@@ -588,18 +588,24 @@ class TCBank
         $ans = [];
         Yii::warning("curlcode: " . $curl->errorCode, 'merchant');
         Yii::warning("curlans: " . $curl->responseCode . ":" . Cards::MaskCardLog($curl->response), 'merchant');
-        switch ($curl->responseCode) {
-            case 200:
-            case 202:
-                $ans['xml'] = $jsonReq ? Json::decode($curl->response) : $curl->response;
-                break;
-            case 500:
-                $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
-                $ans['httperror'] = $jsonReq ? Json::decode($curl->response) : $curl->response;
-                break;
-            default:
-                $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
-                break;
+        try {
+            switch ($curl->responseCode) {
+                case 200:
+                case 202:
+                    $ans['xml'] = $jsonReq ? Json::decode($curl->response) : $curl->response;
+                    break;
+                case 500:
+                    $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
+                    $ans['httperror'] = $jsonReq ? Json::decode($curl->response) : $curl->response;
+                    break;
+                default:
+                    $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
+                    break;
+            }
+        } catch (\yii\base\InvalidArgumentException $e) {
+            $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
+            $ans['httperror'] = $curl->response;
+            return $ans;
         }
 
         return $ans;

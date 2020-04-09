@@ -16,6 +16,7 @@ use app\models\queue\ReverspayJob;
 use Yii;
 use yii\db\Exception;
 use yii\helpers\VarDumper;
+use yii\mutex\FileMutex;
 
 /**
  * Оплата счета ЖКХ
@@ -161,89 +162,93 @@ class Payschets
      */
     public function confirmPay($params)
     {
-        try {
-            $transaction = Yii::$app->db->beginTransaction();
+        $mutex = new FileMutex();
+        if ($mutex->acquire('confirmPay'.$params['idpay'])) {
+            try {
+                $transaction = Yii::$app->db->beginTransaction();
 
-            $query = $this->getPayInfoFoDraft($params['idpay']);
+                $query = $this->getPayInfoFoDraft($params['idpay']);
 
-            if ($query['Status'] == 0) {
-                //только в обработке платеж завершать
-                if ($params['result_code'] == 1) {
-                    //завершение оплаты и печать чека
+                if ($query['Status'] == 0) {
+                    //только в обработке платеж завершать
+                    if ($params['result_code'] == 1) {
+                        //завершение оплаты и печать чека
 
-                    //ок
-                    $this->SetPayOk($params);
+                        //ок
+                        $this->SetPayOk($params);
 
-                    if ($query['IdOrder'] > 0) {
-                        //счет оплачен
-                        $this->SetOrderOk($query['IdOrder'], $params['idpay']);
+                        if ($query['IdOrder'] > 0) {
+                            //счет оплачен
+                            $this->SetOrderOk($query['IdOrder'], $params['idpay']);
+                        }
+
+                        /*if ($query['IsCustom'] == TU::$VYPLATVOZN) {
+                            //выплата вознаграждения произведена
+                            $this->SetVyplataVozn($params['idpay'], 1);
+                        }*/
+
+                        //чек пробить
+                        //$this->CreateDraftPay($query, $params);
+
+                        //оповещения на почту
+                        $this->addNotification($params['idpay'], $query['TypeWidget'], 1);
+
+                        //экспорт оплаты (для онлайн платежей)
+                        //$this->exportPay($params['idpay']);
+
+                        //возврат платежа при привязке карты
+                        if ($query['IdUsluga'] == 1) {
+                            $this->reversPay($params['idpay']);
+                        }
+
+                        //списать/зачислить на баланс
+                        if ($query['IdUsluga'] != 1) {
+                            $this->ChangeBalance($query, $params['idpay']);
+                        }
+
+                        if ($transaction->isActive) {
+                            $transaction->commit();
+                        }
+
+                        $this->AntifrodUpdateStatus($params['idpay'], 1);
+
+                        $res = true;
+
+                    } elseif ($params['result_code'] != 0) {
+                        //отмена платежа
+                        $this->SetPayCancel($params);
+
+                        /*if ($query['IsCustom'] == TU::$VYPLATVOZN) {
+                            //выплата вознаграждения не произведена
+                            $this->SetVyplataVozn($params['idpay'], 2);
+                        }*/
+
+                        //оповещения
+                        $this->addNotification($params['idpay'], $query['TypeWidget'], 2);
+
+                        if ($transaction->isActive) {
+                            $transaction->commit();
+                        }
+
+                        $this->AntifrodUpdateStatus($params['idpay'], 0);
+
+                        $res = false;
+
                     }
-
-                    /*if ($query['IsCustom'] == TU::$VYPLATVOZN) {
-                        //выплата вознаграждения произведена
-                        $this->SetVyplataVozn($params['idpay'], 1);
-                    }*/
-
-                    //чек пробить
-                    //$this->CreateDraftPay($query, $params);
-
-                    //оповещения на почту
-                    $this->addNotification($params['idpay'], $query['TypeWidget'], 1);
-
-                    //экспорт оплаты (для онлайн платежей)
-                    //$this->exportPay($params['idpay']);
-
-                    //возврат платежа при привязке карты
-                    if ($query['IdUsluga'] == 1) {
-                        $this->reversPay($params['idpay']);
+                } else {
+                    if ($transaction) {
+                        $transaction->rollBack();
                     }
-
-                    //списать/зачислить на баланс
-                    if ($query['IdUsluga'] != 1) {
-                        $this->ChangeBalance($query, $params['idpay']);
-                    }
-
-                    if ($transaction->isActive) {
-                        $transaction->commit();
-                    }
-
-                    $this->AntifrodUpdateStatus($params['idpay'], 1);
-
                     $res = true;
-
-                } elseif ($params['result_code'] != 0) {
-                    //отмена платежа
-                    $this->SetPayCancel($params);
-
-                    /*if ($query['IsCustom'] == TU::$VYPLATVOZN) {
-                        //выплата вознаграждения не произведена
-                        $this->SetVyplataVozn($params['idpay'], 2);
-                    }*/
-
-                    //оповещения
-                    $this->addNotification($params['idpay'], $query['TypeWidget'], 2);
-
-                    if ($transaction->isActive) {
-                        $transaction->commit();
-                    }
-
-                    $this->AntifrodUpdateStatus($params['idpay'], 0);
-
-                    $res = false;
-
                 }
-            } else {
-                if ($transaction) {
-                    $transaction->rollBack();
-                }
-                $res = true;
+
+            } catch (\Throwable $e) {
+                // в случае возникновения ошибки при выполнении одного из запросов выбрасывается исключение
+                $transaction->rollback();
+                Yii::error($e->getMessage(), 'rsbcron');
+                throw new \Exception($e->getMessage(), $e->getCode(), $e);
             }
-
-        } catch (\Throwable $e) {
-            // в случае возникновения ошибки при выполнении одного из запросов выбрасывается исключение
-            $transaction->rollback();
-            Yii::error($e->getMessage(), 'rsbcron');
-            throw new \Exception($e->getMessage(), $e->getCode(), $e);
+            $mutex->release('confirmPay'.$params['idpay']);
         }
 
         return $res;
