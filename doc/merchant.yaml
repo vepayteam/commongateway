@@ -1,0 +1,301 @@
+openapi: 3.0.1
+info:
+  title: Vepay API Мерчанта
+  description: API Мерчанта
+  version: 1.0.0
+security:
+  - Login: []
+    Token: []
+tags:
+  - name: Pay
+    description: Запросы оплаты заказов
+  - name: Callback
+    description: Оповещения
+servers:
+  - url: https://api.vepay.online/
+paths:
+  /merchant/pay:
+    post:
+      tags:
+        - Pay
+      summary: Оплата заказа через Интернет-эквайринг
+      description: Осуществляется перевод средств с карты клиента на счет магазина
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PayIn"
+        description: Параметры платежа
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusIdUrl"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /merchant/state:
+    post:
+      tags:
+        - Pay
+      summary: Статус платежа
+      description: Запрос результата операции. Средства будут списаны с карты и перечислены магазину при успешном статусе платежа.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IdState"
+        description: ID платежа
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResult"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /recarring/pay:
+    post:
+      tags:
+        - Pay
+      summary: Погашение займа с карты автоплатежом
+      description: Отправляется запрос оплаты заказа ранее зарегистрированной картой
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PayAuto"
+        description: Параметры платежа
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusId"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /callback:
+    get:
+      tags:
+        - Callback
+      summary: Обратный запрос
+      description: Оповещение отправляется обратным HTTP-запросом на адрес указанный в кабинете.
+      parameters:
+        - name: extid
+          in: query
+          required: true
+          description: внешний идентификатор заказа магазина
+          schema:
+            type: string
+        - name: id
+          in: query
+          required: true
+          description: транзакция
+          schema:
+            type: integer
+        - name: sum
+          in: query
+          required: true
+          description: сумма платежа
+          schema:
+            type: number
+        - name: status
+          in: query
+          required: true
+          description: статус завершения (1 – успешно 2 - ошибка 3 - возврат)
+          schema:
+            type: integer
+        - name: key
+          in: query
+          required: true
+          description: Ключ, формируется как хеш суммы строк параметров md5(id + sum +
+            status + Ключ обратного запроса).
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            text/html:
+              schema:
+                $ref: "#/components/schemas/CallbackState"
+
+components:
+  securitySchemes:
+    Login:
+      type: apiKey
+      in: header
+      name: X-Login
+      description: Логин
+    Token:
+      type: apiKey
+      in: header
+      name: X-Token
+      description: Токен, формируется по алгоритму sha1(sha1(ключ) + sha1(тело запроса))
+  schemas:
+    PayIn:
+      type: object
+      properties:
+        amount:
+          type: number
+          description: Cумма платежа, руб
+        extid:
+          type: string
+          description: Внешний идентификатор запроса
+        descript:
+          type: string
+          description: Описание платежа
+        timeout:
+          type: integer
+          minimum: 10
+          maximum: 60
+          description: Тайм-аут ожидания оплаты, от 10 до 60 минут
+        successurl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после заверщения платежа (успех)
+        failurl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после заверщения платежа (ошибка)
+        cancelurl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после отказа от оплаты
+        type:
+          type: integer
+          description: (опционально) Тип шлюза - 0 – ECOM,1 – ЖКХ
+        regcard:
+          type: integer
+          description: (опционально) 1 – регистрация карты после платежа
+    IdState:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: идентификатор запроса
+    PayAuto:
+      type: object
+      properties:
+        card:
+          type: integer
+          description: Идентификатор карты
+        amount:
+          type: number
+          description: Cумма платежа, руб
+        extid:
+          type: string
+          maxLength: 40
+          description: Внешний идентификатор запроса
+    StatusResult:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Статус (0 - в обработке, 1 - успешно, 2 - ошибка, 3 - отменен)
+        message:
+          type: string
+          description: Сообщение ошибки
+        info:
+          $ref: "#/components/schemas/PayInfo"
+        card:
+          $ref: "#/components/schemas/CardInfo"
+    StatusId:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Статус (0 – ошибка 1 - принят)
+        message:
+          type: string
+          description: Сообщение ошибки
+        id:
+          type: integer
+          description: Статус (0 – ошибка 1 - принят)
+    StatusIdUrl:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Статус (0 – ошибка 1 - принят)
+        message:
+          type: string
+          description: Сообщение ошибки
+        id:
+          type: integer
+          description: идентификатор запроса
+        url:
+          type: string
+          description: Cсылка для перехода на форму оплаты
+    Error:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Наименование кода ошибки
+        message:
+          type: string
+          description: Сообщение ошибки
+        code:
+          type: integer
+          description: Дополнительный код ошибки
+        status:
+          type: integer
+          description: Код ошибки
+    CallbackState:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: 0 - успешно, или код ошибки. При указанном коде ошибки в ответе на колбэк выполняется возврат средств.
+        message:
+          type: string
+          description: Описание ошибки
+    PayInfo:
+      type: object
+      description: Информация о платеже (при status = 1)
+      properties:
+        card:
+          type: string
+          description: Номер карты
+        brand:
+          type: string
+          description: Платежная система карты
+        rrn:
+          type: integer
+          description: Номер RRM
+        transact:
+          type: string
+          description: Номер транзакции банка
+    CardInfo:
+      type: object
+      description: Информация о зарегистрированной карте (при regcard = 1)
+      properties:
+        id:
+          type: integer
+          description: Идентификатор карты
+        num:
+          type: string
+          description: Номер карты
+        exp:
+          type: string
+          description: Срок действия (мм/гг)
+

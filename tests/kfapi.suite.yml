@@ -1,0 +1,10 @@
+actor: KfapiTester
+modules:
+    enabled:
+        - REST:
+            depends: PhpBrowser
+            url: 'http://127.0.0.1:806'
+            shortDebugResponse: 300 # only the first 300 chars of the response
+        - \Helper\Kfapi
+    config:
+        - Yii2

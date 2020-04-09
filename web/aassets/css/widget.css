@@ -1,0 +1,45 @@
+body {
+    font-family: 'Roboto', 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    margin-top: 20px !important;
+}
+
+.copyright-text {
+    padding-top: 8px;
+    font-size: small;
+}
+
+.mt-5 {
+    margin-top: 5px !important;
+}
+.mt-10 {
+    margin-top: 10px !important;
+}
+.mt-20 {
+    margin-top: 20px !important;
+}
+
+.error {
+    color: red;
+}
+
+iframe.noScrolling{
+    overflow: hidden;
+}
+
+* {
+    font-size: 16px;
+    line-height: 1.7;
+}
+.radio label, .checkbox label {
+    line-height: 1.428;
+}
+
+.grouplink, .provlink {
+    cursor: pointer;
+}
+
+.label-sm {
+    font-size: 12px;
+    font-weight: normal;
+    text-align: right;
+}

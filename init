@@ -1,0 +1,62 @@
+#!/usr/bin/env php
+<?php
+/**
+ * Yii Application Initialization Tool
+ *
+ * In order to run in non-interactive mode:
+ *
+ * init --env=prod
+ */
+
+if (!extension_loaded('openssl')) {
+    die('The OpenSSL PHP extension is required by Yii2.');
+}
+
+$params = getParams();
+$root = str_replace('\\', '/', __DIR__);
+
+if (isset($params['env']) && !empty($params['env'])) {
+    $mode = $params['env'];
+    if ($mode == "test") {
+        echo "init: test\n";
+        copy($root . "/config/test/index.php", $root . "/web/index.php");
+        copy($root . "/config/test/params.php", $root . "/config/params.php");
+        copy($root . "/config/test/db.php", $root . "/config/db.php");
+    } elseif ($mode == "prod") {
+        echo "init: prod\n";
+        copy($root . "/config/prod/index.php", $root . "/web/index.php");
+        if (!file_exists($root . "/config/params.php")) {
+			copy($root . "/config/prod/params.php", $root . "/config/params.php");
+		}
+        if (!file_exists($root . "/config/db.php")) {
+            copy($root . "/config/prod/db.php", $root . "/config/db.php");
+        }
+    } else {
+        echo "init: dev\n";
+        copy($root . "/config/dev/index.php", $root . "/web/index.php");
+        copy($root . "/config/dev/params.php", $root . "/config/params.php");
+        copy($root . "/config/dev/db.php", $root . "/config/db.php");
+    }
+} else {
+    echo "Run: ./init --env=prod\n";
+}
+
+function getParams()
+{
+    $rawParams = [];
+    if (isset($_SERVER['argv'])) {
+        $rawParams = $_SERVER['argv'];
+        array_shift($rawParams);
+    }
+
+    $params = [];
+    foreach ($rawParams as $param) {
+        if (preg_match('/^--([\w-]*\w)(=(.*))?$/', $param, $matches)) {
+            $name = $matches[1];
+            $params[$name] = isset($matches[3]) ? $matches[3] : true;
+        } else {
+            $params[] = $param;
+        }
+    }
+    return $params;
+}

@@ -1,0 +1,121 @@
+#!/usr/bin/env php
+<?php
+/**
+ * Yii Application Initialization Tool
+ *
+ * In order to run in non-interactive mode:
+ *
+ * sign --act=check
+ */
+
+$params = getParams();
+$root = str_replace('\\', '/', __DIR__)."/";
+
+if (isset($params['act']) && !empty($params['act'])) {
+    $act = $params['act'];
+    if ($act == "check") {
+        $res = checkSign();
+        echo 'Check '.($res ? 'success' : 'fail')."\n";
+    } elseif ($act == "sign") {
+        signFiles();
+        echo "Sign done\n";
+    } else {
+        echo "Run: ./sign --act=check\n";
+    }
+} else {
+    echo "Run: ./sign --act=check\n";
+}
+
+function checkSign()
+{
+    @unlink(__DIR__ . '/vepay.md5.out');
+    exec('gpg --verify -o vepay.md5.out vepay.md5.asc');
+    if (file_exists(__DIR__ . "/vepay.md5.out")) {
+
+        $fp = fopen(__DIR__ . '/vepay.md5.out', 'r+');
+        $hashRead = fread($fp, 5000000);
+        fclose($fp);
+
+        $hashRead = explode("\n", $hashRead);
+        $hash = [];
+        foreach ($hashRead as $h) {
+            if (stripos($h, " *") !== false) {
+                $hsh = explode(" *", $h);
+                $hash[crc32($hsh[1])] = $hsh;
+            }
+        }
+        $files = filelist(__DIR__, '');
+        foreach ($files as $f) {
+
+            $hsh = $hash[crc32($f[1])];
+            if (!isset($hsh) || $f[0] != $hsh[0]) {
+                echo "error on file: " . $f[1] ."\n";
+                return false;
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+function signFiles()
+{
+    $files = filelist(__DIR__, '');
+    $fp = fopen(__DIR__ . '/vepay.md5', 'w');
+    foreach ($files as $file) {
+        fwrite($fp, $file[0] . " *" . $file[1]. "\n");
+    }
+    fclose($fp);
+
+    @unlink(__DIR__ . '/vepay.md5.asc');
+    exec('gpg --clearsign -a vepay.md5');
+}
+
+function getParams()
+{
+    $rawParams = [];
+    if (isset($_SERVER['argv'])) {
+        $rawParams = $_SERVER['argv'];
+        array_shift($rawParams);
+    }
+
+    $params = [];
+    foreach ($rawParams as $param) {
+        if (preg_match('/^--([\w-]*\w)(=(.*))?$/', $param, $matches)) {
+            $name = $matches[1];
+            $params[$name] = isset($matches[3]) ? $matches[3] : true;
+        } else {
+            $params[] = $param;
+        }
+    }
+    return $params;
+}
+
+function filelist($dir, $sub)
+{
+    $filesArray = [];
+
+    $opendir = opendir($dir);
+
+    while ($list = readdir($opendir)) {
+        $isDir = @is_dir($dir . "/" . $list);
+        if (!$isDir && !in_array($sub . $list, ignoreFiles())) {
+            $fileHash = sha1_file($dir . "/" . $list);
+            $filesArray[] = [$fileHash, $sub . $list];
+        } elseif ($isDir && !in_array($list, ignoreDirs()) && !in_array($sub . $list, ignoreDirs())) {
+            $filesArray = array_merge($filesArray, filelist($dir."/".$list, $sub . $list . "/"));
+        }
+    }
+
+    return $filesArray;
+}
+
+function ignoreDirs()
+{
+    return ['.', '..', 'runtime', 'key', 'vue/node_modules', 'web/assets', '.git', '.idea', '.svn'];
+}
+
+function ignoreFiles()
+{
+    return ['vepay.md5.asc', 'vepay.md5.out', 'vepay.md5', 'cardkeys/db.php', 'config/params.php', 'config/db.php', 'config/db_card.php', 'web/index.php'];
+}

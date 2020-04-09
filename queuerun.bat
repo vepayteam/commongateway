@@ -1,0 +1,1 @@
+yii queue/listen -v

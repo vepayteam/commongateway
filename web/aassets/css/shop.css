@@ -1,0 +1,206 @@
+body {
+    background-color: #fff !important;
+    font-family: 'Roboto', 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+    font-weight: 400 !important;
+    font-size: 15px !important;
+    line-height: 1.42857143 !important;
+}
+
+h1, .h1, h2, .h2, h3, .h3, h4, .h4, h5, .h5, h6, .h6 {
+    font-family: 'Roboto', 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+    font-weight: 400 !important;
+    line-height: 1.1;
+    margin-bottom: 20px;
+}
+
+h1, .h1 {
+    font-size: 2em;
+}
+
+h2, .h2 {
+    font-size: 1.8em;
+}
+
+h3, .h3 {
+    font-size: 1.6em;
+}
+
+h4, .h4 {
+    font-size: 1.13em;
+}
+
+h5, .h5 {
+    font-size: 1.0em;
+}
+
+p {
+    line-height: 1.4;
+    margin: 0 0 10px;
+}
+
+p.provinfo {
+    font-size: 0.8667em;
+}
+
+.container {
+    max-width: 700px;
+}
+
+.provblock {
+    display: inline-block;
+    width: 100%;
+}
+
+.bg-gray333 {
+    background-color: #eee;
+}
+
+/**
+ * Элементы формы
+ */
+.oferttext {
+    font-size: 0.7em;
+    margin-right: 10px;
+    margin-top: 5px;
+    line-height: 1.3;
+    text-align: right;
+}
+
+.progress-bar-warning {
+    background-color: #f46f2a !important;
+}
+
+.progress-bar-none {
+    background-color: rgba(244, 111, 42, 0.29);
+}
+
+form label {
+    font-weight: 400;
+}
+
+label {
+    font-weight: 400;
+}
+
+.form-group:after {
+    display: block;
+    content: ".";
+    height: 0;
+    line-height: 0;
+    clear: both;
+    visibility: hidden;
+}
+
+.form-control {
+    height: 32px !important;
+    padding: 0 12px 0 12px;
+    border: rgb(204, 204, 204) 1px solid;
+
+    -webkit-border-radius: 6px;
+    -moz-border-radius: 6px;
+    border-radius: 6px;
+
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
+}
+
+textarea.form-control {
+    padding: 12px;
+}
+
+.form-control:focus {
+    border-color: rgb(150, 150, 150);
+
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
+}
+
+.field-provparams-param > label, .field-provparams-summ > label {
+    margin-top: 4px;
+}
+
+/**
+ * Визард
+ */
+.form-wizard .nav-pills > li > a {
+    padding-top: 15px;
+    padding-bottom: 15px;
+    background-color: #eee;
+    color: #999;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+    cursor: default;
+}
+
+.form-wizard .nav-pills > li.active > a {
+    background-color: #5d8fc2;
+    color: #fff;
+}
+
+.nav-pills > li.active > a:hover, .nav-pills > li.active > a:focus {
+    color: #fff;
+    background-color: #337ab7;
+}
+
+.nav > li > a:hover, .nav > li > a:focus {
+    text-decoration: none;
+    background-color: #eee;
+}
+
+.form-wizard .nav-pills.nav-justified > li {
+    padding: 0 5px;
+}
+.form-wizard .nav-pills.nav-justified > li:first-child {
+    padding-left: 0;
+}
+.form-wizard .nav-pills.nav-justified > li:last-child {
+    padding-right: 0;
+}
+@media only screen and (max-width: 768px) {
+    .form-wizard .nav-pills.nav-justified > li {
+        padding: 0;
+        margin: 3px 0;
+    }
+}
+
+.form-wizard .tab-pane {
+    padding: 0 0 15px 0;
+}
+
+.form-wizard .tab-pane fieldset {
+    padding-top: 15px;
+}
+.form-wizard .help-block {
+    font-size: 0.85em;
+}
+
+.wizard-bottom {
+    display: inline-block;
+    width: 100%;
+    background-color: #fff;
+    padding-top: 15px;
+}
+
+.form-wizard > form > .tab-content {
+    word-wrap: break-word;
+}
+
+.form-wizard > form * .media-heading {
+    font-weight: 600 !important;
+}
+
+.labelselect {
+    color: #1980B6;
+    font-size: 1.2em;
+}
+
+.BankFrame {
+    float: left;
+    width: 100%;
+    height: 725px;
+    color: red;
+    background-color: #fff;
+}

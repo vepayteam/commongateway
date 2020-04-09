@@ -1,0 +1,296 @@
+.menulogo {
+    margin: 5px 5px 5px 20px;
+    float: left;
+}
+
+.top-navigation .navbar-header .navbar-brand {
+    background: #fff;
+    color: #000;
+    padding: 5px 25px;
+}
+
+
+@media (min-width: 1251px) {
+    .ibox-content .form-horizontal, .ibox-content .table, .panel-body .table {
+        max-width: 1250px;
+    }
+}
+
+/**
+ * Визард
+ */
+
+.widget {
+    background-color: #fff;
+}
+
+.widget > .tab-content {
+    padding: 15px;
+    min-height: 450px;
+}
+
+.widget > .tab-content > .tab-pane {
+    min-height: 450px;
+    padding: 0;
+    margin: 0;
+}
+
+.popover-content {
+    min-width: 250px;
+}
+
+.form-wizard > .tab-content * .uslbody {
+    display: inline-block;
+    position: relative;
+    height: auto;
+    width: 100%;
+}
+
+.form-wizard > .tab-content * .list-group {
+    display: block;
+    background-color: #fff;
+    min-height: 450px;
+    margin: 0;
+    padding: 0 0 30px 0;
+}
+
+.form-wizard > .tab-content * .media-object {
+    min-width: 80px;
+}
+
+.form-wizard > .tab-content * .list-group-item {
+    word-wrap: break-word;
+}
+
+.list-group-item[draggable='true'],
+.list-group-item[draggable='true'] *,
+#listgroupsortable .list-group-item,
+#listgroupsortable .list-group-item *,
+#listgroupsortable2 .list-group-item,
+#listgroupsortable2 .list-group-item * {
+    cursor: move;
+}
+
+.form-wizard a.close {
+    cursor: pointer !important;
+}
+
+.form-wizard .wizard-bottom {
+    display: inline-block;
+    width: 100%;
+    background-color: #fff;
+    padding-top: 20px;
+}
+
+.form-wizard div.toggle > label {
+    color: #333;
+    background: #fff;
+
+    -webkit-border-radius: 0;
+    -moz-border-radius: 0;
+    border-radius: 0;
+}
+
+.form-wizard .maxleninfo {
+    font-size: small;
+}
+
+.form-wizard .labelselect {
+    color: #1980B6;
+    font-size: 1.2em;
+}
+
+.form-wizard .media-heading {
+    font-weight: 600 !important;
+}
+
+.form-wizard .nav-pills > li > a {
+    padding-top: 15px;
+    padding-bottom: 15px;
+    background-color: #eee;
+    color: #999;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+    cursor: default;
+}
+
+.form-wizard .nav-pills > li.active > a {
+    background-color: #f46f2a;
+    color: #eee;
+}
+
+.form-wizard .nav-pills > li.active > a:hover,
+.form-wizard .nav-pills > li.active > a:focus {
+    color: #fff;
+    background-color: #f46f2a;
+}
+
+.form-wizard .nav > li > a:hover,
+.form-wizard .nav > li > a:focus {
+    text-decoration: none;
+    background: #eee;
+    color: #f46f2a;
+}
+
+.form-wizard .nav > li.active {
+    border-left: 4px solid #fff;
+    background: #fff;
+}
+
+.form-wizard .nav-pills.nav-justified > li {
+    padding: 0 5px;
+}
+
+.form-wizard .nav-pills.nav-justified > li:first-child {
+    padding-left: 0;
+}
+
+.form-wizard .nav-pills.nav-justified > li:last-child {
+    padding-right: 0;
+}
+
+.form-wizard .tab-pane {
+    background-color: #eee;
+    padding: 15px 0;
+}
+
+.form-wizard .help-block {
+    font-size: 0.85em;
+}
+
+.form-wizard .list-group {
+    padding: 0 15px;
+    margin: 15px 0;
+}
+
+.nav-header {
+    padding: 16px 25px;
+}
+
+.logo-element {
+    padding: 16px 0;
+}
+
+.payment-orders-list .table-striped > tbody > tr:hover{
+    background-color: #d7d7d7;
+    cursor:pointer;
+}
+
+.payment-orders-list .table-striped > tbody input[type=checkbox]{
+    transform: scale(1.3);
+    opacity: 0.9;
+}
+
+.payment-orders-list .table-striped >tbody > tr > td:first-child{
+    text-align: center;
+}
+
+.payment-orders-list .select-all:hover{
+    cursor: pointer;
+}
+.payment-orders-list .summary button{
+    float: right;
+    margin-right: 30px;
+}
+.confirm-modal-form .modal-header, .pdf-modal .modal-header{
+    display: flex;
+}
+.confirm-modal-form .modal-header h3, .pdf-modal .modal-header h3{
+    margin-bottom: 0;
+}
+.confirm-modal-form .modal-header .close, .pdf-modal .modal-header .close{
+    margin-left: auto;
+}
+@media (min-width: 992px) {
+    .modal-lg {
+        width: 900px!important;
+    }
+}
+
+.pdf-modal .modal-footer{
+    display: flex;
+}
+.pdf-modal .modal-footer input:nth-child(2){
+    margin-left: auto;
+    width: auto;
+}
+.confirm-modal-form .center{
+    text-align: center;
+}
+.confirm-modal-form .modal-body{
+    display:flex;
+    flex-flow: column;
+}
+.confirm-modal-form .modal-body button{
+    margin-right: auto;
+    margin-left: auto;
+}
+.confirm-modal-form .form-control{
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+.confirm-modal-form .div-form-control, .confirm-modal-form .button-send{
+    display: none;
+}
+.confirm-modal-form .error-field{
+    color: red;
+    padding-top:15px;
+    display: none;
+}
+.success-field{
+    color: forestgreen;
+    padding-top:15px;
+    display: none;
+}
+.nav-item .active{
+    background-color: #e5e5e5;
+    color: #656a70;
+}
+.transaction-info{
+    display: flex;
+    border-bottom: 1px solid #f2f2f2;
+    margin-bottom: 10px;
+}
+.transaction-info .info{
+    margin-left: auto;
+}
+.to-pdf{
+    background-color: white;
+    padding-top:60px;
+}
+.to-pdf .header{
+    display: flex;
+    border-bottom: 1px solid #f2f2f2;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+}
+.to-pdf .header .title{
+    margin-left: auto;
+    color:#2432c8;
+    font-weight: 600;
+    font-size: 18px;
+
+}
+.to-pdf h4{
+    color:#2432c8;
+    font-weight: 600;
+    font-size: 16px;
+    padding-left: 30px;
+    padding-top:20px;
+}
+.to-pdf .container{
+    width: 750px;
+}
+.row-info{
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #e1e1e1;
+    padding-top: 5px;
+}
+
+.btn-danger-AF{
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+}

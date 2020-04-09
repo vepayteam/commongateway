@@ -1,0 +1,29 @@
+
+.nopadding {
+    padding:0 !important;
+}
+
+.margin-top4 {
+    margin-top: 4px;
+}
+
+.margin-top16 {
+    margin-top: 16px;
+}
+
+.margin-top20 {
+    margin-top: 20px;
+}
+
+.margin-top24 {
+    margin-top: 24px;
+}
+
+.no-margins {
+    margin: 0 !important;
+}
+
+.no-row-margins {
+    margin-right: 0;
+    margin-left: 0;
+}

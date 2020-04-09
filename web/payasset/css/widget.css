@@ -1,0 +1,219 @@
+/*https://www.figma.com/file/FXdHjlO5wvAwnQzq6PzXqQ/Service?node-id=315%3A1269*/
+
+body {
+    font-family: 'TT Norms Pro', 'TT Norms', sans-serif;
+    background: #fff;
+}
+
+div, span, h1, h2, h3, h4, h5, h6, label, input {
+    font-family: 'TT Norms Pro', 'TT Norms', sans-serif;
+    font-style: normal;
+    font-weight: normal;
+}
+
+.container {
+    padding: 56px 64px;
+    width: 448px;
+    background: #FFFFFF;
+    box-shadow: 0 16px 24px rgba(64, 60, 91, 0.1);
+    border-radius: 32px;
+}
+
+.paybtn {
+    width: 100%;
+    height: 48px;
+
+    font-style: normal;
+    font-weight: bold;
+    font-size: 13px;
+    line-height: 16px;
+    /* identical to box height */
+
+    text-align: center;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+
+    /* white */
+
+    color: #FFFFFF;
+
+    background: linear-gradient(270deg, #A31FED 0%, #03EE65 100%);
+    border-radius: 8px;
+    border: none;
+}
+
+.btn.btn-success:active, .btn.btn-success:focus, .btn.btn-success:hover {
+    background: linear-gradient(270deg, #A31FED 0%, #03EE65 100%);
+}
+
+.form-control {
+    font-style: normal;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 17px;
+    font-feature-settings: 'tnum' on, 'lnum' on, 'case' on;
+    color: #2D293F;
+
+    padding: 8px 0;
+
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    border-bottom: 1px solid #D7D5E6;
+    box-shadow: none;
+    border-radius: unset;
+}
+
+.has-error .form-control {
+    box-shadow: none;
+}
+
+.has-success .form-control {
+    box-shadow: none;
+}
+
+.has-success .form-control:active, .has-success .form-control:focus {
+    box-shadow: none;
+}
+
+.has-error .form-control:active, .has-error .form-control:focus {
+    box-shadow: none;
+}
+
+.form-control:active, .form-control:focus {
+    box-shadow: none;
+    border-image: linear-gradient(270deg, #A31FED 0%, #03EE65 100%) 1 stretch stretch;
+}
+
+.control-label {
+    font-size: 12px;
+    line-height: 14px;
+    color: #8F8DA7;
+}
+
+.borderemail {
+    height: 40px;
+    border: 1px solid #D7D5E6;
+    box-sizing: border-box;
+    border-radius: 10px;
+    padding: 8px 16px;
+}
+
+.borderemail:active, .borderemail:focus {
+    border-radius: 10px;
+    box-shadow: none;
+    border-image: linear-gradient(270deg, #A31FED 0%, #03EE65 100%) 1 stretch stretch;
+}
+
+.cardnumblock {
+    display: block;
+    position: relative;
+    padding-left: 15px;
+    width: 220px;
+    float: left;
+}
+
+.expblock {
+    display: block;
+    position: relative;
+    padding-left: 31px;
+    width: 85px;
+    float: right;
+}
+
+.holderblock {
+    display: block;
+    position: relative;
+    padding-left: 15px;
+    width: 235px;
+    float: left;
+}
+
+.cvcblock {
+    display: block;
+    position: relative;
+    padding-left: 16px;
+    width: 55px;
+    float: right;
+}
+
+.delcard {
+    position: absolute;
+    display: inline-block;
+    top: 30px;
+    left: 217px;
+    width: 20px;
+}
+
+.pslogo {
+    position: absolute;
+    display: inline-block;
+    width: 45px;
+    height: 16px;
+    top: 32px;
+    left: 172px;
+}
+
+.infocvc {
+    position: absolute;
+    top: 6px;
+    left: 40px;
+}
+
+.infosumm, .infomag {
+    font-style: normal;
+    font-weight: normal;
+    font-size: 12px;
+    line-height: 14px;
+    color: #8F8DA7;
+}
+
+.summ, .mag {
+    font-style: normal;
+    font-weight: normal;
+    color: #231F30;
+}
+
+.errmessage {
+    display: block;
+    background-color: rgba(238, 52, 61, 0.15);
+    border-radius: 12px;
+    line-height: 21px;
+    padding: 10px 16px;
+}
+
+p#error_message {
+    margin: 0;
+}
+
+.zagend {
+    font-size: 24px;
+    line-height: 29px;
+    text-align: center;
+    color: #403C5B;
+}
+
+.infoend {
+    font-size: 14px;
+    line-height: 17px;
+    text-align: center;
+    font-feature-settings: 'tnum' on, 'lnum' on, 'case' on;
+    color: #8F8DA7;
+}
+
+.btnret {
+    width: 214px;
+    height: 48px;
+
+
+    background: linear-gradient(270deg, #A31FED 0%, #03EE65 100%);
+    border-radius: 10px;
+    border: none;
+
+    padding-top: 16px;
+    font-size: 13px;
+    line-height: 16px;
+    text-align: center;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}

@@ -1,0 +1,840 @@
+openapi: 3.0.0
+info:
+  title: API МФО
+  description: Vepay API для МФО
+  version: 1.0.7
+security:
+  - Mfo: []
+    Token: []
+tags:
+  - name: Card
+    description: Запросы по картам.
+  - name: Pay
+    description: Запросы погашения займа
+  - name: Out
+    description: Запросы выдачи займа
+  - name: Ident
+    description: Запросы идентификации
+  - name: Info
+    description: Информационные запросы
+  - name: Callback
+    description: Оповещения
+servers:
+  - url: https://api.vepay.online/mfo
+paths:
+  /card/info:
+    post:
+      tags:
+        - Card
+      summary: Получить информацию о зарегистрированной карте
+      description: Получить информацию о зарегистрированной карте по её идентификатору.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CardInfo"
+        description: Параметры запроса
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CardStatus"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /card/reg:
+    post:
+      tags:
+        - Card
+      summary: Регистрация карты пользователя
+      description: Регистрация карты позволяет сохранить токен карты пользователя, который
+        можно использовать для перевода на карту. Также можно зарегистрировать
+        карту для последующего автоплатежа этой картой. Для регистрации карты
+        «для автоплатежа» совершается тестовый платеж на случайную сумму от 1 до
+        10 рублей.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CardReg"
+        description: Параметры запроса
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CardRegAns"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /card/get:
+    post:
+      tags:
+        - Card
+      summary: Получить идентификатор карты
+      description: Перед запросом идентификатора карты, необходимо проверь статус
+        завершения платежа по регистрации карты. У карт «для пополнения» срок
+        действия отсутствует.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CardGet"
+        description: Параметры запроса
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CardStatus"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /card/del:
+    post:
+      tags:
+        - Card
+      summary: Удаление карты
+      description: Удаление зарегистрированной карты
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CardId"
+        description: Параметры запроса
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResult"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /pay/lk:
+    post:
+      tags:
+        - Pay
+      summary: Погашение займа с карты из кабинета МФО
+      description: Отправляется запрос погашения займа, с переходом к форме ввода
+        реквизитов карты
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PayIn"
+        description: Параметры платежа
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusIdUrl"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /pay/auto:
+    post:
+      tags:
+        - Pay
+      summary: Погашение займа с карты автоплатежом
+      description: Отправляется запрос погашения займа автоплатежом
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PayAuto"
+        description: Параметры платежа
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusId"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /pay/state:
+    post:
+      tags:
+        - Pay
+      summary: Статус платежа
+      description: Запрос результата операции. Средства будут списаны с карты и перечислены
+        МФО при успешном статусе платежа.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IdState"
+        description: ID платежа
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Status"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /out/paycard:
+    post:
+      tags:
+        - Out
+      summary: Выдача займа на карту
+      description: Отправляется перевод средств на карту заёмщика
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OutCard"
+        description: Параметры перевода
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusId"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /out/payul:
+    post:
+      tags:
+        - Out
+      summary: Выдача займа на счет юрлица
+      description: Отправляется запрос выдачи займа на счет юрлица
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OutU"
+        description: Параметры перевода
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusId"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /out/payacc:
+    post:
+      tags:
+        - Out
+      summary: Выдача займа на счет физлица
+      description: Отправляется запрос выдачи займа на счет физлица
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OutF"
+        description: Параметры перевода
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusId"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /out/state:
+    post:
+      tags:
+        - Out
+      summary: Статус выдачи займа
+      description: Запрос результата операции. Средства будут перечислены со счета МФО
+        заёмщику при успешном статусе платежа.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IdState"
+        description: ID платежа
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Status"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /ident/req:
+    post:
+      tags:
+        - Ident
+      summary: Идентификация пользователя
+      description: Отправляется запрос идентификации, в ответе на который возвращается id
+        операции. По нему в последующем необходимо уточнить статус выполнения
+        операции. Для идентификации телефона необходимо отправить дополнительный
+        запрос идентификации, в котором указать код пришедший по СМС.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IdentReq"
+        description: Параметры перевода
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusId"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /ident/state:
+    post:
+      tags:
+        - Ident
+      summary: Статус идентификации
+      description: Запрос результата операции. Средства будут перечислены со счета МФО заёмщику при успешном статусе платежа.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IdState"
+        description: ID запрса
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Status"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /сheck:
+    post:
+      tags:
+        - Info
+      summary: Проверка подключения
+      description: Проверка подключения к серверу
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResult"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /account/balance:
+    post:
+      tags:
+        - Info
+      summary: Запрос баланса счета
+      description: Запрос баланса счета площадки.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusAmount"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /callback:
+    get:
+      tags:
+        - Callback
+      summary: Обратный запрос
+      description: Оповещение отправляется обратным HTTP-запросом на адрес указанный в кабинете.
+      parameters:
+        - name: extid
+          in: query
+          required: true
+          description: внешний идентификатор запроса
+          schema:
+            type: string
+        - name: id
+          in: query
+          required: true
+          description: идентификатор запроса платежа
+          schema:
+            type: integer
+        - name: sum
+          in: query
+          required: true
+          description: сумма платежа
+          schema:
+            type: number
+        - name: status
+          in: query
+          required: true
+          description: статус завершения (1 – успешно 2,3 - ошибка)
+          schema:
+            type: integer
+        - name: key
+          in: query
+          required: true
+          description: Ключ, формируется как хеш суммы строк параметров md5(id + sum +
+            status + Ключ обратного запроса).
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            text/html:
+              schema:
+                $ref: "#/components/schemas/CallbackState"
+        default:
+          description: Ошибка колбэка
+  /check:
+    get:
+      tags:
+        - Callback
+      summary: Запрос проверки возможности оплаты
+      description: Запрос проверки возможности оплаты от МФО. URL для запроса задаётся в личном кабинете
+      parameters:
+        - name: extid
+          in: query
+          required: true
+          description: внешний идентификатор запроса
+          schema:
+            type: string
+        - name: sum
+          in: query
+          required: true
+          description: сумма платежа
+          schema:
+            type: number
+      responses:
+        "200":
+          description: OK
+          content:
+            text/html:
+              schema:
+                $ref: "#/components/schemas/CheckReq"
+        default:
+          description: Ошибка проверки
+components:
+  securitySchemes:
+    Mfo:
+      type: apiKey
+      in: header
+      name: X-Mfo
+      description: Логин
+    Token:
+      type: apiKey
+      in: header
+      name: X-Token
+      description: Токен, формируется по алгоритму sha1(sha1(ключ) + sha1(тело запроса))
+  schemas:
+    CardInfo:
+      type: object
+      properties:
+        card:
+          type: integer
+          description: Идентификатор карты
+        type:
+          type: integer
+          description: Тип карты (0 – для автоплатежа, 1 – для пополнения)
+    CardStatus:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Код ошибки (0 – ожидане оплаты 1 - успешно 2 - ошибка платежа)
+        card:
+          $ref: "#/components/schemas/CardInfoAns"
+    CardInfoAns:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Идентификатор карты
+        num:
+          type: string
+          description: Номер карты
+        exp:
+          type: string
+          format: mm/yy
+          description: Срок действия (мм/гг)
+    CardReg:
+      type: object
+      properties:
+        type:
+          type: integer
+          description: Тип карты (0 – для автоплатежа и пополнения, 1 – только для пополнения)
+        extid:
+          type: string
+          maxLength: 40
+          description: Внешний идентификатор запроса
+        timeout:
+          type: integer
+          minimum: 10
+          maximum: 59
+          description: Тайм-аут ожидания оплаты, от 10 до 59 минут
+        successurl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после заверщения платежа (успех)
+        failurl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после заверщения платежа (ошибка)
+        cancelurl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после отказа от оплаты
+    CardRegAns:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Статус (0 – ошибка 1 - успешно)
+        message:
+          type: string
+          description: Сообщение ошибки
+        id:
+          type: integer
+          description: Идентификатор запроса
+        url:
+          type: string
+          description: Cсылка для перехода на форму регистрации
+    CardGet:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Идентификатор запроса регистрации карты
+        type:
+          type: integer
+          description: Тип карты (0 – для автоплатежа, 1 – для пополнения)
+    CardId:
+      type: object
+      properties:
+        card:
+          type: integer
+          description: Идентификатор карты
+    IdState:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: идентификатор запроса
+    PayIn:
+      type: object
+      properties:
+        amount:
+          type: number
+          description: Cумма платежа, руб
+        document_id:
+          type: string
+          maxLength: 40
+          description: Номер договора
+        fullname:
+          type: string
+          maxLength: 80
+          description: ФИО клиента
+        extid:
+          type: string
+          maxLength: 40
+          description: Внешний идентификатор запроса
+        timeout:
+          type: integer
+          minimum: 10
+          maximum: 59
+          description: Тайм-аут ожидания оплаты, от 10 до 59 минут
+        successurl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после заверщения платежа (успех)
+        failurl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после заверщения платежа (ошибка)
+        cancelurl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после отказа от оплаты
+    PayAuto:
+      type: object
+      properties:
+        card:
+          type: integer
+          description: Идентификатор карты
+        amount:
+          type: number
+          description: Cумма платежа
+        extid:
+          type: string
+          maxLength: 40
+          description: Внешний идентификатор запроса
+    OutCard:
+      type: object
+      properties:
+        card:
+          type: integer
+          description: Идентификатор карты
+        cardnum:
+          type: string
+          minLength: 16
+          maxLength: 18
+          description: Номер карты (16/18 цифр)
+        amount:
+          type: number
+          description: Cумма платежа
+        extid:
+          type: string
+          maxLength: 40
+          description: Внешний идентификатор запроса
+    OutU:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Наименование получателя
+        inn:
+          type: string
+          description: ИНН получателя
+        kpp:
+          type: string
+          description: КПП получателя
+        account:
+          type: string
+          description: Счет в банке
+        bic:
+          type: string
+          description: БИК банка
+        descript:
+          type: string
+          maxLength: 210
+          description: Назначение платежа
+        amount:
+          type: number
+          description: Cумма платежа
+        extid:
+          type: string
+          description: Внешний идентификатор запроса
+    OutF:
+      type: object
+      properties:
+        fio:
+          type: string
+          description: ФИО получателя
+        account:
+          type: string
+          description: Счет в банке
+        bic:
+          type: string
+          description: БИК банка
+        descript:
+          type: string
+          maxLength: 210
+          description: Назначение платежа
+        amount:
+          type: number
+          description: Cумма платежа
+        extid:
+          type: string
+          description: Внешний идентификатор запроса
+    Status:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Статус (0 - в обработке, 1 - успешно, 2 - ошибка, 3 - отменен)
+        message:
+          type: string
+          description: Сообщение ошибки
+    StatusResult:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Статус (0 – ошибка 1 - успешно)
+    StatusIdUrl:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Статус (0 – ошибка 1 - принят)
+        message:
+          type: string
+          description: Сообщение ошибки
+        id:
+          type: integer
+          description: Идентификатор запроса (при успехе)
+        url:
+          type: string
+          description: Cсылка для перехода на форму оплаты (при успехе)
+    StatusId:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Статус (0 – ошибка 1 - принят)
+        id:
+          type: integer
+          description: Идентификатор запроса
+    StatusAmount:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Статус (0 – ошибка 1 - принят)
+        message:
+          type: string
+          description: Сообщение ошибки
+        amount:
+          type: number
+          description: Сумма баланса
+    Error:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Наименование кода ошибки
+        message:
+          type: string
+          description: Сообщение ошибки
+        code:
+          type: integer
+          description: Дополнительный код ошибки
+        status:
+          type: integer
+          description: Код ошибки
+    IdentReq:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Идентификатор запроса (указывается повторном запросе, для проверки
+            кода отправленного на телефон)
+        fam:
+          type: string
+          description: Фамилия
+        nam:
+          type: string
+          description: Имя
+        otc:
+          type: string
+          description: Отчество
+        paspser:
+          type: string
+          description: Серия паспорта
+        paspnum:
+          type: string
+          description: Номер паспорта
+        paspdate:
+          type: string
+          description: Дата выдачи паспорта
+        paspcode:
+          type: string
+          description: Код подразделения паспорта
+        paspvid:
+          type: string
+          description: Кем выдан паспорт
+        phone:
+          type: string
+          description: Телефон (при необходимости проверки)
+        phonecode:
+          type: string
+          description: Код отправленный на телефон (при повторном запросе)
+        birth:
+          type: string
+          description: Дата рождения
+        inn:
+          type: string
+          description: ИНН (при необходимости проверки)
+        snils:
+          type: string
+          description: СНИЛС (при необходимости проверки)
+    CheckReq:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Статус разрешения оплаты
+        message:
+          type: string
+          description: Описание ошибки
+    CallbackState:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: 0 - успешно, или код ошибки. При указанном коде ошибки в ответе на
+            колбэк выполняется возврат средств.
+        message:
+          type: string
+          description: Описание ошибки

@@ -1,0 +1,123 @@
+{
+ "statements": [
+   {
+     "id": 1,
+     "datedoc": "21.11.2019T00:00:00",
+     "iscredit": false,
+     "docnumber": 882,
+     "docsumm": {
+       "sum": 1000000.00
+     },
+     "description": "Пополнение транзитного счета: 30232810500000099999  по договору  И-0211/13 от 27.10.2019 г., НДС не облагается. Сумма 1000000-00 Без налога (НДС)",
+     "clientname": "ТКБ БАНК ПАО",
+     "clientbank": "ТКБ БАНК ПАО",
+     "clientbik": "044525388",
+     "clientinn": "7709129705",
+     "clientkpp": "770901001",
+     "clientaccount": "30102810900000000388",
+     "clientbankaccount": "30102810900000000388"
+   },
+   {
+     "id": 2,
+     "datedoc": "21.11.2019T00:00:00",
+     "iscredit": true,
+     "docnumber": 394047,
+     "docsumm": {
+       "sum": 262.5
+     },
+     "description": "Перевод денежных средств со счета №30232810500000099999 ООО ПСБП И-0205/19 от 27.10.2019//№7301// 2202 20** **** 7078",
+     "recipientname": "ТКБ БАНК ПАО",
+     "recipientbank": "ТКБ БАНК ПАО",
+     "recipientbik": "044525388",
+     "recipientinn": "7709129705",
+     "recipientkpp": "770901001",
+     "recipientaccount": "70601810730002740209",
+     "recipientbankaccount": "30102810900000000388"
+   },
+   {
+     "id": 3,
+     "datedoc": "21.11.2019T00:00:00",
+     "iscredit": true,
+     "docnumber": 200089,
+     "docsumm": {
+       "sum": 450000.00
+     },
+     "description": "Удержание с ООО ПСБП по договору И-0205/19 от 27.10.2019 за 21.11.2019 по операция кредита карт в количестве 31 на сумму 450000.00",
+     "recipientname": "ТКБ БАНК ПАО",
+     "recipientbank": "ТКБ БАНК ПАО",
+     "recipientbik": "044525388",
+     "recipientinn": "7709129705",
+     "recipientkpp": "770901001",
+     "recipientaccount": "30232810700000000021",
+     "recipientbankaccount": "30102810900000000388"
+   },
+   {
+     "id": 4,
+     "datedoc": "21.11.2019T00:00:00",
+     "iscredit": false,
+     "docnumber": 9343,
+     "docsumm": {
+       "sum": 189000.65
+     },
+     "description": "Пополнение виртуального счёта инвестора 42159d86-46df-48e1-9699-86ad1537b0f6, ИНН 744408469746",
+     "clientname": "ТКБ БАНК ПАО",
+     "clientbank": "ТКБ БАНК ПАО",
+     "clientbik": "044525388",
+     "clientinn": "744408469746",
+     "clientkpp": "770901001",
+     "clientaccount": "30102810900000000388",
+     "clientbankaccount": "30102810900000000388"
+   },
+   {
+     "id": 5,
+     "datedoc": "21.11.2019T00:00:00",
+     "iscredit": false,
+     "docnumber": 8269,
+     "docsumm": {
+       "sum": 754954.00
+     },
+     "description": "Пополнение виртуального счёта инвестора 25cd49ff-19c9-4665-94ea-5a49646202d2, ИНН 621855151859",
+     "clientname": "ТКБ БАНК ПАО",
+     "clientbank": "ТКБ БАНК ПАО",
+     "clientbik": "044525388",
+     "clientinn": "621855151859",
+     "clientkpp": "770901001",
+     "clientaccount": "30102810900000000388",
+     "clientbankaccount": "30102810900000000388"
+   },
+   {
+     "id": 6,
+     "datedoc": "21.11.2019T00:00:00",
+     "iscredit": false,
+     "docnumber": 9167,
+     "docsumm": {
+       "sum": 50000.99
+     },
+     "description": "Пополнение виртуального счёта инвестора 821db5d5-1724-4496-9b51-b677466a1c1b, ИНН 925165135503",
+     "clientname": "ТКБ БАНК ПАО",
+     "clientbank": "ТКБ БАНК ПАО",
+     "clientbik": "044525388",
+     "clientinn": "925165135503",
+     "clientkpp": "770901001",
+     "clientaccount": "30102810900000000388",
+     "clientbankaccount": "30102810900000000388"
+   },
+   {
+     "id": 7,
+     "datedoc": "02.12.2019T15:00:00",
+     "iscredit": false,
+     "docnumber": 5794,
+     "docsumm": {
+       "sum": 12048.00
+     },
+     "description": "Пополнение виртуального счёта инвестора 585c999c-2014-4bbd-b2d0-fc5d413b5502, по договору L682901614001",
+     "clientname": "ТКБ БАНК ПАО",
+     "clientbank": "ТКБ БАНК ПАО",
+     "clientbik": "044525388",
+     "clientinn": "7709129705",
+     "clientkpp": "773643001",
+     "clientaccount": "30232810700000000021",
+     "clientbankaccount": "30102810900000000388"
+   }
+ ]
+}

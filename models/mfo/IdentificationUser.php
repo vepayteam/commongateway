@@ -1,0 +1,117 @@
+<?php
+
+namespace app\models\mfo;
+
+use app\models\payonline\User;
+use Yii;
+use yii\db\Exception;
+
+class IdentificationUser
+{
+    public $StateOp;
+    public $ErrorMessage;
+    /**
+     * @param $user
+     * @param $extId
+     * @param $IdOrg
+     * @param $params
+     * @return string
+     * @throws Exception
+     */
+    public function Create($user, $IdOrg, $params)
+    {
+        $birth = 0;
+        if (!empty($params['birth'])) {
+            $birth = strtotime($params['birth']);
+        }
+        $paspdate = 0;
+        if (!empty($params['paspdate'])) {
+            $paspdate = strtotime($params['paspdate']);
+        }
+
+        if (empty($params['nam']) || empty($params['fam']) || empty($params['paspser']) || empty($params['paspnum'])) {
+            return 0;
+        }
+
+        $params = [
+            'IdOrg' => $IdOrg,
+            'TransNum' => 0,
+            'Name' => $params['nam'],
+            'Fam' => $params['fam'],
+            'Otch' => $params['otc'],
+            'BirthDay' => $birth,
+            'Inn' => strval($params['inn']),
+            'Snils' => strval($params['snils']),
+            'PaspSer' => strval($params['paspser']),
+            'PaspNum' => strval($params['paspnum']),
+            'PaspPodr' => strval($params['paspcode']),
+            'PaspDate' => $paspdate,
+            'PaspVidan' => strval($params['paspvid']),
+            'Phone' => strval($params['phone']),
+            'PhoneCode' => strval($params['phonecode']),
+            'StateOp' => 0
+        ];
+
+        if ($user && $user->ID) {
+            $params['IdUser'] = $user->ID;
+        } else {
+            $params['IdUser'] = 0;
+        }
+
+        Yii::$app->db->createCommand()->insert('user_identification', $params)->execute();
+
+        return Yii::$app->db->lastInsertID;
+    }
+
+    /**
+     * @param $Id
+     * @param $IdOrg
+     * @return int
+     * @throws Exception
+     */
+    public function FindReq($Id, $IdOrg)
+    {
+
+        $res = Yii::$app->db->createCommand('
+            SELECT
+                `ID`,
+                `StateOp`,
+                `ErrorMessage`
+            FROM
+                `user_identification`   
+            WHERE
+                `IdOrg` = :IDORG
+                AND `Id` = :ID
+        ', [
+            ':IDORG' => $IdOrg,
+            ':ID' => $Id
+        ])->queryOne();
+
+        if ($res) {
+            $this->StateOp = $res['StateOp'];
+            $this->ErrorMessage = $res['ErrorMessage'];
+            return $res['ID'];
+        } else {
+            return 0;
+        }
+    }
+
+    public function SetTansac($id, $transac)
+    {
+        Yii::$app->db->createCommand()->update('user_identification', [
+            'TransNum' => $transac, '`ID` = :ID ', [':ID' => $id]
+        ])->execute();
+    }
+
+    public function SetStatus($id, $status, $message)
+    {
+        Yii::$app->db->createCommand()->update(
+            'user_identification', [
+                'StateOp' => $status,
+                'ErrorMessage' => $message
+            ], '`ID` = :ID ', [':ID' => $id]
+        )->execute();
+
+    }
+
+}
