@@ -40,13 +40,22 @@ yii widget/notification - 1 раз в минуту
 
 yii widget/queue - 1 раз в минуту
 
+yii widget/updatestatm - 1 раз в час
+
+yii widget/vyvod - в 12.30 пн-пт
+
+yii widget/send-otch - в 7.00
+
 5. В дальнейшем обновлять:
 
-Обновить файлы - git pull 
+Обновить файлы: git pull 
 
-Обновить БД - ./yii migrate/up 
+Проверка подписи: ./sign.bat --act=check
 
-Сбросить кэш - ./yii cache/flush-all
+Обновить пакеты: composer install
 
-Проверка подписи - ./sign.bat --act=check
+Обновить БД: ./yii migrate/up 
 
+Обновить ассеты: ./yii asset assets.php config/assets-prod.php
+
+Сбросить кэш: ./yii cache/flush-all

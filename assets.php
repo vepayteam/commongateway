@@ -24,7 +24,7 @@ return [
     // The list of asset bundles to compress:
     'bundles' => [
         'app\assets\CommonAsset',
-		'app\assets\InsAsset',
+        'app\assets\InsAsset',
         'app\assets\SiteAsset',
         'app\assets\SwaggerAsset',
         'app\assets\MerchantAsset',
@@ -41,10 +41,10 @@ return [
     'targets' => [
         'common' => [
             'class' => 'yii\web\AssetBundle',
-            'basePath' => '@webroot',
-            'baseUrl' => '@web',
-            'js' => 'js/common-{hash}.js',
-            'css' => 'css/common-{hash}.css',
+            'basePath' => '@webroot/assets',
+            'baseUrl' => '@web/assets',
+            'js' => 'common-{hash}.js',
+            'css' => 'common-{hash}.css',
             'depends' => [
                 // Include all assets shared between 'backend' and 'frontend'
                 'yii\web\YiiAsset',
@@ -58,10 +58,10 @@ return [
         ],
         'site' => [
             'class' => 'yii\web\AssetBundle',
-            'basePath' => '@webroot',
-            'baseUrl' => '@web',
-            'js' => 'js/site-{hash}.js',
-            'css' => 'css/site-{hash}.css',
+            'basePath' => '@webroot/assets',
+            'baseUrl' => '@web/assets',
+            'js' => 'site-{hash}.js',
+            'css' => 'site-{hash}.css',
             'depends' => [
                 // Include only 'backend' assets:
                 'app\assets\InsAsset',
@@ -70,10 +70,10 @@ return [
         ],
         'swagger' => [
             'class' => 'yii\web\AssetBundle',
-            'basePath' => '@webroot',
-            'baseUrl' => '@web',
-            'js' => 'js/swagger-{hash}.js',
-            'css' => 'css/swagger-{hash}.css',
+            'basePath' => '@webroot/assets',
+            'baseUrl' => '@web/assets',
+            'js' => 'swagger-{hash}.js',
+            'css' => 'swagger-{hash}.css',
             'depends' => [
                 // Include only 'backend' assets:
 				'app\assets\SwaggerAsset'
@@ -81,10 +81,10 @@ return [
         ],
         'communal' => [
             'class' => 'yii\web\AssetBundle',
-            'basePath' => '@webroot',
-            'baseUrl' => '@web',
-            'js' => 'js/communal-{hash}.js',
-            'css' => 'css/communal-{hash}.css',
+            'basePath' => '@webroot/assets',
+            'baseUrl' => '@web/assets',
+            'js' => 'communal-{hash}.js',
+            'css' => 'communal-{hash}.css',
             'depends' => [
                 // Include only 'backend' assets:
                 'app\assets\MerchantAsset'
@@ -92,10 +92,10 @@ return [
         ],
         'partner' => [
             'class' => 'yii\web\AssetBundle',
-            'basePath' => '@webroot',
-            'baseUrl' => '@web',
-            'js' => 'js/partner-{hash}.js',
-            'css' => 'css/partner-{hash}.css',
+            'basePath' => '@webroot/assets',
+            'baseUrl' => '@web/assets',
+            'js' => 'partner-{hash}.js',
+            'css' => 'partner-{hash}.css',
             'depends' => [
                 // Include only 'backend' assets:
                 'app\assets\PartnerAsset',
@@ -103,10 +103,10 @@ return [
         ],
         'pay' => [
             'class' => 'yii\web\AssetBundle',
-            'basePath' => '@webroot',
-            'baseUrl' => '@web',
-            'js' => 'js/pay-{hash}.js',
-            'css' => 'css/pay-{hash}.css',
+            'basePath' => '@webroot/assets',
+            'baseUrl' => '@web/assets',
+            'js' => 'pay-{hash}.js',
+            'css' => 'pay-{hash}.css',
             'depends' => [
                 'app\assets\PayAsset'
             ],
