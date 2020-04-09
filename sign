@@ -112,10 +112,10 @@ function filelist($dir, $sub)
 
 function ignoreDirs()
 {
-    return ['.', '..', 'runtime', 'key', 'vue/node_modules', 'web/assets', '.git', '.idea', '.svn'];
+    return ['.', '..', 'runtime', 'key', 'vue/node_modules', 'web/assets', '.git', '.idea', 'vendor'];
 }
 
 function ignoreFiles()
 {
-    return ['vepay.md5.asc', 'vepay.md5.out', 'vepay.md5', 'cardkeys/db.php', 'config/params.php', 'config/db.php', 'config/db_card.php', 'web/index.php'];
+    return ['vepay.md5.asc', 'vepay.md5.out', 'vepay.md5', 'config/params.php', 'config/db.php', 'web/index.php'];
 }
