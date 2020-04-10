@@ -25,6 +25,10 @@
     
     sudo php composer-setup.php --install-dir=/usr/bin --filename=composer
     
+    Установить пакет:
+    
+    composer global require "fxp/composer-asset-plugin:^1.4.1"
+    
 2. php.ini
 
     В PHP включить short_open_tag = on.
