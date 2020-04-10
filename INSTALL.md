@@ -1,6 +1,6 @@
 1. Изначально выгрузить из репозитория
 
-    git pull  https://github.com/vepayonline/processing.git
+    git checkout из https://github.com/vepayonline/processing.git
     
     Загрузить дамп БД.
     
@@ -8,6 +8,23 @@
     
     Включить mod_rewrite
 
+    Установить NodeJS:
+              
+    curl -sL https://deb.nodesource.com/setup_10.x | bash -
+    apt-get install -y nodejs
+    
+    Установить пакеты:
+    
+    npm install uglify-es -g
+    
+    npm i clean-css-cli -g    
+    
+    Установить composer:
+    
+    curl -sS https://getcomposer.org/installer -o composer-setup.php
+    
+    sudo php composer-setup.php --install-dir=/usr/bin --filename=composer
+    
 2. php.ini
 
     В PHP включить short_open_tag = on.
@@ -48,9 +65,9 @@
 
 5. В дальнейшем обновлять:
 
-    Обновить файлы: git pull 
+    Обновить файлы: git checkout master, git pull 
     
-    Проверка подписи: ./sign.bat --act=check
+    Проверка подписи: ./sign --act=check
     
     Обновить пакеты: composer install
     

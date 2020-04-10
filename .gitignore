@@ -9,9 +9,6 @@ nbproject
 .project
 .settings
 
-# svn
-.svn
-
 # windows thumbnail cache
 Thumbs.db
 
@@ -34,8 +31,4 @@ tests/_support/_generated
 
 vepay.md5
 vepay.md5.out
-vepay.md5.asc
-controllers/VitalyController.php
 !models/geolocation/GeoLite2-ASN.mmdb
-controllers/AntifraudController.php
-views/antifraud/
