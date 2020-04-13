@@ -5,6 +5,8 @@ date_default_timezone_set('Europe/Moscow');
 setlocale (LC_TIME, "RUS");
 ini_set('max_execution_time', 120);
 ini_set('memory_limit','512M');
+ini_set('session.gc_maxlifetime',3600);
+ini_set('session.cookie_lifetime',0);
 
 $config = [
     'id' => 'basic',
