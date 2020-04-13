@@ -1126,12 +1126,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/qfsx/yii2-curl.git",
-                "reference": "f903d25012aed19af1bda4bbe2308c77c4a86d07"
+                "reference": "68542a19f13e2efb801c78c2a806b619d7e77f23"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/qfsx/yii2-curl/zipball/f903d25012aed19af1bda4bbe2308c77c4a86d07",
-                "reference": "f903d25012aed19af1bda4bbe2308c77c4a86d07",
+                "url": "https://api.github.com/repos/qfsx/yii2-curl/zipball/68542a19f13e2efb801c78c2a806b619d7e77f23",
+                "reference": "68542a19f13e2efb801c78c2a806b619d7e77f23",
                 "shasum": ""
             },
             "require": {
@@ -1163,7 +1163,7 @@
                 "restful",
                 "yii2"
             ],
-            "time": "2020-04-13T10:20:36+00:00"
+            "time": "2020-04-13T10:32:56+00:00"
         },
         {
             "name": "setasign/fpdi",
