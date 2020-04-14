@@ -480,7 +480,7 @@ class AdminController extends Controller
         return "1";
     }
 
-    /*public function actionTestrecallcvozn()
+    public function actionTestrecallcvozn()
     {
         $res = Yii::$app->db->createCommand('
             SELECT
@@ -578,5 +578,5 @@ class AdminController extends Controller
         $tr->commit();
 
         return "1";
-    }*/
+    }
 }
