@@ -1,34 +1,41 @@
 1. Изначально выгрузить из репозитория
 
-    git checkout из https://github.com/vepayonline/processing.git
+    git clone из https://github.com/vepayonline/processing.git
     
     Загрузить дамп БД.
     
     В настройках виртуального хоста Apache указать в DocumentRoot путь к каталогу /web
     
-    Включить mod_rewrite
-
-    Установить NodeJS:
-              
-    curl -sL https://deb.nodesource.com/setup_10.x | bash -
-    apt-get install -y nodejs
+    Включить mod_rewrite.
+      
+        Для подготовки релиза: 
     
-    Установить пакеты:
-    
-    npm install uglify-es -g
-    
-    npm i clean-css-cli -g    
-    
-    Установить composer:
-    
-    curl -sS https://getcomposer.org/installer -o composer-setup.php
-    
-    sudo php composer-setup.php --install-dir=/usr/bin --filename=composer
-    
-    Установить пакет:
-    
-    composer global require "fxp/composer-asset-plugin:^1.4.1"
-    
+        Установить NodeJS:
+                  
+        curl -sL https://deb.nodesource.com/setup_10.x | bash - apt-get install -y nodejs
+        
+        Установить пакеты:
+        
+        npm install uglify-es -g
+        
+        npm i clean-css-cli -g    
+        
+        Установить composer:
+        
+        curl -sS https://getcomposer.org/installer -o composer-setup.php
+        
+        sudo php composer-setup.php --install-dir=/usr/bin --filename=composer
+        
+        Установить пакет:
+        
+        composer global require "fxp/composer-asset-plugin:^1.4.1"
+        
+        Перед релизом:
+        
+        Обновить пакеты: composer update
+        
+        Обновить ассеты: ./yii asset assets.php config/assets-prod.php
+       
 2. php.ini
 
     В PHP включить short_open_tag = on.
@@ -72,11 +79,7 @@
     Обновить файлы: git checkout master, git pull 
     
     Проверка подписи: ./sign --act=check
-    
-    Обновить пакеты: composer install
-    
+       
     Обновить БД: ./yii migrate/up 
-    
-    Обновить ассеты: ./yii asset assets.php config/assets-prod.php
-    
+        
     Сбросить кэш: ./yii cache/flush-all
