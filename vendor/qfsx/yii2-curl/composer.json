@@ -1,0 +1,30 @@
+{
+    "name": "qfsx/yii2-curl",
+    "description": "Easy and nice cURL extension with RESTful support for Yii2",
+    "type": "yii2-extension",
+    "keywords": ["yii2","extension"," curl", "RESTful"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "qfsx qfsx",
+            "email": "qfsx@yandex.ru"
+        }
+    ],
+    "require": {
+	"php": "^7.0",
+        "ext-json": "*",
+        "ext-curl": "*",
+        "yiisoft/yii2": "~2.0.14"
+    },
+    "autoload": {
+        "psr-4": {
+            "qfsx\\yii2\\curl\\": "src"
+        }
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://asset-packagist.org"
+        }
+    ]
+}
