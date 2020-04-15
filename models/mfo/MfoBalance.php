@@ -314,12 +314,20 @@ class MfoBalance
         $otch = $vs->GetOtchMerchant(true);
         foreach ($otch as $row) {
             $VoznagSumm += $row['SummPay'];
-            $VoznagSumm -=  $row['MerchVozn'];
+            $VoznagSumm -= $row['MerchVozn'];
         }
 
         return $VoznagSumm;
     }
 
+    /**
+     * Остаток на начало
+     *
+     * @param int $date
+     * @param int $TypeAcc
+     * @return int
+     * @throws \yii\db\Exception
+     */
     public function GetOstBeg($date, $TypeAcc)
     {
         $tabl = $TypeAcc == 0 ? 'partner_orderout' : 'partner_orderin';
@@ -332,9 +340,45 @@ class MfoBalance
             ->orderBy(['ID' => SORT_DESC])
             ->limit(1);
 
-        return $query->scalar();
+        $ost = $query->scalar();
+
+        $MerchVozn = 0;
+        $datefrom = Yii::$app->db->createCommand("
+            SELECT
+                `DateOp`
+            FROM
+                `vyvod_system`
+            WHERE
+                `IdPartner` = :IDMFO
+                AND `TypeVyvod` = :TYPEVYVOD
+                AND `DateOp` < :DATETO
+            ORDER BY `DateTo` DESC 
+            LIMIT 1
+        ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeAcc, ':DATETO' => $date])->queryScalar();
+
+        $vs = new VoznagStat();
+        $vs->setAttributes([
+            'IdPart' => $this->Partner->ID,
+            'datefrom' => (int)$datefrom,
+            'dateto' => date('d.m.Y H:i', $date),
+            'TypeUslug' => $TypeAcc
+        ]);
+        $otch = $vs->GetOtchMerchant(true);
+        foreach ($otch as $row) {
+            $MerchVozn += $row['MerchVozn'];
+        }
+
+        return $ost + $MerchVozn;
     }
 
+    /**
+     * Остаток на конец
+     *
+     * @param int $date
+     * @param int $TypeAcc
+     * @return int
+     * @throws \yii\db\Exception
+     */
     public function GetOstEnd($date, $TypeAcc)
     {
         $tabl = $TypeAcc == 0 ? 'partner_orderout' : 'partner_orderin';
@@ -347,7 +391,35 @@ class MfoBalance
             ->orderBy(['ID' => SORT_DESC])
             ->limit(1);
 
-        return $query->scalar();
+        $ost = $query->scalar();
+
+        $MerchVozn = 0;
+        $datefrom = Yii::$app->db->createCommand("
+            SELECT
+                `DateOp`
+            FROM
+                `vyvod_system`
+            WHERE
+                `IdPartner` = :IDMFO
+                AND `TypeVyvod` = :TYPEVYVOD
+                AND `DateOp` < :DATETO
+            ORDER BY `DateTo` DESC 
+            LIMIT 1
+        ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeAcc, ':DATETO' => $date])->queryScalar();
+
+        $vs = new VoznagStat();
+        $vs->setAttributes([
+            'IdPart' => $this->Partner->ID,
+            'datefrom' => (int)$datefrom,
+            'dateto' => date('d.m.Y H:i', $date),
+            'TypeUslug' => $TypeAcc
+        ]);
+        $otch = $vs->GetOtchMerchant(true);
+        foreach ($otch as $row) {
+            $MerchVozn += $row['MerchVozn'];
+        }
+
+        return $ost + $MerchVozn;
     }
 
     /**

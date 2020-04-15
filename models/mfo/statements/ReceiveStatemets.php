@@ -202,9 +202,9 @@ class ReceiveStatemets
                     //заменить ТКБ на Vepay и прибвать комиссию
                     $name = 'ООО "ПКБП"';
                     $inn = '7728487400';
-                    if (!empty($this->Partner->SchetTcbNominal)) {
+                    /*if (!empty($this->Partner->SchetTcbNominal)) {
                         $comisSum = $this->CalcComiss($sumVyp, $statement['description'], $UslPsr, $UslCard);
-                    }
+                    }*/
                     $description = $this->ChangeDescript($description);
                 } elseif ($inn == '7707083893' || $inn == '7744001497') {
                     //сбербанк,гпб - подставить реквизиты из name и назначения
@@ -262,9 +262,9 @@ class ReceiveStatemets
                 Yii::$app->db->createCommand()->update('statements_account', [/*
                     'NumberPP' => $statement['number'],
                     'DatePP' => strtotime($statement['date']),
-                    'SummPP' => $sumVyp,
+                    'SummPP' => $sumVyp,*/
                     'SummComis' => $comisSum,
-                    'Description' => $description,
+                    /*'Description' => $description,
                     'IsCredit' => $statement['iscredit'], //true - пополнение счета*/
                     'DateDoc' => strtotime($statement['datedoc']),
                     'Name' => $name,

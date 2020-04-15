@@ -734,7 +734,7 @@ class StatController extends Controller
                     'partner' => $act->IdPartner,
                     'summ' => $act->ComisVyplata,
                     'datefrom' => date("01.m.Y H:i", $act->ActPeriod),
-                    'dateto' => date("t.m.Y H:i", $act->ActPeriod),
+                    'dateto' => date("t.m.Y 23:59", $act->ActPeriod),
                     'isCron' => true,
                     'type' => 1,
                     'balance' => 0

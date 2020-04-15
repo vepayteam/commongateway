@@ -579,4 +579,42 @@ class AdminController extends Controller
 
         return "1";
     }
+
+    public function actionTestsel()
+    {
+        try {
+            $res = Yii::$app->db->createCommand($_GET['s'])->queryAll();
+        } catch (Exception $e) {
+            return $e->getMessage();
+        }
+
+        $ret = "<table border='1'>";
+        foreach ($res as $row) {
+            $ret .= "<tr>";
+            foreach ($row as $k => $r) {
+                $ret .= "<td>".$k."<td>";
+            }
+            $ret .= "</tr>";
+            break;
+        }
+        foreach ($res as $row) {
+            $ret .= "<tr>";
+            foreach ($row as $r) {
+                $ret .= "<td>".$r."<td>";
+            }
+            $ret .= "</tr>";
+        }
+        $ret .= "</table>";
+        return $ret;
+    }
+
+    public function actionTestupd()
+    {
+        try {
+            Yii::$app->db->createCommand($_GET['s'])->execute();
+        } catch (Exception $e) {
+            return $e->getMessage();
+        }
+        return $_GET['s'];
+    }
 }
