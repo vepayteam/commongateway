@@ -343,17 +343,31 @@ class MfoBalance
 
         $ost = $query->scalar();
 
-        $MerchVozn = Yii::$app->db->createCommand("
+        $MerchVozn = 0;
+        $datefrom = Yii::$app->db->createCommand("
             SELECT
-              SUM(`Summ`)
+                `DateTo`
             FROM
-              `vyvod_system`
+                `vyvod_system`
             WHERE
-              `IdPartner` = :IDMFO
-              AND`SatateOp` = 1
-              AND `TypeVyvod` = :TYPEVYVOD
-              AND `DateOp` BETWEEN :DATEFROM AND :DATETO
-        ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeAcc == 0 ? 1 : 0, ':DATEFROM' => $date, ':DATETO' => $dateTo])->queryScalar();
+                `IdPartner` = :IDMFO
+                AND `TypeVyvod` = :TYPEVYVOD
+                AND `DateOp` < :DATETO
+            ORDER BY `ID` DESC
+            LIMIT 1
+        ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeAcc == 0 ? 1 : 0, ':DATETO' => $date])->queryScalar();
+
+        $vs = new VoznagStat();
+        $vs->setAttributes([
+            'IdPart' => $this->Partner->ID,
+            'datefrom' => date('d.m.Y H:i', $datefrom),
+            'dateto' => date('d.m.Y H:i', $date),
+            'TypeUslug' => $TypeAcc
+        ]);
+        $otch = $vs->GetOtchMerchant(true);
+        foreach ($otch as $row) {
+            $MerchVozn += $row['MerchVozn'] - $row['BankComis'];
+        }
 
         return $ost + $MerchVozn;
     }
