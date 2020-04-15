@@ -353,7 +353,7 @@ class MfoBalance
               AND`SatateOp` = 1
               AND `TypeVyvod` = :TYPEVYVOD
               AND `DateOp` BETWEEN :DATEFROM AND :DATETO
-        ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeAcc, ':DATEFROM' => $date, ':DATETO' => $dateTo])->queryScalar();
+        ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeAcc == 0 ? 1 : 0, ':DATEFROM' => $date, ':DATETO' => $dateTo])->queryScalar();
 
         return $ost + $MerchVozn;
     }
