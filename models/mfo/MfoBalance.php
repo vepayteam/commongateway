@@ -403,7 +403,7 @@ class MfoBalance
         ]);
         $otch = $vs->GetOtchMerchant(true);
         foreach ($otch as $row) {
-            $MerchVozn += $row['MerchVozn'];
+            $MerchVozn += $row['MerchVozn'] - $row['BankComis'];
         }
 
         return $ost + $MerchVozn;
