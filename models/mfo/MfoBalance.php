@@ -359,7 +359,7 @@ class MfoBalance
         $vs = new VoznagStat();
         $vs->setAttributes([
             'IdPart' => $this->Partner->ID,
-            'datefrom' => (int)$datefrom,
+            'datefrom' => date('d.m.Y H:i', $datefrom),
             'dateto' => date('d.m.Y H:i', $date),
             'TypeUslug' => $TypeAcc
         ]);
@@ -410,7 +410,7 @@ class MfoBalance
         $vs = new VoznagStat();
         $vs->setAttributes([
             'IdPart' => $this->Partner->ID,
-            'datefrom' => (int)$datefrom,
+            'datefrom' => date('d.m.Y H:i', $datefrom),
             'dateto' => date('d.m.Y H:i', $date),
             'TypeUslug' => $TypeAcc
         ]);
