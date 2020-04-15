@@ -9,6 +9,7 @@ use app\models\partner\admin\VoznagStat;
 use app\models\partner\stat\ExportExcel;
 use app\models\payonline\Partner;
 use app\models\queue\ReceiveStatementsJob;
+use app\models\TU;
 use Yii;
 use yii\db\Query;
 
@@ -361,7 +362,7 @@ class MfoBalance
             'IdPart' => $this->Partner->ID,
             'datefrom' => date('d.m.Y H:i', $datefrom),
             'dateto' => date('d.m.Y H:i', $date),
-            'TypeUslug' => $TypeAcc
+            'TypeUslug' => $TypeAcc == 0 ? TU::OutMfo() : TU::InMfo()
         ]);
         $otch = $vs->GetOtchMerchant(true);
         foreach ($otch as $row) {
@@ -412,7 +413,7 @@ class MfoBalance
             'IdPart' => $this->Partner->ID,
             'datefrom' => date('d.m.Y H:i', $datefrom),
             'dateto' => date('d.m.Y H:i', $date),
-            'TypeUslug' => $TypeAcc
+            'TypeUslug' => $TypeAcc == 0 ? TU::OutMfo() : TU::InMfo()
         ]);
         $otch = $vs->GetOtchMerchant(true);
         foreach ($otch as $row) {
