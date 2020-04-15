@@ -380,7 +380,33 @@ class MfoBalance
 
         $ost = $query->scalar();
 
-        return $ost;
+        $MerchVozn = 0;
+        $datefrom = Yii::$app->db->createCommand("
+            SELECT
+                `DateTo`
+            FROM
+                `vyvod_system`
+            WHERE
+                `IdPartner` = :IDMFO
+                AND `TypeVyvod` = :TYPEVYVOD
+                AND `DateOp` < :DATETO
+            ORDER BY `ID` DESC
+            LIMIT 1
+        ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeAcc == 0 ? 1 : 0, ':DATETO' => $date])->queryScalar();
+
+        $vs = new VoznagStat();
+        $vs->setAttributes([
+            'IdPart' => $this->Partner->ID,
+            'datefrom' => date('d.m.Y H:i', $datefrom),
+            'dateto' => date('d.m.Y H:i', $date),
+            'TypeUslug' => $TypeAcc
+        ]);
+        $otch = $vs->GetOtchMerchant(true);
+        foreach ($otch as $row) {
+            $MerchVozn += $row['MerchVozn'];
+        }
+
+        return $ost + $MerchVozn;
     }
 
     /**
