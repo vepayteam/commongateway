@@ -454,12 +454,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/kartik-v/yii2-mpdf.git",
-                "reference": "e513d17e8b1a5e063475f332e726845dba8f32b5"
+                "reference": "7ea3a5f9bcf5bcf6d681bd82cbe843c356d1428c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/kartik-v/yii2-mpdf/zipball/e513d17e8b1a5e063475f332e726845dba8f32b5",
-                "reference": "e513d17e8b1a5e063475f332e726845dba8f32b5",
+                "url": "https://api.github.com/repos/kartik-v/yii2-mpdf/zipball/7ea3a5f9bcf5bcf6d681bd82cbe843c356d1428c",
+                "reference": "7ea3a5f9bcf5bcf6d681bd82cbe843c356d1428c",
                 "shasum": ""
             },
             "require": {
@@ -498,7 +498,7 @@
                 "utf8",
                 "yii2"
             ],
-            "time": "2019-09-03T03:11:44+00:00"
+            "time": "2020-04-14T08:55:18+00:00"
         },
         {
             "name": "markbaker/complex",
