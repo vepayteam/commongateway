@@ -242,8 +242,8 @@ class PayController extends Controller
         Yii::warning("PayForm done id=".$id);
 
         if ($params) {
-
-            if ($params['Status'] == 0) {
+            $md = Yii::$app->request->post('MD', '');
+            if ($params['Status'] == 0 && !empty($md)) {
                 //завершить платеж
                 if ($params['IdUsluga'] == 1) {
                     //регистрация карты
@@ -255,7 +255,7 @@ class PayController extends Controller
                 $tcBank = new TCBank($TcbGate);
                 $ret = $tcBank->ConfirmXml([
                     'ID' => $params['ID'],
-                    'MD' => Yii::$app->request->post('MD'),
+                    'MD' => $md,
                     'PaRes' => Yii::$app->request->post('PaRes')
                 ]);
                 //ret статус проверить?
