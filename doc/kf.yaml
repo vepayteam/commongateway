@@ -457,6 +457,14 @@ components:
         extid:
           type: string
           description: Внешний идентификатор запроса
+        document_id:
+          type: string
+          maxLength: 40
+          description: Номер договора
+        fullname:
+          type: string
+          maxLength: 80
+          description: ФИО клиента
         sms:
           type: integer
           description: Если передан 1, то требуется подтверждение кодом из смс

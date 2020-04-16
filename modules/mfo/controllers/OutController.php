@@ -137,7 +137,7 @@ class OutController extends Controller
         }
 
         //записывает в базу информацию о транзакции.
-        $params = $pay->payToCard($kfCard->user, [Cards::MaskCard($kfOut->cardnum), $token], $kfOut->extid, $kfOut->amount, $usl, TCBank::$bank, $mfo->mfo);
+        $params = $pay->payToCard($kfCard->user, [Cards::MaskCard($kfOut->cardnum), $token, $kfOut->document_id, $kfOut->fullname], $kfOut, $usl, TCBank::$bank, $mfo->mfo);
         $params['CardNum'] = $kfOut->cardnum;
 
         $payschets = new Payschets();
@@ -229,7 +229,7 @@ class OutController extends Controller
 
         Yii::warning('/out/payacc mfo=' . $mfo->mfo . " sum=" . $kfOut->amount . " extid=" . $kfOut->extid, 'mfo');
 
-        $params = $pay->payToCard(null, [$kfOut->account, $kfOut->bic, $kfOut->fio, $kfOut->descript], $kfOut->extid, $kfOut->amount, $usl, TCBank::$bank, $mfo->mfo);
+        $params = $pay->payToCard(null, [$kfOut->account, $kfOut->bic, $kfOut->fio, $kfOut->descript], $kfOut, $usl, TCBank::$bank, $mfo->mfo);
         $params['name'] = $kfOut->fio;
         $params['inn'] = '';
         $params['bic'] = $kfOut->bic;
@@ -300,7 +300,7 @@ class OutController extends Controller
 
         Yii::warning('/out/payul mfo=' . $mfo->mfo . " sum=" . $kfOut->amount . " extid=" . $kfOut->extid, 'mfo');
 
-        $params = $pay->payToCard(null, [$kfOut->account, $kfOut->bic, $kfOut->name, $kfOut->inn, $kfOut->kpp, $kfOut->descript], $kfOut->extid, $kfOut->amount, $usl, TCBank::$bank, $mfo->mfo);
+        $params = $pay->payToCard(null, [$kfOut->account, $kfOut->bic, $kfOut->name, $kfOut->inn, $kfOut->kpp, $kfOut->descript], $kfOut, $usl, TCBank::$bank, $mfo->mfo);
         $params['name'] = $kfOut->name;
         $params['inn'] = trim($kfOut->inn);
         $params['kpp'] = $kfOut->kpp;

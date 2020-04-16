@@ -9,13 +9,14 @@ use yii\base\Model;
 
 class KfOut extends Model
 {
-    //данны для физ.лица
-    public $card = 0;
-    public $cardnum = '';
     public $amount = 0;
     public $extid = '';
+    public $document_id = '';
+    public $fullname = '';
 
-    //Данные ниже предназначены для апи юр.лица
+    public $card = 0;
+    public $cardnum = '';
+
     public $name;
     public $fio;
     public $inn = '';
@@ -46,6 +47,8 @@ class KfOut extends Model
         return [
             [['cardnum'], 'match', 'pattern' => '/^\d{16}|\d{18}$/', 'on' => self::SCENARIO_CARD],
             [['card'], 'integer', 'on' => self::SCENARIO_CARDID],
+            [['document_id'], 'string', 'max' => 40, 'on' => [self::SCENARIO_CARD]],
+            [['fullname'], 'string', 'max' => 80, 'on' => [self::SCENARIO_CARD]],
             [['account'], 'match', 'pattern' => '/^\d{20}$/', 'on' => [self::SCENARIO_FL, self::SCENARIO_UL, self::SCENARIO_INT]],
             [['bic'], 'match', 'pattern' => '/^\d{9}$/', 'on' => [self::SCENARIO_FL, self::SCENARIO_UL]],
             [['descript'], 'string', 'max' => 210, 'on' => [self::SCENARIO_FL, self::SCENARIO_UL, self::SCENARIO_INT]],

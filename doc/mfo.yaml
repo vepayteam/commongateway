@@ -657,6 +657,14 @@ components:
           type: string
           maxLength: 40
           description: Внешний идентификатор запроса
+        document_id:
+          type: string
+          maxLength: 40
+          description: Номер договора
+        fullname:
+          type: string
+          maxLength: 80
+          description: ФИО клиента
     OutU:
       type: object
       properties:

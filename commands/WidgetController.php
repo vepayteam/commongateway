@@ -41,12 +41,12 @@ class WidgetController extends Controller
 
         $this->actionAlarms();
 
-        if (date('G') == 0) {
+        /*if (date('G') == 0) {
             //ocm комиссия 1.5%
             Yii::$app->db->createCommand()->update('uslugatovar', [
                 'MinsumComiss' => 0
             ],'IDPartner = 8 AND IsCustom IN (10,14)')->execute();
-        }
+        }*/
     }
 
     /**

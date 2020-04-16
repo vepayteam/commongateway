@@ -6,6 +6,7 @@ use app\models\api\Reguser;
 //use app\models\protocol\OnlineProv;
 use app\models\geolocation\GeoInfo;
 use app\models\kfapi\KfCard;
+use app\models\kfapi\KfOut;
 use app\models\kfapi\KfPay;
 use GeoIp2\Record\MaxMind;
 use Yii;
@@ -230,6 +231,8 @@ class CreatePay
      * @param string $Extid
      * @param int $AutoPayIdGate
      * @param int $timeout
+     * @param string $dogovor
+     * @param string $fio
      * @return bool
      * @throws \yii\db\Exception
      */
@@ -391,29 +394,29 @@ class CreatePay
      * Вычада займа на карту
      *
      * @param null|User $user
-     * @param array     $params
-     * @param           $extid
-     * @param float     $amount
-     * @param           $usl
-     * @param           $bank
-     * @param           $IdOrg
-     * @param int       $needSms
+     * @param array $params
+     * @param KfOut $kfOut
+     * @param float $amount
+     * @param int $usl
+     * @param int $bank
+     * @param int $IdOrg
+     * @param int $needSms
      *
      * @return array
      * @throws \yii\db\Exception
      */
-    public function payToCard($user, $params, $extid, $amount, $usl, $bank, $IdOrg, $needSms = 0)
+    public function payToCard($user, $params, KfOut $kfOut, $usl, $bank, $IdOrg, $needSms = 0)
     {
         $this->smsNeed = $needSms;
         $this->Provparams = new Provparams();
         $this->Provparams->prov = $usl;
         $this->Provparams->param = $params;
-        $this->Provparams->summ = round(floatval($amount) * 100.0);
+        $this->Provparams->summ = round(floatval($kfOut->amount) * 100.0);
         $this->Provparams->Usluga = Uslugatovar::findOne(['ID' => $this->Provparams->prov]);
 
         $this->user = $user;
 
-        $IdPay = $this->addPayschet(0, 0, 3, $bank, $IdOrg, $extid, 0);
+        $IdPay = $this->addPayschet(0,0,3, $bank, $IdOrg, $kfOut->extid,0,900, $kfOut->document_id, $kfOut->fullname);
 
         return ['IdPay' => $IdPay, 'summ' => $this->Provparams->summ + $this->Provparams->calcComiss()];
     }

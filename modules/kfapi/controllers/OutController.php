@@ -108,7 +108,7 @@ class OutController extends Controller
             return ['status' => 0, 'message' => 'Ошибка формирования платежа'];
         }
         //здесь происходит сохранение платежа в бд.
-        $params = $pay->payToCard(null, [Cards::MaskCard($kfOut->cardnum), $token], $kfOut->extid, $kfOut->amount, $usl, TCBank::$bank, $kf->IdPartner, $kfOut->sms);
+        $params = $pay->payToCard(null, [Cards::MaskCard($kfOut->cardnum), $token, $kfOut->document_id, $kfOut->fullname], $kfOut, $usl, TCBank::$bank, $kf->IdPartner, $kfOut->sms);
         $params['CardNum'] = $kfOut->cardnum;
 
         $payschets = new Payschets();
@@ -198,7 +198,7 @@ class OutController extends Controller
 
         Yii::warning('/out/ul kfmfo='. $kf->IdPartner . " sum=".$kfOut->amount . " extid=".$kfOut->extid, 'mfo');
 
-        $params = $pay->payToCard(null, [$kfOut->account, $kfOut->bic, $kfOut->name, $kfOut->inn, $kfOut->kpp, $kfOut->descript], $kfOut->extid, $kfOut->amount, $usl, TCBank::$bank, $kf->IdPartner, $kfOut->sms);
+        $params = $pay->payToCard(null, [$kfOut->account, $kfOut->bic, $kfOut->name, $kfOut->inn, $kfOut->kpp, $kfOut->descript], $kfOut, $usl, TCBank::$bank, $kf->IdPartner, $kfOut->sms);
         $params['name'] = $kfOut->name;
         $params['inn'] = trim($kfOut->inn);
         $params['kpp'] = $kfOut->kpp;
@@ -278,7 +278,7 @@ class OutController extends Controller
 
         Yii::warning('/out/fl kfmfo='. $kf->IdPartner . " sum=".$kfOut->amount . " extid=".$kfOut->extid, 'mfo');
 
-        $params = $pay->payToCard(null, [$kfOut->account, $kfOut->bic, $kfOut->fio, $kfOut->descript], $kfOut->extid, $kfOut->amount, $usl, TCBank::$bank, $kf->IdPartner, $kfOut->sms);
+        $params = $pay->payToCard(null, [$kfOut->account, $kfOut->bic, $kfOut->fio, $kfOut->descript], $kfOut, $usl, TCBank::$bank, $kf->IdPartner, $kfOut->sms);
         $params['name'] = $kfOut->fio;
         $params['bic'] = $kfOut->bic;
         $params['account'] = $kfOut->account;
@@ -356,7 +356,7 @@ class OutController extends Controller
         }
 
         $kfOut->bic = TCBank::BIC;
-        $params = $pay->payToCard(null, [$kfOut->account, $kfOut->bic, $kfOut->name, $kfOut->inn, $kfOut->kpp, $kfOut->descript], $kfOut->extid, $kfOut->amount, $usl, TCBank::$bank, $kf->IdPartner);
+        $params = $pay->payToCard(null, [$kfOut->account, $kfOut->bic, $kfOut->name, $kfOut->inn, $kfOut->kpp, $kfOut->descript], $kfOut, $usl, TCBank::$bank, $kf->IdPartner);
         $params['name'] = $kfOut->name;
         $params['inn'] = trim($kfOut->inn);
         $params['kpp'] = $kfOut->kpp;
