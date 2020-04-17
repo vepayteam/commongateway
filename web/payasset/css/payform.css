@@ -37,6 +37,14 @@ p {
     color: #8D8D8D;
 }
 
+.infotop {
+    font-size: 14px;
+    line-height: 21px;
+    color: #000000;
+
+    margin: 48px 0 16px 0;
+}
+
 .logoblock {
     height: 38px;
 }
@@ -378,6 +386,14 @@ a.btnret {
 
     .summ {
         font-size: 28px;
+    }
+
+    .infotop {
+        font-size: 14px;
+        line-height: 21px;
+        color: #000000;
+
+        margin: 48px 14px 16px 28px;
     }
 
     .stateend {
