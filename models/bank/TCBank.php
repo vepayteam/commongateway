@@ -13,7 +13,7 @@ use qfsx\yii2\curl\Curl;
 use Yii;
 use yii\helpers\Json;
 
-class TCBank
+class TCBank implements IBank
 {
     public const BIC = '044525388';
 
@@ -43,7 +43,7 @@ class TCBank
     public static $PEREVODOCTGATE = 9;
 
     /**
-     * TCBank constructor. (new)
+     * TCBank constructor
      * @param TcbGate|null $tcbGate
      * @throws \yii\db\Exception
      */
@@ -238,7 +238,7 @@ class TCBank
      * @return array
      * @throws \yii\db\Exception
      */
-    public function reversOrder($IdPay): array
+    public function reversOrder($IdPay)
     {
         $payschets = new Payschets();
         //данные счета

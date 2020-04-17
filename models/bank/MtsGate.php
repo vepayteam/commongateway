@@ -3,11 +3,10 @@
 
 namespace app\models\bank;
 
-
 use app\models\TU;
 use Yii;
 
-class TcbGate implements IBankGate
+class MtsGate implements IBankGate
 {
     public $IdPartner = 0;
     public $typeGate;
@@ -15,8 +14,8 @@ class TcbGate implements IBankGate
 
     /**
      * @param int $IdPartner Мерчант
-     * @param int $typeGate Шлюз ТКБ
-     * @param int|null $IsCustom Тип услуги (для выбора шлюза по типу услуги)
+     * @param int $typeGate Тип Шлюз
+     * @param int|null $IsCustom Или тип услуги (для выбора шлюза по типу услуги)
      */
     public function __construct($IdPartner, $typeGate, $IsCustom = null)
     {
@@ -29,7 +28,7 @@ class TcbGate implements IBankGate
     }
 
     /**
-     * Шлюз ТКБ по услуге (!не все услуги к шлюзу 1 к 1)
+     * Шлюз по услуге
      * @param $IsCustom
      * @return int
      */
@@ -37,35 +36,35 @@ class TcbGate implements IBankGate
     {
         if ($IsCustom == TU::$TOCARD) {
             //выдача на карту
-            $this->typeGate = TCBank::$OCTGATE;
+            $this->typeGate = MTSBank::$OCTGATE;
         } elseif (in_array($IsCustom, [TU::$POGASHATF, TU::$AVTOPLATATF])) {
             //aft
-            $this->typeGate = TCBank::$AFTGATE;
+            $this->typeGate = MTSBank::$AFTGATE;
         } elseif ($IsCustom == TU::$TOSCHET) {
             //выдача на счет
-            $this->typeGate = TCBank::$SCHETGATE;
+            $this->typeGate = MTSBank::$SCHETGATE;
         } elseif (in_array($IsCustom, [TU::$POGASHECOM, TU::$ECOM])) {
             //ecom
-            $this->typeGate = TCBank::$ECOMGATE;
+            $this->typeGate = MTSBank::$ECOMGATE;
         } elseif (in_array($IsCustom, [TU::$VYPLATVOZN, TU::$VYVODPAYS])) {
             //вывод платежей и вознаграждения
-            $this->typeGate = TCBank::$VYVODGATE;
+            $this->typeGate = MTSBank::$VYVODGATE;
         } elseif ($IsCustom == TU::$JKH) {
             //жкх
-            $this->typeGate = TCBank::$JKHGATE;
+            $this->typeGate = MTSBank::$JKHGATE;
         } elseif (in_array($IsCustom, [TU::$REGCARD, TU::$AVTOPLATECOM])) {
             //автоплатеж
-            $this->typeGate = TCBank::$AUTOPAYGATE;
+            $this->typeGate = MTSBank::$AUTOPAYGATE;
         } elseif (in_array($IsCustom, [TU::$REVERSCOMIS, TU::$PEREVPAYS])) {
             //перевод с погашение на выдачу и возмещение комиссии банка
-            $this->typeGate = TCBank::$PEREVODGATE;
+            $this->typeGate = MTSBank::$PEREVODGATE;
         }
 
         return $this->typeGate;
     }
 
     /**
-     * Шлюзы ТКБ для МФО
+     * Шлюзы мерчанта
      * @return array|false|null
      * @throws \yii\db\Exception
      */
@@ -100,7 +99,7 @@ class TcbGate implements IBankGate
     }
 
     /**
-     * Проверка настройки шлюза ТКБ для МФО
+     * Проверка настройки шлюза для мерчанта
      * @param $gate
      * @return bool
      * @throws \yii\db\Exception
@@ -109,23 +108,23 @@ class TcbGate implements IBankGate
     {
         $gates = $this->GetGates();
 
-        if (in_array($this->typeGate, [TCBank::$OCTGATE, TCBank::$SCHETGATE]) && $gates && !empty($gates['LoginTkbOct'])) {
+        if (in_array($this->typeGate, [MTSBank::$OCTGATE, MTSBank::$SCHETGATE]) && $gates && !empty($gates['LoginTkbOct'])) {
             return true;
-        } elseif ($this->typeGate == TCBank::$AFTGATE && $gates && !empty($gates['LoginTkbAft'])) {
+        } elseif ($this->typeGate == MTSBank::$AFTGATE && $gates && !empty($gates['LoginTkbAft'])) {
             return true;
-        } elseif ($this->typeGate == TCBank::$ECOMGATE && $gates && !empty($gates['LoginTkbEcom'])) {
+        } elseif ($this->typeGate == MTSBank::$ECOMGATE && $gates && !empty($gates['LoginTkbEcom'])) {
             return true;
-        } elseif ($this->typeGate == TCBank::$JKHGATE && $gates && !empty($gates['LoginTkbJkh'])) {
+        } elseif ($this->typeGate == MTSBank::$JKHGATE && $gates && !empty($gates['LoginTkbJkh'])) {
             return true;
-        } elseif ($this->typeGate == TCBank::$AUTOPAYGATE && $gates && !empty($gates['LoginTkbAuto1'])) {
+        } elseif ($this->typeGate == MTSBank::$AUTOPAYGATE && $gates && !empty($gates['LoginTkbAuto1'])) {
             return true;
-        } elseif ($this->typeGate == TCBank::$PEREVODGATE && $gates && !empty($gates['LoginTkbPerevod'])) {
+        } elseif ($this->typeGate == MTSBank::$PEREVODGATE && $gates && !empty($gates['LoginTkbPerevod'])) {
             return true;
-        } elseif ($this->typeGate == TCBank::$VYVODGATE && $gates && !empty($gates['LoginTkbVyvod'])) {
+        } elseif ($this->typeGate == MTSBank::$VYVODGATE && $gates && !empty($gates['LoginTkbVyvod'])) {
             return true;
-        } elseif ($this->typeGate == TCBank::$PEREVODOCTGATE && $gates && !empty($gates['LoginTkbOctPerevod'])) {
+        } elseif ($this->typeGate == MTSBank::$PEREVODOCTGATE && $gates && !empty($gates['LoginTkbOctPerevod'])) {
             return true;
-        } elseif ($this->typeGate == TCBank::$VYVODOCTGATE && $gates && !empty($gates['LoginTkbOctVyvod'])) {
+        } elseif ($this->typeGate == MTSBank::$VYVODOCTGATE && $gates && !empty($gates['LoginTkbOctVyvod'])) {
             return true;
         }
         return false;

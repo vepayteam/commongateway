@@ -7,15 +7,16 @@ class BankMerchant
     /**
      * Банк
      * @param $bank
-     * @param $type
-     * @return TCBank
+     * @return IBank
+     * @throws \yii\db\Exception
      */
-    public static function Get($bank)
+    public static function Get($bank, $gate = null)
     {
         if ($bank == TCBank::$bank) {
-            return new TCBank();
+            return new TCBank($gate);
+        } elseif ($bank == MTSBank::$bank) {
+            return new MTSBank($gate);
         }
-        return new TCBank();
+        return new TCBank($gate);
     }
-
 }
