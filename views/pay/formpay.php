@@ -18,6 +18,11 @@ use yii\bootstrap\Html;
         </div>
         <div class="col-md-1 col-sm-1 col-xs-2 pull-right"><img src="/imgs/close.svg" class="closebtn" alt="close" id="closeform"></div>
     </div>
+    <?php if ($params['IdUsluga'] == 1) : ?>
+        <div class="row">
+            <div class="col-xs-12"><div class="infotop">Cписанная cумма, списанная с карты, при успешном списании, вернется обратно на вашу банковскую карту.</div></div>
+        </div>
+    <?php else: ?>
     <div class="row">
         <div class="col-md-8 col-sm-12 hidden-xs">
             <h2 class="summ">Сумма к оплате <?=number_format($params['SummPay']/100.0, 2, ',', '')?> ₽</h2>
@@ -27,6 +32,7 @@ use yii\bootstrap\Html;
             <h2 class="summ"><?=number_format($params['SummPay']/100.0, 2, ',', '')?> ₽</h2>
         </div>
     </div>
+    <?php endif; ?>
     <div class="row">
         <div class="col-md-6 col-sm-12 col-xs-12">
             <div class="info">Магазин: <?=$params['NamePartner']?></div>
@@ -140,6 +146,7 @@ use yii\bootstrap\Html;
                 </div>
             </div>
 
+            <?php if ($params['IdUsluga'] != 1) : ?>
             <div class="row nopadding">
                 <div class="col-md-12 col-sm-6 col-xs-12">
                     <div class="info"><span>Комиссия:</span> <span class="pull-right blacksumm"><?=number_format($params['ComissSumm']/100.0, 2, ',', '')?> ₽</span></div>
@@ -149,6 +156,7 @@ use yii\bootstrap\Html;
                     <img src="/imgs/ps_logos.svg" class="pslogos" alt="visa,mastercard,mir">
                 </div>
             </div>
+            <?php endif; ?>
 
             <div class="row visible-xs">
                 <div class="col-xs-12 text-center">
