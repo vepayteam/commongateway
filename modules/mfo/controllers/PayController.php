@@ -3,6 +3,7 @@
 namespace app\modules\mfo\controllers;
 
 use app\models\api\CorsTrait;
+use app\models\bank\MTSBank;
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\crypt\CardToken;
@@ -99,7 +100,7 @@ class PayController extends Controller
                 }
             }
         }
-        $params = $pay->payToMfo(null, [$kfPay->document_id, $kfPay->fullname], $kfPay, $usl, TCBank::$bank, $mfo->mfo,0);
+        $params = $pay->payToMfo(null, [$kfPay->document_id, $kfPay->fullname], $kfPay, $usl, MTSBank::$bank, $mfo->mfo,0);
         //PCI DSS
         return [
             'status' => 1,

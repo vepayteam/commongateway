@@ -4,6 +4,7 @@ namespace app\controllers;
 
 use app\models\antifraud\AntiFraud;
 use app\models\antifraud\tables\AFFingerPrit;
+use app\models\bank\BankMerchant;
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\crypt\Tokenizer;
@@ -126,27 +127,15 @@ class PayController extends Controller
                 //занести данные карты
                 $payschets->SetCardPay($params['ID'], $params['card']);
 
-                //$params['Bank'] == 2
-                $gate = TCBank::$ECOMGATE;
-                if ($params['IsCustom'] == TU::$JKH) {
-                    $gate = TCBank::$JKHGATE;
-                } elseif ($params['IsCustom'] == TU::$POGASHATF) {
-                    $gate = TCBank::$AFTGATE;
+                if ($params['IsCustom'] == TU::$POGASHATF) {
                     if (Cards::GetTypeCard($payform->CardNumber) == 6) {
                         //карты маэстро только по еком надо
-                        $gate = TCBank::$ECOMGATE;
-                        $payschets->ChangeUsluga($params['ID'], $params['IDPartner'], TU::$POGASHECOM);
+                        $params['IsCustom'] = TU::$POGASHECOM;
+                        $payschets->ChangeUsluga($params['ID'], $params['IDPartner'], $params['IsCustom']);
                     }
                 }
-
-                if ($params['IdUsluga'] == 1) {
-                    //регистрация карты
-                    $TcbGate = new TcbGate($params['IdOrg'], TCBank::$AUTOPAYGATE);
-                } else {
-                    $TcbGate = new TcbGate($params['IDPartner'], $gate);
-                }
-                $tcBank = new TCBank($TcbGate);
-                $ret = $tcBank->PayXml($params);
+                $merchBank = BankMerchant::Create($params);
+                $ret = $merchBank->PayXml($params);
 
                 if ($ret['status'] == 1) {
                     $payschets->SetStartPay($params['ID'], $ret['transac']);

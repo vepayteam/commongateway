@@ -24,7 +24,7 @@ class TCBank implements IBank
     private $keyFile;
     private $caFile;
     private static $orderState = [0 => 'Обрабатывается', 1 => 'Исполнен', 2 => 'Отказано', 3 => 'Возврат'];
-    private $backUrls = ['ok' => 'https://api.vepay.online/merchant/orderok?orderid='];
+    private $backUrls = ['ok' => 'https://api.vepay.online/pay/orderok?orderid='];
 
     public static $bank = 2;
     private $type = 0;
