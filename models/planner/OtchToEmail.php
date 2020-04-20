@@ -77,9 +77,9 @@ class OtchToEmail
             'viewPath' => '@app/mail/', // Путь до папки с шаблоном
             'transport' => [
                 'class' => 'Swift_SmtpTransport',
-                'host' => 'smtp.yandex.ru',//'localhost',
+                'host' => 'mail.dengisrazy.ru',//'localhost',
                 'username' => 'payments@vepay.online',
-                'password' => 'fGpqS08am',
+                'password' => 'wH3zfpspfCvn',
                 'port' => '25',
                 'encryption' => 'tls',
             ],
