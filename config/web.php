@@ -104,9 +104,9 @@ $config = [
             'viewPath' => '@app/mail/', // Путь до папки с шаблоном
             'transport' => [
                 'class' => 'Swift_SmtpTransport',
-                'host' => 'smtp.yandex.ru',//'localhost',
+                'host' => 'mail.dengisrazy.ru',//'localhost',
                 'username' => 'robot@vepay.online',
-                'password' => 'fGpqS08am',
+                'password' => 'Cdbhmm3zsgX3',
                 'port' => '25',
                 'encryption' => 'tls',
             ],
