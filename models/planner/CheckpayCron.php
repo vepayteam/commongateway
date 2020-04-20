@@ -74,15 +74,8 @@ class CheckpayCron
                 while ($value = $query->read()) {
                     if (!empty($value['ExtBillNumber'])) {
 
-                        $bank = $value['Bank'];
-                        $order = '0';
-                        if ($value['Bank'] == TCBank::$bank) {
-                            //ткб
-                            $order = $value['ID'];
-                        }
-
-                        $merchBank = BankMerchant::Get($bank);
-                        $mesg = $merchBank->confirmPay($order, 0, true);
+                        $merchBank = BankMerchant::Get($value['Bank']);
+                        $mesg = $merchBank->confirmPay($value['ID'], 0, true);
 
                         echo "check " . $value['ID'] . " - " . $value['ExtBillNumber'] . " - " . $mesg['message'] . "\n";
                         Yii::warning("check " . $value['ID'] . " - " . $value['ExtBillNumber'] . " - " . $mesg['message'] . "\r\n", 'rsbcron');

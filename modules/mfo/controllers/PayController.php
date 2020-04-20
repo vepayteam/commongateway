@@ -3,6 +3,7 @@
 namespace app\modules\mfo\controllers;
 
 use app\models\api\CorsTrait;
+use app\models\bank\BankMerchant;
 use app\models\bank\MTSBank;
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
@@ -12,6 +13,7 @@ use app\models\kfapi\KfPay;
 use app\models\mfo\MfoReq;
 use app\models\payonline\CreatePay;
 use app\models\Payschets;
+use app\models\TU;
 use Yii;
 use yii\helpers\VarDumper;
 use yii\web\BadRequestHttpException;
@@ -79,12 +81,13 @@ class PayController extends Controller
 
         Yii::warning('/pay/lk mfo='. $mfo->mfo . " sum=".$kfPay->amount . " extid=".$kfPay->extid, 'mfo');
 
-        $gate = $kfPay->IsAftGate($mfo->mfo) ? TCBank::$AFTGATE : TCBank::$ECOMGATE;
-        $TcbGate = new TcbGate($mfo->mfo, $gate);
-        $usl = $kfPay->GetUslug($mfo->mfo, $gate);
+        $bank = MTSBank::$bank;
 
-        if (!$usl || !$TcbGate->IsGate()) {
-            return ['status' => 0, 'message' => 'Нет шлюза'];
+        $typeUsl = $kfPay->IsAftGate($mfo->mfo) ? TU::$POGASHATF : TU::$POGASHECOM;
+        $bankGate = BankMerchant::Gate($mfo->mfo, $bank, $typeUsl);
+        $usl = $kfPay->GetUslug($mfo->mfo, $typeUsl);
+        if (!$usl || !$bankGate || !$bankGate->IsGate()) {
+            return ['status' => 0, 'message' => 'Услуга не найдена'];
         }
 
         $pay = new CreatePay();
@@ -100,7 +103,7 @@ class PayController extends Controller
                 }
             }
         }
-        $params = $pay->payToMfo(null, [$kfPay->document_id, $kfPay->fullname], $kfPay, $usl, MTSBank::$bank, $mfo->mfo,0);
+        $params = $pay->payToMfo(null, [$kfPay->document_id, $kfPay->fullname], $kfPay, $usl, $bank, $mfo->mfo,0);
         //PCI DSS
         return [
             'status' => 1,

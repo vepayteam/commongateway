@@ -58,17 +58,17 @@ class KfPay extends Model
     /**
      * Услуга эквайринга еком или афт
      * @param $org
-     * @param $gate
+     * @param $typeUsl
      * @return false|string|null
      * @throws \yii\db\Exception
      */
-    public function GetUslug($org, $gate)
+    public function GetUslug($org, $typeUsl)
     {
         return Yii::$app->db->createCommand("
             SELECT `ID` 
             FROM `uslugatovar`
             WHERE `IDPartner` = :IDMFO AND `IsCustom` = :TYPEUSL AND `IsDeleted` = 0
-        ", [':IDMFO' => $org, ':TYPEUSL' => $gate == TCBank::$ECOMGATE ? TU::$POGASHECOM : TU::$POGASHATF]
+        ", [':IDMFO' => $org, ':TYPEUSL' => $typeUsl]
         )->queryScalar();
     }
 

@@ -44,4 +44,16 @@ class BankMerchant
         }
         return new TCBank();
     }
+
+    public static function Gate($partner, $bank, $typeUsl)
+    {
+        $Gate = null;
+        if ($bank == TCBank::$bank) {
+            $Gate = new TcbGate($partner, null, $typeUsl);
+        } elseif ($bank == MTSBank::$bank) {
+            $Gate = new MtsGate($partner, null, $typeUsl);
+        }
+
+        return $Gate;
+    }
 }
