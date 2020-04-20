@@ -234,15 +234,8 @@ class PayController extends Controller
             $md = Yii::$app->request->post('MD', '');
             if ($params['Status'] == 0 && !empty($md)) {
                 //завершить платеж
-                if ($params['IdUsluga'] == 1) {
-                    //регистрация карты
-                    $TcbGate = new TcbGate($params['IdOrg'], TCBank::$AUTOPAYGATE);
-                } else {
-                    $TcbGate = new TcbGate($params['IDPartner'], null, $params['IsCustom']);
-                }
-
-                $tcBank = new TCBank($TcbGate);
-                $ret = $tcBank->ConfirmXml([
+                $merchBank = BankMerchant::Create($params);
+                $ret = $merchBank->ConfirmXml([
                     'ID' => $params['ID'],
                     'MD' => $md,
                     'PaRes' => Yii::$app->request->post('PaRes')
@@ -270,12 +263,15 @@ class PayController extends Controller
         if ($id && $id == $SesIdPay) {
             //завершение оплаты + в колбэк приходит + в планировщике проверяется статус
             sleep(5); //подождать завершения оплаты
-            $tcBank = new TCBank();
-            $res = $tcBank->confirmPay($id);
-            $params = $res['Params'];
+
+            $payschets = new Payschets();
+            $params = $payschets->getSchetData($id, null);
             if (!$params) {
                 throw new NotFoundHttpException();
             }
+            $merchBank = BankMerchant::Create($params);
+            $res = $merchBank->confirmPay($id);
+
             if (in_array($res['status'], [1, 3])) {
                 if (!empty($params['SuccessUrl'])) {
                     //перевод на ok

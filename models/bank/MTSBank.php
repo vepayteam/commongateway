@@ -176,9 +176,6 @@ class MTSBank implements IBank
      */
     public function ConfirmXml(array $params)
     {
-        //finishThreeDs
-        //finishThreeDsResponse
-
         $body = $this->CreateSoap();
         $finishThreeDs = $this->doc->createElementNS('http://engine.paymentgate.ru/webservices/merchant', 'mer:finishThreeDs');
         $body->appendChild($finishThreeDs);
@@ -200,7 +197,7 @@ class MTSBank implements IBank
 </soap:Envelope>';
 
         if (isset($ans['xml']) && !empty($ans['xml'])) {
-            $return = $this->ParseResult($ans['xml'], 'registerOrderResponse');
+            $return = $this->ParseResult($ans['xml'], 'finishThreeDsResponse');
             if ($return) {
                 $error = $return->attributes->getNamedItem('errorCode')->nodeValue;
                 if ($error == 0) {
@@ -234,7 +231,7 @@ class MTSBank implements IBank
 
             $body = $this->CreateSoap();
             $order = $this->doc->createElement('order');
-            $order->setAttribute("orderId", $params['ID']);
+            $order->setAttribute("orderId", $params['ExtBillNumber']);
             if ($params['DateCreate'] < mktime(0, 0, 0, date('n'), date('d'), date('Y'))) {
                 //возврат - отмена на следующий день после оплаты
                 $order->setAttribute("refundAmount", $params['SummFull']);
@@ -259,7 +256,7 @@ class MTSBank implements IBank
 </soap:Envelope>
 ';
             if (isset($ans['xml']) && !empty($ans['xml'])) {
-                $return = $this->ParseResult($ans['xml'], 'paymentOrderResponse');
+                $return = $this->ParseResult($ans['xml'], 'refundOrderResponse');
                 if ($return) {
                     $error = $return->attributes->getNamedItem('errorCode')->nodeValue;
                     $message = $return->attributes->getNamedItem('errorMessage')->nodeValue;
@@ -325,7 +322,7 @@ class MTSBank implements IBank
         $body->appendChild($paymentOrder);
         $order = $this->doc->createElement('order');
         $paymentOrder->appendChild($order);
-        $order->setAttribute("orderId", $params['ID']);
+        $order->setAttribute("orderId", $ordernumber);
         $order->setAttribute("pan", $params['card']['number']);
         $order->setAttribute("cvc", $params['card']['cvc']);
         $order->setAttribute("year", (int)("20" . $params['card']['year']));
@@ -397,7 +394,9 @@ class MTSBank implements IBank
         $body->appendChild($paymentOrder);
         $order = $this->doc->createElement('order');
         $paymentOrder->appendChild($order);
-        ///$order->setAttribute("orderId", $params['ID']);
+        //if (!empty($params['ExtBillNumber'])) {
+        //$order->setAttribute("orderId", $params['ExtBillNumber']);
+        //}
         $order->setAttribute("language", "ru");
         $paymentOrder->appendChild(
             $this->doc->createElement('merchantOrderNumber', $params['ID'])
@@ -438,8 +437,12 @@ class MTSBank implements IBank
                                 'statedescription' => $actionCodeDescription
                             ],
                             'orderadditionalinfo' => [
-                                'rrn' => '',
-                                'cardnumber' => isset($cardAuthInfo) ? $cardAuthInfo->attributes->getNamedItem('maskedPan')->nodeValue : null
+                                'rrn' => $this->GetChildNode($return, 'authRefNum')->nodeValue,
+                                'cardnumber' => isset($cardAuthInfo) ? $cardAuthInfo->attributes->getNamedItem('maskedPan')->nodeValue : null,
+                                'expiry' => isset($cardAuthInfo) ? substr($cardAuthInfo->attributes->getNamedItem('expiration')->nodeValue, 4,2).substr($cardAuthInfo->attributes->getNamedItem('expiration')->nodeValue, 2,2) : null,
+                                'idcard' => isset($cardAuthInfo) ? $cardAuthInfo->attributes->getNamedItem('approvalCode')->nodeValue : null,
+                                'type' => Cards::GetTypeCard($status['xml']['orderadditionalinfo']['cardnumber']),
+                                'holder' => isset($cardAuthInfo) ? $cardAuthInfo->attributes->getNamedItem('cardholderName')->nodeValue : null,
                             ]
                         ]
                     ];

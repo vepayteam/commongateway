@@ -239,14 +239,16 @@ class PayController extends Controller
 
         $IdPay = $mfo->GetReq('id');
 
-        $tcBank = new TCBank();
-        $ret = $tcBank->confirmPay($IdPay, $mfo->mfo);
-        if ($ret && isset($ret['status']) && $ret['IdPay'] != 0) {
-            $state = ['status' => (int)$ret['status'], 'message' => (string)$ret['message']];
-        } else {
-            $state = ['status' => 0, 'message' => 'Счет не найден'];
+        $payschets = new Payschets();
+        $params = $payschets->getSchetData($IdPay,null, $mfo->mfo);
+        if ($params) {
+            $merchBank = BankMerchant::Create($params);
+            $ret = $merchBank->confirmPay($IdPay, $mfo->mfo);
+            if ($ret && isset($ret['status']) && $ret['IdPay'] != 0) {
+                return ['status' => (int)$ret['status'], 'message' => (string)$ret['message']];
+            }
         }
-        return $state;
+        return ['status' => 0, 'message' => 'Счет не найден'];
     }
 
 }
