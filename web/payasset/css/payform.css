@@ -15,9 +15,11 @@ p {
 }
 
 .container {
-    padding-right: 32px;
-    padding-left: 32px;
-    width: 865px;
+    padding: 56px 100px;
+    width: 550px;
+    background: #FFFFFF;
+    box-shadow: 0 16px 24px rgba(64, 60, 91, 0.1);
+    border-radius: 32px;
 }
 
 .summ {
@@ -45,15 +47,23 @@ p {
     margin: 48px 0 16px 0;
 }
 
-.logoblock {
+.rowlogo {
     height: 38px;
 }
 
 .logo {
     width: 145px;
     height: auto;
-    display: block;
+    display: inline-block;
     margin-top: 5px;
+    float: left;
+}
+
+.logotext {
+    display: inline-block;
+    float: left;
+    width: 70px;
+    margin-left: 30px;
 }
 
 .pslogos {
@@ -84,26 +94,46 @@ p {
 .closebtn {
     display: block;
     float: right;
+    position: relative;
     padding-top: 6px;
 }
 
-.card_full {
-    min-width: 536px;
-}
-
-.card_fon {
-    background-image: url('/imgs/card_back.svg');
-    display: inline-block;
-    width: 527px;
-    height: 241px;
-}
-
 .cardnumblock {
-    padding: 40px 0 0 0 !important;
+    display: inline-block;
+    float: left;
+    position: relative;
+    width: 295px;
+}
+
+.cardholder {
+    display: inline-block;
+    float: left;
+    position: relative;
+    width: 295px;
 }
 
 .cvcblock {
-    margin-left: 20px;
+    display: inline-block;
+    float: right;
+    position: relative;
+    width: 72px;
+    margin-right: 13px;
+}
+
+.cardexpblock {
+    display: inline-block;
+    float: left;
+    position: relative;
+    width: 72px;
+}
+
+.pslogo {
+    position: absolute;
+    display: inline-block;
+    width: 45px;
+    height: 16px;
+    top: 40px;
+    left: 235px;
 }
 
 .form-horizontal .control-label {
@@ -172,15 +202,6 @@ p {
     border-radius: unset;
 }
 
-.pslogo {
-    position: absolute;
-    display: inline-block;
-    width: 45px;
-    height: 16px;
-    top: 80px;
-    left: 286px;
-}
-
 .delcard {
     position: absolute;
     display: inline-block;
@@ -194,24 +215,27 @@ p {
 }
 
 .form-horizontal .form-group.field-payform-cardnumber {
-    margin-left: 56px;
-    margin-right: 52px;
+    margin-left: 16px;
+    margin-right: 16px;
+    width: 260px;
 }
 
 .form-horizontal .form-group.field-payform-cardholder {
-    margin-left: 56px;
-    margin-right: 0;
-    max-width: 200px;
+    margin-left: 16px;
+    margin-right: 16px;
+    width: 260px;
 }
 
 .form-horizontal .form-group.field-payform-cardexp {
     margin-left: 0;
-    margin-right: 16px;
+    margin-right: 0;
+    width: 90px;
 }
 
 .form-horizontal .form-group.field-payform-cardcvc {
-    margin-left: 10px;
-    margin-right: 56px;
+    margin-left: 0;
+    margin-right: 16px;
+    width: 90px;
 }
 
 .field-payform-cardcvc input {
@@ -257,15 +281,15 @@ p#error_message {
 
     font-style: normal;
     font-weight: 500;
-    font-size: 14px;
+    font-size: 16px;
     line-height: 21px;
     text-align: center;
 
-    color: #000000;
+    color: #FFFFFF;
 
-    background: #93F0A2;
-    border-color: #93F0A2;
-    border-radius: 4px;
+    background: linear-gradient(270deg, #A31FED 0%, #03EE65 100%);
+    border-radius: 8px;
+    border: none;
 }
 
 a.btnret {
@@ -277,10 +301,10 @@ a.btnret {
 }
 
 .btn.btn-success:active, .btn.btn-success:focus, .btn.btn-success:hover {
-    color: #000000;
+    color: #FFFFFF;
 
-    background: rgba(147, 240, 162, 0.5);
-    border-color: rgba(147, 240, 162, 0.5);
+    background: #52EA83;
+    border-color: #52EA83;
 }
 
 .footcopyr {
@@ -337,73 +361,8 @@ a.btnret {
     color: #8D8D8D;
 }
 
-/* ipad */
-@media (max-width: 991px) {
-
-    .container {
-        padding-right: 32px;
-        padding-left: 32px;
-        width: 591px;
-    }
-
-    .col-sm-offset-pay {
-        margin-left: 12.5%;
-    }
-
-    .footcopyr {
-        padding-top: 52px;
-    }
-
-    .form-group {
-        margin-bottom: 16px;
-    }
-
-    .form-group.field-payform-phone {
-        display: block;
-        float: left;
-        width: 250px;
-    }
-
-    .form-group.field-payform-linkphone {
-        display: block;
-        float: left;
-        width: 240px;
-        margin-left: 24px;
-        margin-top: 30px;
-    }
-
-    .errmessage {
-        margin-top: 24px;
-    }
-
-    .phoneblock {
-        margin-top: 20px;
-    }
-
-    .closebtn {
-        padding-right: 0;
-    }
-
-    .summ {
-        font-size: 28px;
-    }
-
-    .infotop {
-        font-size: 14px;
-        line-height: 21px;
-        color: #000000;
-
-        margin: 48px 14px 16px 28px;
-    }
-
-    .stateend {
-        margin-top: 220px;
-    }
-
-}
-
 /* mobile */
-@media (max-width: 767px) {
+@media (max-width: 500px) {
 
     .container {
         width: 360px;
@@ -499,8 +458,8 @@ a.btnret {
 
     .pslogo {
         position: absolute;
-        top: 56px;
-        left: calc(100% - 133px);
+        top: 16px;
+        left: calc(100% - 233px);
     }
 
     .delcard {
@@ -558,6 +517,5 @@ a.btnret {
 
     .paybtn {
         width: 100%;
-        border-radius: unset;
     }
 }
