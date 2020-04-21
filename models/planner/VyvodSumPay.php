@@ -411,7 +411,7 @@ class VyvodSumPay
 
         foreach ($partners as $partner) {
             $sumPays = $this->GetSumPays($partner->ID, $dateFrom, $dateTo);
-            if ($sumPays > 0) {
+            if ($sumPays > 0 && $partner->BalanceIn > 0) {
                 $bal = new BalancePartner(BalancePartner::IN, $partner->ID);
                 $bal->Dec($sumPays,'Перечислено на выдачу',1, 0,0);
             }

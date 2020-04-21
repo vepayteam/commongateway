@@ -97,7 +97,8 @@ class MfoBalance
             $ret = $bal;
         }
 
-        $ret['localin'] = $this->Partner->BalanceIn / 100.0 - $this->TodayPays() / 100.0;
+        $todayPays = $this->TodayPays()/100.0;
+        $ret['localin'] = $this->Partner->BalanceIn / 100.0 - $todayPays;
         $ret['localout'] = $this->Partner->BalanceOut / 100.0;
 
         $comispogas = $this->GetComissPogas()/100.0;
@@ -112,12 +113,13 @@ class MfoBalance
         } else {
             //транзитный выдача
             if (!$this->Partner->VoznagVyplatDirect) {
-                //комиссию за выдачу не списываем
+                //вознаграждение не выводится со счета - комиссию за выдачу не списываем в онлайне
                 $ret['localout'] += $comisvyd;
             }
             if ($this->Partner->IsCommonSchetVydacha) {
-                //комиссия по выдаче - со счета погашения
+                //один счет - комиссия по выдаче со счета погашения, баланс погашения онлайн
                 $ret['localout'] -= $comispogas;
+                $ret['localin'] += $todayPays;
             }
         }
 
