@@ -6,7 +6,7 @@
 use yii\bootstrap\ActiveForm;
 use yii\bootstrap\Html;
 ?>
-
+<div class="middle">
 <section class="container">
     <div class="row margin-top24 rowlogo">
         <div class="col-xs-12">
@@ -22,15 +22,15 @@ use yii\bootstrap\Html;
     <?php else: ?>
         <div class="row margin-top24">
             <div class="col-xs-12">
-                <div class="info">Оплата в: <?=$params['NamePartner']?></div>
+                <div class="info">Оплата в<span class="pull-right blacksumm"><?=$params['NamePartner']?></span></div>
             </div>
         </div>
     <?php endif; ?>
     <?php if ($params['IdUsluga'] != 1) : ?>
         <div class="row nopadding">
             <div class="col-xs-12">
-                <div class="info"><span>Сумма:</span> <span class="pull-right blacksumm"><?=number_format($params['SummPay']/100.0, 2, ',', '')?> ₽</span></div>
-                <div class="info"><span>Комиссия:</span> <span class="pull-right blacksumm"><?=number_format($params['ComissSumm']/100.0, 2, ',', '')?> ₽</span></div>
+                <div class="info"><span>Сумма</span> <span class="pull-right blacksumm"><?=number_format($params['SummPay']/100.0, 2, ',', '')?> ₽</span></div>
+                <div class="info"><span>Комиссия</span> <span class="pull-right blacksumm"><?=number_format($params['ComissSumm']/100.0, 2, ',', '')?> ₽</span></div>
             </div>
         </div>
     <?php endif; ?>
@@ -152,13 +152,18 @@ use yii\bootstrap\Html;
 
     <div class="row nopadding margin-top24">
         <div class="col-xs-12 text-center">
-            <img src="/imgs/ps_logos.svg" class="pslogosBtm" alt="visa,mastercard,mir">
+            <div class="pslogosBtm">
+                <img src="/imgs/pci-dss.png" class="opacity">
+                <img src="/imgs/verified-by-visa.png" class="padding-left10 opacity">
+                <img src="/imgs/mastercard-securecode.png" class="padding-left10 opacity">
+                <img src="/imgs/mir-accept.png" class="padding-left10 opacity">
+            </div>
         </div>
     </div>
 
     <div class="row">
         <div class="col-xs-12 text-center">
-            <div class="footcopyr">Сервис предоставлен VEPAY© ООО "ПКБП"</div>
+            <div class="footcopyr">ООО «ПРОЦЕССИНГОВАЯ КОМПАНИЯ БЫСТРЫХ ПЛАТЕЖЕЙ»</div>
         </div>
     </div>
 
@@ -173,6 +178,7 @@ use yii\bootstrap\Html;
     </div>
 
 </section>
+</div>
 <noscript><div><img src="https://mc.yandex.ru/watch/56963551" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <?php
 $this->registerJs('payform.init();');

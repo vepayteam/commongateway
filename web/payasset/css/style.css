@@ -27,3 +27,11 @@
     margin-right: 0;
     margin-left: 0;
 }
+
+.padding-left10 {
+    padding-left: 10px;
+}
+
+.opacity {
+    opacity: 50%;
+}

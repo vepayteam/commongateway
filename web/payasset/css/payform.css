@@ -5,13 +5,16 @@ body {
 
 div, span, h1, h2, h3, h4, h5, h6, label, input {
     font-family: 'M PLUS 1p', sans-serif;
-    font-style: normal;
-    font-weight: normal;
 }
 
 p {
     font-size: 14px;
     line-height: 21px;
+}
+
+.middle {
+    background: #282333;
+    padding: 56px 100px;
 }
 
 .container {
@@ -29,20 +32,27 @@ p {
     font-size: 32px;
     line-height: 48px;
 
-    color: #000000;
+    color: #433E4D;
     margin: 48px 0 16px 0;
+}
+
+.blacksumm {
+    color: #7C7293;
+    font-weight: bold;
+    padding-right: 85px;
 }
 
 .info {
     font-size: 12px;
     line-height: 18px;
-    color: #8D8D8D;
+    color: #282333;
+    font-weight: bold;
 }
 
 .infotop {
     font-size: 14px;
     line-height: 21px;
-    color: #000000;
+    color: #282333;
 
     margin: 48px 0 16px 0;
 }
@@ -63,7 +73,9 @@ p {
     display: inline-block;
     float: left;
     width: 70px;
-    margin-left: 30px;
+    margin: 6px 0 0 10px;
+    color: #353140;
+    font-size: 9px;
 }
 
 .pslogos {
@@ -95,7 +107,8 @@ p {
     display: block;
     float: right;
     position: relative;
-    padding-top: 6px;
+    margin-top: -60px;
+    margin-right: -80px;
 }
 
 .cardnumblock {
@@ -132,32 +145,32 @@ p {
     display: inline-block;
     width: 45px;
     height: 16px;
-    top: 40px;
+    top: 33px;
     left: 235px;
 }
 
 .form-horizontal .control-label {
     font-size: 12px;
     line-height: 18px;
-    color: #8D8D8D;
+    color: #282333;
     text-align: left;
 }
 
 .form-horizontal .form-group > .control-label.error-field {
-    color: #EE343D;
+    color: #EB001B;
 }
 
 .form-horizontal .form-group > .control-label {
-    color: #8D8D8D;
+    color: #282333;
 }
 
 .form-horizontal .form-group > .form-control.error-field {
-    color: #EE343D;
-    border-bottom: 1px solid #EE343D;
+    color: #EB001B;
+    border-bottom: 1px solid #EB001B;
 }
 
 .form-horizontal .form-group > .form-control {
-    color: #000;
+    color: #74698C;
 }
 
 .form-horizontal .form-group.field-payform-phone > .form-control {
@@ -169,11 +182,11 @@ p {
     font-size: 14px;
     height: 40px;
     line-height: 21px;
-    color: #231E28;
+    color: #74698C;
 }
 
 .form-horizontal .control-label {
-    margin-bottom: 8px;
+    margin-bottom: 0;
 }
 
 .form-horizontal .form-group.field-payform-phone > .control-label {
@@ -182,7 +195,7 @@ p {
     font-weight: normal;
     font-size: 14px;
     line-height: 21px;
-    color: #231E28;
+    color: #282333;
 }
 
 .form-control {
@@ -192,12 +205,12 @@ p {
     line-height: 24px;
     padding: 8px 0;
 
-    color: #000000;
+    color: #74698C;
 
     border-top: none;
     border-left: none;
     border-right: none;
-    border-bottom: 1px solid #8D8D8D;
+    border-bottom: 1px solid #D0CAE0;
     box-shadow: none;
     border-radius: unset;
 }
@@ -260,7 +273,7 @@ p {
 
 .form-control:active, .form-control:focus {
     box-shadow: none;
-    border-bottom: 1px solid #65E078;
+    border-image: linear-gradient(270deg, #A31FED 0%, #03EE65 100%) 1 stretch stretch;
 }
 
 .errmessage {
@@ -308,9 +321,9 @@ a.btnret {
 }
 
 .footcopyr {
-    font-size: 12px;
+    font-size: 11px;
     line-height: 18px;
-    color: #8D8D8D;
+    color: #857C9A;
     padding-top: 36px;
 }
 
@@ -322,11 +335,6 @@ a.btnret {
     position: absolute;
     top: 8px;
     left: 48px;
-}
-
-.blacksumm {
-    color: #000;
-    font-weight: 500;
 }
 
 .logoend {
@@ -517,5 +525,9 @@ a.btnret {
 
     .paybtn {
         width: 100%;
+    }
+
+    .blacksumm {
+        padding-right: 16px;
     }
 }
