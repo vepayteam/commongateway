@@ -59,8 +59,48 @@ class MfoBalance
     {
         $ret = [];
 
+        if ($IsAdmin) {
+            $ret = $this->GetTcbBalances();
+        }
+
+        $todayPays = $this->TodayPays()/100.0;
+        $ret['localin'] = $this->Partner->BalanceIn / 100.0 - $todayPays;
+        $ret['localout'] = $this->Partner->BalanceOut / 100.0;
+
+        $comispogas = $this->GetComissPogas()/100.0;
+        $comisvyd = $this->GetComissVyplat(false)/100.0;
+        $comisvydtoday = $this->GetComissVyplat(true)/100.0;
+        $ret['comisin'] = $comispogas;
+        $ret['comisout'] = $comisvyd;
+
+        if (!empty($this->Partner->SchetTcbNominal)) {
+            //номинальный счет - вся комиссия на счете выдачи, и сегдняшнюю комиссию по выдаче не учитываем
+            $ret['localout'] += $comisvydtoday;
+        } else {
+            //транзитный выдача
+            if (!$this->Partner->VoznagVyplatDirect) {
+                //вознаграждение не выводится со счета - комиссию за выдачу не списываем в онлайне
+                $ret['localout'] += $comisvyd;
+            }
+            if ($this->Partner->IsCommonSchetVydacha) {
+                //один счет - комиссия по выдаче со счета погашения, баланс погашения онлайн
+                $ret['localout'] -= $comispogas;
+                $ret['localin'] += $todayPays;
+            }
+        }
+
+        return $ret;
+    }
+
+    /**
+     * Баланс в ТКБ
+     * @return mixed
+     * @throws \yii\db\Exception
+     */
+    private function GetTcbBalances()
+    {
         $bal = Yii::$app->cache->get('mfo_balance_'.$this->Partner->ID);
-        if (!$bal && $IsAdmin) {
+        if (!$bal) {
 
             $mfo = new MfoReq();
             $mfo->mfo = $this->Partner->ID;
@@ -96,33 +136,6 @@ class MfoBalance
         } else {
             $ret = $bal;
         }
-
-        $todayPays = $this->TodayPays()/100.0;
-        $ret['localin'] = $this->Partner->BalanceIn / 100.0 - $todayPays;
-        $ret['localout'] = $this->Partner->BalanceOut / 100.0;
-
-        $comispogas = $this->GetComissPogas()/100.0;
-        $comisvyd = $this->GetComissVyplat(false)/100.0;
-        $comisvydtoday = $this->GetComissVyplat(true)/100.0;
-        $ret['comisin'] = $comispogas;
-        $ret['comisout'] = $comisvyd;
-
-        if (!empty($this->Partner->SchetTcbNominal)) {
-            //номинальный счет - вся комиссия на счете выдачи, и сегдняшнюю комиссию по выдаче не учитываем
-            $ret['localout'] += $comisvydtoday;
-        } else {
-            //транзитный выдача
-            if (!$this->Partner->VoznagVyplatDirect) {
-                //вознаграждение не выводится со счета - комиссию за выдачу не списываем в онлайне
-                $ret['localout'] += $comisvyd;
-            }
-            if ($this->Partner->IsCommonSchetVydacha) {
-                //один счет - комиссия по выдаче со счета погашения, баланс погашения онлайн
-                $ret['localout'] -= $comispogas;
-                $ret['localin'] += $todayPays;
-            }
-        }
-
         return $ret;
     }
 
