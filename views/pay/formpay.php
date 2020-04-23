@@ -76,12 +76,11 @@ use yii\bootstrap\Html;
                     'class' => 'form-control',
                     'value' => '',
                     'placeholder' => 'ММ/ГГ',
-                    //'autocomplete' => 'off',
-                    'style' => "width: 65px;",
+                    'autocomplete' => 'off',
                 ]); ?>
             </div>
             <div class="cvcblock">
-                <img src="/imgs/info.svg" alt="info" class="infocvc" title="Код с обратной стороны карты">
+                <img src="/imgs/info.svg" alt="info" class="infocvc" data-toggle="tooltip" data-placement="top" title="Последние 3 цифры на белой полосе карты с обратной стороны">
                 <?= $form->field($payform, 'CardCVC')->passwordInput([
                     'data-inputmask-placeholder' => '_',
                     'data-inputmask-jitMasking' => 'true',
@@ -91,7 +90,6 @@ use yii\bootstrap\Html;
                     'value' => '',
                     'placeholder' => '',
                     'autocomplete' => 'new-password',
-                    'style' => "width: 54px;"
                 ]); ?>
             </div>
 
@@ -111,20 +109,11 @@ use yii\bootstrap\Html;
 
     <div class="row nopadding" style="display: none;">
         <div class="col-sm-12 col-xs-12">
-            <?= $form->field($payform, 'Phone')->textInput([
-                'data-inputmask-placeholder' => '_',
-                'data-inputmask-jitMasking' => 'true',
-                'data-inputmask-mask' => '+ 7 (999) 999-99-99',
-                'data-inputmask-regex' => '\d{10}',
+            <?= $form->field($payform, 'Email')->textInput([
+                'type' => 'email',
                 'class' => 'form-control notrequired',
                 'value' => '',
-                'placeholder' => '+7',
-                'disabled' => 'disabled'
-            ]); ?>
-
-            <?= $form->field($payform, 'LinkPhone')->checkbox([
-                'template' => "<div class=\"checkbox\">\n{input}\n{beginLabel}\n{labelTitle}\n{endLabel}</div>",
-                'disabled' => 'disabled'
+                'placeholder' => 'info@vepay.online'
             ]); ?>
         </div>
     </div>

@@ -1,6 +1,11 @@
+html {
+    height: 100%;
+}
+
 body {
     font-family: 'M PLUS 1p', sans-serif;
     background: #fff;
+    height: 100%;
 }
 
 div, span, h1, h2, h3, h4, h5, h6, label, input {
@@ -12,7 +17,12 @@ p {
     line-height: 21px;
 }
 
+.wrapper {
+    height: 100%;
+}
+
 .middle {
+    min-height: 100%;
     background: #282333;
     padding: 56px 100px;
 }
@@ -58,7 +68,7 @@ p {
 }
 
 .rowlogo {
-    height: 38px;
+    height: 48px;
 }
 
 .logo {
@@ -78,29 +88,8 @@ p {
     font-size: 9px;
 }
 
-.pslogos {
-    margin-top: 0;
-}
-
 .pslogosBtm {
     margin-top: 16px;
-}
-
-.ssl {
-    font-size: 12px;
-    line-height: 24px;
-    text-align: right;
-    color: #8D8D8D;
-    padding-top: 6px;
-    display: inline-block;
-}
-
-.lockssl {
-    height: 24px;
-    width: 24px;
-    margin-left: 10px;
-    vertical-align: middle;
-    display: inline-block;
 }
 
 .closebtn {
@@ -109,6 +98,12 @@ p {
     position: relative;
     margin-top: -60px;
     margin-right: -80px;
+    width: 34px;
+    height: auto;
+}
+
+.closebtn:hover, .closebtn:active {
+    content: url('/imgs/close_act.svg');
 }
 
 .cardnumblock {
@@ -215,13 +210,6 @@ p {
     border-radius: unset;
 }
 
-.delcard {
-    position: absolute;
-    display: inline-block;
-    top: 78px;
-    left: 350px;
-}
-
 .form-horizontal .form-group {
     margin-right: 0;
     margin-left: 0;
@@ -242,13 +230,13 @@ p {
 .form-horizontal .form-group.field-payform-cardexp {
     margin-left: 0;
     margin-right: 0;
-    width: 90px;
+    width: 72px;
 }
 
 .form-horizontal .form-group.field-payform-cardcvc {
     margin-left: 0;
     margin-right: 16px;
-    width: 90px;
+    width: 70px;
 }
 
 .field-payform-cardcvc input {
@@ -276,10 +264,24 @@ p {
     border-image: linear-gradient(270deg, #A31FED 0%, #03EE65 100%) 1 stretch stretch;
 }
 
+#payform-email {
+    border-radius: 10px;
+    box-shadow: none;
+    border: 1px solid #D7D5E6;
+    padding: 8px 16px;
+    height: 44px;
+    position: relative;
+}
+
+#payform-email:active, #payform-email:focus {
+    border-radius: 10px;
+    box-shadow: none;
+    border-image: linear-gradient(270deg, #A31FED 0%, #03EE65 100%) 1 stretch stretch;
+}
+
 .errmessage {
     display: block;
-    background-color: rgba(238, 52, 61, 0.15);
-    border-radius: 12px;
+    background-color: rgba(235, 0, 27, 0.30);
     line-height: 21px;
     padding: 10px 16px;
 }
@@ -305,12 +307,12 @@ p#error_message {
     border: none;
 }
 
-a.btnret {
-    line-height: 40px;
+.paybtn:disabled {
+    background: #D0CAE0;
 }
 
-.phoneblock {
-    margin-left: 0;
+a.btnret {
+    line-height: 40px;
 }
 
 .btn.btn-success:active, .btn.btn-success:focus, .btn.btn-success:hover {
@@ -335,6 +337,9 @@ a.btnret {
     position: absolute;
     top: 8px;
     left: 48px;
+}
+.infocvc:hover, .infocvc:active {
+    content: url('/imgs/info_act.svg');
 }
 
 .logoend {
@@ -369,105 +374,117 @@ a.btnret {
     color: #8D8D8D;
 }
 
+.tooltip-inner {
+    background-color: #A320EE;
+    max-width: 200px;
+    padding: 16px 16px;
+}
+
+/* mini screen */
+@media (max-width: 700px) {
+    .middle {
+        min-height: 100%;
+        padding: 40px 0;
+    }
+}
+
 /* mobile */
-@media (max-width: 500px) {
+@media (max-width: 540px) {
 
     .container {
-        width: 360px;
-        padding-right: 0;
-        padding-left: 0;
+        width: 320px;
+        padding-right: 50px;
+        padding-left: 50px;
+        box-shadow: unset;
+        border-radius: unset;
     }
 
-    .summ, .summ-xs, .info {
+    .middle {
+        min-height: 100%;
+        background: unset;
+        padding: 0;
+    }
+    .summ, .info {
         padding-left: 28px;
         padding-right: 28px;
     }
-    .rowlogo {
-        padding-left: 28px;
+    .logo {
+        max-width: 100px;
     }
 
-    .summ-xs {
-        font-style: normal;
-        font-weight: normal;
-        font-size: 14px;
-        line-height: 21px;
-        color: #8D8D8D;
-        padding-top: 24px;
+    .logotext {
+        width: 70px;
+        margin: 4px 0 0 10px;
+        font-size: 7px;
+    }
+
+    .closebtn {
+        margin-top: -4px;
+        margin-right: 0;
+    }
+
+    .info {
+        padding-left: 0;
+        padding-right: 0;
     }
 
     .summ {
         margin-top: 8px;
     }
 
-    .card_full {
-        margin-top: 0;
-        min-width: unset;
-        max-width: 390px;
-        padding-left: 0;
-        padding-right: 0;
-    }
-
-    .card_fon {
-        background-image: unset;
-        display: inline-block;
-        width: unset;
-        height: unset;
-        background: rgba(147, 240, 162, 0.1);
-        margin-top: 0;
-        margin-left: 0;
-    }
-
     .cardnumblock {
-        padding: 24px 0 0 0 !important;
+        padding: 0;
+        width: 240px;
     }
 
-    .holderrow {
-        padding-bottom: 16px;
+    .cardholder {
+        width: 240px;
     }
 
-    .phoneblock {
+    .cardexpblock {
+        width: 100px;
+    }
+
+    .cvcblock {
+        width: 100px;
+        margin-left: 0;
+        margin-top: 0;
     }
 
     .form-horizontal .form-group {
-        margin-left: 36px !important;
-    }
-    .cvcblock {
-        margin-left: 0;
-        margin-top: 0;
-    }
-
-    .form-horizontal .form-group.field-payform-cardnumber {
-        padding-left: 24px;
-        padding-right: 16px;
-    }
-
-    .form-horizontal .form-group.field-payform-cardholder {
-        padding-left: 24px;
-        padding-right: 68px;
-        max-width: unset;
-    }
-    .form-horizontal .form-group.field-payform-cardexp {
-        padding-left: 24px;
-    }
-
-    .form-horizontal .form-group.field-payform-phone {
-        padding-left: 28px;
-        padding-right: 28px;
-    }
-
-    .form-horizontal .form-group.field-payform-linkphone {
-        padding-left: 28px;
-        padding-right: 28px;
     }
 
     .form-horizontal .form-group .form-control {
         background-color: unset;
+        font-size: 14px;
+    }
+
+    .form-horizontal .form-group.field-payform-cardnumber {
+        padding-left: 0;
+        padding-right: 0;
+        width: 220px;
+    }
+
+    .form-horizontal .form-group.field-payform-cardholder {
+        padding-left: 0;
+        padding-right: 0;
+        width: 220px;
+    }
+
+    .form-horizontal .form-group.field-payform-cardexp {
+        padding-left: 16px;
+        padding-right: 0;
+        width: 110px;
+    }
+
+    .form-horizontal .form-group.field-payform-cardcvc {
+        width: 110px;
     }
 
     .pslogo {
         position: absolute;
-        top: 16px;
-        left: calc(100% - 233px);
+        top: 28px;
+        left: 195px;
     }
 
     .delcard {
@@ -477,8 +494,8 @@ a.btnret {
     }
 
     .infocvc {
-        top: 1px;
-        left: 80px;
+        top: 3px;
+        left: 40px;
     }
 
     .field-payform-cardcvc input {
@@ -525,9 +542,19 @@ a.btnret {
 
     .paybtn {
         width: 100%;
+        height: 37px;
+        font-size: 14px;
     }
 
     .blacksumm {
         padding-right: 16px;
+    }
+
+    .pslogosBtm img {
+        width: 23%;
+    }
+
+    .footcopyr {
+        font-size: 7px;
     }
 }
