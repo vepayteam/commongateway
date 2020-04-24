@@ -575,8 +575,14 @@ class TCBank
                 //->setOption(CURLOPT_SSLCERT, $this->certFile)
                 //->setOption(CURLOPT_CAINFO, $this->caFile)
                 ->setOption(CURLOPT_SSL_VERIFYPEER, false)
-                ->setOption(CURLOPT_POSTFIELDS, $post)
-                ->post($url);
+                ->setOption(CURLOPT_POSTFIELDS, $post);
+
+            if (Yii::$app->params['TESTMODE'] == 'Y') {
+                $curl->setOption(CURLOPT_PROXY, '194.58.96.139:3128');
+                $curl->setOption(CURLOPT_PROXYUSERPWD, 'vfort:S3n4a@Mvy4');
+            }
+            $curl->post($url);
+
         } catch (\Exception $e) {
             Yii::warning("curlerror: " . $curl->responseCode . ":" . Cards::MaskCardLog($curl->response), 'merchant');
             $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
@@ -755,6 +761,39 @@ class TCBank
         $queryData = Json::encode($queryData);
 
         $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            $xml = $this->parseAns($ans['xml']);
+            if (isset($xml['Status']) && $xml['Status'] == '0') {
+                return ['status' => 1, 'transac' => $xml['ordernumber']];
+            }
+        }
+
+        return ['status' => 0, 'message' => ''];
+    }
+
+    public function transferToNdfl(array $data)
+    {
+        $action = "/api/tcbpay/gate/registerordertoexternalaccount";
+
+        $queryData = [
+            'OrderID' => $data['IdPay'],
+            'Account' => strval($data['account']),
+            'Bik' => strval($data['bic']),
+            'Amount' => $data['summ'],
+            'Name' => $data['name'],
+            'Description' => $data['descript']
+        ];
+        if (isset($data['inn']) && !empty($data['inn'])) {
+            $queryData['Inn'] = $data['inn'];
+        }
+        if (isset($data['kpp']) && !empty($data['kpp'])) {
+            $queryData['Kpp'] = $data['kpp'];
+        }
+
+        $queryData = Json::encode($queryData);
+
+        $ans = $this->curlXmlReq($queryData, Yii::$app->params['TESTMODE'] == 'Y' ? 'https://193.232.101.14:8203/nominal/psr' : 'https://193.232.101.14:8204/nominal/psr');
 
         if (isset($ans['xml']) && !empty($ans['xml'])) {
             $xml = $this->parseAns($ans['xml']);

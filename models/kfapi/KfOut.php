@@ -39,6 +39,7 @@ class KfOut extends Model
     const SCENARIO_CARDID = 'cardid';
     const SCENARIO_UL = 'ul';
     const SCENARIO_FL = 'fl';
+    const SCENARIO_NDFL = 'ndfl';
     const SCENARIO_INT = 'int';
     const SCENARIO_STATE = 'state';
 
@@ -49,22 +50,22 @@ class KfOut extends Model
             [['card'], 'integer', 'on' => self::SCENARIO_CARDID],
             [['document_id'], 'string', 'max' => 40, 'on' => [self::SCENARIO_CARD]],
             [['fullname'], 'string', 'max' => 80, 'on' => [self::SCENARIO_CARD]],
-            [['account'], 'match', 'pattern' => '/^\d{20}$/', 'on' => [self::SCENARIO_FL, self::SCENARIO_UL, self::SCENARIO_INT]],
+            [['account'], 'match', 'pattern' => '/^\d{20}$/', 'on' => [self::SCENARIO_FL, self::SCENARIO_UL, self::SCENARIO_INT,self::SCENARIO_NDFL]],
             [['bic'], 'match', 'pattern' => '/^\d{9}$/', 'on' => [self::SCENARIO_FL, self::SCENARIO_UL]],
-            [['descript'], 'string', 'max' => 210, 'on' => [self::SCENARIO_FL, self::SCENARIO_UL, self::SCENARIO_INT]],
-            [['inn'], 'match', 'pattern' => '/^\d{10,13}$/', 'on' => [self::SCENARIO_UL, self::SCENARIO_INT]],
-            [['kpp'], 'string', 'max' => 9, 'on' => [self::SCENARIO_UL, self::SCENARIO_INT]],
-            [['name'], 'string', 'max' => 200, 'on' => [self::SCENARIO_UL, self::SCENARIO_INT]],
+            [['descript'], 'string', 'max' => 210, 'on' => [self::SCENARIO_FL, self::SCENARIO_UL, self::SCENARIO_INT, self::SCENARIO_NDFL]],
+            [['inn'], 'match', 'pattern' => '/^\d{10,13}$/', 'on' => [self::SCENARIO_UL, self::SCENARIO_INT, self::SCENARIO_NDFL]],
+            [['kpp'], 'string', 'max' => 9, 'on' => [self::SCENARIO_UL, self::SCENARIO_INT,self::SCENARIO_NDFL]],
+            [['name'], 'string', 'max' => 200, 'on' => [self::SCENARIO_UL, self::SCENARIO_INT,self::SCENARIO_NDFL]],
             [['fio'], 'string', 'max' => 150, 'on' => self::SCENARIO_FL],
             [['id'], 'integer', 'on' => self::SCENARIO_STATE],
             [['amount'], 'number', 'min' => 1, 'max' => 600000, 'on' => [self::SCENARIO_CARD, self::SCENARIO_CARDID]],
-            [['amount'], 'number', 'min' => 1, 'max' => 21000000, 'on' => [self::SCENARIO_UL, self::SCENARIO_FL, self::SCENARIO_INT]],
-            [['extid'], 'string', 'max' => 40, 'on' => [self::SCENARIO_CARD, self::SCENARIO_CARDID, self::SCENARIO_UL, self::SCENARIO_FL, self::SCENARIO_INT]],
+            [['amount'], 'number', 'min' => 1, 'max' => 21000000, 'on' => [self::SCENARIO_UL, self::SCENARIO_FL, self::SCENARIO_INT,self::SCENARIO_NDFL]],
+            [['extid'], 'string', 'max' => 40],
             [['cardnum', 'amount'/*, 'extid'*/], 'required', 'on' => self::SCENARIO_CARD],
             [['card', 'amount'/*, 'extid'*/], 'required', 'on' => self::SCENARIO_CARDID],
-            [['name', 'inn', 'account', 'bic', 'descript', 'amount'/*, 'extid'*/], 'required', 'on' => self::SCENARIO_UL],
+            [['name', 'inn', 'account', 'bic', 'descript', 'amount'/*, 'extid'*/], 'required', 'on' => [self::SCENARIO_UL,self::SCENARIO_NDFL]],
             [['fio', 'account', 'bic', 'descript', 'amount'/*, 'extid'*/], 'required', 'on' => self::SCENARIO_FL],
-            [['name', 'inn', 'account', 'descript', 'amount'/*, 'extid'*/], 'required', 'on' => self::SCENARIO_INT],
+            [['name', 'inn', 'account', 'descript', 'amount'/*, 'extid'*/], 'required', 'on' => [self::SCENARIO_INT,self::SCENARIO_NDFL]],
             [['id'], 'required', 'on' => self::SCENARIO_STATE],
             [['sms'], 'integer', 'on' => [self::SCENARIO_CARD, self::SCENARIO_UL, self::SCENARIO_FL, self::SCENARIO_INT]]
         ];
