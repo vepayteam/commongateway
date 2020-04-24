@@ -123,12 +123,12 @@ class KfOut extends Model
                 "dateValue" => date("Y-m-d 00:00:00"),
                 "extID" => $params['IdPay'],
                 "filial" => "000",
-                "num" => "793353",
+                "num" => $params['IdPay'],
                 "pack" => "VP",
                 "purpose" => $this->descript,
                 "docName" => [
-                    "name" => "МТС Номер телефона: 9105032268",
-                    "operType" => "17"
+                    "name" => "Оплата НДФЛ",
+                    "operType" => "01"
                 ],
                 "sender" => [
                     "name" => $this->sendername."//".$this->senderadress."//".$this->senderaccount,
@@ -150,12 +150,12 @@ class KfOut extends Model
                     ]
                 ],
                 "summaDt" => [
-                    "amount" => $this->amount,
+                    "amount" => $this->amount/100.0,
                     "currency" => "RUB"
                 ],
                 "merchantCheck" => [
                     "merchantId" => "MEDINVEK",
-                    "accountName" => "40702810000000000063"
+                    "accountName" => "40702810000000000063",
                 ],
                 "budgetaryPmt" => [
                     "formerStatus" => "01",
