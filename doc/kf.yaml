@@ -553,9 +553,15 @@ components:
     OutNdfl:
       type: object
       properties:
-        fio:
+        name:
           type: string
-          description: ФИО получателя
+          description: Наименование получателя
+        inn:
+          type: string
+          description: ИНН получателя
+        kpp:
+          type: string
+          description: КПП получателя
         account:
           type: string
           description: Счет в банке
@@ -569,12 +575,30 @@ components:
         amount:
           type: number
           description: Cумма платежа
+        kbk:
+          type: string
+          description: КБК
+        okato:
+          type: string
+          description: ОКАТО
+        paymentbase:
+          type: string
+          description: Основание платежа
+        taxperiod:
+          type: string
+          description: Налоговый период
+        taxdocnum:
+          type: string
+          description: Номер налогового документа
+        taxdocdate:
+          type: string
+          description: Дата налогового документа
+        taxpaymenttype:
+          type: string
+          description: Тип налогового платежа
         extid:
           type: string
           description: Внешний идентификатор запроса
-        sms:
-          type: integer
-          description: Если передан 1, то требуется подтверждение кодом из смс
     OutI:
       type: object
       properties:

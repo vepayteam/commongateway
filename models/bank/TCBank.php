@@ -18,6 +18,7 @@ class TCBank
     public const BIC = '044525388';
 
     private $bankUrl = 'https://pay.tkbbank.ru';
+    private $bankUrlXml = 'https://193.232.101.14:8204';
     private $bankUrlClient = 'https://pay.tkbbank.ru';
     private $shopId;
     private $certFile;
@@ -51,6 +52,7 @@ class TCBank
     {
         if (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] == 'Y') {
             $this->bankUrl = 'https://paytest.online.tkbbank.ru';
+            $this->bankUrlXml = 'https://193.232.101.14:8203';
         }
 
         if ($tcbGate) {
@@ -774,26 +776,22 @@ class TCBank
 
     public function transferToNdfl(array $data)
     {
-        $action = "/api/tcbpay/gate/registerordertoexternalaccount";
+        $action = "/nominal/psr";
 
         $queryData = [
             'OrderID' => $data['IdPay'],
-            'Account' => strval($data['account']),
-            'Bik' => strval($data['bic']),
+            'Account' => (string)$data['account'],
+            'Bik' => (string)$data['bic'],
             'Amount' => $data['summ'],
             'Name' => $data['name'],
-            'Description' => $data['descript']
+            'Description' => $data['descript'],
+            'Kbk' => $data['kbk'],
+            'Okato' => $data['okato'],
+            'taxperiod' => $data['taxperiod']
         ];
-        if (isset($data['inn']) && !empty($data['inn'])) {
-            $queryData['Inn'] = $data['inn'];
-        }
-        if (isset($data['kpp']) && !empty($data['kpp'])) {
-            $queryData['Kpp'] = $data['kpp'];
-        }
-
         $queryData = Json::encode($queryData);
 
-        $ans = $this->curlXmlReq($queryData, Yii::$app->params['TESTMODE'] == 'Y' ? 'https://193.232.101.14:8203/nominal/psr' : 'https://193.232.101.14:8204/nominal/psr');
+        $ans = $this->curlXmlReq($queryData,$this->bankUrlXml.$action);
 
         if (isset($ans['xml']) && !empty($ans['xml'])) {
             $xml = $this->parseAns($ans['xml']);
@@ -802,7 +800,7 @@ class TCBank
             }
         }
 
-        return ['status' => 0, 'message' => ''];
+        return ['status' => 0, 'message' => 'Ошибка запроса'];
     }
 
     /**
@@ -1108,7 +1106,7 @@ class TCBank
 
         $queryData = Json::encode($queryData);
 
-        $ans = $this->curlXmlReq($queryData, /*$this->bankUrl*/(Yii::$app->params['TESTMODE'] == 'Y' ? "https://193.232.101.14:8203" : "https://193.232.101.14:8204").$action);
+        $ans = $this->curlXmlReq($queryData, $this->bankUrlXml.$action);
 
         //$ans['xml'] = '';
         //$ans['xml'] = Json::decode($ans['xml']);
@@ -1469,8 +1467,7 @@ class TCBank
         $queryData = $params['req'];
 
         $ans = $this->curlXmlReq($queryData,
-            //$this->bankUrl
-            (Yii::$app->params['TESTMODE'] == 'Y' ? "https://193.232.101.14:8203" : "https://193.232.101.14:8204").$action,
+            $this->bankUrlXml.$action,
             ['SOAPAction: "http://cft.transcapital.ru/CftNominalIntegrator/SetBeneficiary"'],
             false
         );

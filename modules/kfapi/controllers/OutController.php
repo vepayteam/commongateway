@@ -357,25 +357,19 @@ class OutController extends Controller
         Yii::warning('/out/ndfl kfmfo='. $kf->IdPartner . " sum=".$kfOut->amount . " extid=".$kfOut->extid, 'mfo');
 
         $params = $pay->payToCard(null, [$kfOut->account, $kfOut->bic, $kfOut->name, $kfOut->inn, $kfOut->kpp, $kfOut->descript], $kfOut, $usl, TCBank::$bank, $kf->IdPartner, $kfOut->sms);
-        $params['name'] = $kfOut->name;
-        $params['inn'] = trim($kfOut->inn);
-        $params['kpp'] = $kfOut->kpp;
-        $params['bic'] = $kfOut->bic;
-        $params['account'] = $kfOut->account;
-        $params['descript'] = $kfOut->descript;
 
-        /*if (Yii::$app->params['TESTMODE'] == 'Y' && $kfOut->sms === 0) {
-            //заглушка - тест выплаты на счет
-            $test = new MfoTestError();
-            if (!$test->TestCancelSchet($kfOut->account, $params['IdPay'])) {
-                $test->ConfirmOut($params['IdPay']);
-            }
-            return ['status' => 1, 'id' => (int)$params['IdPay'], 'message' => ''];
-        }*/
         if ($kfOut->sms === 0) {
             $tcBank = new TCBank($TcbGate);
+            $params['name'] = $kfOut->name;
+            $params['inn'] = trim($kfOut->inn);
+            $params['kpp'] = $kfOut->kpp;
+            $params['bic'] = $kfOut->bic;
+            $params['account'] = $kfOut->account;
+            $params['descript'] = $kfOut->descript;
+            $params['kbk'] = $kfOut->kbk;
+            $params['okato'] = $kfOut->okato;
+            $params['taxperiod'] = $kfOut->taxperiod;
             $ret = $tcBank->transferToNdfl($params);
-
             if ($ret && $ret['status'] == 1) {
                 //сохранение номера транзакции
                 $payschets = new Payschets();
