@@ -369,9 +369,18 @@ class OutController extends Controller
                     'trx_id' => $ret['transac'],
                     'url' => ''
                 ]);
+                //статус отдельно не надо получать
+                $payschets->confirmPay([
+                    'idpay' => $params['IdPay'],
+                    'result_code' => 1,
+                    'trx_id' => $ret['transac'],
+                    'ApprovalCode' => '',
+                    'RRN' => $ret['rrn'],
+                    'message' => ''
+                ]);
 
             } else {
-                $pay->CancelReq($params['IdPay']);
+                $pay->CancelReq($params['IdPay'], $ret['message']);
             }
         }
 

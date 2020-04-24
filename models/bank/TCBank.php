@@ -784,8 +784,10 @@ class TCBank
 
         if (isset($ans['xml']) && !empty($ans['xml'])) {
             $xml = $this->parseAns($ans['xml']);
-            if (isset($xml['Status']) && $xml['Status'] == '0') {
-                return ['status' => 1, 'transac' => $xml['ordernumber']];
+            if (isset($xml['document']['status']) && $xml['document']['status'] == '0') {
+                return ['status' => 1, 'transac' => $xml['document']['id'] ?? 0, 'rrn' => $xml['document']['id'] ?? 0];
+            } else {
+                return ['status' => 0, 'message' => $xml['document']['comment'] ?? '', 'transac' => $xml['document']['number'] ?? 0];
             }
         }
 

@@ -119,8 +119,8 @@ class KfOut extends Model
         $ret = [
             "document" => [
                 "uid" => md5($params['IdPay']),
-                "date" => "2018-02-20  23:23:22",
-                "dateValue" => date("Y-m-d H:i:s"),
+                "date" => date("Y-m-d H:i:s"),
+                "dateValue" => date("Y-m-d 00:00:00"),
                 "extID" => $params['IdPay'],
                 "filial" => "000",
                 "num" => "793353",
