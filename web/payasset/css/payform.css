@@ -149,6 +149,7 @@ p {
     line-height: 18px;
     color: #282333;
     text-align: left;
+    padding-top: 7px;
 }
 
 .form-horizontal .form-group > .control-label.error-field {
@@ -518,6 +519,10 @@ a.btnret {
 
     .btn.btn-success {
         width: 100%;
+    }
+
+    .form-horizontal .control-label {
+        padding-top: 0;
     }
 
     .form-horizontal .form-group.field-payform-phone, .form-horizontal .form-group.field-payform-linkphone {
