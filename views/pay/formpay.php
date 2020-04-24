@@ -122,7 +122,10 @@ use yii\bootstrap\Html;
         <div class="col-xs-12">
             <input type="hidden" class="idPay" name="PayForm[IdPay]" value="<?=$params['ID']?>">
             <input type="hidden" class="user_hash" name="user_hash" value="">
-            <?= Html::submitButton('ОПЛАТИТЬ '. number_format($params['SummFull']/100.0, 2, ',', '').' ₽', [
+            <?= Html::submitButton(
+                ($params['IdUsluga'] == 1 ? 'ОТПРАВИТЬ' :
+                    'ОПЛАТИТЬ ' . number_format($params['SummFull']/100.0, 2, ',', '').' ₽'
+                ), [
                 'class' => 'btn btn-success paybtn',
                 'name' => 'paysubmit',
                 'form' => 'payform',
