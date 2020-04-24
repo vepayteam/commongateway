@@ -778,18 +778,7 @@ class TCBank
     {
         $action = "/nominal/psr";
 
-        $queryData = [
-            'OrderID' => $data['IdPay'],
-            'Account' => (string)$data['account'],
-            'Bik' => (string)$data['bic'],
-            'Amount' => $data['summ'],
-            'Name' => $data['name'],
-            'Description' => $data['descript'],
-            'Kbk' => $data['kbk'],
-            'Okato' => $data['okato'],
-            'taxperiod' => $data['taxperiod']
-        ];
-        $queryData = Json::encode($queryData);
+        $queryData = Json::encode($data);
 
         $ans = $this->curlXmlReq($queryData,$this->bankUrlXml.$action);
 

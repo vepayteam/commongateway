@@ -360,16 +360,7 @@ class OutController extends Controller
 
         if ($kfOut->sms === 0) {
             $tcBank = new TCBank($TcbGate);
-            $params['name'] = $kfOut->name;
-            $params['inn'] = trim($kfOut->inn);
-            $params['kpp'] = $kfOut->kpp;
-            $params['bic'] = $kfOut->bic;
-            $params['account'] = $kfOut->account;
-            $params['descript'] = $kfOut->descript;
-            $params['kbk'] = $kfOut->kbk;
-            $params['okato'] = $kfOut->okato;
-            $params['taxperiod'] = $kfOut->taxperiod;
-            $ret = $tcBank->transferToNdfl($params);
+            $ret = $tcBank->transferToNdfl($kfOut->GetNdflJson($params, $kf->partner));
             if ($ret && $ret['status'] == 1) {
                 //сохранение номера транзакции
                 $payschets = new Payschets();

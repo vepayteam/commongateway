@@ -575,6 +575,15 @@ components:
         amount:
           type: number
           description: Cумма платежа
+        sendername:
+          type: string
+          description: Наименование отправвителя
+        senderadress:
+          type: string
+          description: Адрес отправвителя
+        senderaccount:
+          type: string
+          description: Счет отправвителя
         kbk:
           type: string
           description: КБК
