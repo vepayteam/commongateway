@@ -62,12 +62,12 @@ class PayForm extends Model
     {
         return [
             'CardNumber' => 'Номер карты',
-            'CardHolder' => 'Держитель карты',
-            'CardExp' => 'Срок действия',
+            'CardHolder' => 'Владелец',
+            'CardExp' => 'Действует',
             'CardCVC' => 'CVC',
             'Phone' => 'Номер телефона',
             'LinkPhone' => 'Привязать номер к карте',
-            'Email' => 'Почта для отправки чека'
+            'Email' => 'Почта для отправления чека'
         ];
     }
 

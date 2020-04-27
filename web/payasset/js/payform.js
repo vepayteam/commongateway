@@ -7,6 +7,8 @@
     let payform = {
         init: function () {
 
+            $('[data-toggle="tooltip"]').tooltip();
+
             Inputmask.extendDefinitions({
                 'C': {
                     validator: "[A-Za-z ]",
