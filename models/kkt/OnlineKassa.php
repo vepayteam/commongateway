@@ -21,44 +21,22 @@ class OnlineKassa
      */
     public function createDraft($IdPayschet, $tovar, $tovarOFD, $summ, $email)
     {
-        $ans = $this->curlReq('sum=' . intval($summ) .
-            '&org=2&section=3&Tovar=' . urlencode($tovarOFD) .
-            '&email=' . $email . '&token=');
+        $data = new DraftData();
+        $data->customerContact = $email;
+        $data->text = $tovar;
+        $data->price = $summ;
 
-        if (isset($ans['xml']) && !empty($ans['xml'])) {
-            $xmlDraft = simplexml_load_string($ans['xml']);
-            /*
-                NumDocument;
-                NumDraft;
-                Smena;
-                DateDraft;
-                KPKNumber;  //номер фискального документа
-                KPKCode;    //фискальный признак
+        $OrangeData = new OrangeData();
+        $ans = $OrangeData->CreateDraft($IdPayschet, $data);
+        if ($ans['status'] == 1) {
+            $ans = $OrangeData->StatusDraft($IdPayschet);
+        }
 
-                KassaLogicalNumber; //номер в налоговой
-                KassaSerialNumber;
-                EKLZSerialNumber; //ФН номер
-             */
+        if (isset($ans['data']) && !empty($ans['data'])) {
+            $FiskalData = new FiskalData();
+            $FiskalData->Load($ans['data']);
 
-            $this->draftData = [
-                'IdPaySchet' => $IdPayschet,
-                'Urlico' => Yii::$app->params['kkt']['urlico'],
-                'Inn' => Yii::$app->params['kkt']['inn'],
-                'Sno' => Yii::$app->params['kkt']['sno'],
-                'NumDocument' => $xmlDraft->NumDocument,
-                'NumDraft' => $xmlDraft->NumDraft,
-                'Smena' => $xmlDraft->Smena,
-                'DateDraft' => $xmlDraft->DateDraft,
-                'FDNumber' => $xmlDraft->KPKNumber,
-                'FPCode' => $xmlDraft->KPKCode,
-                'KassaRegNumber' => $xmlDraft->KassaLogicalNumber,
-                'KassaSerialNumber' => $xmlDraft->KassaSerialNumber,
-                'FNSerialNumber' => $xmlDraft->EKLZSerialNumber,
-                'Tovar' => $tovar,
-                'Summ' => $summ,
-                'SummNoNds' => $summ,
-                'Email' => $email
-            ];
+            $this->draftData = $FiskalData->GetDraftData();
 
             $this->saveToDB();
 
@@ -66,37 +44,6 @@ class OnlineKassa
         }
 
         return null;
-    }
-
-    /**
-     * GET запрос
-     * @param string $get
-     * @return array xml|error
-     */
-    private function curlReq($get)
-    {
-        $url = Yii::$app->params['kkt']['host'] . "?" . $get .
-            "&token=" . Yii::$app->params['kkt']['token'];
-
-        Yii::warning("req: " . $url . "\r\n", 'qroplata');
-
-        $curl = new Curl();
-        $curl->reset()->get($url);
-
-        $ans = [];
-        Yii::warning("curlcode: " . $curl->errorCode, 'qroplata');
-        Yii::warning("curlans: " . $curl->responseCode . ":" . $curl->response, 'qroplata');
-        switch ($curl->responseCode) {
-            case 200:
-            case 202:
-                $ans['xml'] = $curl->response;
-                break;
-            default:
-                $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
-                break;
-        }
-
-        return $ans;
     }
 
     private function saveToDB()

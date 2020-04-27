@@ -188,7 +188,7 @@ class Payschets
                         }*/
 
                         //чек пробить
-                        //$this->CreateDraftPay($query, $params);
+                        $this->CreateDraftPay($query, $params);
 
                         //оповещения на почту
                         $this->addNotification($params['idpay'], $query['TypeWidget'], 1);
@@ -389,10 +389,9 @@ class Payschets
      */
     private function CreateDraftPay($query, $params)
     {
-        //0 - оплата услуги 1 - mobile
-        if (in_array($query['TypeWidget'], [0, 1])) {
+        if (TU::IsInAll($query['IsCustom'])) {
             //чек пробить
-            /*if (!Yii::$app->request->isConsoleRequest) {
+            if (!Yii::$app->request->isConsoleRequest) {
                 Yii::$app->queue->push(new DraftPrintJob([
                     'idpay' => $params['idpay'],
                     'tovar' => $query['tovar'],
@@ -400,12 +399,7 @@ class Payschets
                     'summDraft' => $query['SummPay'] + $query['ComissSumm'],
                     'email' => isset($query['Email']) ? $query['Email'] : ''
                 ]));
-            }*/
-
-            /*$kassa = new OnlineKassa();
-            $kassa->createDraft($params['idpay'], $query['tovar'], $query['tovarOFD'],
-                $query['SummPay'] + $query['ComissSumm'],
-                isset($query['Email']) ? $query['Email'] : '');*/
+            }
         }
 
         return true;
