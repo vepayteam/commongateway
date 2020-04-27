@@ -150,7 +150,7 @@ class KfOut extends Model
                     ]
                 ],
                 "summaDt" => [
-                    "amount" => $this->amount/100.0,
+                    "amount" => $this->amount,
                     "currency" => "RUB"
                 ],
                 "merchantCheck" => [
