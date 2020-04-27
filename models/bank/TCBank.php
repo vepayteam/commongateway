@@ -579,7 +579,7 @@ class TCBank
                 ->setOption(CURLOPT_SSL_VERIFYPEER, false)
                 ->setOption(CURLOPT_POSTFIELDS, $post);
 
-            if (Yii::$app->params['TESTMODE'] == 'Y') {
+            if (Yii::$app->params['DEVMODE'] == 'Y') {
                 $curl->setOption(CURLOPT_PROXY, '194.58.96.139:3128');
                 $curl->setOption(CURLOPT_PROXYUSERPWD, 'vfort:S3n4a@Mvy4');
             }
