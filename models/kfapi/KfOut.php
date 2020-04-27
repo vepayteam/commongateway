@@ -154,8 +154,8 @@ class KfOut extends Model
                     "currency" => "RUB"
                 ],
                 "merchantCheck" => [
-                    "merchantId" => "MEDINVEK",
-                    "accountName" => "40702810000000000063",
+                    "merchantId" => "LEMONONLINE",
+                    "accountName" => $partner->SchetTcbNominal,
                 ],
                 "budgetaryPmt" => [
                     "formerStatus" => "01",
