@@ -676,7 +676,7 @@ class CreatePay
         if ($res) {
             Yii::$app->db->createCommand()->update('pay_schet', [
                 'Status' => 2,
-                'ErrorInfo' => $message
+                'ErrorInfo' => mb_substr($message, 0, 250)
             ], '`ID` = :ID', [':ID' => $IdPay])->execute();
         }
     }
