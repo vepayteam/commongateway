@@ -51,7 +51,10 @@ class DefaultController extends Controller
     {
         if (!Yii::$app->user->isGuest) {
             $news = [['TypeNews' => 0, 'HeaderNews' => 'Новый кабинет мерчанта', 'TextNews' => 'Новый кабинет мерчанта', 'DateNew' => time()]];
-            return $this->render('index', ['news' => $news]);
+            return $this->render('index', [
+                'news' => $news,
+                'IsAdmin' => UserLk::IsAdmin(Yii::$app->user),
+            ]);
         } else {
             return $this->render('login');
         }

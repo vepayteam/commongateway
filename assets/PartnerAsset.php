@@ -139,6 +139,7 @@ class PartnerAsset extends AssetBundle
         'aassets/js/partner/select.js',
         'aassets/js/antifraud/antifraud.js',
         'aassets/js/partner/act.js',
+        'aassets/js/partner/news.js',
 
     ];
     public $depends = [

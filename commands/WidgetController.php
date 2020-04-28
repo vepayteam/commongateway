@@ -9,6 +9,7 @@ use app\models\Payschets;
 use app\models\planner\AlarmsSend;
 use app\models\planner\OtchToEmail;
 use app\models\planner\ReturnComisMfo;
+use app\models\planner\SendNews;
 use app\models\planner\UpdateStatems;
 use app\models\planner\VyvodSumPay;
 use app\models\planner\VyvodVoznagPlanner;
@@ -168,5 +169,10 @@ class WidgetController extends Controller
         $perevod->executeVirt();
     }
 
+    public function actionSendNews()
+    {
+        $SendNews = new SendNews();
+        $SendNews->execute();
+    }
 
 }
