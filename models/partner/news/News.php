@@ -49,4 +49,9 @@ class News extends \yii\db\ActiveRecord
             'DateSend' => 'Date Send',
         ];
     }
+
+    public function getNewsread()
+    {
+        return $this->hasOne(Newsread::class, ['IdNews'=>'ID']);
+    }
 }

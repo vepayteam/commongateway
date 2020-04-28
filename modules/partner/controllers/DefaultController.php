@@ -2,6 +2,8 @@
 
 namespace app\modules\partner\controllers;
 
+use app\models\partner\news\News;
+use app\models\partner\news\Newsread;
 use app\models\partner\PartnerUsers;
 use app\models\payonline\Partner;
 use Yii;
@@ -9,6 +11,7 @@ use yii\filters\AccessControl;
 use yii\helpers\Url;
 use yii\web\Controller;
 use app\models\partner\UserLk;
+use function Sodium\library_version_minor;
 
 /**
  * Default controller for the `partner` module
@@ -50,7 +53,9 @@ class DefaultController extends Controller
     public function actionIndex()
     {
         if (!Yii::$app->user->isGuest) {
-            $news = [['TypeNews' => 0, 'HeaderNews' => 'Новый кабинет мерчанта', 'TextNews' => 'Новый кабинет мерчанта', 'DateNew' => time()]];
+            $news = News::find()
+                ->orderBy(['DateAdd' => SORT_DESC])->limit(10)
+                ->all();
             return $this->render('index', [
                 'news' => $news,
                 'IsAdmin' => UserLk::IsAdmin(Yii::$app->user),
@@ -140,4 +145,27 @@ class DefaultController extends Controller
             return $this->redirect('/partner/chngpassw');
         }
     }
+
+    /**
+     * Добавить новосить
+     * @return int[]|\yii\web\Response
+     */
+    public function actionAddnews()
+    {
+        if (Yii::$app->request->isAjax && UserLk::IsAdmin(Yii::$app->user)) {
+            Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+            $news = new News();
+            $news->load(Yii::$app->request->post());
+            $news->DateAdd = time();
+            $news->DateSend = 0;
+            if ($news->validate()) {
+                $news->save(false);
+                return ['status' => 1];
+            }
+            return ['status' => 0];
+        }
+        return $this->redirect('/');
+    }
+
 }

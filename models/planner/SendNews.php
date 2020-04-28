@@ -12,19 +12,30 @@ class SendNews
 {
     public function execute()
     {
-        $partners = Partner::findAll(['IsDeleted' => 0]);
-        $result = (new Query())
-            ->select('*')
-            ->from('news')
-            ->where(['DateSend' => 0])
-            ->all();
+        try {
+            $partners = Partner::findAll(['IsDeleted' => 0]);
 
-        foreach ($result as $row) {
-            Yii::$app->queue->push(new SendMailJob([
-                'email' => '',
-                'subject' => $row['Head'],
-                'content' => $row['Body']
-            ]));
+            $result = (new Query())
+                ->select('*')
+                ->from('news')
+                ->where(['DateSend' => 0])
+                ->all();
+
+            foreach ($result as $row) {
+                foreach ($partners as $partner) {
+                    if (!empty($partner->KontTehEmail)) {
+                        Yii::$app->queue->push(new SendMailJob([
+                            'email' => $partner->KontTehEmail,
+                            'subject' => $row['Head'],
+                            'content' => str_replace("\r\n", "<br>", $row['Body'])
+                        ]));
+                    }
+                }
+
+                Yii::$app->db->createCommand()->update('news', ['DateSend' => time()], ['ID' => $row['ID']])->execute();
+            }
+        } catch (\Throwable $e) {
+            Yii::warning($e->getMessage(), 'rsbcron');
         }
     }
 }

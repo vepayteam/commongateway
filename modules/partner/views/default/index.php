@@ -1,8 +1,12 @@
 <?php
+
+use app\models\partner\news\News;
+
 /* @var yii\web\View $this */
 /* @var $IsAdmin */
-/* @var array $news */
+/* @var News[] $news */
 /* @var array $alerts */
+
 $this->title = "Кабинет партнера";
 ?>
 
@@ -35,9 +39,9 @@ $this->title = "Кабинет партнера";
 
                     <div class="feed-element">
                         <div>
-                            <strong <?= $onenew['TypeNews'] == 1 ? 'style=\'color: red\'' : ''?>><?=$onenew['HeaderNews']?></strong>
-                            <div <?= $onenew['TypeNews'] == 1 ? 'style=\'color: red\'' : ''?>><?=$onenew['TextNews']?></div>
-                            <small class="text-muted"><?=date('d.m.Y H:i', $onenew['DateNew'])?></small>
+                            <strong <?= false ? 'style=\'color: red\'' : ''?>><?=\yii\helpers\Html::encode($onenew->Head)?></strong>
+                            <div <?= false ? 'style=\'color: red\'' : ''?>><?=str_replace("\r\n", "<br>", \yii\helpers\Html::encode($onenew->Body))?></div>
+                            <small class="text-muted"><?=date('d.m.Y H:i', $onenew->DateAdd)?></small>
                         </div>
                     </div>
 
@@ -56,6 +60,7 @@ $this->title = "Кабинет партнера";
         </div>
         <div class="ibox-content">
             <h5>По финансовым вопросам</h5>
+            <p>+7 (499) 954-84-95</p>
             <h5>Служба технической поддержки</h5>
             <p>e-mail: <a href="mailto:support@vepay.online">support@vepay.online</a>
         </div>

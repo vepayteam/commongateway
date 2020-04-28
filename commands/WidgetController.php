@@ -42,6 +42,8 @@ class WidgetController extends Controller
 
         $this->actionAlarms();
 
+        $this->actionSendNews();
+
         /*if (date('G') == 0) {
             //ocm комиссия 1.5%
             Yii::$app->db->createCommand()->update('uslugatovar', [
@@ -171,6 +173,7 @@ class WidgetController extends Controller
 
     public function actionSendNews()
     {
+        echo "Run SendNews\n";
         $SendNews = new SendNews();
         $SendNews->execute();
     }
