@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
-  title: API Краутфандинг
-  description: Vepay API Краутфандинг.
+  title: API Краудфандинг
+  description: Vepay API Краудфандинг.
   version: 1.0.5
 security:
   - Login: []
