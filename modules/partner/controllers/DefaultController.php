@@ -54,7 +54,8 @@ class DefaultController extends Controller
     {
         if (!Yii::$app->user->isGuest) {
             $news = News::find()
-                ->orderBy(['DateAdd' => SORT_DESC])->limit(10)
+                ->where(['IsDeleted' => 0])
+                ->orderBy(['DateAdd' => SORT_DESC])->limit(5)
                 ->all();
             return $this->render('index', [
                 'news' => $news,
@@ -158,8 +159,27 @@ class DefaultController extends Controller
             $news = new News();
             $news->load(Yii::$app->request->post());
             $news->DateAdd = time();
-            $news->DateSend = 0;
             if ($news->validate()) {
+                $news->save(false);
+                return ['status' => 1];
+            }
+            return ['status' => 0];
+        }
+        return $this->redirect('/');
+    }
+
+    /**
+     * Добавить новосить
+     * @return int[]|\yii\web\Response
+     */
+    public function actionDelnews()
+    {
+        if (Yii::$app->request->isAjax && UserLk::IsAdmin(Yii::$app->user)) {
+            Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+            $news = News::findOne(['ID' => (int)Yii::$app->request->post('id')]);
+            if ($news) {
+                $news->IsDeleted = 1;
                 $news->save(false);
                 return ['status' => 1];
             }

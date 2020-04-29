@@ -11,6 +11,7 @@ use app\models\queue\SendMailJob;
 use app\models\site\CheckPay;
 use app\models\site\ContactForm;
 use app\models\site\PartnerReg;
+use app\models\telegram\Telegram;
 use Yii;
 use yii\bootstrap\ActiveForm;
 use yii\db\Exception;
@@ -181,7 +182,7 @@ class SiteController extends Controller
             }*/
 
             Yii::$app->queue->push(new SendMailJob([
-                'email' => 'it@vepay.online',
+                'email' => 'info@vepay.online',
                 'subject' => "Зарегистрирован контрагент",
                 'content' => "Зарегистрирован контрагент " . $partner->Name
             ]));
@@ -257,6 +258,17 @@ class SiteController extends Controller
             'model' => $model
         ]);
 
+    }
+
+    public function actionFeed()
+    {
+        $Telegram = new Telegram();
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $ret = $Telegram->GetMesages();
+        if ($ret) {
+            return ['status' => 1, 'data' => $ret];
+        }
+        return ['status' => 0];
     }
 
     /**

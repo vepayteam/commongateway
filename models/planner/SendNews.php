@@ -23,9 +23,9 @@ class SendNews
 
             foreach ($result as $row) {
                 foreach ($partners as $partner) {
-                    if (!empty($partner->KontTehEmail)) {
+                    if (!empty($partner->EmailNotif)) {
                         Yii::$app->queue->push(new SendMailJob([
-                            'email' => $partner->KontTehEmail,
+                            'email' => $partner->EmailNotif,
                             'subject' => $row['Head'],
                             'content' => str_replace("\r\n", "<br>", $row['Body'])
                         ]));

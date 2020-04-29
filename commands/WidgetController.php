@@ -8,6 +8,7 @@ use app\models\mfo\DistributionReports;
 use app\models\Payschets;
 use app\models\planner\AlarmsSend;
 use app\models\planner\OtchToEmail;
+use app\models\planner\ReceiveTelegram;
 use app\models\planner\ReturnComisMfo;
 use app\models\planner\SendNews;
 use app\models\planner\UpdateStatems;
@@ -43,6 +44,8 @@ class WidgetController extends Controller
         $this->actionAlarms();
 
         $this->actionSendNews();
+
+        $this->actionReceiveTelegram();
 
         /*if (date('G') == 0) {
             //ocm комиссия 1.5%
@@ -178,4 +181,10 @@ class WidgetController extends Controller
         $SendNews->execute();
     }
 
+    public function actionReceiveTelegram()
+    {
+        echo "Run ReceiveTelegram\n";
+        $ReceiveTelegram = new ReceiveTelegram();
+        $ReceiveTelegram->execute();
+    }
 }

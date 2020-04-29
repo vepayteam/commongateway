@@ -32,3 +32,5 @@ tests/_support/_generated
 vepay.md5
 vepay.md5.out
 !models/geolocation/GeoLite2-ASN.mmdb
+/models/telegram/vepay.session
+/models/telegram/data.json

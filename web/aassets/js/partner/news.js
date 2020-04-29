@@ -14,21 +14,45 @@
                     method: 'POST',
                     data: form.serialize(),
                     beforeSend: function () {
-                        form.closest('.ibox-content').toggleClass('sk-loading');
+                        $('#submitnews').prop('disabled', true);
                     },
                     success: function (data) {
                         form.closest('.ibox-content').toggleClass('sk-loading');
                         if (data.status == 1) {
                             window.location.reload();
                         } else {
+                            $('#submitnews').prop('disabled', false);
                             toastr.error(data.message, "Ошибка");
                         }
                     },
                     error: function () {
-                        form.closest('.ibox-content').toggleClass('sk-loading');
+                        $('#submitnews').prop('disabled', false);
                     }
                 });
 
+                return false;
+            });
+
+            $('[data-click="delnews"]').off().on('click', function () {
+                let id = $(this).attr('data-id');
+                if (confirm("Удалить новость?")) {
+                    $.ajax({
+                        url: '/partner/default/delnews',
+                        method: 'POST',
+                        data: {'id': id},
+                        beforeSend: function () {
+                        },
+                        success: function (data) {
+                            if (data.status == 1) {
+                                window.location.reload();
+                            } else {
+                                toastr.error(data.message, "Ошибка");
+                            }
+                        },
+                        error: function () {
+                        }
+                    });
+                }
                 return false;
             });
         },

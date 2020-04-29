@@ -12,6 +12,10 @@ use Yii;
  * @property string|null $Body
  * @property int $DateAdd
  * @property int $DateSend
+ * @property int $Bank
+ * @property int $BankId
+ * @property int $BankDate
+ * @property int $IsDeleted
  */
 class News extends \yii\db\ActiveRecord
 {
@@ -30,8 +34,8 @@ class News extends \yii\db\ActiveRecord
     {
         return [
             [['Body'], 'string'],
-            [['DateAdd', 'DateSend'], 'required'],
-            [['DateAdd', 'DateSend'], 'integer'],
+            [['DateAdd'], 'required'],
+            [['DateAdd', 'DateSend', 'Bank', 'BankId', 'BankDate', 'IsDeleted'], 'integer'],
             [['Head'], 'string', 'max' => 255],
         ];
     }
@@ -43,10 +47,8 @@ class News extends \yii\db\ActiveRecord
     {
         return [
             'ID' => 'ID',
-            'Head' => 'Head',
-            'Body' => 'Body',
-            'DateAdd' => 'Date Add',
-            'DateSend' => 'Date Send',
+            'Head' => 'Заголовок',
+            'Body' => 'Новость',
         ];
     }
 

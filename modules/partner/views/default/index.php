@@ -40,6 +40,9 @@ $this->title = "Кабинет партнера";
                     <div class="feed-element">
                         <div>
                             <strong <?= false ? 'style=\'color: red\'' : ''?>><?=\yii\helpers\Html::encode($onenew->Head)?></strong>
+                            <?php if ($IsAdmin) : ?>
+                                <a class="pull-right" data-id="<?=$onenew->ID?>" data-click="delnews">x</a>
+                            <?php endif;?>
                             <div <?= false ? 'style=\'color: red\'' : ''?>><?=str_replace("\r\n", "<br>", \yii\helpers\Html::encode($onenew->Body))?></div>
                             <small class="text-muted"><?=date('d.m.Y H:i', $onenew->DateAdd)?></small>
                         </div>
