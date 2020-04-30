@@ -5,17 +5,15 @@ namespace app\models\bank;
 use app\models\payonline\Cards;
 use app\models\Payschets;
 use app\models\TU;
-use DOMDocument;
-use DOMNode;
-use DOMXPath;
 use qfsx\yii2\curl\Curl;
 use Yii;
+use yii\helpers\Json;
 
 class MTSBank implements IBank
 {
     public static $bank = 3;
 
-    private $bankUrl = 'https://web.rbsuat.com/mtsbank/webservices/merchant-ws';
+    private $bankUrl = 'https://web.rbsuat.com/mtsbank';
     private $bankUrlClient = '';
     private $shopId = 'vepay-api';
     private $certFile = 'vepay';
@@ -35,9 +33,6 @@ class MTSBank implements IBank
     public static $VYVODOCTGATE = 8;
     public static $PEREVODOCTGATE = 9;
 
-    /* @var DOMDocument $doc */
-    private $doc;
-
     /**
      * MTSBank constructor
      * @param MtsGate|null $mtsGate
@@ -46,7 +41,7 @@ class MTSBank implements IBank
     public function __construct($mtsGate = null)
     {
         if (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] == 'Y') {
-            $this->bankUrl = 'https://web.rbsuat.com/mtsbank/webservices/merchant-ws';
+            $this->bankUrl = 'https://web.rbsuat.com/mtsbank';
         }
 
         if ($mtsGate) {
@@ -176,42 +171,29 @@ class MTSBank implements IBank
      */
     public function ConfirmXml(array $params)
     {
-        $body = $this->CreateSoap();
-        $finishThreeDs = $this->doc->createElementNS('http://engine.paymentgate.ru/webservices/merchant', 'mer:finishThreeDs');
-        $body->appendChild($finishThreeDs);
-        $request = $this->doc->createElement('request');
-        $finishThreeDs->appendChild($request);
-        //$request->setAttribute("merchantOrderNumber", $params['ID']);
-        $request->setAttribute("language", "ru");
-        $request->setAttribute("md", $params['MD']);
-        $request->setAttribute("paRes", $params['PaRes']);
+        $action = '/rest/finish3dsPayment.do';
+        $queryData = [
+            'userName' => $this->shopId,
+            'password' => $this->certFile,
+            'mdOrder' => $params['ExtBillNumber'],
+            'paRes' => $params['PaRes']
+        ];
 
-        $ans = $this->curlXmlReq($this->doc->saveXML(), $this->bankUrl);
-
-        /*$ans['xml'] = '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-<soap:Body> 
-<ns1:finishThreeDsResponse xmlns:ns1="http://engine.paymentgate.ru/webservices/merchant"> 
-<return errorMessage="" errorCode="0" returnUrl="http://ya.ru?orderId=8b5b7ee5-eb5a-4cf4-81ec-7153f7ca2864"/> 
-</ns1:finishThreeDsResponse> 
-</soap:Body> 
-</soap:Envelope>';*/
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl.$action);
 
         if (isset($ans['xml']) && !empty($ans['xml'])) {
-            $return = $this->ParseResult($ans['xml'], 'finishThreeDsResponse');
-            if ($return) {
-                $error = $return->attributes->getNamedItem('errorCode')->nodeValue;
-                if ($error == 0) {
-                    $ordernumber = $return->attributes->getNamedItem('orderId')->nodeValue;
-                    return ['status' => 1, 'transac' => $ordernumber];
-                } else {
-                    $message = $return->attributes->getNamedItem('errorMessage')->nodeValue;
-                    return ['status' => 2, 'message' => $message, 'fatal' => 1];
-                }
+            if (!isset($ans['xml']['errorCode'])) {
+                return [
+                    'status' => 1,
+                    'transac' => $params['ExtBillNumber'],
+                ];
             } else {
-                $fault = $this->ParseFault($ans['xml']);
-                return ['status' => 2, 'message' => $fault->nodeValue, 'fatal' => 1];
+                $error = $ans['xml']['errorCode'];
+                $message = $ans['xml']['errorMessage'];
+                return ['status' => 2, 'message' => $error.":".$message, 'fatal' => 1];
             }
         }
+
         return ['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0];
     }
 
@@ -229,39 +211,36 @@ class MTSBank implements IBank
 
         if ($params['Status'] == 1) {
 
-            $body = $this->CreateSoap();
-            $order = $this->doc->createElement('order');
-            $order->setAttribute("orderId", $params['ExtBillNumber']);
             if ($params['DateCreate'] < mktime(0, 0, 0, date('n'), date('d'), date('Y'))) {
-                //возврат - отмена на следующий день после оплаты
-                $order->setAttribute("refundAmount", $params['SummFull']);
-                $refundOrder = $this->doc->createElementNS('http://engine.paymentgate.ru/webservices/merchant', 'mer:refundOrder');
-                $refundOrder->appendChild($order);
-                $body->appendChild($refundOrder);
+                $action = '/rest/refund.do';
+                $queryData = [
+                    'userName' => $this->shopId,
+                    'password' => $this->certFile,
+                    'orderId' => $params['ExtBillNumber'],
+                    'amount' => $params['SummFull']
+                ];
             } else {
-                //отмена в день оплаты
-                $reverseOrder = $this->doc->createElementNS('http://engine.paymentgate.ru/webservices/merchant', 'mer:reverseOrder');
-                $reverseOrder->appendChild($order);
-                $body->appendChild($reverseOrder);
+                $action = '/rest/reverse.do';
+                $queryData = [
+                    'userName' => $this->shopId,
+                    'password' => $this->certFile,
+                    'orderId' => $params['ExtBillNumber']
+                ];
             }
 
-            $ans = $this->curlXmlReq($this->doc->saveXML(), $this->bankUrl);
+            $ans = $this->curlXmlReq($queryData, $this->bankUrl.$action);
 
-            /*$ans['xml'] = '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-<soap:Body> 
-<ns1:refundOrderResponse xmlns:ns1="http://engine.paymentgate.ru/webservices/merchant"> 
-  <return errorCode="7" errorMessage="    "/> 
-</ns1:refundOrderResponse> 
-</soap:Body> 
-</soap:Envelope>
-';*/
             if (isset($ans['xml']) && !empty($ans['xml'])) {
-                $return = $this->ParseResult($ans['xml'], 'refundOrderResponse');
-                if ($return) {
-                    $error = $return->attributes->getNamedItem('errorCode')->nodeValue;
-                    $message = $return->attributes->getNamedItem('errorMessage')->nodeValue;
-
-                    return ['state' => $error == 0, 'Status' => $error, 'message' => $message];
+                if (!isset($ans['xml']['errorCode'])) {
+                    return [
+                        'status' => 1,
+                        'Status' => 0,
+                        'message' => ''
+                    ];
+                } else {
+                    $error = $ans['xml']['errorCode'];
+                    $message = $ans['xml']['errorMessage'];
+                    return ['state' => $error == 0, 'Status' => $error, 'message' => $error.":".$message];
                 }
             }
         }
@@ -270,46 +249,26 @@ class MTSBank implements IBank
 
     private function RegisterOrder(array $params)
     {
-        $body = $this->CreateSoap();
-        $registerOrder = $this->doc->createElementNS('http://engine.paymentgate.ru/webservices/merchant', 'mer:registerOrder');
-        $body->appendChild($registerOrder);
-        $order = $this->doc->createElement('order');
-        $registerOrder->appendChild($order);
-        $order->setAttribute("merchantOrderNumber", $params['ID']);
-        $order->setAttribute("Description", 'Оплата по счету ' . $params['ID']);
-        $order->setAttribute("amount", $params['SummFull']);
-        //$order->setAttribute("currency","");
-        //$order->setAttribute("language","");
-        //$order->setAttribute("pageView","MOBILE");
-        $order->setAttribute("sessionTimeoutSecs", $params['TimeElapsed']);
-        //$order->setAttribute("bindingId", "");
+        $action = '/rest/register.do';
+        $queryData = [
+            'token' => $this->keyFile,
+            'orderNumber' => $params['ID'],
+            'amount' => $params['SummFull'],
+            'description' => 'Оплата по счету ' . $params['ID'],
+            'returnUrl' => $this->backUrls['ok'] . $params['ID'],
+            'sessionTimeoutSecs' => $params['TimeElapsed']
+        ];
 
-        $ans = $this->curlXmlReq($this->doc->saveXML(), $this->bankUrl);
-
-        /*$ans['xml'] = '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
- <soap:Body>
- <ns1:registerOrderResponse xmlns:ns1="http://engine.paymentgate.ru/webservices/merchant">
- <return orderId="05fcbc62-7ee6-4f1a-b3d5-6ca41a982283" errorCode="0" errorMessage="">
- <formUrl> https://server/application_context/mobile_payment_ru.html?mdOrder=05fcbc62-7ee6-4f1ab3d5-6ca41a982283 </formUrl>
- </return>
- </ns1:registerOrderResponse>
- </soap:Body>
- </soap:Envelope>';*/
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl.$action);
 
         if (isset($ans['xml']) && !empty($ans['xml'])) {
-            $return = $this->ParseResult($ans['xml'], 'registerOrderResponse');
-            if ($return) {
-                $error = $return->attributes->getNamedItem('errorCode')->nodeValue;
-                if ($error == 0) {
-                    $ordernumber = $return->attributes->getNamedItem('orderId')->nodeValue;
-                    return ['status' => 1, 'transac' => $ordernumber];
-                } else {
-                    $message = $return->attributes->getNamedItem('errorMessage')->nodeValue;
-                    return ['status' => 2, 'message' => $message, 'fatal' => 1];
-                }
+            if (!isset($ans['xml']['errorCode'])) {
+                $ordernumber = $ans['xml']['orderId'];
+                return ['status' => 1, 'transac' => $ordernumber];
             } else {
-                $fault = $this->ParseFault($ans['xml']);
-                return ['status' => 2, 'message' => $fault->nodeValue, 'fatal' => 1];
+                $error = $ans['xml']['errorCode'];
+                $message = $ans['xml']['errorMessage'];
+                return ['status' => 2, 'message' => $error.":".$message, 'fatal' => 1];
             }
         }
         return ['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0];
@@ -317,66 +276,41 @@ class MTSBank implements IBank
 
     private function PayOrder(array $params, $ordernumber)
     {
-        $body = $this->CreateSoap();
-        $paymentOrder = $this->doc->createElementNS('http://engine.paymentgate.ru/webservices/merchant', 'mer:paymentOrder');
-        $body->appendChild($paymentOrder);
-        $order = $this->doc->createElement('order');
-        $paymentOrder->appendChild($order);
-        $order->setAttribute("orderId", $ordernumber);
-        $order->setAttribute("pan", $params['card']['number']);
-        $order->setAttribute("cvc", $params['card']['cvc']);
-        $order->setAttribute("year", (int)("20" . $params['card']['year']));
-        $order->setAttribute("month", (int)($params['card']['month']));
-        $order->setAttribute("cardholderName", $params['card']['holder']);
-        $order->setAttribute("language", "ru");
-        $order->setAttribute("ip", $params['IPAddressUser']);
-        //email
-        //params
+        $action = '/rest/paymentorder.do';
+        $queryData = [
+            'userName' => $this->shopId,
+            'password' => $this->certFile,
+            'MDORDER' => $ordernumber,
+            '$PAN' => $params['card']['number'],
+            '$CVC' => $params['card']['cvc'],
+            'YYYY' => (int)("20" . $params['card']['year']),
+            'MM' => (int)($params['card']['month']),
+            'TEXT' => $params['card']['holder'],
+            'language' => 'ru',
+            'ip' => $params['IPAddressUser']
+        ];
 
-        //'Amount' => $params['SummFull'],
-        //'Description' => 'Оплата по счету ' . $params['ID'],
-        //'TTL' => '00.00:' . ($params['TimeElapsed'] / 60) . ':00'
-
-        $ans = $this->curlXmlReq($this->doc->saveXML(), $this->bankUrl);
-
-        /*$ans['xml'] = '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
- <soap:Body>
- <ns1:paymentOrderResponse xmlns:ns1="http://engine.paymentgate.ru/webservices/merchant">
- <return errorCode="0" info=" , ..." redirect="https://test.paymentgate.ru:443/testpayment/rest
-/finish3ds.do" acsUrl="https://test.paymentgate.ru/acs/auth/start.do" paReq="eJxVUk1zgjAQ
-/SsM95KEr1pnjUOLnXqgYxUvvVHYAVQ+DFDUX99EUeshM/t2N2/3vQSmh2Kn
-/aJo8qqc6MyguoZlXCV5mU70dfj+NNKnHMJMIPorjDuBHAJsmihFLU8metGkBtM5LLwl7jkMTFwSGSaQK5RXRJxFZcshivev809uWzazHCADhALF
-3OfMtGzHfR4BuWAoowJ5iE27yqoayBlCXHVlK47ctS0gVwCd2PGsbesxIX3fG2lVpTs04qoAokpA7jssOhU1kuqQJzzwvf5yZqdPf0uDcHsM
-/C8WnNIJENUBSdQiNykzGaWOxujYpmNqAznnISrUDtx1XUqloguCWg3xHkr/UyC9FNLqq4wrAjzUVYmyQ
-/p3iyHBJr4ZodWDALmBygO5K3r7UB7HrXRvnXxvhdufxGKUdH34kiUb15mZ3k+3WSrnz01qXi79Yw67DFQAiKIhw6OS4cFl9PAR/gAOWr9V"/>
- </ns1:paymentOrderResponse>
- </soap:Body>
- </soap:Envelope>';*/
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl.$action);
 
         if (isset($ans['xml']) && !empty($ans['xml'])) {
-            $return = $this->ParseResult($ans['xml'], 'paymentOrderResponse');
-            if ($return) {
-                $error = $return->attributes->getNamedItem('errorCode')->nodeValue;
-                if ($error == 0) {
-                    $url = $return->attributes->getNamedItem('acsUrl')->nodeValue;
-                    $pa = $return->attributes->getNamedItem('paReq')->nodeValue;
-                    $md = md5($params['ID']);
-                    return [
-                        'status' => 1,
-                        'transac' => $ordernumber,
-                        'url' => $url,
-                        'pa' => $pa,
-                        'md' => $md
-                    ];
-                } else {
-                    $message = $return->attributes->getNamedItem('errorMessage');
-                    return ['status' => 2, 'message' => $message, 'fatal' => 1];
-                }
+            if (!isset($ans['xml']['errorCode'])) {
+                $url = $ans['xml']['acsUrl'];
+                $pa = $ans['xml']['paReq'];
+                $md = $ordernumber;
+                return [
+                    'status' => 1,
+                    'transac' => $ordernumber,
+                    'url' => $url,
+                    'pa' => $pa,
+                    'md' => $md
+                ];
             } else {
-                $fault = $this->ParseFault($ans['xml']);
-                return ['status' => 2, 'message' => $fault->nodeValue, 'fatal' => 1];
+                $error = $ans['xml']['errorCode'];
+                $message = $ans['xml']['errorMessage'];
+                return ['status' => 2, 'message' => $error.":".$message, 'fatal' => 1];
             }
         }
+
         return ['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0];
 
     }
@@ -389,64 +323,39 @@ class MTSBank implements IBank
      */
     private function checkStatusOrder($params, $isCron)
     {
-        $body = $this->CreateSoap();
-        $paymentOrder = $this->doc->createElementNS('http://engine.paymentgate.ru/webservices/merchant', 'mer:getOrderStatusExtended');
-        $body->appendChild($paymentOrder);
-        $order = $this->doc->createElement('order');
-        $paymentOrder->appendChild($order);
-        //if (!empty($params['ExtBillNumber'])) {
-        //$order->setAttribute("orderId", $params['ExtBillNumber']);
-        //}
-        $order->setAttribute("language", "ru");
-        $paymentOrder->appendChild(
-            $this->doc->createElement('merchantOrderNumber', $params['ID'])
-        );
+        $action = '/rest/getOrderStatusExtended.do';
+        $queryData = [
+            'userName' => $this->shopId,
+            'password' => $this->certFile,
+            //'orderId' => $params['ExtBillNumber'],
+            'orderNumber' => $params['ID']
+        ];
 
-        $ans = $this->curlXmlReq($this->doc->saveXML(), $this->bankUrl);
-
-        /*$ans['xml'] = '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-<soap:Body> 
-<ns1:getOrderStatusExtendedResponse xmlns:ns1="http://engine.paymentgate.ru/webservices/merchant">
-<return orderNumber="0s7a84sPe49Hdsddd0134567a0" orderStatus="2" actionCode="0" actionCodeDescription="Request processed successfully" amount="33000" currency="643" date="2013-11-13T16:51:02.785+04:00" orderDescription=" " errorCode="0" errorMessage="Success"> 
-<attributes name="mdOrder" value="942e8534-ac73-4e3c-96c6-f6cc448018f7"/> 
-<cardAuthInfo maskedPan="411111**1111" expiration="201512" cardholderName="Ivan" approvalCode="123456"/> 
-<authDateTime>2013-11-13T16:51:02.898+04:00</authDateTime> 
-<terminalId>111113</terminalId> 
-<authRefNum>111111111111</authRefNum> 
-<paymentAmountInfo paymentState="DEPOSITED" approvedAmount="33000" depositedAmount="33000" refundedAmount="0"/> 
-<bankInfo bankName="TEST CARD" bankCountryCode="RU" bankCountryName="Russian Federation"/> 
-</return> 
-</ns1:getOrderStatusExtendedResponse> 
-</soap:Body> 
- </soap:Envelope>';*/
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl.$action);
 
         if (isset($ans['xml']) && !empty($ans['xml'])) {
-            $return = $this->ParseResult($ans['xml'], 'getOrderStatusExtendedResponse');
-            if ($return) {
-                $error = $return->attributes->getNamedItem('errorCode')->nodeValue;
-                if ($error == 0) {
-                    $orderStatus = $return->attributes->getNamedItem('orderStatus')->nodeValue;
-                    $actionCodeDescription = $return->attributes->getNamedItem('actionCodeDescription')->nodeValue;
-                    $cardAuthInfo = $this->GetChildNode($return, 'cardAuthInfo');
-                    $bankInfo = $this->GetChildNode($return, 'bankInfo');
-                    $status = $this->convertState($orderStatus);
-                    return [
-                        'state' => $status,
-                        'xml' => [
-                            'orderinfo' => [
-                                'statedescription' => $actionCodeDescription
-                            ],
-                            'orderadditionalinfo' => [
-                                'rrn' => $this->GetChildNode($return, 'authRefNum')->nodeValue,
-                                'cardnumber' => isset($cardAuthInfo) ? $cardAuthInfo->attributes->getNamedItem('maskedPan')->nodeValue : null,
-                                'expiry' => isset($cardAuthInfo) ? substr($cardAuthInfo->attributes->getNamedItem('expiration')->nodeValue, 4,2).substr($cardAuthInfo->attributes->getNamedItem('expiration')->nodeValue, 2,2) : null,
-                                'idcard' => isset($cardAuthInfo) ? $cardAuthInfo->attributes->getNamedItem('approvalCode')->nodeValue : null,
-                                'type' => Cards::GetTypeCard($status['xml']['orderadditionalinfo']['cardnumber']),
-                                'holder' => isset($cardAuthInfo) ? $cardAuthInfo->attributes->getNamedItem('cardholderName')->nodeValue : null,
-                            ]
+            if (!isset($ans['xml']['errorCode'])) {
+                $status = $this->convertState($ans['xml']['actionCode']);
+                return [
+                    'state' => $status,
+                    'xml' => [
+                        'orderinfo' => [
+                            'statedescription' => $ans['xml']['actionCodeDescription']
+                        ],
+                        'orderadditionalinfo' => [
+                            'rrn' => $ans['xml']['authRefNum'],
+                            'cardnumber' => isset($ans['xml']['cardAuthInfo']['maskedPan']) ? $ans['xml']['cardAuthInfo']['maskedPan'] : null,
+                            'expiry' => isset($ans['xml']['cardAuthInfo']['expiration']) ? substr($ans['xml']['cardAuthInfo']['expiration'], 4,2).substr($ans['xml']['cardAuthInfo']['expiration'], 2,2) : null,
+                            'idcard' => isset($ans['xml']['cardAuthInfo']['approvalCode']) ? $ans['xml']['cardAuthInfo']['approvalCode'] : null,
+                            'type' => Cards::GetTypeCard($ans['xml']['cardAuthInfo']['maskedPan']),
+                            'holder' => isset($ans['xml']['cardAuthInfo']['cardholderName']) ? $ans['xml']['cardAuthInfo']['cardholderName'] : null,
                         ]
-                    ];
-                } elseif ($error == 6) {
+                    ]
+                ];
+            } else {
+                $error = $ans['xml']['errorCode'];
+                $message = $ans['xml']['errorMessage'];
+                if ($error == 6) {
                     //не найден в банке - если в кроне запрос, то отменить
                     if ($isCron && isset($params['IsCustom']) && TU::IsInPay($params['IsCustom'])) {
                         //не найден в банке - если в кроне запрос, то отменить
@@ -455,15 +364,10 @@ class MTSBank implements IBank
                         return ['state' => 0, 'xml' => ['orderinfo' => ['statedescription' => 'В обработке']]];
                     }
                 } else {
-                    $message = $return->attributes->getNamedItem('errorMessage');
                     return ['state' => 0, 'xml' => ['orderinfo' => ['statedescription' => $message]]];
                 }
-            } else {
-                $fault = $this->ParseFault($ans['xml']);
-                return ['state' => 0, 'xml' => ['orderinfo' => ['statedescription' =>  $fault->nodeValue]]];
             }
         }
-
         return ['state' => 0];
     }
 
@@ -493,41 +397,8 @@ class MTSBank implements IBank
     }
 
     /**
-     * @return DOMNode
-     */
-    private function CreateSoap()
-    {
-        $this->doc = new DOMDocument('1.0', 'utf-8');
-        $envelope = $this->doc->createElementNS('http://schemas.xmlsoap.org/soap/envelope/', 's:Envelope');
-        $this->doc->appendChild($envelope);
-
-        $Header = $this->doc->createElement('s:Header');
-        $envelope->appendChild($Header);
-        $Security = $this->doc->createElement('wsse:Security');
-        $Security->setAttribute('xmlns:wsse', 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd');
-        $Security->setAttribute('xmlns:wsu', 'http://docs.oasis-open.dsx.0.1-ytilitu-ytirucessw02%-ssw-104002-sisao/10/4002/ssw/gro');
-        $Header->appendChild($Security);
-
-        $UsernameToken = $this->doc->createElement('wsse:UsernameToken');
-        $UsernameToken->setAttribute('wsu:Id', $this->keyFile);
-        $Security->appendChild($UsernameToken);
-
-        $Username = $this->doc->createElement('wsse:UsernameToken', $this->shopId);
-        $UsernameToken->appendChild($Username);
-
-        $Password = $this->doc->createElement('wsse:Password', $this->certFile);
-        $Password->setAttribute('Type', 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText');
-        $UsernameToken->appendChild($Password);
-
-        $body = $this->doc->createElement('s:Body');
-        $envelope->appendChild($body);
-
-        return $body;
-    }
-
-    /**
      * Отправка POST запроса в банк
-     * @param string $post
+     * @param array $post
      * @param string $url
      * @param array $addHeader
      * @param bool $jsonReq
@@ -535,7 +406,7 @@ class MTSBank implements IBank
      */
     private function curlXmlReq($post, $url, $addHeader = [])
     {
-        $post = trim(str_replace('<?xml version="1.0" encoding="utf-8"?>', '', $post));
+        $post = http_build_query($post);
         $timout = 110;
         $curl = new Curl();
         Yii::warning("req: login = " . $this->shopId . " url = " . $url . "\r\n" . Cards::MaskCardLog($post), 'merchant');
@@ -544,8 +415,7 @@ class MTSBank implements IBank
                 ->setOption(CURLOPT_TIMEOUT, $timout)
                 ->setOption(CURLOPT_CONNECTTIMEOUT, $timout)
                 ->setOption(CURLOPT_HTTPHEADER, array_merge([
-                    'Content-Type: application/soap+xml; charset=utf-8',
-                    'SOAPAction: ""'
+                    'Content-Type: application/x-www-form-urlencoded; charset=utf-8'
                 ], $addHeader))
                 ->setOption(CURLOPT_SSL_VERIFYHOST, false)
                 ->setOption(CURLOPT_SSL_CIPHER_LIST, 'TLSv1')
@@ -570,11 +440,11 @@ class MTSBank implements IBank
             switch ($curl->responseCode) {
                 case 200:
                 case 202:
-                    $ans['xml'] = $this->ParseSoap($curl->response);
+                    $ans['xml'] = Json::decode($curl->response);
                     break;
                 case 500:
                     $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
-                    $ans['httperror'] = $this->ParseSoap($curl->response);
+                    $ans['httperror'] = Json::decode($curl->response);
                     break;
                 default:
                     $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
@@ -587,52 +457,6 @@ class MTSBank implements IBank
         }
 
         return $ans;
-    }
-
-    private function ParseSoap($response)
-    {
-        $doc = new DOMDocument('1.0', 'utf-8');
-        $doc->loadXML($response);
-        return $doc->firstChild;
-    }
-
-    /**
-     * @param $response
-     * @param $node
-     * @return DOMNode|\DOMNodeList|false|null
-     */
-    private function ParseResult($response, $node)
-    {
-        $xml = new DOMDocument('1.0', 'utf-8');
-        $xml->loadXML($response);
-        $xpath = new DOMXpath($xml);
-        $return = $xpath->query("//*[local-name(.) = '".$node."']/return");
-        $return = $return && $return->item(0) ? $return->item(0) : null;
-        return $return;
-    }
-
-    /**
-     * @param $response
-     * @return DOMNode|\DOMNodeList|false|null
-     */
-    private function ParseFault($response)
-    {
-        $xpath = new DOMXpath($response);
-        $fault = $xpath->query("//*[local-name(.) = 'registerOrderResponse']/fault");
-        $fault = $fault && $fault->item(0) ? $fault->item(0) : null;
-        return $fault;
-    }
-
-    private function GetChildNode(DOMNode $node, $nameChild)
-    {
-        $cnt = $node->childNodes->count();
-        for ($i = 0; $i < $cnt; $i++) {
-            $n = $node->childNodes->item($i);
-            if ($n && $n->localName == $nameChild) {
-                return $n;
-            }
-        }
-        return null;
     }
 
 }
