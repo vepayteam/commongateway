@@ -6,6 +6,7 @@ use app\models\partner\news\News;
 use app\models\partner\news\Newsread;
 use app\models\partner\PartnerUsers;
 use app\models\payonline\Partner;
+use app\models\payonline\User;
 use Yii;
 use yii\filters\AccessControl;
 use yii\helpers\Url;
@@ -57,8 +58,10 @@ class DefaultController extends Controller
                 ->where(['IsDeleted' => 0])
                 ->orderBy(['DateAdd' => SORT_DESC])->limit(5)
                 ->all();
+            $alerts = News::GetAlerts($news, UserLk::getUserId(Yii::$app->user));
             return $this->render('index', [
                 'news' => $news,
+                'alerts' => $alerts,
                 'IsAdmin' => UserLk::IsAdmin(Yii::$app->user),
             ]);
         } else {

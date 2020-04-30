@@ -52,8 +52,28 @@ class News extends \yii\db\ActiveRecord
         ];
     }
 
-    public function getNewsread()
+    public function getNewsread($user)
     {
-        return $this->hasOne(Newsread::class, ['IdNews'=>'ID']);
+        return $this->hasOne(Newsread::class, ['IdNews'=>'ID'])->where(['IdUser' => $user])->one();
     }
+
+    public static function GetAlerts($news,  $UserId)
+    {
+        $alerts = [];
+        foreach ($news as $onenew) {
+            $read = $onenew->getNewsread($UserId);
+            if (!$read) {
+                $alerts[] = $onenew;
+                $Newsread = new Newsread();
+                $Newsread->setAttributes([
+                    'IdNews' => $onenew->ID,
+                    'IdUser' => $UserId,
+                    'DateRead' => time()
+                ]);
+                $Newsread->save(false);
+            }
+        }
+        return $alerts;
+    }
+
 }
