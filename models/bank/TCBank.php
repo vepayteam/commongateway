@@ -18,6 +18,7 @@ class TCBank implements IBank
     public const BIC = '044525388';
 
     private $bankUrl = 'https://pay.tkbbank.ru';
+    private $bankUrlXml = 'https://193.232.101.14:8204';
     private $bankUrlClient = 'https://pay.tkbbank.ru';
     private $shopId;
     private $certFile;
@@ -51,6 +52,7 @@ class TCBank implements IBank
     {
         if (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] == 'Y') {
             $this->bankUrl = 'https://paytest.online.tkbbank.ru';
+            $this->bankUrlXml = 'https://193.232.101.14:8203';
         }
 
         if ($tcbGate) {
@@ -575,8 +577,14 @@ class TCBank implements IBank
                 //->setOption(CURLOPT_SSLCERT, $this->certFile)
                 //->setOption(CURLOPT_CAINFO, $this->caFile)
                 ->setOption(CURLOPT_SSL_VERIFYPEER, false)
-                ->setOption(CURLOPT_POSTFIELDS, $post)
-                ->post($url);
+                ->setOption(CURLOPT_POSTFIELDS, $post);
+
+            if (Yii::$app->params['DEVMODE'] == 'Y') {
+                $curl->setOption(CURLOPT_PROXY, '194.58.96.139:3128');
+                $curl->setOption(CURLOPT_PROXYUSERPWD, 'vfort:S3n4a@Mvy4');
+            }
+            $curl->post($url);
+
         } catch (\Exception $e) {
             Yii::warning("curlerror: " . $curl->responseCode . ":" . Cards::MaskCardLog($curl->response), 'merchant');
             $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
@@ -764,6 +772,26 @@ class TCBank implements IBank
         }
 
         return ['status' => 0, 'message' => ''];
+    }
+
+    public function transferToNdfl(array $data)
+    {
+        $action = "/nominal/psr";
+
+        $queryData = Json::encode($data);
+
+        $ans = $this->curlXmlReq($queryData,$this->bankUrlXml.$action);
+
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            $xml = $this->parseAns($ans['xml']);
+            if (isset($xml['document']['status']) && $xml['document']['status'] == '0') {
+                return ['status' => 1, 'transac' => $xml['document']['id'] ?? 0, 'rrn' => $xml['document']['id'] ?? 0];
+            } else {
+                return ['status' => 0, 'message' => $xml['document']['comment'] ?? '', 'transac' => $xml['document']['number'] ?? 0];
+            }
+        }
+
+        return ['status' => 0, 'message' => 'Ошибка запроса'];
     }
 
     /**
@@ -1069,7 +1097,7 @@ class TCBank implements IBank
 
         $queryData = Json::encode($queryData);
 
-        $ans = $this->curlXmlReq($queryData, /*$this->bankUrl*/(Yii::$app->params['TESTMODE'] == 'Y' ? "https://193.232.101.14:8203" : "https://193.232.101.14:8204").$action);
+        $ans = $this->curlXmlReq($queryData, $this->bankUrlXml.$action);
 
         //$ans['xml'] = '';
         //$ans['xml'] = Json::decode($ans['xml']);
@@ -1430,8 +1458,7 @@ class TCBank implements IBank
         $queryData = $params['req'];
 
         $ans = $this->curlXmlReq($queryData,
-            //$this->bankUrl
-            (Yii::$app->params['TESTMODE'] == 'Y' ? "https://193.232.101.14:8203" : "https://193.232.101.14:8204").$action,
+            $this->bankUrlXml.$action,
             ['SOAPAction: "http://cft.transcapital.ru/CftNominalIntegrator/SetBeneficiary"'],
             false
         );

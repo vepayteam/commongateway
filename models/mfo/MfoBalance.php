@@ -59,8 +59,48 @@ class MfoBalance
     {
         $ret = [];
 
+        if ($IsAdmin) {
+            $ret = $this->GetTcbBalances();
+        }
+
+        $todayPays = $this->TodayPays()/100.0;
+        $ret['localin'] = $this->Partner->BalanceIn / 100.0 - $todayPays;
+        $ret['localout'] = $this->Partner->BalanceOut / 100.0;
+
+        $comispogas = $this->GetComissPogas()/100.0;
+        $comisvyd = $this->GetComissVyplat(false)/100.0;
+        $comisvydtoday = $this->GetComissVyplat(true)/100.0;
+        $ret['comisin'] = $comispogas;
+        $ret['comisout'] = $comisvyd;
+
+        if (!empty($this->Partner->SchetTcbNominal)) {
+            //номинальный счет - вся комиссия на счете выдачи, и сегдняшнюю комиссию по выдаче не учитываем
+            $ret['localout'] += $comisvydtoday;
+        } else {
+            //транзитный выдача
+            if (!$this->Partner->VoznagVyplatDirect) {
+                //вознаграждение не выводится со счета - комиссию за выдачу не списываем в онлайне
+                $ret['localout'] += $comisvyd;
+            }
+            if ($this->Partner->IsCommonSchetVydacha) {
+                //один счет - комиссия по выдаче со счета погашения, баланс погашения онлайн
+                $ret['localout'] -= $comispogas;
+                $ret['localin'] += $todayPays;
+            }
+        }
+
+        return $ret;
+    }
+
+    /**
+     * Баланс в ТКБ
+     * @return mixed
+     * @throws \yii\db\Exception
+     */
+    private function GetTcbBalances()
+    {
         $bal = Yii::$app->cache->get('mfo_balance_'.$this->Partner->ID);
-        if (!$bal && $IsAdmin) {
+        if (!$bal) {
 
             $mfo = new MfoReq();
             $mfo->mfo = $this->Partner->ID;
@@ -96,31 +136,6 @@ class MfoBalance
         } else {
             $ret = $bal;
         }
-
-        $ret['localin'] = $this->Partner->BalanceIn / 100.0 - $this->TodayPays() / 100.0;
-        $ret['localout'] = $this->Partner->BalanceOut / 100.0;
-
-        $comispogas = $this->GetComissPogas()/100.0;
-        $comisvyd = $this->GetComissVyplat(false)/100.0;
-        $comisvydtoday = $this->GetComissVyplat(true)/100.0;
-        $ret['comisin'] = $comispogas;
-        $ret['comisout'] = $comisvyd;
-
-        if (!empty($this->Partner->SchetTcbNominal)) {
-            //номинальный счет - вся комиссия на счете выдачи, и сегдняшнюю комиссию по выдаче не учитываем
-            $ret['localout'] += $comisvydtoday;
-        } else {
-            //транзитный выдача
-            if (!$this->Partner->VoznagVyplatDirect) {
-                //комиссию за выдачу не списываем
-                $ret['localout'] += $comisvyd;
-            }
-            if ($this->Partner->IsCommonSchetVydacha) {
-                //комиссия по выдаче - со счета погашения
-                $ret['localout'] -= $comispogas;
-            }
-        }
-
         return $ret;
     }
 
@@ -344,29 +359,31 @@ class MfoBalance
         $ost = $query->scalar();
 
         $MerchVozn = 0;
-        $datefrom = Yii::$app->db->createCommand("
-            SELECT
-                `DateTo`
-            FROM
-                `vyvod_system`
-            WHERE
-                `IdPartner` = :IDMFO
-                AND `TypeVyvod` = :TYPEVYVOD
-                AND `DateOp` < :DATETO
-            ORDER BY `ID` DESC
-            LIMIT 1
-        ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeAcc == 0 ? 1 : 0, ':DATETO' => $date])->queryScalar();
+        if ($TypeAcc != 2) {
+            $datefrom = Yii::$app->db->createCommand("
+                SELECT
+                    `DateTo`
+                FROM
+                    `vyvod_system`
+                WHERE
+                    `IdPartner` = :IDMFO
+                    AND `TypeVyvod` = :TYPEVYVOD
+                    AND `DateOp` < :DATETO
+                ORDER BY `ID` DESC
+                LIMIT 1
+            ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeAcc == 0 ? 1 : 0, ':DATETO' => $date])->queryScalar();
 
-        $vs = new VoznagStat();
-        $vs->setAttributes([
-            'IdPart' => $this->Partner->ID,
-            'datefrom' => date('d.m.Y H:i', $datefrom),
-            'dateto' => date('d.m.Y H:i', $date),
-            'TypeUslug' => $TypeAcc
-        ]);
-        $otch = $vs->GetOtchMerchant(true);
-        foreach ($otch as $row) {
-            $MerchVozn += $row['MerchVozn'] - $row['BankComis'];
+            $vs = new VoznagStat();
+            $vs->setAttributes([
+                'IdPart' => $this->Partner->ID,
+                'datefrom' => date('d.m.Y H:i', $datefrom),
+                'dateto' => date('d.m.Y H:i', $date),
+                'TypeUslug' => 0
+            ]);
+            $otch = $vs->GetOtchMerchant(true);
+            foreach ($otch as $row) {
+                $MerchVozn += $row['MerchVozn'] - $row['BankComis'];
+            }
         }
 
         return $ost + $MerchVozn;
@@ -395,29 +412,31 @@ class MfoBalance
         $ost = $query->scalar();
 
         $MerchVozn = 0;
-        $datefrom = Yii::$app->db->createCommand("
-            SELECT
-                `DateTo`
-            FROM
-                `vyvod_system`
-            WHERE
-                `IdPartner` = :IDMFO
-                AND `TypeVyvod` = :TYPEVYVOD
-                AND `DateOp` < :DATETO
-            ORDER BY `ID` DESC
-            LIMIT 1
-        ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeAcc == 0 ? 1 : 0, ':DATETO' => $date])->queryScalar();
+        if ($TypeAcc != 2) {
+            $datefrom = Yii::$app->db->createCommand("
+                SELECT
+                    `DateTo`
+                FROM
+                    `vyvod_system`
+                WHERE
+                    `IdPartner` = :IDMFO
+                    AND `TypeVyvod` = :TYPEVYVOD
+                    AND `DateOp` < :DATETO
+                ORDER BY `ID` DESC
+                LIMIT 1
+            ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeAcc == 0 ? 1 : 0, ':DATETO' => $date])->queryScalar();
 
-        $vs = new VoznagStat();
-        $vs->setAttributes([
-            'IdPart' => $this->Partner->ID,
-            'datefrom' => date('d.m.Y H:i', $datefrom),
-            'dateto' => date('d.m.Y H:i', $date),
-            'TypeUslug' => $TypeAcc
-        ]);
-        $otch = $vs->GetOtchMerchant(true);
-        foreach ($otch as $row) {
-            $MerchVozn += $row['MerchVozn'] - $row['BankComis'];
+            $vs = new VoznagStat();
+            $vs->setAttributes([
+                'IdPart' => $this->Partner->ID,
+                'datefrom' => date('d.m.Y H:i', $datefrom),
+                'dateto' => date('d.m.Y H:i', $date),
+                'TypeUslug' => 0
+            ]);
+            $otch = $vs->GetOtchMerchant(true);
+            foreach ($otch as $row) {
+                $MerchVozn += $row['MerchVozn'] - $row['BankComis'];
+            }
         }
 
         return $ost + $MerchVozn;

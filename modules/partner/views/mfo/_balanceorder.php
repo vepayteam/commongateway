@@ -9,7 +9,7 @@
 /* @var $istransit */
 /* @var $IdPartner */
 
-$sumIn = $sumOut = $sumComis = 0;
+$sumIn = $sumOut = 0;
 
 ?>
 
@@ -17,16 +17,13 @@ $sumIn = $sumOut = $sumComis = 0;
     <thead>
     <tr>
         <th rowspan="2"><a id="sorttype" style="color: rgb(103, 106, 108);">Дата операции</a></th>
-        <th colspan=<?=($IsAdmin ? "3" : "2")?> >Сумма</th>
+        <th colspan="2">Сумма</th>
         <th rowspan="2">Комментарий</th>
         <th rowspan="2">Контрагент</th>
     </tr>
     <tr>
         <th>Поступления</th>
         <th>Списания</th>
-        <?php if ($IsAdmin) : ?>
-            <th>Комиссия Vepay</th>
-        <?php endif; ?>
     </tr>
     </thead>
     <tbody>
@@ -35,19 +32,13 @@ $sumIn = $sumOut = $sumComis = 0;
         <tr>
             <td data-datesort="<?=date('YmdHis', $row['DatePP'])?>"><?= date('d.m.Y H:i:s', $row['DatePP']) ?></td>
             <td class="text-right"><?= $row['IsCredit'] ? number_format($row['SummPP']/100.0,2,'.','&nbsp;') : ''?></td>
-            <?php if ($IsAdmin) : ?>
-                <td class="text-right"><?= !$row['IsCredit'] ? number_format($row['SummPP']/100.0,2,'.','&nbsp;') : ''?></td>
-                <td class="text-right"><?= !$row['IsCredit'] ? number_format($row['SummComis']/100.0,2,'.','&nbsp;') : ''?></td>
-            <?php else: ?>
-                <td class="text-right"><?= !$row['IsCredit'] ? number_format(($row['SummPP'] + $row['SummComis'])/100.0,2,'.','&nbsp;') : ''?></td>
-            <?php endif; ?>
+            <td class="text-right"><?= !$row['IsCredit'] ? number_format($row['SummPP']/100.0,2,'.','&nbsp;') : ''?></td>
             <td><?= $row['Description'] ?></td>
             <td><?= $row['Name'] ?></td>
         </tr>
         <?php if ($row['IsCredit']) $sumIn += $row['SummPP']; ?>
         <?php if (!$row['IsCredit']) {
             $sumOut += $row['SummPP'];
-            $sumComis += $row['SummComis'];
         } ?>
 
         <?php endforeach; ?>
@@ -56,12 +47,7 @@ $sumIn = $sumOut = $sumComis = 0;
     <tr>
         <th colspan='1'>Итого: </th>
         <th class="text-right"><?=number_format(round($sumIn/100.0, 2),2,'.','&nbsp;')?></th>
-        <?php if ($IsAdmin) : ?>
-            <th class="text-right"><?=number_format(round($sumOut/100.0, 2),2,'.','&nbsp;')?></th>
-            <th class="text-right"><?=number_format(round($sumComis/100.0, 2),2,'.','&nbsp;')?></th>
-        <?php else : ?>
-            <th class="text-right"><?=number_format(round(($sumOut + $sumComis)/100.0, 2),2,'.','&nbsp;')?></th>
-        <?php endif; ?>
+        <th class="text-right"><?=number_format(round($sumOut/100.0, 2),2,'.','&nbsp;')?></th>
         <th colspan='7'></th>
     </tr>
     <tr>
