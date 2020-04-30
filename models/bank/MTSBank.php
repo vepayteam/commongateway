@@ -15,11 +15,11 @@ class MTSBank implements IBank
 {
     public static $bank = 3;
 
-    private $bankUrl = 'https://pay.mtsbank.ru/webservices/merchant';
-    private $bankUrlClient = 'https://pay.mtsbank.ru';
-    private $shopId;
-    private $certFile;
-    private $keyFile;
+    private $bankUrl = 'https://web.rbsuat.com/mtsbank/webservices/merchant-ws';
+    private $bankUrlClient = '';
+    private $shopId = 'vepay-api';
+    private $certFile = 'vepay';
+    private $keyFile = 'ma5m5b0vn7ucd1q4njsmceuul1';
     private $caFile;
     private static $orderState = [0 => 'Обрабатывается', 1 => 'Исполнен', 2 => 'Отказано', 3 => 'Возврат'];
     private $backUrls = ['ok' => 'https://api.vepay.online/pay/orderok?orderid='];
@@ -46,7 +46,7 @@ class MTSBank implements IBank
     public function __construct($mtsGate = null)
     {
         if (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] == 'Y') {
-            $this->bankUrl = 'https://test.paymentgate.ru:443/webservices/merchant-ws';
+            $this->bankUrl = 'https://web.rbsuat.com/mtsbank/webservices/merchant-ws';
         }
 
         if ($mtsGate) {
@@ -188,13 +188,13 @@ class MTSBank implements IBank
 
         $ans = $this->curlXmlReq($this->doc->saveXML(), $this->bankUrl);
 
-        $ans['xml'] = '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"> 
+        /*$ans['xml'] = '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
 <soap:Body> 
 <ns1:finishThreeDsResponse xmlns:ns1="http://engine.paymentgate.ru/webservices/merchant"> 
 <return errorMessage="" errorCode="0" returnUrl="http://ya.ru?orderId=8b5b7ee5-eb5a-4cf4-81ec-7153f7ca2864"/> 
 </ns1:finishThreeDsResponse> 
 </soap:Body> 
-</soap:Envelope>';
+</soap:Envelope>';*/
 
         if (isset($ans['xml']) && !empty($ans['xml'])) {
             $return = $this->ParseResult($ans['xml'], 'finishThreeDsResponse');
@@ -247,14 +247,14 @@ class MTSBank implements IBank
 
             $ans = $this->curlXmlReq($this->doc->saveXML(), $this->bankUrl);
 
-            $ans['xml'] = '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"> 
+            /*$ans['xml'] = '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
 <soap:Body> 
 <ns1:refundOrderResponse xmlns:ns1="http://engine.paymentgate.ru/webservices/merchant"> 
   <return errorCode="7" errorMessage="    "/> 
 </ns1:refundOrderResponse> 
 </soap:Body> 
 </soap:Envelope>
-';
+';*/
             if (isset($ans['xml']) && !empty($ans['xml'])) {
                 $return = $this->ParseResult($ans['xml'], 'refundOrderResponse');
                 if ($return) {
@@ -286,7 +286,7 @@ class MTSBank implements IBank
 
         $ans = $this->curlXmlReq($this->doc->saveXML(), $this->bankUrl);
 
-        $ans['xml'] = '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+        /*$ans['xml'] = '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
  <soap:Body>
  <ns1:registerOrderResponse xmlns:ns1="http://engine.paymentgate.ru/webservices/merchant">
  <return orderId="05fcbc62-7ee6-4f1a-b3d5-6ca41a982283" errorCode="0" errorMessage="">
@@ -294,7 +294,7 @@ class MTSBank implements IBank
  </return>
  </ns1:registerOrderResponse>
  </soap:Body>
- </soap:Envelope>';
+ </soap:Envelope>';*/
 
         if (isset($ans['xml']) && !empty($ans['xml'])) {
             $return = $this->ParseResult($ans['xml'], 'registerOrderResponse');
@@ -339,7 +339,7 @@ class MTSBank implements IBank
 
         $ans = $this->curlXmlReq($this->doc->saveXML(), $this->bankUrl);
 
-        $ans['xml'] = '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+        /*$ans['xml'] = '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
  <soap:Body>
  <ns1:paymentOrderResponse xmlns:ns1="http://engine.paymentgate.ru/webservices/merchant">
  <return errorCode="0" info=" , ..." redirect="https://test.paymentgate.ru:443/testpayment/rest
@@ -351,7 +351,7 @@ class MTSBank implements IBank
 /p3iyHBJr4ZodWDALmBygO5K3r7UB7HrXRvnXxvhdufxGKUdH34kiUb15mZ3k+3WSrnz01qXi79Yw67DFQAiKIhw6OS4cFl9PAR/gAOWr9V"/>
  </ns1:paymentOrderResponse>
  </soap:Body>
- </soap:Envelope>';
+ </soap:Envelope>';*/
 
         if (isset($ans['xml']) && !empty($ans['xml'])) {
             $return = $this->ParseResult($ans['xml'], 'paymentOrderResponse');
@@ -404,7 +404,7 @@ class MTSBank implements IBank
 
         $ans = $this->curlXmlReq($this->doc->saveXML(), $this->bankUrl);
 
-        $ans['xml'] = '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"> 
+        /*$ans['xml'] = '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
 <soap:Body> 
 <ns1:getOrderStatusExtendedResponse xmlns:ns1="http://engine.paymentgate.ru/webservices/merchant">
 <return orderNumber="0s7a84sPe49Hdsddd0134567a0" orderStatus="2" actionCode="0" actionCodeDescription="Request processed successfully" amount="33000" currency="643" date="2013-11-13T16:51:02.785+04:00" orderDescription=" " errorCode="0" errorMessage="Success"> 
@@ -418,7 +418,7 @@ class MTSBank implements IBank
 </return> 
 </ns1:getOrderStatusExtendedResponse> 
 </soap:Body> 
- </soap:Envelope>';
+ </soap:Envelope>';*/
 
         if (isset($ans['xml']) && !empty($ans['xml'])) {
             $return = $this->ParseResult($ans['xml'], 'getOrderStatusExtendedResponse');
@@ -500,8 +500,28 @@ class MTSBank implements IBank
         $this->doc = new DOMDocument('1.0', 'utf-8');
         $envelope = $this->doc->createElementNS('http://schemas.xmlsoap.org/soap/envelope/', 's:Envelope');
         $this->doc->appendChild($envelope);
+
+        $Header = $this->doc->createElement('s:Header');
+        $envelope->appendChild($Header);
+        $Security = $this->doc->createElement('wsse:Security');
+        $Security->setAttribute('xmlns:wsse', 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd');
+        $Security->setAttribute('xmlns:wsu', 'http://docs.oasis-open.dsx.0.1-ytilitu-ytirucessw02%-ssw-104002-sisao/10/4002/ssw/gro');
+        $Header->appendChild($Security);
+
+        $UsernameToken = $this->doc->createElement('wsse:UsernameToken');
+        $UsernameToken->setAttribute('wsu:Id', $this->keyFile);
+        $Security->appendChild($UsernameToken);
+
+        $Username = $this->doc->createElement('wsse:UsernameToken', $this->shopId);
+        $UsernameToken->appendChild($Username);
+
+        $Password = $this->doc->createElement('wsse:Password', $this->certFile);
+        $Password->setAttribute('Type', 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText');
+        $UsernameToken->appendChild($Password);
+
         $body = $this->doc->createElement('s:Body');
         $envelope->appendChild($body);
+
         return $body;
     }
 
@@ -515,6 +535,7 @@ class MTSBank implements IBank
      */
     private function curlXmlReq($post, $url, $addHeader = [])
     {
+        $post = trim(str_replace('<?xml version="1.0" encoding="utf-8"?>', '', $post));
         $timout = 110;
         $curl = new Curl();
         Yii::warning("req: login = " . $this->shopId . " url = " . $url . "\r\n" . Cards::MaskCardLog($post), 'merchant');
@@ -524,9 +545,7 @@ class MTSBank implements IBank
                 ->setOption(CURLOPT_CONNECTTIMEOUT, $timout)
                 ->setOption(CURLOPT_HTTPHEADER, array_merge([
                     'Content-Type: application/soap+xml; charset=utf-8',
-                    'TCB-Header-Login: ' . $this->shopId,
-                    'TCB-Header-Sign: ' . ''/*$this->HmacSha1($post, $this->keyFile)*/,
-                    'TCB-Header-SerializerType: LowerCase'
+                    'SOAPAction: ""'
                 ], $addHeader))
                 ->setOption(CURLOPT_SSL_VERIFYHOST, false)
                 ->setOption(CURLOPT_SSL_CIPHER_LIST, 'TLSv1')
