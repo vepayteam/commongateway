@@ -264,7 +264,7 @@ class SiteController extends Controller
     {
         $Telegram = new Telegram();
         Yii::$app->response->format = Response::FORMAT_JSON;
-        $ret = $Telegram->GetMesages();
+        $ret = $Telegram->ReadMesages();
         if ($ret) {
             return ['status' => 1, 'data' => $ret];
         }

@@ -14,6 +14,7 @@ use app\models\planner\SendNews;
 use app\models\planner\UpdateStatems;
 use app\models\planner\VyvodSumPay;
 use app\models\planner\VyvodVoznagPlanner;
+use app\models\telegram\Telegram;
 use Yii;
 use yii\console\Controller;
 use app\models\payonline\OrderNotif;
@@ -184,6 +185,10 @@ class WidgetController extends Controller
     public function actionReceiveTelegram()
     {
         echo "Run ReceiveTelegram\n";
+
+        $Telegram = new Telegram();
+        $Telegram->GetMesages();
+
         $ReceiveTelegram = new ReceiveTelegram();
         $ReceiveTelegram->execute();
     }

@@ -30,6 +30,10 @@ class Telegram
             fwrite($pt, $mesgs);
             fclose($pt);
         }
+    }
+
+    public function ReadMesages()
+    {
         $pt = fopen(Yii::$app->runtimePath . '/feed.json', 'rb');
         $mesgs = fread($pt,1000000);
         fclose($pt);
