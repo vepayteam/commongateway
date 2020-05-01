@@ -45,7 +45,7 @@ class ReceiveTelegram
                         'Head' => 'Оповещение от Банка',
                         'Body' => $mesg['message'],
                         'DateAdd' => strtotime($mesg['date']),
-                        'Bank' => $mesg['message'],
+                        'Bank' => $mesg['bank'],
                         'BankId' => $mesg['id'],
                         'BankDate' => strtotime($mesg['date']),
                     ]);

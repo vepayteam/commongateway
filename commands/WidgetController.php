@@ -186,8 +186,8 @@ class WidgetController extends Controller
     {
         echo "Run ReceiveTelegram\n";
 
-        //$Telegram = new Telegram();
-        //$Telegram->GetMesages();
+        $Telegram = new Telegram();
+        $Telegram->GetMesages();
 
         $ReceiveTelegram = new ReceiveTelegram();
         $ReceiveTelegram->execute();
