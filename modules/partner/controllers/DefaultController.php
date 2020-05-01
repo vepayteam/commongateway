@@ -58,15 +58,31 @@ class DefaultController extends Controller
                 ->where(['IsDeleted' => 0])
                 ->orderBy(['DateAdd' => SORT_DESC])->limit(5)
                 ->all();
-            $alerts = News::GetAlerts($news, UserLk::getUserId(Yii::$app->user));
             return $this->render('index', [
                 'news' => $news,
-                'alerts' => $alerts,
                 'IsAdmin' => UserLk::IsAdmin(Yii::$app->user),
             ]);
         } else {
             return $this->render('login');
         }
+    }
+
+    /**
+     * Renders the index view for the module
+     * @return array|string
+     */
+    public function actionAlerts()
+    {
+        if (Yii::$app->request->isAjax && !Yii::$app->user->isGuest) {
+            Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+            $news = News::find()
+                ->where(['IsDeleted' => 0])
+                ->orderBy(['DateAdd' => SORT_DESC])->limit(3)
+                ->all();
+            $alerts = News::GetAlerts($news, UserLk::getUserId(Yii::$app->user));
+            return ['status' => 1, 'data' => $alerts];
+        }
+        return $this->redirect('/partner/index');
     }
 
     /**

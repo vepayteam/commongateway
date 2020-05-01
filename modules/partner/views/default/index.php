@@ -5,18 +5,8 @@ use app\models\partner\news\News;
 /* @var yii\web\View $this */
 /* @var $IsAdmin */
 /* @var News[] $news */
-/* @var News[] $alerts */
 
 $this->title = "Кабинет партнера";
-?>
-
-<?php if (count($alerts) > 0) {
-    $js = '';
-    foreach ($alerts as $alert) {
-        $js .= 'toastr.warning("<div>'.str_replace(["\r", "\n"], [' '], $alert->Body).'</div>", "'.$alert->Head.'", {timeOut: 30000, positionClass: "toast-top-full-width"}); ';
-    }
-    $this->registerJs($js);
-}
 ?>
 
 <?php if ($IsAdmin) : ?>

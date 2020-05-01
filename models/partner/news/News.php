@@ -63,7 +63,7 @@ class News extends \yii\db\ActiveRecord
         foreach ($news as $onenew) {
             $read = $onenew->getNewsread($UserId);
             if (!$read) {
-                $alerts[] = $onenew;
+                $alerts[] = ['head' => $onenew->Head, 'body' => str_replace(["\r", "\n"], [' '], $onenew->Body)];
                 $Newsread = new Newsread();
                 $Newsread->setAttributes([
                     'IdNews' => $onenew->ID,

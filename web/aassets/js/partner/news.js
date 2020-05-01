@@ -55,6 +55,24 @@
                 }
                 return false;
             });
+
+            setTimeout(function alerts() {
+                $.ajax({
+                    url: '/partner/default/alerts',
+                    method: 'GET',
+                    success: function (data) {
+                        if (data.status == 1 && data.data.length > 0) {
+                            data.data.forEach(function(item, i) {
+                                toastr.warning(item.body, item.head, {
+                                    timeOut: 30000,
+                                    positionClass: "toast-top-full-width"
+                                });
+                            });
+                        }
+                    }
+                });
+            },500);
+
         },
 
     };
