@@ -38,7 +38,9 @@ class Telegram
         $mesgs = fread($pt,1000000);
         fclose($pt);
         try {
-            $mesgs = iconv('windows-1251', 'utf-8', $mesgs);
+            if (PHP_OS_FAMILY === "Windows") {
+                $mesgs = iconv('windows-1251', 'utf-8', $mesgs);
+            }
             return Json::decode($mesgs);
         } catch (\Throwable $e) {
             Yii::warning($e->getMessage(), 'rsbcron');
