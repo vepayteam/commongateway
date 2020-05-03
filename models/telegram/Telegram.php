@@ -23,6 +23,7 @@ class Telegram
             fclose($pipes[0]);
             $mesgs = stream_get_contents($pipes[1]);
             fclose($pipes[1]);
+            fclose($pipes[2]);
             proc_close($process);
         }
         if (!empty($mesgs)) {
