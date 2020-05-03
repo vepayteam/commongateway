@@ -437,7 +437,7 @@ class AdminController extends Controller
                 'FullReq' => null,
                 'HttpCode' => 0,
                 'HttpAns' => null
-        ], '`DateCreate` > :DATE AND HttpCode = 0 AND DateSend > 0', [':ID' => strtotime(Yii::$app->request->get('datefrom', ''))]
+        ], '`DateCreate` > :DATE AND HttpCode = 0 AND DateSend > 0', [':DATE' => strtotime(Yii::$app->request->get('datefrom', ''))]
         )->execute();
 
         return 1;
