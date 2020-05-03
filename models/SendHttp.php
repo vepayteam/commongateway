@@ -2,12 +2,14 @@
 
 namespace app\models;
 
-use function GuzzleHttp\Psr7\parse_query;
+use app\models\extservice\HttpProxy;
 use qfsx\yii2\curl\Curl;
 use Yii;
 
 class SendHttp
 {
+    use HttpProxy;
+
     public $resultCode = 0;
     public $resultText = '';
     public $fullReq = '';
@@ -112,6 +114,10 @@ class SendHttp
         $fst = "?";
         if (mb_stripos($url, "?") > 0) {
             $fst = "&";
+        }
+        if (Yii::$app->params['DEVMODE'] != 'Y' && Yii::$app->params['TESTMODE'] != 'Y' && !empty($this->proxyHost)) {
+            $curl->setOption(CURLOPT_PROXY, $this->proxyHost);
+            $curl->setOption(CURLOPT_PROXYUSERPWD, $this->proxyUser);
         }
         $curl->get($url . $fst . $params);
 
