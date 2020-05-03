@@ -73,6 +73,10 @@ class ReceiveTelegram
         if (mb_stripos($url, "?") > 0) {
             $fst = "&";
         }
+        if (Yii::$app->params['DEVMODE'] != 'Y' && Yii::$app->params['TESTMODE'] != 'Y' && !empty($this->proxyHost)) {
+            $curl->setOption(CURLOPT_PROXY, $this->proxyHost);
+            $curl->setOption(CURLOPT_PROXYUSERPWD, $this->proxyUser);
+        }
         $curl->get($url . $fst . $params);
 
         Yii::warning("sendCurlGet-url: " . $url . $fst . $params . "\r\n", 'rsbcron');
