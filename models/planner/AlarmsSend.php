@@ -20,19 +20,19 @@ class AlarmsSend
         try {
             //тип 0
             $this->runAlertCheckNewPay();
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             Yii::warning('runAlertCheckNewPay: error=' . $e->getMessage(), 'rsbcron');
         }
         try {
             //тип 2
             $this->runAlertCheckLastUpdateStatePay();
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             Yii::warning('runAlertCheckLastUpdateStatePay: error=' . $e->getMessage(), 'rsbcron');
         }
         try {
             //тип 1
             $this->runCheckSmsGate();
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             Yii::warning('runCheckSmsGate: error=' . $e->getMessage(), 'rsbcron');
         }
     }

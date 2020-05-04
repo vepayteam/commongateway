@@ -8,10 +8,13 @@ use app\models\mfo\DistributionReports;
 use app\models\Payschets;
 use app\models\planner\AlarmsSend;
 use app\models\planner\OtchToEmail;
+use app\models\planner\ReceiveTelegram;
 use app\models\planner\ReturnComisMfo;
+use app\models\planner\SendNews;
 use app\models\planner\UpdateStatems;
 use app\models\planner\VyvodSumPay;
 use app\models\planner\VyvodVoznagPlanner;
+use app\models\telegram\Telegram;
 use Yii;
 use yii\console\Controller;
 use app\models\payonline\OrderNotif;
@@ -40,6 +43,11 @@ class WidgetController extends Controller
         echo "Run Rsbcron end\n";
 
         $this->actionAlarms();
+
+        $this->actionSendNews();
+        if (date('i')  % 15 == 0) {
+            $this->actionReceiveTelegram();
+        }
 
         /*if (date('G') == 0) {
             //ocm комиссия 1.5%
@@ -168,5 +176,23 @@ class WidgetController extends Controller
         $perevod->executeVirt();
     }
 
+    public function actionSendNews()
+    {
+        echo "Run SendNews\n";
+        $SendNews = new SendNews();
+        $SendNews->execute();
+    }
 
+    public function actionReceiveTelegram()
+    {
+        echo "Run ReceiveTelegram\n";
+
+        if (Yii::$app->params['TESTMODE'] == 'Y') {
+            $Telegram = new Telegram();
+            $Telegram->GetMesages();
+        }
+
+        $ReceiveTelegram = new ReceiveTelegram();
+        $ReceiveTelegram->execute();
+    }
 }
