@@ -45,7 +45,7 @@ class WidgetController extends Controller
         $this->actionAlarms();
 
         $this->actionSendNews();
-        if (date('m')  % 15 == 0) {
+        if (date('i')  % 15 == 0) {
             $this->actionReceiveTelegram();
         }
 
