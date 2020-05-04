@@ -427,6 +427,27 @@ class AdminController extends Controller
         return $id;
     }
 
+    public function actionRenotificate()
+    {
+        $date = strtotime(Yii::$app->request->get('datefrom', ''));
+        if ($date > 0) {
+            Yii::$app->db->createCommand()
+                ->update('notification_pay', [
+                    'DateSend' => 0,
+                    'SendCount' => 0,
+                    'DateLastReq' => 0,
+                    'FullReq' => null,
+                    'HttpCode' => 0,
+                    'HttpAns' => null
+                ], '`TypeNotif` = 2 AND `DateCreate` > :DATE AND HttpCode = 0 AND DateSend > 0',
+                    [':DATE' => $date]
+                )->execute();
+
+            return 1;
+        }
+        return 0;
+    }
+
     public function actionTestdelresetvozn($id)
     {
         if ($id > 0) {
