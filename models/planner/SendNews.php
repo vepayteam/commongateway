@@ -27,7 +27,7 @@ class SendNews
                         Yii::$app->queue->push(new SendMailJob([
                             'email' => $partner->EmailNotif,
                             'subject' => $row['Head'],
-                            'content' => str_replace("\r\n", "<br>", $row['Body'])
+                            'content' => date('d.m.Y H:i', $row['DateAdd'])."<br>".str_replace("\r\n", "<br>", $row['Body'])
                         ]));
                     }
                 }
