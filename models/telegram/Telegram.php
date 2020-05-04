@@ -25,7 +25,8 @@ class Telegram
             $write  = NULL;
             $except = NULL;
             if (stream_select($read, $write, $except, 0) !== false) {
-                $mesgs = stream_get_contents($pipes[1]);
+                foreach ($read as $r)
+                    $mesgs = stream_get_contents($r);
             }
             fclose($pipes[1]);
             fclose($pipes[2]);
