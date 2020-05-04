@@ -3,13 +3,14 @@
 namespace app\models\planner;
 
 use app\models\partner\news\News;
-use app\models\SendHttp;
+use app\models\extservice\HttpProxy;
 use qfsx\yii2\curl\Curl;
 use Yii;
 use yii\helpers\Json;
 
 class ReceiveTelegram
 {
+    use HttpProxy;
     private $resultText;
 
     public function execute()
