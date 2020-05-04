@@ -21,7 +21,7 @@ class Telegram
         if (is_resource($process)) {
             fwrite($pipes[0], "\r\n");
             fclose($pipes[0]);
-            $read = $pipes[1];
+            $read = [$pipes[1]];
             $write  = NULL;
             $except = NULL;
             if (stream_select($read, $write, $except, 0) !== false) {
