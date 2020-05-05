@@ -4,6 +4,7 @@ namespace app\modules\partner\controllers;
 
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
+use app\models\kkt\OnlineKassa;
 use app\models\mfo\MfoStat;
 use app\models\partner\admin\VyvodVoznag;
 use app\models\partner\PartUserAccess;
@@ -789,6 +790,12 @@ class StatController extends Controller
 
         }
         throw new NotFoundHttpException();
+    }
+
+    public function actionDraft($id)
+    {
+        $kkt = new OnlineKassa();
+        return $kkt->printFromDB($id,true);
     }
 
 }

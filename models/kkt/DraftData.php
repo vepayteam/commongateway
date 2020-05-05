@@ -6,7 +6,7 @@ namespace app\models\kkt;
 
 class DraftData
 {
-    public $type;
+    public $type = 1;
     public $customerContact;
     public $quantity = 1.000;
     public $price;

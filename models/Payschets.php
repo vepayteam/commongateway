@@ -397,7 +397,7 @@ class Payschets
                     'tovar' => $query['tovar'],
                     'tovarOFD' => $query['tovarOFD'],
                     'summDraft' => $query['SummPay'] + $query['ComissSumm'],
-                    'email' => isset($query['Email']) ? $query['Email'] : ''
+                    'email' => $query['Email']
                 ]));
             }
         }
@@ -739,7 +739,7 @@ class Payschets
     {
         $query = Yii::$app->db->createCommand('
               SELECT
-                u.`Email`, 
+                p.UserEmail as `Email`, 
                 p.`SummPay`,
                 p.`ComissSumm`,
                 ut.IDPartner,
@@ -761,10 +761,10 @@ class Payschets
                 p.Status,
                 pr.ID AS IdOrg,
                 pr.SchetTcbNominal,
-                ut.ExtReestrIDUsluga
+                ut.ExtReestrIDUsluga,
+                p.Dogovor
               FROM
                 `pay_schet` AS p
-                LEFT JOIN `user` AS u ON p.`IdUser` = u.`ID` AND u.IsDeleted = 0
                 LEFT JOIN `uslugatovar` AS ut ON ut.ID = p.IdUsluga
                 LEFT JOIN `partner` AS pr ON p.IdOrg = pr.ID
               WHERE
@@ -778,20 +778,9 @@ class Payschets
         if (!$query) {
             return false;
         }
-        $query['tovar'] = 'Назначение платежа: ' . $query['NameUsluga'] . "\r\n";
-        if ($query['IsCustom'] > 0) {
-            $query['tovar'] = "Оплата заказа\r\n";
-        }
-        $query['tovar'] .= str_ireplace('|', ', ', $query['QrParams']);
-
-        $query['summ'] = $query['SummPay'] + $query['ComissSumm'];
-        $query['tovar'] .=
-            "\r\nПринято: " .
-            sprintf("%02.2f", $query['summ'] / 100.0) .
-            "\r\nК зачислению: " . sprintf("%02.2f", $query['SummPay'] / 100.0) .
-            "\r\nКомиссия: " . sprintf("%02.2f", $query['ComissSumm'] / 100.0);
-
+        $query['tovar'] = $query['NameUsluga'].(!empty($query['Dogovor']) ? ", Договор: ".$query['Dogovor'] : '');
         $query['tovarOFD'] = $query['NameUsluga'];
+        $query['summ'] = $query['SummPay'] + $query['ComissSumm'];
 
         return $query;
     }

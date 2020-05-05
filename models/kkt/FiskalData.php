@@ -11,8 +11,8 @@ class FiskalData
     public $deviceRN;
     public $fsNumber;
     public $ofdName;
-    public $odfWebsite;
-    public $odfINN;
+    public $ofdWebsite;
+    public $ofdinn;
     public $fnsWebsite;
     public $companyINN;
     public $companyName;
@@ -31,8 +31,8 @@ class FiskalData
         $this->deviceRN = $data['deviceRN'];
         $this->fsNumber = $data['fsNumber'];
         $this->ofdName = $data['ofdName'];
-        $this->odfWebsite = $data['odfWebsite'];
-        $this->odfINN = $data['odfINN'];
+        $this->ofdWebsite = $data['ofdWebsite'];
+        $this->ofdinn = $data['ofdinn'];
         $this->fnsWebsite = $data['fnsWebsite'];
         $this->companyINN = $data['companyINN'];
         $this->companyName = $data['companyName'];
@@ -51,17 +51,17 @@ class FiskalData
             'IdPaySchet' => $this->id,
             'Urlico' => $this->companyName,
             'Inn' => $this->companyINN,
-            'Sno' => '',
+            'Sno' => 'УСН доход - расход',
             'NumDocument' => $this->documentNumber,
             'NumDraft' => $this->documentIndex,
             'Smena' => $this->shiftNumber,
-            'DateDraft' => $this->processedAt,
+            'DateDraft' => date('d.m.Y H:i:s', strtotime($this->processedAt)),
             'FDNumber' => $this->documentNumber,
             'FPCode' => $this->fp,
             'KassaRegNumber' => $this->deviceRN,
             'KassaSerialNumber' => $this->deviceSN,
             'FNSerialNumber' => $this->fsNumber,
-            'Tovar' => $this->content['text'],
+            'Tovar' => $this->content['positions'][0]['text'],
             'Summ' => $this->content['checkClose']['payments'][0]['amount'],
             'SummNoNds' => $this->content['checkClose']['payments'][0]['amount'],
             'Email' => $this->content['customerContact']

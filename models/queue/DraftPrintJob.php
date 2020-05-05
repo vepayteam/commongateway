@@ -2,6 +2,7 @@
 
 namespace app\models\queue;
 
+use app\models\kkt\DraftData;
 use app\models\kkt\OnlineKassa;
 use yii\base\BaseObject;
 
@@ -16,7 +17,12 @@ class DraftPrintJob extends BaseObject implements \yii\queue\JobInterface
     public function execute($queue)
     {
         //чек пробить
+        $data = new DraftData();
+        $data->customerContact = $this->email;
+        $data->text = $this->tovar;
+        $data->price = $this->summDraft;
+
         $kassa = new OnlineKassa();
-        $kassa->createDraft($this->idpay, $this->tovar, $this->tovarOFD, $this->summDraft, $this->email);
+        $kassa->createDraft($this->idpay, $data);
     }
 }

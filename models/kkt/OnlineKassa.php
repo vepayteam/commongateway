@@ -2,6 +2,7 @@
 
 namespace app\models\kkt;
 
+use Da\QrCode\QrCode;
 use Yii;
 use qfsx\yii2\curl\Curl;
 use app\models\Payschets;
@@ -9,36 +10,40 @@ use app\models\Payschets;
 class OnlineKassa
 {
     private $draftData = null;
+    private $kktConfig;
+
+    public function __construct()
+    {
+        $this->kktConfig = $this->readConfig();
+    }
 
     /**
      * Пробить чек
      * @param int $IdPayschet
-     * @param string $tovar
-     * @param string $tovarOFD
-     * @param int $summ
-     * @param string $email
+     * @param DraftData $draftData
      * @return array|null
      */
-    public function createDraft($IdPayschet, $tovar, $tovarOFD, $summ, $email)
+    public function createDraft($IdPayschet, DraftData $draftData)
     {
-        $data = new DraftData();
-        $data->customerContact = $email;
-        $data->text = $tovar;
-        $data->price = $summ;
-
-        $OrangeData = new OrangeData();
-        $ans = $OrangeData->CreateDraft($IdPayschet, $data);
-        if ($ans['status'] == 1) {
-            $ans = $OrangeData->StatusDraft($IdPayschet);
+        $isNew = 0;
+        $OrangeData = new OrangeData($this->kktConfig);
+        $ans = $OrangeData->StatusDraft($IdPayschet);
+        if ($ans['status'] == 0) {
+            $ans = $OrangeData->CreateDraft($IdPayschet, $draftData);
+            $isNew = 1;
+            if ($ans['status'] == 1) {
+                $ans = $OrangeData->StatusDraft($IdPayschet);
+            }
         }
 
-        if (isset($ans['data']) && !empty($ans['data'])) {
+        if ($ans['status'] == 1 && isset($ans['data'])) {
             $FiskalData = new FiskalData();
             $FiskalData->Load($ans['data']);
 
             $this->draftData = $FiskalData->GetDraftData();
-
-            $this->saveToDB();
+            if ($isNew && is_array($this->draftData)) {
+                $this->saveToDB();
+            }
 
             return $this->draftData;
         }
@@ -70,8 +75,12 @@ class OnlineKassa
                 $ps = new Payschets();
                 $query = $ps->getPayInfoFoDraft($IdPayschet);
 
-                $this->draftData = $this->createDraft($IdPayschet, $query['tovar'], $query['tovarOFD'], $query['summ'],
-                    isset($query['Email']) ? $query['Email'] : '');
+                $data = new DraftData();
+                $data->customerContact = $query['Email'];
+                $data->text = $query['tovar'];
+                $data->price = $query['summ'];
+
+                $this->draftData = $this->createDraft($IdPayschet, $data);
             }
 
             if (is_array($this->draftData)) {
@@ -89,27 +98,39 @@ class OnlineKassa
      */
     public function getDraftText()
     {
-        $draft = '';
+        $draft = $qrcode = '';
         if ($this->draftData) {
-            $draftData = $this->draftData;
-            $qrcode = "https://api.vepay.online/qr?data=".urlencode("t=".
-                date("Ymd\\THi", strtotime($draftData['DateDraft'])) . "00&s=" .
-                sprintf('%02.2f', $draftData['Summ']/100.0) . "&fn=" .
-                $draftData['FNSerialNumber'] . "&i=" . $draftData['FDNumber'] . "&fp=" . $draftData['FPCode']."&n=1");
-            $curl = new Curl();
-            $qrcodeBase64 = $curl
-                ->setOption(CURLOPT_SSL_VERIFYHOST, 0)
-                ->setOption(CURLOPT_SSL_CIPHER_LIST, 'TLSv1')
-                ->setOption(CURLOPT_SSL_VERIFYPEER, false)
-                ->get($qrcode);
+            $qrcodeBase64 = $this->createQrImg();
             if (!empty($qrcodeBase64)) {
                 $qrcode = "data:image/png;base64," . base64_encode($qrcodeBase64);
             }
-            $draft = Yii::$app->view->render('@app/views/communal/textdraft.php', [
+            $draft = Yii::$app->view->render('@app/views/pay/textdraft.php', [
                 'draftData' => $this->draftData,
                 'qrcode' => $qrcode
             ]);
         }
         return $draft;
+    }
+
+    private function readConfig()
+    {
+        return [];
+    }
+
+    private function createQrImg()
+    {
+        $draftData = $this->draftData;
+
+        $qrcode = "t=".
+            date("Ymd\\THi", strtotime($draftData['DateDraft'])) . "00&s=" .
+            sprintf('%02.2f', $draftData['Summ']/100.0) . "&fn=" .
+            $draftData['FNSerialNumber'] . "&i=" . $draftData['FDNumber'] . "&fp=" . $draftData['FPCode']."&n=1";
+
+        $qrCode = (new QrCode($qrcode))
+//            ->setSize(70)
+            ->setMargin(3)
+            ->useForegroundColor(0, 0, 0);
+
+        return $qrCode->writeString();
     }
 }
