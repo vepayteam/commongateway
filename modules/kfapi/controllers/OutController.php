@@ -315,6 +315,79 @@ class OutController extends Controller
     }
 
     /**
+     * Вывод НДФЛ
+     * @return array|mixed
+     * @throws BadRequestHttpException
+     * @throws \yii\db\Exception
+     * @throws \yii\web\UnauthorizedHttpException
+     * @throws \Exception
+     */
+    public function actionNdfl()
+    {
+        $kf = new KfRequest();
+        $kf->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody());
+        $kfOut = new KfOut();
+        $kfOut->scenario = KfOut::SCENARIO_NDFL;
+        $kfOut->load($kf->req, '');
+        if (!$kfOut->validate()) {
+            return ['status' => 0, 'message' => $kfOut->GetError()];
+        }
+
+        $TcbGate = new TcbGate($kf->IdPartner, TCBank::$SCHETGATE);
+        $usl = $kfOut->GetUslug($kf->IdPartner);
+        if (!$usl || !$TcbGate->IsGate()) {
+            return ['status' => 0, 'message' => 'Услуга не найдена'];
+        }
+
+        $kfOut->descript = str_replace(" ", " ", $kfOut->descript); //0xA0 пробел на 0x20
+
+        $pay = new CreatePay();
+        if (!empty($kfOut->extid)) {
+            //проверка на повторный запрос
+            $params = $pay->getPaySchetExt($kfOut->extid, $usl, $kf->IdPartner);
+            if ($params) {
+                if ($kfOut->amount == $params['sumin']) {
+                    return ['status' => 1, 'id' => (int)$params['IdPay'], 'message' => ''];
+                } else {
+                    return ['status' => 0, 'id' => 0, 'message' => 'Нарушение уникальности запроса'];
+                }
+            }
+        }
+
+        Yii::warning('/out/ndfl kfmfo='. $kf->IdPartner . " sum=".$kfOut->amount . " extid=".$kfOut->extid, 'mfo');
+
+        $params = $pay->payToCard(null, [$kfOut->account, $kfOut->bic, $kfOut->name, $kfOut->inn, $kfOut->kpp, $kfOut->descript], $kfOut, $usl, TCBank::$bank, $kf->IdPartner, $kfOut->sms);
+
+        if ($kfOut->sms === 0) {
+            $tcBank = new TCBank($TcbGate);
+            $ret = $tcBank->transferToNdfl($kfOut->GetNdflJson($params, $kf->partner));
+            if ($ret && $ret['status'] == 1) {
+                //сохранение номера транзакции
+                $payschets = new Payschets();
+                $payschets->SetBankTransact([
+                    'idpay' => $params['IdPay'],
+                    'trx_id' => $ret['transac'],
+                    'url' => ''
+                ]);
+                //статус отдельно не надо получать
+                $payschets->confirmPay([
+                    'idpay' => $params['IdPay'],
+                    'result_code' => 1,
+                    'trx_id' => $ret['transac'],
+                    'ApprovalCode' => '',
+                    'RRN' => $ret['rrn'],
+                    'message' => ''
+                ]);
+
+            } else {
+                $pay->CancelReq($params['IdPay'], $ret['message']);
+            }
+        }
+
+        return ['status' => 1, 'id' => (int)$params['IdPay'], 'message' => ''];
+    }
+
+    /**
      * Вывод на счет юрлица внутри ТКБ
      * @return array|mixed
      * @throws BadRequestHttpException

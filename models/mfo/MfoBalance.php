@@ -359,29 +359,31 @@ class MfoBalance
         $ost = $query->scalar();
 
         $MerchVozn = 0;
-        $datefrom = Yii::$app->db->createCommand("
-            SELECT
-                `DateTo`
-            FROM
-                `vyvod_system`
-            WHERE
-                `IdPartner` = :IDMFO
-                AND `TypeVyvod` = :TYPEVYVOD
-                AND `DateOp` < :DATETO
-            ORDER BY `ID` DESC
-            LIMIT 1
-        ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeAcc == 0 ? 1 : 0, ':DATETO' => $date])->queryScalar();
+        if ($TypeAcc != 2) {
+            $datefrom = Yii::$app->db->createCommand("
+                SELECT
+                    `DateTo`
+                FROM
+                    `vyvod_system`
+                WHERE
+                    `IdPartner` = :IDMFO
+                    AND `TypeVyvod` = :TYPEVYVOD
+                    AND `DateOp` < :DATETO
+                ORDER BY `ID` DESC
+                LIMIT 1
+            ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeAcc == 0 ? 1 : 0, ':DATETO' => $date])->queryScalar();
 
-        $vs = new VoznagStat();
-        $vs->setAttributes([
-            'IdPart' => $this->Partner->ID,
-            'datefrom' => date('d.m.Y H:i', $datefrom),
-            'dateto' => date('d.m.Y H:i', $date),
-            'TypeUslug' => $TypeAcc
-        ]);
-        $otch = $vs->GetOtchMerchant(true);
-        foreach ($otch as $row) {
-            $MerchVozn += $row['MerchVozn'] - $row['BankComis'];
+            $vs = new VoznagStat();
+            $vs->setAttributes([
+                'IdPart' => $this->Partner->ID,
+                'datefrom' => date('d.m.Y H:i', $datefrom),
+                'dateto' => date('d.m.Y H:i', $date),
+                'TypeUslug' => 0
+            ]);
+            $otch = $vs->GetOtchMerchant(true);
+            foreach ($otch as $row) {
+                $MerchVozn += $row['MerchVozn'] - $row['BankComis'];
+            }
         }
 
         return $ost + $MerchVozn;
@@ -410,29 +412,31 @@ class MfoBalance
         $ost = $query->scalar();
 
         $MerchVozn = 0;
-        $datefrom = Yii::$app->db->createCommand("
-            SELECT
-                `DateTo`
-            FROM
-                `vyvod_system`
-            WHERE
-                `IdPartner` = :IDMFO
-                AND `TypeVyvod` = :TYPEVYVOD
-                AND `DateOp` < :DATETO
-            ORDER BY `ID` DESC
-            LIMIT 1
-        ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeAcc == 0 ? 1 : 0, ':DATETO' => $date])->queryScalar();
+        if ($TypeAcc != 2) {
+            $datefrom = Yii::$app->db->createCommand("
+                SELECT
+                    `DateTo`
+                FROM
+                    `vyvod_system`
+                WHERE
+                    `IdPartner` = :IDMFO
+                    AND `TypeVyvod` = :TYPEVYVOD
+                    AND `DateOp` < :DATETO
+                ORDER BY `ID` DESC
+                LIMIT 1
+            ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeAcc == 0 ? 1 : 0, ':DATETO' => $date])->queryScalar();
 
-        $vs = new VoznagStat();
-        $vs->setAttributes([
-            'IdPart' => $this->Partner->ID,
-            'datefrom' => date('d.m.Y H:i', $datefrom),
-            'dateto' => date('d.m.Y H:i', $date),
-            'TypeUslug' => $TypeAcc
-        ]);
-        $otch = $vs->GetOtchMerchant(true);
-        foreach ($otch as $row) {
-            $MerchVozn += $row['MerchVozn'] - $row['BankComis'];
+            $vs = new VoznagStat();
+            $vs->setAttributes([
+                'IdPart' => $this->Partner->ID,
+                'datefrom' => date('d.m.Y H:i', $datefrom),
+                'dateto' => date('d.m.Y H:i', $date),
+                'TypeUslug' => 0
+            ]);
+            $otch = $vs->GetOtchMerchant(true);
+            foreach ($otch as $row) {
+                $MerchVozn += $row['MerchVozn'] - $row['BankComis'];
+            }
         }
 
         return $ost + $MerchVozn;

@@ -116,6 +116,7 @@ echo $form->field($partner,'KontTehEmail')->textInput(['class'=>'form-control'])
 echo $form->field($partner,'KontFinansFio')->textInput(['class'=>'form-control']);
 echo $form->field($partner,'KontFinansPhone')->textInput(['class'=>'form-control']);
 echo $form->field($partner,'KontFinansEmail')->textInput(['class'=>'form-control']);
+echo $form->field($partner,'EmailNotif')->textInput(['class'=>'form-control']);
 ?>
 
 <div class="hr-line-dashed"></div>

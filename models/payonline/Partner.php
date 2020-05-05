@@ -92,6 +92,7 @@ use Yii;
  * @property string $KeyTkbOctPerevod
  * @property integer $IsAutoPerevodToVydacha
  * @property integer $IsCommonSchetVydacha
+ * @property string $EmailNotif
  */
 class Partner extends \yii\db\ActiveRecord
 {
@@ -129,7 +130,7 @@ class Partner extends \yii\db\ActiveRecord
                 'LoginTkbAuto1', 'LoginTkbAuto2', 'LoginTkbAuto3', 'LoginTkbAuto4', 'LoginTkbAuto5', 'LoginTkbAuto6',
                 'LoginTkbAuto7', 'LoginTkbJkh', 'LoginTkbOct', 'LoginTkbOctVyvod', 'LoginTkbOctPerevod'
             ], 'string', 'max' => 50],
-            [['Email', 'KontTehEmail', 'KontFinansEmail'], '\app\models\EmailListValidator'],
+            [['Email', 'KontTehEmail', 'KontFinansEmail', 'EmailNotif'], '\app\models\EmailListValidator'],
             [['INN', 'KPP', 'BikBank', 'OGRN', 'NumDogovor', 'DateDogovor', 'SchetTcb', 'SchetTcbTransit', 'SchetTcbNominal', 'SchetTCBUnreserve'], 'string', 'max' => 20],
             [['Name', 'UrLico', 'UrAdres', 'PostAdres', 'Phone'], 'required', 'on' => self::SCENARIO_SELFREG],
             [['INN', 'OGRN', 'PodpisantShort', 'PodpisantFull', 'PodpOsnovan', 'PodpOsnovanRod'], 'required', 'on' => self::SCENARIO_SELFREG, 'when' => function($model) {
@@ -221,7 +222,8 @@ class Partner extends \yii\db\ActiveRecord
             'LoginTkbOctPerevod' => 'Логин ТКБ Перевод со счета выдачи',
             'KeyTkbOctPerevod' => 'Пароль ТКБ Перевод со счета выдачи',
             'IsAutoPerevodToVydacha' => 'Автоперечисления на счет выдачи',
-            'IsCommonSchetVydacha' => 'Один счет на выдачу и погашение'
+            'IsCommonSchetVydacha' => 'Один счет на выдачу и погашение',
+            'EmailNotif' => 'E-mail для оповещения',
         ];
     }
 

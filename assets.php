@@ -30,6 +30,7 @@ return [
         'app\assets\MerchantAsset',
         'app\assets\PartnerAsset',
         'app\assets\PayAsset',
+        'app\assets\WidgetAsset',
         'yii\web\YiiAsset',
         'yii\web\JqueryAsset',
         'yii\bootstrap\BootstrapAsset',
@@ -109,6 +110,16 @@ return [
             'css' => 'pay-{hash}.css',
             'depends' => [
                 'app\assets\PayAsset'
+            ],
+        ],
+        'widget' => [
+            'class' => 'yii\web\AssetBundle',
+            'basePath' => '@webroot/assets',
+            'baseUrl' => '@web/assets',
+            'js' => 'widget-{hash}.js',
+            'css' => 'widget-{hash}.css',
+            'depends' => [
+                'app\assets\WidgetAsset'
             ],
         ]
     ],

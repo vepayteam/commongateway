@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
-  title: API Краутфандинг
-  description: Vepay API Краутфандинг.
+  title: API Краудфандинг
+  description: Vepay API Краудфандинг.
   version: 1.0.5
 security:
   - Login: []
@@ -163,6 +163,32 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/OutI"
+        description: Параметры перевода
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusId"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /out/ndfl:
+    post:
+      tags:
+        - Out
+      summary: Перечисление НДФЛ
+      description: Осуществляется перечисление НДФЛ со счета площадки.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OutNdfl"
         description: Параметры перевода
         required: true
       responses:
@@ -524,6 +550,64 @@ components:
         sms:
           type: integer
           description: Если передан 1, то требуется подтверждение кодом из смс
+    OutNdfl:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Наименование получателя
+        inn:
+          type: string
+          description: ИНН получателя
+        kpp:
+          type: string
+          description: КПП получателя
+        account:
+          type: string
+          description: Счет в банке
+        bic:
+          type: string
+          description: БИК банка
+        descript:
+          type: string
+          maxLength: 210
+          description: Назначение платежа
+        amount:
+          type: number
+          description: Cумма платежа
+        sendername:
+          type: string
+          description: Наименование отправвителя
+        senderadress:
+          type: string
+          description: Адрес отправвителя
+        senderaccount:
+          type: string
+          description: Счет отправвителя
+        kbk:
+          type: string
+          description: КБК
+        okato:
+          type: string
+          description: ОКАТО
+        paymentbase:
+          type: string
+          description: Основание платежа
+        taxperiod:
+          type: string
+          description: Налоговый период
+        taxdocnum:
+          type: string
+          description: Номер налогового документа
+        taxdocdate:
+          type: string
+          description: Дата налогового документа
+        taxpaymenttype:
+          type: string
+          description: Тип налогового платежа
+        extid:
+          type: string
+          description: Внешний идентификатор запроса
     OutI:
       type: object
       properties:
