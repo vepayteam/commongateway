@@ -214,7 +214,7 @@ class PayController extends Controller
             ]);
 
         } else {
-            $pay->CancelReq($params['IdPay']);
+            $pay->CancelReq($params['IdPay'],'Платеж не проведен');
         }
 
         return ['status' => 1, 'message' => '', 'id' => (int)$params['IdPay']];

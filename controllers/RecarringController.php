@@ -290,7 +290,7 @@ class RecarringController extends Controller
             ]);
 
         } else {
-            $pay->CancelReq($params['IdPay']);
+            $pay->CancelReq($params['IdPay'],'Платеж не проведен');
         }
 
         return ['status' => 1, 'id' => (int)$params['IdPay']];
