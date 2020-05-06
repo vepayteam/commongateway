@@ -789,9 +789,10 @@ class Payschets
      * флаг начала платежа
      * @param $IdPay
      * @param $Transac
-     * @throws \yii\db\Exception
+     * @param $Email
+     * @throws Exception
      */
-    public function SetStartPay($IdPay, $Transac)
+    public function SetStartPay($IdPay, $Transac, $Email)
     {
         //флаг начала платежа
         Yii::$app->db->createCommand()
@@ -799,6 +800,7 @@ class Payschets
                 'UserClickPay' => 1,
                 'UrlFormPay' => '/pay/form/' . $IdPay,
                 'ExtBillNumber' => $Transac,
+                'UserEmail' => $Email,
                 'DateLastUpdate' => time(),
                 'CountSendOK' => 0
             ], '`ID` = :ID', [':ID' => $IdPay])

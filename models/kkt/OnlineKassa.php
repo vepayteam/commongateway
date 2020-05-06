@@ -2,9 +2,9 @@
 
 namespace app\models\kkt;
 
+use app\models\TU;
 use Da\QrCode\QrCode;
 use Yii;
-use qfsx\yii2\curl\Curl;
 use app\models\Payschets;
 
 class OnlineKassa
@@ -21,13 +21,18 @@ class OnlineKassa
      * Пробить чек
      * @param int $IdPayschet
      * @param DraftData $draftData
+     * @param bool $checkExist
      * @return array|null
      */
-    public function createDraft($IdPayschet, DraftData $draftData)
+    public function createDraft($IdPayschet, DraftData $draftData, $checkExist = false)
     {
         $isNew = 0;
         $OrangeData = new OrangeData($this->kktConfig);
-        $ans = $OrangeData->StatusDraft($IdPayschet);
+        if ($checkExist) {
+            $ans = $OrangeData->StatusDraft($IdPayschet);
+        } else {
+            $ans = ['status' => 0];
+        }
         if ($ans['status'] == 0) {
             $ans = $OrangeData->CreateDraft($IdPayschet, $draftData);
             $isNew = 1;
@@ -75,12 +80,14 @@ class OnlineKassa
                 $ps = new Payschets();
                 $query = $ps->getPayInfoFoDraft($IdPayschet);
 
-                $data = new DraftData();
-                $data->customerContact = $query['Email'];
-                $data->text = $query['tovar'];
-                $data->price = $query['summ'];
+                if (!empty($query['Email']) && $query['Status'] == 1 && TU::IsInAll($query['IsCustom'])) {
+                    $data = new DraftData();
+                    $data->customerContact = $query['Email'];
+                    $data->text = $query['tovar'];
+                    $data->price = $query['summ'];
 
-                $this->draftData = $this->createDraft($IdPayschet, $data);
+                    $this->draftData = $this->createDraft($IdPayschet, $data,true);
+                }
             }
 
             if (is_array($this->draftData)) {

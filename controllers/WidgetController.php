@@ -205,7 +205,7 @@ class WidgetController extends Controller
                 $ret = $tcBank->PayXml($params);
 
                 if ($ret['status'] == 1) {
-                    $payschets->SetStartPay($params['ID'], $ret['transac']);
+                    $payschets->SetStartPay($params['ID'], $ret['transac'], $payform->Email);
                     //отправить запрос адреса формы 3ds
                     return [
                         'status' => 1,

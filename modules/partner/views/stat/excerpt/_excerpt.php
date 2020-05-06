@@ -71,3 +71,6 @@ $status = [0 => "Создан", 1 => "Оплачен", 2 => "Отмена", 3 =>
 <div class="transaction-info">
     <p class="name"><?= $data['ErrorInfo'] ?></p>
 </div>
+<div class="transaction-info">
+    <div class="col-sm-12"><a class="btn btn-white btn-md pull-right" href="/partner/stat/draft/<?=$data['ID']?>" target="_blank">Чек</a></div>
+</div>

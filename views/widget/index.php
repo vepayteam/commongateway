@@ -108,6 +108,7 @@ use yii\helpers\Url;
     <div class="row no-row-margins">
         <div class="col-xs-12">
             <?= $form->field($payform, 'Email')->textInput([
+                'type' => 'email',
                 'class' => 'form-control borderemail',
                 'value' => $order->EmailTo,
                 'placeholder' => 'info@vepay.online'

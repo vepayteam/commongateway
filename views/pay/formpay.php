@@ -107,7 +107,7 @@ use yii\bootstrap\Html;
         </div>
     </div>
 
-    <div class="row nopadding" style="display: none;">
+    <div class="row nopadding">
         <div class="col-sm-12 col-xs-12">
             <?= $form->field($payform, 'Email')->textInput([
                 'type' => 'email',

@@ -22,7 +22,9 @@ class DraftPrintJob extends BaseObject implements \yii\queue\JobInterface
         $data->text = $this->tovar;
         $data->price = $this->summDraft;
 
-        $kassa = new OnlineKassa();
-        $kassa->createDraft($this->idpay, $data);
+        if (!empty($this->email)) {
+            $kassa = new OnlineKassa();
+            $kassa->createDraft($this->idpay, $data, false);
+        }
     }
 }
