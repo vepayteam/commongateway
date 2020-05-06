@@ -46,8 +46,12 @@ class WidgetController extends Controller
 
         $this->actionSendNews();
         if (date('i')  % 15 == 0) {
+            $this->actionUpdateTelegram();
+        }
+        if (date('i')  % 20 == 0) {
             $this->actionReceiveTelegram();
         }
+
 
         /*if (date('G') == 0) {
             //ocm комиссия 1.5%
@@ -183,14 +187,19 @@ class WidgetController extends Controller
         $SendNews->execute();
     }
 
-    public function actionReceiveTelegram()
+    public function actionUpdateTelegram()
     {
-        echo "Run ReceiveTelegram\n";
-
         if (Yii::$app->params['TESTMODE'] == 'Y') {
+            echo "Run UpdateTelegram\n";
+
             $Telegram = new Telegram();
             $Telegram->GetMesages();
         }
+    }
+
+    public function actionReceiveTelegram()
+    {
+        echo "Run ReceiveTelegram\n";
 
         $ReceiveTelegram = new ReceiveTelegram();
         $ReceiveTelegram->execute();
