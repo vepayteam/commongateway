@@ -45,7 +45,7 @@ class ReceiveTelegram
                     $news->setAttributes([
                         'Head' => 'Оповещение от Банка',
                         'Body' => $mesg['message'],
-                        'DateAdd' => strtotime($mesg['date']),
+                        'DateAdd' => strtotime($mesg['date']) + 10800,
                         'Bank' => $bank,
                         'BankId' => $mesg['id'],
                         'BankDate' => strtotime($mesg['date']),
