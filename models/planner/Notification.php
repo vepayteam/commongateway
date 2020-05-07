@@ -68,7 +68,8 @@ class Notification
                 p.UserKeyInform,
                 p.Extid,
                 n.SendCount,
-                p.DateOplat
+                p.DateOplat,
+                p.UserEmail
             FROM
                 `notification_pay` AS n
                 LEFT JOIN `pay_schet` AS p ON (p.ID = n.IdPay)
@@ -110,7 +111,7 @@ class Notification
                         'FullReq' => $this->fullReq
                     ], '`ID` = :ID', [':ID' => $value['IdNotif']])
                     ->execute();
-                if ($res || $value['SendCount'] > 10) {
+                if ($res || $value['SendCount'] > 30) {
                     //завершить обработку
                     if ($value['TypeNotif'] == 2 && $this->httpCode == 200 && $value['DateOplat'] > strtotime('today')) {
                         $this->addToRefundArray($this->httpAns, $value);
@@ -143,19 +144,23 @@ class Notification
         $uslinfo = isset($value['EmailShablon']) ? $value['EmailShablon'] : '';
 
         $kkt = new OnlineKassa();
-        $draft = $kkt->printFromDB($IdSchet, true);
+        $draft = $kkt->printFromDB($IdSchet,false);
+        if ($draft) {
 
-        $content = Yii::$app->view->renderFile("@app/mail/notificate_template.php", [
-            'IdSchet' => $IdSchet,
-            'draft' => $draft,
-            'uslinfo' => $uslinfo
-        ]);
+            $content = Yii::$app->view->renderFile("@app/mail/notificate_template.php", [
+                'IdSchet' => $IdSchet,
+                'draft' => $draft,
+                'uslinfo' => $uslinfo
+            ]);
 
-        $subject = 'Подтверждение оплаты заказа';
-        $sendemail = new SendEmail();
-        $res = $sendemail->send($Email, '', $subject, $content);
+            $subject = 'Электронный чек';
+            $sendemail = new SendEmail();
+            $res = $sendemail->send($Email, '', $subject, $content);
 
-        Yii::warning("sendToUser: " . $Email . " - " . $IdSchet . "\r\n", 'rsbcron');
+            Yii::warning("sendToUser: " . $Email . " - " . $IdSchet . "\r\n", 'rsbcron');
+        } else {
+            $res = 0;
+        }
 
         return $res;
     }

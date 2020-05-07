@@ -190,7 +190,7 @@ class Payschets
                         //чек пробить
                         $this->CreateDraftPay($query, $params);
 
-                        //оповещения на почту
+                        //оповещения на почту и колбэком
                         $this->addNotification($params['idpay'], $query['TypeWidget'], 1);
 
                         //экспорт оплаты (для онлайн платежей)
@@ -397,6 +397,7 @@ class Payschets
                     'tovar' => $query['tovar'],
                     'tovarOFD' => $query['tovarOFD'],
                     'summDraft' => $query['SummPay'] + $query['ComissSumm'],
+                    'summComis' => $query['ComissSumm'],
                     'email' => $query['Email']
                 ]));
             }
@@ -536,34 +537,32 @@ class Payschets
      */
     protected function addNotification($IdPay, $TypeWidget, $status)
     {
+        $row = Yii::$app->db->createCommand('
+            SELECT
+                p.UserEmail AS Email,
+                p.UserUrlInform
+            FROM
+                `pay_schet` AS p
+            WHERE
+                p.ID = :IDPAY
+        ', [
+            ':IDPAY' => $IdPay
+        ])->queryOne();
+
+        if ($row && !empty($row['Email']) && $status == 1) {
+            //для плательщика чек
+            Yii::$app->db->createCommand()
+                ->insert('notification_pay', [
+                    'IdPay' => $IdPay,
+                    'Email' => $row['Email'],
+                    'TypeNotif' => 0,
+                    'DateCreate' => time(),
+                    'DateSend' => 0
+                ])
+                ->execute();
+        }
+
         if (in_array($TypeWidget, [0, 1])) {
-            //для плательщика по платежам
-            $row = Yii::$app->db->createCommand('
-                SELECT
-                    u.Email,
-                    p.UserUrlInform
-                FROM
-                    `pay_schet` AS p
-                    LEFT JOIN `user` AS u ON (p.IdUser = u.ID AND u.IsDeleted = 0)
-                WHERE
-                    p.ID = :IDPAY
-            ', [
-                ':IDPAY' => $IdPay
-            ])->queryOne();
-
-            if ($row && !empty($row['Email']) && $status == 1) {
-                //только успешные
-                Yii::$app->db->createCommand()
-                    ->insert('notification_pay', [
-                        'IdPay' => $IdPay,
-                        'Email' => $row['Email'],
-                        'TypeNotif' => 0,
-                        'DateCreate' => time(),
-                        'DateSend' => 0
-                    ])
-                    ->execute();
-            }
-
             if ($row && !empty($row['UserUrlInform'])) {
                 //http
                 Yii::$app->db->createCommand()

@@ -10,6 +10,7 @@ class DraftData
     public $customerContact;
     public $quantity = 1.000;
     public $price;
+    public $comis;
     public $tax = 6; //НДС не облагается
     public $text;
 

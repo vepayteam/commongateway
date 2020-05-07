@@ -14,6 +14,9 @@
 <div>Смена: <?=$draftData['Smena']?> Чек: <?=$draftData['NumDraft']?></div>
 <div><?=str_ireplace("\r\n", "<br>", $draftData['Tovar'])?></div>
 <div>Сумма: <?=number_format($draftData['Summ']/100.0, 2, '.', '')?></div>
+<?php if (isset($draftData['SummComis']) && !empty($draftData['SummComis'])) : ?>
+    <div>Комиссия: <?=number_format($draftData['SummComis']/100.0, 2, '.', '')?></div>
+<?php endif; ?>
 <div>Адрес покупателя: <?=$draftData['Email']?></div>
 <div>ИТОГ ≡<?=number_format($draftData['Summ']/100.0, 2, '.', '')?></div>
 <div>ЭЛЕКТРОННО ≡<?=number_format($draftData['Summ']/100.0, 2, '.', '')?></div>

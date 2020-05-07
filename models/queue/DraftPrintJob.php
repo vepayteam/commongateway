@@ -12,6 +12,7 @@ class DraftPrintJob extends BaseObject implements \yii\queue\JobInterface
     public $tovar;
     public $tovarOFD;
     public $summDraft;
+    public $summComis;
     public $email = '';
 
     public function execute($queue)
@@ -21,6 +22,7 @@ class DraftPrintJob extends BaseObject implements \yii\queue\JobInterface
         $data->customerContact = $this->email;
         $data->text = $this->tovar;
         $data->price = $this->summDraft;
+        $data->comis = $this->summComis;
 
         if (!empty($this->email)) {
             $kassa = new OnlineKassa();

@@ -34,7 +34,7 @@ class SendEmail extends Model
     {
         $emailfrom = [empty($emailfrom) ? $this->fromEmail : $emailfrom => 'Vepay'];
         if (Yii::$app->params['TESTMODE'] == "Y") {
-            $email = "support@teleport.run";
+            $email = "ayuriev@vepay.online";
         }
         $this->mailer->compose('@app/mail/layouts/html', ['content' => $content])
             ->setTo($this->explodeMail($email))
@@ -56,7 +56,7 @@ class SendEmail extends Model
     {
         $emailfrom = [$this->fromEmail => 'Vepay'];
         if (Yii::$app->params['TESTMODE'] == "Y") {
-            $email = "support@teleport.run";
+            $email = "ayuriev@vepay.online";
         }
         $mailer = $this->mailer->compose('@app/mail/layouts/html', ['content' => $content])
             ->setTo($this->explodeMail($email))
