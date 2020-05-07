@@ -21,7 +21,8 @@ class TCBank
     private $bankUrlXml = 'https://193.232.101.14:8204';
     private $bankUrlClient = 'https://pay.tkbbank.ru';
     private $shopId;
-    private $certFile;
+    private $UserCert;
+    private $UserKey;
     private $keyFile;
     private $caFile;
     private static $orderState = [0 => 'Обрабатывается', 1 => 'Исполнен', 2 => 'Отказано', 3 => 'Возврат'];
@@ -573,16 +574,19 @@ class TCBank
                     ], $addHeader))
                 ->setOption(CURLOPT_SSL_VERIFYHOST, false)
                 ->setOption(CURLOPT_SSL_CIPHER_LIST, 'TLSv1')
-                //->setOption(CURLOPT_SSLKEY, $this->keyFile)
-                //->setOption(CURLOPT_SSLCERT, $this->certFile)
-                //->setOption(CURLOPT_CAINFO, $this->caFile)
                 ->setOption(CURLOPT_SSL_VERIFYPEER, false)
+                //->setOption(CURLOPT_CAINFO, $this->caFile)
                 ->setOption(CURLOPT_POSTFIELDS, $post);
+            if (mb_stripos($this->bankUrlXml, $url) !== false) {
+                $curl
+                    ->setOption(CURLOPT_SSLKEY, $this->UserCert)
+                    ->setOption(CURLOPT_SSLCERT, $this->UserKey);
+            }
 
-            if (Yii::$app->params['DEVMODE'] == 'Y') {
+            /*if (Yii::$app->params['DEVMODE'] == 'Y') {
                 $curl->setOption(CURLOPT_PROXY, '194.58.96.139:3128');
                 $curl->setOption(CURLOPT_PROXYUSERPWD, 'vfort:S3n4a@Mvy4');
-            }
+            }*/
             $curl->post($url);
 
         } catch (\Exception $e) {
