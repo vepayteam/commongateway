@@ -21,7 +21,8 @@ class TCBank
     private $bankUrlXml = 'https://193.232.101.14:8204';
     private $bankUrlClient = 'https://pay.tkbbank.ru';
     private $shopId;
-    private $certFile;
+    private $UserCert;
+    private $UserKey;
     private $keyFile;
     private $caFile;
     private static $orderState = [0 => 'Обрабатывается', 1 => 'Исполнен', 2 => 'Отказано', 3 => 'Возврат'];
@@ -50,6 +51,9 @@ class TCBank
      */
     public function __construct($tcbGate = null)
     {
+        $this->UserCert = Yii::$app->basePath . '/config/tcbcert/vepay.crt';
+        $this->UserKey = Yii::$app->basePath . '/config/tcbcert/vepay.key';
+
         if (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] == 'Y') {
             $this->bankUrl = 'https://paytest.online.tkbbank.ru';
             $this->bankUrlXml = 'https://193.232.101.14:8203';
@@ -573,11 +577,14 @@ class TCBank
                     ], $addHeader))
                 ->setOption(CURLOPT_SSL_VERIFYHOST, false)
                 ->setOption(CURLOPT_SSL_CIPHER_LIST, 'TLSv1')
-                //->setOption(CURLOPT_SSLKEY, $this->keyFile)
-                //->setOption(CURLOPT_SSLCERT, $this->certFile)
-                //->setOption(CURLOPT_CAINFO, $this->caFile)
                 ->setOption(CURLOPT_SSL_VERIFYPEER, false)
+                //->setOption(CURLOPT_CAINFO, $this->caFile)
                 ->setOption(CURLOPT_POSTFIELDS, $post);
+            if (!empty($this->UserKey) && mb_stripos($url, $this->bankUrlXml) !== false) {
+                $curl
+                    ->setOption(CURLOPT_SSLKEY, $this->UserKey)
+                    ->setOption(CURLOPT_SSLCERT, $this->UserCert);
+            }
 
             if (Yii::$app->params['DEVMODE'] == 'Y') {
                 $curl->setOption(CURLOPT_PROXY, '194.58.96.139:3128');
