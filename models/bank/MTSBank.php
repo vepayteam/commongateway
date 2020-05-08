@@ -182,7 +182,7 @@ class MTSBank implements IBank
         $ans = $this->curlXmlReq($queryData, $this->bankUrl.$action);
 
         if (isset($ans['xml']) && !empty($ans['xml'])) {
-            if (!isset($ans['xml']['errorCode'])) {
+            if (!isset($ans['xml']['errorCode']) || $ans['xml']['errorCode'] == 0) {
                 return [
                     'status' => 1,
                     'transac' => $params['ExtBillNumber'],
@@ -231,7 +231,7 @@ class MTSBank implements IBank
             $ans = $this->curlXmlReq($queryData, $this->bankUrl.$action);
 
             if (isset($ans['xml']) && !empty($ans['xml'])) {
-                if (!isset($ans['xml']['errorCode'])) {
+                if (!isset($ans['xml']['errorCode']) || $ans['xml']['errorCode'] == 0) {
                     return [
                         'status' => 1,
                         'Status' => 0,
@@ -262,7 +262,7 @@ class MTSBank implements IBank
         $ans = $this->curlXmlReq($queryData, $this->bankUrl.$action);
 
         if (isset($ans['xml']) && !empty($ans['xml'])) {
-            if (!isset($ans['xml']['errorCode'])) {
+            if (!isset($ans['xml']['errorCode']) || $ans['xml']['errorCode'] == 0) {
                 $ordernumber = $ans['xml']['orderId'];
                 return ['status' => 1, 'transac' => $ordernumber];
             } else {
@@ -293,7 +293,7 @@ class MTSBank implements IBank
         $ans = $this->curlXmlReq($queryData, $this->bankUrl.$action);
 
         if (isset($ans['xml']) && !empty($ans['xml'])) {
-            if (!isset($ans['xml']['errorCode'])) {
+            if (!isset($ans['xml']['errorCode']) || $ans['xml']['errorCode'] == 0) {
                 $url = $ans['xml']['acsUrl'];
                 $pa = $ans['xml']['paReq'];
                 $md = $ordernumber;
@@ -334,8 +334,8 @@ class MTSBank implements IBank
         $ans = $this->curlXmlReq($queryData, $this->bankUrl.$action);
 
         if (isset($ans['xml']) && !empty($ans['xml'])) {
-            if (!isset($ans['xml']['errorCode'])) {
-                $status = $this->convertState($ans['xml']['actionCode']);
+            if (!isset($ans['xml']['errorCode']) || $ans['xml']['errorCode'] == 0) {
+                $status = $this->convertState($ans['xml']['orderStatus']);
                 return [
                     'state' => $status,
                     'xml' => [
@@ -398,18 +398,17 @@ class MTSBank implements IBank
 
     /**
      * Отправка POST запроса в банк
-     * @param array $post
+     * @param array $postArr
      * @param string $url
      * @param array $addHeader
-     * @param bool $jsonReq
      * @return array [xml, error]
      */
-    private function curlXmlReq($post, $url, $addHeader = [])
+    private function curlXmlReq(array $postArr, $url, $addHeader = [])
     {
-        $post = http_build_query($post);
+        $post = http_build_query($postArr);
         $timout = 110;
         $curl = new Curl();
-        Yii::warning("req: login = " . $this->shopId . " url = " . $url . "\r\n" . Cards::MaskCardLog($post), 'merchant');
+        Yii::warning("req: login = " . $this->shopId . " url = " . $url . "\r\n" . $this->MaskCardLog($post), 'merchant');
         try {
             $curl->reset()
                 ->setOption(CURLOPT_TIMEOUT, $timout)
@@ -457,6 +456,17 @@ class MTSBank implements IBank
         }
 
         return $ans;
+    }
+
+    private function MaskCardLog($post)
+    {
+        if (preg_match('/PAN=(\d+)/ius', $post, $m)) {
+            $post = str_ireplace($m[1], Cards::MaskCard($m[1]), $post);
+        }
+        if (preg_match('/CVC=(\d+)/ius', $post, $m)) {
+            $post = str_ireplace($m[1], "***", $post);
+        }
+        return $post;
     }
 
 }

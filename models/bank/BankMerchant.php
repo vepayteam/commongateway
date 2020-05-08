@@ -56,4 +56,16 @@ class BankMerchant
 
         return $Gate;
     }
+
+    /**
+     * Выбор банка для платежа
+     * @return int
+     */
+    public static function GetWorkBank()
+    {
+        if (true) {
+            return MTSBank::$bank;
+        }
+        return TCBank::$bank;
+    }
 }

@@ -237,6 +237,7 @@ class PayController extends Controller
                 $merchBank = BankMerchant::Create($params);
                 $ret = $merchBank->ConfirmXml([
                     'ID' => $params['ID'],
+                    'ExtBillNumber' => $params['ExtBillNumber'],
                     'MD' => $md,
                     'PaRes' => Yii::$app->request->post('PaRes')
                 ]);

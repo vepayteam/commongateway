@@ -81,7 +81,7 @@ class PayController extends Controller
 
         Yii::warning('/pay/lk mfo='. $mfo->mfo . " sum=".$kfPay->amount . " extid=".$kfPay->extid, 'mfo');
 
-        $bank = MTSBank::$bank;
+        $bank = BankMerchant::GetWorkBank();
 
         $typeUsl = $kfPay->IsAftGate($mfo->mfo) ? TU::$POGASHATF : TU::$POGASHECOM;
         $bankGate = BankMerchant::Gate($mfo->mfo, $bank, $typeUsl);
