@@ -54,6 +54,10 @@ class TCBank
         if (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] == 'Y') {
             $this->bankUrl = 'https://paytest.online.tkbbank.ru';
             $this->bankUrlXml = 'https://193.232.101.14:8203';
+
+            $this->UserCert = Yii::$app->basePath . '/config/tcbcert/vepay.crt';
+            $this->UserKey = Yii::$app->basePath . '/config/tcbcert/vepay.key';
+
         }
 
         if ($tcbGate) {
@@ -577,16 +581,16 @@ class TCBank
                 ->setOption(CURLOPT_SSL_VERIFYPEER, false)
                 //->setOption(CURLOPT_CAINFO, $this->caFile)
                 ->setOption(CURLOPT_POSTFIELDS, $post);
-            if (mb_stripos($this->bankUrlXml, $url) !== false) {
+            if (!empty($this->UserKey) && mb_stripos($url, $this->bankUrlXml) !== false) {
                 $curl
-                    ->setOption(CURLOPT_SSLKEY, $this->UserCert)
-                    ->setOption(CURLOPT_SSLCERT, $this->UserKey);
+                    ->setOption(CURLOPT_SSLKEY, $this->UserKey)
+                    ->setOption(CURLOPT_SSLCERT, $this->UserCert);
             }
 
-            /*if (Yii::$app->params['DEVMODE'] == 'Y') {
+            if (Yii::$app->params['DEVMODE'] == 'Y') {
                 $curl->setOption(CURLOPT_PROXY, '194.58.96.139:3128');
                 $curl->setOption(CURLOPT_PROXYUSERPWD, 'vfort:S3n4a@Mvy4');
-            }*/
+            }
             $curl->post($url);
 
         } catch (\Exception $e) {
