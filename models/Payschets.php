@@ -391,16 +391,15 @@ class Payschets
     {
         if (TU::IsInAll($query['IsCustom'])) {
             //чек пробить
-            if (!Yii::$app->request->isConsoleRequest) {
-                Yii::$app->queue->push(new DraftPrintJob([
-                    'idpay' => $params['idpay'],
-                    'tovar' => $query['tovar'],
-                    'tovarOFD' => $query['tovarOFD'],
-                    'summDraft' => $query['SummPay'] + $query['ComissSumm'],
-                    'summComis' => $query['ComissSumm'],
-                    'email' => $query['Email']
-                ]));
-            }
+            Yii::$app->queue->push(new DraftPrintJob([
+                'idpay' => $params['idpay'],
+                'tovar' => $query['tovar'],
+                'tovarOFD' => $query['tovarOFD'],
+                'summDraft' => $query['SummPay'] + $query['ComissSumm'],
+                'summComis' => $query['ComissSumm'],
+                'email' => $query['Email'],
+                'checkExist' => Yii::$app->request->isConsoleRequest ? true : false
+            ]));
         }
 
         return true;

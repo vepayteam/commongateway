@@ -14,7 +14,7 @@ class OnlineKassa
 
     public function __construct()
     {
-        $this->kktConfig = $this->readConfig();
+        $this->kktConfig = [];
     }
 
     /**
@@ -117,11 +117,6 @@ class OnlineKassa
             ]);
         }
         return $draft;
-    }
-
-    private function readConfig()
-    {
-        return [];
     }
 
     private function createQrImg()

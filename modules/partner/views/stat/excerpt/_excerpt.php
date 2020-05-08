@@ -14,7 +14,7 @@
  * o.CartType,
  * o.CardNum
  */
-$status = [0 => "Создан", 1 => "Оплачен", 2 => "Отмена", 3 => "Возврат"];
+use app\models\TU;$status = [0 => "Создан", 1 => "Оплачен", 2 => "Отмена", 3 => "Возврат"];
 //здесь еще в зависимости от TU нужно будет прописать описание.
 ?>
 <div>
@@ -71,6 +71,8 @@ $status = [0 => "Создан", 1 => "Оплачен", 2 => "Отмена", 3 =>
 <div class="transaction-info">
     <p class="name"><?= $data['ErrorInfo'] ?></p>
 </div>
+<?php if ($data['Status'] == 1 && TU::IsInAll($data['IsCustom'])): ?>
 <div class="transaction-info">
     <div class="col-sm-12"><a class="btn btn-white btn-md pull-right" href="/partner/stat/draft/<?=$data['ID']?>" target="_blank">Чек</a></div>
 </div>
+<?php endif; ?>

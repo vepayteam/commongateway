@@ -144,7 +144,7 @@ class Notification
         $uslinfo = isset($value['EmailShablon']) ? $value['EmailShablon'] : '';
 
         $kkt = new OnlineKassa();
-        $draft = $kkt->printFromDB($IdSchet,false);
+        $draft = $kkt->printFromDB($IdSchet,true);
         if ($draft) {
 
             $content = Yii::$app->view->renderFile("@app/mail/notificate_template.php", [

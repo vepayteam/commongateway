@@ -14,6 +14,7 @@ class DraftPrintJob extends BaseObject implements \yii\queue\JobInterface
     public $summDraft;
     public $summComis;
     public $email = '';
+    public $checkExist = true;
 
     public function execute($queue)
     {
@@ -26,7 +27,7 @@ class DraftPrintJob extends BaseObject implements \yii\queue\JobInterface
 
         if (!empty($this->email)) {
             $kassa = new OnlineKassa();
-            $kassa->createDraft($this->idpay, $data, false);
+            $kassa->createDraft($this->idpay, $data, $this->checkExist);
         }
     }
 }

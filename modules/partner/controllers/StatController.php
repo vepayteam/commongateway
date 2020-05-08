@@ -795,7 +795,11 @@ class StatController extends Controller
     public function actionDraft($id)
     {
         $kkt = new OnlineKassa();
-        return $kkt->printFromDB($id,true);
+        $ret = $kkt->printFromDB($id);
+        if (!empty($ret)) {
+            return $ret;
+        }
+        throw new NotFoundHttpException();
     }
 
 }

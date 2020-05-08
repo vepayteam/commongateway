@@ -70,8 +70,9 @@ class Excerpt
                 o.CardNum,
                 o.CardHolder,
                 o.CardExp,
-                u.NameUsluga
-                ');
+                u.NameUsluga,
+                u.IsCustom
+            ');
 
             if (UserLk::IsAdmin(Yii::$app->user)){
                 $query->where(['o.ID'=>$this->id]);
