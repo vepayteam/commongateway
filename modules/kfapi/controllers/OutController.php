@@ -123,7 +123,7 @@ class OutController extends Controller
         //антифрод должен рабоатть после записи в базу.
         $anti_fraud = new AntiFraudRefund($params['IdPay'], $kf->IdPartner, Cards::MaskCard($kfOut->cardnum));
         if (!$anti_fraud->validate()) {
-            $pay->CancelReq($params['IdPay']);
+            $pay->CancelReq($params['IdPay'], 'Повторный платеж');
             Yii::warning("out/paycard: Повторный платеж", 'mfo');
             return ['status' => 0, 'id' => 0, 'message' => 'Повторный платеж'];
         }
@@ -149,7 +149,7 @@ class OutController extends Controller
                 ]);
 
             } else {
-                $pay->CancelReq($params['IdPay']);
+                $pay->CancelReq($params['IdPay'],'Платеж не проведен');
             }
         }
 
@@ -228,7 +228,7 @@ class OutController extends Controller
                 ]);
 
             } else {
-                $pay->CancelReq($params['IdPay']);
+                $pay->CancelReq($params['IdPay'],'Платеж не проведен');
             }
         }
 
@@ -306,7 +306,7 @@ class OutController extends Controller
                 ]);
 
             } else {
-                $pay->CancelReq($params['IdPay']);
+                $pay->CancelReq($params['IdPay'],'Платеж не проведен');
             }
 
         }
@@ -449,7 +449,7 @@ class OutController extends Controller
             ]);
 
         } else {
-            $pay->CancelReq($params['IdPay']);
+            $pay->CancelReq($params['IdPay'],'Платеж не проведен');
         }
 
         return ['status' => 1, 'id' => (int)$params['IdPay'], 'message' => ''];

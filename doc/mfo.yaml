@@ -513,6 +513,9 @@ components:
         status:
           type: integer
           description: Код ошибки (0 – ожидане оплаты 1 - успешно 2 - ошибка платежа)
+        message:
+          type: string
+          description: Описание ошибки
         card:
           $ref: "#/components/schemas/CardInfoAns"
     CardInfoAns:
@@ -730,6 +733,9 @@ components:
         status:
           type: integer
           description: Статус (0 – ошибка 1 - успешно)
+        message:
+          type: string
+          description: Описание ошибки
     StatusIdUrl:
       type: object
       properties:
@@ -751,6 +757,9 @@ components:
         status:
           type: integer
           description: Статус (0 – ошибка 1 - принят)
+        message:
+          type: string
+          description: Описание ошибки
         id:
           type: integer
           description: Идентификатор запроса

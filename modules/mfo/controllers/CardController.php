@@ -79,13 +79,14 @@ class CardController extends Controller
         }
         if (!$Card) {
             Yii::warning("card/info: нет такой карты", 'mfo');
-            return ['status' => 0];
+            return ['status' => 0, 'message' => 'Нет такой карты'];
         }
 
         //информация и карте
         if ($Card && $type == 0) {
             return [
                 'status' => 1,
+                'message' => '',
                 'card' => [
                     'id' => (int)$Card->ID,
                     'num' => (string)$Card->CardNumber,
@@ -95,6 +96,7 @@ class CardController extends Controller
         } elseif ($Card && $type == 1) {
             return [
                 'status' => 1,
+                'message' => '',
                 'card' => [
                     'id' => (int)$Card->ID,
                     'num' => (string)$Card->CardNumber,
@@ -102,7 +104,7 @@ class CardController extends Controller
                 ]
             ];
         }
-        return ['status' => 0];
+        return ['status' => 0, 'message' => 'Ошибка запроса'];
     }
 
     /**
@@ -168,6 +170,7 @@ class CardController extends Controller
             if (isset($data['IdPay'])) {
                 return [
                     'status' => 1,
+                    'message' => '',
                     'id' => $data['IdPay'],
                     'url' => $mfo->getLinkOutCard($data['IdPay'])
                 ];
@@ -196,8 +199,8 @@ class CardController extends Controller
         $kfCard->scenario = KfCard::SCENARIO_GET;
         $kfCard->load($mfo->Req(), '');
         if (!$kfCard->validate()) {
-            Yii::warning('/card/get mfo='. $mfo->mfo . " IdPay=0", 'mfo');
-            return ['status' => 0];
+            Yii::warning('/card/get mfo='. $mfo->mfo . " " . $kfCard->GetError(), 'mfo');
+            return ['status' => 0, 'message' => $kfCard->GetError()];
         }
 
         Yii::warning('/card/get mfo='. $mfo->mfo . " IdPay=". $kfCard->id . " type=".$type, 'mfo');
@@ -211,7 +214,8 @@ class CardController extends Controller
         $statePay = $kfCard->GetPayState();
         if ($statePay == 2) {
             return [
-                'status' => 2
+                'status' => 2,
+                'message' => 'Платеж не успешный'
             ];
         }
 
@@ -221,6 +225,7 @@ class CardController extends Controller
         if ($Card && $type == 0) {
             return [
                 'status' => 1,
+                'message' => '',
                 'card' => [
                     'id' => (int)$Card->ID,
                     'num' => (string)$Card->CardNumber,
@@ -231,6 +236,7 @@ class CardController extends Controller
         } elseif ($Card && $type == 1) {
             return [
                 'status' => 1,
+                'message' => '',
                 'card' => [
                     'id' => (int)$Card->ID,
                     'num' => $Card->CardNumber,
@@ -238,7 +244,7 @@ class CardController extends Controller
                 ]
             ];
         }
-        return ['status' => 0];
+        return ['status' => 0, 'message' => 'Ошибка запроса'];
     }
 
     /**
@@ -267,9 +273,9 @@ class CardController extends Controller
         if ($Card) {
             $Card->IsDeleted = 1;
             $Card->save(false);
-            return ['status' => 1];
+            return ['status' => 1, 'message' => ''];
         }
-        return ['status' => 0];
+        return ['status' => 0, 'message' => 'Ошибка запроса'];
     }
 
 }

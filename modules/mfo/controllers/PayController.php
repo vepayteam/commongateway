@@ -131,13 +131,13 @@ class PayController extends Controller
         $kfCard->load($mfo->Req(), '');
         if (!$kfCard->validate()) {
             Yii::warning("pay/auto: не указана карта");
-            return ['status' => 0];
+            return ['status' => 0, 'message' => 'Не указана карта'];
 
         }
         $Card = $kfCard->FindKard($mfo->mfo,0);
         if (!$Card) {
             Yii::warning("pay/auto: нет такой карты");
-            return ['status' => 0];
+            return ['status' => 0, 'message' => 'Нет такой карты'];
         }
 
         $kfPay = new KfPay();
@@ -145,14 +145,14 @@ class PayController extends Controller
         $kfPay->load($mfo->Req(), '');
         if (!$kfPay->validate()) {
             Yii::warning("pay/auto: ".$kfPay->GetError());
-            return ['status' => 0];
+            return ['status' => 0, 'message' => $kfPay->GetError()];
         }
 
         $TcbGate = new TcbGate($mfo->mfo, TCBank::$AUTOPAYGATE);
         $usl = $kfPay->GetUslugAuto($mfo->mfo);
 
         if (!$usl || !$TcbGate->IsGate()) {
-            return ['status' => 0];
+            return ['status' => 0, 'message' => 'Нет шлюза'];
         }
 
         Yii::warning('/pay/auto mfo='. $mfo->mfo . " sum=".$kfPay->amount . " extid=".$kfPay->extid, 'mfo');
@@ -163,10 +163,10 @@ class PayController extends Controller
             $paramsExist = $pay->getPaySchetExt($kfPay->extid, $usl, $mfo->mfo);
             if ($paramsExist) {
                 if ($kfPay->amount == $paramsExist['sumin']) {
-                    return ['status' => 1, 'id' => (int)$paramsExist['IdPay']];
+                    return ['status' => 1, 'message' => '', 'id' => (int)$paramsExist['IdPay']];
                 } else {
                     Yii::warning("pay/auto: Нарушение уникальности запроса");
-                    return ['status' => 0, 'id' => 0];
+                    return ['status' => 0, 'message' => 'Нарушение уникальности запроса', 'id' => 0];
                 }
             }
         }
@@ -175,7 +175,7 @@ class PayController extends Controller
         $TcbGate->AutoPayIdGate = $kfPay->GetAutopayGate();
         if (!$TcbGate->AutoPayIdGate) {
             Yii::warning("pay/auto: нет больше шлюзов");
-            return ['status' => 0];
+            return ['status' => 0, 'message' => 'нет больше шлюзов'];
         }
         if ($Card && $Card->IdPan > 0) {
             $CardToken = new CardToken();
@@ -183,7 +183,7 @@ class PayController extends Controller
         }
         if (empty($cardnum)) {
             Yii::warning("pay/auto: empty card", 'mfo');
-            return ['status' => 0];
+            return ['status' => 0, 'message' => 'empty card'];
         }
 
         $kfPay->timeout = 30;
@@ -218,10 +218,10 @@ class PayController extends Controller
             ]);
 
         } else {
-            $pay->CancelReq($params['IdPay']);
+            $pay->CancelReq($params['IdPay'],'Платеж не проведен');
         }
 
-        return ['status' => 1, 'id' => (int)$params['IdPay']];
+        return ['status' => 1, 'message' => '', 'id' => (int)$params['IdPay']];
     }
 
     /**
