@@ -294,8 +294,8 @@ class MTSBank implements IBank
 
         if (isset($ans['xml']) && !empty($ans['xml'])) {
             if (!isset($ans['xml']['errorCode']) || $ans['xml']['errorCode'] == 0) {
-                $url = $ans['xml']['acsUrl'];
-                $pa = $ans['xml']['paReq'];
+                $url = $ans['xml']['acsUrl'] ?? '';
+                $pa = $ans['xml']['paReq'] ?? '';
                 $md = $ordernumber;
                 return [
                     'status' => 1,
