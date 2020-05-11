@@ -188,17 +188,18 @@ if (YII_ENV_DEV) {
 } else {
     Yii::setAlias('@img', '');
     $config['components']['assetManager'] = ['bundles' => require 'assets-prod.php'];
-
-    $config['as hostControl'] = [
-        'class' => 'yii\filters\HostControl',
-        'allowedHosts' => [
-            'api.vepay.online',
-            'test.vepay.online',
-            'dev.vepay.online',
-            'api.vepay.local'
-        ],
-        'fallbackHostInfo' => 'https://api.vepay.online',
-    ];
+    if (!($params['DEVMODE'] == 'Y' || $params['TESTMODE'] == 'Y')) {
+        $config['as hostControl'] = [
+            'class' => 'yii\filters\HostControl',
+            'allowedHosts' => [
+                'api.vepay.online',
+                'test.vepay.online',
+                'dev.vepay.online',
+                'api.vepay.local'
+            ],
+            'fallbackHostInfo' => 'https://api.vepay.online',
+        ];
+    }
 }
 
 $config['components']['log']['targets'][] = [

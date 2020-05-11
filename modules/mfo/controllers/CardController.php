@@ -142,7 +142,7 @@ class CardController extends Controller
 
         //зарегистрировать карту
         $reguser = new Reguser();
-        $user = $reguser->findUser('0', $mfo->mfo.'-'.time(), md5($mfo->mfo.'-'.time()), $mfo->mfo, false);
+        $user = $reguser->findUser('0', $mfo->mfo.'-'.time().random_int(100,999), md5($mfo->mfo.'-'.time()), $mfo->mfo, false);
         $data['user'] = $user;
         if (!empty($user->Email)) {
             $data['email'] = $user->Email;
