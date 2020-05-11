@@ -220,7 +220,7 @@ class Tokenizer
      */
     private function GetKeyMem()
     {
-        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' && Yii::$app->params['DEVMODE'] == 'Y') {
+        if (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] == 'Y') {
             return '1234567890';
         } else {
             $shmKey = ftok(Yii::$app->basePath . "/yii", 't');
