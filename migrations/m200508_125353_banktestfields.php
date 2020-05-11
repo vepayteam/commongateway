@@ -12,10 +12,10 @@ class m200508_125353_banktestfields extends Migration
      */
     public function safeUp()
     {
-        $this->addColumn('banks', 'LastWork', $this->integer(10)->unsigned()->notNull()->defaultValue(0));
-        $this->addColumn('banks', 'LastPay', $this->integer(10)->unsigned()->notNull()->defaultValue(0));
-        $this->addColumn('banks', 'LastCheck', $this->integer(10)->unsigned()->notNull()->defaultValue(0));
-        $this->addColumn('banks', 'UsePay', $this->tinyInteger(1)->unsigned()->notNull()->defaultValue(0));
+        $this->addColumn('banks', 'LastWorkIn', $this->integer(10)->unsigned()->notNull()->defaultValue(0));
+        $this->addColumn('banks', 'LastInPay', $this->integer(10)->unsigned()->notNull()->defaultValue(0));
+        $this->addColumn('banks', 'LastInCheck', $this->integer(10)->unsigned()->notNull()->defaultValue(0));
+        $this->addColumn('banks', 'UsePayIn', $this->tinyInteger(1)->unsigned()->notNull()->defaultValue(0));
 
         $this->insert('banks', [
             'ID' => 3,
@@ -28,10 +28,10 @@ class m200508_125353_banktestfields extends Migration
      */
     public function safeDown()
     {
-        $this->dropColumn('banks', 'LastWork');
-        $this->dropColumn('banks', 'UsePay');
-        $this->dropColumn('banks', 'LastCheck');
-        $this->dropColumn('banks', 'LastPay');
+        $this->dropColumn('banks', 'LastWorkIn');
+        $this->dropColumn('banks', 'UseInPay');
+        $this->dropColumn('banks', 'LastInCheck');
+        $this->dropColumn('banks', 'LastPayIn');
 
         $this->delete('banks', 'ID = 3');
 

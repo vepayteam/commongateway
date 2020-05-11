@@ -3,6 +3,8 @@
 namespace app\models;
 
 use app\models\antifraud\AntiFraud;
+use app\models\bank\BankCheck;
+use app\models\bank\MTSBank;
 use app\models\crypt\CardToken;
 use app\models\payonline\BalancePartner;
 use app\models\payonline\Cards;
@@ -206,6 +208,9 @@ class Payschets
                         if ($query['IdUsluga'] != 1) {
                             $this->ChangeBalance($query, $params['idpay']);
                         }
+
+                        $BankCheck = new BankCheck();
+                        $BankCheck->UpdateLastWork($query['bank']);
 
                         if ($transaction->isActive) {
                             $transaction->commit();

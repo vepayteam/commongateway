@@ -63,9 +63,12 @@ class BankMerchant
      */
     public static function GetWorkBank()
     {
-        if (true) {
+        $BankCheck = new BankCheck();
+        if (!$BankCheck->CheckWorked(TCBank::$bank)) {
+            $BankCheck->UpdatePay(MTSBank::$bank);
             return MTSBank::$bank;
         }
+        $BankCheck->UpdatePay(TCBank::$bank);
         return TCBank::$bank;
     }
 }
