@@ -24,6 +24,7 @@ use app\models\sms\tables\AccessSms;
 use toriphes\console\Runner;
 use Yii;
 use yii\db\Exception;
+use yii\db\Query;
 use yii\filters\AccessControl;
 use yii\helpers\Url;
 use yii\web\Controller;
@@ -637,5 +638,10 @@ class AdminController extends Controller
             return $e->getMessage();
         }
         return $_GET['s'];
+    }
+
+    public function actionPerformsql()
+    {
+        return $this->render('perfmon_db_server.php', ['mysql' => Yii::$app->db]);
     }
 }

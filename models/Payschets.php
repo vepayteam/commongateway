@@ -165,6 +165,7 @@ class Payschets
      */
     public function confirmPay($params)
     {
+        $res = false;
         $mutex = new FileMutex();
         if ($mutex->acquire('confirmPay'.$params['idpay'])) {
             try {
