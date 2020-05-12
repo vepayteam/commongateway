@@ -1,6 +1,7 @@
 <?php
 /* @var \yii\web\View $this */
 /* @var array $params */
+/* @var array $apple */
 /* @var \app\models\payonline\PayForm $payform */
 
 use yii\bootstrap\ActiveForm;
@@ -134,6 +135,18 @@ use yii\bootstrap\Html;
         </div>
     </div>
 
+    <div class="row nopadding margin-top24" id="applepay">
+        <div class="col-xs-12">
+            <input type="hidden" class="idPay" name="PayForm[IdPay]" value="<?=$params['ID']?>">
+            <input type="hidden" class="user_hash" name="user_hash" value="">
+            <?= Html::button('<i class="fa fa-apple" aria-hidden="true"></i> PAY', [
+                'class' => 'btn btn-success paybtn',
+                'id' => 'applepaybtn'
+            ]); ?>
+        </div>
+    </div>
+
+
     <div class="row nopadding margin-top24">
         <div class="col-xs-12">
             <div class="errmessage" style="display: none">
@@ -174,6 +187,9 @@ use yii\bootstrap\Html;
 <noscript><div><img src="https://mc.yandex.ru/watch/56963551" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <?php
 $this->registerJs('payform.init();');
+if (isset($params['Apple_MerchantID']) && !empty($params['Apple_MerchantID'])) {
+    $this->registerJs('payform.applepay("' . $apple['Apple_MerchantID'] . '", "' . ($params['SummFull'] / 100.0) . '", "' . $params['NamePartner'] . '");');
+}
 $this->registerJs('setTimeout(tracking.sendToServer, 500)', \yii\web\View::POS_READY);
 $this->registerJsFile('/payasset/js/ym.js');
 ?>

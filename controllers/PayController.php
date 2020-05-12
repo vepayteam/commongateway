@@ -4,6 +4,7 @@ namespace app\controllers;
 
 use app\models\antifraud\AntiFraud;
 use app\models\antifraud\tables\AFFingerPrit;
+use app\models\bank\ApplePay;
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\crypt\Tokenizer;
@@ -72,7 +73,11 @@ class PayController extends Controller
                     $csp .= ' frame-src ' . $params['URLSite'].';';
                 }
                 Yii::$app->response->headers->add('Content-Security-Policy', $csp);
-                return $this->render('formpay', ['params' => $params, 'payform' => $payform]);
+
+                $ApplePay = new ApplePay();
+                $apple = $ApplePay->GetConf($params['IDPartner']);
+
+                return $this->render('formpay', ['params' => $params, 'apple' => $apple, 'payform' => $payform]);
 
             } else {
                 return $this->redirect(\yii\helpers\Url::to('/pay/orderok?id='.$id));
@@ -313,6 +318,21 @@ class PayController extends Controller
         } else {
             throw new NotFoundHttpException();
         }
+    }
+
+    public function actionApplepayvalidate()
+    {
+        if (Yii::$app->request->isAjax) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+
+            $validationURL = Yii::$app->request->post('validationURL');
+            if (!empty($validationURL)) {
+                $ApplePay = new ApplePay();
+                return ['status' => $ApplePay->ValidateSession($validationURL)];
+            }
+            return ['status' => 0];
+        }
+        return '';
     }
 
 //    public function actionRegisterTracking(){
