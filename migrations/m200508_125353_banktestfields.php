@@ -17,6 +17,7 @@ class m200508_125353_banktestfields extends Migration
         $this->addColumn('banks', 'LastInCheck', $this->integer(10)->unsigned()->notNull()->defaultValue(0));
         $this->addColumn('banks', 'UsePayIn', $this->tinyInteger(1)->unsigned()->notNull()->defaultValue(0));
 
+        $this->update('banks', ['UsePayIn' => 1], 'ID = 2');
         $this->insert('banks', [
             'ID' => 3,
             'Name' => 'МТС Банк',

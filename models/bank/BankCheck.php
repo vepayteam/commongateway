@@ -14,13 +14,15 @@ class BankCheck
     public function CheckWorked($bank)
     {
         $result = (new Query())
-            ->select(['LastWorkIn', 'LastInPay'])
+            ->select(['LastWorkIn', 'LastInPay', 'LastInCheck'])
             ->from('banks')
-            ->where(['ID' => $bank, 'UsePayIn' => true])
+            ->where(['ID' => $bank, 'UsePayIn' => 1])
             ->one();
 
         if ($result) {
-            return $result['LastWorkIn'] > time() - 10 * 60 || $result['LastWorkIn'] < $result['LastInPay'] - 60 * 60;
+            return $result['LastInPay'] == 0 ||
+                ($result['LastWorkIn'] > $result['LastInPay'] - 10 * 60) ||
+                ($result['LastWorkIn'] < $result['LastInPay'] - 20 * 60 && $result['LastInPay'] < time() - 10 * 60);
         }
         return false;
     }

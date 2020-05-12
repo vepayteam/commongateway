@@ -211,7 +211,7 @@ class Payschets
                         }
 
                         $BankCheck = new BankCheck();
-                        $BankCheck->UpdateLastWork($query['bank']);
+                        $BankCheck->UpdateLastWork($query['Bank']);
 
                         if ($transaction->isActive) {
                             $transaction->commit();
@@ -774,7 +774,8 @@ class Payschets
                 p.Status,
                 pr.ID AS IdOrg,
                 pr.SchetTcbNominal,
-                ut.ExtReestrIDUsluga
+                ut.ExtReestrIDUsluga,
+                p.Bank
               FROM
                 `pay_schet` AS p
                 LEFT JOIN `user` AS u ON p.`IdUser` = u.`ID` AND u.IsDeleted = 0

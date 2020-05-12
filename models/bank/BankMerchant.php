@@ -45,6 +45,12 @@ class BankMerchant
         return new TCBank();
     }
 
+    /**
+     * @param $partner
+     * @param $bank
+     * @param $typeUsl
+     * @return IBankGate|null
+     */
     public static function Gate($partner, $bank, $typeUsl)
     {
         $Gate = null;
