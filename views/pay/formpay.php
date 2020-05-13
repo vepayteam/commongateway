@@ -106,17 +106,18 @@ use yii\bootstrap\Html;
             </div>
         </div>
     </div>
-
-    <div class="row nopadding">
-        <div class="col-sm-12 col-xs-12">
-            <?= $form->field($payform, 'Email')->textInput([
-                'type' => 'email',
-                'class' => 'form-control notrequired',
-                'value' => '',
-                'placeholder' => 'info@vepay.online'
-            ]); ?>
+    <?php if ($params['IsUseKKmPrint']) : ?>
+        <div class="row nopadding">
+            <div class="col-sm-12 col-xs-12">
+                <?= $form->field($payform, 'Email')->textInput([
+                    'type' => 'email',
+                    'class' => 'form-control notrequired',
+                    'value' => '',
+                    'placeholder' => 'info@vepay.online'
+                ]); ?>
+            </div>
         </div>
-    </div>
+    <?php endif; ?>
 
     <div class="row nopadding margin-top24">
         <div class="col-xs-12">

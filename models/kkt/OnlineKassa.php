@@ -10,12 +10,6 @@ use app\models\Payschets;
 class OnlineKassa
 {
     private $draftData = null;
-    private $kktConfig;
-
-    public function __construct()
-    {
-        $this->kktConfig = [];
-    }
 
     /**
      * Пробить чек
@@ -27,7 +21,7 @@ class OnlineKassa
     public function createDraft($IdPayschet, DraftData $draftData, $checkExist = false)
     {
         $isNew = 0;
-        $OrangeData = new OrangeData($this->kktConfig);
+        $OrangeData = new OrangeData($this->kktConfig($IdPayschet));
         if ($checkExist) {
             $ans = $OrangeData->StatusDraft($IdPayschet);
         } else {
@@ -134,5 +128,21 @@ class OnlineKassa
             ->useForegroundColor(0, 0, 0);
 
         return $qrCode->writeString();
+    }
+
+    private function kktConfig($IdPayschet)
+    {
+        $ret = Yii::$app->db->createCommand('
+            SELECT 
+                `OrangeDataSingKey` AS keySign, 
+                `OrangeDataConKey` AS keyFile,
+                `OrangeDataConCert` AS certFile,
+                `INN` AS inn
+            FROM `partner` AS p
+            LEFT JOIN `pay_schet` AS ps ON p.ID = ps.IdOrg
+            WHERE ps.`ID` = :IDPAYSCHT', [
+            ':IDPAYSCHT' => $IdPayschet,
+        ])->queryOne();
+        return is_array($ret) ? $ret : [];
     }
 }

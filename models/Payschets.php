@@ -99,7 +99,8 @@ class Payschets
                 ps.BankName,
                 ps.sms_accept,
                 qu.IDPartner,
-                ps.IdOrg
+                ps.IdOrg,
+                p.IsUseKKmPrint
             FROM
                 `pay_schet` AS ps
                 LEFT JOIN `user` AS u ON u.`ID`=ps.`IdUser`

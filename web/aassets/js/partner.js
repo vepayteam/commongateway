@@ -1407,6 +1407,32 @@
                 return false;
             });
 
+            $('#btnEditPartnerKkm').on('click',function (e) {
+                e.preventDefault();
+                let form = new FormData($("#formEditPartnerKkm")[0]);
+                $.ajax({
+                    type: "POST",
+                    url: '/partner/partner/partner-kkm-save',
+                    data: form,
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    beforeSend: function () {
+                    },
+                    success: function (data) {
+                        if (data.status == 0) {
+                            toastr.error(data.message, "Ошибка");
+                        } else {
+                            toastr.success("OK", "Ключи ККМ сохранены");
+                        }
+                    },
+                    error: function () {
+                        toastr.error("Ошибка запроса", "Ошибка");
+                    }
+                });
+                return false;
+            });
+
             $('#formEditMainSms').on('submit',function (e) {
                 e.preventDefault();
                 let form = $(this);

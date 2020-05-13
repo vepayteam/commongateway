@@ -183,6 +183,28 @@ class PartnerController extends Controller
         return $this->redirect('/partner');
     }
 
+    public function actionPartnerKkmSave()
+    {
+        if (UserLk::IsAdmin(Yii::$app->user)) {
+            if (Yii::$app->request->isAjax && !Yii::$app->request->isPjax) {
+
+                Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+                $partner = Partner::findOne(['ID' => Yii::$app->request->post('Partner_ID'), 'IsDeleted' => 0]);
+                if (!$partner) {
+                    return ['status' => 0, 'message' => 'Контрагент не найден'];
+                }
+
+                $partner->load(Yii::$app->request->post(), 'Partner');
+                if (!$partner->validate()) {
+                    return ['status' => 0, 'message' => $partner->GetError()];
+                }
+                return $partner->uploadkkm();
+            }
+        }
+        return $this->redirect('/partner');
+    }
+
     /**
      * Редактирование услуги
      * @param $id

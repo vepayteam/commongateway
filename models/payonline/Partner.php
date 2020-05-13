@@ -8,6 +8,7 @@ use app\models\partner\UserLk;
 use app\models\sms\tables\AccessSms;
 use app\models\TU;
 use Yii;
+use yii\web\UploadedFile;
 
 /**
  * This is the model class for table "partner".
@@ -93,6 +94,10 @@ use Yii;
  * @property integer $IsAutoPerevodToVydacha
  * @property integer $IsCommonSchetVydacha
  * @property string $EmailNotif
+ * @property string $OrangeDataSingKey
+ * @property string $OrangeDataConKey
+ * @property string $OrangeDataConCert
+ * @property integer $IsUseKKmPrint
  */
 class Partner extends \yii\db\ActiveRecord
 {
@@ -116,7 +121,7 @@ class Partner extends \yii\db\ActiveRecord
         return [
             [['Name'], 'required', 'on' => self::SCENARIO_DEFAULT],
             [['IsBlocked', 'UrState', 'IsMfo', 'IsAftOnly', 'IsUnreserveComis', 'TypeMerchant', 'VoznagVyplatDirect',
-                'IsAutoPerevodToVydacha', 'IsCommonSchetVydacha'], 'integer'],
+                'IsAutoPerevodToVydacha', 'IsCommonSchetVydacha', 'IsUseKKmPrint'], 'integer'],
             [['UrAdres', 'PostAdres'], 'string', 'max' => 1000],
             [['Name', 'UrLico'], 'string', 'max' => 250],
             [['URLSite', 'PodpisantFull', 'PodpDoljpost', 'PodpDoljpostRod', 'PodpOsnovan', 'PodpOsnovanRod',
@@ -138,7 +143,8 @@ class Partner extends \yii\db\ActiveRecord
             }],
             [['KPP', 'PodpDoljpost', 'PodpDoljpostRod', 'BikBank', 'BankName', 'RSchet', 'KSchet'], 'required', 'on' => self::SCENARIO_SELFREG, 'when' => function($model) {
                 return $model->UrState == 0;
-            }]
+            }],
+            [['OrangeDataSingKey', 'OrangeDataConKey', 'OrangeDataConCert'], 'file', 'skipOnEmpty' => true, 'extensions' => 'key,crt,cer']
         ];
     }
 
@@ -224,6 +230,10 @@ class Partner extends \yii\db\ActiveRecord
             'IsAutoPerevodToVydacha' => 'Автоперечисления на счет выдачи',
             'IsCommonSchetVydacha' => 'Один счет на выдачу и погашение',
             'EmailNotif' => 'E-mail для оповещения',
+            'OrangeDataSingKey' => 'Ключ для подписи',
+            'OrangeDataConKey' => 'Ключ для подключения',
+            'OrangeDataConCert' => 'Сертификат для подключения',
+            'IsUseKKmPrint' => 'Использование ККМ'
         ];
     }
 
@@ -445,5 +455,37 @@ class Partner extends \yii\db\ActiveRecord
     public function getDistribution()
     {
         return $this->hasOne(DistributionReports::class, ['partner_id'=>'ID']);
+    }
+
+    public function uploadkkm()
+    {
+        $path = Yii::$app->basePath . '/config/kassaclients/';
+        $uploadOrangeDataSingKey = UploadedFile::getInstance($this, 'OrangeDataSingKey');
+        if ($uploadOrangeDataSingKey) {
+            $uploadOrangeDataSingKey->saveAs($path . $uploadOrangeDataSingKey->baseName . '.' . $uploadOrangeDataSingKey->extension);
+            $this->OrangeDataSingKey = $uploadOrangeDataSingKey->baseName . '.' . $uploadOrangeDataSingKey->extension;
+        } else {
+            $this->setAttribute('OrangeDataSingKey', $this->oldAttributes['OrangeDataSingKey']);
+        }
+
+        $uploadOrangeDataConKey = UploadedFile::getInstance($this, 'OrangeDataConKey');
+        if ($uploadOrangeDataConKey) {
+            $uploadOrangeDataConKey->saveAs($path . $uploadOrangeDataConKey->baseName . '.' . $uploadOrangeDataConKey->extension);
+            $this->OrangeDataConKey = $uploadOrangeDataConKey->baseName . '.' . $uploadOrangeDataConKey->extension;
+        } else {
+            $this->setAttribute('OrangeDataConKey', $this->oldAttributes['OrangeDataConKey']);
+        }
+
+        $uploadOrangeDataConCert = UploadedFile::getInstance($this, 'OrangeDataConCert');
+        if ($uploadOrangeDataConCert) {
+            $uploadOrangeDataConCert->saveAs($path . $uploadOrangeDataConCert->baseName . '.' . $uploadOrangeDataConCert->extension);
+            $this->OrangeDataConCert = $uploadOrangeDataConCert->baseName . '.' . $uploadOrangeDataConCert->extension;
+        } else {
+            $this->setAttribute('OrangeDataConCert', $this->oldAttributes['OrangeDataConCert']);
+        }
+
+        $this->save(false);
+
+        return ['status' => 1];
     }
 }

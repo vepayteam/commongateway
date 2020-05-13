@@ -23,27 +23,29 @@ class OrangeData implements IKkm
 
     public function __construct($config)
     {
-        foreach ($config as $key => $val) {
-            $this->$key = $val;
-        }
-        if (Yii::$app->params['DEVMODE'] != 'Y' && Yii::$app->params['TESTMODE'] != 'Y') {
-            $this->url = 'https://api.orangedata.ru:12003';
+        $this->inn = $config['inn'];
+        $this->keySign = Yii::$app->basePath . '/config/kassaclients/'.$config['keySign'];
+        $this->keyFile = Yii::$app->basePath . '/config/kassaclients/'.$config['keyFile'];
+        $this->certFile = Yii::$app->basePath . '/config/kassaclients/'.$config['certFile'];
 
-            $this->inn = '7728487400';
-            $this->keySign = Yii::$app->basePath . '/config/kassa/7728487400_sign.key';
-            $this->keyFile = Yii::$app->basePath . '/config/kassa/7728487400.key';
-            $this->certFile = Yii::$app->basePath . '/config/kassa/7728487400.crt';
-            $this->ca_cert = Yii::$app->basePath . '/config/kassa/cacert.pem';
-            $this->keyPw = '';
+        /*
+        $this->inn = '7728487400';
+        $this->keySign = Yii::$app->basePath . '/config/kassa/7728487400_sign.key';
+        $this->keyFile = Yii::$app->basePath . '/config/kassa/7728487400.key';
+        $this->certFile = Yii::$app->basePath . '/config/kassa/7728487400.crt';
+        */
+        $this->keyPw = '';
 
-        } else {
+        $this->url = 'https://api.orangedata.ru:12003';
+        $this->ca_cert = Yii::$app->basePath . '/config/kassa/cacert.pem';
+
+        if (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] != 'Y') {
             $this->url = 'https://apip.orangedata.ru:2443';
 
-            $this->inn = '3123011520';
+            $this->inn = '7728487400';
             $this->keySign = Yii::$app->basePath . '/config/kassa/private_key_test.pem';
             $this->keyFile = Yii::$app->basePath . '/config/kassa/client.key';
             $this->certFile = Yii::$app->basePath . '/config/kassa/client.crt';
-            $this->ca_cert = Yii::$app->basePath . '/config/kassa/cacert.pem';
             $this->keyPw = '1234';
         }
 
