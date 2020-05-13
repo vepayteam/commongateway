@@ -21,8 +21,9 @@ class ReturnComisMfo
      */
     public function execute()
     {
-        $dateFrom = strtotime('yesterday');
-        $dateTo = strtotime('today') - 1;
+        //Компенсация банковской комиссии за вывод за предыдущий месяй
+        $dateFrom = strtotime('first day of last month 00:00:00');
+        $dateTo = strtotime('first day of this month 00:00:00') - 1;
 
         Yii::warning("ReturnComisMfo: from " . date('d.m.Y H:i:s', $dateFrom)." to " . date('d.m.Y H:i:s', $dateTo), "rsbcron");
         echo "ReturnComisMfo: from " . date('d.m.Y H:i:s', $dateFrom)." to " . date('d.m.Y H:i:s', $dateTo) . "\r\n";
@@ -44,15 +45,14 @@ class ReturnComisMfo
         ")->query();
 
         while ($row = $res->read()) {
+
             if (empty($row['SchetTCBUnreserve'])) {
                 continue;
             }
 
             $lastDate = $this->PrevVyvyod($row['ID']);
-            if ($lastDate > 0 &&
-                ($lastDate + 1 < $dateFrom || $lastDate + 1 > $dateFrom)
-            ) {
-                $dateFrom = $lastDate + 1;
+            if ($lastDate > $dateFrom) {
+                continue;
             }
 
             Yii::warning("ReturnComisMfo: mfo=" . $row['ID'] . " from " . date('d.m.Y H:i:s', $dateFrom)." to " . date('d.m.Y H:i:s', $dateTo), "rsbcron");
@@ -70,99 +70,35 @@ class ReturnComisMfo
      */
     private function SendUnreserveComis($row, $dateFrom, $dateTo)
     {
-        $PBKPOrg = 1;
         $sumComis = $this->GetSumComis($row['ID'], $dateFrom, $dateTo);
 
         Yii::warning("ReturnComisMfo: " . $row['ID'] . " sum=" . ($sumComis/100.0), "rsbcron");
         echo "ReturnComisMfo: " . $row['ID'] . " sum=" . ($sumComis/100.0) . "\r\n";
 
-        if (false && $sumComis > 0) {
+        Yii::$app->db->createCommand()->insert(
+            'vozvr_comis', [
+                'DateOp' => time(),
+                'IdPartner' => $row['ID'],
+                'DateFrom' => $dateFrom,
+                'DateTo' => $dateTo,
+                'SumOp' => $sumComis,
+                'StateOp' => $sumComis > 0 ? 0 : 1,
+                'IdPay' => 0
+            ]
+        )->execute();
 
-            $tr = Yii::$app->db->beginTransaction();
-            Yii::$app->db->createCommand()->insert(
-                'vozvr_comis', [
-                    'DateOp' => time(),
-                    'IdPartner' => $row['ID'],
-                    'DateFrom' => $dateFrom,
-                    'DateTo' => $dateTo,
-                    'SumOp' => $sumComis,
-                    'StateOp' => 0,
-                    'IdPay' => 0
-                ]
-            )->execute();
+        $id = Yii::$app->db->getLastInsertID();
 
-            $id = Yii::$app->db->getLastInsertID();
+        if ($sumComis > 0) {
 
-            $descript = "Перевод между собственными счетами согласно условий договора №".$row['NumDogovor']." от ".$row['DateDogovor']." за ".date('d.m', $dateFrom);
+            $descript = "Компенсация банковской комиссии за выдачу за ".date('m.Y', $dateFrom);
 
-            $usl = $this->GetUslug($row['ID']);
-            if (!$usl) {
-                $tr->rollBack();
-                Yii::warning("ReturnComisMfo: error mfo=" . $row['ID'] . " usl=" . $usl, "rsbcron");
-                echo "ReturnComisMfo: error mfo=" . $row['ID'] . " usl=" . $usl . "\r\n";
-                return;
-            }
-
-            $pay = new CreatePay();
-            $Provparams = new Provparams;
-            $Provparams->prov = $usl;
-            $Provparams->param = [$row['SchetTCBUnreserve'], TCBank::BIC, $row['UrLico'], $row['INN'], '', $descript];
-            $Provparams->summ = $sumComis;
-            $Provparams->Usluga = Uslugatovar::findOne(['ID' => $usl]);
-
-            $idpay = $pay->createPay($Provparams, 0, 3, TCBank::$bank, $PBKPOrg, 'revcomis' . $id);
-
-            if (!$idpay) {
-                $tr->rollBack();
-                Yii::warning("ReturnComisMfo: error mfo=" . $row['ID'] . " idpay=" . $idpay, "rsbcron");
-                echo "ReturnComisMfo: error mfo=" . $row['ID'] . " idpay=" . $idpay . "\r\n";
-                return;
-            }
-            $idpay = $idpay['IdPay'];
-
-            Yii::$app->db->createCommand()->update('vyvod_reestr', [
-                'IdPay' => $idpay
-            ],'`ID` = :ID', [':ID' => $id])->execute();
-
-            $tr->commit();
-
-            Yii::warning("ReturnComisMfo: mfo=" . $row['ID'] . " idpay=" . $idpay, "rsbcron");
-            echo "ReturnComisMfo: mfo=" . $row['ID'] . " idpay=" . $idpay . "\r\n";
-
-            $TcbGate = new TcbGate($row['ID'], TCBank::$PEREVODGATE);
-            $tkb = new TCBank($TcbGate);
-
-            $ret = $tkb->transferToAccount([
-                'IdPay' => $idpay,
-                'account' => $row['SchetTCBUnreserve'],
-                'bic' => TCBank::BIC,
-                'summ' => $sumComis,
-                'name' => $row['UrLico'],
-                'inn' => $row['INN'],
-                'descript' => $descript
-            ]);
+            $ret = $this->ExecCompensate($row['ID'], $row['SchetTCBUnreserve'], $sumComis, $descript);
 
             if ($ret && $ret['status'] == 1) {
-                //сохранение номера транзакции
-                $payschets = new Payschets();
-                $payschets->SetBankTransact([
-                    'idpay' => $idpay,
-                    'trx_id' => $ret['transac'],
-                    'url' => ''
-                ]);
 
-                Yii::warning("ReturnComisMfo: mfo=" . $row['ID'] . ", transac=" . $ret['transac'], "rsbcron");
-                echo "ReturnComisMfo: mfo=" . $row['ID'] . ", transac=" . $ret['transac'] . "\r\n";
-
-                //статус не будем смотреть
-                $payschets->confirmPay([
-                    'idpay' => $idpay,
-                    'result_code' => 1,
-                    'trx_id' => $ret['transac'],
-                    'ApprovalCode' => '',
-                    'RRN' => '',
-                    'message' => ''
-                ]);
+                Yii::warning("ReturnComisMfo done: mfo=" . $row['ID'] . ", sum=" . $sumComis, "rsbcron");
+                echo "ReturnComisMfo done: mfo=" . $row['ID'] . ", sum=" . $sumComis . "\r\n";
 
                 Yii::$app->db->createCommand()->update('vozvr_comis', [
                     'StateOp' => 1
@@ -260,5 +196,51 @@ class ReturnComisMfo
             return $summ;
         }
         return 0;
+    }
+
+    private function ExecCompensate($IdPartner, $schet, $summ, $description)
+    {
+        $dateFrom = strtotime('first day of this month 00:00:00');
+        $dateTo = $dateFrom;
+
+        $tr = Yii::$app->db->beginTransaction();
+        Yii::$app->db->createCommand()->insert(
+            'vyvod_system', [
+                'DateOp' => time(),
+                'IdPartner' => $IdPartner,
+                'DateFrom' => $dateFrom,
+                'DateTo' => $dateTo,
+                'Summ' => $summ,
+                'SatateOp' => 1,
+                'IdPay' => 0,
+                'TypeVyvod' => 0//pogashenie
+            ]
+        )->execute();
+        $id = Yii::$app->db->lastInsertID;
+
+        Yii::$app->db->createCommand()->insert('statements_account', [
+            'IdPartner' => $IdPartner,
+            'TypeAccount' => 0,//vydacha
+            'BnkId' => 2,
+            'NumberPP' => $id,
+            'DatePP' => strtotime(date('d.m.Y')),
+            'DateDoc' => strtotime(date('d.m.Y')),
+            'DateRead' => strtotime(date('d.m.Y')),
+            'SummPP' => $summ,
+            'SummComis' => 0,
+            'Description' => $description,
+            'IsCredit' => true, //true - пополнение счета
+            'Name' => "ООО ПКБП",
+            'Inn' => "7728487400",
+            'Kpp' => "772801001",
+            'Account' => $schet,
+            'Bic' => "044525388",
+            'Bank' => "ТКБ БАНК ПАО",
+            'BankAccount' => "30101810800000000388"
+        ])->execute();
+
+        $tr->commit();
+
+        return ['status' => 1];
     }
 }
