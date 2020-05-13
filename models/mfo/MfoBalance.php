@@ -331,9 +331,8 @@ class MfoBalance
             WHERE
                 `IdPartner` = :IDMFO
                 AND `TypeVyvod` = :TYPEVYVOD
-                AND `DateFrom` >= :DATEFROM AND `DateTo` <= :DATETO
-            ORDER BY `DateTo` DESC 
-            LIMIT 1
+                AND `DateFrom` >= :DATEFROM 
+                AND `DateTo` <= :DATETO
         ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeVyvod, ':DATEFROM' => $dateFrom, ':DATETO' => $dateTo])->queryScalar();
 
         return $sumvypl;
