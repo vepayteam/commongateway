@@ -351,7 +351,7 @@ class AdminController extends Controller
     {
         $output = '';
         if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-            $runner = new Runner(['phpexec' => 'c:/lamp/php72/php.exe']);
+            $runner = new Runner(['phpexec' => 'php.exe']);
             $runner->run('widget/vyvod', $output);
             $output = iconv('cp866', 'windows-1251', $output);
             $output = iconv('windows-1251', 'utf-8', $output);
@@ -367,7 +367,7 @@ class AdminController extends Controller
     {
         $output = '';
         if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-            $runner = new Runner(['phpexec' => 'c:/lamp/php72/php.exe']);
+            $runner = new Runner(['phpexec' => 'php.exe']);
             $runner->run('widget/return-comis', $output);
             $output = iconv('cp866', 'windows-1251', $output);
             $output = iconv('windows-1251', 'utf-8', $output);
@@ -383,7 +383,7 @@ class AdminController extends Controller
     {
         $output = '';
         if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-            $runner = new Runner(['phpexec' => 'c:/lamp/php72/php.exe']);
+            $runner = new Runner(['phpexec' => 'php.exe']);
             $runner->run('widget/vyvodvirt', $output);
             $output = iconv('cp866', 'windows-1251', $output);
             $output = iconv('windows-1251', 'utf-8', $output);
