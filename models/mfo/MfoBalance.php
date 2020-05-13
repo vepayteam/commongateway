@@ -240,6 +240,7 @@ class MfoBalance
         ]);
         $VoznagSumm = 0;
         $otch = $vs->GetOtchMerchant(true);
+        Yii::error(print_r($otch, true),'rsbcron');
         foreach ($otch as $row) {
             $VoznagSumm += $row['VoznagSumm'];
         }
@@ -334,7 +335,7 @@ class MfoBalance
                 AND `DateFrom` >= :DATEFROM 
                 AND `DateTo` <= :DATETO
         ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeVyvod, ':DATEFROM' => $dateFrom, ':DATETO' => $dateTo])->queryScalar();
-        Yii::error($dateFrom." === ".$dateTo,'rsbcron');
+
         return $sumvypl;
     }
 
