@@ -334,7 +334,7 @@ class MfoBalance
                 AND `DateFrom` >= :DATEFROM 
                 AND `DateTo` <= :DATETO
         ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeVyvod, ':DATEFROM' => $dateFrom, ':DATETO' => $dateTo])->queryScalar();
-
+        Yii::error($dateFrom." === ".$dateTo,'rsbcron');
         return $sumvypl;
     }
 
