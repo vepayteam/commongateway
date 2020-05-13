@@ -240,11 +240,10 @@ class MfoBalance
         ]);
         $VoznagSumm = 0;
         $otch = $vs->GetOtchMerchant(true);
-        Yii::error(print_r($otch, true),'rsbcron');
         foreach ($otch as $row) {
-            $VoznagSumm += $row['VoznagSumm'];
+            $VoznagSumm += $row['VoznagSumm'] - $row['SummVyveden'];
         }
-        return $VoznagSumm - $this->SummCurrVoznVypl(0, $datefrom, $dateto);
+        return $VoznagSumm;
     }
 
     /**
@@ -315,28 +314,6 @@ class MfoBalance
         ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeVyvod])->queryScalar();
 
         return $PrevDateTo;
-    }
-
-    /**
-     * @param int $TypeVyvod 0 - pogashenie 1 - vyplaty
-     * @return false|string|null
-     * @throws \yii\db\Exception
-     */
-    public function SummCurrVoznVypl($TypeVyvod, $dateFrom, $dateTo)
-    {
-        $sumvypl = Yii::$app->db->createCommand("
-            SELECT
-                SUM(`Summ`)
-            FROM
-                `vyvod_system`
-            WHERE
-                `IdPartner` = :IDMFO
-                AND `TypeVyvod` = :TYPEVYVOD
-                AND `DateFrom` >= :DATEFROM 
-                AND `DateTo` <= :DATETO
-        ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeVyvod, ':DATEFROM' => $dateFrom, ':DATETO' => $dateTo])->queryScalar();
-
-        return $sumvypl;
     }
 
     private function TodayPays()
