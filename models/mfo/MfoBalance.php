@@ -229,7 +229,13 @@ class MfoBalance
         } else {
             $datefrom++;
         }
-        $dateto = strtotime('today') - 1;
+        if ($this->Partner->IsCommonSchetVydacha) {
+            //один счет - комиссия по выдаче со счета погашения, баланс погашения онлайн
+            $dateto = time();
+        } else {
+            $dateto = strtotime('today') - 1;
+        }
+
         $vs = new VoznagStat();
 
         $vs->setAttributes([
