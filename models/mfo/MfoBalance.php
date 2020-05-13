@@ -243,7 +243,7 @@ class MfoBalance
         foreach ($otch as $row) {
             $VoznagSumm += $row['VoznagSumm'];
         }
-        return $VoznagSumm;
+        return $VoznagSumm - $this->SummCurrVoznVypl(0, $datefrom, $dateto);
     }
 
     /**
@@ -314,6 +314,29 @@ class MfoBalance
         ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeVyvod])->queryScalar();
 
         return $PrevDateTo;
+    }
+
+    /**
+     * @param int $TypeVyvod 0 - pogashenie 1 - vyplaty
+     * @return false|string|null
+     * @throws \yii\db\Exception
+     */
+    public function SummCurrVoznVypl($TypeVyvod, $dateFrom, $dateTo)
+    {
+        $sumvypl = Yii::$app->db->createCommand("
+            SELECT
+                SUM(`Summ`)
+            FROM
+                `vyvod_system`
+            WHERE
+                `IdPartner` = :IDMFO
+                AND `TypeVyvod` = :TYPEVYVOD
+                AND `DateFrom` >= :DATEFROM AND `DateTo` <= :DATETO
+            ORDER BY `DateTo` DESC 
+            LIMIT 1
+        ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeVyvod, ':DATEFROM' => $dateFrom, ':DATETO' => $dateTo])->queryScalar();
+
+        return $sumvypl;
     }
 
     private function TodayPays()

@@ -1,6 +1,6 @@
 <template>
     <div class="products">
-        <h1>Список товаров</h1>
+        <h1>РЎРїРёСЃРѕРє С‚РѕРІР°СЂРѕРІ</h1>
 	<ul>
             <li v-for="product in products" :key="product.id">                
                 <a href="#" class="" @click="viewProductDetails(product.id)">{{product.title}}</a>
