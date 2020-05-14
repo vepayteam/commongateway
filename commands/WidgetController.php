@@ -94,7 +94,7 @@ class WidgetController extends Controller
     }
 
     /**
-     * Vyvod prinatyh platejeii mfo (1d)
+     * Vyvod prinatyh platejeii mfo (1d at 12:30)
      * @throws \yii\db\Exception
      */
     public function actionVyvod()
@@ -103,6 +103,11 @@ class WidgetController extends Controller
 
         $perevod = new VyvodSumPay();
         $perevod->execute();
+
+        if (date('d') == 1) {
+            //возмещение космиссии по выдаче 1го числа
+            $this->actionReturnComis();
+        }
     }
 
     /**
@@ -129,7 +134,7 @@ class WidgetController extends Controller
     }
 
     /**
-     * Vozvrat comissii (off)
+     * Vozvrat comissii
      * @throws \yii\db\Exception
      */
     public function actionReturnComis()

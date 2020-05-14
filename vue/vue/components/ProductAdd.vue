@@ -1,21 +1,21 @@
 <template>
     <div class="product">
-        <h1>Добавление товара</h1>
+        <h1>Р”РѕР±Р°РІР»РµРЅРёРµ С‚РѕРІР°СЂР°</h1>
         <form>
             <div class="form-group">
-                <label for="title">Название</label>
-                <input type="text" class="form-control" id="title" placeholder="Введите название товара" v-model="product.title" />
+                <label for="title">РќР°Р·РІР°РЅРёРµ</label>
+                <input type="text" class="form-control" id="title" placeholder="Р’РІРµРґРёС‚Рµ РЅР°Р·РІР°РЅРёРµ С‚РѕРІР°СЂР°" v-model="product.title" />
             </div>
             <div class="form-group">
-                <label for="price">Цена</label>
-                <input type="number" class="form-control" id="price" placeholder="Введите цену за единицу товара" v-model="product.price" />
+                <label for="price">Р¦РµРЅР°</label>
+                <input type="number" class="form-control" id="price" placeholder="Р’РІРµРґРёС‚Рµ С†РµРЅСѓ Р·Р° РµРґРёРЅРёС†Сѓ С‚РѕРІР°СЂР°" v-model="product.price" />
             </div>
             <div class="form-group">
-                <label for="qt">Количество</label>
-                <input type="number" class="form-control" id="qt" placeholder="Введите количество товара" v-model="product.qt" />
+                <label for="qt">РљРѕР»РёС‡РµСЃС‚РІРѕ</label>
+                <input type="number" class="form-control" id="qt" placeholder="Р’РІРµРґРёС‚Рµ РєРѕР»РёС‡РµСЃС‚РІРѕ С‚РѕРІР°СЂР°" v-model="product.qt" />
             </div>
             <div class="form-group">
-                <button type="submit" class="btn btn-primary" @click.prevent="addProduct()">Создать</button>
+                <button type="submit" class="btn btn-primary" @click.prevent="addProduct()">РЎРѕР·РґР°С‚СЊ</button>
             </div>
         </form>
     </div>

@@ -229,7 +229,13 @@ class MfoBalance
         } else {
             $datefrom++;
         }
-        $dateto = strtotime('today') - 1;
+        if ($this->Partner->IsCommonSchetVydacha) {
+            //один счет - комиссия по выдаче со счета погашения, баланс погашения онлайн
+            $dateto = time();
+        } else {
+            $dateto = strtotime('today') - 1;
+        }
+
         $vs = new VoznagStat();
 
         $vs->setAttributes([
@@ -241,7 +247,7 @@ class MfoBalance
         $VoznagSumm = 0;
         $otch = $vs->GetOtchMerchant(true);
         foreach ($otch as $row) {
-            $VoznagSumm += $row['VoznagSumm'];
+            $VoznagSumm += $row['VoznagSumm'] - $row['SummVyveden'];
         }
         return $VoznagSumm;
     }

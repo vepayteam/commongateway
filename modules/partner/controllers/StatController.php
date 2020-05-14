@@ -123,7 +123,7 @@ class StatController extends Controller
 
     public function actionListexport()
     {
-		ini_set('memory_limit', '512M');
+		ini_set('memory_limit', '1024M');
         $MfoStat = new MfoStat();
         $data = $MfoStat->ExportOpList(Yii::$app->request->get());
         if ($data) {
@@ -141,7 +141,7 @@ class StatController extends Controller
 
     public function actionListExportCsv()
     {
-		ini_set('memory_limit', '512M');
+		ini_set('memory_limit', '1024M');
         $isAdmin = UserLk::IsAdmin(Yii::$app->user);
         $payschet = new PayShetStat(); //загрузить
         if ($payschet->load(Yii::$app->request->get(), '') && $payschet->validate()){
