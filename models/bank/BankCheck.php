@@ -21,8 +21,8 @@ class BankCheck
 
         if ($result) {
             return $result['LastInPay'] == 0 ||
-                ($result['LastWorkIn'] > $result['LastInPay'] - 10 * 60) ||
-                ($result['LastWorkIn'] < $result['LastInPay'] - 20 * 60 && $result['LastInPay'] < time() - 10 * 60);
+                ($result['LastWorkIn'] >= $result['LastInPay'] - 10 * 60) ||
+                ($result['LastWorkIn'] < $result['LastInPay'] - 10 * 60 && $result['LastInPay'] < time() - 20 * 60);
         }
         return false;
     }

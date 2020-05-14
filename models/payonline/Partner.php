@@ -127,7 +127,6 @@ class Partner extends \yii\db\ActiveRecord
             [['IsBlocked', 'UrState', 'IsMfo', 'IsAftOnly', 'IsUnreserveComis', 'TypeMerchant', 'VoznagVyplatDirect',
                 'IsAutoPerevodToVydacha', 'IsCommonSchetVydacha', 'IsUseKKmPrint'], 'integer'],
             [['UrAdres', 'PostAdres'], 'string', 'max' => 1000],
-                'IsAutoPerevodToVydacha', 'IsCommonSchetVydacha'], 'integer'],
             [['UrAdres', 'PostAdres', 'Apple_PayProcCert'], 'string', 'max' => 1000],
             [['Name', 'UrLico'], 'string', 'max' => 250],
             [['URLSite', 'PodpisantFull', 'PodpDoljpost', 'PodpDoljpostRod', 'PodpOsnovan', 'PodpOsnovanRod',
@@ -239,7 +238,7 @@ class Partner extends \yii\db\ActiveRecord
             'OrangeDataSingKey' => 'Ключ для подписи',
             'OrangeDataConKey' => 'Ключ для подключения',
             'OrangeDataConCert' => 'Сертификат для подключения',
-            'IsUseKKmPrint' => 'Использование ККМ'
+            'IsUseKKmPrint' => 'Использование ККМ',
             'Apple_MerchantID' => 'Apple MerchantID',
             'Apple_PayProcCert' => 'Apple закрытый ключ сертификата',
             'Apple_KeyPasswd' => 'Apple пароль закрытого ключа',
