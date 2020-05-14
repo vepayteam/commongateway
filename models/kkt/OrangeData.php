@@ -39,7 +39,7 @@ class OrangeData implements IKkm
         $this->url = 'https://api.orangedata.ru:12003';
         $this->ca_cert = Yii::$app->basePath . '/config/kassa/cacert.pem';
 
-        if (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] != 'Y') {
+        if (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] == 'Y') {
             $this->url = 'https://apip.orangedata.ru:2443';
 
             $this->inn = '7728487400';
