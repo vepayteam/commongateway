@@ -102,7 +102,8 @@ class Payschets
                 ps.sms_accept,
                 qu.IDPartner,
                 ps.IdOrg,
-                ps.IPAddressUser
+                ps.IPAddressUser,
+                p.IsUseKKmPrint
             FROM
                 `pay_schet` AS ps
                 LEFT JOIN `user` AS u ON u.`ID`=ps.`IdUser`
@@ -192,9 +193,9 @@ class Payschets
                         }*/
 
                         //чек пробить
-                        //$this->CreateDraftPay($query, $params);
+                        $this->CreateDraftPay($query, $params);
 
-                        //оповещения на почту
+                        //оповещения на почту и колбэком
                         $this->addNotification($params['idpay'], $query['TypeWidget'], 1);
 
                         //экспорт оплаты (для онлайн платежей)
@@ -396,23 +397,17 @@ class Payschets
      */
     private function CreateDraftPay($query, $params)
     {
-        //0 - оплата услуги 1 - mobile
-        if (in_array($query['TypeWidget'], [0, 1])) {
+        if (TU::IsInAll($query['IsCustom'])) {
             //чек пробить
-            /*if (!Yii::$app->request->isConsoleRequest) {
-                Yii::$app->queue->push(new DraftPrintJob([
-                    'idpay' => $params['idpay'],
-                    'tovar' => $query['tovar'],
-                    'tovarOFD' => $query['tovarOFD'],
-                    'summDraft' => $query['SummPay'] + $query['ComissSumm'],
-                    'email' => isset($query['Email']) ? $query['Email'] : ''
-                ]));
-            }*/
-
-            /*$kassa = new OnlineKassa();
-            $kassa->createDraft($params['idpay'], $query['tovar'], $query['tovarOFD'],
-                $query['SummPay'] + $query['ComissSumm'],
-                isset($query['Email']) ? $query['Email'] : '');*/
+            Yii::$app->queue->push(new DraftPrintJob([
+                'idpay' => $params['idpay'],
+                'tovar' => $query['tovar'],
+                'tovarOFD' => $query['tovarOFD'],
+                'summDraft' => $query['SummPay'] + $query['ComissSumm'],
+                'summComis' => $query['ComissSumm'],
+                'email' => $query['Email'],
+                'checkExist' => Yii::$app->request->isConsoleRequest ? true : false
+            ]));
         }
 
         return true;
@@ -549,34 +544,32 @@ class Payschets
      */
     protected function addNotification($IdPay, $TypeWidget, $status)
     {
+        $row = Yii::$app->db->createCommand('
+            SELECT
+                p.UserEmail AS Email,
+                p.UserUrlInform
+            FROM
+                `pay_schet` AS p
+            WHERE
+                p.ID = :IDPAY
+        ', [
+            ':IDPAY' => $IdPay
+        ])->queryOne();
+
+        if ($row && !empty($row['Email']) && $status == 1) {
+            //для плательщика чек
+            Yii::$app->db->createCommand()
+                ->insert('notification_pay', [
+                    'IdPay' => $IdPay,
+                    'Email' => $row['Email'],
+                    'TypeNotif' => 0,
+                    'DateCreate' => time(),
+                    'DateSend' => 0
+                ])
+                ->execute();
+        }
+
         if (in_array($TypeWidget, [0, 1])) {
-            //для плательщика по платежам
-            $row = Yii::$app->db->createCommand('
-                SELECT
-                    u.Email,
-                    p.UserUrlInform
-                FROM
-                    `pay_schet` AS p
-                    LEFT JOIN `user` AS u ON (p.IdUser = u.ID AND u.IsDeleted = 0)
-                WHERE
-                    p.ID = :IDPAY
-            ', [
-                ':IDPAY' => $IdPay
-            ])->queryOne();
-
-            if ($row && !empty($row['Email']) && $status == 1) {
-                //только успешные
-                Yii::$app->db->createCommand()
-                    ->insert('notification_pay', [
-                        'IdPay' => $IdPay,
-                        'Email' => $row['Email'],
-                        'TypeNotif' => 0,
-                        'DateCreate' => time(),
-                        'DateSend' => 0
-                    ])
-                    ->execute();
-            }
-
             if ($row && !empty($row['UserUrlInform'])) {
                 //http
                 Yii::$app->db->createCommand()
@@ -752,7 +745,7 @@ class Payschets
     {
         $query = Yii::$app->db->createCommand('
               SELECT
-                u.`Email`, 
+                p.UserEmail as `Email`, 
                 p.`SummPay`,
                 p.`ComissSumm`,
                 ut.IDPartner,
@@ -775,10 +768,10 @@ class Payschets
                 pr.ID AS IdOrg,
                 pr.SchetTcbNominal,
                 ut.ExtReestrIDUsluga,
+                p.Dogovor,
                 p.Bank
               FROM
                 `pay_schet` AS p
-                LEFT JOIN `user` AS u ON p.`IdUser` = u.`ID` AND u.IsDeleted = 0
                 LEFT JOIN `uslugatovar` AS ut ON ut.ID = p.IdUsluga
                 LEFT JOIN `partner` AS pr ON p.IdOrg = pr.ID
               WHERE
@@ -792,20 +785,9 @@ class Payschets
         if (!$query) {
             return false;
         }
-        $query['tovar'] = 'Назначение платежа: ' . $query['NameUsluga'] . "\r\n";
-        if ($query['IsCustom'] > 0) {
-            $query['tovar'] = "Оплата заказа\r\n";
-        }
-        $query['tovar'] .= str_ireplace('|', ', ', $query['QrParams']);
-
-        $query['summ'] = $query['SummPay'] + $query['ComissSumm'];
-        $query['tovar'] .=
-            "\r\nПринято: " .
-            sprintf("%02.2f", $query['summ'] / 100.0) .
-            "\r\nК зачислению: " . sprintf("%02.2f", $query['SummPay'] / 100.0) .
-            "\r\nКомиссия: " . sprintf("%02.2f", $query['ComissSumm'] / 100.0);
-
+        $query['tovar'] = $query['NameUsluga'].(!empty($query['Dogovor']) ? ", Договор: ".$query['Dogovor'] : '');
         $query['tovarOFD'] = $query['NameUsluga'];
+        $query['summ'] = $query['SummPay'] + $query['ComissSumm'];
 
         return $query;
     }
@@ -814,9 +796,10 @@ class Payschets
      * флаг начала платежа
      * @param $IdPay
      * @param $Transac
-     * @throws \yii\db\Exception
+     * @param $Email
+     * @throws Exception
      */
-    public function SetStartPay($IdPay, $Transac)
+    public function SetStartPay($IdPay, $Transac, $Email)
     {
         //флаг начала платежа
         Yii::$app->db->createCommand()
@@ -824,6 +807,7 @@ class Payschets
                 'UserClickPay' => 1,
                 'UrlFormPay' => '/pay/form/' . $IdPay,
                 'ExtBillNumber' => $Transac,
+                'UserEmail' => $Email,
                 'DateLastUpdate' => time(),
                 'CountSendOK' => 0
             ], '`ID` = :ID', [':ID' => $IdPay])

@@ -143,7 +143,7 @@ class PayController extends Controller
                 $ret = $merchBank->PayXml($params);
 
                 if ($ret['status'] == 1) {
-                    $payschets->SetStartPay($params['ID'], $ret['transac']);
+                    $payschets->SetStartPay($params['ID'], $ret['transac'], $payform->Email);
 
                     if ($params['IdUsluga'] == 1) {
                         //регистрация карты

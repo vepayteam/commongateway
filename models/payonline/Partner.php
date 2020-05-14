@@ -8,6 +8,7 @@ use app\models\partner\UserLk;
 use app\models\sms\tables\AccessSms;
 use app\models\TU;
 use Yii;
+use yii\web\UploadedFile;
 
 /**
  * This is the model class for table "partner".
@@ -93,6 +94,10 @@ use Yii;
  * @property integer $IsAutoPerevodToVydacha
  * @property integer $IsCommonSchetVydacha
  * @property string $EmailNotif
+ * @property string $OrangeDataSingKey
+ * @property string $OrangeDataConKey
+ * @property string $OrangeDataConCert
+ * @property integer $IsUseKKmPrint
  * @property string $Apple_MerchantID
  * @property string $Apple_PayProcCert
  * @property string $Apple_KeyPasswd
@@ -120,6 +125,8 @@ class Partner extends \yii\db\ActiveRecord
         return [
             [['Name'], 'required', 'on' => self::SCENARIO_DEFAULT],
             [['IsBlocked', 'UrState', 'IsMfo', 'IsAftOnly', 'IsUnreserveComis', 'TypeMerchant', 'VoznagVyplatDirect',
+                'IsAutoPerevodToVydacha', 'IsCommonSchetVydacha', 'IsUseKKmPrint'], 'integer'],
+            [['UrAdres', 'PostAdres'], 'string', 'max' => 1000],
                 'IsAutoPerevodToVydacha', 'IsCommonSchetVydacha'], 'integer'],
             [['UrAdres', 'PostAdres', 'Apple_PayProcCert'], 'string', 'max' => 1000],
             [['Name', 'UrLico'], 'string', 'max' => 250],
@@ -142,7 +149,8 @@ class Partner extends \yii\db\ActiveRecord
             }],
             [['KPP', 'PodpDoljpost', 'PodpDoljpostRod', 'BikBank', 'BankName', 'RSchet', 'KSchet'], 'required', 'on' => self::SCENARIO_SELFREG, 'when' => function($model) {
                 return $model->UrState == 0;
-            }]
+            }],
+            [['OrangeDataSingKey', 'OrangeDataConKey', 'OrangeDataConCert'], 'file', 'skipOnEmpty' => true, 'extensions' => 'key,crt,cer']
         ];
     }
 
@@ -228,6 +236,10 @@ class Partner extends \yii\db\ActiveRecord
             'IsAutoPerevodToVydacha' => 'Автоперечисления на счет выдачи',
             'IsCommonSchetVydacha' => 'Один счет на выдачу и погашение',
             'EmailNotif' => 'E-mail для оповещения',
+            'OrangeDataSingKey' => 'Ключ для подписи',
+            'OrangeDataConKey' => 'Ключ для подключения',
+            'OrangeDataConCert' => 'Сертификат для подключения',
+            'IsUseKKmPrint' => 'Использование ККМ'
             'Apple_MerchantID' => 'Apple MerchantID',
             'Apple_PayProcCert' => 'Apple закрытый ключ сертификата',
             'Apple_KeyPasswd' => 'Apple пароль закрытого ключа',
@@ -452,5 +464,56 @@ class Partner extends \yii\db\ActiveRecord
     public function getDistribution()
     {
         return $this->hasOne(DistributionReports::class, ['partner_id'=>'ID']);
+    }
+
+    public function uploadKeysKkm()
+    {
+        $res1 = $res2 = $res3 = 1;
+        $path = Yii::$app->basePath . '/config/kassaclients/';
+        if (!file_exists($path)) {
+            if (!mkdir($path) && !is_dir($path)) {
+                throw new \RuntimeException(sprintf('Directory "%s" was not created', $path));
+            }
+        }
+        $uploadOrangeDataSingKey = UploadedFile::getInstance($this, 'OrangeDataSingKey');
+        if ($uploadOrangeDataSingKey) {
+            if (file_exists($path . $this->oldAttributes['OrangeDataSingKey'])) {
+                @unlink($path . $this->oldAttributes['OrangeDataSingKey']);
+            }
+            $res1 = $uploadOrangeDataSingKey->saveAs($path . $this->ID."_".$uploadOrangeDataSingKey->baseName . '.' . $uploadOrangeDataSingKey->extension);
+            $this->OrangeDataSingKey = $this->ID."_".$uploadOrangeDataSingKey->baseName . '.' . $uploadOrangeDataSingKey->extension;
+        } else {
+            $this->setAttribute('OrangeDataSingKey', $this->oldAttributes['OrangeDataSingKey']);
+        }
+
+        $uploadOrangeDataConKey = UploadedFile::getInstance($this, 'OrangeDataConKey');
+        if ($uploadOrangeDataConKey) {
+            if (file_exists($path . $this->oldAttributes['OrangeDataConKey'])) {
+                @unlink($path . $this->oldAttributes['OrangeDataConKey']);
+            }
+            $res2 = $uploadOrangeDataConKey->saveAs($path . $this->ID."_".$uploadOrangeDataConKey->baseName . '.' . $uploadOrangeDataConKey->extension);
+            $this->OrangeDataConKey = $this->ID."_".$uploadOrangeDataConKey->baseName . '.' . $uploadOrangeDataConKey->extension;
+        } else {
+            $this->setAttribute('OrangeDataConKey', $this->oldAttributes['OrangeDataConKey']);
+        }
+
+        $uploadOrangeDataConCert = UploadedFile::getInstance($this, 'OrangeDataConCert');
+        if ($uploadOrangeDataConCert) {
+            if (file_exists($path . $this->oldAttributes['OrangeDataConCert'])) {
+                @unlink($path . $this->oldAttributes['OrangeDataConCert']);
+            }
+            $res3 = $uploadOrangeDataConCert->saveAs($path . $this->ID."_".$uploadOrangeDataConCert->baseName . '.' . $uploadOrangeDataConCert->extension);
+            $this->OrangeDataConCert = $this->ID."_".$uploadOrangeDataConCert->baseName . '.' . $uploadOrangeDataConCert->extension;
+        } else {
+            $this->setAttribute('OrangeDataConCert', $this->oldAttributes['OrangeDataConCert']);
+        }
+
+        $this->save(false);
+
+        if (!$res1 || !$res2 || !$res3) {
+            return ['status' => 0, 'message' => 'Ошибка сохранения файла'];
+        }
+
+        return ['status' => 1];
     }
 }

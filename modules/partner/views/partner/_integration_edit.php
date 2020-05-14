@@ -265,6 +265,58 @@ ActiveForm::end();
 <div class="hr-line-dashed"></div>
 <div class="row">
     <div class="m-md">
+        <h3>Настройка OrandeData</h3>
+    </div>
+</div>
+
+<?php
+$form = ActiveForm::begin([
+    'layout' => 'horizontal',
+    'id' => 'formEditPartnerKkm',
+    'options' => [
+        'name' => 'formEditPartnerKkm'
+    ],
+    'successCssClass' => '',
+    'fieldConfig' => [
+        'template' => "{label}\n{beginWrapper}\n{input}\n{hint}\n{error}\n{endWrapper}",
+        'horizontalCssClasses' => [
+            'label' => 'col-sm-3',
+            'wrapper' => 'col-sm-8',
+            'error' => '',
+            'hint' => '',
+        ],
+    ],
+]);
+
+echo $form->field($partner, 'OrangeDataSingKey')->fileInput(['class' => 'form-control'])->hint($partner->OrangeDataSingKey);
+echo $form->field($partner, 'OrangeDataConKey')->fileInput(['class' => 'form-control'])->hint($partner->OrangeDataConKey);
+echo $form->field($partner, 'OrangeDataConCert')->fileInput(['class' => 'form-control'])->hint($partner->OrangeDataConCert);
+
+?>
+
+<div class="row no-margins">
+    <div class="col-sm-8 col-sm-offset-3">
+        <?php
+        echo $form->field($partner,'IsUseKKmPrint')->checkbox([
+            'template' => "<div class=\"checkbox m-l-sm\">\n{input}\n{beginLabel}\n{labelTitle}\n{endLabel}\n{error}\n{hint}\n</div>"
+        ]);
+        ?>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-sm-8 col-sm-offset-3">
+        <input type="hidden" name="Partner_ID" value="<?=$partner->ID?>">
+        <button type="button" class="btn btn-primary" id="btnEditPartnerKkm">Сохранить</button>
+    </div>
+</div>
+<?php
+ActiveForm::end();
+?>
+
+<div class="hr-line-dashed"></div>
+<div class="row">
+    <div class="m-md">
         <h3>Оповещения</h3>
     </div>
 </div>

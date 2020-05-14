@@ -45,13 +45,12 @@ class WidgetController extends Controller
         $this->actionAlarms();
 
         $this->actionSendNews();
-        if (date('i')  % 15 == 0) {
+        /*if (date('i')  % 15 == 0) {
             $this->actionUpdateTelegram();
-        }
+        }*/
         if (date('i')  % 20 == 0) {
             $this->actionReceiveTelegram();
         }
-
 
         /*if (date('G') == 0) {
             //ocm комиссия 1.5%

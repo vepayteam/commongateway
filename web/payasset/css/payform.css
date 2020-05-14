@@ -280,6 +280,21 @@ p {
     border-image: linear-gradient(270deg, #A31FED 0%, #03EE65 100%) 1 stretch stretch;
 }
 
+/*#payform-email {
+    border: 0;
+    box-shadow: none;
+    background:url(/imgs/edit.svg) no-repeat left top;
+    padding: 8px 16px;
+    height: 44px;
+    position: relative;
+}
+
+#payform-email:active, #payform-email:focus {
+    border: 0;
+    box-shadow: none;
+    background:url(/imgs/edit_act.svg) no-repeat left top;
+}*/
+
 .errmessage {
     display: block;
     background-color: rgba(235, 0, 27, 0.30);
