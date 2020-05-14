@@ -132,6 +132,10 @@ if ($partner->IsMfo) {
     echo $form->field($partner, 'KeyTkbAuto1')->textInput(['class' => 'form-control']);
 }
 
+echo $form->field($partner, 'MtsLogin')->textInput(['class' => 'form-control']);
+echo $form->field($partner, 'MtsPassword')->textarea(['class' => 'form-control']);
+echo $form->field($partner, 'MtsToken')->textInput(['class' => 'form-control']);
+
 echo $form->field($partner, 'Apple_MerchantID')->textInput(['class' => 'form-control']);
 echo $form->field($partner, 'Apple_PayProcCert')->textarea(['class' => 'form-control']);
 echo $form->field($partner, 'Apple_KeyPasswd')->textInput(['class' => 'form-control']);

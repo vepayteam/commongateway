@@ -49,9 +49,13 @@ class MTSBank implements IBank
         }
     }
 
-    public function SetMfoGate($mtsGate)
+    public function SetMfoGate(MtsGate $mtsGate)
     {
-
+        if (Yii::$app->params['DEVMODE'] != 'Y' && Yii::$app->params['TESTMODE'] != 'Y') {
+            $this->shopId = $mtsGate->gates['MtsLogin'];
+            $this->certFile = $mtsGate->gates['MtsPassword'];
+            $this->keyFile = $mtsGate->gates['MtsToken'];
+        }
     }
 
     /**
@@ -77,9 +81,9 @@ class MTSBank implements IBank
 
                 //шлюз
                 if ($params['IdUsluga'] == 1) {
-                    $MtsGate = new TcbGate($params['IdOrg'], self::$AUTOPAYGATE);
+                    $MtsGate = new MtsGate($params['IdOrg'], self::$AUTOPAYGATE);
                 } else {
-                    $MtsGate = new TcbGate($params['IDPartner'], null, $params['IsCustom']);
+                    $MtsGate = new MtsGate($params['IDPartner'], null, $params['IsCustom']);
                 }
                 if ($params['AutoPayIdGate']) {
                     $MtsGate->AutoPayIdGate = $params['AutoPayIdGate'];

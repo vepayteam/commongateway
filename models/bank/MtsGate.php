@@ -11,6 +11,7 @@ class MtsGate implements IBankGate
     public $IdPartner = 0;
     public $typeGate;
     public $AutoPayIdGate = 0;
+    public $gates;
 
     /**
      * @param int $IdPartner Мерчант
@@ -72,14 +73,9 @@ class MtsGate implements IBankGate
     {
         $res = Yii::$app->db->createCommand('
             SELECT 
-                `LoginTkbAft`, `KeyTkbAft`,
-                `LoginTkbEcom`, `KeyTkbEcom`,                                  
-                `LoginTkbJkh`, `KeyTkbJkh`,
-                `LoginTkbOct`, `KeyTkbOct`,
-                `LoginTkbAuto1`, `LoginTkbAuto2`, `LoginTkbAuto3`, `LoginTkbAuto4`, `LoginTkbAuto5`, `LoginTkbAuto6`, `LoginTkbAuto7`,
-                `KeyTkbAuto1`, `KeyTkbAuto2`, `KeyTkbAuto3`, `KeyTkbAuto4`, `KeyTkbAuto5`, `KeyTkbAuto6`, `KeyTkbAuto7`, 
-                `LoginTkbVyvod`, `KeyTkbVyvod`, `LoginTkbPerevod`, `KeyTkbPerevod`,
-                `LoginTkbOctVyvod`, `KeyTkbOctVyvod`, `LoginTkbOctPerevod`, `KeyTkbOctPerevod`
+                `MtsLogin`, 
+                `MtsPassword`,
+                `MtsToken`
             FROM 
                 `partner` 
             WHERE 
@@ -108,23 +104,23 @@ class MtsGate implements IBankGate
     {
         $gates = $this->GetGates();
 
-        if (in_array($this->typeGate, [MTSBank::$OCTGATE, MTSBank::$SCHETGATE]) && $gates && !empty($gates['LoginTkbOct'])) {
+        if (in_array($this->typeGate, [MTSBank::$OCTGATE, MTSBank::$SCHETGATE]) && $gates && !empty($gates['MtsLogin'])) {
             return true;
-        } elseif ($this->typeGate == MTSBank::$AFTGATE && $gates && !empty($gates['LoginTkbAft'])) {
+        } elseif ($this->typeGate == MTSBank::$AFTGATE && $gates && !empty($gates['MtsLogin'])) {
             return true;
-        } elseif ($this->typeGate == MTSBank::$ECOMGATE && $gates && !empty($gates['LoginTkbEcom'])) {
+        } elseif ($this->typeGate == MTSBank::$ECOMGATE && $gates && !empty($gates['MtsLogin'])) {
             return true;
-        } elseif ($this->typeGate == MTSBank::$JKHGATE && $gates && !empty($gates['LoginTkbJkh'])) {
+        } elseif ($this->typeGate == MTSBank::$JKHGATE && $gates && !empty($gates['MtsLogin'])) {
             return true;
-        } elseif ($this->typeGate == MTSBank::$AUTOPAYGATE && $gates && !empty($gates['LoginTkbAuto1'])) {
+        } elseif ($this->typeGate == MTSBank::$AUTOPAYGATE && $gates && !empty($gates['MtsLogin'])) {
             return true;
-        } elseif ($this->typeGate == MTSBank::$PEREVODGATE && $gates && !empty($gates['LoginTkbPerevod'])) {
+        } elseif ($this->typeGate == MTSBank::$PEREVODGATE && $gates && !empty($gates['MtsLogin'])) {
             return true;
-        } elseif ($this->typeGate == MTSBank::$VYVODGATE && $gates && !empty($gates['LoginTkbVyvod'])) {
+        } elseif ($this->typeGate == MTSBank::$VYVODGATE && $gates && !empty($gates['MtsLogin'])) {
             return true;
-        } elseif ($this->typeGate == MTSBank::$PEREVODOCTGATE && $gates && !empty($gates['LoginTkbOctPerevod'])) {
+        } elseif ($this->typeGate == MTSBank::$PEREVODOCTGATE && $gates && !empty($gates['MtsLogin'])) {
             return true;
-        } elseif ($this->typeGate == MTSBank::$VYVODOCTGATE && $gates && !empty($gates['LoginTkbOctVyvod'])) {
+        } elseif ($this->typeGate == MTSBank::$VYVODOCTGATE && $gates && !empty($gates['MtsLogin'])) {
             return true;
         }
         return false;

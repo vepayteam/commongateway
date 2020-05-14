@@ -98,6 +98,9 @@ use yii\web\UploadedFile;
  * @property string $OrangeDataConKey
  * @property string $OrangeDataConCert
  * @property integer $IsUseKKmPrint
+ * @property string $MtsLogin
+ * @property string $MtsPassword
+ * @property string $MtsToken
  * @property string $Apple_MerchantID
  * @property string $Apple_PayProcCert
  * @property string $Apple_KeyPasswd
@@ -130,7 +133,8 @@ class Partner extends \yii\db\ActiveRecord
             [['UrAdres', 'PostAdres', 'Apple_PayProcCert'], 'string', 'max' => 1000],
             [['Name', 'UrLico'], 'string', 'max' => 250],
             [['URLSite', 'PodpisantFull', 'PodpDoljpost', 'PodpDoljpostRod', 'PodpOsnovan', 'PodpOsnovanRod',
-                'KontTehFio', 'KontFinansFio', 'BankName', 'PaaswordApi', 'Apple_MerchantID', 'Apple_KeyPasswd'], 'string', 'max' => 100],
+                'KontTehFio', 'KontFinansFio', 'BankName', 'PaaswordApi', 'MtsLogin', 'MtsPassword', 'MtsToken',
+                'Apple_MerchantID', 'Apple_KeyPasswd'], 'string', 'max' => 100],
             [['KeyTkbAft', 'KeyTkbEcom', 'KeyTkbVyvod', 'KeyTkbPerevod', 'KeyTkbAuto1', 'KeyTkbAuto2',
                 'KeyTkbAuto3', 'KeyTkbAuto4', 'KeyTkbAuto5', 'KeyTkbAuto6', 'KeyTkbAuto7', 'IpAccesApi', 'KeyTkbJkh',
                 'KeyTkbOct', 'KeyTkbOctVyvod', 'KeyTkbOctPerevod'
@@ -239,6 +243,9 @@ class Partner extends \yii\db\ActiveRecord
             'OrangeDataConKey' => 'Ключ для подключения',
             'OrangeDataConCert' => 'Сертификат для подключения',
             'IsUseKKmPrint' => 'Использование ККМ',
+            'MtsLogin' => 'Логин МТС Банк',
+            'MtsPassword' => 'Пароль МТС Банк',
+            'MtsToken' => 'Токен МТС Банк',
             'Apple_MerchantID' => 'Apple MerchantID',
             'Apple_PayProcCert' => 'Apple закрытый ключ сертификата',
             'Apple_KeyPasswd' => 'Apple пароль закрытого ключа',
