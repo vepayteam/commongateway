@@ -457,34 +457,48 @@ class Partner extends \yii\db\ActiveRecord
         return $this->hasOne(DistributionReports::class, ['partner_id'=>'ID']);
     }
 
-    public function uploadkkm()
+    public function uploadKeysKkm()
     {
+        $res1 = $res2 = $res3 = 1;
         $path = Yii::$app->basePath . '/config/kassaclients/';
         $uploadOrangeDataSingKey = UploadedFile::getInstance($this, 'OrangeDataSingKey');
         if ($uploadOrangeDataSingKey) {
-            $uploadOrangeDataSingKey->saveAs($path . $uploadOrangeDataSingKey->baseName . '.' . $uploadOrangeDataSingKey->extension);
-            $this->OrangeDataSingKey = $uploadOrangeDataSingKey->baseName . '.' . $uploadOrangeDataSingKey->extension;
+            if (file_exists($path . $this->oldAttributes['OrangeDataSingKey'])) {
+                @unlink($path . $this->oldAttributes['OrangeDataSingKey']);
+            }
+            $res1 = $uploadOrangeDataSingKey->saveAs($path . $this->ID."_".$uploadOrangeDataSingKey->baseName . '.' . $uploadOrangeDataSingKey->extension);
+            $this->OrangeDataSingKey = $this->ID."_".$uploadOrangeDataSingKey->baseName . '.' . $uploadOrangeDataSingKey->extension;
         } else {
             $this->setAttribute('OrangeDataSingKey', $this->oldAttributes['OrangeDataSingKey']);
         }
 
         $uploadOrangeDataConKey = UploadedFile::getInstance($this, 'OrangeDataConKey');
         if ($uploadOrangeDataConKey) {
-            $uploadOrangeDataConKey->saveAs($path . $uploadOrangeDataConKey->baseName . '.' . $uploadOrangeDataConKey->extension);
-            $this->OrangeDataConKey = $uploadOrangeDataConKey->baseName . '.' . $uploadOrangeDataConKey->extension;
+            if (file_exists($path . $this->oldAttributes['OrangeDataConKey'])) {
+                @unlink($path . $this->oldAttributes['OrangeDataConKey']);
+            }
+            $res2 = $uploadOrangeDataConKey->saveAs($path . $this->ID."_".$uploadOrangeDataConKey->baseName . '.' . $uploadOrangeDataConKey->extension);
+            $this->OrangeDataConKey = $this->ID."_".$uploadOrangeDataConKey->baseName . '.' . $uploadOrangeDataConKey->extension;
         } else {
             $this->setAttribute('OrangeDataConKey', $this->oldAttributes['OrangeDataConKey']);
         }
 
         $uploadOrangeDataConCert = UploadedFile::getInstance($this, 'OrangeDataConCert');
         if ($uploadOrangeDataConCert) {
-            $uploadOrangeDataConCert->saveAs($path . $uploadOrangeDataConCert->baseName . '.' . $uploadOrangeDataConCert->extension);
-            $this->OrangeDataConCert = $uploadOrangeDataConCert->baseName . '.' . $uploadOrangeDataConCert->extension;
+            if (file_exists($path . $this->oldAttributes['OrangeDataConCert'])) {
+                @unlink($path . $this->oldAttributes['OrangeDataConCert']);
+            }
+            $res3 = $uploadOrangeDataConCert->saveAs($path . $this->ID."_".$uploadOrangeDataConCert->baseName . '.' . $uploadOrangeDataConCert->extension);
+            $this->OrangeDataConCert = $this->ID."_".$uploadOrangeDataConCert->baseName . '.' . $uploadOrangeDataConCert->extension;
         } else {
             $this->setAttribute('OrangeDataConCert', $this->oldAttributes['OrangeDataConCert']);
         }
 
         $this->save(false);
+
+        if (!$res1 || !$res2 || !$res3) {
+            return ['status' => 0, 'message' => 'Ошибка сохранения файла'];
+        }
 
         return ['status' => 1];
     }

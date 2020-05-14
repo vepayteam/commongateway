@@ -284,9 +284,9 @@ $form = ActiveForm::begin([
     ],
 ]);
 
-echo $form->field($partner, 'OrangeDataSingKey')->fileInput(['class' => 'form-control']);
-echo $form->field($partner, 'OrangeDataConKey')->fileInput(['class' => 'form-control']);
-echo $form->field($partner, 'OrangeDataConCert')->fileInput(['class' => 'form-control']);
+echo $form->field($partner, 'OrangeDataSingKey')->fileInput(['class' => 'form-control'])->hint($partner->OrangeDataSingKey);
+echo $form->field($partner, 'OrangeDataConKey')->fileInput(['class' => 'form-control'])->hint($partner->OrangeDataConKey);
+echo $form->field($partner, 'OrangeDataConCert')->fileInput(['class' => 'form-control'])->hint($partner->OrangeDataConCert);
 
 ?>
 

@@ -199,7 +199,7 @@ class PartnerController extends Controller
                 if (!$partner->validate()) {
                     return ['status' => 0, 'message' => $partner->GetError()];
                 }
-                return $partner->uploadkkm();
+                return $partner->uploadKeysKkm();
             }
         }
         return $this->redirect('/partner');
