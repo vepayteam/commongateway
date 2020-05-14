@@ -93,6 +93,10 @@ use Yii;
  * @property integer $IsAutoPerevodToVydacha
  * @property integer $IsCommonSchetVydacha
  * @property string $EmailNotif
+ * @property string $Apple_MerchantID
+ * @property string $Apple_PayProcCert
+ * @property string $Apple_KeyPasswd
+ *
  */
 class Partner extends \yii\db\ActiveRecord
 {
@@ -117,10 +121,10 @@ class Partner extends \yii\db\ActiveRecord
             [['Name'], 'required', 'on' => self::SCENARIO_DEFAULT],
             [['IsBlocked', 'UrState', 'IsMfo', 'IsAftOnly', 'IsUnreserveComis', 'TypeMerchant', 'VoznagVyplatDirect',
                 'IsAutoPerevodToVydacha', 'IsCommonSchetVydacha'], 'integer'],
-            [['UrAdres', 'PostAdres'], 'string', 'max' => 1000],
+            [['UrAdres', 'PostAdres', 'Apple_PayProcCert'], 'string', 'max' => 1000],
             [['Name', 'UrLico'], 'string', 'max' => 250],
             [['URLSite', 'PodpisantFull', 'PodpDoljpost', 'PodpDoljpostRod', 'PodpOsnovan', 'PodpOsnovanRod',
-                'KontTehFio', 'KontFinansFio', 'BankName', 'PaaswordApi'], 'string', 'max' => 100],
+                'KontTehFio', 'KontFinansFio', 'BankName', 'PaaswordApi', 'Apple_MerchantID', 'Apple_KeyPasswd'], 'string', 'max' => 100],
             [['KeyTkbAft', 'KeyTkbEcom', 'KeyTkbVyvod', 'KeyTkbPerevod', 'KeyTkbAuto1', 'KeyTkbAuto2',
                 'KeyTkbAuto3', 'KeyTkbAuto4', 'KeyTkbAuto5', 'KeyTkbAuto6', 'KeyTkbAuto7', 'IpAccesApi', 'KeyTkbJkh',
                 'KeyTkbOct', 'KeyTkbOctVyvod', 'KeyTkbOctPerevod'
@@ -224,6 +228,9 @@ class Partner extends \yii\db\ActiveRecord
             'IsAutoPerevodToVydacha' => 'Автоперечисления на счет выдачи',
             'IsCommonSchetVydacha' => 'Один счет на выдачу и погашение',
             'EmailNotif' => 'E-mail для оповещения',
+            'Apple_MerchantID' => 'Apple MerchantID',
+            'Apple_PayProcCert' => 'Apple закрытый ключ сертификата',
+            'Apple_KeyPasswd' => 'Apple пароль закрытого ключа',
         ];
     }
 

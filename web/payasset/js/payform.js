@@ -171,6 +171,55 @@
             $('#md3ds').val(md);
             $('#termurl3ds').val(termurl);
             $('#form3ds').trigger('submit');
+        },
+
+        applepay: function (merchantIdentifier, amount, label) {
+            if (window.ApplePaySession) {
+                let promise = window.ApplePaySession.canMakePaymentsWithActiveCard(merchantIdentifier);
+                promise.then(function (canMakePayments) {
+                    if (canMakePayments) {
+                        // Display Apple Pay button here.
+                        $('#applepay').show();
+
+                        $('#applepaybtn').off().on('click', function () {
+                            const paymentRequest = {
+                                total: {
+                                    label: label,
+                                    amount: amount
+                                },
+                                countryCode: 'RU',
+                                currencyCode: 'RUB',
+                                merchantCapabilities: ['supports3DS'],
+                                supportedNetworks: ['masterCard', 'visa']
+                            };
+
+                            const applePaySession = new window.ApplePaySession(1, paymentRequest);
+                            applePaySession.onvalidatemerchant = (event) => {
+                                // отправляем запрос на валидацию сессии
+                                $.ajax({
+                                    type: 'POST',
+                                    url: "/pay/applepayvalidate",
+                                    data: {'validationURL': event.validationURL},
+                                    success: function (data, textStatus, jqXHR) {
+                                        // завершаем валидацию платежной сессии
+                                        applePaySession.completeMerchantValidation(data.merchantSession);
+                                    },
+                                    error: function (jqXHR, textStatus, errorThrown) {
+                                        applePaySession.abort();
+                                    }
+                                });
+                            };
+
+                            applePaySession.onpaymentauthorized = (event) => {
+                                applePaySession.completeShippingContactSelection(applePaySession.STATUS_SUCCESS);
+                            }
+
+                            applePaySession.begin();
+                        });
+
+                    }
+                });
+            }
         }
 
     };
