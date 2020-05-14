@@ -461,6 +461,11 @@ class Partner extends \yii\db\ActiveRecord
     {
         $res1 = $res2 = $res3 = 1;
         $path = Yii::$app->basePath . '/config/kassaclients/';
+        if (!file_exists($path)) {
+            if (!mkdir($path) && !is_dir($path)) {
+                throw new \RuntimeException(sprintf('Directory "%s" was not created', $path));
+            }
+        }
         $uploadOrangeDataSingKey = UploadedFile::getInstance($this, 'OrangeDataSingKey');
         if ($uploadOrangeDataSingKey) {
             if (file_exists($path . $this->oldAttributes['OrangeDataSingKey'])) {
