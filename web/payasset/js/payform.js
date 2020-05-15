@@ -196,10 +196,11 @@
                             const applePaySession = new window.ApplePaySession(1, paymentRequest);
                             applePaySession.onvalidatemerchant = (event) => {
                                 // отправляем запрос на валидацию сессии
+                                let id = $('[name="PayForm[IdPay]"]').val();
                                 $.ajax({
                                     type: 'POST',
                                     url: "/pay/applepayvalidate",
-                                    data: {'validationURL': event.validationURL},
+                                    data: {'validationURL': event.validationURL, 'IdPay': 'id'},
                                     success: function (data, textStatus, jqXHR) {
                                         // завершаем валидацию платежной сессии
                                         applePaySession.completeMerchantValidation(data.merchantSession);
@@ -211,7 +212,8 @@
                             };
 
                             applePaySession.onpaymentauthorized = (event) => {
-                                applePaySession.completeShippingContactSelection(applePaySession.STATUS_SUCCESS);
+                                //приходит после подтверждения польцем - завершить оплату
+                                applePaySession.completePayment(applePaySession.STATUS_SUCCESS);
                             }
 
                             applePaySession.begin();

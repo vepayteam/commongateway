@@ -8,12 +8,10 @@ use app\models\extservice\HttpProxy;
 use app\models\payonline\Cards;
 use qfsx\yii2\curl\Curl;
 use Yii;
+use yii\helpers\Json;
 
 class ApplePay
 {
-    private $UserKey;
-    private $UserCert;
-
     use HttpProxy;
 
     public function GetConf($IdPartner)
@@ -21,8 +19,12 @@ class ApplePay
         $res = Yii::$app->db->createCommand('
             SELECT 
                 `Apple_MerchantID`, 
+                `Apple_displayName`,
                 `Apple_PayProcCert`,
-                `Apple_KeyPasswd`
+                `Apple_KeyPasswd`,
+                `Apple_MerchIdentKey`,
+                `Apple_MerchIdentCert`,
+                `IsUseApplepay`
             FROM 
                 `partner` 
             WHERE 
@@ -33,8 +35,17 @@ class ApplePay
         return $res;
     }
 
-    public function ValidateSession($validationURL)
+    public function ValidateSession($IdPartner, $validationURL)
     {
+        $conf = $this->GetConf($IdPartner);
+        $UserKey = Yii::$app->basePath . '/config/applepayclients/'.$conf['Apple_MerchIdentKey'];
+        $UserCert = Yii::$app->basePath . '/config/applepayclients/'.$conf['Apple_MerchIdentCert'];
+
+        $data = [
+            "merchantIdentifier" => $conf['Apple_MerchantID'],
+            "domainName" => $_SERVER['HTTP_HOST'],
+            "displayName" => $conf['Apple_displayName']
+        ];
         $curl = new Curl();
         try {
             $curl->reset()
@@ -44,14 +55,18 @@ class ApplePay
                 ->setOption(CURLOPT_SSL_CIPHER_LIST, 'TLSv12')
                 ->setOption(CURLOPT_SSL_VERIFYPEER, false)
                 //->setOption(CURLOPT_CAINFO, $this->caFile)
-                ->setOption(CURLOPT_SSLKEY, $this->UserKey)
-                ->setOption(CURLOPT_SSLCERT, $this->UserCert);
+                ->setOption(CURLOPT_SSLKEY, $UserKey)
+                ->setOption(CURLOPT_SSLCERT, $UserCert)
+                ->setOption(CURLOPT_HTTPHEADER, [
+                    'Content-type: application/json'
+                ])
+                ->setOption(CURLOPT_POST, Json::encode($data));
 
             if (Yii::$app->params['DEVMODE'] != 'Y' && Yii::$app->params['TESTMODE'] != 'Y') {
                 $curl->setOption(CURLOPT_PROXY, $this->proxyHost);
                 $curl->setOption(CURLOPT_PROXYUSERPWD, $this->proxyUser);
             }
-            $ans = $curl->get($validationURL);
+            $ans = $curl->post($validationURL);
 
         } catch (\Exception $e) {
             Yii::warning("curlerror: " . $curl->responseCode . ":" . Cards::MaskCardLog($curl->response), 'merchant');

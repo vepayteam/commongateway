@@ -311,10 +311,18 @@ class PayController extends Controller
         if (Yii::$app->request->isAjax) {
             Yii::$app->response->format = Response::FORMAT_JSON;
 
+            $payschets = new Payschets();
+            $params = $payschets->getSchetData((int)Yii::$app->request->post('IdPay'),null);
+            if (!$params) {
+                throw new NotFoundHttpException();
+            }
+
             $validationURL = Yii::$app->request->post('validationURL');
             if (!empty($validationURL)) {
                 $ApplePay = new ApplePay();
-                return ['status' => $ApplePay->ValidateSession($validationURL)];
+                return [
+                    'status' => $ApplePay->ValidateSession($params['IDPartner'], $validationURL)
+                ];
             }
             return ['status' => 0];
         }

@@ -188,7 +188,7 @@ use yii\bootstrap\Html;
 <noscript><div><img src="https://mc.yandex.ru/watch/56963551" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <?php
 $this->registerJs('payform.init();');
-if (isset($params['Apple_MerchantID']) && !empty($params['Apple_MerchantID'])) {
+if (isset($params['IsUseApplepay']) && $params['IsUseApplepay'] && isset($params['Apple_MerchantID']) && !empty($params['Apple_MerchantID'])) {
     $this->registerJs('payform.applepay("' . $apple['Apple_MerchantID'] . '", "' . ($params['SummFull'] / 100.0) . '", "' . $params['NamePartner'] . '");');
 }
 $this->registerJs('setTimeout(tracking.sendToServer, 500)', \yii\web\View::POS_READY);

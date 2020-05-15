@@ -135,16 +135,62 @@ if ($partner->IsMfo) {
 echo $form->field($partner, 'MtsLogin')->textInput(['class' => 'form-control']);
 echo $form->field($partner, 'MtsPassword')->textarea(['class' => 'form-control']);
 echo $form->field($partner, 'MtsToken')->textInput(['class' => 'form-control']);
-
-echo $form->field($partner, 'Apple_MerchantID')->textInput(['class' => 'form-control']);
-echo $form->field($partner, 'Apple_PayProcCert')->textarea(['class' => 'form-control']);
-echo $form->field($partner, 'Apple_KeyPasswd')->textInput(['class' => 'form-control']);
-
 ?>
 <div class="row">
     <div class="col-sm-8 col-sm-offset-3">
         <input type="hidden" name="Partner_ID" value="<?=$partner->ID?>">
         <button type="button" class="btn btn-primary" id="btnEditPartnerTkb">Сохранить</button>
+    </div>
+</div>
+<?php
+ActiveForm::end();
+?>
+
+<div class="row">
+    <div class="m-md">
+        <h3>Настройки ApplePay</h3>
+    </div>
+</div>
+
+<?php
+$form = ActiveForm::begin([
+    'layout' => 'horizontal',
+    'id' => 'formEditPartnerApplepay',
+    'options' => [
+        'name' => 'formEditPartnerApplepay'
+    ],
+    'successCssClass' => '',
+    'fieldConfig' => [
+        'template' => "{label}\n{beginWrapper}\n{input}\n{hint}\n{error}\n{endWrapper}",
+        'horizontalCssClasses' => [
+            'label' => 'col-sm-3',
+            'wrapper' => 'col-sm-8',
+            'error' => '',
+            'hint' => '',
+        ],
+    ],
+]);
+
+echo $form->field($partner, 'Apple_MerchantID')->textInput(['class' => 'form-control']);
+echo $form->field($partner, 'Apple_displayName')->textInput(['class' => 'form-control']);
+echo $form->field($partner, 'Apple_PayProcCert')->textarea(['class' => 'form-control']);
+echo $form->field($partner, 'Apple_KeyPasswd')->textInput(['class' => 'form-control']);
+echo $form->field($partner, 'Apple_MerchIdentKey')->fileInput(['class' => 'form-control'])->hint($partner->Apple_MerchIdentKey);
+echo $form->field($partner, 'Apple_MerchIdentCert')->fileInput(['class' => 'form-control'])->hint($partner->Apple_MerchIdentCert);
+?>
+<div class="row no-margins">
+    <div class="col-sm-8 col-sm-offset-3">
+        <?php
+        echo $form->field($partner,'IsUseApplepay')->checkbox([
+            'template' => "<div class=\"checkbox m-l-sm\">\n{input}\n{beginLabel}\n{labelTitle}\n{endLabel}\n{error}\n{hint}\n</div>"
+        ]);
+        ?>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-8 col-sm-offset-3">
+        <input type="hidden" name="Partner_ID" value="<?=$partner->ID?>">
+        <button type="button" class="btn btn-primary" id="btnEditPartnerApplepay">Сохранить</button>
     </div>
 </div>
 <?php

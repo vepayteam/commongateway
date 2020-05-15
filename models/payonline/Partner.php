@@ -104,6 +104,9 @@ use yii\web\UploadedFile;
  * @property string $Apple_MerchantID
  * @property string $Apple_PayProcCert
  * @property string $Apple_KeyPasswd
+ * @property string $Apple_MerchIdentKey
+ * @property string $Apple_MerchIdentCert
+ * @property integer $IsUseApplepay
  *
  */
 class Partner extends \yii\db\ActiveRecord
@@ -128,13 +131,14 @@ class Partner extends \yii\db\ActiveRecord
         return [
             [['Name'], 'required', 'on' => self::SCENARIO_DEFAULT],
             [['IsBlocked', 'UrState', 'IsMfo', 'IsAftOnly', 'IsUnreserveComis', 'TypeMerchant', 'VoznagVyplatDirect',
-                'IsAutoPerevodToVydacha', 'IsCommonSchetVydacha', 'IsUseKKmPrint'], 'integer'],
+                'IsAutoPerevodToVydacha', 'IsCommonSchetVydacha', 'IsUseKKmPrint', 'IsUseApplepay'], 'integer'],
             [['UrAdres', 'PostAdres'], 'string', 'max' => 1000],
             [['UrAdres', 'PostAdres', 'Apple_PayProcCert'], 'string', 'max' => 1000],
             [['Name', 'UrLico'], 'string', 'max' => 250],
             [['URLSite', 'PodpisantFull', 'PodpDoljpost', 'PodpDoljpostRod', 'PodpOsnovan', 'PodpOsnovanRod',
                 'KontTehFio', 'KontFinansFio', 'BankName', 'PaaswordApi', 'MtsLogin', 'MtsPassword', 'MtsToken',
-                'Apple_MerchantID', 'Apple_KeyPasswd'], 'string', 'max' => 100],
+                'Apple_MerchantID', 'Apple_displayName', 'Apple_KeyPasswd', 'Apple_MerchIdentKey', 'Apple_MerchIdentCert'
+            ], 'string', 'max' => 100],
             [['KeyTkbAft', 'KeyTkbEcom', 'KeyTkbVyvod', 'KeyTkbPerevod', 'KeyTkbAuto1', 'KeyTkbAuto2',
                 'KeyTkbAuto3', 'KeyTkbAuto4', 'KeyTkbAuto5', 'KeyTkbAuto6', 'KeyTkbAuto7', 'IpAccesApi', 'KeyTkbJkh',
                 'KeyTkbOct', 'KeyTkbOctVyvod', 'KeyTkbOctPerevod'
@@ -153,7 +157,7 @@ class Partner extends \yii\db\ActiveRecord
             [['KPP', 'PodpDoljpost', 'PodpDoljpostRod', 'BikBank', 'BankName', 'RSchet', 'KSchet'], 'required', 'on' => self::SCENARIO_SELFREG, 'when' => function($model) {
                 return $model->UrState == 0;
             }],
-            [['OrangeDataSingKey', 'OrangeDataConKey', 'OrangeDataConCert'], 'file', 'skipOnEmpty' => true, 'extensions' => 'key,crt,cer']
+            [['OrangeDataSingKey', 'OrangeDataConKey', 'OrangeDataConCert', 'Apple_MerchIdentKey', 'Apple_MerchIdentCert'], 'file', 'skipOnEmpty' => true, 'extensions' => 'key,crt,cer']
         ];
     }
 
@@ -247,8 +251,11 @@ class Partner extends \yii\db\ActiveRecord
             'MtsPassword' => 'Пароль МТС Банк',
             'MtsToken' => 'Токен МТС Банк',
             'Apple_MerchantID' => 'Apple MerchantID',
-            'Apple_PayProcCert' => 'Apple закрытый ключ сертификата',
+            'Apple_PayProcCert' => 'Payment Processing Certificate',
             'Apple_KeyPasswd' => 'Apple пароль закрытого ключа',
+            'Apple_MerchIdentKey' => 'Merchant Identity Key',
+            'Apple_MerchIdentCert' => 'Merchant Identity Certificate',
+            'IsUseApplepay' => 'Используется Apple Pay',
         ];
     }
 
@@ -521,5 +528,46 @@ class Partner extends \yii\db\ActiveRecord
         }
 
         return ['status' => 1];
+    }
+
+    public function uploadKeysApplepay()
+    {
+        $res1 = $res2 = 1;
+        $path = Yii::$app->basePath . '/config/applepayclients/';
+        if (!file_exists($path)) {
+            if (!mkdir($path) && !is_dir($path)) {
+                throw new \RuntimeException(sprintf('Directory "%s" was not created', $path));
+            }
+        }
+        $uploadApple_MerchIdentKey = UploadedFile::getInstance($this, 'Apple_MerchIdentKey');
+        if ($uploadApple_MerchIdentKey) {
+            if (file_exists($path . $this->oldAttributes['Apple_MerchIdentKey'])) {
+                @unlink($path . $this->oldAttributes['Apple_MerchIdentKey']);
+            }
+            $res1 = $uploadApple_MerchIdentKey->saveAs($path . $this->ID."_".$uploadApple_MerchIdentKey->baseName . '.' . $uploadApple_MerchIdentKey->extension);
+            $this->Apple_MerchIdentKey = $this->ID."_".$uploadApple_MerchIdentKey->baseName . '.' . $uploadApple_MerchIdentKey->extension;
+        } else {
+            $this->setAttribute('Apple_MerchIdentKey', $this->oldAttributes['Apple_MerchIdentKey']);
+        }
+
+        $uploadApple_MerchIdentCert = UploadedFile::getInstance($this, 'Apple_MerchIdentCert');
+        if ($uploadApple_MerchIdentCert) {
+            if (file_exists($path . $this->oldAttributes['Apple_MerchIdentCert'])) {
+                @unlink($path . $this->oldAttributes['Apple_MerchIdentCert']);
+            }
+            $res2 = $uploadApple_MerchIdentCert->saveAs($path . $this->ID."_".$uploadApple_MerchIdentCert->baseName . '.' . $uploadApple_MerchIdentCert->extension);
+            $this->Apple_MerchIdentCert = $this->ID."_".$uploadApple_MerchIdentCert->baseName . '.' . $uploadApple_MerchIdentCert->extension;
+        } else {
+            $this->setAttribute('Apple_MerchIdentCert', $this->oldAttributes['Apple_MerchIdentCert']);
+        }
+
+        $this->save(false);
+
+        if (!$res1 || !$res2) {
+            return ['status' => 0, 'message' => 'Ошибка сохранения файла'];
+        }
+
+        return ['status' => 1];
+
     }
 }
