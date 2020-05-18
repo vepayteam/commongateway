@@ -12,8 +12,8 @@ class m200515_111216_applepaycert extends Migration
      */
     public function safeUp()
     {
-//        $this->addColumn('partner','Apple_MerchIdentKey', $this->string(100));
-//        $this->addColumn('partner','Apple_MerchIdentCert', $this->string(100));
+        $this->addColumn('partner','Apple_MerchIdentKey', $this->string(100));
+        $this->addColumn('partner','Apple_MerchIdentCert', $this->string(100));
         $this->addColumn('partner','Apple_displayName', $this->string(100));
         $this->addColumn('partner','IsUseApplepay', $this->tinyInteger(1)->unsigned()->notNull()->defaultValue(0));
     }

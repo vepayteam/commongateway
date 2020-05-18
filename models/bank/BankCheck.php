@@ -11,7 +11,7 @@ class BankCheck
      * @param int $bank
      * @return bool
      */
-    public function CheckWorked($bank)
+    public function CheckWorkedIn($bank)
     {
         $result = (new Query())
             ->select(['LastWorkIn', 'LastInPay', 'LastInCheck'])
@@ -22,6 +22,7 @@ class BankCheck
         if ($result) {
             return $result['LastInPay'] == 0 ||
                 ($result['LastWorkIn'] >= $result['LastInPay'] - 10 * 60) ||
+                ($result['LastInCheck'] > time() - 5 * 60) ||
                 ($result['LastWorkIn'] < $result['LastInPay'] - 10 * 60 && $result['LastInPay'] < time() - 20 * 60);
         }
         return false;
@@ -35,6 +36,17 @@ class BankCheck
     {
         Yii::$app->db->createCommand()->update('banks', [
             'LastInPay' => time()
+        ], ['ID' => $bank])->execute();
+    }
+
+    /**
+     * @param $bank
+     * @throws \yii\db\Exception
+     */
+    public function UpdateLastCheck($bank)
+    {
+        Yii::$app->db->createCommand()->update('banks', [
+            'LastInCheck' => time()
         ], ['ID' => $bank])->execute();
     }
 

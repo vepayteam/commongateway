@@ -212,7 +212,7 @@ class Payschets
                         }
 
                         $BankCheck = new BankCheck();
-                        $BankCheck->UpdateLastWork($query['Bank']);
+                        $BankCheck->UpdateLastCheck($query['Bank']);
 
                         if ($transaction->isActive) {
                             $transaction->commit();
@@ -243,6 +243,10 @@ class Payschets
                         $res = false;
 
                     }
+
+                    $BankCheck = new BankCheck();
+                    $BankCheck->UpdateLastWork($query['Bank']);
+
                 } else {
                     if ($transaction) {
                         $transaction->rollBack();

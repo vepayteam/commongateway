@@ -10,6 +10,7 @@ class BankMerchant
     /**
      * Банк
      * @param $bank
+     * @param IBankGate|null $gate
      * @return IBank
      * @throws \yii\db\Exception
      */
@@ -70,11 +71,20 @@ class BankMerchant
     public static function GetWorkBank()
     {
         $BankCheck = new BankCheck();
-        if (!$BankCheck->CheckWorked(TCBank::$bank)) {
+        if (!$BankCheck->CheckWorkedIn(TCBank::$bank)) {
             $BankCheck->UpdatePay(MTSBank::$bank);
             return MTSBank::$bank;
         }
         $BankCheck->UpdatePay(TCBank::$bank);
+        return TCBank::$bank;
+    }
+
+    /**
+     * Выбор банка для выплаты
+     * @return int
+     */
+    public static function GetWorkBankOut()
+    {
         return TCBank::$bank;
     }
 }
