@@ -32,6 +32,13 @@ interface IBank
     public function PayXml(array $params);
 
     /**
+     * Оплата без формы ApplePay
+     * @param array $params
+     * @return array
+     */
+    public function PayApple(array $params);
+
+    /**
      * Финиш оплаты без формы (PCI DSS)
      * @param array $params
      * @return array

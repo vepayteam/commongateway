@@ -65,18 +65,31 @@ class BankMerchant
     }
 
     /**
-     * Выбор банка для платежа
+     * Выбор банка для платежа картой
      * @return int
      */
     public static function GetWorkBank()
     {
         $BankCheck = new BankCheck();
-        if (!$BankCheck->CheckWorkedIn(TCBank::$bank)) {
-            $BankCheck->UpdatePay(MTSBank::$bank);
-            return MTSBank::$bank;
+        $bank = $BankCheck->CheckWorkedIn();
+        if ($bank) {
+            $BankCheck->UpdatePay($bank);
         }
-        $BankCheck->UpdatePay(TCBank::$bank);
-        return TCBank::$bank;
+        return $bank;
+    }
+
+    /**
+     * Выбор банка для платежа ApplePay
+     * @return int
+     */
+    public static function GetApplePayBank()
+    {
+        $BankCheck = new BankCheck();
+        $bank = $BankCheck->CheckWorkedApplePay();
+        if ($bank) {
+            $BankCheck->UpdatePay($bank);
+        }
+        return $bank;
     }
 
     /**

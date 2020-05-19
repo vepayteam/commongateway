@@ -175,6 +175,7 @@
 
         applepay: function (merchantIdentifier, amount, label) {
             if (window.ApplePaySession) {
+                let id = $('[name="PayForm[IdPay]"]').val();
                 let promise = window.ApplePaySession.canMakePaymentsWithActiveCard(merchantIdentifier);
                 promise.then(function (canMakePayments) {
                     if (canMakePayments) {
@@ -196,11 +197,10 @@
                             const applePaySession = new window.ApplePaySession(1, paymentRequest);
                             applePaySession.onvalidatemerchant = (event) => {
                                 // отправляем запрос на валидацию сессии
-                                let id = $('[name="PayForm[IdPay]"]').val();
                                 $.ajax({
                                     type: 'POST',
                                     url: "/pay/applepayvalidate",
-                                    data: {'validationURL': event.validationURL, 'IdPay': 'id'},
+                                    data: {'validationURL': event.validationURL, 'IdPay': id},
                                     success: function (data, textStatus, jqXHR) {
                                         // завершаем валидацию платежной сессии
                                         applePaySession.completeMerchantValidation(data.merchantSession);
@@ -213,7 +213,25 @@
 
                             applePaySession.onpaymentauthorized = (event) => {
                                 //приходит после подтверждения польцем - завершить оплату
-                                applePaySession.completePayment(applePaySession.STATUS_SUCCESS);
+                                //передать токен в банк
+                                $.ajax({
+                                    type: 'POST',
+                                    url: "/pay/applepaycreate",
+                                    data: {'paymentToken': event.token, 'IdPay': id},
+                                    success: function (data, textStatus, jqXHR) {
+                                        //$("#loader").hide();
+                                        if (data.status == 1) {
+                                            applePaySession.completePayment(applePaySession.STATUS_SUCCESS);
+                                            window.location.href = '/pay/orderok/'+id;
+                                        } else {
+                                            $('#error_message').html(data.message);
+                                        }
+                                    },
+                                    error: function (jqXHR, textStatus, errorThrown) {
+                                        //$("#loader").hide();
+                                        $('#error_message').html("Ошибка запроса");
+                                    }
+                                });
                             }
 
                             applePaySession.begin();

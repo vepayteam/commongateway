@@ -314,6 +314,9 @@ class PayController extends Controller
                 throw new NotFoundHttpException();
             }
 
+            $bank = BankMerchant::GetApplePayBank();
+            $payschets->ChangeBank($params['ID'], $bank);
+
             $validationURL = Yii::$app->request->post('validationURL');
             if (!empty($validationURL)) {
                 $ApplePay = new ApplePay();
@@ -322,6 +325,31 @@ class PayController extends Controller
                 ];
             }
             return ['status' => 0];
+        }
+        return '';
+    }
+
+    public function actionApplepaycreate()
+    {
+        if (Yii::$app->request->isAjax) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+
+            $payschets = new Payschets();
+            $params = $payschets->getSchetData((int)Yii::$app->request->post('IdPay'),null);
+            if (!$params) {
+                throw new NotFoundHttpException();
+            }
+
+            $paymentToken = Yii::$app->request->post('paymentToken');
+            $merchBank = BankMerchant::Create($params);
+            $ApplePay = new ApplePay();
+            $res = $merchBank->PayApple($params + ['Apple_MerchantID' => $ApplePay->GetConf($params['IDPartner'])['Apple_MerchantID'], 'PaymentToken' => $paymentToken]);
+
+            if ($res) {
+                return ['status' => 1];
+            }
+            return ['status' => 0, 'message' => 'Ошибка запроса'];
+            //return $this->redirect(\yii\helpers\Url::to('/pay/orderok?id='.$params['ID']));
         }
         return '';
     }

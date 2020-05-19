@@ -1420,6 +1420,11 @@ class TCBank implements IBank
 
     }
 
+    public function PayApple(array $params)
+    {
+        return ['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0];
+    }
+
     /**
      * Финиш оплаты без формы (PCI DSS)
      * @param array $params

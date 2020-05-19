@@ -169,6 +169,45 @@ class MTSBank implements IBank
     }
 
     /**
+     * Оплата ApplePay (без формы)
+     * @param array $params
+     * @return array
+     */
+    public function PayApple(array $params)
+    {
+        $ret = $this->RegisterOrder($params);
+        if ($ret['status'] == 1) {
+
+            $action = '/rest/payment.do';
+            $queryData = [
+                'userName' => $this->shopId,
+                'password' => $this->certFile,
+                'merchant' => $params['Apple_MerchantID'],
+                'orderNumber' => $params['ExtBillNumber'],
+                'description' => 'Оплата по счету ' . $params['ID'],
+                'paymentToken' => $params['PaymentToken']
+            ];
+
+            $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+
+            if (isset($ans['xml']) && !empty($ans['xml'])) {
+                if (!isset($ans['xml']['errorCode']) || $ans['xml']['errorCode'] == 0) {
+                    return [
+                        'status' => 1,
+                        'transac' => $params['ExtBillNumber'],
+                    ];
+                } else {
+                    $error = $ans['xml']['errorCode'];
+                    $message = $ans['xml']['errorMessage'];
+                    return ['status' => 2, 'message' => $error . ":" . $message, 'fatal' => 1];
+                }
+            }
+        }
+
+        return ['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0];
+    }
+
+    /**
      * Финиш оплаты без формы (PCI DSS)
      * @param array $params
      * @return array

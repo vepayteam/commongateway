@@ -24,6 +24,14 @@ use Yii;
  * @property float $FreepayVozn
  * @property float $FreepayVoznMin
  * @property float $VyvodBankComis
+ * @property int $LastWorkIn
+ * @property int $LastInPay
+ * @property int $LastInCheck
+ * @property int $UsePayIn
+ * @property int $UseApplePay
+ * @property int $UseGooglePay
+ * @property int $UseSamsungPay
+ * @property int $SortOrder
  */
 class Banks extends \yii\db\ActiveRecord
 {
@@ -42,7 +50,7 @@ class Banks extends \yii\db\ActiveRecord
     {
         return [
             [['ID', 'Name'], 'required'],
-            [['ID'], 'integer'],
+            [['ID', 'LastWorkIn', 'LastInPay', 'LastInCheck', 'UsePayIn', 'UseApplePay', 'UseGooglePay', 'UseSamsungPay', 'SortOrder'], 'integer'],
             [['JkhComis', 'JkhComisMin', 'EcomComis', 'EcomComisMin', 'AFTComis', 'AFTComisMin', 'OCTComis', 'OCTComisMin',
                 'OCTVozn', 'OCTVoznMin', 'FreepayComis', 'FreepayComisMin', 'FreepayVozn', 'FreepayVoznMin', 'VyvodBankComis'
             ], 'number'],
@@ -73,7 +81,7 @@ class Banks extends \yii\db\ActiveRecord
             'FreepayComisMin' => 'Freepay, не менее руб',
             'FreepayVozn' => 'Freepay вознаграждение %',
             'FreepayVoznMin' => 'Freepay, не менее руб',
-            'VyvodBankComis' => 'Сумма за вывод средтсв, руб'
+            'VyvodBankComis' => 'Сумма за вывод средтсв, руб',
         ];
     }
 }

@@ -11,19 +11,42 @@ class BankCheck
      * @param int $bank
      * @return bool
      */
-    public function CheckWorkedIn($bank)
+    public function CheckWorkedIn($offset = 0)
     {
         $result = (new Query())
-            ->select(['LastWorkIn', 'LastInPay', 'LastInCheck'])
+            ->select(['ID', 'LastWorkIn', 'LastInPay', 'LastInCheck'])
             ->from('banks')
-            ->where(['ID' => $bank, 'UsePayIn' => 1])
+            ->where(['UsePayIn' => 1])
+            ->orderBy('SortOrder')
+            ->offset($offset)
+            ->limit(1)
             ->one();
 
         if ($result) {
-            return $result['LastInPay'] == 0 ||
+            if ($result['LastInPay'] == 0 ||
                 ($result['LastWorkIn'] >= $result['LastInPay'] - 10 * 60) ||
                 ($result['LastInCheck'] > time() - 5 * 60) ||
-                ($result['LastWorkIn'] < $result['LastInPay'] - 10 * 60 && $result['LastInPay'] < time() - 20 * 60);
+                ($result['LastWorkIn'] < $result['LastInPay'] - 10 * 60 && $result['LastInPay'] < time() - 20 * 60)) {
+                return $result['ID'];
+            } else {
+                return $this->CheckWorkedIn($offset > 0 ? 0 : 1);
+            }
+        }
+        return false;
+    }
+
+    public function CheckWorkedApplePay()
+    {
+        $result = (new Query())
+            ->select(['ID'])
+            ->from('banks')
+            ->where(['UsePayIn' => 1, 'UseApplePay' => 1])
+            ->orderBy('SortOrder')
+            ->limit(1)
+            ->one();
+
+        if ($result) {
+            return $result['ID'];
         }
         return false;
     }

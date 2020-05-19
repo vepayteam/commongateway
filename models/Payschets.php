@@ -952,6 +952,14 @@ class Payschets
         }
     }
 
+    public function ChangeBank($IdPay, $bank)
+    {
+        Yii::$app->db->createCommand()->update('pay_schet', [
+            'bank' => $bank,
+        ], ['ID' => $IdPay])->execute();
+
+    }
+
     public static function RedirectUrl($url, $Extid)
     {
         if (!empty($url)) {

@@ -1023,35 +1023,8 @@
                 showClose: true
             });
 
-            $('#veekenddays').on('submit', function () {
-                if (linklink) {
-                    linklink.abort();
-                }
-                linklink = $.ajax({
-                    type: "POST",
-                    url: '/partner/admin/saveveekenddays',
-                    data: $('#veekenddays').serialize(),
-                    beforeSend: function () {
-                        $('#veekenddays').closest('.ibox-content').toggleClass('sk-loading');
-                    },
-                    success: function (data) {
-                        $('#veekenddays').closest('.ibox-content').toggleClass('sk-loading');
-                        if (data.status == 1) {
-                            toastr.success("OK", data.message);
-                        } else {
-                            toastr.error("Ошибка", data.message);
-                        }
-                    },
-                    error: function () {
-                        $('#veekenddays').closest('.ibox-content').toggleClass('sk-loading');
-                        toastr.error("Ошибка", "Ошибка запроса.");
-                    }
-                });
-                return false;
-            });
-
-
-            $('#comisotchetform').on('submit', function () {
+            $('#comisotchetform').on('submit', function (e) {
+                e.preventDefault();
                 if (linklink) {
                     linklink.abort();
                 }
@@ -1708,7 +1681,69 @@
                 });
                 return false;
             });
-        }
+        },
+
+        adminsettings: function () {
+            $('#veekenddays').on('submit', function (e) {
+                e.preventDefault();
+                if (linklink) {
+                    linklink.abort();
+                }
+                linklink = $.ajax({
+                    type: "POST",
+                    url: '/partner/settings/saveveekenddays',
+                    data: $('#veekenddays').serialize(),
+                    beforeSend: function () {
+                        $('#veekenddays').closest('.ibox-content').toggleClass('sk-loading');
+                    },
+                    success: function (data) {
+                        $('#veekenddays').closest('.ibox-content').toggleClass('sk-loading');
+                        if (data.status == 1) {
+                            toastr.success("OK", data.message);
+                        } else {
+                            toastr.error("Ошибка", data.message);
+                        }
+                    },
+                    error: function () {
+                        $('#veekenddays').closest('.ibox-content').toggleClass('sk-loading');
+                        toastr.error("Ошибка", "Ошибка запроса.");
+                    }
+                });
+                return false;
+            });
+        },
+
+        banksconf: function () {
+            $('#banksconf').on('submit', function (e) {
+                e.preventDefault();
+                if (linklink) {
+                    linklink.abort();
+                }
+                linklink = $.ajax({
+                    type: "POST",
+                    url: '/partner/settings/savebankconf',
+                    data: $('#banksconf').serialize(),
+                    beforeSend: function () {
+                        $('#banksconf').closest('.ibox-content').toggleClass('sk-loading');
+                    },
+                    success: function (data) {
+                        $('#banksconf').closest('.ibox-content').toggleClass('sk-loading');
+                        if (data.status == 1) {
+                            toastr.success("OK", data.message);
+                        } else {
+                            toastr.error("Ошибка", data.message);
+                        }
+                    },
+                    error: function () {
+                        $('#banksconf').closest('.ibox-content').toggleClass('sk-loading');
+                        toastr.error("Ошибка", "Ошибка запроса.");
+                    }
+                });
+                return false;
+            });
+        },
+
+
     };
 
     let commInfo = {

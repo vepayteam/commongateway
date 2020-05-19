@@ -2,8 +2,10 @@
 
 namespace app\modules\partner\controllers;
 
+use app\models\bank\Banks;
 use app\models\mfo\MfoDistributionReports;
 use app\models\mfo\MfoSettings;
+use app\models\Options;
 use app\models\partner\admin\AlarmsSettings;
 use app\models\partner\PartUserAccess;
 use app\models\partner\stat\StatFilter;
@@ -74,22 +76,6 @@ class SettingsController extends Controller
         $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
         if ($IsAdmin) {
 
-            /*$IdPart = Yii::$app->request->post('IdPartner', 0);
-            $sel = $this->selectPartner($IdPart, false, false, true);
-            if (empty($sel)) {
-                $MfoSettings = new MfoSettings(['IdPartner' => $IdPart]);
-                $MfoSettings->ReadUrl();
-                return $this->render('callback', [
-                    'settings' => $MfoSettings,
-                    'IdPartner' => $IdPart,
-                    'IsAdmin' => $IsAdmin
-                ]);
-            } else {
-                return $this->render('index', [
-                    'sel' => $sel,
-                    'IsAdmin' => $IsAdmin
-                ]);
-            }*/
             $settings = [];
             for ($i = 0; $i < 3; $i++) {
                 $settings[$i] = AlarmsSettings::findOne(['TypeAlarm' => $i]);
@@ -97,9 +83,16 @@ class SettingsController extends Controller
                     $settings[$i] = new AlarmsSettings();
                 }
             }
+
+            $opt = Options::findOne(['Name' => 'disabledday']);
+
+            $banks = Banks::find()->where(['>', 'ID', '1'])->all();
+
             return $this->render('alarms', [
                 'settings' => $settings,
-                'IsAdmin' => $IsAdmin
+                'IsAdmin' => $IsAdmin,
+                'veekends' => $opt ? $opt->Value : '',
+                'banks' => $banks
             ]);
 
         } else {
@@ -115,21 +108,62 @@ class SettingsController extends Controller
         }
     }
 
-    /*public function actionDistribution()
+    /**
+     * @return array
+     * @throws NotFoundHttpException
+     */
+    public function actionSaveveekenddays()
     {
         $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-        if ($IsAdmin) {
-            $fltr = new StatFilter();
-            $partners = $fltr->getPartnersList(false);
 
-            return $this->render('distribution', [
-                'partners' => $partners,
-                'IsAdmin' => $IsAdmin
-            ]);
+        if ($IsAdmin && Yii::$app->request->isAjax) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+            $opt = Options::findOne(['Name' => 'disabledday']);
+            if (!$opt) {
+                $opt = new Options();
+                $opt->Name = 'disabledday';
+            }
+            $opt->Value = Yii::$app->request->post('veekenddays', '');
+            if ($opt->save(false)) {
+                return ['status' => 1, 'message' => 'Данные внесены'];
+            } else {
+                return ['status' => 0, 'message' => 'Ошибка сохранения'];
+            }
+
+        } else {
+            throw new NotFoundHttpException();
         }
-        return $this->redirect('/partner');
+    }
 
-    }*/
+    /**
+     * @return array
+     * @throws NotFoundHttpException
+     */
+    public function actionSavebankconf()
+    {
+        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+
+        if ($IsAdmin && Yii::$app->request->isAjax) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+            $inBanks = Yii::$app->request->post('Bank', '');
+            foreach ($inBanks as $bank) {
+                $banksave = Banks::findOne(['ID' => $bank['ID']]);
+                if (!$banksave) {
+                    return ['status' => 0, 'message' => 'Ошибка сохранения'];
+                }
+                $banksave->SortOrder = $bank['SortOrder'];
+                $banksave->UsePayIn = $bank['UsePayIn'] ?? 0;
+                $banksave->UseApplePay = $bank['UseApplePay'] ?? 0;
+                if (!$banksave->save()) {
+                    return ['status' => 0, 'message' => 'Ошибка сохранения'];
+                }
+            }
+            return ['status' => 1, 'message' => 'Данные сохранены'];
+
+        } else {
+            throw new NotFoundHttpException();
+        }
+    }
 
     public function actionAlarms()
     {
@@ -149,30 +183,6 @@ class SettingsController extends Controller
         }
         return $this->redirect('/partner');
     }
-
-    /**
-     * Рассылка реестров (Ajax - Сохранить)
-     */
-    /*public function actionSaveDistribution()
-    {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-        if ($IsAdmin) {
-            $model = new MfoDistributionReports();
-            if ($model->validate()) {
-                $model->save();
-                return [
-                    'status' => 1,
-                    'message' => 'Данные успешно сохранены, только для партенеров, у которых указан email.'];
-            } else {
-                return [
-                    'status' => 0,
-                    'data' => $model->errors,
-                    'message' => 'Ошибка, неверно заполненны данные.'];
-            }
-        }
-        return ['status' => 0, 'message' => 'У вас нет доступа к этому разделу сайта.'];
-    }*/
 
     /**
      * @return array|Response
