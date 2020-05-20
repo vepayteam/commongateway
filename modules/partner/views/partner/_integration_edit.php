@@ -133,7 +133,7 @@ if ($partner->IsMfo) {
 }
 
 echo $form->field($partner, 'MtsLogin')->textInput(['class' => 'form-control']);
-echo $form->field($partner, 'MtsPassword')->textarea(['class' => 'form-control']);
+echo $form->field($partner, 'MtsPassword')->textInput(['class' => 'form-control']);
 echo $form->field($partner, 'MtsToken')->textInput(['class' => 'form-control']);
 ?>
 <div class="row">
@@ -173,7 +173,7 @@ $form = ActiveForm::begin([
 
 echo $form->field($partner, 'Apple_MerchantID')->textInput(['class' => 'form-control']);
 echo $form->field($partner, 'Apple_displayName')->textInput(['class' => 'form-control']);
-echo $form->field($partner, 'Apple_PayProcCert')->textarea(['class' => 'form-control']);
+//echo $form->field($partner, 'Apple_PayProcCert')->textarea(['class' => 'form-control']);
 echo $form->field($partner, 'Apple_KeyPasswd')->textInput(['class' => 'form-control']);
 echo $form->field($partner, 'Apple_MerchIdentKey')->fileInput(['class' => 'form-control'])->hint($partner->Apple_MerchIdentKey);
 echo $form->field($partner, 'Apple_MerchIdentCert')->fileInput(['class' => 'form-control'])->hint($partner->Apple_MerchIdentCert);

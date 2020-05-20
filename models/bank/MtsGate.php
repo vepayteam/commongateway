@@ -8,6 +8,7 @@ use Yii;
 
 class MtsGate implements IBankGate
 {
+    public $bank = 3;
     public $IdPartner = 0;
     public $typeGate;
     public $AutoPayIdGate = 0;
@@ -132,5 +133,13 @@ class MtsGate implements IBankGate
     public function getTypeGate()
     {
         return $this->typeGate;
+    }
+
+    /**
+     * @return int
+     */
+    public function getBank()
+    {
+        return $this->bank;
     }
 }

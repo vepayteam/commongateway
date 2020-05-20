@@ -66,16 +66,33 @@ class BankMerchant
 
     /**
      * Выбор банка для платежа картой
-     * @return int
+     * @param $IdPartner
+     * @param $typeUsl
+     * @return IBank
+     * @throws \yii\db\Exception
      */
-    public static function GetWorkBank()
+    public static function GetWorkBank($IdPartner, $typeUsl)
     {
         $BankCheck = new BankCheck();
-        $bank = $BankCheck->CheckWorkedIn();
-        if ($bank) {
-            $BankCheck->UpdatePay($bank);
-        }
-        return $bank;
+        $order = 0;
+        $bankRet = null;
+        do {
+            $bank = $BankCheck->CheckWorkedIn($order);
+            $gate = null;
+            if ($bank) {
+                $gate = self::Gate($IdPartner, $bank, $typeUsl);
+            }
+            if ($bank && $gate && $gate->IsGate()) {
+                $bankRet = self::Get($bank, $gate);
+            }
+            if ($bankRet !== null) {
+                $BankCheck->UpdatePay($bank);
+            } else {
+                $order++;
+            }
+
+        } while ($bankRet === null && $order < 2);
+        return $bankRet;
     }
 
     /**

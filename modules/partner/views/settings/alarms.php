@@ -98,16 +98,16 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                 </div>
                                 <div class="col-sm-2">
                                     <div class="checkbox m-r-xs">
-                                        <input type="checkbox" id="checkboxUsePayIn" name="Bank[<?=$bank->ID?>][UsePayIn]" value="1" <?=$bank->UsePayIn ? 'checked' : ''?>>
-                                        <label for="checkboxUsePayIn">
+                                        <input type="checkbox" id="checkboxUsePayIn<?=$bank->ID?>" name="Bank[<?=$bank->ID?>][UsePayIn]" value="1" <?=$bank->UsePayIn ? 'checked' : ''?>>
+                                        <label for="checkboxUsePayIn<?=$bank->ID?>">
                                             Использовать
                                         </label>
                                     </div>
                                 </div>
                                 <div class="col-sm-4">
                                     <div class="checkbox m-r-xs">
-                                        <input type="checkbox" id="checkboxUseApplePay" name="Bank[<?=$bank->ID?>][UseApplePay]" value="1" <?=$bank->UseApplePay ? 'checked' : ''?>>
-                                        <label for="checkboxUseApplePay">
+                                        <input type="checkbox" id="checkboxUseApplePay<?=$bank->ID?>" name="Bank[<?=$bank->ID?>][UseApplePay]" value="1" <?=$bank->UseApplePay ? 'checked' : ''?>>
+                                        <label for="checkboxUseApplePay<?=$bank->ID?>">
                                             Apple Pay
                                         </label>
                                     </div>

@@ -9,6 +9,7 @@ use Yii;
 
 class TcbGate implements IBankGate
 {
+    public $bank = 2;
     public $IdPartner = 0;
     public $typeGate;
     public $AutoPayIdGate = 0;
@@ -137,5 +138,13 @@ class TcbGate implements IBankGate
     public function getTypeGate()
     {
         return $this->typeGate;
+    }
+
+    /**
+     * @return int
+     */
+    public function getBank()
+    {
+        return $this->bank;
     }
 }

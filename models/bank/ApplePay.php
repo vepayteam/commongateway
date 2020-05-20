@@ -62,11 +62,14 @@ class ApplePay
                 ])
                 ->setOption(CURLOPT_POST, Json::encode($data));
 
+            if (!empty($conf['Apple_KeyPasswd'])) {
+                $curl->setOption(CURLOPT_SSLKEYPASSWD, $conf['Apple_KeyPasswd']);
+            }
             if (Yii::$app->params['DEVMODE'] != 'Y' && Yii::$app->params['TESTMODE'] != 'Y') {
                 $curl->setOption(CURLOPT_PROXY, $this->proxyHost);
                 $curl->setOption(CURLOPT_PROXYUSERPWD, $this->proxyUser);
             }
-            $ans = $curl->post($validationURL);
+            $ans = $curl->post('https://'.$validationURL.'/paymentSession');
 
         } catch (\Exception $e) {
             Yii::warning("curlerror: " . $curl->responseCode . ":" . Cards::MaskCardLog($curl->response), 'merchant');

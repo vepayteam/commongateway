@@ -81,12 +81,11 @@ class PayController extends Controller
 
         Yii::warning('/pay/lk mfo='. $mfo->mfo . " sum=".$kfPay->amount . " extid=".$kfPay->extid, 'mfo');
 
-        $bank = BankMerchant::GetWorkBank();
-
         $typeUsl = $kfPay->IsAftGate($mfo->mfo) ? TU::$POGASHATF : TU::$POGASHECOM;
-        $bankGate = BankMerchant::Gate($mfo->mfo, $bank, $typeUsl);
+        $bank = BankMerchant::GetWorkBank($mfo->mfo, $typeUsl);
+
         $usl = $kfPay->GetUslug($mfo->mfo, $typeUsl);
-        if (!$usl || !$bankGate || !$bankGate->IsGate()) {
+        if (!$usl || !$bank) {
             return ['status' => 0, 'message' => 'Услуга не найдена'];
         }
 
@@ -103,7 +102,7 @@ class PayController extends Controller
                 }
             }
         }
-        $params = $pay->payToMfo(null, [$kfPay->document_id, $kfPay->fullname], $kfPay, $usl, $bank, $mfo->mfo,0);
+        $params = $pay->payToMfo(null, [$kfPay->document_id, $kfPay->fullname], $kfPay, $usl, $bank::$bank, $mfo->mfo,0);
         //PCI DSS
         return [
             'status' => 1,

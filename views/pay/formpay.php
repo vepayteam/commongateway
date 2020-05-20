@@ -136,7 +136,7 @@ use yii\bootstrap\Html;
         </div>
     </div>
 
-    <div class="row nopadding margin-top24" id="applepay">
+    <div class="row nopadding margin-top24" id="applepay" style="display: none">
         <div class="col-xs-12">
             <input type="hidden" class="idPay" name="PayForm[IdPay]" value="<?=$params['ID']?>">
             <input type="hidden" class="user_hash" name="user_hash" value="">

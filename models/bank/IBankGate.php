@@ -39,4 +39,9 @@ interface IBankGate
      * @return int
      */
     public function getTypeGate();
+
+    /**
+     * @return int
+     */
+    public function getBank();
 }
