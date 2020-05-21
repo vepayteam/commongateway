@@ -12,10 +12,10 @@ class m200519_092023_bankorder extends Migration
      */
     public function safeUp()
     {
-        $this->addColumn('Banks', 'UseApplePay', $this->tinyInteger(1)->unsigned()->notNull()->defaultValue(0));
-        $this->addColumn('Banks', 'UseGooglePay', $this->tinyInteger(1)->unsigned()->notNull()->defaultValue(0));
-        $this->addColumn('Banks', 'UseSamsungPay', $this->tinyInteger(1)->unsigned()->notNull()->defaultValue(0));
-        $this->addColumn('Banks', 'SortOrder', $this->tinyInteger(1)->unsigned()->notNull()->defaultValue(0));
+        $this->addColumn('banks', 'UseApplePay', $this->tinyInteger(1)->unsigned()->notNull()->defaultValue(0));
+        $this->addColumn('banks', 'UseGooglePay', $this->tinyInteger(1)->unsigned()->notNull()->defaultValue(0));
+        $this->addColumn('banks', 'UseSamsungPay', $this->tinyInteger(1)->unsigned()->notNull()->defaultValue(0));
+        $this->addColumn('banks', 'SortOrder', $this->tinyInteger(1)->unsigned()->notNull()->defaultValue(0));
     }
 
     /**
@@ -23,10 +23,10 @@ class m200519_092023_bankorder extends Migration
      */
     public function safeDown()
     {
-        $this->dropColumn('Banks', 'UseApplePay');
-        $this->dropColumn('Banks', 'UseGooglePay');
-        $this->dropColumn('Banks', 'UseSamsungPay');
-        $this->dropColumn('Banks', 'SortOrder');
+        $this->dropColumn('banks', 'UseApplePay');
+        $this->dropColumn('banks', 'UseGooglePay');
+        $this->dropColumn('banks', 'UseSamsungPay');
+        $this->dropColumn('banks', 'SortOrder');
 
         return true;
     }
