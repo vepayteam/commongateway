@@ -22,7 +22,7 @@ class VyvodInfo extends BaseObject
 
     /**
      * Сумма перечислений по выписке счета погашения
-     * @param $Type
+     * @param int $Type 0 - на выдачу 1 - на р/с
      * @return int
      * @throws \yii\db\Exception
      */

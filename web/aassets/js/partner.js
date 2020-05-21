@@ -371,6 +371,13 @@
                 });
                 return false;
             });
+
+            $('#otchetpsxls').on('click', function () {
+                let datefrom = $('[name="datefrom"]').val();
+                let dateto = $('[name="dateto"]').val()
+                $('#otchetpsxls').attr('href', '/partner/stat/otchetps?datefrom='+datefrom+"&dateto="+dateto);
+                return true;
+            });
         },
 
         statgraph: function () {

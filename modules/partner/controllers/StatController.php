@@ -15,6 +15,7 @@ use app\models\partner\stat\export\csv\OtchToCSV;
 use app\models\partner\stat\export\ExcerptToFile;
 use app\models\partner\stat\export\ExportOtch;
 use app\models\partner\stat\export\MfoMonthActs;
+use app\models\partner\stat\export\OtchetPsXlsx;
 use app\models\partner\stat\ExportExcel;
 use app\models\partner\stat\PayShetStat;
 use app\models\partner\stat\StatFilter;
@@ -791,4 +792,21 @@ class StatController extends Controller
         throw new NotFoundHttpException();
     }
 
+    public function actionOtchetps()
+    {
+        if (UserLk::IsAdmin(Yii::$app->user)) {
+
+            Yii::$app->response->format = Response::FORMAT_RAW;
+            $datefrom = Yii::$app->request->get('datefrom');
+            $dateto = Yii::$app->request->get('dateto');
+            $OtchetPs = new OtchetPsXlsx($datefrom, $dateto);
+            $content = $OtchetPs->RenderContent();
+            Yii::$app->response->setDownloadHeaders(
+                $content['name'],
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            );
+            return $content['data'];
+        }
+        throw new NotFoundHttpException();
+    }
 }
