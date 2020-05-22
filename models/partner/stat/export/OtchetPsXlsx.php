@@ -5,7 +5,6 @@ namespace app\models\partner\stat\export;
 
 use app\models\Helper;
 use app\models\partner\stat\PayShetStat;
-use app\models\partner\stat\VyvodInfo;
 use app\models\payonline\Partner;
 use app\models\TU;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -123,12 +122,30 @@ class OtchetPsXlsx
 
     private function VyvodSum($partner)
     {
-        $VyvodInfo = new VyvodInfo([
-            'Partner' => $partner,
-            'DateFrom' => $this->datefrom,
-            'DateTo' => $this->dateto
-        ]);
-        return round($VyvodInfo->GetSummPepechislen(1)/100.0, 2);
+        $query = (new Query())
+            ->select('SUM(Summ)')
+            ->from('partner_orderout')
+            ->where(['IdPartner' => $partner->ID, 'TypeOrder' => 1])
+            ->andWhere(['<', 'Summ', 0])
+            ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto])
+            ->orderBy(['ID' => SORT_DESC])
+            ->limit(1);
+
+        $sumout = round($query->scalar()/100.0, 2);
+
+        $query = (new Query())
+            ->select('SUM(Summ)')
+            ->from('partner_orderin')
+            ->where(['IdPartner' => $partner->ID, 'TypeOrder' => 1])
+            ->andWhere(['<', 'Summ', 0])
+            ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto])
+            ->orderBy(['ID' => SORT_DESC])
+            ->limit(1);
+
+        $sumin = round($query->scalar()/100.0, 2);
+
+        return $sumout+$sumin;
+
     }
 
     private function OstBeg(Partner $partner)
