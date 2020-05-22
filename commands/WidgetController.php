@@ -173,10 +173,11 @@ class WidgetController extends Controller
      */
     public function actionAlarms()
     {
-        echo "Run Alarms\n";
-        $AlertsSend = new AlarmsSend();
-        $AlertsSend->execute();
-
+        if (Yii::$app->params['TESTMODE'] != 'Y') {
+            echo "Run Alarms\n";
+            $AlertsSend = new AlarmsSend();
+            $AlertsSend->execute();
+        }
     }
 
     public function actionVyvodvirt()
@@ -187,9 +188,11 @@ class WidgetController extends Controller
 
     public function actionSendNews()
     {
-        echo "Run SendNews\n";
-        $SendNews = new SendNews();
-        $SendNews->execute();
+        if (Yii::$app->params['TESTMODE'] != 'Y') {
+            echo "Run SendNews\n";
+            $SendNews = new SendNews();
+            $SendNews->execute();
+        }
     }
 
     public function actionUpdateTelegram()

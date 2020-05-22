@@ -10,6 +10,7 @@ use app\models\TU;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Writer\Exception;
 use Yii;
 use yii\db\Query;
@@ -59,12 +60,14 @@ class OtchetPsXlsx
             ->setHorizontal(Alignment::HORIZONTAL_CENTER);
         foreach ($head as $k => $h) {
             $this->sheet->setCellValue(self::xl($k)."1", $h);
+            $this->sheet->getStyle(self::xl($k)."1")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
         }
 
         $data = $this->GetData();
         foreach ($data as $i => $row) {
             foreach ($row as $k => $v) {
                 $this->sheet->setCellValue(self::xl($k) . ($i + 2), $v);
+                $this->sheet->getStyle(self::xl($k) . ($i + 2))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
             }
         }
 
@@ -137,6 +140,7 @@ class OtchetPsXlsx
             ->select('SUM(Summ)')
             ->from('partner_orderout')
             ->where(['IdPartner' => $partner->ID, 'TypeOrder' => 1])
+            ->andWhere(['like', 'Comment', 'Списание на перевод средств'])
             ->andWhere(['<', 'Summ', 0])
             ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto]);
 
