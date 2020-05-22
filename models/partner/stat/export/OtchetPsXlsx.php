@@ -141,7 +141,19 @@ class OtchetPsXlsx
             ->orderBy(['ID' => SORT_DESC])
             ->limit(1);
 
-        return round($query->scalar()/100.0, 2);
+        $sumout = round($query->scalar()/100.0, 2);
+
+        $query = (new Query())
+            ->select('SummAfter')
+            ->from('partner_orderout')
+            ->where(['IdPartner' => $partner->ID])
+            ->andWhere('DateOp < :DATEFROM', [':DATEFROM' => $this->datefrom])
+            ->orderBy(['ID' => SORT_DESC])
+            ->limit(1);
+
+        $sumin = round($query->scalar()/100.0, 2);
+
+        return $sumout + $sumin;
     }
 
     private function OstEnd(Partner $partner)
@@ -154,7 +166,19 @@ class OtchetPsXlsx
             ->orderBy(['ID' => SORT_DESC])
             ->limit(1);
 
-        return round($query->scalar()/100.0, 2);
+        $sumout = round($query->scalar()/100.0, 2);
+
+        $query = (new Query())
+            ->select('SummAfter')
+            ->from('partner_orderin')
+            ->where(['IdPartner' => $partner->ID])
+            ->andWhere('DateOp <= :DATETO', [':DATETO' => $this->dateto])
+            ->orderBy(['ID' => SORT_DESC])
+            ->limit(1);
+
+        $sumin = round($query->scalar()/100.0, 2);
+
+        return $sumout + $sumin;
     }
 
     private function PogashSum(Partner $partner)
@@ -216,7 +240,20 @@ class OtchetPsXlsx
             ->orderBy(['ID' => SORT_DESC])
             ->limit(1);
 
-        return round($query->scalar()/100.0, 2);
+        $sumout = round($query->scalar()/100.0, 2);
+
+        $query = (new Query())
+            ->select('SUM(Summ)')
+            ->from('partner_orderin')
+            ->where(['IdPartner' => $partner->ID, 'TypeOrder' => 0])
+            ->andWhere(['<', 'Summ', 0])
+            ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto])
+            ->orderBy(['ID' => SORT_DESC])
+            ->limit(1);
+
+        $sumin = round($query->scalar()/100.0, 2);
+
+        return $sumout+$sumin;
     }
 
 }
