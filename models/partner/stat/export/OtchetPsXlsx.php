@@ -145,7 +145,7 @@ class OtchetPsXlsx
 
         $query = (new Query())
             ->select('SummAfter')
-            ->from('partner_orderout')
+            ->from('partner_orderin')
             ->where(['IdPartner' => $partner->ID])
             ->andWhere('DateOp < :DATEFROM', [':DATEFROM' => $this->datefrom])
             ->orderBy(['ID' => SORT_DESC])

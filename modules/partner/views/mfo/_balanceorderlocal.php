@@ -30,7 +30,7 @@ $sumIn = $sumOut = $sumComis = 0;
                 <td class="text-right"><?= $row['Summ'] >= 0 ? number_format($row['Summ']/100.0,2,'.','&nbsp;') : ''?></td>
                 <td class="text-right"><?= $row['Summ'] < 0 ? number_format($row['Summ']/100.0, 2,'.','&nbsp;') : ''?></td>
                 <td><?= $row['Comment'] ?></td>
-                <td class="text-right"><?= number_format($row['SummAfter']/100.0,2,'.','') ?></td>
+                <td class="text-right"><?= number_format($row['SummAfter']/100.0,2,'.','&nbsp;') ?></td>
             </tr>
             <?php
             if ($row['Summ'] >= 0) {
