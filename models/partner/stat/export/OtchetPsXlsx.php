@@ -122,18 +122,27 @@ class OtchetPsXlsx
 
     private function VyvodSum($partner)
     {
+
+        $query = (new Query())
+            ->select('SUM(Summ)')
+            ->from('partner_orderin')
+            ->where(['IdPartner' => $partner->ID, 'TypeOrder' => 1])
+            ->andWhere(['like', 'Comment', 'Списание на перевод средств'])
+            ->andWhere(['<', 'Summ', 0])
+            ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto]);
+
+        $sumin = -round($query->scalar()/100.0, 2);
+
         $query = (new Query())
             ->select('SUM(Summ)')
             ->from('partner_orderout')
             ->where(['IdPartner' => $partner->ID, 'TypeOrder' => 1])
             ->andWhere(['<', 'Summ', 0])
-            ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto])
-            ->orderBy(['ID' => SORT_DESC])
-            ->limit(1);
+            ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto]);
 
         $sumout = -round($query->scalar()/100.0, 2);
 
-        return $sumout;
+        return $sumin+$sumout;
 
     }
 
@@ -232,9 +241,7 @@ class OtchetPsXlsx
                 ['like', 'Comment', 'пополнение транзитного счета'],
                 ['like', 'Comment', 'Перенос денежных средств']
             ])
-            ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto])
-            ->orderBy(['ID' => SORT_DESC])
-            ->limit(1);
+            ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto]);
 
         return round($query->scalar()/100.0, 2);
     }
@@ -244,22 +251,20 @@ class OtchetPsXlsx
         $query = (new Query())
             ->select('SUM(Summ)')
             ->from('partner_orderout')
-            ->where(['IdPartner' => $partner->ID, 'TypeOrder' => 10])
+            ->where(['IdPartner' => $partner->ID, 'TypeOrder' => 0])
+            ->andWhere(['like', 'Comment', 'Перенос денежных средств'])
             ->andWhere(['<', 'Summ', 0])
-            ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto])
-            ->orderBy(['ID' => SORT_DESC])
-            ->limit(1);
+            ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto]);
 
         $sumout = round($query->scalar()/100.0, 2);
 
         $query = (new Query())
             ->select('SUM(Summ)')
             ->from('partner_orderin')
-            ->where(['IdPartner' => $partner->ID, 'TypeOrder' => 10])
+            ->where(['IdPartner' => $partner->ID, 'TypeOrder' => 0])
+            ->andWhere(['like', 'Comment', 'Перенос денежных средств'])
             ->andWhere(['<', 'Summ', 0])
-            ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto])
-            ->orderBy(['ID' => SORT_DESC])
-            ->limit(1);
+            ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto]);
 
         $sumin = round($query->scalar()/100.0, 2);
 
@@ -267,9 +272,7 @@ class OtchetPsXlsx
             ->select('SUM(Summ)')
             ->from('vyvod_system')
             ->where(['IdPartner' => $partner->ID, 'SatateOp' => 1])
-            ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto])
-            ->orderBy(['ID' => SORT_DESC])
-            ->limit(1);
+            ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto]);
 
         $sumvozn = round($query->scalar()/100.0, 2);
 
