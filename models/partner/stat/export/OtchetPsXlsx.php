@@ -127,26 +127,14 @@ class OtchetPsXlsx
     {
 
         $query = (new Query())
-            ->select('SUM(Summ)')
-            ->from('partner_orderin')
-            ->where(['IdPartner' => $partner->ID, 'TypeOrder' => 1])
-            ->andWhere(['like', 'Comment', 'Списание на перевод средств'])
-            ->andWhere(['<', 'Summ', 0])
+            ->select('SUM(SumOp)')
+            ->from('vyvod_reestr')
+            ->where(['IdPartner' => $partner->ID, 'StateOp' => 1, 'TypePerechisl' => 1])
             ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto]);
 
-        $sumin = -round($query->scalar()/100.0, 2);
+        $sumout = round($query->scalar()/100.0, 2);
 
-        $query = (new Query())
-            ->select('SUM(Summ)')
-            ->from('partner_orderout')
-            ->where(['IdPartner' => $partner->ID, 'TypeOrder' => 1])
-            ->andWhere(['like', 'Comment', 'Списание на перевод средств'])
-            ->andWhere(['<', 'Summ', 0])
-            ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto]);
-
-        $sumout = -round($query->scalar()/100.0, 2);
-
-        return $sumin+$sumout;
+        return $sumout;
 
     }
 
