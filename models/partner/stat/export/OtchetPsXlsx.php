@@ -104,7 +104,7 @@ class OtchetPsXlsx
     private function GetData()
     {
         $ret = [];
-        $partners = Partner::findAll(['IsDeleted' => 0]);
+        $partners = Partner::find()->where(['IsDeleted' => 0])->andWhere(['not in', 'ID', [1,5,7,9]])->all();
         foreach ($partners as $partner) {
             $row = [
                 $partner->Name,
