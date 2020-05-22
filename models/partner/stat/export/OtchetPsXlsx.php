@@ -131,7 +131,7 @@ class OtchetPsXlsx
             ->orderBy(['ID' => SORT_DESC])
             ->limit(1);
 
-        $sumout = round($query->scalar()/100.0, 2);
+        $sumout = -round($query->scalar()/100.0, 2);
 
         return $sumout;
 
@@ -228,6 +228,7 @@ class OtchetPsXlsx
             ->from('partner_orderout')
             ->where(['IdPartner' => $partner->ID, 'TypeOrder' => 0])
             ->andWhere(['>', 'Summ', 0])
+            ->andWhere(['like', 'Comment', 'пополнение транзитного счета%'])
             ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto])
             ->orderBy(['ID' => SORT_DESC])
             ->limit(1);
