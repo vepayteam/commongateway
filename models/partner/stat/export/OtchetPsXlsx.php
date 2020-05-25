@@ -19,11 +19,13 @@ class OtchetPsXlsx
 {
     public $datefrom;
     public $dateto;
+    public $partner = 0;
 
-    public function __construct($datefrom, $dateto)
+    public function __construct($datefrom, $dateto, $partner)
     {
         $this->datefrom = strtotime($datefrom);
         $this->dateto = strtotime($dateto);
+        $this->partner = (int)$partner;
     }
 
     public function RenderContent()
@@ -106,7 +108,18 @@ class OtchetPsXlsx
     private function GetData()
     {
         $ret = [];
-        $partners = Partner::find()->where(['IsDeleted' => 0])->andWhere(['not in', 'ID', [1,5,7,9]])->all();
+
+        if (!$this->datefrom || !$this->dateto) {
+            return $ret;
+        }
+
+        $partners = Partner::find()->where(['IsDeleted' => 0]);
+        if ($this->partner > 0) {
+            $partners = $partners->andWhere(['ID' => $this->partner]);
+        } else {
+            $partners = $partners->andWhere(['not in', 'ID', [1,5,7,9]]);
+        }
+        $partners = $partners->all();
         foreach ($partners as $partner) {
             $row = [
                 $partner->Name,

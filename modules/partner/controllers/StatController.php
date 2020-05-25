@@ -799,7 +799,8 @@ class StatController extends Controller
             Yii::$app->response->format = Response::FORMAT_RAW;
             $datefrom = Yii::$app->request->get('datefrom');
             $dateto = Yii::$app->request->get('dateto');
-            $OtchetPs = new OtchetPsXlsx($datefrom, $dateto);
+            $partner = Yii::$app->request->get('IdPart',0);
+            $OtchetPs = new OtchetPsXlsx($datefrom, $dateto, $partner);
             $content = $OtchetPs->RenderContent();
             Yii::$app->response->setDownloadHeaders(
                 $content['name'],
