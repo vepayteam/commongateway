@@ -57,11 +57,9 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                             <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
                             <button class="btn btn-sm btn-primary" type="submit">Сформировать</button>
                         </div>
-                        <?php if ($IsAdmin) : ?>
                         <div class="col-sm-offset-2 col-sm-4">
                             <a href="/partner/stat/otchetps" target="_blank" class="btn btn-sm btn-default" id="otchetpsxls">Отчет по ПС (xls)</a>
                         </div>
-                        <?php endif; ?>
                     </div>
                 </form>
 

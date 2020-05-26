@@ -66,7 +66,7 @@ class CheckpayCron
             ', [
                 //":TIMEOUT" => time() - $this->timeOutMin * 60,
                 ":NOTIMEOUT" => time() - 60,
-                ":TIMEOUTOFF" => time() - 3600 * 24 * 7,
+                ":TIMEOUTOFF" => time() - 3600 * 24 * 30,
             ])
                 ->query();
 

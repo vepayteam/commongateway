@@ -375,7 +375,10 @@
             $('#otchetpsxls').on('click', function () {
                 let datefrom = $('[name="datefrom"]').val();
                 let dateto = $('[name="dateto"]').val();
-                let IdPart = $('[name="IdPart"]').val();
+                let IdPart = 0;
+                if ($('[name="IdPart"]') !== undefined) {
+                    IdPart = $('[name="IdPart"]').val();
+                }
                 $('#otchetpsxls').attr('href', '/partner/stat/otchetps?datefrom='+datefrom+"&dateto="+dateto+"&IdPart="+IdPart);
                 return true;
             });

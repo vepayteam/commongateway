@@ -794,20 +794,20 @@ class StatController extends Controller
 
     public function actionOtchetps()
     {
+        Yii::$app->response->format = Response::FORMAT_RAW;
+        $datefrom = Yii::$app->request->get('datefrom');
+        $dateto = Yii::$app->request->get('dateto');
         if (UserLk::IsAdmin(Yii::$app->user)) {
-
-            Yii::$app->response->format = Response::FORMAT_RAW;
-            $datefrom = Yii::$app->request->get('datefrom');
-            $dateto = Yii::$app->request->get('dateto');
-            $partner = Yii::$app->request->get('IdPart',0);
-            $OtchetPs = new OtchetPsXlsx($datefrom, $dateto, $partner);
-            $content = $OtchetPs->RenderContent();
-            Yii::$app->response->setDownloadHeaders(
-                $content['name'],
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            );
-            return $content['data'];
+            $partner = Yii::$app->request->get('IdPart', 0);
+        } else {
+            $partner = UserLk::getPartnerId(Yii::$app->user);
         }
-        throw new NotFoundHttpException();
+        $OtchetPs = new OtchetPsXlsx($datefrom, $dateto, $partner);
+        $content = $OtchetPs->RenderContent();
+        Yii::$app->response->setDownloadHeaders(
+            $content['name'],
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        );
+        return $content['data'];
     }
 }
