@@ -37,7 +37,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                     <option value="-1" data-ismfo="-1">Все</option>
                                     <?php foreach ($partnerlist as $partn) : ?>
                                         <option value="<?=$partn->ID?>" data-ismfo="<?= $partn->ID == 1 ? 2 : $partn->IsMfo?>"><?=$partn->Name?></option>
-                                    <? endforeach; ?>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                         </div>
@@ -48,7 +48,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                             <select class="form-control multiselect-field" multiple name="TypeUslug[]">
                                 <?php foreach ($uslugilist as $usl) : ?>
                                     <option value="<?=$usl->ID?>" data-partner="<?= $usl->IsMfo ?>"><?=$usl->Name?></option>
-                                <? endforeach; ?>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                     </div>
@@ -56,6 +56,9 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         <div class="col-sm-offset-2 col-sm-4">
                             <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
                             <button class="btn btn-sm btn-primary" type="submit">Сформировать</button>
+                        </div>
+                        <div class="col-sm-offset-2 col-sm-4">
+                            <a href="/partner/stat/otchetps" target="_blank" class="btn btn-sm btn-default" id="otchetpsxls">Отчет по ПС (xls)</a>
                         </div>
                     </div>
                 </form>

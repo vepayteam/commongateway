@@ -7,6 +7,7 @@ use app\models\payonline\Cards;
 use app\models\TU;
 use Yii;
 use yii\base\Model;
+use yii\db\Query;
 
 class KfPay extends Model
 {
@@ -64,12 +65,13 @@ class KfPay extends Model
      */
     public function GetUslug($org, $gate)
     {
-        return Yii::$app->db->createCommand("
-            SELECT `ID` 
-            FROM `uslugatovar`
-            WHERE `IDPartner` = :IDMFO AND `IsCustom` = :TYPEUSL AND `IsDeleted` = 0
-        ", [':IDMFO' => $org, ':TYPEUSL' => $gate == TCBank::$ECOMGATE ? TU::$POGASHECOM : TU::$POGASHATF]
-        )->queryScalar();
+        $query = (new Query())->select('ID')->from('uslugatovar')->where(['IDPartner' => $org, 'IsDeleted' => 0]);
+        if ($gate == TCBank::$AFTGATE) {
+            $query->andWhere(['IsCustom' => TU::$POGASHATF]);
+        } else {
+            $query->andWhere(['IsCustom' => [TU::$POGASHECOM, TU::$ECOM]]);
+        }
+        return $query->limit(1)->scalar();
     }
 
     /**
@@ -143,15 +145,19 @@ class KfPay extends Model
      */
     public function IsAftGate($IdPartner)
     {
-        $IsAftOnly = Yii::$app->db->createCommand("
-            SELECT `IsAftOnly` 
+        $res = Yii::$app->db->createCommand("
+            SELECT `IsAftOnly`, `LoginTkbAft`
             FROM `partner`
             WHERE `ID` = :IDMFO
         ", [':IDMFO' => $IdPartner]
-        )->queryScalar();
+        )->queryOne();
 
-        if ($IsAftOnly) {
+        if ($res['IsAftOnly']) {
             return 1;
+        }
+
+        if (empty($res['LoginTkbAft'])) {
+            return 0;
         }
         return $this->amount > self::AFTMINSUMM;
     }
