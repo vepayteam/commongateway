@@ -603,64 +603,26 @@
             });
         },
 
-        statrekurrent: function () {
-            $('[name="datefrom"],[name="dateto"]').datetimepicker({
-                format: 'MM.YYYY'
-            });
-            $('#recurrentform').on('submit', function () {
-                lk.statrekurrentload();
-                return false;
-            });
-            lk.statrekurrentload();
-        },
-
-        statrekurrentload: function () {
-            if (linklink) {
-                linklink.abort();
-            }
-            linklink = $.ajax({
-                type: "POST",
-                url: '/partner/stat/recurrentpaysdata',
-                data: $('#recurrentform').serialize(),
-                beforeSend: function () {
-                    $("#recurrent-graph").empty();
-                    $('#recurrentform').closest('.ibox-content').toggleClass('sk-loading');
-                },
-                success: function (data) {
-                    $('#recurrentform').closest('.ibox-content').toggleClass('sk-loading');
-                    if (data.status == 1) {
-                        Morris.Line({
-                            element: 'recurrent-graph',
-                            data: data.data,
-                            xkey: 'x',
-                            ykeys: ['a'],
-                            labels: [data.label],
-                            lineColors: ['#f46f2a'],
-                            hideHover: 'auto',
-                            parseTime: false,
-                            resize: true
-                        });
-                    } else {
-                        $('#recurrent-graph').html(data.message);
-                    }
-                },
-                error: function () {
-                    $('#recurrentform').closest('.ibox-content').toggleClass('sk-loading');
-                    $('#recurrent-graph').html("Ошибка запроса");
-                }
-            });
-        },
-
         recurrentcard: function () {
             $('[name="datefrom"],[name="dateto"]').datetimepicker({
                 format: 'DD.MM.YYYY'
             });
             $('#recurrentcardform').on('submit', function (e) {
                 e.preventDefault();
-                lk.recurrentcardformload();
+                $('#recurrentpaytabs li.active').find('a').trigger('click');
                 return false;
             });
             lk.recurrentcardformload();
+
+            $('#recurrentpaytabs a').on('click', function () {
+                let id = $(this).attr('href');
+                $('#recurrentpaytabs').find('[name="datetype"]').val(id[5]);
+                if (id == '#auto') {
+                    lk.recurrentcardformload();
+                } else {
+                    lk.statrekurrentload();
+                }
+            });
         },
 
         recurrentcardformload: function () {
@@ -683,6 +645,43 @@
                     }
                 },
                 error: function (data) {
+                    $('#recurrentcardform').closest('.ibox-content').toggleClass('sk-loading');
+                    $('#recurrentcardresult').html("Ошибка запроса");
+                }
+            });
+        },
+
+        statrekurrentload: function () {
+            if (linklink) {
+                linklink.abort();
+            }
+            linklink = $.ajax({
+                type: "POST",
+                url: '/partner/stat/recurrentpaysdata',
+                data: $('#recurrentcardform').serialize(),
+                beforeSend: function () {
+                    $("#recurrentcardresult").empty();
+                    $('#recurrentcardform').closest('.ibox-content').toggleClass('sk-loading');
+                },
+                success: function (data) {
+                    $('#recurrentcardform').closest('.ibox-content').toggleClass('sk-loading');
+                    if (data.status == 1) {
+                        Morris.Line({
+                            element: 'recurrentcardresult',
+                            data: data.data,
+                            xkey: 'x',
+                            ykeys: ['a'],
+                            labels: [data.label],
+                            lineColors: ['#f46f2a'],
+                            hideHover: 'auto',
+                            parseTime: false,
+                            resize: true
+                        });
+                    } else {
+                        $('#recurrentcardresult').html(data.message);
+                    }
+                },
+                error: function () {
                     $('#recurrentcardform').closest('.ibox-content').toggleClass('sk-loading');
                     $('#recurrentcardresult').html("Ошибка запроса");
                 }

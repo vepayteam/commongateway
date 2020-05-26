@@ -17,7 +17,7 @@ use yii\web\View;
         <div class="col-sm-12">
             <div class="ibox float-e-margins">
                 <div class="ibox-title">
-                    <?=$this->render('_recurent-nav');?>
+                    <h5>Автоплатежи</h5>
                 </div>
                 <div class="ibox-content">
                     <form class="form-horizontal" id="recurrentcardform" method="post">
@@ -37,9 +37,9 @@ use yii\web\View;
                                 <div class="col-sm-4">
                                     <select class="form-control" name="IdPart">
                                         <option value="-1">Все</option>
-                                        <? foreach ($partnerlist as $partn) : ?>
+                                        <?php foreach ($partnerlist as $partn) : ?>
                                             <option value="<?=$partn->ID?>"><?=$partn->Name?></option>
-                                        <? endforeach; ?>
+                                        <?php endforeach; ?>
                                     </select>
                                 </div>
                             </div>
@@ -47,6 +47,7 @@ use yii\web\View;
 
                         <div class="form-group">
                             <div class="col-sm-10 col-sm-offset-2 col-md-6 col-md-offset-2">
+                                <input type="hidden" name="datetype" value="0">
                                 <input type="submit" value="Сформировать" class="btn btn-primary">
                             </div>
                         </div>
@@ -60,10 +61,15 @@ use yii\web\View;
                         <div class="sk-rect4"></div>
                         <div class="sk-rect5"></div>
                     </div>
-                    <div id="recurrentcardresult"></div>
                 </div>
             </div>
         </div>
+    </div>
+
+    <?=$this->render('_recurent-nav');?>
+
+    <div class="ibox-content">
+        <div id="recurrentcardresult"></div>
     </div>
 
 <?php $this->registerJs('

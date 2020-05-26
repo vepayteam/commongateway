@@ -452,26 +452,6 @@ class StatController extends Controller
     }
 
     /**
-     * @return array|Response
-     * @throws \Throwable
-     */
-    public function actionRecurrentpaysdata()
-    {
-        if (Yii::$app->request->isAjax) {
-            Yii::$app->response->format = Response::FORMAT_JSON;
-            $StatGraph = new StatGraph();
-            $StatGraph->scenario = StatGraph::SCENARIO_MONTH;
-            $StatGraph->load(Yii::$app->request->post(), '');
-            if ($StatGraph->validate()) {
-                return $StatGraph->GetRecurrentData();
-            }
-            return ['status' => 0, 'message' => $StatGraph->GetError()];
-        } else {
-            return $this->redirect('/partner');
-        }
-    }
-
-    /**
      * @return string
      */
     public function actionRecurrentcard()
@@ -509,6 +489,25 @@ class StatController extends Controller
             return ['status' => 0, 'message' => $AutopayStat->GetError()];
         }
         return $this->redirect('/partner');
+    }
+
+    /**
+     * @return array|Response
+     * @throws \Throwable
+     */
+    public function actionRecurrentpaysdata()
+    {
+        if (Yii::$app->request->isAjax) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+            $StatGraph = new AutopayStat();
+            $StatGraph->load(Yii::$app->request->post(), '');
+            if ($StatGraph->validate()) {
+                return $StatGraph->GetRecurrentData();
+            }
+            return ['status' => 0, 'message' => $StatGraph->GetError()];
+        } else {
+            return $this->redirect('/partner');
+        }
     }
 
     /**
