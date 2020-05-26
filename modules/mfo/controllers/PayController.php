@@ -82,9 +82,12 @@ class PayController extends Controller
         Yii::warning('/pay/lk mfo='. $mfo->mfo . " sum=".$kfPay->amount . " extid=".$kfPay->extid, 'mfo');
 
         $typeUsl = $kfPay->IsAftGate($mfo->mfo) ? TU::$POGASHATF : TU::$POGASHECOM;
-        $bank = BankMerchant::GetWorkBank($mfo->mfo, $typeUsl);
-
         $usl = $kfPay->GetUslug($mfo->mfo, $typeUsl);
+        if ($typeUsl == TU::$POGASHECOM && !$usl) {
+            $typeUsl = TU::$ECOM;
+            $usl = $kfPay->GetUslug($mfo->mfo, $typeUsl);
+        }
+        $bank = BankMerchant::GetWorkBank($mfo->mfo, $typeUsl);
         if (!$usl || !$bank) {
             return ['status' => 0, 'message' => 'Услуга не найдена'];
         }

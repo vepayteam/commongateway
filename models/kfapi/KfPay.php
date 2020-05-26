@@ -138,10 +138,11 @@ class KfPay extends Model
     /**
      * Использовать шлюз AFT
      * @param $IdPartner
+     * @param int $bank
      * @return bool|int
      * @throws \yii\db\Exception
      */
-    public function IsAftGate($IdPartner)
+    public function IsAftGate($IdPartner, $bank = 2)
     {
         $res = Yii::$app->db->createCommand("
             SELECT `IsAftOnly`, `LoginTkbAft`
@@ -154,7 +155,7 @@ class KfPay extends Model
             return 1;
         }
 
-        if (empty($res['LoginTkbAft'])) {
+        if ($bank == 3 || ($bank == 2 && empty($res['LoginTkbAft']))) {
             return 0;
         }
         return $this->amount > self::AFTMINSUMM;
