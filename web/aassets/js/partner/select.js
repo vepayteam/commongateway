@@ -30,7 +30,8 @@
             let val = $(merchantSelector).find("option:selected").attr('data-ismfo');
             let optionsMultiselect = $(nodeMultiSelect).find('input');
             $(optionsMultiselect).each(function () {
-                if ($(this).attr(attrOptionMultiSelect) !== val && val!=="-1"){
+                let selAttr = $(this).attr(attrOptionMultiSelect);
+                if (selAttr != '-1' && selAttr !== val && val !== "-1") {
                     $(this).parent().parent('li').remove();
                 }
             });

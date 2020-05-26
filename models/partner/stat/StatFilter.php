@@ -93,6 +93,8 @@ class StatFilter
                 $tp->ID = $k;
                 if (in_array($k, TU::NoPart())) {
                     $tp->IsMfo = 2;
+                } elseif ($k == 2) {
+                    $tp->IsMfo = '-1';
                 } else {
                     $tp->IsMfo = $k > 9 ? '1' : '0';
                 }

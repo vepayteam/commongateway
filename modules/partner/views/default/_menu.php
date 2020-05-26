@@ -32,7 +32,7 @@ $act = PartUserAccess::getSelRazdel(\Yii::$app->controller->action);
                                 class="nav-label">Баланс</span></a></li>
             <?php endif; ?>
 
-            <?php if ($IsAdmin || (!$IsMfo && (count($razdels) == 0 || isset($razdels[1]) || isset($razdels[18])))) : ?>
+            <?php if ($IsAdmin || $IsMfo || ((count($razdels) == 0 || isset($razdels[1]) || isset($razdels[18])))) : ?>
                 <li class="<?= !empty($act[1]) || !empty($act[21])? "active": ''?>">
                     <a href="" aria-expanded="<?= !empty($act[1]) || !empty($act[21]) ? 'true' : 'false' ?>">
                         <i class="fa fa-cubes"></i>

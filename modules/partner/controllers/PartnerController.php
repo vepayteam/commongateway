@@ -128,7 +128,7 @@ class PartnerController extends Controller
 
             $usl = new Uslugi();
 
-            $MfoSettings = new MfoSettings(['IdPartner' => $partner]);
+            $MfoSettings = new MfoSettings(['IdPartner' => $partner->ID]);
             $MfoSettings->ReadUrl();
 
             $PartnerAdmin = PartnerUsers::findOne(['IsAdmin' => 0, 'RoleUser' => 1, 'IdPartner' => $partner->ID, 'IsDeleted' => 0]);

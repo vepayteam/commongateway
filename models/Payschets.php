@@ -289,7 +289,7 @@ class Payschets
                 //'CardType' => isset($params['CardBrand']) ? $params['CardBrand'] : '',
                 //'BankName' => isset($params['CardIssuingBank']) ? $params['CardIssuingBank'] : '',
                 'Status' => 1,
-                'ErrorInfo' => isset($params['message']) ? $params['message'] : '',
+                'ErrorInfo' => isset($params['message']) ? mb_substr($params['message'],0,250) : '',
                 'CountSendOK' => 10
             ], '`ID` = :ID', [':ID' => $params['idpay']])
             ->execute();
@@ -525,7 +525,7 @@ class Payschets
         Yii::$app->db->createCommand()
             ->update('pay_schet', [
                 'Status' => 2,
-                'ErrorInfo' => isset($params['message']) ? $params['message'] : '',
+                'ErrorInfo' => isset($params['message']) ? mb_substr($params['message'], 0, 250) : '',
                 'CountSendOK' => 0
             ], '`ID` = :ID', [':ID' => $params['idpay']])
             ->execute();
