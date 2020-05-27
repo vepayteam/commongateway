@@ -407,50 +407,6 @@ class StatController extends Controller
         }
     }
 
-    public function actionRecurrentpays()
-    {
-        $fltr = new StatFilter();
-        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-        return $this->render('recurrentpays', [
-            'name' => 'Изменение суммы платежей',
-            'uslugilist' => $fltr->getTypeUslugLiust(TU::AutoPay()),
-            'type' => 0
-        ]);
-    }
-
-    public function actionRecurrentcomis()
-    {
-        $fltr = new StatFilter();
-        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-        return $this->render('recurrentpays', [
-            'name' => 'Изменение выручки с пользователя',
-            'uslugilist' => $fltr->getTypeUslugLiust(TU::AutoPay()),
-            'type' => 1
-        ]);
-    }
-
-    public function actionRecurrentremove()
-    {
-        $fltr = new StatFilter();
-        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-        return $this->render('recurrentpays', [
-            'name' => 'Отток пользователей',
-            'uslugilist' => $fltr->getTypeUslugLiust(TU::AutoPay()),
-            'type' => 2
-        ]);
-    }
-
-    public function actionRecurrentmiddle()
-    {
-        $fltr = new StatFilter();
-        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-        return $this->render('recurrentpays', [
-            'name' => 'Изменение средней суммы платежей',
-            'uslugilist' => $fltr->getTypeUslugLiust(TU::AutoPay()),
-            'type' => 3
-        ]);
-    }
-
     /**
      * @return string
      */

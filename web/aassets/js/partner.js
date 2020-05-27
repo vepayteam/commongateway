@@ -616,7 +616,7 @@
 
             $('#recurrentpaytabs a').on('click', function () {
                 let id = $(this).attr('href');
-                $('#recurrentpaytabs').find('[name="datetype"]').val(id[5]);
+                $('input[name="graphtype"]').val(id[5]);
                 if (id == '#auto') {
                     lk.recurrentcardformload();
                 } else {
@@ -635,11 +635,13 @@
                 data: $('#recurrentcardform').serialize(),
                 beforeSend: function () {
                     $('#recurrentcardform').closest('.ibox-content').toggleClass('sk-loading');
+                    $('#recurrentcardresult').parent().attr('style', 'background-color: #fafafa;')
                 },
                 success: function (result) {
                     $('#recurrentcardform').closest('.ibox-content').toggleClass('sk-loading');
                     if (result.status == 1) {
                         $('#recurrentcardresult').html(result.data);
+                        $('#recurrentcardresult').parent().attr('style', 'background-color: #fafafa;')
                     } else {
                         $('#recurrentcardresult').html(result.message);
                     }
@@ -661,6 +663,7 @@
                 data: $('#recurrentcardform').serialize(),
                 beforeSend: function () {
                     $("#recurrentcardresult").empty();
+                    $('#recurrentcardresult').parent().attr('style', 'background-color: #fff;')
                     $('#recurrentcardform').closest('.ibox-content').toggleClass('sk-loading');
                 },
                 success: function (data) {
