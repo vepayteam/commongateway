@@ -39,6 +39,20 @@ interface IBank
     public function PayApple(array $params);
 
     /**
+     * Оплата без формы GooglePay
+     * @param array $params
+     * @return array
+     */
+    public function PayGoogle(array $params);
+
+    /**
+     * Оплата без формы SamsungPay
+     * @param array $params
+     * @return array
+     */
+    public function PaySamsung(array $params);
+
+    /**
      * Финиш оплаты без формы (PCI DSS)
      * @param array $params
      * @return array

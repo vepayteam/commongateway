@@ -208,6 +208,86 @@ class MTSBank implements IBank
     }
 
     /**
+     * Оплата GooglePay
+     * @param array $params
+     * @return array
+     */
+    public function PayGoogle(array $params)
+    {
+        $ret = $this->RegisterOrder($params);
+        if ($ret['status'] == 1) {
+
+            $action = '/rest/payment.do';
+            $queryData = [
+                'userName' => $this->shopId,
+                'password' => $this->certFile,
+                'orderNumber' => $params['ExtBillNumber'],
+                'description' => 'Оплата по счету ' . $params['ID'],
+                'paymentToken' => $params['PaymentToken']
+            ];
+
+            $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+
+            if (isset($ans['xml']) && !empty($ans['xml'])) {
+                if (!isset($ans['xml']['errorCode']) || $ans['xml']['errorCode'] == 0) {
+                    return [
+                        'status' => 1,
+                        'transac' => $params['ExtBillNumber'],
+                        'termUrl' => $ans['xml']['data']['termUrl'] ?? null,
+                        'acsUrl' => $ans['xml']['data']['acsUrl'] ?? null,
+                        'paReq' => $ans['xml']['data']['paReq'] ?? null,
+                        'md' => $params['ExtBillNumber'] ?? null
+                    ];
+                } else {
+                    $error = $ans['xml']['errorCode'];
+                    $message = $ans['xml']['errorMessage'];
+                    return ['status' => 2, 'message' => $error . ":" . $message, 'fatal' => 1];
+                }
+            }
+        }
+
+        return ['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0];
+    }
+
+    /**
+     * Оплата SamsungPay
+     * @param array $params
+     * @return array
+     */
+    public function PaySamsung(array $params)
+    {
+        $ret = $this->RegisterOrder($params);
+        if ($ret['status'] == 1) {
+
+            $action = '/rest/payment.do';
+            $queryData = [
+                'userName' => $this->shopId,
+                'password' => $this->certFile,
+                'orderNumber' => $params['ExtBillNumber'],
+                'description' => 'Оплата по счету ' . $params['ID'],
+                'paymentToken' => $params['PaymentToken']
+            ];
+
+            $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+
+            if (isset($ans['xml']) && !empty($ans['xml'])) {
+                if (!isset($ans['xml']['errorCode']) || $ans['xml']['errorCode'] == 0) {
+                    return [
+                        'status' => 1,
+                        'transac' => $params['ExtBillNumber'],
+                    ];
+                } else {
+                    $error = $ans['xml']['errorCode'];
+                    $message = $ans['xml']['errorMessage'];
+                    return ['status' => 2, 'message' => $error . ":" . $message, 'fatal' => 1];
+                }
+            }
+        }
+
+        return ['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0];
+    }
+
+    /**
      * Финиш оплаты без формы (PCI DSS)
      * @param array $params
      * @return array
@@ -386,12 +466,12 @@ class MTSBank implements IBank
                             'statedescription' => $ans['xml']['actionCodeDescription']
                         ],
                         'orderadditionalinfo' => [
-                            'rrn' => $ans['xml']['authRefNum'],
-                            'cardnumber' => isset($ans['xml']['cardAuthInfo']['maskedPan']) ? $ans['xml']['cardAuthInfo']['maskedPan'] : null,
+                            'rrn' => $ans['xml']['authRefNum'] ?? null,
+                            'cardnumber' => $ans['xml']['cardAuthInfo']['maskedPan'] ?? null,
                             'expiry' => isset($ans['xml']['cardAuthInfo']['expiration']) ? substr($ans['xml']['cardAuthInfo']['expiration'], 4,2).substr($ans['xml']['cardAuthInfo']['expiration'], 2,2) : null,
-                            'idcard' => isset($ans['xml']['cardAuthInfo']['approvalCode']) ? $ans['xml']['cardAuthInfo']['approvalCode'] : null,
+                            'idcard' => $ans['xml']['cardAuthInfo']['approvalCode'] ?? null,
                             'type' => Cards::GetTypeCard($ans['xml']['cardAuthInfo']['maskedPan']),
-                            'holder' => isset($ans['xml']['cardAuthInfo']['cardholderName']) ? $ans['xml']['cardAuthInfo']['cardholderName'] : null,
+                            'holder' => $ans['xml']['cardAuthInfo']['cardholderName'] ?? null,
                         ]
                     ]
                 ];

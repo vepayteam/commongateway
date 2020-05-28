@@ -240,6 +240,83 @@
                     }
                 });
             }
+        },
+
+        googlepay: function (merchantIdentifier, amount, label) {
+            if (google) {
+                let paymentsClient = new google.payments.api.PaymentsClient({environment: 'TEST'});
+
+                let getGooglePaymentDataConfiguration = {
+                    merchantId: merchantIdentifier,
+                    environment: 'TEST',
+                    transactionInfo: {
+                        totalPriceStatus: 'FINAL',
+                        totalPrice: amount,
+                        currencyCode: 'RUB' //ISO 4217
+                    },
+                    paymentMethodTokenizationParameters: {
+                        tokenizationType: 'PAYMENT_GATEWAY',
+                        parameters: {
+                            gateway: 'some-bank', //
+                            gatewayMerchantId: 'exampleGatewayMerchantId' //
+                        }
+                    },
+                    allowedPaymentMethods: ['CARD', 'TOKENIZED_CARD'],
+                    cardRequirements: {
+                        allowedCardNetworks: ['MASTERCARD', 'VISA']
+                    },
+                    phoneNumberRequired:
+                        true,
+                    emailRequired: true
+                }
+
+                paymentsClient.isReadyToPay(({allowedPaymentMethods: ['CARD', 'TOKENIZED_CARD']}))
+                    .then(function (response) {
+                        if (response.result) {
+                            //кнопка
+                            $('#googlepay').show();
+                        }
+                    })
+                    .catch(function (err) {
+                        // show error in developer console for debugging
+                        console.error(err);
+                    });
+
+                $('#googlepay').off().on('click', function () {
+                    paymentsClient.loadPaymentData(getGooglePaymentDataConfiguration)
+                        .then(function (paymentData) {
+                            $.ajax({
+                                type: 'POST',
+                                url: "/pay/googlepaycreate",
+                                data: {'paymentToken': paymentData, 'IdPay': id},
+                                success: function (data, textStatus, jqXHR) {
+                                    //$("#loader").hide();
+                                    if (data.status == 1) {
+                                        if (data.acsUrl == undefined) {
+                                            window.location.href = '/pay/orderok/' + id;
+                                        } else {
+                                            load3ds(data.acsUrl, data.paReq, data.md, data.termUrl);
+                                        }
+                                    } else {
+                                        $('#error_message').html(data.message);
+                                    }
+                                },
+                                error: function (jqXHR, textStatus, errorThrown) {
+                                    //$("#loader").hide();
+                                    $('#error_message').html("Ошибка запроса");
+                                }
+                            });
+
+                        }).catch(function (err) {
+                        // show error in developer console for debugging
+                        console.error(err);
+                    });
+                });
+            }
+        },
+
+        samsungpay: function (merchantIdentifier, amount, label) {
+
         }
 
     };

@@ -8,7 +8,8 @@ use yii\db\Query;
 class BankCheck
 {
     /**
-     * @param int $bank
+     * Доступный Банк
+     * @param int $offset порядок
      * @return int
      */
     public function CheckWorkedIn($offset = 0)
@@ -35,6 +36,38 @@ class BankCheck
             ->select(['ID'])
             ->from('banks')
             ->where(['UsePayIn' => 1, 'UseApplePay' => 1])
+            ->orderBy('SortOrder')
+            ->limit(1)
+            ->one();
+
+        if ($result) {
+            return $result['ID'];
+        }
+        return false;
+    }
+
+    public function CheckWorkedGooglePay()
+    {
+        $result = (new Query())
+            ->select(['ID'])
+            ->from('banks')
+            ->where(['UsePayIn' => 1, 'UseGooglePay' => 1])
+            ->orderBy('SortOrder')
+            ->limit(1)
+            ->one();
+
+        if ($result) {
+            return $result['ID'];
+        }
+        return false;
+    }
+
+    public function CheckWorkedSamsungPay()
+    {
+        $result = (new Query())
+            ->select(['ID'])
+            ->from('banks')
+            ->where(['UsePayIn' => 1, 'UseSamsungPay' => 1])
             ->orderBy('SortOrder')
             ->limit(1)
             ->one();

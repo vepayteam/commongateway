@@ -1420,7 +1420,32 @@ class TCBank implements IBank
 
     }
 
+    /**
+     * Оплата ApplePay
+     * @param array $params
+     * @return array
+     */
     public function PayApple(array $params)
+    {
+        return ['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0];
+    }
+
+    /**
+     * Оплата GooglePay
+     * @param array $params
+     * @return array
+     */
+    public function PayGoogle(array $params)
+    {
+        return ['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0];
+    }
+
+    /**
+     * Оплата SamsungPay
+     * @param array $params
+     * @return array
+     */
+    public function PaySamsung(array $params)
     {
         return ['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0];
     }

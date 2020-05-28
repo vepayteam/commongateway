@@ -110,6 +110,34 @@ class BankMerchant
     }
 
     /**
+     * Выбор банка для платежа GooglePay
+     * @return int
+     */
+    public static function GetGooglePayBank()
+    {
+        $BankCheck = new BankCheck();
+        $bank = $BankCheck->CheckWorkedGooglePay();
+        if ($bank) {
+            $BankCheck->UpdatePay($bank);
+        }
+        return $bank;
+    }
+
+    /**
+     * Выбор банка для платежа SamsungPay
+     * @return int
+     */
+    public static function GetSamsungPayBank()
+    {
+        $BankCheck = new BankCheck();
+        $bank = $BankCheck->CheckWorkedSamsungPay();
+        if ($bank) {
+            $BankCheck->UpdatePay($bank);
+        }
+        return $bank;
+    }
+
+    /**
      * Выбор банка для выплаты
      * @return int
      */

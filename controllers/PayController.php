@@ -6,6 +6,10 @@ use app\models\antifraud\AntiFraud;
 use app\models\antifraud\tables\AFFingerPrit;
 use app\models\bank\BankMerchant;
 use app\models\bank\ApplePay;
+use app\models\bank\GooglePay;
+use app\models\bank\MTSBank;
+use app\models\bank\SamsungPay;
+use app\models\bank\TCBank;
 use app\models\crypt\Tokenizer;
 use app\models\payonline\Cards;
 use app\models\payonline\PayForm;
@@ -66,7 +70,9 @@ class PayController extends Controller
                 $payschets->SetIpAddress($params['ID']);
 
                 //разрешить открытие во фрейме на сайте мерчанта
-                $csp = "default-src 'self' 'unsafe-inline' https://mc.yandex.ru; img-src 'self' data: https://mc.yandex.ru; connect-src 'self' https://mc.yandex.ru;";
+                $csp = "default-src 'self' 'unsafe-inline' https://mc.yandex.ru https://pay.google.com; ".
+                    "img-src 'self' data: https://mc.yandex.ru https://google.com/pay https://google.com/pay https://www.gstatic.com; ".
+                    "connect-src 'self' https://mc.yandex.ru https://play.google.com;";
                 if (!empty($params['URLSite'])) {
                     $csp .= ' frame-src ' . $params['URLSite'].';';
                 }
@@ -74,8 +80,12 @@ class PayController extends Controller
 
                 $ApplePay = new ApplePay();
                 $apple = $ApplePay->GetConf($params['IDPartner']);
+                $GooglePay = new GooglePay();
+                $google = $GooglePay->GetConf($params['IDPartner']);
+                $SamsungPay = new SamsungPay();
+                $samsung = $SamsungPay->GetConf($params['IDPartner']);
 
-                return $this->render('formpay', ['params' => $params, 'apple' => $apple, 'payform' => $payform]);
+                return $this->render('formpay', ['params' => $params, 'apple' => $apple, 'google' => $google, 'samsung' => $samsung, 'payform' => $payform]);
 
             } else {
                 return $this->redirect(\yii\helpers\Url::to('/pay/orderok?id='.$id));
@@ -138,6 +148,15 @@ class PayController extends Controller
                 }
                 $merchBank = BankMerchant::Create($params);
                 $ret = $merchBank->PayXml($params);
+                if ($ret['status'] != 1 && $merchBank::$bank === TCBank::$bank) {
+                    $params['Bank'] = MTSBank::$bank;
+                    $payschets->ChangeBank($params['ID'], MTSBank::$bank);
+                    $merchBank = BankMerchant::Create($params);
+                    $retBank2 = $merchBank->PayXml($params);
+                    if ($retBank2['status'] == 1) {
+                        $ret = $retBank2;
+                    }
+                }
 
                 if ($ret['status'] == 1) {
                     $payschets->SetStartPay($params['ID'], $ret['transac'], $payform->Email);
@@ -344,6 +363,54 @@ class PayController extends Controller
             $merchBank = BankMerchant::Create($params);
             $ApplePay = new ApplePay();
             $res = $merchBank->PayApple($params + ['Apple_MerchantID' => $ApplePay->GetConf($params['IDPartner'])['Apple_MerchantID'], 'PaymentToken' => $paymentToken]);
+
+            if ($res) {
+                return ['status' => 1];
+            }
+            return ['status' => 0, 'message' => 'Ошибка запроса'];
+            //return $this->redirect(\yii\helpers\Url::to('/pay/orderok?id='.$params['ID']));
+        }
+        return '';
+    }
+
+    public function actionGooglepaycreate()
+    {
+        if (Yii::$app->request->isAjax) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+
+            $payschets = new Payschets();
+            $params = $payschets->getSchetData((int)Yii::$app->request->post('IdPay'),null);
+            if (!$params) {
+                throw new NotFoundHttpException();
+            }
+
+            $paymentToken = Yii::$app->request->post('paymentToken');
+            $merchBank = BankMerchant::Create($params);
+            $res = $merchBank->PayGoogle($params + ['PaymentToken' => $paymentToken]);
+
+            if ($res) {
+                return ['status' => 1];
+            }
+            return ['status' => 0, 'message' => 'Ошибка запроса'];
+            //return $this->redirect(\yii\helpers\Url::to('/pay/orderok?id='.$params['ID']));
+        }
+        return '';
+    }
+
+    public function actionSamsungpaycreate()
+    {
+        if (Yii::$app->request->isAjax) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+
+            $payschets = new Payschets();
+            $params = $payschets->getSchetData((int)Yii::$app->request->post('IdPay'),null);
+            if (!$params) {
+                throw new NotFoundHttpException();
+            }
+
+            $paymentToken = Yii::$app->request->post('paymentToken');
+            $merchBank = BankMerchant::Create($params);
+            $res = $merchBank->PaySamsung($params + ['PaymentToken' => $paymentToken]);
 
             if ($res) {
                 return ['status' => 1];
