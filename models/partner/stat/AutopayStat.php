@@ -188,16 +188,6 @@ class AutopayStat extends Model
                 }
 
             } elseif ($this->graphtype == 2) {
-                //График ежемесячного оттока пользователей.
-                //$SummPay = $row['SummPay']/100.0;
-                $DatePay = date($groupDate, $row['DateCreate']);
-                if (isset($data[$DatePay])) {
-                    $data[$DatePay]['cnt']++;
-                } else {
-                    $data[$DatePay] = ['cnt' => 1, $xkey => $DatePay];
-                }
-
-            } elseif ($this->graphtype == 3) {
                 //График изменение средней суммы платежей, полученных с одного плательщика за весь период сотрудничества
                 $SummPay = $row['SummPay'] / 100.0;
                 $DatePay = date($groupDate, $row['DateCreate']);
@@ -206,6 +196,15 @@ class AutopayStat extends Model
                     $data[$DatePay]['cnt']++;
                 } else {
                     $data[$DatePay] = ['sum' => $SummPay, 'cnt' => 1, $xkey => $DatePay];
+                }
+            } elseif ($this->graphtype == 3) {
+                //График ежемесячного оттока пользователей.
+                //$SummPay = $row['SummPay']/100.0;
+                $DatePay = date($groupDate, $row['DateCreate']);
+                if (isset($data[$DatePay])) {
+                    $data[$DatePay]['cnt']++;
+                } else {
+                    $data[$DatePay] = ['cnt' => 1, $xkey => $DatePay];
                 }
             }
         }
@@ -223,6 +222,11 @@ class AutopayStat extends Model
                     unset($rd['cnt']);
                     $dataJ[] = $rd;
                 } elseif ($this->graphtype == 2) {
+                    $rd[$ykey] = $rd['cnt'] > 0 ? round($rd['sum'] / $rd['cnt'], 2) : 0;
+                    unset($rd['sum']);
+                    unset($rd['cnt']);
+                    $dataJ[] = $rd;
+                } elseif ($this->graphtype == 3) {
                     if ($prev) {
                         $rd[$ykey] = round(($rd['cnt'] - $prev) / $prev * 100, 2);
                         $prev = $rd['cnt'];
@@ -231,11 +235,6 @@ class AutopayStat extends Model
                     } else {
                         $prev = $rd['cnt'];
                     }
-                } elseif ($this->graphtype == 3) {
-                    $rd[$ykey] = $rd['cnt'] > 0 ? round($rd['sum'] / $rd['cnt'], 2) : 0;
-                    unset($rd['sum']);
-                    unset($rd['cnt']);
-                    $dataJ[] = $rd;
                 }
             }
         } else {
@@ -248,9 +247,9 @@ class AutopayStat extends Model
         } elseif ($this->graphtype == 1) {
             $label = "Средняя выручка";
         } elseif ($this->graphtype == 2) {
-            $label = "Процент оттока";
-        } elseif ($this->graphtype == 3) {
             $label = "Средний платеж";
+        } elseif ($this->graphtype == 3) {
+            $label = "Процент оттока";
         }
 
         return ['status' => 1, 'data' => $dataJ, 'label' => $label];
