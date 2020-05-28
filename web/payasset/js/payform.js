@@ -257,17 +257,16 @@
                     paymentMethodTokenizationParameters: {
                         tokenizationType: 'PAYMENT_GATEWAY',
                         parameters: {
-                            gateway: 'some-bank', //
-                            gatewayMerchantId: 'exampleGatewayMerchantId' //
+                            gateway: 'mpgs', //
+                            gatewayMerchantId: merchantIdentifier //
                         }
                     },
                     allowedPaymentMethods: ['CARD', 'TOKENIZED_CARD'],
                     cardRequirements: {
-                        allowedCardNetworks: ['MASTERCARD', 'VISA']
+                        allowedCardNetworks: ['MASTERCARD', 'VISA', 'MIR']
                     },
-                    phoneNumberRequired:
-                        true,
-                    emailRequired: true
+                    phoneNumberRequired: false,
+                    emailRequired: false
                 }
 
                 paymentsClient.isReadyToPay(({allowedPaymentMethods: ['CARD', 'TOKENIZED_CARD']}))
@@ -295,7 +294,7 @@
                                         if (data.acsUrl == undefined) {
                                             window.location.href = '/pay/orderok/' + id;
                                         } else {
-                                            load3ds(data.acsUrl, data.paReq, data.md, data.termUrl);
+                                            payform.load3ds(data.acsUrl, data.paReq, data.md, data.termUrl);
                                         }
                                     } else {
                                         $('#error_message').html(data.message);

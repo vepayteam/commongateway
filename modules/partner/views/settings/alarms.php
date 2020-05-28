@@ -104,11 +104,27 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                         </label>
                                     </div>
                                 </div>
-                                <div class="col-sm-4">
+                                <div class="col-sm-2">
                                     <div class="checkbox m-r-xs">
                                         <input type="checkbox" id="checkboxUseApplePay<?=$bank->ID?>" name="Bank[<?=$bank->ID?>][UseApplePay]" value="1" <?=$bank->UseApplePay ? 'checked' : ''?>>
                                         <label for="checkboxUseApplePay<?=$bank->ID?>">
                                             Apple Pay
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-sm-2">
+                                    <div class="checkbox m-r-xs">
+                                        <input type="checkbox" id="checkboxUseGooglePay<?=$bank->ID?>" name="Bank[<?=$bank->ID?>][UseGooglePay]" value="1" <?=$bank->UseGooglePay ? 'checked' : ''?>>
+                                        <label for="checkboxUseGooglePay<?=$bank->ID?>">
+                                            Google Pay
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-sm-2">
+                                    <div class="checkbox m-r-xs">
+                                        <input type="checkbox" id="checkboxUseSamsungPay<?=$bank->ID?>" name="Bank[<?=$bank->ID?>][UseSamsungPay]" value="1" <?=$bank->UseSamsungPay ? 'checked' : ''?>>
+                                        <label for="checkboxUseSamsungPay<?=$bank->ID?>">
+                                            Samsung Pay
                                         </label>
                                     </div>
                                 </div>
