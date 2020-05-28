@@ -401,70 +401,6 @@ class StatController extends Controller
         }
     }
 
-    public function actionRecurrentpays()
-    {
-        $fltr = new StatFilter();
-        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-        return $this->render('recurrentpays', [
-            'name' => 'Изменение суммы платежей',
-            'uslugilist' => $fltr->getTypeUslugLiust(TU::AutoPay()),
-            'type' => 0
-        ]);
-    }
-
-    public function actionRecurrentcomis()
-    {
-        $fltr = new StatFilter();
-        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-        return $this->render('recurrentpays', [
-            'name' => 'Изменение выручки с пользователя',
-            'uslugilist' => $fltr->getTypeUslugLiust(TU::AutoPay()),
-            'type' => 1
-        ]);
-    }
-
-    public function actionRecurrentremove()
-    {
-        $fltr = new StatFilter();
-        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-        return $this->render('recurrentpays', [
-            'name' => 'Отток пользователей',
-            'uslugilist' => $fltr->getTypeUslugLiust(TU::AutoPay()),
-            'type' => 2
-        ]);
-    }
-
-    public function actionRecurrentmiddle()
-    {
-        $fltr = new StatFilter();
-        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-        return $this->render('recurrentpays', [
-            'name' => 'Изменение средней суммы платежей',
-            'uslugilist' => $fltr->getTypeUslugLiust(TU::AutoPay()),
-            'type' => 3
-        ]);
-    }
-
-    /**
-     * @return array|Response
-     * @throws \Throwable
-     */
-    public function actionRecurrentpaysdata()
-    {
-        if (Yii::$app->request->isAjax) {
-            Yii::$app->response->format = Response::FORMAT_JSON;
-            $StatGraph = new StatGraph();
-            $StatGraph->scenario = StatGraph::SCENARIO_MONTH;
-            $StatGraph->load(Yii::$app->request->post(), '');
-            if ($StatGraph->validate()) {
-                return $StatGraph->GetRecurrentData();
-            }
-            return ['status' => 0, 'message' => $StatGraph->GetError()];
-        } else {
-            return $this->redirect('/partner');
-        }
-    }
-
     /**
      * @return string
      */
@@ -503,6 +439,25 @@ class StatController extends Controller
             return ['status' => 0, 'message' => $AutopayStat->GetError()];
         }
         return $this->redirect('/partner');
+    }
+
+    /**
+     * @return array|Response
+     * @throws \Throwable
+     */
+    public function actionRecurrentpaysdata()
+    {
+        if (Yii::$app->request->isAjax) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+            $StatGraph = new AutopayStat();
+            $StatGraph->load(Yii::$app->request->post(), '');
+            if ($StatGraph->validate()) {
+                return $StatGraph->GetRecurrentData();
+            }
+            return ['status' => 0, 'message' => $StatGraph->GetError()];
+        } else {
+            return $this->redirect('/partner');
+        }
     }
 
     /**

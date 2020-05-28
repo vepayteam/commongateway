@@ -6,32 +6,69 @@
 
 ?>
 
-<table class="table table-striped tabledata" style="font-size: 0.9em">
-    <thead>
-    <tr>
-        <th>#</th>
-        <th>Параметр</th>
-        <th>Значение</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr>
-        <td>1</td>
-        <td>Общее количество зарегистрированных карт</td>
-        <td><?=number_format($data['cntcards'], 0, '.', ' ')?></td>
-    </tr>
-    <tr>
-        <td>2</td>
-        <td>Число активных карт</td>
-        <td><?=number_format($data['activecards'], 0, '.', ' ')?></td>
-    <tr>
-        <td>3</td>
-        <td>Число запросов к одной карте/всего (за период)</td>
-        <td><?=$data['activecards'] > 0 ? number_format(round($data['reqcards'] / $data['activecards']), 0, '.', ' ') : 0?> / <?=number_format($data['reqcards'], 0, '.', ' ')?></td>
-    <tr>
-        <td>4</td>
-        <td>Число успешных запросов</td>
-        <td><?=number_format($data['payscards'], 0, '.', ' ')?></td>
-    </tr>
-    </tbody>
-</table>
+<div class="row">
+    <div class="col-lg-4 col-sm-6">
+        <div class="ibox ">
+            <div class="ibox-title">
+                <h5>Количество новых карт</h5>
+            </div>
+            <div class="ibox-content">
+                <h2 class="no-margins"><?=$data['cntnewcards']?></h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 col-sm-6">
+        <div class="ibox ">
+            <div class="ibox-title">
+                <h5>Общее количество привязанных карт</h5>
+            </div>
+            <div class="ibox-content">
+                <h2 class="no-margins"><?=number_format($data['cntcards'], 0, '.', ' ')?></h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-sm-6">
+        <div class="ibox ">
+            <div class="ibox-title">
+                <h5>Число активных карт</h5>
+            </div>
+            <div class="ibox-content">
+                <h2 class="no-margins"><?=number_format($data['activecards'], 0, '.', ' ')?></h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-sm-6">
+        <div class="ibox ">
+            <div class="ibox-title">
+                <h5>Количество запросов на одну карту</h5>
+            </div>
+            <div class="ibox-content">
+                <h2 class="no-margins"><?=number_format($data['reqcards'], 0, '.', ' ')?></h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 col-sm-6">
+        <div class="ibox ">
+            <div class="ibox-title">
+                <h5>Количество успешных платежей</h5>
+            </div>
+            <div class="ibox-content">
+                <h2 class="no-margins"><?=number_format($data['payscards'], 0, '.', ' ')?></h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-sm-6">
+        <div class="ibox ">
+            <div class="ibox-title">
+                <h5>Выручка по успешным платежам</h5>
+            </div>
+            <div class="ibox-content">
+                <h2 class="no-margins"><?=number_format($data['sumpayscards'] / 100.0, 0, '.', ' ')?></h2>
+            </div>
+        </div>
+    </div>
+
+</div>
