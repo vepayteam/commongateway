@@ -66,6 +66,7 @@ class AutopayStat extends Model
             ->select(['c.ID'])
             ->from('`cards` AS c')
             ->where(['c.TypeCard' => 0])
+            ->leftJoin('user AS u', 'u.ID = c.IdUser')
             ->andWhere(['between', 'c.DateAdd', $datefrom, $dateto]);
         if ($IdPart > 0) {
             $query->andWhere('u.ExtOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
@@ -82,7 +83,7 @@ class AutopayStat extends Model
             ->andWhere(['c.TypeCard' => 0])
             ->andWhere(['ps.IsAutoPay' => 1]);
         if ($IdPart > 0) {
-            $query->andWhere('u.ExtOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
+            $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
         $query->groupBy('c.ID');
         $ret['activecards'] = $query->count();
@@ -97,7 +98,7 @@ class AutopayStat extends Model
             ->andWhere(['c.TypeCard' => 0])
             ->andWhere(['ps.IsAutoPay' => 1]);
         if ($IdPart > 0) {
-            $query->andWhere('u.ExtOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
+            $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
         if ($ret['activecards'] > 0) {
             $ret['reqcards'] = $query->count() / $ret['activecards'] / ceil(($dateto - $datefrom) / (60 * 60 * 24) + 1);
@@ -113,7 +114,7 @@ class AutopayStat extends Model
             ->andWhere(['c.TypeCard' => 0])
             ->andWhere(['ps.IsAutoPay' => 1, 'ps.Status' => 1]);
         if ($IdPart > 0) {
-            $query->andWhere('u.ExtOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
+            $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
         $ret['payscards'] = $query->count();
         $ret['sumpayscards'] = $query->sum('SummPay');
