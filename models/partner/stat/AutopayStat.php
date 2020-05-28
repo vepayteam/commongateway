@@ -103,7 +103,7 @@ class AutopayStat extends Model
             $query->andWhere('u.ExtOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
         if ($ret['activecards'] > 0) {
-            $ret['reqcards'] = $query->count() / $ret['activecards'] / ceil(($dateto - $datefrom) / (60 * 60 * 24));
+            $ret['reqcards'] = $query->count() / $ret['activecards'];// / ceil(($dateto - $datefrom) / (60 * 60 * 24));
         }
 
         //Сколько успешных запросов

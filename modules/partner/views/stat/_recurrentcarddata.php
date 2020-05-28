@@ -13,7 +13,7 @@
                 <h5>Количество новых карт</h5>
             </div>
             <div class="ibox-content">
-                <h2 class="no-margins"><?=$data['cntnewcards']?></h2>
+                <h2 class="no-margins"><?=number_format($data['cntnewcards'], 0, '.', ' ')?></h2>
             </div>
         </div>
     </div>
@@ -55,7 +55,7 @@
                 <h5>Количество успешных платежей</h5>
             </div>
             <div class="ibox-content">
-                <h2 class="no-margins"><?=number_format($data['payscards'], 0, '.', ' ')?></h2>
+                <h2 class="no-margins"><?=number_format($data['payscards'], 2, '.', ' ')?></h2>
             </div>
         </div>
     </div>
