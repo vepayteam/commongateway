@@ -261,7 +261,7 @@ class OtchetPsXlsx
             ->andWhere(['<', 'Summ', 0])
             ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto]);
 
-        $sumout = round($query->scalar()/100.0, 2);
+        $sumout = -round($query->scalar()/100.0, 2);
 
         $query = (new Query())
             ->select('SUM(Summ)')
@@ -271,9 +271,9 @@ class OtchetPsXlsx
             ->andWhere(['<', 'Summ', 0])
             ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto]);
 
-        $sumin = round($query->scalar()/100.0, 2);
+        $sumin = -round($query->scalar()/100.0, 2);
 
-        $query = (new Query())
+        /*$query = (new Query())
             ->select('SUM(Summ)')
             ->from('vyvod_system')
             ->where(['IdPartner' => $partner->ID, 'SatateOp' => 1])
@@ -281,7 +281,21 @@ class OtchetPsXlsx
 
         $sumvozn = round($query->scalar()/100.0, 2);
 
-        return $sumout+$sumin+$sumvozn;
+        return $sumout+$sumin+$sumvozn;*/
+
+        $pays = new PayShetStat();
+        $pays->setAttributes([
+            'IdPart' => $partner->ID,
+            'datefrom' => date("d.m.Y H:i", $this->datefrom),
+            'dateto' => date("d.m.Y H:i", $this->dateto),
+            'TypeUslug' => array_merge(TU::InAll(), TU::OutMfo())
+        ]);
+        $dataIn = $pays->getOtch(true);
+        $sum = 0;
+        foreach ($dataIn as $data) {
+            $sum += $data['ComissSumm'] + $data['MerchVozn'];
+        }
+        return $sumout + $sumin + round($sum/100.0, 2);
     }
 
 }

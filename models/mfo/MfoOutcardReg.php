@@ -59,7 +59,7 @@ class MfoOutcardReg
     private function SaveOutard($IdPay, $card, User $user)
     {
         $CardToken = new CardToken();
-        $IdPan = $CardToken->CreateToken($card, 0);
+        $IdPan = $CardToken->CreateToken($card, 0, '');
         $maskedPan = $this->MaskedCardNumber($card);
         if ($IdPan) {
             Yii::warning('register out card: ' . $maskedPan . ' IdPay=' . $IdPay . " IdPan=".$IdPan);

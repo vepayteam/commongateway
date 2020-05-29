@@ -102,7 +102,7 @@ class OutController extends Controller
 
         $cartToken = new CardToken();
         if (($token = $cartToken->CheckExistToken($kfOut->cardnum, 0)) == 0) {
-            $token = $cartToken->CreateToken($kfOut->cardnum, 0);
+            $token = $cartToken->CreateToken($kfOut->cardnum, 0, '');
         }
         if ($token === 0){
             return ['status' => 0, 'message' => 'Ошибка формирования платежа'];

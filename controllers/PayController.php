@@ -164,7 +164,10 @@ class PayController extends Controller
                     if ($params['IdUsluga'] == 1) {
                         //регистрация карты
                         $tokenizer = new Tokenizer();
-                        $IdPan = $tokenizer->CreateToken($payform->CardNumber, $payform->CardMonth.$payform->CardYear);
+                        if (($IdPan = $tokenizer->CheckExistToken($payform->CardNumber,$payform->CardMonth.$payform->CardYear)) == 0) {
+                            $IdPan = $tokenizer->CreateToken($payform->CardNumber, $payform->CardMonth.$payform->CardYear, $payform->CardHolder);
+                        }
+
                         if ($IdPan) {
                             //сохранить карту
                             $payschets->SaveCardPan($params['IdUser'], $params['card'], $IdPan);

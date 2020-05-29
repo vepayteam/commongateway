@@ -18,9 +18,10 @@ class Tokenizer
      * Создать токен карты
      * @param string $CardNumber
      * @param integer $SrokKard
+     * @param string $CardHolder
      * @return integer
      */
-    public function CreateToken($CardNumber, $SrokKard)
+    public function CreateToken($CardNumber, $SrokKard, $CardHolder)
     {
         $EncryptedPan = $this->Crypt($CardNumber, $CryptKeyId);
         if (empty($EncryptedPan)) {
@@ -36,7 +37,8 @@ class Tokenizer
                 'ExpDateYear' => substr(sprintf("%04d", $SrokKard), 2, 2),
                 'CreatedDate' => time(),
                 'UpdatedDate' => time(),
-                'CryptoKeyId' => $CryptKeyId
+                'CryptoKeyId' => $CryptKeyId,
+                'CardHolder' => !empty($CardHolder) ? mb_substr($CardHolder, 0, 100) : null
             ])->execute();
             $token = $this->db->getLastInsertID();
         } catch (\yii\db\Exception $e) {

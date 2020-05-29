@@ -43,6 +43,7 @@ class AutopayStat extends Model
             'cntcards' => 0,
             'cntnewcards' => 0,
             'activecards' => 0,
+            'reqonecard' => 0,
             'reqcards' => 0,
             'payscards' => 0,
             'sumpayscards ' => 0
@@ -100,8 +101,10 @@ class AutopayStat extends Model
         if ($IdPart > 0) {
             $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
+        $ret['reqcards'] = $query->count();
+
         if ($ret['activecards'] > 0) {
-            $ret['reqcards'] = $query->count() / $ret['activecards'] / ceil(($dateto - $datefrom) / (60 * 60 * 24) + 1);
+            $ret['reqonecard'] = $ret['reqcards'] / $ret['activecards'] / ceil(($dateto - $datefrom) / (60 * 60 * 24) + 1);
         }
 
         //Сколько успешных запросов
