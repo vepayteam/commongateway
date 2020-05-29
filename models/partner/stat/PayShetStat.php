@@ -163,7 +163,7 @@ class PayShetStat extends Model
             }
             $query->orderBy('`ID` DESC')->limit($CNTPAGE);
         }
-        $res = $query->cache(10)->all();
+        $res = $query->cache(3)->all();
 
         $ret = [];
         foreach ($res as $row) {
