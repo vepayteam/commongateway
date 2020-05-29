@@ -92,10 +92,8 @@ class MfoBalance
                 }
             }
             Yii::$app->cache->set('mfo_bal_'.$this->Partner->ID, $bal,30);
-
-        } else {
-            $ret = array_merge($ret, $bal);
         }
+        $ret = array_merge($ret, $bal);
 
         return $ret;
     }
