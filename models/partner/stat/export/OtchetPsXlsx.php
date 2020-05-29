@@ -91,7 +91,7 @@ class OtchetPsXlsx
         //Сохранение в файл
         $data = null;
 
-        $tmpfile = Yii::$app->getBasePath() . "\\runtime\\tmp" . random_int(10000, 100000) . ".xlsx";
+        $tmpfile = Yii::$app->getBasePath() . "/runtime/tmp" . random_int(10000, 100000) . ".xlsx";
         $writer = IOFactory::createWriter($document, 'Xlsx');
         $writer->save($tmpfile);
         $data = file_get_contents($tmpfile);
