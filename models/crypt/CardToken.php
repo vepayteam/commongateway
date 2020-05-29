@@ -8,12 +8,13 @@ class CardToken
      * Создать токен карты
      * @param string $CardNumber
      * @param integer $SrokKard
+     * @param string $CardHolder
      * @return integer
      */
-    public function CreateToken($CardNumber, $SrokKard)
+    public function CreateToken($CardNumber, $SrokKard, $CardHolder)
     {
         $tokenizer = new Tokenizer();
-        $token = $tokenizer->CreateToken($CardNumber, $SrokKard);
+        $token = $tokenizer->CreateToken($CardNumber, $SrokKard, $CardHolder);
 
         return $token;
     }

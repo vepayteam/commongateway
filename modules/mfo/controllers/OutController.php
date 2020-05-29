@@ -128,7 +128,7 @@ class OutController extends Controller
             //сформировать токен карты, если оплата без регистрации карты
             $cartToken = new CardToken();
             if (($token = $cartToken->CheckExistToken($kfOut->cardnum, 0)) == 0) {
-                $token = $cartToken->CreateToken($kfOut->cardnum, 0);
+                $token = $cartToken->CreateToken($kfOut->cardnum, 0, '');
             }
             if ($token === 0) {
                 Yii::warning("out/paycard: Ошибка формирования платежа", 'mfo');

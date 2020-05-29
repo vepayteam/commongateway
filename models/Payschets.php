@@ -817,7 +817,7 @@ class Payschets
     {
         $cartToken = new CardToken();
         if (($token = $cartToken->CheckExistToken($card['number'],$card['month'].$card['year'])) == 0) {
-            $token = $cartToken->CreateToken($card['number'],$card['month'].$card['year']);
+            $token = $cartToken->CreateToken($card['number'],$card['month'].$card['year'], $card['holder']);
         }
         Yii::$app->db->createCommand()
             ->update('pay_schet', [
