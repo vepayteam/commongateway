@@ -59,7 +59,7 @@ class AutopayStat extends Model
         if ($IdPart > 0) {
             $query->andWhere('u.ExtOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
-        $ret['cntcards'] = $query->count();
+        $ret['cntcards'] = $query->cache(30)->count();
 
         //Количество новых карт
         $query = new Query();
@@ -72,7 +72,7 @@ class AutopayStat extends Model
         if ($IdPart > 0) {
             $query->andWhere('u.ExtOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
-        $ret['cntnewcards'] = $query->count();
+        $ret['cntnewcards'] = $query->cache(30)->count();
 
         //сколько активных привязанных карт
         $query = new Query();
@@ -87,7 +87,7 @@ class AutopayStat extends Model
             $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
         $query->groupBy('c.ID');
-        $ret['activecards'] = $query->count();
+        $ret['activecards'] = $query->cache(30)->count();
 
         //Количество запросов на одну карту
         $query = new Query();
@@ -101,7 +101,7 @@ class AutopayStat extends Model
         if ($IdPart > 0) {
             $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
-        $ret['reqcards'] = $query->count();
+        $ret['reqcards'] = $query->cache(30)->count();
 
         if ($ret['activecards'] > 0) {
             $ret['reqonecard'] = $ret['reqcards'] / $ret['activecards'] / ceil(($dateto - $datefrom) / (60 * 60 * 24) + 1);
@@ -119,8 +119,8 @@ class AutopayStat extends Model
         if ($IdPart > 0) {
             $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
-        $ret['payscards'] = $query->count();
-        $ret['sumpayscards'] = $query->sum('SummPay');
+        $ret['payscards'] = $query->cache(30)->count();
+        $ret['sumpayscards'] = $query->cache(30)->sum('SummPay');
 
         return $ret;
     }
