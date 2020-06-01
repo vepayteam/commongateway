@@ -36,8 +36,11 @@ class AutopayStat extends Model
     {
         $IdPart = $IsAdmin ? $this->IdPart : UserLk::getPartnerId(Yii::$app->user);
 
-        $datefrom = strtotime($this->datefrom);
-        $dateto = strtotime($this->dateto);
+        $datefrom = strtotime($this->datefrom." 00:00:00");
+        $dateto = strtotime($this->dateto." 23:59:59");
+        if ($datefrom < $dateto - 30 * 86400) {
+            $datefrom = $dateto - 30 * 86400;
+        }
 
         $ret = [
             'cntcards' => 0,
@@ -136,8 +139,8 @@ class AutopayStat extends Model
 
         $datefrom = strtotime($this->datefrom . " 00:00:00");
         $dateto = strtotime($this->dateto . " 23:59:59");
-        if ($datefrom < $dateto - 365 * 86400) {
-            $datefrom = $dateto - 365 * 86400;
+        if ($datefrom < $dateto - 30 * 86400) {
+            $datefrom = $dateto - 30 * 86400;
         }
 
         $data = [];
