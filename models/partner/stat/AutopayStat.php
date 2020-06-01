@@ -107,7 +107,7 @@ class AutopayStat extends Model
         $ret['reqcards'] = $query->cache(30)->count();
 
         if ($ret['activecards'] > 0) {
-            $ret['reqonecard'] = $ret['reqcards'] / $ret['activecards'] / ceil(($dateto - $datefrom) / (60 * 60 * 24) + 1);
+            $ret['reqonecard'] = $ret['reqcards'] / $ret['activecards'] / ceil(($dateto + 1 - $datefrom) / (60 * 60 * 24));
         }
 
         //Сколько успешных запросов
