@@ -54,7 +54,7 @@ class OtchToEmail
             if($list['data']){
                 $otch = new OtchToCSV($list, $partner->payment, $partner->repayment);
                 $otch->export();
-                $sender = new SendEmail(['mailer' => $this->mailer(), 'fromEmail'=>'payments@vepay.online']);
+                $sender = new SendEmail();//['mailer' => $this->mailer(), 'fromEmail'=>'payments@vepay.online']
                 $subject = "Отчет за период" . $dateFrom . ' - ' . $dateTo;
                 $sender->sendReestr($partner->email, $subject, 'Отчет предоставлен в виде прикрепленного файла csv.', [
                     [

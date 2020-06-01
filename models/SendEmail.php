@@ -2,6 +2,7 @@
 
 namespace app\models;
 
+use Swift_SwiftException;
 use Yii;
 use yii\base\Model;
 use yii\mail\MailerInterface;
@@ -36,11 +37,15 @@ class SendEmail extends Model
         if (Yii::$app->params['TESTMODE'] == "Y") {
             $email = "ayuriev@vepay.online";
         }
-        $this->mailer->compose('@app/mail/layouts/html', ['content' => $content])
-            ->setTo($this->explodeMail($email))
-            ->setFrom($emailfrom)
-            ->setSubject($subject)
-            ->send();
+        try {
+            $this->mailer->compose('@app/mail/layouts/html', ['content' => $content])
+                ->setTo($this->explodeMail($email))
+                ->setFrom($emailfrom)
+                ->setSubject($subject)
+                ->send();
+        } catch (Swift_SwiftException $e) {
+            Yii::error($e->getMessage());
+        }
         return true;
     }
 
@@ -65,7 +70,12 @@ class SendEmail extends Model
         foreach ($files as $file) {
             $mailer = $mailer->attachContent($file['data'], ['fileName' => $file['name']]);
         }
-        return $mailer->send();
+        try {
+            return $mailer->send();
+        } catch (Swift_SwiftException $e) {
+            Yii::error($e->getMessage());
+        }
+        return false;
     }
 
     /**

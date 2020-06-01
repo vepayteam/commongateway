@@ -104,11 +104,12 @@ $config = [
             'viewPath' => '@app/mail/', // Путь до папки с шаблоном
             'transport' => [
                 'class' => 'Swift_SmtpTransport',
-                'host' => 'mail.dengisrazy.ru',//'localhost',
-                'username' => 'robot@vepay.online',
-                'password' => 'Cdbhmm3zsgX3',
-                'port' => '25',
+                'host' => 'exchange.dengisrazy.ru',//'localhost',
+                'username' => 'dengisrazy.ru\robot-vepay',
+                'password' => 'z8ndN6TF',
+                'port' => '587',
                 'encryption' => 'tls',
+                'streamoptions' => ['ssl' => ['verify_peer' => FALSE, 'verify_peer_name' => FALSE]]
             ],
         ],
         'log' => [
