@@ -38,8 +38,8 @@ class AutopayStat extends Model
 
         $datefrom = strtotime($this->datefrom." 00:00:00");
         $dateto = strtotime($this->dateto." 23:59:59");
-        if ($datefrom < $dateto - 30 * 86400) {
-            $datefrom = $dateto - 30 * 86400;
+        if ($datefrom < $dateto - 365 * 86400) {
+            $datefrom = $dateto - 365 * 86400 - 86399;
         }
 
         $ret = [
@@ -139,8 +139,8 @@ class AutopayStat extends Model
 
         $datefrom = strtotime($this->datefrom . " 00:00:00");
         $dateto = strtotime($this->dateto . " 23:59:59");
-        if ($datefrom < $dateto - 30 * 86400) {
-            $datefrom = $dateto - 30 * 86400;
+        if ($datefrom < $dateto - 365 * 86400) {
+            $datefrom = $dateto - 365 * 86400 - 86399;
         }
 
         $data = [];
