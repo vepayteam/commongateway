@@ -51,7 +51,7 @@ class OtchetPsXlsx
             "Пополнение плат системы, руб",
             "Перечисление на р/сч, руб",
             "Прочие списания, руб",
-            "Остаток на конец периода". date("d.m.Y", $this->dateto)
+            "Остаток на конец периода ". date("d.m.Y", $this->dateto)
         ];
 
         $this->sheet->getStyle("A1:H1")->getFont()
@@ -141,11 +141,21 @@ class OtchetPsXlsx
     private function VyvodSum($partner)
     {
 
-        $query = (new Query())
+        /*$query = (new Query())
             ->select('SUM(SumOp)')
             ->from('vyvod_reestr')
             ->where(['IdPartner' => $partner->ID, 'StateOp' => 1, 'TypePerechisl' => 1])
             ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto]);
+
+        $sumout = round($query->scalar()/100.0, 2);*/
+
+        $query = (new Query())
+            ->select('SUM(SummPP)')
+            ->from('statements_account')
+            ->where(['IdPartner' => $partner->ID, 'IsCredit' => 0])
+            ->andWhere(['like', 'Description', 'Расчеты по договору'])
+            ->andWhere(['<>', 'Bic', '044525388'])
+            ->andWhere('DatePP BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto]);
 
         $sumout = round($query->scalar()/100.0, 2);
 
