@@ -83,12 +83,11 @@ class VoznagStat extends Model
         }
 
         $query->andWhere(['in', 'ut.IsCustom', $tuList]);
-        $res = $query->all();
+        $res = $query->cache(10)->all();
 
         $ret = [];
         foreach ($res as $row) {
 
-            $this->CalcComis($row);
             $row['VoznagSumm'] = $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
 
             $indx = $row['IDPartner'];
@@ -176,18 +175,6 @@ class VoznagStat extends Model
         }
 
         return $ret;
-    }
-
-    private function CalcComis(&$row)
-    {
-        /*$row['BankComis'] = round(($row['SummPay'] + $row['ComissSumm']) * $row['ProvComisPC'] / 100.0, 0);
-        if ($row['BankComis'] < $row['ProvComisMin'] * 100.0) {
-            $row['BankComis'] = $row['ProvComisMin'] * 100.0;
-        }
-        $row['MerchVozn'] = round($row['SummPay'] * $row['ProvVoznagPC'] / 100.0, 0);
-        if ($row['MerchVozn'] < $row['ProvVoznagMin'] * 100.0) {
-            $row['MerchVozn'] = $row['ProvVoznagMin'] * 100.0;
-        }*/
     }
 
     /**

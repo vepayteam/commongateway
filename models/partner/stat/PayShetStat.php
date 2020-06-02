@@ -145,18 +145,16 @@ class PayShetStat extends Model
         if (count($this->params) > 0) {
             if (!empty($this->params[0])) $query->andWhere(['like', 'ps.Dogovor', $this->params[0]]);
         }
-        $cnt = $query->count();
 
-        $sumPay = $query->sum('SummPay');
-        $sumComis = $query->sum('ComissSumm');
-        $voznagps = $bankcomis = 0;
-        $allres = $query->all();
+        $cnt = $sumPay = $sumComis = $voznagps = $bankcomis = 0;
+        $allres = $query->cache(10)->all();
+
         foreach ($allres as $row) {
-            $this->CalcComis($row);
-            $row['VoznagSumm'] = $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
-
-            $voznagps += $row['VoznagSumm'];
+            $sumPay += $row['SummPay'];
+            $sumComis += $row['ComissSumm'];
+            $voznagps += $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
             $bankcomis += $row['BankComis'];
+            $cnt++;
         }
 
         if (!$nolimit) {
@@ -165,13 +163,10 @@ class PayShetStat extends Model
             }
             $query->orderBy('`ID` DESC')->limit($CNTPAGE);
         }
-
-
-        $res = $query->all();
+        $res = $query->cache(3)->all();
 
         $ret = [];
         foreach ($res as $row) {
-            $this->CalcComis($row);
             $row['VoznagSumm'] = $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
 
             $ret[] = $row;
@@ -226,11 +221,8 @@ class PayShetStat extends Model
         if ($IdPart > 0) {
             $query->andWhere('ut.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
-        //if ($data['magaz'] > 0) {
-        //$query->andWhere('ut.IdMagazin = :IDMAGAZ', [':IDMAGAZ' => $data['magaz']]);
-        //}
+
         if (count($this->usluga) > 0) {
-//            $query->andWhere('ut.ID = :IDUSLUG', [':IDUSLUG' => $this->usluga]);
             $query->andWhere(['in', 'ut.ID', $this->usluga]);
         }
         //if ($data['paytype'] >= 0) {
@@ -240,12 +232,11 @@ class PayShetStat extends Model
             $query->andWhere(['in', 'ut.IsCustom', $this->TypeUslug]);
         }
 
-        $res = $query->all();
+        $res = $query->cache(10)->all();
 
         $ret = [];
         foreach ($res as $row) {
             $indx = $row['IdUsluga'];
-            $this->CalcComis($row);
             $row['VoznagSumm'] = $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
 
             if (!isset($ret[$indx])) {
@@ -321,15 +312,4 @@ class PayShetStat extends Model
         return (double)$summVozvr;
     }
 
-    private function CalcComis(&$row)
-    {
-        /*$row['BankComis'] = round(($row['SummPay'] + $row['ComissSumm']) * $row['ProvComisPC'] / 100.0, 0);
-        if ($row['BankComis'] < $row['ProvComisMin'] * 100.0) {
-            $row['BankComis'] = $row['ProvComisMin'] * 100.0;
-        }
-        $row['MerchVozn'] = round($row['SummPay'] * $row['ProvVoznagPC'] / 100.0, 0);
-        if ($row['MerchVozn'] < $row['ProvVoznagMin'] * 100.0) {
-            $row['MerchVozn'] = $row['ProvVoznagMin'] * 100.0;
-        }*/
-    }
 }
