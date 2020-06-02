@@ -312,7 +312,7 @@ class OtchetPsXlsx
             'IdPart' => $partner->ID,
             'datefrom' => date("d.m.Y H:i", strtotime('-1 month', $this->datefrom)),
             'dateto' => date("d.m.Y H:i", $this->datefrom - 1),
-            'TypeUslug' => TU::InAll()//array_merge(TU::InAll(), TU::OutMfo())
+            'TypeUslug' => array_merge(TU::InAll(), TU::OutMfo())
         ]);
         $dataIn = $pays->getOtch(true);
         $sum = 0;
