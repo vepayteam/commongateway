@@ -76,7 +76,16 @@ class MtsGate implements IBankGate
             SELECT 
                 `MtsLogin`, 
                 `MtsPassword`,
-                `MtsToken`
+                `MtsToken`,
+                `MtsLoginAft`, 
+                `MtsPasswordAft`,
+                `MtsTokenAft`,
+                `MtsLoginOct`, 
+                `MtsPasswordOct`,
+                `MtsTokenOct`,
+                `MtsLoginJkh`, 
+                `MtsPasswordJkh`,
+                `MtsTokenJkh`
             FROM 
                 `partner` 
             WHERE 
@@ -105,13 +114,13 @@ class MtsGate implements IBankGate
     {
         $gates = $this->GetGates();
 
-        if (in_array($this->typeGate, [MTSBank::$OCTGATE, MTSBank::$SCHETGATE]) && $gates && !empty($gates['MtsLogin'])) {
+        if (in_array($this->typeGate, [MTSBank::$OCTGATE, MTSBank::$SCHETGATE]) && $gates && !empty($gates['MtsLoginOct'])) {
             return true;
-        } elseif ($this->typeGate == MTSBank::$AFTGATE && $gates && !empty($gates['MtsLogin'])) {
+        } elseif ($this->typeGate == MTSBank::$AFTGATE && $gates && !empty($gates['MtsLoginAft'])) {
             return true;
         } elseif ($this->typeGate == MTSBank::$ECOMGATE && $gates && !empty($gates['MtsLogin'])) {
             return true;
-        } elseif ($this->typeGate == MTSBank::$JKHGATE && $gates && !empty($gates['MtsLogin'])) {
+        } elseif ($this->typeGate == MTSBank::$JKHGATE && $gates && !empty($gates['MtsLoginJkh'])) {
             return true;
         } elseif ($this->typeGate == MTSBank::$AUTOPAYGATE && $gates && !empty($gates['MtsLogin'])) {
             return true;

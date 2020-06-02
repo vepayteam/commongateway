@@ -51,7 +51,55 @@ class MTSBank implements IBank
 
     public function SetMfoGate(MtsGate $mtsGate)
     {
-        if (Yii::$app->params['DEVMODE'] != 'Y' && Yii::$app->params['TESTMODE'] != 'Y') {
+        if (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] == 'Y') {
+            return;
+        }
+
+        if (in_array($mtsGate->getTypeGate(), [self::$OCTGATE, self::$SCHETGATE]) && !empty($params['LoginTkbOct'])) {
+            //выдача на карту OCT, и на счет
+            $this->shopId = $mtsGate->gates['MtsLogin'];
+            $this->certFile = $mtsGate->gates['MtsPassword'];
+            $this->keyFile = $mtsGate->gates['MtsToken'];
+        } elseif ($mtsGate->getTypeGate() == self::$AFTGATE && !empty($params['LoginTkbAft'])) {
+            //прием с карты AFT
+            $this->shopId = $mtsGate->gates['MtsLoginAft'];
+            $this->certFile = $mtsGate->gates['MtsPasswordAft'];
+            $this->keyFile = $mtsGate->gates['MtsTokenAft'];
+        } elseif ($mtsGate->getTypeGate() == self::$ECOMGATE && !empty($params['LoginTkbEcom'])) {
+            //ecom
+            $this->shopId = $mtsGate->gates['MtsLogin'];
+            $this->certFile = $mtsGate->gates['MtsPassword'];
+            $this->keyFile = $mtsGate->gates['MtsToken'];
+        } elseif ($mtsGate->getTypeGate() == self::$VYVODGATE && !empty($params['LoginTkbVyvod'])) {
+            //вывод платежей
+            $this->shopId = $mtsGate->gates['MtsLogin'];
+            $this->certFile = $mtsGate->gates['MtsPassword'];
+            $this->keyFile = $mtsGate->gates['MtsToken'];
+        } elseif ($mtsGate->getTypeGate() == self::$JKHGATE && !empty($params['LoginTkbJkh'])) {
+            //жкх платежи
+            $this->shopId = $mtsGate->gates['MtsLoginJkh'];
+            $this->certFile = $mtsGate->gates['MtsPasswordJkh'];
+            $this->keyFile = $mtsGate->gates['MtsTokenJkh'];
+        } elseif ($mtsGate->getTypeGate() == self::$AUTOPAYGATE) {
+            //авторплатеж
+            $gateAutoId = $params['AutoPayIdGate'] ?? 0;
+            if ($gateAutoId && !empty($params['LoginTkbAuto'.intval($gateAutoId)])) {
+                $this->shopId = $mtsGate->gates['MtsLogin'];
+                $this->certFile = $mtsGate->gates['MtsPassword'];
+                $this->keyFile = $mtsGate->gates['MtsToken'];
+            }
+        } elseif ($mtsGate->getTypeGate() == self::$PEREVODGATE && !empty($params['LoginTkbPerevod'])) {
+            //перевод зарезервированной комиссии обратно
+            $this->shopId = $mtsGate->gates['MtsLogin'];
+            $this->certFile = $mtsGate->gates['MtsPassword'];
+            $this->keyFile = $mtsGate->gates['MtsToken'];
+        } elseif ($mtsGate->getTypeGate() == self::$VYVODOCTGATE && !empty($params['LoginTkbOctVyvod'])) {
+            //вывод со счета выплат
+            $this->shopId = $mtsGate->gates['MtsLoginOct'];
+            $this->certFile = $mtsGate->gates['MtsPasswordOct'];
+            $this->keyFile = $mtsGate->gates['MtsTokenOct'];
+        } elseif ($mtsGate->getTypeGate() == self::$PEREVODOCTGATE && !empty($params['LoginTkbOctPerevod'])) {
+            //перевод со счета выплат внутри банка
             $this->shopId = $mtsGate->gates['MtsLogin'];
             $this->certFile = $mtsGate->gates['MtsPassword'];
             $this->keyFile = $mtsGate->gates['MtsToken'];
