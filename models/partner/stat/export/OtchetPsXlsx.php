@@ -73,6 +73,8 @@ class OtchetPsXlsx
             }
         }
 
+        $this->sheet->setCellValue(self::xl($k+20)."1", 'Остаток на конец = Остаток на начало периода + Выручка - Выдача займа + Пополнение плат системы + Перечисление на р/сч - Прочие списания');
+
         $content['name'] = 'otchet.xlsx';
         $content['data'] = $this->content($objPHPExcel);
 
@@ -252,7 +254,7 @@ class OtchetPsXlsx
 
     private function PopolnenSum(Partner $partner)
     {
-        $query = (new Query())
+        /*$query = (new Query())
             ->select('SUM(Summ)')
             ->from('partner_orderout')
             ->where(['IdPartner' => $partner->ID, 'TypeOrder' => 0])
@@ -261,7 +263,17 @@ class OtchetPsXlsx
                 ['like', 'Comment', 'пополнение транзитного счета'],
                 ['like', 'Comment', 'Перенос денежных средств']
             ])
-            ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto]);
+            ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto]);*/
+
+        $query = (new Query())
+            ->select('SUM(SummPP)')
+            ->from('statements_account')
+            ->where(['IdPartner' => $partner->ID, 'IsCredit' => 1])
+            ->andWhere(['or',
+                ['like', 'Description', 'пополнение транзитного счета'],
+                ['like', 'Description', 'Перенос денежных средств']
+            ])
+            ->andWhere('DatePP BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto]);
 
         return round($query->scalar()/100.0, 2);
     }
