@@ -317,7 +317,7 @@ class OtchetPsXlsx
         $dataIn = $pays->getOtch(true);
         $sum = 0;
         foreach ($dataIn as $data) {
-            $sum += $data['MerchVozn'];//$data['ComissSumm'] + $data['MerchVozn'];
+            $sum += $data['VoznagSumm'];
         }
         return round($sum/100.0,2);
     }
