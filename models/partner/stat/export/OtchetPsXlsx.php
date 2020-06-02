@@ -121,16 +121,18 @@ class OtchetPsXlsx
         }
         $partners = $partners->all();
         foreach ($partners as $partner) {
+            $begOstVozn = $this->VoznVepayPrevPeriod($partner);
             $row = [
                 $partner->Name,
-                $this->OstBeg($partner),
+                $this->OstBeg($partner) - $begOstVozn,
                 $this->PogashSum($partner),
                 $this->VydachSum($partner),
                 $this->PopolnenSum($partner),
                 $this->VyvodSum($partner),
                 $this->ProchSpisanSum($partner),
-                $this->OstEnd($partner)
+                0//$this->OstEnd($partner)
             ];
+            $row[7] = $row[1] + $row[2] - $row[3] + $row[4] - $row[5] - $row[6];
             $ret[] = $row;
         }
         return $ret;
@@ -153,6 +155,7 @@ class OtchetPsXlsx
 
     private function OstBeg(Partner $partner)
     {
+        //на счете - сумма погашений + вознаграждение Vepay (за минусом банка) за предыдущий период
         $query = (new Query())
             ->select('SummAfter')
             ->from('partner_orderout')
@@ -163,6 +166,8 @@ class OtchetPsXlsx
 
         $sumout = round($query->scalar()/100.0, 2);
 
+        //на счете - остаток по выплатам + вознаграждение Vepay (с учётом банка) за предыдущий период
+        //если один счет то плюсом сумма погашений с вознагражденим Vepay за предыдущий период
         $query = (new Query())
             ->select('SummAfter')
             ->from('partner_orderin')
@@ -283,7 +288,7 @@ class OtchetPsXlsx
 
         return $sumout+$sumin+$sumvozn;*/
 
-        $pays = new PayShetStat();
+        /*$pays = new PayShetStat();
         $pays->setAttributes([
             'IdPart' => $partner->ID,
             'datefrom' => date("d.m.Y H:i", $this->datefrom),
@@ -295,7 +300,26 @@ class OtchetPsXlsx
         foreach ($dataIn as $data) {
             $sum += $data['ComissSumm'] + $data['MerchVozn'];
         }
-        return $sumout + $sumin + round($sum/100.0, 2);
+        return $sumout + $sumin + round($sum/100.0, 2);*/
+
+        return $sumout+$sumin;
+    }
+
+    private function VoznVepayPrevPeriod(Partner $partner)
+    {
+        $pays = new PayShetStat();
+        $pays->setAttributes([
+            'IdPart' => $partner->ID,
+            'datefrom' => date("d.m.Y H:i", strtotime('-1 month', $this->datefrom)),
+            'dateto' => date("d.m.Y H:i", $this->datefrom - 1),
+            'TypeUslug' => TU::InAll()//array_merge(TU::InAll(), TU::OutMfo())
+        ]);
+        $dataIn = $pays->getOtch(true);
+        $sum = 0;
+        foreach ($dataIn as $data) {
+            $sum += $data['MerchVozn'];//$data['ComissSumm'] + $data['MerchVozn'];
+        }
+        return round($sum/100.0,2);
     }
 
 }
