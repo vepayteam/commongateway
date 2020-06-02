@@ -107,6 +107,19 @@ use yii\web\UploadedFile;
  * @property string $Apple_MerchIdentKey
  * @property string $Apple_MerchIdentCert
  * @property integer $IsUseApplepay
+ * @property string $GoogleMerchantID
+ * @property integer $IsUseGooglepay
+ * @property string $SamsungMerchantID
+ * @property integer $IsUseSamsungpay
+ * @property string $MtsLoginAft
+ * @property string $MtsPasswordAft
+ * @property string $MtsTokenAft
+ * @property string $MtsLoginJkh
+ * @property string $MtsPasswordJkh
+ * @property string $MtsTokenJkh
+ * @property string $MtsLoginOct
+ * @property string $MtsPasswordOct
+ * @property string $MtsTokenOct
  *
  */
 class Partner extends \yii\db\ActiveRecord
@@ -131,13 +144,15 @@ class Partner extends \yii\db\ActiveRecord
         return [
             [['Name'], 'required', 'on' => self::SCENARIO_DEFAULT],
             [['IsBlocked', 'UrState', 'IsMfo', 'IsAftOnly', 'IsUnreserveComis', 'TypeMerchant', 'VoznagVyplatDirect',
-                'IsAutoPerevodToVydacha', 'IsCommonSchetVydacha', 'IsUseKKmPrint', 'IsUseApplepay'], 'integer'],
+                'IsAutoPerevodToVydacha', 'IsCommonSchetVydacha', 'IsUseKKmPrint',
+                'IsUseApplepay', 'IsUseGooglepay', 'IsUseSamsungpay'], 'integer'],
             [['UrAdres', 'PostAdres'], 'string', 'max' => 1000],
             [['UrAdres', 'PostAdres', 'Apple_PayProcCert'], 'string', 'max' => 1000],
             [['Name', 'UrLico'], 'string', 'max' => 250],
             [['URLSite', 'PodpisantFull', 'PodpDoljpost', 'PodpDoljpostRod', 'PodpOsnovan', 'PodpOsnovanRod',
                 'KontTehFio', 'KontFinansFio', 'BankName', 'PaaswordApi', 'MtsLogin', 'MtsPassword', 'MtsToken',
-                'Apple_MerchantID', 'Apple_displayName', 'Apple_KeyPasswd', 'Apple_MerchIdentKey', 'Apple_MerchIdentCert'
+                'Apple_MerchantID', 'Apple_displayName', 'Apple_KeyPasswd', 'Apple_MerchIdentKey', 'Apple_MerchIdentCert',
+                'GoogleMerchantID', 'SamsungMerchantID'
             ], 'string', 'max' => 100],
             [['KeyTkbAft', 'KeyTkbEcom', 'KeyTkbVyvod', 'KeyTkbPerevod', 'KeyTkbAuto1', 'KeyTkbAuto2',
                 'KeyTkbAuto3', 'KeyTkbAuto4', 'KeyTkbAuto5', 'KeyTkbAuto6', 'KeyTkbAuto7', 'IpAccesApi', 'KeyTkbJkh',
@@ -250,12 +265,22 @@ class Partner extends \yii\db\ActiveRecord
             'MtsLogin' => 'Логин МТС Банк',
             'MtsPassword' => 'Пароль МТС Банк',
             'MtsToken' => 'Токен МТС Банк',
+            'MtsLoginAft' => 'Логин МТС Банк AFT',
+            'MtsPasswordAft' => 'Пароль МТС Банк AFT',
+            'MtsTokenAft' => 'Токен МТС Банк AFT',
+            'MtsLoginOct' => 'Логин МТС Банк OCT',
+            'MtsPasswordOct' => 'Пароль МТС Банк OCT',
+            'MtsTokenOct' => 'Токен МТС Банк OCT',
             'Apple_MerchantID' => 'Apple MerchantID',
             'Apple_PayProcCert' => 'Payment Processing Certificate',
             'Apple_KeyPasswd' => 'Apple пароль закрытого ключа',
             'Apple_MerchIdentKey' => 'Merchant Identity Key',
             'Apple_MerchIdentCert' => 'Merchant Identity Certificate',
             'IsUseApplepay' => 'Используется Apple Pay',
+            'GoogleMerchantID' => 'Google MerchantID',
+            'IsUseGooglepay' => 'Используется Google Pay',
+            'SamsungMerchantID' => 'Samsung MerchantID',
+            'IsUseSamsungpay' => 'Используется Samsung Pay',
         ];
     }
 

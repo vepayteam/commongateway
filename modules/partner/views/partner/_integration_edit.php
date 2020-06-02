@@ -135,6 +135,14 @@ if ($partner->IsMfo) {
 echo $form->field($partner, 'MtsLogin')->textInput(['class' => 'form-control']);
 echo $form->field($partner, 'MtsPassword')->textInput(['class' => 'form-control']);
 echo $form->field($partner, 'MtsToken')->textInput(['class' => 'form-control']);
+
+echo $form->field($partner,'MtsLoginAft')->textInput(['class' => 'form-control']);
+echo $form->field($partner,'MtsPasswordAft')->textInput(['class' => 'form-control']);
+echo $form->field($partner,'MtsTokenAft')->textInput(['class' => 'form-control']);
+echo $form->field($partner,'MtsLoginOct')->textInput(['class' => 'form-control']);
+echo $form->field($partner,'MtsPasswordOct')->textInput(['class' => 'form-control']);
+echo $form->field($partner,'MtsTokenOct')->textInput(['class' => 'form-control']);
+
 ?>
 <div class="row">
     <div class="col-sm-8 col-sm-offset-3">
@@ -148,7 +156,7 @@ ActiveForm::end();
 
 <div class="row">
     <div class="m-md">
-        <h3>Настройки ApplePay</h3>
+        <h3>Настройки ApplePay, GooglePay, SamsungPay</h3>
     </div>
 </div>
 
@@ -187,6 +195,28 @@ echo $form->field($partner, 'Apple_MerchIdentCert')->fileInput(['class' => 'form
         ?>
     </div>
 </div>
+
+<?= $form->field($partner, 'GoogleMerchantID')->textInput(['class' => 'form-control']);?>
+<div class="row no-margins">
+    <div class="col-sm-8 col-sm-offset-3">
+        <?php
+        echo $form->field($partner,'IsUseGooglepay')->checkbox([
+            'template' => "<div class=\"checkbox m-l-sm\">\n{input}\n{beginLabel}\n{labelTitle}\n{endLabel}\n{error}\n{hint}\n</div>"
+        ]);
+        ?>
+    </div>
+</div>
+<?= $form->field($partner, 'SamsungMerchantID')->textInput(['class' => 'form-control']);?>
+<div class="row no-margins">
+    <div class="col-sm-8 col-sm-offset-3">
+        <?php
+        echo $form->field($partner,'IsUseSamsungpay')->checkbox([
+            'template' => "<div class=\"checkbox m-l-sm\">\n{input}\n{beginLabel}\n{labelTitle}\n{endLabel}\n{error}\n{hint}\n</div>"
+        ]);
+        ?>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-sm-8 col-sm-offset-3">
         <input type="hidden" name="Partner_ID" value="<?=$partner->ID?>">

@@ -10,7 +10,8 @@ class SamsungPay
     {
         $res = Yii::$app->db->createCommand('
             SELECT 
-                `IsUseApplepay`
+                `SamsungMerchantID` AS `Samsung_MerchantID`,
+                `IsUseSamsungpay`
             FROM 
                 `partner` 
             WHERE 
@@ -18,6 +19,6 @@ class SamsungPay
             LIMIT 1
         ', [':IDMFO' => $IdPartner]
         )->queryOne();
-        return $res && $res['IsUseApplepay'] ? ['IsUseSamsungpay' => 1, 'Samsung_MerchantID' => '000000000000000000'] : ['IsUseSamsungpay' => 0];
+        return $res;
     }
 }

@@ -10,7 +10,8 @@ class GooglePay
     {
         $res = Yii::$app->db->createCommand('
             SELECT 
-                `IsUseApplepay`
+                `GoogleMerchantID` AS `Google_MerchantID`,
+                `IsUseGooglepay`
             FROM 
                 `partner` 
             WHERE 
@@ -18,6 +19,6 @@ class GooglePay
             LIMIT 1
         ', [':IDMFO' => $IdPartner]
         )->queryOne();
-        return $res && $res['IsUseApplepay'] ? ['IsUseGooglepay' => 1, 'Google_MerchantID' => '000000000000000000000'] : ['IsUseGooglepay' => 0];
+        return $res;
     }
 }
