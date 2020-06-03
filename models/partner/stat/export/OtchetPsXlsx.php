@@ -23,8 +23,8 @@ class OtchetPsXlsx
 
     public function __construct($datefrom, $dateto, $partner)
     {
-        $this->datefrom = strtotime($datefrom);
-        $this->dateto = strtotime($dateto);
+        $this->datefrom = strtotime($datefrom.":00");
+        $this->dateto = strtotime($dateto.":59");
         $this->partner = (int)$partner;
     }
 
@@ -75,7 +75,7 @@ class OtchetPsXlsx
             }
         }
 
-        $this->sheet->setCellValue(self::xl($k+20)."1", 'Остаток на конец = Остаток на начало периода + Выручка - Выдача займа + Пополнение плат системы + Перечисление на р/сч - Прочие списания');
+        $this->sheet->setCellValue(self::xl($k+20)."1", 'Остаток на конец = Остаток на начало периода + Выручка - Выдача займа + Пополнение плат системы + Перечисление на р/сч');
 
         $content['name'] = 'otchet.xlsx';
         $content['data'] = $this->content($objPHPExcel);
