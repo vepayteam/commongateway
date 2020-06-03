@@ -221,7 +221,7 @@ class OtchetPsXlsx
         $query = (new Query())
             ->select('OstEnd')
             ->from('otchetps')
-            ->where(['IdPartner' => $partner->ID, 'DateFrom' => $prevMonth, 'DateTo' => $this->datefrom])
+            ->where(['IdPartner' => $partner->ID, 'DateFrom' => $prevMonth, 'DateTo' => $this->datefrom - 1])
             ->limit(1);
 
         $sumost = $query->scalar();
