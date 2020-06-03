@@ -41,7 +41,8 @@ class OtchetPsXlsx
         $this->sheet->getColumnDimension('E')->setWidth(18);
         $this->sheet->getColumnDimension('F')->setWidth(18);
         $this->sheet->getColumnDimension('G')->setWidth(18);
-        $this->sheet->getColumnDimension('H')->setWidth(21);
+        $this->sheet->getColumnDimension('H')->setWidth(18);
+        $this->sheet->getColumnDimension('I')->setWidth(21);
 
         $head = [
             "Платежная система",
@@ -50,15 +51,16 @@ class OtchetPsXlsx
             "Выдача займа, руб",
             "Пополнение плат системы, руб",
             "Перечисление на р/сч, руб",
-            "Прочие списания, руб",
+            "Прочие списания (погашения), руб",
+            "Прочие списания (выдачи), руб",
             "Остаток на конец периода ". date("d.m.Y", $this->dateto)
         ];
 
-        $this->sheet->getStyle("A1:H1")->getFont()
+        $this->sheet->getStyle("A1:I1")->getFont()
             ->setBold(true);
-        $this->sheet->getStyle("A1:H1")->getAlignment()
+        $this->sheet->getStyle("A1:I1")->getAlignment()
             ->setWrapText(true);
-        $this->sheet->getStyle('A1:H1')->getAlignment()
+        $this->sheet->getStyle('A1:I1')->getAlignment()
             ->setHorizontal(Alignment::HORIZONTAL_CENTER);
         foreach ($head as $k => $h) {
             $this->sheet->setCellValue(self::xl($k)."1", $h);
@@ -68,7 +70,7 @@ class OtchetPsXlsx
         $data = $this->GetData();
         foreach ($data as $i => $row) {
             foreach ($row as $k => $v) {
-                $this->sheet->setCellValue(self::xl($k) . ($i + 2), $v);
+                $this->sheet->setCellValue(self::xl($k) . ($i + 2), $k > 0 ? $v / 100 : $v);
                 $this->sheet->getStyle(self::xl($k) . ($i + 2))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
             }
         }
@@ -122,20 +124,40 @@ class OtchetPsXlsx
             $partners = $partners->andWhere(['not in', 'ID', [1,5,7,9]]);
         }
         $partners = $partners->all();
+        /** @var Partner $partner */
         foreach ($partners as $partner) {
-            $begOstVozn = $this->VoznVepayPrevPeriod($partner);
+            //$begOstVozn = $this->VoznVepayPrevPeriod($partner);
             $row = [
                 $partner->Name,
-                $this->OstBeg($partner) - $begOstVozn,
+                $this->OstBeg($partner),
                 $this->PogashSum($partner),
                 $this->VydachSum($partner),
                 $this->PopolnenSum($partner),
                 $this->VyvodSum($partner),
-                $this->ProchSpisanSum($partner),
+                $this->ProchSpisanPaySum($partner, TU::InAll()),
+                $this->ProchSpisanPaySum($partner, TU::OutMfo()),
                 0//$this->OstEnd($partner)
             ];
-            $row[7] = $row[1] + $row[2] - $row[3] + $row[4] - $row[5] - $row[6];
+            $row[8] = $row[1] + $row[2] - $row[3] + $row[4] - $row[5];
             $ret[] = $row;
+
+            Yii::$app->db->createCommand()
+                ->delete('otchetps', ['IdPartner' => $partner->ID, 'DateFrom' => $this->datefrom, 'DateTo' => $this->dateto])
+                ->execute();
+            Yii::$app->db->createCommand()
+                ->insert('otchetps', [
+                    'IdPartner' => $partner->ID,
+                    'DateFrom' => $this->datefrom,
+                    'DateTo' => $this->dateto,
+                    'OstBeg' => $row[1],
+                    'OstEnd' => $row[8],
+                    'Pogashen' => $row[2],
+                    'Vedacha' => $row[3],
+                    'Popolnen' => $row[4],
+                    'Perechislen' => $row[5],
+                    'ProchspisanPogas' => $row[6],
+                    'ProchspisanVydach' => $row[7]
+                ])->execute();
         }
         return $ret;
     }
@@ -149,25 +171,27 @@ class OtchetPsXlsx
             ->where(['IdPartner' => $partner->ID, 'StateOp' => 1, 'TypePerechisl' => 1])
             ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto]);
 
-        $sumout = round($query->scalar()/100.0, 2);*/
+        $sumout = $query->scalar()*/
 
         $query = (new Query())
             ->select('SUM(SummPP)')
             ->from('statements_account')
             ->where(['IdPartner' => $partner->ID, 'IsCredit' => 0])
-            ->andWhere(['like', 'Description', 'Расчеты по договору'])
+            ->andWhere(['or',
+                ['like', 'Description', 'Расчеты по договору'],
+                ['like', 'Description', 'Перевод денежных средств по заявлению Клиента']
+            ])
             ->andWhere(['<>', 'Bic', '044525388'])
             ->andWhere('DatePP BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto]);
 
-        $sumout = round($query->scalar()/100.0, 2);
+        $sumout = $query->scalar();
 
-        return $sumout;
-
+        return round($sumout);
     }
 
     private function OstBeg(Partner $partner)
     {
-        //на счете - сумма погашений + вознаграждение Vepay (за минусом банка) за предыдущий период
+        /*//на счете - сумма погашений + вознаграждение Vepay (за минусом банка) за предыдущий период
         $query = (new Query())
             ->select('SummAfter')
             ->from('partner_orderout')
@@ -176,7 +200,7 @@ class OtchetPsXlsx
             ->orderBy(['ID' => SORT_DESC])
             ->limit(1);
 
-        $sumout = round($query->scalar()/100.0, 2);
+        $sumout = $query->scalar();
 
         //на счете - остаток по выплатам + вознаграждение Vepay (с учётом банка) за предыдущий период
         //если один счет то плюсом сумма погашений с вознагражденим Vepay за предыдущий период
@@ -188,9 +212,22 @@ class OtchetPsXlsx
             ->orderBy(['ID' => SORT_DESC])
             ->limit(1);
 
-        $sumin = round($query->scalar()/100.0, 2);
+        $sumin = $query->scalar();
 
-        return $sumout + $sumin;
+        return $sumout + $sumin;*/
+
+        $prevMonth = strtotime('-1 month', $this->datefrom);
+
+        $query = (new Query())
+            ->select('OstEnd')
+            ->from('otchetps')
+            ->where(['IdPartner' => $partner->ID, 'DateFrom' => $prevMonth, 'DateTo' => $this->datefrom])
+            ->limit(1);
+
+        $sumost = $query->scalar();
+
+        return round($sumost);
+
     }
 
     private function OstEnd(Partner $partner)
@@ -203,7 +240,7 @@ class OtchetPsXlsx
             ->orderBy(['ID' => SORT_DESC])
             ->limit(1);
 
-        $sumout = round($query->scalar()/100.0, 2);
+        $sumout = $query->scalar();
 
         $query = (new Query())
             ->select('SummAfter')
@@ -213,9 +250,9 @@ class OtchetPsXlsx
             ->orderBy(['ID' => SORT_DESC])
             ->limit(1);
 
-        $sumin = round($query->scalar()/100.0, 2);
+        $sumin = $query->scalar();
 
-        return $sumout + $sumin;
+        return round($sumout + $sumin);
     }
 
     private function PogashSum(Partner $partner)
@@ -232,7 +269,7 @@ class OtchetPsXlsx
         foreach ($dataIn as $data) {
             $sum += $data['SummPay'];
         }
-        return round($sum/100.0, 2);
+        return round($sum);
     }
 
     private function VydachSum(Partner $partner)
@@ -249,7 +286,7 @@ class OtchetPsXlsx
         foreach ($dataOut as $data) {
             $sum += $data['SummPay'];
         }
-        return round($sum/100.0, 2);
+        return round($sum);
     }
 
     private function PopolnenSum(Partner $partner)
@@ -271,11 +308,12 @@ class OtchetPsXlsx
             ->where(['IdPartner' => $partner->ID, 'IsCredit' => 1])
             ->andWhere(['or',
                 ['like', 'Description', 'пополнение транзитного счета'],
+                ['like', 'Description', 'Перенос денежных средств'],
                 ['like', 'Description', 'Перенос денежных средств']
             ])
             ->andWhere('DatePP BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto]);
 
-        return round($query->scalar()/100.0, 2);
+        return round($query->scalar());
     }
 
     private function ProchSpisanSum(Partner $partner)
@@ -288,7 +326,7 @@ class OtchetPsXlsx
             ->andWhere(['<', 'Summ', 0])
             ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto]);
 
-        $sumout = -round($query->scalar()/100.0, 2);
+        $sumout = -$query->scalar();
 
         $query = (new Query())
             ->select('SUM(Summ)')
@@ -298,33 +336,26 @@ class OtchetPsXlsx
             ->andWhere(['<', 'Summ', 0])
             ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto]);
 
-        $sumin = -round($query->scalar()/100.0, 2);
+        $sumin = -$query->scalar();
 
-        /*$query = (new Query())
-            ->select('SUM(Summ)')
-            ->from('vyvod_system')
-            ->where(['IdPartner' => $partner->ID, 'SatateOp' => 1])
-            ->andWhere('DateOp BETWEEN :DATEFROM AND  :DATETO', [':DATEFROM' => $this->datefrom, ':DATETO' => $this->dateto]);
+        return round($sumout+$sumin);
+    }
 
-        $sumvozn = round($query->scalar()/100.0, 2);
-
-        return $sumout+$sumin+$sumvozn;*/
-
-        /*$pays = new PayShetStat();
+    private function ProchSpisanPaySum(Partner $partner, array $typesUsl)
+    {
+        $pays = new PayShetStat();
         $pays->setAttributes([
             'IdPart' => $partner->ID,
             'datefrom' => date("d.m.Y H:i", $this->datefrom),
             'dateto' => date("d.m.Y H:i", $this->dateto),
-            'TypeUslug' => array_merge(TU::InAll(), TU::OutMfo())
+            'TypeUslug' => $typesUsl
         ]);
         $dataIn = $pays->getOtch(true);
         $sum = 0;
         foreach ($dataIn as $data) {
             $sum += $data['ComissSumm'] + $data['MerchVozn'];
         }
-        return $sumout + $sumin + round($sum/100.0, 2);*/
-
-        return $sumout+$sumin;
+        return round($sum);
     }
 
     private function VoznVepayPrevPeriod(Partner $partner)
@@ -341,7 +372,7 @@ class OtchetPsXlsx
         foreach ($dataIn as $data) {
             $sum += $data['VoznagSumm'];
         }
-        return round($sum/100.0,2);
+        return round($sum);
     }
 
 }
