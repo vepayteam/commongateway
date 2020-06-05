@@ -727,6 +727,9 @@ components:
         message:
           type: string
           description: Сообщение ошибки
+        rc:
+          type: string
+          description: Код ошибки банка (может отсутствовать)
     StatusResult:
       type: object
       properties:

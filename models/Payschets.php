@@ -95,6 +95,7 @@ class Payschets
                 ps.CardHolder,
                 ps.CardExp,
                 ps.RRN,
+                ps.RCCode,
                 ps.CardType,
                 ps.BankName,
                 ps.sms_accept,
@@ -156,7 +157,7 @@ class Payschets
 
     /**
      * Сохранение платежа и экспорт
-     * @param array $params [idpay, result_code, trx_id, ApprovalCode, RRN, message]
+     * @param array $params [idpay, result_code, trx_id, ApprovalCode, RRN, RCCode, message]
      * @return bool
      * @throws \yii\db\Exception
      * @throws \Exception
@@ -275,6 +276,7 @@ class Payschets
                 'ExtKeyAcces' => 0,
                 'ApprovalCode' => isset($params['ApprovalCode']) ? $params['ApprovalCode'] : '',
                 'RRN' => $params['RRN'],
+                'RCCode' => isset($params['RCCode']) ? mb_substr($params['RCCode'],0,3) : null,
                 //'CardNum' => isset($params['CardNum']) ? $params['CardNum'] : '',
                 //'CardType' => isset($params['CardBrand']) ? $params['CardBrand'] : '',
                 //'BankName' => isset($params['CardIssuingBank']) ? $params['CardIssuingBank'] : '',
@@ -516,6 +518,7 @@ class Payschets
             ->update('pay_schet', [
                 'Status' => 2,
                 'ErrorInfo' => isset($params['message']) ? mb_substr($params['message'], 0, 250) : '',
+                'RCCode' => isset($params['RCCode']) ? mb_substr($params['RCCode'],0,3) : null,
                 'CountSendOK' => 0
             ], '`ID` = :ID', [':ID' => $params['idpay']])
             ->execute();

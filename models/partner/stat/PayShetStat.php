@@ -110,7 +110,8 @@ class PayShetStat extends Model
                 'qp.ProvComisMin',
                 'ps.sms_accept',
                 'ps.Dogovor',
-                'ps.FIO'
+                'ps.FIO',
+                'ps.RCCode'
             ])
             ->from('`pay_schet` AS ps')
             ->leftJoin('`banks` AS b', 'ps.Bank = b.ID')

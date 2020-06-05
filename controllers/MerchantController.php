@@ -181,7 +181,7 @@ class MerchantController extends Controller
                     }
                 }
             }
-            $state = ['status' => (int)$ret['status'], 'message' => (string)$ret['message'], 'info' => $ret['info'], 'card' => $card];
+            $state = ['status' => (int)$ret['status'], 'message' => (string)$ret['message'], 'rc' => (string)$ret['rc'], 'info' => $ret['info'], 'card' => $card];
         } else {
             $state = ['status' => 0, 'message' => 'Счет не найден'];
         }

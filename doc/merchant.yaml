@@ -214,6 +214,9 @@ components:
         message:
           type: string
           description: Сообщение ошибки
+        rc:
+          type: string
+          description: Код ошибки банка (может отсутствовать)
         info:
           $ref: "#/components/schemas/PayInfo"
         card:
