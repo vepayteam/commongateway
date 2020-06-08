@@ -47,10 +47,11 @@ class VoznagStat extends Model
                 'ut.IDPartner',
                 'ut.ProvVoznagPC',
                 'ut.ProvVoznagMin',
-                'ps.SummPay',
-                'ps.ComissSumm',
-                'ps.MerchVozn',
-                'ps.BankComis',
+                'SUM(ps.SummPay) AS SummPay',
+                'SUM(ps.ComissSumm) AS ComissSumm',
+                'SUM(ps.MerchVozn) AS MerchVozn',
+                'SUM(ps.BankComis) AS BankComis',
+                'COUNT(*) AS CntPays',
                 'ps.IdUsluga',
                 'ut.IsCustom',
                 'ut.ProvVoznagPC',
@@ -62,7 +63,6 @@ class VoznagStat extends Model
             ->from('`pay_schet` AS ps')
             ->leftJoin('`uslugatovar` AS ut', 'ps.IdUsluga = ut.ID')
             ->leftJoin('`partner` AS r', 'r.ID = ut.IDPartner')
-            ->leftJoin('`banks` AS b', 'ps.Bank = b.ID')
             ->where('ps.DateCreate BETWEEN :DATEFROM AND :DATETO', [
                 ':DATEFROM' => $dateFrom,
                 ':DATETO' => $dateTo
@@ -83,6 +83,7 @@ class VoznagStat extends Model
         }
 
         $query->andWhere(['in', 'ut.IsCustom', $tuList]);
+        $query->groupBy('ps.IdUsluga');
         $res = $query->cache(10)->all();
 
         $ret = [];
@@ -92,8 +93,6 @@ class VoznagStat extends Model
 
             $indx = $row['IDPartner'];
             if (!isset($ret[$indx])) {
-                $row['CntPays'] = 1;
-
                 $typeVyvyod = 0;
                 if (in_array($row['IsCustom'], [TU::$TOSCHET, TU::$TOCARD])) {
                     $typeVyvyod = 1;
@@ -170,7 +169,7 @@ class VoznagStat extends Model
                 $ret[$indx]['VoznagSumm'] += $row['VoznagSumm'];
                 $ret[$indx]['MerchVozn'] += $row['MerchVozn'];
                 $ret[$indx]['BankComis'] += $row['BankComis'];
-                $ret[$indx]['CntPays']++;
+                $ret[$indx]['CntPays'] += $row['CntPays'];
             }
         }
 

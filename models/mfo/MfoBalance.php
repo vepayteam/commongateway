@@ -108,6 +108,7 @@ class MfoBalance
         $bal = Yii::$app->cache->get('mfo_balance_'.$this->Partner->ID);
         if (!$bal) {
 
+            $ret = [];
             $mfo = new MfoReq();
             $mfo->mfo = $this->Partner->ID;
             $TcbGate = new TcbGate($this->Partner->ID, TCBank::$AFTGATE);

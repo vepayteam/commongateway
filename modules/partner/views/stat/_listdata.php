@@ -74,7 +74,12 @@ use app\models\TU;
                 <td><?= $row['ExtBillNumber'] ?></td>
                 <td><span class="label label-primary" style="background-color: <?=$stClr[$row['Status']]?>">
                         <?= (!$row['sms_accept'] && $row['Status'] == 0) ? 'Создан' : $st[$row['Status']]?></span></td>
-                <td><?= $row['ErrorInfo'] ?></td>
+                <td>
+                    <div><?= $row['ErrorInfo'] ?></div>
+                    <?php if ($row['Status'] == 2 && !empty($row['RCCode'])) : ?>
+                        <div>Код: <?= $row['RCCode'] ?></div>
+                    <?php endif; ?>
+                </td>
                 <td><?= $row['CardType'] ?></td>
                 <td><?= $row['CountryUser'] . " " . $row['CityUser'] ?></td>
                 <td>

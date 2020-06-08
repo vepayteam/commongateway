@@ -155,7 +155,7 @@ class TCBank implements IBank
 
         if ($params) {
             $state = $params['Status'];
-            $ApprovalCode = $RRN = '';
+            $ApprovalCode = $RRN = $RCCode = '';
             if ($params['Status'] == 0 && $params['sms_accept'] == 1) {
 
                 //шлюз
@@ -184,9 +184,8 @@ class TCBank implements IBank
                 }
                 $status = $this->checkStatusOrder($params, $isCron);
 
-                if (isset($status['xml']['orderinfo']['statedescription'])) {
-                    $mesg = $status['xml']['orderinfo']['statedescription'];
-                }
+                $mesg = $status['xml']['orderinfo']['statedescription'] ?? '';
+                $RCCode = $status['xml']['orderadditionalinfo']['rc'] ?? '';
 
                 if ($status['state'] > 0) {
                     //1 - оплачен, 2,3 - не оплачен
@@ -208,7 +207,7 @@ class TCBank implements IBank
 
                     if ($status['state'] == 1) {
                         //$ApprovalCode = isset($status['xml']['APPROVAL_CODE']) ? $status['xml']['APPROVAL_CODE'] : '';
-                        $RRN = isset($status['xml']['orderadditionalinfo']['rrn']) ? $status['xml']['orderadditionalinfo']['rrn'] : '';
+                        $RRN = $status['xml']['orderadditionalinfo']['rrn'] ?? '';
                     }
 
                     $payschets->confirmPay([
@@ -218,18 +217,23 @@ class TCBank implements IBank
                         'trx_id' => $params['ExtBillNumber'],
                         'ApprovalCode' => $ApprovalCode,
                         'RRN' => $RRN,
+                        'RCCode' => $RCCode,
                         'message' => $mesg
                     ]);
                 }
                 $state = $status['state'];
+                $RCCode = $status['xml']['orderadditionalinfo']['rc'] ?? '';
+
             } elseif (in_array($state, [1, 2, 3])) {
                 $mesg = $params['ErrorInfo'];
                 //$ApprovalCode = $params['ApprovalCode'];
                 $RRN = $params['RRN'];
+                $RCCode = $params['RCCode'];
             }
             return [
                 'status' => $state,
                 'message' => $mesg,
+                'rc' => $RCCode,
                 'IdPay' => $params['ID'],
                 'Params' => $params,
                 'info' => ['card' => $params['CardNum'], 'brand' => $params['CardType'], 'rrn' => $RRN, 'transact' => $params['ExtBillNumber']]
