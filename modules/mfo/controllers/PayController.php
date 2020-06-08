@@ -238,7 +238,7 @@ class PayController extends Controller
         $tcBank = new TCBank();
         $ret = $tcBank->confirmPay($IdPay, $mfo->mfo);
         if ($ret && isset($ret['status']) && $ret['IdPay'] != 0) {
-            $state = ['status' => (int)$ret['status'], 'message' => (string)$ret['message'], 'rc' => (string)$ret['rc']];
+            $state = ['status' => (int)$ret['status'], 'message' => (string)$ret['message'], 'rc' => isset($ret['rc']) ?(string)$ret['rc'] : ''];
         } else {
             $state = ['status' => 0, 'message' => 'Счет не найден'];
         }
