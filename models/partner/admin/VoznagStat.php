@@ -93,8 +93,6 @@ class VoznagStat extends Model
 
             $indx = $row['IDPartner'];
             if (!isset($ret[$indx])) {
-                $row['CntPays'] = 1;
-
                 $typeVyvyod = 0;
                 if (in_array($row['IsCustom'], [TU::$TOSCHET, TU::$TOCARD])) {
                     $typeVyvyod = 1;
