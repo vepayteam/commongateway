@@ -239,7 +239,7 @@ class TCBank implements IBank
                 'info' => ['card' => $params['CardNum'], 'brand' => $params['CardType'], 'rrn' => $RRN, 'transact' => $params['ExtBillNumber']]
             ];
         }
-        return ['status' => 0, 'message' => $mesg, 'IdPay' => 0, 'Params' => null, 'info' => null];
+        return ['status' => 0, 'message' => $mesg, 'rc' => '', 'IdPay' => 0, 'Params' => null, 'info' => null];
     }
 
     /**

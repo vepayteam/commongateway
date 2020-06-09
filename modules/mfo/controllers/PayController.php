@@ -3,8 +3,6 @@
 namespace app\modules\mfo\controllers;
 
 use app\models\api\CorsTrait;
-use app\models\bank\BankMerchant;
-use app\models\bank\MTSBank;
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\crypt\CardToken;
@@ -13,7 +11,6 @@ use app\models\kfapi\KfPay;
 use app\models\mfo\MfoReq;
 use app\models\payonline\CreatePay;
 use app\models\Payschets;
-use app\models\TU;
 use Yii;
 use yii\helpers\VarDumper;
 use yii\web\BadRequestHttpException;
@@ -247,7 +244,7 @@ class PayController extends Controller
             $merchBank = BankMerchant::Create($params);
             $ret = $merchBank->confirmPay($IdPay, $mfo->mfo);
             if ($ret && isset($ret['status']) && $ret['IdPay'] != 0) {
-                return ['status' => (int)$ret['status'], 'message' => (string)$ret['message']];
+                return ['status' => (int)$ret['status'], 'message' => (string)$ret['message'], 'rc' => isset($ret['rc']) ?(string)$ret['rc'] : ''];
             }
         }
         return ['status' => 0, 'message' => 'Счет не найден'];
