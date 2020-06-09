@@ -242,13 +242,13 @@
             }
         },
 
-        googlepay: function (merchantIdentifier, amount, label) {
+        googlepay: function (merchantIdentifier, amount, label, gate, istest) {
             if (google) {
-                let paymentsClient = new google.payments.api.PaymentsClient({environment: 'TEST'});
+                let paymentsClient = new google.payments.api.PaymentsClient({environment: istest ? 'TEST' : 'PROD'});
 
                 let getGooglePaymentDataConfiguration = {
                     merchantId: merchantIdentifier,
-                    environment: 'TEST',
+                    environment: istest ? 'TEST' : 'PROD',
                     transactionInfo: {
                         totalPriceStatus: 'FINAL',
                         totalPrice: amount,
@@ -257,13 +257,13 @@
                     paymentMethodTokenizationParameters: {
                         tokenizationType: 'PAYMENT_GATEWAY',
                         parameters: {
-                            gateway: 'mpgs', //
+                            gateway: gate, //
                             gatewayMerchantId: merchantIdentifier //
                         }
                     },
                     allowedPaymentMethods: ['CARD', 'TOKENIZED_CARD'],
                     cardRequirements: {
-                        allowedCardNetworks: ['MASTERCARD', 'VISA', 'MIR']
+                        allowedCardNetworks: ['MASTERCARD', 'VISA']
                     },
                     phoneNumberRequired: false,
                     emailRequired: false

@@ -154,6 +154,8 @@ class SettingsController extends Controller
                 $banksave->SortOrder = $bank['SortOrder'];
                 $banksave->UsePayIn = $bank['UsePayIn'] ?? 0;
                 $banksave->UseApplePay = $bank['UseApplePay'] ?? 0;
+                $banksave->UseGooglePay = $bank['UseGooglePay'] ?? 0;
+                $banksave->UseSamsungPay = $bank['UseSamsungPay'] ?? 0;
                 if (!$banksave->save()) {
                     return ['status' => 0, 'message' => 'Ошибка сохранения'];
                 }

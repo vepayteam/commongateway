@@ -214,7 +214,14 @@ if (isset($apple['IsUseApplepay']) && $apple['IsUseApplepay'] && isset($apple['A
 }
 if (isset($google['IsUseGooglepay']) && $google['IsUseGooglepay']) {
     $this->registerJsFile('https://pay.google.com/gp/p/js/pay.js');
-    $this->registerJs('payform.googlepay("' . $google['Google_MerchantID'] . '", "' . number_format($params['SummFull'] / 100.0, 2, '.', '') . '", "' . $params['NamePartner'] . '");');
+    $this->registerJs('payform.googlepay("' .
+        $google['Google_MerchantID'] . '", "' .
+        number_format($params['SummFull'] / 100.0, 2, '.', '') . '", "' .
+        $params['NamePartner'] . '", "' .
+        'mtsbank", "' .
+        (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] == 'Y' ? 1 : 0) .
+        '");'
+    );
 }
 if (isset($samsung['IsUseSamsungpay']) && $samsung['IsUseSamsungpay']) {
     $this->registerJs('payform.samsungpay("' . $samsung['Samsung_MerchantID'] . '", "' . number_format($params['SummFull'] / 100.0, 2, '.', '') . '", "' . $params['NamePartner'] . '");');
