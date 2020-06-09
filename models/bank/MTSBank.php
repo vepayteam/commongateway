@@ -13,7 +13,7 @@ class MTSBank implements IBank
 {
     public static $bank = 3;
 
-    private $bankUrl = 'https://web.rbsuat.com/mtsbank';
+    private $bankUrl = 'https://oplata.mtsbank.ru/payment/';
     private $bankUrlClient = '';
     private $shopId = 'vepay-api';
     private $certFile = 'vepay';
