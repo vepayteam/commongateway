@@ -624,6 +624,7 @@ class CreatePay
      */
     public function getPaySchetExt($extid, $usl, $IdOrg)
     {
+        $ret = null;
         $mutex = new FileMutex();
         if ($mutex->acquire('getPaySchetExt'.$extid, 30)) {
             $res = Yii::$app->db->createCommand('
@@ -646,7 +647,7 @@ class CreatePay
             )->queryOne();
 
             if ($res) {
-                return [
+                $ret = [
                     'IdPay' => $res['ID'],
                     'sumin' => $res['SummPay'] / 100.0,
                     'summ' => $res['SummPay'] + $res['ComissSumm'],
@@ -659,7 +660,7 @@ class CreatePay
         } else {
             throw new Exception('getPaySchetExt: error lock!');
         }
-        return null;
+        return $ret;
     }
 
     /**
