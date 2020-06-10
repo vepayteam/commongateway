@@ -590,10 +590,6 @@ class TCBank
                     ->setOption(CURLOPT_SSLCERT, $this->UserCert);
             }
 
-            if (Yii::$app->params['DEVMODE'] == 'Y') {
-                $curl->setOption(CURLOPT_PROXY, '194.58.96.139:3128');
-                $curl->setOption(CURLOPT_PROXYUSERPWD, 'vfort:S3n4a@Mvy4');
-            }
             $curl->post($url);
 
         } catch (\Exception $e) {

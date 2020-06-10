@@ -90,7 +90,8 @@ class CardController extends Controller
                 'card' => [
                     'id' => (int)$Card->ID,
                     'num' => (string)$Card->CardNumber,
-                    'exp' => $Card->getMonth() . "/" . $Card->getYear()
+                    'exp' => $Card->getMonth() . "/" . $Card->getYear(),
+                    'holder' => $Card->CardHolder
                 ]
             ];
         } elseif ($Card && $type == 1) {
@@ -100,7 +101,8 @@ class CardController extends Controller
                 'card' => [
                     'id' => (int)$Card->ID,
                     'num' => (string)$Card->CardNumber,
-                    'exp' => ''
+                    'exp' => '',
+                    'holder' => ''
                 ]
             ];
         }
@@ -229,7 +231,8 @@ class CardController extends Controller
                 'card' => [
                     'id' => (int)$Card->ID,
                     'num' => (string)$Card->CardNumber,
-                    'exp' => $Card->getMonth() . "/" . $Card->getYear()
+                    'exp' => $Card->getMonth() . "/" . $Card->getYear(),
+                    'holder' => $Card->CardHolder
                 ]
             ];
 
@@ -240,7 +243,8 @@ class CardController extends Controller
                 'card' => [
                     'id' => (int)$Card->ID,
                     'num' => $Card->CardNumber,
-                    'exp' => ''
+                    'exp' => '',
+                    'holder' => ''
                 ]
             ];
         }

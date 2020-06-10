@@ -10,6 +10,8 @@ use app\models\kfapi\KfOut;
 use app\models\kfapi\KfPay;
 use GeoIp2\Record\MaxMind;
 use Yii;
+use yii\base\Exception;
+use yii\mutex\FileMutex;
 
 class CreatePay
 {
@@ -614,7 +616,7 @@ class CreatePay
 
     /**
      * проверка на повтор счета по внешнему id
-     * @param $extid
+     * @param $string extid
      * @param $usl
      * @param $IdOrg
      * @return array|null
@@ -622,32 +624,40 @@ class CreatePay
      */
     public function getPaySchetExt($extid, $usl, $IdOrg)
     {
-        $res = Yii::$app->db->createCommand('
-            SELECT
-                ps.`ID`,
-                ps.SummPay,
-                ps.ComissSumm,
-                ps.Status,
-                ps.DateCreate,
-                ps.UrlFormPay,
-                ps.QrParams
-            FROM
-                `pay_schet` AS ps
-            WHERE
-                ps.`Extid` = :EXTID
-                AND ps.`IdUsluga` = :USL
-                AND ps.`IdOrg` = :IDORG
-                AND ps.DateCreate > UNIX_TIMESTAMP() - 86400 * 100
-        ', [':EXTID' => $extid, ':USL' => $usl, ':IDORG' => $IdOrg])->queryOne();
+        $mutex = new FileMutex();
+        if ($mutex->acquire('getPaySchetExt'.$extid, 30)) {
+            $res = Yii::$app->db->createCommand('
+                SELECT
+                    ps.`ID`,
+                    ps.SummPay,
+                    ps.ComissSumm,
+                    ps.Status,
+                    ps.DateCreate,
+                    ps.UrlFormPay,
+                    ps.QrParams
+                FROM
+                    `pay_schet` AS ps
+                WHERE
+                    ps.`Extid` = :EXTID
+                    AND ps.`IdUsluga` = :USL
+                    AND ps.`IdOrg` = :IDORG
+                    AND ps.DateCreate > UNIX_TIMESTAMP() - 86400 * 100
+            ', [':EXTID' => $extid, ':USL' => $usl, ':IDORG' => $IdOrg]
+            )->queryOne();
 
-        if ($res) {
-            return [
-                'IdPay' => $res['ID'],
-                'sumin' => $res['SummPay'] / 100.0,
-                'summ' => $res['SummPay'] + $res['ComissSumm'],
-                'url' => $res['UrlFormPay'],
-                'params' => $res['QrParams']
-            ];
+            if ($res) {
+                return [
+                    'IdPay' => $res['ID'],
+                    'sumin' => $res['SummPay'] / 100.0,
+                    'summ' => $res['SummPay'] + $res['ComissSumm'],
+                    'url' => $res['UrlFormPay'],
+                    'params' => $res['QrParams']
+                ];
+            }
+
+            $mutex->release('getPaySchetExt'.$extid);
+        } else {
+            throw new Exception('getPaySchetExt: error lock!');
         }
         return null;
     }
