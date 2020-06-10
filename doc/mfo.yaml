@@ -21,6 +21,7 @@ tags:
     description: Оповещения
 servers:
   - url: https://api.vepay.online/mfo
+  - url: https://test.vepay.online/mfo
 paths:
   /card/info:
     post:
@@ -531,6 +532,9 @@ components:
           type: string
           format: mm/yy
           description: Срок действия (мм/гг)
+        holder:
+          type: string
+          description: Держатель карты
     CardReg:
       type: object
       properties:

@@ -29,7 +29,7 @@ class OtchToEmail
 
     public function run()
     {
-        $dateFrom = date('d.m.Y H:i', strtotime('yesterday'));
+        $dateFrom = date('d.m.Y H:i', strtotime('yesterday')-86400*1000);
         $dateTo = date('d.m.Y H:i', strtotime('today')-1);
         echo "from ".$dateFrom." to ".$dateTo."\r\n";
         Yii::warning("from ".$dateFrom." to ".$dateTo, "rsbcron");
@@ -46,22 +46,23 @@ class OtchToEmail
                 'datefrom' => $dateFrom,
                 'dateto' => $dateTo,
             ]);
-            if ($partner->payment || $partner->repayment){
+            if ($partner->payment || $partner->repayment) {
                 $list = $payschet->getList(1, 0, 1);
-            }else{
-                $list = ['data'=>[]];
+            } else {
+                $list = ['data' => []];
             }
-            if($list['data']){
+            if ($list['data']) {
                 $otch = new OtchToCSV($list, $partner->payment, $partner->repayment);
                 $otch->export();
                 $sender = new SendEmail();//['mailer' => $this->mailer(), 'fromEmail'=>'payments@vepay.online']
-                $subject = "Отчет за период" . $dateFrom . ' - ' . $dateTo;
-                $sender->sendReestr($partner->email, $subject, 'Отчет предоставлен в виде прикрепленного файла csv.', [
-                    [
+                $subject = "Отчет за период " . $dateFrom . ' - ' . $dateTo;
+                $res = $sender->sendReestr($partner->email, $subject, 'Отчет предоставлен в виде прикрепленного файла csv.', [[
                         'data' => file_get_contents($otch->fullpath()),
                         'name' => time().$i. '.csv'
-                    ]
-                ]);
+                ]]);
+                Yii::warning("OtchToEmail: send to " . $partner->email . " result = " . $res, "rsbcron");
+                echo "OtchToEmail: send to " . $partner->email . " result = " . $res . "\r\n";
+
                 if (file_exists($otch->fullpath())){
                     unlink($otch->fullpath());
                 }
