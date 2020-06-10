@@ -60,7 +60,7 @@ class VoznagStat extends Model
                 'ut.ProvComisMin',
                 'r.VoznagVyplatDirect'
             ])
-            ->from('`pay_schet` AS ps')
+            ->from('`pay_schet` AS ps FORCE INDEX(DateCreate_idx)')
             ->leftJoin('`uslugatovar` AS ut', 'ps.IdUsluga = ut.ID')
             ->leftJoin('`partner` AS r', 'r.ID = ut.IDPartner')
             ->where('ps.DateCreate BETWEEN :DATEFROM AND :DATETO', [

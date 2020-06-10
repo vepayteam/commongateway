@@ -85,7 +85,7 @@ class StatGraph extends Model
             $query = new Query();
             $query
                 ->select(['SummPay', 'DateCreate'])
-                ->from('`pay_schet` AS ps')
+                ->from('`pay_schet` AS ps FORCE INDEX(DateCreate_idx)')
                 ->leftJoin('`uslugatovar` AS qp', 'ps.IdUsluga = qp.ID')
                 ->where('ps.DateCreate BETWEEN :DATEFROM AND :DATETO', [
                     ':DATEFROM' => $datefrom, ':DATETO' => $dateto
