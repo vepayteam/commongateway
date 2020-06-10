@@ -86,8 +86,8 @@ class Excerpt
 
     private function convertToDate(int $stamp): string
     {
-        if($stamp){
-            return \DateTime::createFromFormat('U', $stamp)->format('Y-m-d / H:i:s');
+        if ($stamp) {
+            return date('Y-m-d / H:i:s', $stamp);
         }
         return '';
     }
