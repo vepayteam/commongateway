@@ -347,6 +347,8 @@ class Partner extends \yii\db\ActiveRecord
         $usluga->IsCustom = TU::$ECOM;
         $usluga->NameUsluga = "Оплата.".$this->Name;
         $usluga->PcComission = 2.2;
+        $usluga->ProvComisPC = 1.85;
+        $usluga->ProvComisMin = 0;
         $usluga->TypeExport = 1;
         $usluga->save(false);
 
@@ -355,6 +357,7 @@ class Partner extends \yii\db\ActiveRecord
         $usluga->IsCustom = TU::$AVTOPLATECOM;
         $usluga->NameUsluga = "Автоплатеж.".$this->Name;
         $usluga->PcComission = 2.2;
+        $usluga->ProvComisPC = 2.0;
         $usluga->ProvComisMin = 0.60;
         $usluga->TypeExport = 1;
         $usluga->save(false);

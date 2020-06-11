@@ -113,7 +113,7 @@ class PayShetStat extends Model
                 'ps.FIO',
                 'ps.RCCode'
             ])
-            ->from('`pay_schet` AS ps')
+            ->from('`pay_schet` AS ps FORCE INDEX(DateCreate_idx)')
             ->leftJoin('`banks` AS b', 'ps.Bank = b.ID')
             ->leftJoin('`uslugatovar` AS qp', 'ps.IdUsluga = qp.ID')
             ->leftJoin('`user` AS u', 'u.`ID` = ps.`IdUser`')
@@ -210,7 +210,7 @@ class PayShetStat extends Model
                 'ut.ProvComisPC',
                 'ut.ProvComisMin'
             ])
-            ->from('`pay_schet` AS ps')
+            ->from('`pay_schet` AS ps FORCE INDEX(DateCreate_idx)')
             ->leftJoin('`uslugatovar` AS ut', 'ps.IdUsluga = ut.ID')
             ->leftJoin('`banks` AS b', 'ps.Bank = b.ID')
             ->where('ps.DateCreate BETWEEN :DATEFROM AND :DATETO', [

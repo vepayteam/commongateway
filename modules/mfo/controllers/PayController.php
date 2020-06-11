@@ -14,7 +14,9 @@ use app\models\payonline\CreatePay;
 use app\models\Payschets;
 use app\models\TU;
 use Yii;
+use yii\base\Exception;
 use yii\helpers\VarDumper;
+use yii\mutex\FileMutex;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\web\ForbiddenHttpException;
@@ -92,8 +94,12 @@ class PayController extends Controller
         }
 
         $pay = new CreatePay();
+        $mutex = new FileMutex();
         if (!empty($kfPay->extid)) {
             //проверка на повторный запрос
+            if (!$mutex->acquire('getPaySchetExt' . $kfPay->extid, 30)) {
+                throw new Exception('getPaySchetExt: error lock!');
+            }
             $paramsExist = $pay->getPaySchetExt($kfPay->extid, $usl, $mfo->mfo);
             if ($paramsExist) {
                 if ($kfPay->amount == $paramsExist['sumin']) {
@@ -105,7 +111,9 @@ class PayController extends Controller
             }
         }
         $params = $pay->payToMfo(null, [$kfPay->document_id, $kfPay->fullname], $kfPay, $usl, $bank::$bank, $mfo->mfo,0);
-        //PCI DSS
+        if (!empty($kfPay->extid)) {
+            $mutex->release('getPaySchetExt' . $kfPay->extid);
+        }        //PCI DSS
         return [
             'status' => 1,
             'message' => '',
@@ -159,8 +167,12 @@ class PayController extends Controller
         Yii::warning('/pay/auto mfo='. $mfo->mfo . " sum=".$kfPay->amount . " extid=".$kfPay->extid, 'mfo');
 
         $pay = new CreatePay();
+        $mutex = new FileMutex();
         if (!empty($kfPay->extid)) {
             //проверка на повторный запрос
+            if (!$mutex->acquire('getPaySchetExt' . $kfPay->extid, 30)) {
+                throw new Exception('getPaySchetExt: error lock!');
+            }
             $paramsExist = $pay->getPaySchetExt($kfPay->extid, $usl, $mfo->mfo);
             if ($paramsExist) {
                 if ($kfPay->amount == $paramsExist['sumin']) {
@@ -189,6 +201,9 @@ class PayController extends Controller
 
         $kfPay->timeout = 30;
         $params = $pay->payToMfo($kfCard->user, [$kfPay->extid, $Card->ID, $TcbGate->AutoPayIdGate], $kfPay, $usl, TCBank::$bank, $mfo->mfo, $TcbGate->AutoPayIdGate);
+        if (!empty($kfPay->extid)) {
+            $mutex->release('getPaySchetExt' . $kfPay->extid);
+        }
         //$params['CardFrom'] = $Card->ExtCardIDP;
         $params['card']['number'] = $cardnum;
         $params['card']['holder'] = $Card->CardHolder;

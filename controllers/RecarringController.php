@@ -13,6 +13,8 @@ use app\models\kfapi\KfRequest;
 use app\models\payonline\CreatePay;
 use app\models\Payschets;
 use Yii;
+use yii\base\Exception;
+use yii\mutex\FileMutex;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\web\ForbiddenHttpException;
@@ -230,8 +232,12 @@ class RecarringController extends Controller
         }
 
         $pay = new CreatePay();
+        $mutex = new FileMutex();
         if (!empty($kfPay->extid)) {
             //проверка на повторный запрос
+            if (!$mutex->acquire('getPaySchetExt' . $kfPay->extid, 30)) {
+                throw new Exception('getPaySchetExt: error lock!');
+            }
             $paramsExist = $pay->getPaySchetExt($kfPay->extid, $usl, $kf->IdPartner);
             if ($paramsExist) {
                 if ($kfPay->amount == $paramsExist['sumin']) {
@@ -260,6 +266,9 @@ class RecarringController extends Controller
 
         $kfPay->timeout = 15;
         $params = $pay->payToMfo($user, [$kfPay->extid, $kfPay->card, $TcbGate->AutoPayIdGate], $kfPay, $usl, TCBank::$bank, $kf->IdPartner, $TcbGate->AutoPayIdGate);
+        if (!empty($kfPay->extid)) {
+            $mutex->release('getPaySchetExt' . $kfPay->extid);
+        }
         //$params['CardFrom'] = $card->ExtCardIDP;
         $params['card']['number'] = $cardnum;
         $params['card']['holder'] = $card->CardHolder;

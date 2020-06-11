@@ -11,6 +11,8 @@ use app\models\kfapi\KfPay;
 use app\models\mfo\MfoReq;
 use app\models\payonline\CreatePay;
 use Yii;
+use yii\base\Exception;
+use yii\mutex\FileMutex;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\web\ForbiddenHttpException;
@@ -133,8 +135,12 @@ class CardController extends Controller
             return ['status' => 0, 'message' => $kfCard->GetError()];
         }
 
+        $mutex = new FileMutex();
         if (!empty($kfCard->extid)) {
             //проверка на повторный запрос
+            if (!$mutex->acquire('getPaySchetExt' . $kfCard->extid, 30)) {
+                throw new Exception('getPaySchetExt: error lock!');
+            }
             $pay = new CreatePay();
             $paramsExist = $pay->getPaySchetExt($kfCard->extid, 1, $mfo->mfo);
             if ($paramsExist) {
@@ -156,6 +162,9 @@ class CardController extends Controller
             //карта для автоплатежа
             $pay = new CreatePay($user);
             $data = $pay->payActivateCard(0, $kfCard,3, TCBank::$bank, $mfo->mfo); //Provparams
+            if (!empty($kfCard->extid)) {
+                $mutex->release('getPaySchetExt' . $kfCard->extid);
+            }
             //PCI DSS
             return [
                 'status' => 1,
@@ -168,6 +177,9 @@ class CardController extends Controller
             //карта для выплат
             $pay = new CreatePay($user);
             $data = $pay->payActivateCard(0, $kfCard,3,0, $mfo->mfo); //Provparams
+            if (!empty($kfCard->extid)) {
+                $mutex->release('getPaySchetExt' . $kfCard->extid);
+            }
 
             if (isset($data['IdPay'])) {
                 return [
