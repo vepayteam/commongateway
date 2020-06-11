@@ -41,9 +41,9 @@ class PartnerUsers extends \yii\db\ActiveRecord
     {
         return [
             [['IsAdmin', 'IdPartner', 'RoleUser', 'IsActive'], 'integer'],
-            [['Login'], 'string', 'max' => 20],
+            [['Login', 'Password', 'Password2'], 'string', 'max' => 20],
             [['Email'], 'string', 'max' => 50],
-            [['Password', 'Password2', 'FIO', 'Doljnost'], 'string', 'max' => 100],
+            [['FIO', 'Doljnost'], 'string', 'max' => 100],
             [['Login'], 'required'],
             [['Login'], 'unique'],
             [['RoleUser', 'IsActive'], 'ruleRole'],

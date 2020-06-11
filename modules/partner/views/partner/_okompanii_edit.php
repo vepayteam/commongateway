@@ -216,10 +216,10 @@ ActiveForm::end();
         ],
     ]);
 
-    echo $form->field($PartnerAdmin,'FIO')->textInput(['class'=>'form-control', 'autocomplete' => 'off']);
-    echo $form->field($PartnerAdmin,'Login')->textInput(['class'=>'form-control', 'autocomplete' => 'off']);
-    echo $form->field($PartnerAdmin,'Password')->passwordInput(['class'=>'form-control', 'autocomplete' => 'new-password', 'value' => '']);
-    echo $form->field($PartnerAdmin,'Password2')->passwordInput(['class'=>'form-control', 'autocomplete' => 'new-password', 'value' => ''])->hint('Пароль должен содержать буквенные и цифровые символы и быть длиной не менее 8 символов');
+    echo $form->field($PartnerAdmin,'FIO')->textInput(['class'=>'form-control', 'autocomplete' => 'off', 'maxlength' => 100]);
+    echo $form->field($PartnerAdmin,'Login')->textInput(['class'=>'form-control', 'autocomplete' => 'off', 'maxlength' => 50]);
+    echo $form->field($PartnerAdmin,'Password')->passwordInput(['class'=>'form-control', 'autocomplete' => 'new-password', 'value' => '', 'maxlength' => 20]);
+    echo $form->field($PartnerAdmin,'Password2')->passwordInput(['class'=>'form-control', 'autocomplete' => 'new-password', 'value' => '', 'maxlength' => 20])->hint('Пароль должен содержать буквенные и цифровые символы и быть длиной не менее 8 символов');
     ?>
     <div class="row no-margins">
         <div class="col-sm-8 col-sm-offset-3">
