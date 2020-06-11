@@ -24,7 +24,7 @@ class RecarringCest
     public function tryToRecarringInfo(KfapiTester $I)
     {
         $jsonData = [
-            "card" => 32,
+            "card" => 233,
         ];
         $I->haveHttpHeader('X-Login', '114');
         $I->haveHttpHeader('X-Token', sha1(sha1('YNgGPQ736').sha1(\yii\helpers\Json::encode($jsonData))));
