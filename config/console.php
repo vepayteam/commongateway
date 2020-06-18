@@ -43,7 +43,7 @@ $console = [
                 'class' => 'Swift_SmtpTransport',
                 'host' => 'exchange.dengisrazy.ru',//'localhost',
                 'username' => 'dengisrazy.ru\robot-vepay',
-                'password' => 'z8ndN6TF',
+                'password' => 'Sheel6ah',
                 'port' => '587',
                 'encryption' => 'tls',
                 'streamoptions' => ['ssl' => ['verify_peer' => FALSE, 'verify_peer_name' => FALSE]]
