@@ -2,6 +2,8 @@
 
 namespace app\models\bank;
 
+use app\models\Options;
+use app\models\payonline\Partner;
 use Yii;
 
 /**
@@ -35,12 +37,54 @@ use Yii;
  */
 class Banks extends \yii\db\ActiveRecord
 {
+    const DEFAULT_BANK_CLASS = TCBank::class;
+    const BANK_CLASSES = [
+        2 => TCBank::class,
+        3 => MTSBank::class,
+    ];
+    const BANK_BY_PAYMENT_OPTION_NAME = 'bank_payment_id';
+
     /**
      * {@inheritdoc}
      */
     public static function tableName()
     {
         return 'banks';
+    }
+
+    /**
+     * @param Partner|null $partner
+     * @return string
+     */
+    public static function getBankClassByPayment(Partner $partner = null)
+    {
+        $id = null;
+        $option = Options::findOne(['Name' => self::BANK_BY_PAYMENT_OPTION_NAME]);
+        if(is_null($partner) || !$partner->BankForPaymentId || $option->Value != 0) {
+            $id = $option->Value;
+        } else {
+            $id = $partner->BankForPaymentId;
+        }
+
+        $bankClassIds = array_keys(self::BANK_CLASSES);
+        if(in_array($id, $bankClassIds)) {
+            return self::BANK_CLASSES[$id];
+        } else {
+            return self::DEFAULT_BANK_CLASS;
+        }
+    }
+
+    /**
+     * @return array
+     */
+    public static function getBanksByDropdown()
+    {
+        $result = [];
+        /** @var Banks $bank */
+        foreach(Banks::find()->select('ID, Name')->all() as $bank) {
+            $result[$bank->ID] = $bank->Name;
+        }
+        return $result;
     }
 
     /**

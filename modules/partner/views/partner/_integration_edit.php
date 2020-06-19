@@ -8,6 +8,7 @@
 $publicKey = isset($partner->accessSms->public_key)? $partner->accessSms->public_key: "";
 $secretKey = isset($partner->accessSms->secret_key)?$partner->accessSms->secret_key:"";
 
+use app\models\bank\Banks;
 use app\models\mfo\MfoSettings;
 use app\models\payonline\Partner;
 use app\models\payonline\PartnerBankRekviz;
@@ -42,6 +43,7 @@ $form = ActiveForm::begin([
     ],
 ]);
 
+echo $form->field($partner, 'BankForPaymentId')->dropDownList(array_merge([-1 => 'Любой'], Banks::getBanksByDropdown()), ['class' => 'form-control']);
 if ($partner->IsMfo) {
     echo $form->field($partner, 'SchetTcb')->textInput(['class' => 'form-control']);
     echo $form->field($partner, 'SchetTcbTransit')->textInput(['class' => 'form-control']);

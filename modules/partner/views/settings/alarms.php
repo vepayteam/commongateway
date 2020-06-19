@@ -88,6 +88,17 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                 </div>
                 <div class="ibox-content">
                     <form class="form-horizontal m-t-md" id="banksconf">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">Банк для оплаты</label>
+                            <div class="col-sm-10">
+                                <select class=" form-control" name="bank_payment_id">
+                                    <option value="-1">Любой</option>
+                                    <? foreach(Banks::getBanksByDropdown() as $bank) : ?>
+                                        <option value="<?=$bank['ID']?>"><?=$bank['Name']?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
                         <?php /** @var Banks $bank */?>
                         <?php foreach ($banks as $bank) : ?>
                             <input type="hidden" name="Bank[<?=$bank->ID?>][ID]" value="<?=$bank->ID?>">

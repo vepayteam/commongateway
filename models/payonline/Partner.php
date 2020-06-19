@@ -120,6 +120,7 @@ use yii\web\UploadedFile;
  * @property string $MtsLoginOct
  * @property string $MtsPasswordOct
  * @property string $MtsTokenOct
+ * @property int $BankForPaymentId
  *
  */
 class Partner extends \yii\db\ActiveRecord
@@ -145,7 +146,7 @@ class Partner extends \yii\db\ActiveRecord
             [['Name'], 'required', 'on' => self::SCENARIO_DEFAULT],
             [['IsBlocked', 'UrState', 'IsMfo', 'IsAftOnly', 'IsUnreserveComis', 'TypeMerchant', 'VoznagVyplatDirect',
                 'IsAutoPerevodToVydacha', 'IsCommonSchetVydacha', 'IsUseKKmPrint',
-                'IsUseApplepay', 'IsUseGooglepay', 'IsUseSamsungpay'], 'integer'],
+                'IsUseApplepay', 'IsUseGooglepay', 'IsUseSamsungpay', 'BankForPaymentId'], 'integer'],
             [['UrAdres', 'PostAdres'], 'string', 'max' => 1000],
             [['UrAdres', 'PostAdres', 'Apple_PayProcCert'], 'string', 'max' => 1000],
             [['Name', 'UrLico'], 'string', 'max' => 250],
@@ -281,6 +282,7 @@ class Partner extends \yii\db\ActiveRecord
             'IsUseGooglepay' => 'Используется Google Pay',
             'SamsungMerchantID' => 'Samsung MerchantID',
             'IsUseSamsungpay' => 'Используется Samsung Pay',
+            'BankForPaymentId' => 'Банк для оплат',
         ];
     }
 
