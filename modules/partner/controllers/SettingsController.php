@@ -145,6 +145,11 @@ class SettingsController extends Controller
 
         if ($IsAdmin && Yii::$app->request->isAjax) {
             Yii::$app->response->format = Response::FORMAT_JSON;
+
+            $option = Options::findOne(['Name' => 'bank_payment_id']);
+            $option->Value = Yii::$app->request->post('bank_payment_id');
+            $option->save();
+
             $inBanks = Yii::$app->request->post('Bank', '');
             foreach ($inBanks as $bank) {
                 $banksave = Banks::findOne(['ID' => $bank['ID']]);

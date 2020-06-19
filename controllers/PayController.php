@@ -6,12 +6,15 @@ use app\models\antifraud\AntiFraud;
 use app\models\antifraud\tables\AFFingerPrit;
 use app\models\bank\BankMerchant;
 use app\models\bank\ApplePay;
+use app\models\bank\Banks;
 use app\models\bank\GooglePay;
+use app\models\bank\IBank;
 use app\models\bank\MTSBank;
 use app\models\bank\SamsungPay;
 use app\models\bank\TCBank;
 use app\models\crypt\Tokenizer;
 use app\models\payonline\Cards;
+use app\models\payonline\Partner;
 use app\models\payonline\PayForm;
 use app\models\Payschets;
 use app\models\TU;
@@ -116,6 +119,9 @@ class PayController extends Controller
             //данные счета для оплаты
             $payschets = new Payschets();
             $params = $payschets->getSchetData($payform->IdPay, null);
+
+            $partner = Partner::findOne(['ID' => $params['IDPartner']]);
+
             if ($params && $params['DateCreate'] + $params['TimeElapsed'] > time()) {
 
                 Yii::$app->session->set('IdPay', $params['ID']);
@@ -146,17 +152,11 @@ class PayController extends Controller
                         $payschets->ChangeUsluga($params['ID'], $params['IDPartner'], $params['IsCustom']);
                     }
                 }
+
+                $bankClass = Banks::getBankClassByPayment($partner);
+                $payschets->ChangeBank($params['ID'], $bankClass::$bank);
                 $merchBank = BankMerchant::Create($params);
                 $ret = $merchBank->PayXml($params);
-                if ($ret['status'] != 1 && $merchBank::$bank === TCBank::$bank) {
-                    $params['Bank'] = MTSBank::$bank;
-                    $payschets->ChangeBank($params['ID'], MTSBank::$bank);
-                    $merchBank = BankMerchant::Create($params);
-                    $retBank2 = $merchBank->PayXml($params);
-                    if ($retBank2['status'] == 1) {
-                        $ret = $retBank2;
-                    }
-                }
 
                 if ($ret['status'] == 1) {
                     $payschets->SetStartPay($params['ID'], $ret['transac'], $payform->Email);
