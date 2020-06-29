@@ -43,6 +43,7 @@ class Banks extends \yii\db\ActiveRecord
         3 => MTSBank::class,
     ];
     const BANK_BY_PAYMENT_OPTION_NAME = 'bank_payment_id';
+    const BANK_BY_TRANSFER_IN_CARD_OPTION_NAME = 'bank_transfer_to_card_id';
 
     /**
      * {@inheritdoc}
@@ -60,10 +61,32 @@ class Banks extends \yii\db\ActiveRecord
     {
         $id = null;
         $option = Options::findOne(['Name' => self::BANK_BY_PAYMENT_OPTION_NAME]);
-        if(is_null($partner) || !$partner->BankForPaymentId || $option->Value != 0) {
+        if(is_null($partner) || !$partner->BankForPaymentId || $option->Value != -1) {
             $id = $option->Value;
         } else {
             $id = $partner->BankForPaymentId;
+        }
+
+        $bankClassIds = array_keys(self::BANK_CLASSES);
+        if(in_array($id, $bankClassIds)) {
+            return self::BANK_CLASSES[$id];
+        } else {
+            return self::DEFAULT_BANK_CLASS;
+        }
+    }
+
+    /**
+     * @param Partner|null $partner
+     * @return string
+     */
+    public static function getBankClassByTransferToCard(Partner $partner = null)
+    {
+        $id = null;
+        $option = Options::findOne(['Name' => self::BANK_BY_TRANSFER_IN_CARD_OPTION_NAME]);
+        if(is_null($partner) || !$partner->BankForTransferToCardId || $option->Value != -1) {
+            $id = $option->Value;
+        } else {
+            $id = $partner->BankForTransferToCardId;
         }
 
         $bankClassIds = array_keys(self::BANK_CLASSES);

@@ -91,10 +91,27 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         <div class="form-group">
                             <label class="col-sm-2 control-label">Банк для оплаты</label>
                             <div class="col-sm-10">
-                                <select class=" form-control" name="bank_payment_id">
+                                <select class=" form-control" name="Options[<?=Banks::BANK_BY_PAYMENT_OPTION_NAME?>]">
                                     <option value="-1">Любой</option>
-                                    <? foreach(Banks::getBanksByDropdown() as $bank) : ?>
-                                        <option value="<?=$bank['ID']?>"><?=$bank['Name']?></option>
+                                    <? foreach(Banks::getBanksByDropdown() as $id => $name) : ?>
+                                        <option value="<?=$id?>"
+                                            <?=($options[Banks::BANK_BY_PAYMENT_OPTION_NAME] == $id ? 'selected' : '')?>>
+                                            <?=$name?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">Банк для перечислений на карту</label>
+                            <div class="col-sm-10">
+                                <select class=" form-control" name="Options[<?=Banks::BANK_BY_TRANSFER_IN_CARD_OPTION_NAME?>]">
+                                    <option value="-1">Любой</option>
+                                    <? foreach(Banks::getBanksByDropdown() as $id => $name) : ?>
+                                        <option value="<?=$id?>"
+                                            <?=($options[Banks::BANK_BY_TRANSFER_IN_CARD_OPTION_NAME] == $id ? 'selected' : '')?>>
+                                            <?=$name?>
+                                        </option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>

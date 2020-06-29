@@ -18,9 +18,8 @@ class m200619_064027_add_bank_for_payment_id_in_partner extends Migration
 
         $option = new \app\models\Options();
         $option->Name = Banks::BANK_BY_PAYMENT_OPTION_NAME;
-        $option->Value = '0';
+        $option->Value = '2';
         $option->save();
-
     }
 
     /**

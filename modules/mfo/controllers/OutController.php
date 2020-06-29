@@ -183,7 +183,7 @@ class OutController extends Controller
         }*/
 
         $partner = Partner::findOne(['ID' => $params['IDPartner']]);
-        $bankClass = Banks::getBankClassByPayment($partner);
+        $bankClass = Banks::getBankClassByTransferToCard($partner);
         $payschets->ChangeBank($params['IdPay'], $bankClass::$bank);
 
         $merchBank = BankMerchant::Get($bankClass::$bank, $bankGate);

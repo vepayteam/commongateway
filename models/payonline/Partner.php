@@ -121,6 +121,7 @@ use yii\web\UploadedFile;
  * @property string $MtsPasswordOct
  * @property string $MtsTokenOct
  * @property int $BankForPaymentId
+ * @property int $BankForTransferToCardId
  *
  */
 class Partner extends \yii\db\ActiveRecord

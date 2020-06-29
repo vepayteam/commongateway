@@ -22,6 +22,8 @@ use yii\web\Response;
 class SettingsController extends Controller
 {
     use SelectPartnerTrait;
+    // TODO: refact
+    const IGNORE_OPTION_NAMES = ['disabledday'];
 
     public function behaviors()
     {
@@ -85,6 +87,7 @@ class SettingsController extends Controller
             }
 
             $opt = Options::findOne(['Name' => 'disabledday']);
+            $options = Options::getAllToArray();
 
             $banks = Banks::find()->where(['>', 'ID', '1'])->all();
 
@@ -92,7 +95,8 @@ class SettingsController extends Controller
                 'settings' => $settings,
                 'IsAdmin' => $IsAdmin,
                 'veekends' => $opt ? $opt->Value : '',
-                'banks' => $banks
+                'banks' => $banks,
+                'options' => $options,
             ]);
 
         } else {
@@ -143,33 +147,38 @@ class SettingsController extends Controller
     {
         $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
 
-        if ($IsAdmin && Yii::$app->request->isAjax) {
-            Yii::$app->response->format = Response::FORMAT_JSON;
-
-            $option = Options::findOne(['Name' => 'bank_payment_id']);
-            $option->Value = Yii::$app->request->post('bank_payment_id');
-            $option->save();
-
-            $inBanks = Yii::$app->request->post('Bank', '');
-            foreach ($inBanks as $bank) {
-                $banksave = Banks::findOne(['ID' => $bank['ID']]);
-                if (!$banksave) {
-                    return ['status' => 0, 'message' => 'Ошибка сохранения'];
-                }
-                $banksave->SortOrder = $bank['SortOrder'];
-                $banksave->UsePayIn = $bank['UsePayIn'] ?? 0;
-                $banksave->UseApplePay = $bank['UseApplePay'] ?? 0;
-                $banksave->UseGooglePay = $bank['UseGooglePay'] ?? 0;
-                $banksave->UseSamsungPay = $bank['UseSamsungPay'] ?? 0;
-                if (!$banksave->save()) {
-                    return ['status' => 0, 'message' => 'Ошибка сохранения'];
-                }
-            }
-            return ['status' => 1, 'message' => 'Данные сохранены'];
-
-        } else {
+        if(!$IsAdmin || !Yii::$app->request->isAjax) {
             throw new NotFoundHttpException();
         }
+
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        foreach (Yii::$app->request->post('Options') as $name => $value) {
+            if(in_array($name, self::IGNORE_OPTION_NAMES)) {
+                continue;
+            }
+
+            $option = Options::findOne(['Name' => $name]);
+            $option->Value = $value;
+            $option->save();
+        }
+
+        $inBanks = Yii::$app->request->post('Bank', '');
+        foreach ($inBanks as $bank) {
+            $banksave = Banks::findOne(['ID' => $bank['ID']]);
+            if (!$banksave) {
+                return ['status' => 0, 'message' => 'Ошибка сохранения'];
+            }
+            $banksave->SortOrder = $bank['SortOrder'];
+            $banksave->UsePayIn = $bank['UsePayIn'] ?? 0;
+            $banksave->UseApplePay = $bank['UseApplePay'] ?? 0;
+            $banksave->UseGooglePay = $bank['UseGooglePay'] ?? 0;
+            $banksave->UseSamsungPay = $bank['UseSamsungPay'] ?? 0;
+            if (!$banksave->save()) {
+                return ['status' => 0, 'message' => 'Ошибка сохранения'];
+            }
+        }
+        return ['status' => 1, 'message' => 'Данные сохранены'];
     }
 
     public function actionAlarms()
