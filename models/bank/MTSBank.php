@@ -199,7 +199,19 @@ class MTSBank implements IBank
      */
     public function transferToCard(array $data)
     {
+        $payschets = new Payschets();
+        $params = $payschets->getSchetData($data['IdPay']);
 
+        // TODO:
+        $params['card'] = [
+            'number' => $data['CardNum'],
+        ];
+
+        $ret = $this->RegisterTransferToCard($params);
+        if ($ret['status'] == 1) {
+            $ret = $this->PayOrder($params, $ret['transac']);
+        }
+        return $ret;
     }
 
     /**
@@ -428,6 +440,35 @@ class MTSBank implements IBank
             'description' => 'Оплата по счету ' . $params['ID'],
             'returnUrl' => $this->backUrls['ok'] . $params['ID'],
             'sessionTimeoutSecs' => $params['TimeElapsed']
+        ];
+
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl.$action);
+
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            if (!isset($ans['xml']['errorCode']) || $ans['xml']['errorCode'] == 0) {
+                $ordernumber = $ans['xml']['orderId'];
+                return ['status' => 1, 'transac' => $ordernumber];
+            } else {
+                $error = $ans['xml']['errorCode'];
+                $message = $ans['xml']['errorMessage'];
+                return ['status' => 2, 'message' => $error.":".$message, 'fatal' => 1];
+            }
+        }
+        return ['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0];
+    }
+
+    // TODO: refact DRY
+    private function RegisterTransferToCard(array $params)
+    {
+        $action = '/rest/register.do';
+        $queryData = [
+            'token' => $this->keyFile,
+            'orderNumber' => $params['ID'],
+            'amount' => $params['SummFull'],
+            'description' => 'Оплата по счету ' . $params['ID'],
+            'returnUrl' => $this->backUrls['ok'] . $params['ID'],
+            'sessionTimeoutSecs' => $params['TimeElapsed'],
+            'features' => 'WITHOUT_FROM_CARD',
         ];
 
         $ans = $this->curlXmlReq($queryData, $this->bankUrl.$action);

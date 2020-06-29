@@ -6,6 +6,7 @@ use app\models\antifraud\AntiFraud;
 use app\models\antifraud\AntiFraudRefund;
 use app\models\api\CorsTrait;
 use app\models\bank\BankMerchant;
+use app\models\bank\Banks;
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\crypt\CardToken;
@@ -15,6 +16,7 @@ use app\models\mfo\MfoReq;
 use app\models\mfo\MfoTestError;
 use app\models\payonline\Cards;
 use app\models\payonline\CreatePay;
+use app\models\payonline\Partner;
 use app\models\Payschets;
 use app\models\TU;
 use Yii;
@@ -180,7 +182,11 @@ class OutController extends Controller
             return ['status' => 1, 'id' => $params['IdPay']];
         }*/
 
-        $merchBank = BankMerchant::Get($bank, $bankGate);
+        $partner = Partner::findOne(['ID' => $params['IDPartner']]);
+        $bankClass = Banks::getBankClassByPayment($partner);
+        $payschets->ChangeBank($params['IdPay'], $bankClass::$bank);
+
+        $merchBank = BankMerchant::Get($bankClass::$bank, $bankGate);
         $ret = $merchBank->transferToCard($params);
         if ($ret && $ret['status'] == 1) {
             //сохранение номера транзакции
