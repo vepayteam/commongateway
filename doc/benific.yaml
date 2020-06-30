@@ -1,0 +1,626 @@
+openapi: 3.0.0
+info:
+  title: API УПРИД
+  description: Vepay API УПРИД.
+  version: 1.0.5
+security:
+  - Login: []
+    Token: []
+tags:
+  - name: Benific
+    description: Бенифициары
+  - name: Callback
+    description: Оповещения
+servers:
+  - url: https://test.vepay.online/kfapi
+paths:
+  /benific/reg:
+    post:
+      tags:
+        - Benific
+      summary: Регистрация бенифициара
+      description: Запрос регистрации бенифициара
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Benific"
+        description: Параметры запроса
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResult"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  securitySchemes:
+    Login:
+      type: apiKey
+      in: header
+      name: X-Login
+      description: Логин
+    Token:
+      type: apiKey
+      in: header
+      name: X-Token
+      description: Токен, формируется по алгоритму sha1(sha1(ключ) + sha1(тело запроса))
+  schemas:
+    PayIn:
+      type: object
+      properties:
+        amount:
+          type: number
+          description: Cумма платежа, руб
+        document_id:
+          type: string
+          maxLength: 40
+          description: Номер договора
+        fullname:
+          type: string
+          maxLength: 80
+          description: ФИО клиента
+        extid:
+          type: string
+          description: Внешний идентификатор запроса
+        timeout:
+          type: integer
+          minimum: 10
+          maximum: 60
+          description: Тайм-аут ожидания оплаты, от 10 до 60 минут
+        successurl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после заверщения платежа (успех)
+        failurl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после заверщения платежа (ошибка)
+        cancelurl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после отказа от оплаты
+    IdState:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: идентификатор запроса
+    Status:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Статус (0 - в обработке, 1 - успешно, 2 - ошибка, 3 - отменен)
+        message:
+          type: string
+          description: Сообщение ошибки
+        rc:
+          type: string
+          description: Код ошибки банка (может отсутствовать)
+    StatusResult:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Статус (0 - ошибка, 1 - успешно)
+        message:
+          type: string
+          description: Сообщение ошибки
+    StatusId:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Статус (0 – ошибка 1 - принят)
+        message:
+          type: string
+          description: Сообщение ошибки
+        id:
+          type: integer
+          description: идентификатор запроса
+    StatusIdUrl:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Статус (0 – ошибка 1 - принят)
+        message:
+          type: string
+          description: Сообщение ошибки
+        id:
+          type: integer
+          description: идентификатор запроса
+        url:
+          type: string
+          description: Cсылка для перехода на форму оплаты
+    StatusAmount:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Статус (0 – ошибка 1 - успешно)
+        message:
+          type: string
+          description: Сообщение ошибки
+        amount:
+          type: number
+          description: Сумма баланса
+        insumm:
+          type: number
+          description: Сумма полученных средств (в пути)
+        outsumm:
+          type: number
+          description: Сумма отправленных средств (в пути)
+    OutCard:
+      type: object
+      properties:
+        cardnum:
+          type: string
+          description: Номер карты (16/18 цифр)
+        amount:
+          type: number
+          description: Cумма платежа
+        extid:
+          type: string
+          description: Внешний идентификатор запроса
+        document_id:
+          type: string
+          maxLength: 40
+          description: Номер договора
+        fullname:
+          type: string
+          maxLength: 80
+          description: ФИО клиента
+        sms:
+          type: integer
+          description: Если передан 1, то требуется подтверждение кодом из смс
+    OutU:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Наименование получателя
+        inn:
+          type: string
+          description: ИНН получателя
+        kpp:
+          type: string
+          description: КПП получателя
+        account:
+          type: string
+          description: Счет в банке
+        bic:
+          type: string
+          description: БИК банка
+        descript:
+          type: string
+          maxLength: 210
+          description: Назначение платежа
+        amount:
+          type: number
+          description: Cумма платежа
+        extid:
+          type: string
+          description: Внешний идентификатор запроса
+        sms:
+          type: integer
+          description: Если передан 1, то требуется подтверждение кодом из смс
+    OutF:
+      type: object
+      properties:
+        fio:
+          type: string
+          description: ФИО получателя
+        account:
+          type: string
+          description: Счет в банке
+        bic:
+          type: string
+          description: БИК банка
+        descript:
+          type: string
+          maxLength: 210
+          description: Назначение платежа
+        amount:
+          type: number
+          description: Cумма платежа
+        extid:
+          type: string
+          description: Внешний идентификатор запроса
+        sms:
+          type: integer
+          description: Если передан 1, то требуется подтверждение кодом из смс
+    OutNdfl:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Наименование получателя
+        inn:
+          type: string
+          description: ИНН получателя
+        kpp:
+          type: string
+          description: КПП получателя
+        account:
+          type: string
+          description: Счет в банке
+        bic:
+          type: string
+          description: БИК банка
+        descript:
+          type: string
+          maxLength: 210
+          description: Назначение платежа
+        amount:
+          type: number
+          description: Cумма платежа
+        sendername:
+          type: string
+          description: Наименование отправвителя
+        senderadress:
+          type: string
+          description: Адрес отправвителя
+        senderaccount:
+          type: string
+          description: Счет отправвителя
+        kbk:
+          type: string
+          description: КБК
+        okato:
+          type: string
+          description: ОКАТО
+        paymentbase:
+          type: string
+          description: Основание платежа
+        taxperiod:
+          type: string
+          description: Налоговый период
+        taxdocnum:
+          type: string
+          description: Номер налогового документа
+        taxdocdate:
+          type: string
+          description: Дата налогового документа
+        taxpaymenttype:
+          type: string
+          description: Тип налогового платежа
+        extid:
+          type: string
+          description: Внешний идентификатор запроса
+    OutI:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Наименование получателя
+        inn:
+          type: string
+          description: ИНН получателя
+        kpp:
+          type: string
+          description: КПП получателя
+        account:
+          type: string
+          description: Счет получателя в банке
+        descript:
+          type: string
+          maxLength: 210
+          description: Назначение платежа
+        amount:
+          type: number
+          description: Cумма платежа
+        extid:
+          type: string
+          description: Внешний идентификатор запроса
+    Balance:
+      type: object
+      properties:
+        account:
+          type: string
+          description: Счет в банке
+    Statements:
+      type: object
+      properties:
+        account:
+          type: string
+          description: Счет в банке
+        datefrom:
+          type: string
+          format: date-time
+          description: Дата начала
+        dateto:
+          type: string
+          format: date-time
+          description: Дата окончания
+    StatusStatements:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Статус (0 – ошибка 1 - успешно)
+        message:
+          type: string
+          description: Сообщение ошибки
+        statements:
+          type: array
+          items:
+            $ref: "#/components/schemas/ListStatements"
+          description: Список платежных поручений
+    ListStatements:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Идентификатор операции
+        number:
+          type: integer
+          description: Номер платежного поручения
+        date:
+          type: string
+          format: date-time
+          description: Дата, время документа
+        datedoc:
+          type: string
+          format: date-time
+          description: Дата создания документа
+        summ:
+          type: number
+          description: Сумма платежа
+        description:
+          type: string
+          maxLength: 210
+          description: Назначение платежа
+        isсredit:
+          type: boolean
+          description: Флаг 1 - зачисление / 0 - списание
+        name:
+          type: string
+          description: Наименование получателя/отправителя
+        inn:
+          type: string
+          description: ИНН получателя/отправителя
+        kpp:
+          type: string
+          description: КПП получателя/отправителя
+        bic:
+          type: string
+          description: БИК банка
+        bank:
+          type: string
+          description: Наименование банка
+        bankaccount:
+          type: string
+          description: Корсчет банка
+        account:
+          type: string
+          description: Счет в банке
+    Benific:
+      type: object
+      properties:
+        registrationtype:
+          type: integer
+          description: Тип регистрации организации - 0 - Физлицо (ФЛ) 1 - ИП 2 - Юрлицо (ЮЛ)
+        ownershipform:
+          type: integer
+          description: Тип организации (ЮЛ / ИП) - 1 - Организация, находящаяся в
+            федеральной собственности 2 - Организация, находящаяся в
+            государственной (кроме федеральной) собственности 3 -
+            Негосударственная организация 4 - Физические лица - индивидуальные
+            предприниматели
+        ownershipgroup:
+          type: integer
+          description: Тип собственности (ЮЛ / ИП) - 1 - Финансовая организация, 2 -
+            Коммерческая организация, 3 - Некоммерческая организация, 4 -
+            Индивидуальный предприниматель
+        msp:
+          type: integer
+          description: Субъект МСП (ЮЛ / ИП), 0 - нет 1 - да
+        legalformsofbusiness:
+          type: integer
+          description: Организационно-правовая форма (ЮЛ) - 0 - Иное 1 - Общество с
+            ограниченной ответственностью 2 - Закрытое акционерное общество 3 -
+            Открытое акционерное общество 4 - Акционерное общество 5 - Публичное
+            акционерное общество
+        capitalpayed:
+          type: number
+          description: Оплаченный уставной капитал ЮЛ
+        urname:
+          type: string
+          description: Полное наименование ЮЛ
+        shorturname:
+          type: string
+          description: Сокращенное наименование ЮЛ
+        inn:
+          type: string
+          description: ИНН (ЮЛ / ИП)
+        kpp:
+          type: string
+          description: КПП  ЮЛ
+        ogrn:
+          type: string
+          description: ОГРН (ЮЛ / ИП)
+        okved:
+          type: string
+          description: ОКВЕД (ЮЛ / ИП)
+        okopf:
+          type: string
+          description: ОКОПФ (ЮЛ / ИП)
+        okpo:
+          type: string
+          description: ОКПО (ЮЛ / ИП)
+        govregistrationdate:
+          type: string
+          format: date(YYYY-MM-DD)
+          description: Дата государственной регистрации (ЮЛ / ИП)
+        govregistrationplace:
+          type: string
+          description: Место государственной регистрации (ЮЛ / ИП)
+        govregistrationathority:
+          type: string
+          description: Наименование регистрирующего органа (ЮЛ / ИП)
+        lastname:
+          type: string
+          description: Фамилия ген.директора ЮЛ / ИП / ФЛ
+        firstname:
+          type: string
+          description: Имя ген.директора ЮЛ / ИП / ФЛ
+        middlename:
+          type: string
+          description: Отчество ген.директора ЮЛ / ИП / ФЛ
+        dirregistrationdate:
+          type: string
+          format: date(YYYY-MM-DD)
+          description: Дата назначения на должность ген.директора ЮЛ
+        innfl:
+          type: string
+          description: ИНН ген.директора ЮЛ / ФЛ
+        birthdate:
+          type: string
+          format: date(YYYY-MM-DD)
+          description: Дата рождения ген.директора ЮЛ / ИП / ФЛ
+        birthplace:
+          type: string
+          description: Место рождения ген.директора ЮЛ / ИП / ФЛ
+        gender:
+          type: integer
+          description: Пол ген.директора ЮЛ / ФЛ - 0 - М 1 - Ж
+        pdl:
+          type: integer
+          description: Публичное должностное лицо - 0 - нет 1 - да
+        rpdl:
+          type: integer
+          description: Родственник публичного должностного лица - 0 - нет 1 - да
+        nationality:
+          type: string
+          description: Гражданство (трехбуквенный ISO код страны, например RUS)
+        resident:
+          type: integer
+          description: Резидент - 0 - нет 1 - да
+        document:
+          #description: Документ, удостоверяющий личность
+          $ref: "#/components/schemas/Document"
+        righttostaydocument:
+          #description: Документ, разрешающий проживание (для иностранных нраждан)
+          $ref: "#/components/schemas/Document"
+        phone:
+          type: string
+          description: Контактный телефон
+        email:
+          type: string
+          description: Адрес электронной почты
+        uraddres:
+          #description: Юридический адрес (Адрес регистрации ИП / ФЛ)
+          $ref: "#/components/schemas/Adress"
+        actualaddres:
+          #description: Фактический адрес
+          $ref: "#/components/schemas/Adress"
+        groundforparticipation:
+          type: string
+          description: Основание участия в договоре
+        joiningdate:
+          type: string
+          format: date(YYYY-MM-DD)
+          description: Дата присоединения
+    Adress:
+      type: object
+      description: uraddres - Юридический адрес (Адрес регистрации ИП / ФЛ), actualaddres - Фактический адрес
+      properties:
+        fias:
+          type: string
+          description: Код адреса по ФИАС
+        country:
+          type: string
+          description: Страна
+        region:
+          type: string
+          description: Регион
+        regiontype:
+          type: string
+          description: Тип региона
+        city:
+          type: string
+          description: Город
+        citytype:
+          type: string
+          description: Тип города
+        place:
+          type: string
+          description: Населенный пункт
+        placetype:
+          type: string
+          description: Тип населенного пункта
+        street:
+          type: string
+          description: Улица
+        streettype:
+          type: string
+          description: Тип улицы
+        house:
+          type: string
+          description: Дом
+        corp:
+          type: string
+          description: Корпус
+        flat:
+          type: string
+          description: Квартира, Офис
+    Document:
+      type: object
+      description: document - Документ, удостоверяющий личность, righttostaydocument - Документ, разрешающий проживание (для иностранных нраждан)
+      properties:
+        type:
+          type: integer
+          description: Тип документа - 0 - Иной документ 1 - Паспорт РФ 2 - Паспорт
+            иностранного гражданина 3 - Вид на жительство 4 - Разрешение на
+            временное проживание 5 - Виза 6 - Миграционная карта
+        serial:
+          type: string
+          description: Серия документа
+        number:
+          type: string
+          description: Номер документа
+        issueby:
+          type: string
+          description: Кем документ выдан
+        date:
+          type: string
+          description: Дата выдачи документа
+        finishdate:
+          type: string
+          description: Срок действия документа
+        code:
+          type: string
+          description: Код подразделения
+    Error:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Наименование кода ошибки
+        message:
+          type: string
+          description: Сообщение ошибки
+        code:
+          type: integer
+          description: Дополнительный код ошибки
+        status:
+          type: integer
+          description: Код ошибки
+    CallbackState:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: 0 - успешно, или код ошибки. При указанном коде ошибки в ответе на колбэк выполняется возврат средств.
+        message:
+          type: string
+          description: Описание ошибки
