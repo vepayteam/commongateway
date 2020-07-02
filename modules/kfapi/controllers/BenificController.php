@@ -44,8 +44,51 @@ class BenificController extends Controller
     protected function verbs()
     {
         return [
-            'reg' => ['POST'],
+            'reg-individual' => ['POST'],
+            'reg-sole-proprietor' => ['POST'],
+            'reg-legal-person' => ['POST'],
         ];
+    }
+
+    public function actionRegIndividual()
+    {
+        $KfBenific = $this->checkAuthAndLoadData();
+        $KfBenific->registrationtype = KfBenific::INDIVIDUAL_TYPE_REG;
+        return $this->reg($KfBenific);
+    }
+
+    public function actionRegSoleProprietor()
+    {
+        $KfBenific = $this->checkAuthAndLoadData();
+        $KfBenific->registrationtype = KfBenific::SOLE_PROPRIETOR_TYPE_REG;
+        $KfBenific->ownershipform = 4;
+        $KfBenific->ownershipgroup = 4;
+        return $this->reg($KfBenific);
+    }
+
+    public function actionRegLegalPerson()
+    {
+        $KfBenific = $this->checkAuthAndLoadData();
+        $KfBenific->registrationtype = KfBenific::LEGAL_PERSON_TYPE_REG;
+
+        return $this->reg($KfBenific);
+    }
+
+    /**
+     * @return KfBenific
+     * @throws BadRequestHttpException
+     * @throws ForbiddenHttpException
+     * @throws \yii\web\UnauthorizedHttpException
+     */
+    private function checkAuthAndLoadData()
+    {
+        $kf = new KfRequest();
+        $kf->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody());
+
+        $KfBenific = new KfBenific();
+        $KfBenific->load($kf->req, '');
+        $KfBenific->partner = $kf->partner;
+        return $KfBenific;
     }
 
     /**
@@ -57,18 +100,13 @@ class BenificController extends Controller
      * @throws \yii\db\Exception
      * @throws \yii\web\UnauthorizedHttpException
      */
-    public function actionReg()
+    private function reg($KfBenific)
     {
-        $kf = new KfRequest();
-        $kf->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody());
-
-        $KfBenific = new KfBenific();
-        $KfBenific->load($kf->req, '');
         if (!$KfBenific->validate()) {
             return ['status' => 0, 'message' => $KfBenific->GetError()];
         }
 
-        if (empty($kf->partner->SchetTcbNominal)) {
+        if (empty($KfBenific->partner->SchetTcbNominal)) {
             return ['status' => 0, 'message' => 'Номинальный счет не найден'];
         }
 
