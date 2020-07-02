@@ -12,6 +12,7 @@ tags:
   - name: Callback
     description: Оповещения
 servers:
+  - url: https://vepay.online/kfapi
   - url: https://test.vepay.online/kfapi
 paths:
   /benific/reg-individual:
