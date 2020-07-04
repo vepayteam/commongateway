@@ -263,14 +263,7 @@ class PayController extends Controller
                 ]);
                 //ret статус проверить?
             }
-            // TODO:
-            if($params['IDPartner'] == '3') {
-                return $this->redirect("https://cashtoyou.ru/registration/third/");
-            } elseif ($params['IDPartner'] == '8') {
-                return $this->redirect("https://oneclickmoney.ru/registration/third/");
-            } else {
-                return $this->redirect(\yii\helpers\Url::to('/pay/orderok?id='.$params['ID']));
-            }
+            return $this->redirect(\yii\helpers\Url::to('/pay/orderok?id='.$id));
 
         } else {
             throw new NotFoundHttpException();
