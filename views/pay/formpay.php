@@ -15,7 +15,7 @@ use yii\bootstrap\Html;
             <img src="/imgs/close.svg" class="closebtn" alt="close" id="closeform">
         </div>
     </div>
-    <?php if (true) : ?>
+    <?php if ($params['IdUsluga'] == 1) : ?>
         <div class="row margin-top24">
             <div class="col-xs-12">
                 <?php /* TODO: */if(in_array($params['IDPartner'], ['3','8'])): ?>
