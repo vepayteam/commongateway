@@ -37,7 +37,7 @@ class CreateFormEcomStrategy implements IPaymentStrategy
             return ['status' => 0, 'message' => $kfPay->GetError()];
         }
 
-        $usl = $this->getUsl();
+        $usl = $this->getUslId();
         $tcbGate = $this->getTkbGate();
 
         if (!$usl || !$tcbGate->IsGate()) {
@@ -53,7 +53,7 @@ class CreateFormEcomStrategy implements IPaymentStrategy
             if (!$mutex->acquire('getPaySchetExt' . $kfPay->extid, 30)) {
                 throw new Exception('getPaySchetExt: error lock!');
             }
-            $paramsExist = $pay->getPaySchetExt($kfPay->extid, $usl, $kf->IdPartner);
+            $paramsExist = $pay->getPaySchetExt($kfPay->extid, $usl, $this->request->IdPartner);
             if ($paramsExist) {
                 if ($kfPay->amount == $paramsExist['sumin']) {
                     return ['status' => 1, 'id' => (int)$paramsExist['IdPay'], 'url' => $kfPay->GetPayForm($paramsExist['IdPay']), 'message' => ''];
@@ -63,9 +63,22 @@ class CreateFormEcomStrategy implements IPaymentStrategy
             }
         }
 
+        $params = $pay->payToMfo($this->getUser(), [$kfPay->descript], $kfPay, $usl, TCBank::$bank, $this->request->IdPartner, 0);
+        if (!empty($kfPay->extid)) {
+            $mutex->release('getPaySchetExt' . $kfPay->extid);
+        }
+
+        //PCI DSS
+        return [
+            'status' => 1,
+            'id' => (int)$params['IdPay'],
+            'url' => $kfPay->GetPayForm($params['IdPay']),
+            'message' => ''
+        ];
+
     }
 
-    private function getUsl()
+    private function getUslId()
     {
         return Yii::$app->db->createCommand("
             SELECT `ID` 

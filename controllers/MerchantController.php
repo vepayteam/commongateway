@@ -114,6 +114,68 @@ class MerchantController extends Controller
         }
 
         return $paymentStrategy->exec();
+//
+//        Yii::$app->response->format = Response::FORMAT_JSON;
+//
+//        $kf = new KfRequest();
+//        $kf->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody(), 0);
+//
+//        $kfPay = new KfPay();
+//        $kfPay->scenario = KfPay::SCENARIO_FORM;
+//        $kfPay->load($kf->req, '');
+//        if (!$kfPay->validate()) {
+//            return ['status' => 0, 'message' => $kfPay->GetError()];
+//        }
+//
+//        if ($kf->GetReq('type', 0) == 1) {
+//            $gate = TCBank::$JKHGATE;
+//            $usl = $kfPay->GetUslugJkh($kf->IdPartner);
+//        } else {
+//            $gate = TCBank::$ECOMGATE;
+//            $usl = $kfPay->GetUslugEcom($kf->IdPartner);
+//        }
+//        $TcbGate = new TcbGate($kf->IdPartner, $gate);
+//        if (!$usl || !$TcbGate->IsGate()) {
+//            return ['status' => 0, 'message' => 'Услуга не найдена'];
+//        }
+//
+//        Yii::warning('/merchant/pay id='. $kf->IdPartner . " sum=".$kfPay->amount . " extid=".$kfPay->extid, 'mfo');
+//
+//        $user = null;
+//        if ($kf->GetReq('regcard',0)) {
+//            $reguser = new Reguser();
+//            $user = $reguser->findUser('0', $kf->IdPartner . '-' . time(), md5($kf->IdPartner . '-' . time()), $kf->IdPartner, false);
+//        }
+//
+//        $pay = new CreatePay($user);
+//        $mutex = new FileMutex();
+//        if (!empty($kfPay->extid)) {
+//            //проверка на повторный запрос
+//            if (!$mutex->acquire('getPaySchetExt' . $kfPay->extid, 30)) {
+//                throw new Exception('getPaySchetExt: error lock!');
+//            }
+//            $paramsExist = $pay->getPaySchetExt($kfPay->extid, $usl, $kf->IdPartner);
+//            if ($paramsExist) {
+//                if ($kfPay->amount == $paramsExist['sumin']) {
+//                    return ['status' => 1, 'id' => (int)$paramsExist['IdPay'], 'url' => $kfPay->GetPayForm($paramsExist['IdPay']), 'message' => ''];
+//                } else {
+//                    return ['status' => 0, 'id' => 0, 'url' => '', 'message' => 'Нарушение уникальности запроса'];
+//                }
+//            }
+//        }
+//
+//        $params = $pay->payToMfo($user, [$kfPay->descript], $kfPay, $usl, TCBank::$bank, $kf->IdPartner, 0);
+//        if (!empty($kfPay->extid)) {
+//            $mutex->release('getPaySchetExt' . $kfPay->extid);
+//        }
+//
+//        //PCI DSS
+//        return [
+//            'status' => 1,
+//            'id' => (int)$params['IdPay'],
+//            'url' => $kfPay->GetPayForm($params['IdPay']),
+//            'message' => ''
+//        ];
     }
 
     /**

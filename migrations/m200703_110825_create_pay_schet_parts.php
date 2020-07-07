@@ -1,6 +1,6 @@
 <?php
 
-use app\models\PaySchetPart;
+use app\models\PayschetPart;
 use yii\db\Migration;
 use yii\db\Schema;
 
@@ -14,10 +14,11 @@ class m200703_110825_create_pay_schet_parts extends Migration
      */
     public function safeUp()
     {
-        $this->createTable(PaySchetPart::tableName(), [
-            'id' => $this->primaryKey(),
-            'pay_schet_id' => $this->integer()->notNull(),
-            'summ' => $this->integer()->notNull(),
+        $this->createTable(PayschetPart::tableName(), [
+            'Id' => $this->primaryKey(),
+            'PayschetId' => $this->integer()->notNull(),
+            'SupplierServiceId' => $this->integer()->notNull(),
+            'Summ' => $this->integer()->notNull(),
         ]);
 
     }
@@ -27,7 +28,7 @@ class m200703_110825_create_pay_schet_parts extends Migration
      */
     public function safeDown()
     {
-        $this->dropTable(PaySchetPart::tableName());
+        $this->dropTable(PayschetPart::tableName());
     }
 
     /*
