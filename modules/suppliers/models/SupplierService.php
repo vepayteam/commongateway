@@ -8,18 +8,6 @@ use Yii;
 *      schema="SupplierService",
 *      required={"SupplierId","TypeId","Title"},
 *     @OA\Property(
-*        property="Id",
-*        description="",
-*        type="integer",
-*        format="int64",
-*    ),
-*     @OA\Property(
-*        property="SupplierId",
-*        description="",
-*        type="integer",
-*        format="int64",
-*    ),
-*     @OA\Property(
 *        property="TypeId",
 *        description="",
 *        type="integer",
@@ -63,7 +51,7 @@ class SupplierService extends \yii\db\ActiveRecord
     {
         return [
             [['SupplierId', 'TypeId', 'Title'], 'required'],
-            [['SupplierId', 'TypeId'], 'integer'],
+            [['SupplierId', 'TypeId', 'PartnerId'], 'integer'],
             [['Title'], 'string', 'max' => 250],
             [['SupplierId'], 'exist', 'skipOnError' => true, 'targetClass' => Supplier::className(), 'targetAttribute' => ['SupplierId' => 'Id']],
             [['TypeId'], 'exist', 'skipOnError' => true, 'targetClass' => SupplierServiceType::className(), 'targetAttribute' => ['TypeId' => 'Id']],
@@ -99,5 +87,10 @@ class SupplierService extends \yii\db\ActiveRecord
         return $this->hasOne(SupplierServiceType::className(), ['Id' => 'TypeId']);
     }
 
-
+    public static function findOneByPartnerId($id, $partnerId)
+    {
+        return self::find()
+            ->where(['PartnerId' => $partnerId, 'Id' => $id])
+            ->one();
+    }
 }

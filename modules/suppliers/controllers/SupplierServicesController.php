@@ -2,10 +2,12 @@
 
 namespace app\modules\suppliers\controllers;
 
+use app\services\suppliers\SuppliersService;
 use Yii;
 use app\modules\suppliers\models\SupplierService;
 use yii\data\ActiveDataProvider;
 use app\modules\suppliers\controllers\BaseController;
+use yii\web\BadRequestHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\ServerErrorHttpException;
 
@@ -52,10 +54,8 @@ class SupplierServicesController extends BaseController
      */
     public function actionIndex()
     {
-        $dataProvider = new ActiveDataProvider([
-            'query' => SupplierService::find()->with('creator')->with('updater'),
-        ]);
-        return $dataProvider;
+        $models = $this->getSuppliersService()->getSupplierServicesByPartnerId($this->partnerId);
+        return $models;
     }
 
     /**
@@ -92,7 +92,8 @@ class SupplierServicesController extends BaseController
      */
     public function actionView($id)
     {
-        return $this->findModel($id);
+        $models = $this->getSuppliersService()->getSupplierServiceByPartnerId($id, $this->partnerId);
+        return $models;
     }
 
     /**
@@ -124,13 +125,14 @@ class SupplierServicesController extends BaseController
      */
     public function actionCreate()
     {
-        $model = new SupplierService();
-        if ($model->load(Yii::$app->getRequest()->getBodyParams(), '') && $model->save()) {
-            $response = Yii::$app->getResponse();
-            $response->setStatusCode(201);
-        } elseif (!$model->hasErrors()) {
-            throw new ServerErrorHttpException('Failed to create the object for unknown reason.');
+        $model = $this->getSuppliersService()->createSupplierServiceByPartnerId($this->partnerId, $this->body);
+
+        if($model === false) {
+            throw new BadRequestHttpException();
         }
+
+        $response = Yii::$app->getResponse();
+        $response->setStatusCode(201);
         return $model;
     }
 
@@ -181,12 +183,11 @@ class SupplierServicesController extends BaseController
      */
     public function actionUpdate($id)
     {
-        $model = $this->findModel($id);
-        if ($model->load(Yii::$app->request->getBodyParams(), '') && $model->save()) {
-            Yii::$app->response->setStatusCode(200);
-        } elseif (!$model->hasErrors()) {
-            throw new ServerErrorHttpException('Failed to update the object for unknown reason.');
+        $model = $this->getSuppliersService()->updateSupplierServiceByPartnerId($id, $this->partnerId, $this->body);
+        if($model === false) {
+            throw new BadRequestHttpException();
         }
+
         return $model;
     }
 
@@ -223,25 +224,20 @@ class SupplierServicesController extends BaseController
      */
     public function actionDelete($id)
     {
-        $model = $this->findModel($id);
+        $model = $this->getSuppliersService()->getSupplierServiceByPartnerId($id, $this->partnerId);
         if ($model->delete() === false) {
             throw new ServerErrorHttpException('Failed to delete the object for unknown reason.');
         }
-        Yii::$app->getResponse()->setStatusCode(204);
+        Yii::$app->getResponse()->setStatusCode(204);;
     }
 
     /**
-     * Finds the SupplierService model based on its primary key value.
-     * If the model is not found, a 404 HTTP exception will be thrown.
-     * @param integer $id
-     * @return SupplierService the loaded model
-     * @throws NotFoundHttpException if the model cannot be found
+     * @return SuppliersService
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\di\NotInstantiableException
      */
-    protected function findModel($id)
+    protected function getSuppliersService()
     {
-        if (($model = SupplierService::findOne($id)) !== null) {
-            return $model;
-        }
-        throw new NotFoundHttpException('The requested SupplierService does not exist.');
+        return Yii::$container->get('SuppliersService');
     }
 }

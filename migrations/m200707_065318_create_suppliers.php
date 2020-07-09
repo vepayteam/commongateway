@@ -1,5 +1,6 @@
 <?php
 
+use app\modules\suppliers\models\Supplier;
 use yii\db\Migration;
 
 /**
@@ -12,7 +13,7 @@ class m200707_065318_create_suppliers extends Migration
      */
     public function safeUp()
     {
-        $this->createTable('suppliers', [
+        $this->createTable(Supplier::tableName(), [
             'Id' => $this->primaryKey(),
             'Name' => $this->string(250)->notNull(),
             'SchetTcb' => $this->string(40),
@@ -25,9 +26,9 @@ class m200707_065318_create_suppliers extends Migration
      */
     public function safeDown()
     {
-        $this->dropTable('suppliers');
+        $this->dropTable(Supplier::tableName());
 
-        return false;
+        return true;
     }
 
     /*

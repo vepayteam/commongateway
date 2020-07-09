@@ -10,6 +10,10 @@ namespace app\modules\suppliers;
  *         description="",
  *     ),
  *     @OA\Server(
+ *         description="Dev",
+ *         url="http://processing.vepay.ru/suppliers/"
+ *     ),
+ *     @OA\Server(
  *         description="Test",
  *         url="http://test.vepay.online/suppliers/"
  *     ),
