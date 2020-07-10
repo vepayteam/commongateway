@@ -6,6 +6,7 @@ namespace app\services\payment\payment_strategies;
 
 use app\models\bank\TCBank;
 use app\models\kfapi\KfPay;
+use app\models\kfapi\KfPayParts;
 use app\models\kfapi\KfRequest;
 use app\models\TU;
 use app\services\payment\payment_strategies\traits\PaymentFormTrait;
@@ -33,22 +34,32 @@ class CreateFormJkhPartsStrategy implements IPaymentStrategy
 
     public function exec()
     {
-        $kfPay = new KfPay();
-        $kfPay->scenario = KfPay::SCENARIO_FORM;
+        $kfPay = new KfPayParts();
+        $kfPay->scenario = KfPayParts::SCENARIO_FORM;
         $kfPay->load($this->request->req, '');
         if (!$kfPay->validate()) {
             return ['status' => 0, 'message' => $kfPay->GetError()];
         }
 
         $usl = $this->getUsl();
-        $tcbGate = $this->getTkbGate();
-
-        if (!$usl || !$tcbGate->IsGate()) {
+        if (!$usl) {
             return ['status' => 0, 'message' => 'Услуга не найдена'];
         }
+
+        foreach ($kfPay->parts as $part) {
+            $tcbGate = $this->getTkbGate($part['merchant_id']);
+
+            if(!$tcbGate->IsGate()) {
+                return [
+                    'status' => 0,
+                    'message' => 'Услуга не найдена'];
+            }
+        }
+
         Yii::warning('/merchant/pay id='. $this->request->IdPartner . " sum=".$kfPay->amount . " extid=".$kfPay->extid, 'mfo');
 
         $pay = $this->createPay();
+
         $mutex = new FileMutex();
         if (!empty($kfPay->extid)) {
             //проверка на повторный запрос
@@ -66,6 +77,7 @@ class CreateFormJkhPartsStrategy implements IPaymentStrategy
         }
 
         $params = $pay->payToMfo($this->getUser(), [$kfPay->descript], $kfPay, $usl, TCBank::$bank, $this->request->IdPartner, 0);
+        $this->createPayParts($params);
         if (!empty($kfPay->extid)) {
             $mutex->release('getPaySchetExt' . $kfPay->extid);
         }
@@ -81,6 +93,7 @@ class CreateFormJkhPartsStrategy implements IPaymentStrategy
 
     private function getUsl()
     {
+
         return Yii::$app->db->createCommand("
             SELECT `ID` 
             FROM `uslugatovar`

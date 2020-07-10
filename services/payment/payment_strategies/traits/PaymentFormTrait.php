@@ -8,6 +8,7 @@ use app\models\api\Reguser;
 use app\models\bank\TcbGate;
 use app\models\kfapi\KfRequest;
 use app\models\payonline\CreatePay;
+use app\models\PayschetPart;
 use yii\web\User;
 
 /**
@@ -22,9 +23,9 @@ trait PaymentFormTrait
     /**
      * @return TcbGate
      */
-    private function getTkbGate()
+    private function getTkbGate($partnerId = null)
     {
-        return new TcbGate($this->request->IdPartner, $this->gate);
+        return new TcbGate($partnerId ?? $this->request->IdPartner, $this->gate);
     }
 
     private function createPay()
@@ -32,6 +33,20 @@ trait PaymentFormTrait
         $user = $this->getUser();
         $pay = new CreatePay($user);
         return $pay;
+    }
+
+    /**
+     * @param CreatePay $pay
+     */
+    private function createPayParts($params)
+    {
+        foreach ($this->request->req['parts'] as $part) {
+            $payschetPart = new PayschetPart();
+            $payschetPart->PayschetId = $params['IdPay'];
+            $payschetPart->PartnerId = $part['merchant_id'];
+            $payschetPart->Amount = $part['amount'];
+            $payschetPart->save();
+        }
     }
 
     private function getUser()

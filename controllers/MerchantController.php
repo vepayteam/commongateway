@@ -41,7 +41,12 @@ class MerchantController extends Controller
     public function behaviors()
     {
         $behaviors = parent::behaviors();
-        if (in_array(Yii::$app->controller->action->id, ['pay', 'state', 'reverseorder'])) {
+        if (in_array(Yii::$app->controller->action->id, [
+            'pay',
+            'pay-parts',
+            'state',
+            'reverseorder'
+        ])) {
             $this->updateBehaviorsCors($behaviors);
         }
         return $behaviors;
@@ -51,8 +56,9 @@ class MerchantController extends Controller
     {
         return [
             'pay' => ['POST'],
+            'pay-parts' => ['POST'],
             'state' => ['POST'],
-            'reverseorder' => ['POST']
+            'reverseorder' => ['POST'],
         ];
     }
 
@@ -63,7 +69,7 @@ class MerchantController extends Controller
      */
     public function beforeAction($action)
     {
-        if (in_array($action->id, ['pay', 'state', 'reverseorder'])) {
+        if (in_array($action->id, ['pay', 'pay-parts', 'state', 'reverseorder'])) {
             $this->enableCsrfValidation = false;
         }
         return parent::beforeAction($action);
@@ -187,8 +193,7 @@ class MerchantController extends Controller
         $kfRequest->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody(), 0);
         /** @var IPaymentStrategy $paymentStrategy */
         $paymentStrategy = new CreateFormJkhPartsStrategy($kfRequest);
-
-
+        return $paymentStrategy->exec();
     }
 
     /**
