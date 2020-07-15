@@ -33,9 +33,7 @@
         "geoip2/geoip2" : "~2.0",
         "kartik-v/yii2-mpdf": "dev-master",
         "toriphes/yii2-console-runner": "*",
-        "2amigos/qrcode-library" : "*",
-        "bestyii/yii2-gii-rest": "*",
-        "bestyii/yii2-openapi-reader": "dev-master"
+        "2amigos/qrcode-library" : "*"
     },
     "require-dev": {
         "yiisoft/yii2-debug": "~2.1.0",
