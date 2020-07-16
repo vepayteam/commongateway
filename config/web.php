@@ -149,7 +149,6 @@ $config = [
     'container' => [
         'singletons' => [
             'PaymentService' => ['class' => 'app\services\payment\PaymentService'],
-            'SuppliersService' => ['class' => 'app\services\suppliers\SuppliersService'],
         ],
     ],
     'modules' => [
