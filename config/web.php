@@ -146,6 +146,11 @@ $config = [
         ],
     ],
     'params' => $params,
+    'container' => [
+        'singletons' => [
+            'AuthService' => ['class' => 'app\services\auth\AuthService'],
+        ],
+    ],
     'modules' => [
         'partner' => [
             'class' => 'app\modules\partner\Module',
@@ -161,7 +166,10 @@ $config = [
         ],
         'antifraud' => [
             'class' => 'app\modules\antifraud\Module',
-        ]
+        ],
+        'lk' => [
+            'class' => 'app\modules\lk\Module',
+        ],
     ],
 ];
 
