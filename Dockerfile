@@ -6,7 +6,7 @@ COPY . ${APACHE_DOCUMENT_ROOT}/
 
 RUN set -ex \
     && rm -rf ${APACHE_DOCUMENT_ROOT}/vendor \
-    && composer --working-dir="${APACHE_DOCUMENT_ROOT}/" --ansi --no-interaction install \
+    && composer --working-dir="${APACHE_DOCUMENT_ROOT}/" --ansi --no-interaction --no-cache install \
     \
     && chmod +x ${APACHE_DOCUMENT_ROOT}/yii \
     && chmod +x ${APACHE_DOCUMENT_ROOT}/init \
