@@ -1,0 +1,582 @@
+openapi: 3.0.0
+info:
+  title: API УПРИД
+  description: Vepay API УПРИД.
+  version: 1.0.6
+security:
+  - Login: []
+    Token: []
+tags:
+  - name: Benific
+    description: Бенифициары
+  - name: Callback
+    description: Оповещения
+servers:
+  - url: https://vepay.online/kfapi
+  - url: https://test.vepay.online/kfapi
+paths:
+  /benific/reg-individual:
+    post:
+      tags:
+        - Benific
+      summary: Регистрация бенифициара, физическое лицо
+      description: Запрос регистрации бенифициара
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BenificIndividual"
+        description: Параметры запроса
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResult"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /benific/reg-sole-proprietor:
+    post:
+      tags:
+        - Benific
+      summary: Регистрация бенифициара, индивидуальный предприниматель
+      description: Запрос регистрации бенифициара
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BenificSoleProprietor"
+        description: Параметры запроса
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResult"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /benific/reg-legal-person:
+    post:
+      tags:
+        - Benific
+      summary: Регистрация бенифициара, юридическое лицо
+      description: Запрос регистрации бенифициара
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BenificLegalPerson"
+        description: Параметры запроса
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResult"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  securitySchemes:
+    Login:
+      type: apiKey
+      in: header
+      name: X-Login
+      description: Логин
+    Token:
+      type: apiKey
+      in: header
+      name: X-Token
+      description: Токен, формируется по алгоритму sha1(sha1(ключ) + sha1(тело запроса))
+  schemas:
+    BenificIndividual:
+      type: object
+      properties:
+        groundforparticipation:
+          type: string
+          description: Основание участия в договоре
+        joiningdate:
+          type: string
+          format: date(YYYY-MM-DD)
+          description: Дата присоединения
+        lastname:
+          type: string
+          description: Фамилия
+        firstname:
+          type: string
+          description: Имя
+        middlename:
+          type: string
+          description: Отчество
+        birthdate:
+          type: string
+          format: date(YYYY-MM-DD)
+          description: Дата рождения
+        birthplace:
+          type: string
+          description: Место рождения
+        phone:
+          type: string
+          description: Контактный телефон
+        email:
+          type: string
+          description: Адрес электронной почты
+        gender:
+          type: integer
+          description: Пол 0 - М 1 - Ж
+        innfl:
+          type: string
+          description: ИНН
+        nationality:
+          type: string
+          description: Гражданство (трехбуквенный ISO код страны, например RUS)
+        pdl:
+          type: integer
+          description: Публичное должностное лицо - 0 - нет 1 - да
+        rpdl:
+          type: integer
+          description: Родственник публичного должностного лица - 0 - нет 1 - да
+        document:
+          description: Документ, удостоверяющий личность
+          $ref: "#/components/schemas/Document"
+        righttostaydocument:
+          description: Документ, разрешающий проживание (для иностранных нраждан)
+          $ref: "#/components/schemas/Document"
+        actualaddres:
+          description: Фактический адрес
+          $ref: "#/components/schemas/Adress"
+        uraddres:
+          description: Юридический адрес
+          $ref: "#/components/schemas/Adress"
+    BenificSoleProprietor:
+      type: object
+      properties:
+        groundforparticipation:
+          type: string
+          description: Основание участия в договоре
+        joiningdate:
+          type: string
+          format: date(YYYY-MM-DD)
+          description: Дата присоединения
+        lastname:
+          type: string
+          description: Фамилия
+        firstname:
+          type: string
+          description: Имя
+        middlename:
+          type: string
+          description: Отчество
+        birthdate:
+          type: string
+          format: date(YYYY-MM-DD)
+          description: Дата рождения
+        birthplace:
+          type: string
+          description: Место рождения
+        phone:
+          type: string
+          description: Контактный телефон
+        email:
+          type: string
+          description: Адрес электронной почты
+        gender:
+          type: integer
+          description: Пол 0 - М 1 - Ж
+        govregistrationdate:
+          type: string
+          format: date(YYYY-MM-DD)
+          description: Дата государственной регистрации ИП
+        govregistrationplace:
+          type: string
+          description: Место государственной регистрации
+        govregistrationathority:
+          type: string
+          description: Наименование регистрирующего органа
+        inn:
+          type: string
+          description: ИНН
+        nationality:
+          type: string
+          description: Гражданство (трехбуквенный ISO код страны, например RUS)
+        pdl:
+          type: integer
+          description: Публичное должностное лицо - 0 - нет 1 - да
+        rpdl:
+          type: integer
+          description: Родственник публичного должностного лица - 0 - нет 1 - да
+        msp:
+          type: integer
+          description: Субъект МСП, 0 - нет 1 - да
+        document:
+          description: Документ, удостоверяющий личность
+          $ref: "#/components/schemas/Document"
+        uraddres:
+          description: Юридический адрес
+          $ref: "#/components/schemas/Adress"
+    BenificLegalPerson:
+      type: object
+      properties:
+        joiningdate:
+          type: string
+          format: date(YYYY-MM-DD)
+          description: Дата присоединения
+        urname:
+          type: string
+          description: Полное наименование
+        shorturname:
+          type: string
+          description: Сокращенное наименование
+        govregistrationdate:
+          type: string
+          format: date(YYYY-MM-DD)
+          description: Дата государственной регистрации
+        govregistrationplace:
+          type: string
+          description: Место государственной регистрации
+        govregistrationathority:
+          type: string
+          description: Наименование регистрирующего органа
+        inn:
+          type: string
+          description: ИНН
+        ownershipform:
+          type: integer
+          description: Тип организации ЮЛ - 1 - Организация, находящаяся в
+            федеральной собственности 2 - Организация, находящаяся в
+            государственной (кроме федеральной) собственности 3 -
+            Негосударственная организация
+        ownershipgroup:
+          type: integer
+          description: Тип собственности ЮЛ - 1 - Финансовая организация, 2 -
+            Коммерческая организация, 3 - Некоммерческая организация
+        kpp:
+          type: string
+          description: КПП
+        ogrn:
+          type: string
+          description: ОГРН
+        okved:
+          type: string
+          description: ОКВЕД
+        okopf:
+          type: string
+          description: ОКОПФ
+        okpo:
+          type: string
+          description: ОКПО
+        uraddres:
+          description: Юридический адрес
+          $ref: "#/components/schemas/Adress"
+        actualaddres:
+          description: Фактический адрес
+          $ref: "#/components/schemas/Adress"
+        lastname:
+          type: string
+          description: Фамилия руководителя
+        firstname:
+          type: string
+          description: Имя руководителя
+        middlename:
+          type: string
+          description: Отчество руководителя
+        dirregistrationdate:
+          type: string
+          format: date(YYYY-MM-DD)
+          description: Дата назначения на должность руководителя
+        groundforparticipation:
+          type: string
+          description: Основание участия в договоре
+        innfl:
+          type: string
+          description: ИНН руководителя
+        document:
+          description: Документ, удостоверяющий личность руководителя
+          $ref: "#/components/schemas/Document"
+        resident:
+          type: integer
+          description: Резидент - 0 - нет 1 - да
+        phone:
+          type: string
+          description: Контактный телефон
+        email:
+          type: string
+          description: Адрес электронной почты
+        capitalpayed:
+          type: number
+          description: Оплаченный уставной капитал
+        msp:
+          type: integer
+          description: Субъект МСП, 0 - нет 1 - да
+        legalformsofbusiness:
+          type: integer
+          description: Организационно-правовая форма (ЮЛ) - 0 - Иное 1 - Общество с
+            ограниченной ответственностью 2 - Закрытое акционерное общество 3 -
+            Открытое акционерное общество 4 - Акционерное общество 5 - Публичное
+            акционерное общество
+    Adress:
+      type: object
+      description: uraddres - Юридический адрес (Адрес регистрации ИП / ФЛ), actualaddres - Фактический адрес
+      properties:
+        fias:
+          type: string
+          description: Код адреса по ФИАС
+        country:
+          type: string
+          description: Страна
+        region:
+          type: string
+          description: Регион
+        regiontype:
+          type: string
+          description: Тип региона
+        city:
+          type: string
+          description: Город
+        citytype:
+          type: string
+          description: Тип города
+        place:
+          type: string
+          description: Населенный пункт
+        placetype:
+          type: string
+          description: Тип населенного пункта
+        street:
+          type: string
+          description: Улица
+        streettype:
+          type: string
+          description: Тип улицы
+        house:
+          type: string
+          description: Дом
+        corp:
+          type: string
+          description: Корпус
+        flat:
+          type: string
+          description: Квартира, Офис
+    Document:
+      type: object
+      description: document - Документ, удостоверяющий личность, righttostaydocument - Документ, разрешающий проживание (для иностранных нраждан)
+      properties:
+        type:
+          type: integer
+          description: Тип документа - 0 - Иной документ 1 - Паспорт РФ 2 - Паспорт
+            иностранного гражданина 3 - Вид на жительство 4 - Разрешение на
+            временное проживание 5 - Виза 6 - Миграционная карта
+        serial:
+          type: string
+          description: Серия документа
+        number:
+          type: string
+          description: Номер документа
+        issueby:
+          type: string
+          description: Кем документ выдан
+        date:
+          type: string
+          description: Дата выдачи документа
+        finishdate:
+          type: string
+          description: Срок действия документа
+        code:
+          type: string
+          description: Код подразделения
+    Error:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Наименование кода ошибки
+        message:
+          type: string
+          description: Сообщение ошибки
+        code:
+          type: integer
+          description: Дополнительный код ошибки
+        status:
+          type: integer
+          description: Код ошибки
+    IdState:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: идентификатор запроса
+    Status:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Статус (0 - в обработке, 1 - успешно, 2 - ошибка, 3 - отменен)
+        message:
+          type: string
+          description: Сообщение ошибки
+        rc:
+          type: string
+          description: Код ошибки банка (может отсутствовать)
+    StatusResult:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Статус (0 - ошибка, 1 - успешно)
+        message:
+          type: string
+          description: Сообщение ошибки
+    StatusId:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Статус (0 – ошибка 1 - принят)
+        message:
+          type: string
+          description: Сообщение ошибки
+        id:
+          type: integer
+          description: идентификатор запроса
+    StatusIdUrl:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Статус (0 – ошибка 1 - принят)
+        message:
+          type: string
+          description: Сообщение ошибки
+        id:
+          type: integer
+          description: идентификатор запроса
+        url:
+          type: string
+          description: Cсылка для перехода на форму оплаты
+    StatusAmount:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Статус (0 – ошибка 1 - успешно)
+        message:
+          type: string
+          description: Сообщение ошибки
+        amount:
+          type: number
+          description: Сумма баланса
+        insumm:
+          type: number
+          description: Сумма полученных средств (в пути)
+        outsumm:
+          type: number
+          description: Сумма отправленных средств (в пути)
+    Balance:
+      type: object
+      properties:
+        account:
+          type: string
+          description: Счет в банке
+    Statements:
+      type: object
+      properties:
+        account:
+          type: string
+          description: Счет в банке
+        datefrom:
+          type: string
+          format: date-time
+          description: Дата начала
+        dateto:
+          type: string
+          format: date-time
+          description: Дата окончания
+    StatusStatements:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Статус (0 – ошибка 1 - успешно)
+        message:
+          type: string
+          description: Сообщение ошибки
+        statements:
+          type: array
+          items:
+            $ref: "#/components/schemas/ListStatements"
+          description: Список платежных поручений
+    ListStatements:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Идентификатор операции
+        number:
+          type: integer
+          description: Номер платежного поручения
+        date:
+          type: string
+          format: date-time
+          description: Дата, время документа
+        datedoc:
+          type: string
+          format: date-time
+          description: Дата создания документа
+        summ:
+          type: number
+          description: Сумма платежа
+        description:
+          type: string
+          maxLength: 210
+          description: Назначение платежа
+        isсredit:
+          type: boolean
+          description: Флаг 1 - зачисление / 0 - списание
+        name:
+          type: string
+          description: Наименование получателя/отправителя
+        inn:
+          type: string
+          description: ИНН получателя/отправителя
+        kpp:
+          type: string
+          description: КПП получателя/отправителя
+        bic:
+          type: string
+          description: БИК банка
+        bank:
+          type: string
+          description: Наименование банка
+        bankaccount:
+          type: string
+          description: Корсчет банка
+        account:
+          type: string
+          description: Счет в банке
+
+    CallbackState:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: 0 - успешно, или код ошибки. При указанном коде ошибки в ответе на колбэк выполняется возврат средств.
+        message:
+          type: string
+          description: Описание ошибки
