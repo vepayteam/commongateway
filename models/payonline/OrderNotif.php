@@ -58,11 +58,16 @@ class OrderNotif
         ")->query();
 
         while ($row = $res->read()) {
+            // TODO: refact
+            $domain = 'https://api.vepay.online';
+            if (Yii::$app->params['TESTMODE'] == 'Y') {
+                $domain = 'https://test.vepay.online';
+            }
 
             $subject = "Счет на оплату";
             $content = "Счет № ".$row['IdOrder']." на сумму ".($row['SumOrder']/100.0)." руб.<br>".
                 $row['Comment']."<br>".
-                "<a href='https://api.vepay.online/widget/order/".$row['IdOrder']."'>Оплатить</a>";
+                "<a href='".$domain."/widget/order/".$row['IdOrder']."'>Оплатить</a>";
 
             $mail = new SendEmail();
             $mail->send($row['EmailTo'], null, $subject, $content);
