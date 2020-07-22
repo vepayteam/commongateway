@@ -68,6 +68,7 @@ class Payschets
                 u.`Fam`,
                 u.`Name`,
                 u.`Otch`,
+                u.`ExtOrg`,
                 ps.`ExtBillNumber`,
                 ps.`DateCreate`,
                 qu.NameUsluga,
