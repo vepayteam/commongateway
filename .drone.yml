@@ -1,0 +1,85 @@
+---
+kind: pipeline
+type: kubernetes
+name: build-test-deploy
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+  - name: feature-docker-tag-review
+    image: alpine
+    privileged: false
+    commands:
+    - echo -n "${DRONE_SOURCE_BRANCH##feature/}" | tr '[:upper:]' '[:lower:]' > .tags
+    when:
+      branch:
+      - feature/*
+
+  - name: feat-docker-tag-review
+    image: alpine
+    privileged: false
+    commands:
+    - echo -n "${DRONE_SOURCE_BRANCH##feat/}" | tr '[:upper:]' '[:lower:]' > .tags
+    when:
+      branch:
+      - feat/*
+  
+  - name: fix-docker-tag-review
+    image: alpine
+    privileged: false
+    commands:
+    - echo -n "${DRONE_SOURCE_BRANCH##fix/}" | tr '[:upper:]' '[:lower:]' > .tags
+    when:
+      branch:
+      - fix/*
+
+  - name: hotfix-docker-tag-review
+    image: alpine
+    privileged: false
+    commands:
+    - echo -n "${DRONE_SOURCE_BRANCH##hotfix/}" | tr '[:upper:]' '[:lower:]' > .tags
+    when:
+      branch:
+      - hotfix/*
+
+  - name: docker-tag-staging
+    image: alpine
+    privileged: false
+    commands:
+    - echo -n "${DRONE_BRANCH,,},staging,latest" > .tags
+    when:
+      branch:
+      - develop
+
+  - name: docker-image-build
+    image: plugins/docker
+    privileged: false
+    settings:
+      username:
+        from_secret: DOCKER_USERNAME
+      password:
+        from_secret: DOCKER_PASSWORD
+      registry: registry.vepay.cf
+      repo: registry.vepay.cf/${DRONE_REPO,,}
+    when:
+      branch:
+        - feature/*
+        - feat/*
+        - fix/*
+        - hotfix/*
+        - develop
+
+trigger:
+  branch:
+    - feature/*
+    - feat/*
+    - fix/*
+    - hotfix/*
+    - develop
+---
+kind: signature
+hmac: ad35a8e78d11caa822ba6fd9b8dc78e96894e4855b0522b49a599a18e01ca9ad
+
+...
