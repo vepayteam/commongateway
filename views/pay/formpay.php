@@ -15,9 +15,20 @@ use yii\bootstrap\Html;
             <img src="/imgs/close.svg" class="closebtn" alt="close" id="closeform">
         </div>
     </div>
-    <?php if ($params['IdUsluga'] == 1) : ?>
+    <?php if (true) : ?>
         <div class="row margin-top24">
-            <div class="col-xs-12"><div class="infotop">Cписанная cумма, списанная с карты, при успешном списании, вернется обратно на вашу банковскую карту.</div></div>
+            <div class="col-xs-12">
+                <?php /* TODO: */if(in_array($params['IDPartner'], ['3','8'])): ?>
+                    <div class="infotop">
+                        Для проверки актуальности Вашей банковской карты с нее будет списана сумма до 10 р.
+                        После окончания проверки, списанная сумма вернется на карту.
+                    </div>
+                <?php else: ?>
+                    <div class="infotop">
+                        Cписанная cумма, списанная с карты, при успешном списании, вернется обратно на вашу банковскую карту.
+                    </div>
+                <?php endif; ?>
+            </div>
         </div>
     <?php else: ?>
         <div class="row margin-top24">
