@@ -21,6 +21,7 @@ RUN set -ex \
     \
     && mkdir -p ${APACHE_DOCUMENT_ROOT}/web/assets \
     && mkdir -p ${APACHE_DOCUMENT_ROOT}/web/shopdata \
+    && mkdir -p ${APACHE_DOCUMENT_ROOT}/runtime/logs/console \
     && chmod -R g-w ${APACHE_DOCUMENT_ROOT} \
     && chmod -R g+w ${APACHE_DOCUMENT_ROOT}/runtime \
     && chmod -R g+w ${APACHE_DOCUMENT_ROOT}/web/assets \
