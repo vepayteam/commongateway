@@ -6,19 +6,11 @@
                     <form action="#">
                         <h2 class="form-header">Войти в аккаунт</h2>
                         <div class="form-group">
-                            <label for="login">Логин</label>
+                            <label for="login">Телефон</label>
                             <input class="form-control" id="login" name="login" type="text">
                         </div>
-                        <div class="form-group">
-                            <label for="password">Пароль</label>
-                            <input class="form-control" id="password" name="password" type="password">
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" id="remember_me" name="remember_me" type="checkbox">
-                            <label class="form-check-label" for="remember_me">Запомнить меня</label>
-                        </div>
-                        <button class="btn btn-primary w-100">Войти</button>
-                    </form><a class="text-center login-form-signin-phone" href="/lk/login/in-by-phone">Войти по номеру телефона</a>
+                        <button class="btn btn-primary w-100">Далее</button>
+                    </form><a class="text-center login-form-signin-phone" href="/lk/login/in">Войти с помощью логина и пароля</a>
                     <div class="login-form-info"><a class="text-center login-form-info-newuser" href="#">Новый пользователь?</a>
                         <div class="text-center">
                             <button class="btn btn-outline-primary login-form-info-signup w-100" type="button">Зарегистрироваться</button>

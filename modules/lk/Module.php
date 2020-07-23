@@ -1,6 +1,6 @@
 <?php
 
-namespace app\modules\mfo;
+namespace app\modules\lk;
 
 /**
  * mfo module definition class

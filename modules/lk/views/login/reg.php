@@ -4,26 +4,25 @@
             <div class="block-gradient">
                 <div class="login-form-wrap">
                     <form action="#">
-                        <h2 class="form-header">Войти в аккаунт</h2>
+                        <h2 class="form-header">Регистрация</h2>
                         <div class="form-group">
                             <label for="login">Логин</label>
                             <input class="form-control" id="login" name="login" type="text">
                         </div>
                         <div class="form-group">
-                            <label for="password">Пароль</label>
+                            <label for="password">Придумайте пароль</label>
                             <input class="form-control" id="password" name="password" type="password">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Действующий адрес электронной почты</label>
+                            <input class="form-control" id="email" name="email" type="text">
                         </div>
                         <div class="form-check">
                             <input class="form-check-input" id="remember_me" name="remember_me" type="checkbox">
                             <label class="form-check-label" for="remember_me">Запомнить меня</label>
                         </div>
-                        <button class="btn btn-primary w-100">Войти</button>
-                    </form><a class="text-center login-form-signin-phone" href="/lk/login/in-by-phone">Войти по номеру телефона</a>
-                    <div class="login-form-info"><a class="text-center login-form-info-newuser" href="#">Новый пользователь?</a>
-                        <div class="text-center">
-                            <button class="btn btn-outline-primary login-form-info-signup w-100" type="button">Зарегистрироваться</button>
-                        </div>
-                    </div>
+                        <button class="btn btn-primary w-100">Зарегистрироваться</button>
+                    </form><a class="text-center login-form-signin-phone" href="#">Войти по номеру телефона</a>
                 </div>
             </div>
         </div>
