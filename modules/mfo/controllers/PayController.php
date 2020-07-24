@@ -7,6 +7,7 @@ use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\crypt\CardToken;
 use app\models\kfapi\KfCard;
+use app\models\kfapi\KfFormPay;
 use app\models\kfapi\KfPay;
 use app\models\mfo\MfoReq;
 use app\models\payonline\CreatePay;
@@ -51,10 +52,31 @@ class PayController extends Controller
     protected function verbs()
     {
         return [
+            'form-lk' => ['POST'],
             'lk' => ['POST'],
             'auto' => ['POST'],
             'state' => ['POST'],
         ];
+    }
+
+    public function actionFormLk()
+    {
+        $mfo = new MfoReq();
+        $mfo->LoadData(Yii::$app->request->getRawBody());
+
+        $kfFormPay = new KfFormPay();
+        $kfFormPay->scenario = KfFormPay::SCENARIO_FORM;
+        $kfFormPay->load($mfo->Req(), '');
+        if (!$kfFormPay->validate()) {
+            return ['status' => 0, 'message' => $kfFormPay->GetError()];
+        }
+        $result = $this->actionLk();
+
+        if($result['status'] == 1) {
+            $kfFormPay->createFormElements($result['id']);
+            $result['url'] = $kfFormPay->GetPayForm($result['id']);
+        }
+        return $result;
     }
 
     /**
