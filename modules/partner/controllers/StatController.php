@@ -328,7 +328,7 @@ class StatController extends Controller
         $fltr = new StatFilter();
         $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
         return $this->render('saledraft', [
-            'uslugilist' => $fltr->getTypeUslugLiust(TU::InAll())
+            'uslugilist' => $fltr->getTypeUslugLiust(TU::InAllBySaledraft())
         ]);
     }
 
