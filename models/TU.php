@@ -41,6 +41,11 @@ class TU
         return [self::$JKH, self::$REGCARD, self::$ECOM, self::$POGASHATF, self::$AVTOPLATATF, self::$POGASHECOM, self::$AVTOPLATECOM];
     }
 
+    public static function InAllBySaledraft()
+    {
+        return array_merge([self::$TOCARD], self::InAll());
+    }
+
     public static function IsInPay($type)
     {
         return in_array($type, self::InPay());
