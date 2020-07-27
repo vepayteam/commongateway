@@ -7,6 +7,7 @@ return [
     'buhEmail' => 'support@vepay.online',
     'DEVMODE' => 'Y',
     'TESTMODE' => 'Y',
+    'accountServiceUrl' => 'http://accounts.192-168-110-1.nip.io/api',
 	'key' => '',
     'keycancel' => '',
     'info' => [

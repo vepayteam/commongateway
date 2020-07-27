@@ -1,17 +1,29 @@
+<?php
+
+/**
+ * @var \app\services\auth\models\LoginForm $loginform
+ *
+ **/
+
+?>
 <div class="row d-flex align-center flex-wrap">
     <div class="col-xs-12 col-md-6">
         <div class="block-gradient-wrap login-form">
             <div class="block-gradient">
                 <div class="login-form-wrap">
-                    <form action="#">
+                    <form action="/lk/login/in" method="post">
                         <h2 class="form-header">Войти в аккаунт</h2>
-                        <div class="form-group">
+                        <div class="form-group<?=$loginForm->getErrors('login') ? 'has-error': ''?>">
                             <label for="login">Логин</label>
-                            <input class="form-control" id="login" name="login" type="text">
+                            <input class="form-control" id="login"
+                                   name="LoginForm[login]"
+                                   type="text"
+                                   value="<?=$loginform->login?>"
+                            >
                         </div>
-                        <div class="form-group">
+                        <div class="form-group <?=$loginForm->getErrors('password') ? 'has-error': ''?>">
                             <label for="password">Пароль</label>
-                            <input class="form-control" id="password" name="password" type="password">
+                            <input class="form-control" id="password" name="LoginForm[password]" type="password">
                         </div>
                         <div class="form-check">
                             <input class="form-check-input" id="remember_me" name="remember_me" type="checkbox">

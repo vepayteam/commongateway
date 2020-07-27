@@ -7,6 +7,7 @@ return [
     'buhEmail' => 'support@vepay.online',
     'DEVMODE' => 'N',
     'TESTMODE' => 'N',
+    'accountServiceUrl' => '',
 	'key' => '',
     'keycancel' => '',
     'info' => [
