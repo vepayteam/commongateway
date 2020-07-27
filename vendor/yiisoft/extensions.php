@@ -102,4 +102,22 @@ return array (
       '@Da/QrCode' => $vendorDir . '/2amigos/qrcode-library/src',
     ),
   ),
+  'bestyii/yii2-gii-rest' => 
+  array (
+    'name' => 'bestyii/yii2-gii-rest',
+    'version' => '0.0.2.0',
+    'alias' => 
+    array (
+      '@bestyii/giiRest' => $vendorDir . '/bestyii/yii2-gii-rest/src',
+    ),
+  ),
+  'bestyii/yii2-openapi-reader' => 
+  array (
+    'name' => 'bestyii/yii2-openapi-reader',
+    'version' => '9999999-dev',
+    'alias' => 
+    array (
+      '@bestyii/openapiReader' => $vendorDir . '/bestyii/yii2-openapi-reader/src',
+    ),
+  ),
 );

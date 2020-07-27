@@ -2,10 +2,8 @@
 
 namespace app\models\mfo;
 
-use app\models\partner\UserLk;
 use app\models\payonline\Uslugatovar;
 use app\models\TU;
-use Yii;
 use yii\base\Model;
 
 class MfoSettings extends Model
@@ -18,31 +16,14 @@ class MfoSettings extends Model
     public $UrlReturnCancel = '';
     public $UrlCheckReq = '';
 
-    const CALLBACK_NAME_URLS = ['UrlReturn', 'UrlReturnFail', 'UrlReturnCancel'];
-
     public function rules()
     {
         return [
             [['IdPartner'], 'integer'],
             [['url', 'UrlReturn', 'UrlReturnFail', 'UrlCheckReq', 'UrlReturnCancel'], 'url'],
             [['url', 'UrlReturn', 'UrlReturnFail', 'UrlCheckReq', 'UrlReturnCancel'], 'string', 'max' => 300],
-            ['key', 'string', 'max' => 20],
-            [self::CALLBACK_NAME_URLS, 'validateOnlyAdminCanChange'],
+            ['key', 'string', 'max' => 20]
         ];
-    }
-
-
-    public function validateOnlyAdminCanChange()
-    {
-        $isAdmin = UserLk::IsAdmin(Yii::$app->user);
-        if(!$isAdmin) {
-            $usl = $this->getUslugatovarByUrlReturns();
-            foreach (self::CALLBACK_NAME_URLS as $callbackUrl) {
-                if($usl->$callbackUrl != $this->$callbackUrl) {
-                    $this->addError($callbackUrl, 'Только администратор может изменять это поле');
-                }
-            }
-        }
     }
 
     /**
@@ -50,23 +31,7 @@ class MfoSettings extends Model
      */
     public function ReadUrl()
     {
-        $usl = $this->getUslugatovarByUrlReturns();
-
-        if(!$usl) {
-            return false;
-        }
-
-        $this->url = $usl->UrlInform;
-        $this->key = $usl->KeyInform;
-        $this->UrlReturn = $usl->UrlReturn;
-        $this->UrlReturnFail = $usl->UrlReturnFail;
-        $this->UrlReturnCancel = $usl->UrlReturnCancel;
-        $this->UrlCheckReq = $usl->UrlCheckReq;
-        return true;
-    }
-
-    private function getUslugatovarByUrlReturns()
-    {
+        $usl = null;
         $tp = [TU::$POGASHECOM, TU::$ECOM, TU::$JKH];
         foreach ($tp as $uslType) {
             $usl = Uslugatovar::findOne(['IsCustom' => $uslType, 'IDPartner' => $this->IdPartner, 'IsDeleted' => 0]);
@@ -74,8 +39,14 @@ class MfoSettings extends Model
                 break;
             }
         }
-
-        return $usl ?? null;
+        if ($usl) {
+            $this->url = $usl->UrlInform;
+            $this->key = $usl->KeyInform;
+            $this->UrlReturn = $usl->UrlReturn;
+            $this->UrlReturnFail = $usl->UrlReturnFail;
+            $this->UrlReturnCancel = $usl->UrlReturnCancel;
+            $this->UrlCheckReq = $usl->UrlCheckReq;
+        }
     }
 
     /**
