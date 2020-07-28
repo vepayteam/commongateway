@@ -7,10 +7,16 @@ use app\models\api\Reguser;
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\kfapi\KfCard;
+use app\models\kfapi\KfFormPay;
 use app\models\kfapi\KfPay;
 use app\models\kfapi\KfRequest;
 use app\models\payonline\CreatePay;
 use app\models\Payschets;
+use app\services\payment\payment_strategies\CreateFormEcomStrategy;
+use app\services\payment\payment_strategies\CreateFormJkhPartsStrategy;
+use app\services\payment\payment_strategies\CreateFormJkhStrategy;
+use app\services\payment\payment_strategies\IPaymentStrategy;
+use app\services\payment\PaymentService;
 use Yii;
 use yii\db\Exception;
 use yii\mutex\FileMutex;
@@ -36,7 +42,13 @@ class MerchantController extends Controller
     public function behaviors()
     {
         $behaviors = parent::behaviors();
-        if (in_array(Yii::$app->controller->action->id, ['pay', 'state', 'reverseorder'])) {
+        if (in_array(Yii::$app->controller->action->id, [
+            'form-pay',
+            'pay-parts',
+            'pay',
+            'state',
+            'reverseorder'
+        ])) {
             $this->updateBehaviorsCors($behaviors);
         }
         return $behaviors;
@@ -45,9 +57,11 @@ class MerchantController extends Controller
     protected function verbs()
     {
         return [
+            'form-pay' => ['POST'],
             'pay' => ['POST'],
+            'pay-parts' => ['POST'],
             'state' => ['POST'],
-            'reverseorder' => ['POST']
+            'reverseorder' => ['POST'],
         ];
     }
 
@@ -58,7 +72,13 @@ class MerchantController extends Controller
      */
     public function beforeAction($action)
     {
-        if (in_array($action->id, ['pay', 'state', 'reverseorder'])) {
+        if (in_array($action->id, [
+            'form-pay',
+            'pay',
+            'pay-parts',
+            'state',
+            'reverseorder'
+        ])) {
             $this->enableCsrfValidation = false;
         }
         return parent::beforeAction($action);
@@ -83,6 +103,26 @@ class MerchantController extends Controller
         return Yii::$app->response->sendFile(Yii::$app->basePath . '/doc/merchant.yaml', '', ['inline' => true, 'mimeType' => 'application/yaml']);
     }
 
+    public function actionFormPay()
+    {
+        $kf = new KfRequest();
+        $kf->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody(), 0);
+
+        $kfFormPay = new KfFormPay();
+        $kfFormPay->scenario = KfFormPay::SCENARIO_FORM;
+        $kfFormPay->load($kf->req, '');
+        if (!$kfFormPay->validate()) {
+            return ['status' => 0, 'message' => $kfFormPay->GetError()];
+        }
+        $result = $this->actionPay();
+
+        if($result['status'] == 1) {
+            $kfFormPay->createFormElements($result['id']);
+            $result['url'] = $kfFormPay->GetPayForm($result['id']);
+        }
+        return $result;
+    }
+
     /**
      * Платеж по АПИ
      * @return array
@@ -95,66 +135,32 @@ class MerchantController extends Controller
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        $kf = new KfRequest();
-        $kf->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody(), 0);
+        $kfRequest = new KfRequest();
+        $kfRequest->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody(), 0);
 
-        $kfPay = new KfPay();
-        $kfPay->scenario = KfPay::SCENARIO_FORM;
-        $kfPay->load($kf->req, '');
-        if (!$kfPay->validate()) {
-            return ['status' => 0, 'message' => $kfPay->GetError()];
+        /** @var IPaymentStrategy $paymentStrategy */
+        $paymentStrategy = null;
+        switch($kfRequest->GetReq('type', 0)) {
+            case 1:
+                $paymentStrategy = new CreateFormJkhStrategy($kfRequest);
+                break;
+            default:
+                $paymentStrategy = new CreateFormEcomStrategy($kfRequest);
+                break;
         }
 
-        if ($kf->GetReq('type', 0) == 1) {
-            $gate = TCBank::$JKHGATE;
-            $usl = $kfPay->GetUslugJkh($kf->IdPartner);
-        } else {
-            $gate = TCBank::$ECOMGATE;
-            $usl = $kfPay->GetUslugEcom($kf->IdPartner);
-        }
-        $TcbGate = new TcbGate($kf->IdPartner, $gate);
-        if (!$usl || !$TcbGate->IsGate()) {
-            return ['status' => 0, 'message' => 'Услуга не найдена'];
-        }
+        return $paymentStrategy->exec();
+    }
 
-        Yii::warning('/merchant/pay id='. $kf->IdPartner . " sum=".$kfPay->amount . " extid=".$kfPay->extid, 'mfo');
+    public function actionPayParts()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
 
-        $user = null;
-        if ($kf->GetReq('regcard',0)) {
-            $reguser = new Reguser();
-            $user = $reguser->findUser('0', $kf->IdPartner . '-' . time(), md5($kf->IdPartner . '-' . time()), $kf->IdPartner, false);
-        }
-
-        $pay = new CreatePay($user);
-        $mutex = new FileMutex();
-        if (!empty($kfPay->extid)) {
-            //проверка на повторный запрос
-            if (!$mutex->acquire('getPaySchetExt' . $kfPay->extid, 30)) {
-                throw new Exception('getPaySchetExt: error lock!');
-            }
-            $paramsExist = $pay->getPaySchetExt($kfPay->extid, $usl, $kf->IdPartner);
-            if ($paramsExist) {
-                if ($kfPay->amount == $paramsExist['sumin']) {
-                    return ['status' => 1, 'id' => (int)$paramsExist['IdPay'], 'url' => $kfPay->GetPayForm($paramsExist['IdPay']), 'message' => ''];
-                } else {
-                    return ['status' => 0, 'id' => 0, 'url' => '', 'message' => 'Нарушение уникальности запроса'];
-                }
-            }
-        }
-
-        $params = $pay->payToMfo($user, [$kfPay->descript], $kfPay, $usl, TCBank::$bank, $kf->IdPartner, 0);
-        if (!empty($kfPay->extid)) {
-            $mutex->release('getPaySchetExt' . $kfPay->extid);
-        }
-
-        //PCI DSS
-        return [
-            'status' => 1,
-            'id' => (int)$params['IdPay'],
-            'url' => $kfPay->GetPayForm($params['IdPay']),
-            'message' => ''
-        ];
-
+        $kfRequest = new KfRequest();
+        $kfRequest->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody(), 0);
+        /** @var IPaymentStrategy $paymentStrategy */
+        $paymentStrategy = new CreateFormJkhPartsStrategy($kfRequest);
+        return $paymentStrategy->exec();
     }
 
     /**
@@ -233,6 +239,16 @@ class MerchantController extends Controller
 
         return ['status' => 0, 'message' => 'Ошибка запроса'];
 
+    }
+
+    /**
+     * @return PaymentService
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\di\NotInstantiableException
+     */
+    private function getPaymentService()
+    {
+        return Yii::$container->get('PaymentService');
     }
 
 }

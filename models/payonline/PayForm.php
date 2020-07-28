@@ -92,14 +92,14 @@ class PayForm extends Model
      * @param $id
      * @return string
      */
-    public function GetRetUrl($id)
+    public function GetRetUrl($id, $md)
     {
         if (Yii::$app->params['DEVMODE'] == 'Y') {
-            return 'http://127.0.0.1:806/pay/orderdone?id='.$id;
+            return 'http://127.0.0.1:806/pay/orderdone?id='.$id.'&md='.$md;
         } elseif (Yii::$app->params['TESTMODE'] == 'Y') {
-            return 'https://'.$_SERVER['SERVER_NAME'].'/pay/orderdone?id='.$id;
+            return 'https://'.$_SERVER['SERVER_NAME'].'/pay/orderdone?id='.$id.'&md='.$md;
         } else {
-            return 'https://api.vepay.online/pay/orderdone?id='.$id;
+            return 'https://api.vepay.online/pay/orderdone?id='.$id.'&md='.$md;
         }
     }
 
