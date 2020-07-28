@@ -1,171 +1,6 @@
 ---
 kind: pipeline
 type: kubernetes
-name: build-deploy-development-push
-
-platform:
-  os: linux
-  arch: amd64
-
-steps:
-- name: check-for-conventional-commits
-  pull: if-not-exists
-  image: aevea/commitsar
-  commands:
-  - commitsar -v -s
-  failure: ignore
-  when:
-    branch:
-    - feature/*
-    - feat/*
-    - hotfix/*
-    - fix/*
-
-- name: notify-developer-cc-checks
-  pull: always
-  image: registry.vepay.cf/ci-tools
-  commands:
-  - gitea-status "conventional-commits" "${DRONE_STAGE_STATUS}" "${DRONE_STAGE_STATUS}" "${DRONE_BUILD_LINK}"
-  environment:
-    GITEA_TOKEN:
-      from_secret: GITEA_TOKEN
-  when:
-    branch:
-    - feature/*
-    - feat/*
-    - hotfix/*
-    - fix/*
-    status:
-    - failure
-    - success
-
-- name: docker-tag-f9a32b4ab2477fbd8d5ecb47cfba825c
-  pull: always
-  image: registry.vepay.cf/ci-tools
-  commands:
-  - echo -n "${DRONE_BUILD_NUMBER},${DRONE_BRANCH//\//-}" > .tags
-
-- name: docker-image-build
-  image: plugins/docker
-  settings:
-    password:
-      from_secret: DOCKER_PASSWORD
-    registry: registry.vepay.cf
-    repo: registry.vepay.cf/${DRONE_REPO,,}
-    username:
-      from_secret: DOCKER_USERNAME
-
-- name: notify-gitea-docker-image-url
-  pull: always
-  image: registry.vepay.cf/ci-tools
-  commands:
-  - gitea-status "docker-image/url" "registry.vepay.cf/${DRONE_REPO,,}:${DRONE_BRANCH//\//-}" "success" "${DRONE_BUILD_LINK}"
-  environment:
-    GITEA_TOKEN:
-      from_secret: GITEA_TOKEN
-
-- name: fetch-extract-helm-package-2636825aa6bb09be7a3998172154ea86
-  pull: if-not-exists
-  image: dtzar/helm-kubectl
-  commands:
-  - helm repo add vepay http://charts.service.vepay:8080/
-  - helm repo update
-  - helm pull --untar vepay/${DRONE_REPO_NAME}
-
-- name: helm-deployment-upgrade-f43c7461bb3dd2a6709d0e1da0d8baa3
-  image: pelotech/drone-helm3
-  settings:
-    add_repos:
-    - vepay=http://charts.service.vepay:8080/
-    atomic_upgrade: true
-    chart: ${DRONE_REPO_NAME}
-    cleanup_failed_upgrade: true
-    kube_api_server: https://kubernetes.default.svc
-    kube_service_account:
-      from_secret: KUBE_SERVICE_ACCOUNT
-    kube_token:
-      from_secret: KUBE_TOKEN
-    mode: upgrade
-    namespace: api-testing
-    release: ${DRONE_BRANCH//\//-}-test
-    skip_tls_verify: true
-    update_dependencies: true
-    values:
-    - enableTunnel=true
-    - image.app.repository=registry.vepay.cf/${DRONE_REPO,,}
-    - image.app.tag=${DRONE_BUILD_NUMBER}
-    - ingress.hosts[0].host=${DRONE_BRANCH//\//-}-test.192-168-110-1.nip.io
-    - ingress.hosts[0].paths[0]=/
-    wait_for_upgrade: true
-
-- name: helm-deployment-upgrade-3e2a33720ff5d3008c8faefb0e9d144f
-  image: pelotech/drone-helm3
-  settings:
-    add_repos:
-    - vepay=http://charts.service.vepay:8080/
-    atomic_upgrade: true
-    chart: ${DRONE_REPO_NAME}
-    cleanup_failed_upgrade: true
-    kube_api_server: https://kubernetes.default.svc
-    kube_service_account:
-      from_secret: KUBE_SERVICE_ACCOUNT
-    kube_token:
-      from_secret: KUBE_TOKEN
-    mode: upgrade
-    namespace: api-development
-    release: ${DRONE_BRANCH//\//-}
-    skip_tls_verify: true
-    update_dependencies: true
-    values:
-    - enableTunnel=false
-    - image.app.repository=registry.vepay.cf/${DRONE_REPO,,}
-    - image.app.tag=${DRONE_BUILD_NUMBER}
-    - ingress.hosts[0].host=${DRONE_BRANCH//\//-}.192-168-110-1.nip.io
-    - ingress.hosts[0].paths[0]=/
-    wait_for_upgrade: true
-  when:
-    branch:
-    - develop
-
-- name: notify-gitea-test-url
-  pull: always
-  image: registry.vepay.cf/ci-tools
-  commands:
-  - gitea-status "app-test/url"
-  environment:
-    GITEA_TOKEN:
-      from_secret: GITEA_TOKEN
-    WORK_BRANCH: ${DRONE_BRANCH}-test
-
-- name: notify-gitea-url
-  pull: always
-  image: registry.vepay.cf/ci-tools
-  commands:
-  - gitea-status
-  environment:
-    GITEA_TOKEN:
-      from_secret: GITEA_TOKEN
-    WORK_BRANCH: ${DRONE_BRANCH}
-  when:
-    branch:
-    - develop
-
-image_pull_secrets:
-- dockerconfig
-
-trigger:
-  branch:
-  - feature/*
-  - feat/*
-  - hotfix/*
-  - fix/*
-  - develop
-  event:
-  - push
-
----
-kind: pipeline
-type: kubernetes
 name: build-deploy-development-pull-request
 
 platform:
@@ -180,11 +15,11 @@ steps:
   - commitsar -v -s
   failure: ignore
 
-- name: notify-developer-cc-checks
+- name: notify-conventional-commits-92dd82a6ba7e676ab8b076809a35bc98
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
-  - gitea-status "conventional-commits" "${DRONE_STAGE_STATUS}" "${DRONE_STAGE_STATUS}" "${DRONE_BUILD_LINK}"
+  - gitea-status -t "conventional-commits" -m "${DRONE_STAGE_STATUS}" -s "${DRONE_STAGE_STATUS}" -u "${DRONE_BUILD_LINK}"
   environment:
     GITEA_TOKEN:
       from_secret: GITEA_TOKEN
@@ -193,11 +28,12 @@ steps:
     - failure
     - success
 
-- name: docker-tag-2dc165c30f388d81a7132e1bb29dd0a9
+- name: docker-tag-7d9d8b7eed1620f6eefac4a9eca4190b
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
-  - echo -n "${DRONE_BUILD_NUMBER},${DRONE_SOURCE_BRANCH//\//-}" > .tags
+  - echo -n "`replace-slash ${DRONE_BUILD_NUMBER}`" > .tags
+  - echo -n ",`replace-slash ${DRONE_SOURCE_BRANCH}`" >> .tags
 
 - name: docker-image-build
   image: plugins/docker
@@ -209,11 +45,11 @@ steps:
     username:
       from_secret: DOCKER_USERNAME
 
-- name: notify-gitea-docker-image-url
+- name: notify-docker-image-url-657105c17bc1553c117a2cb22deb694f
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
-  - gitea-status "docker-image/url" "registry.vepay.cf/${DRONE_REPO,,}:${DRONE_SOURCE_BRANCH//\//-}" "success" "${DRONE_BUILD_LINK}"
+  - gitea-status -t "docker-image/url" -m "registry.vepay.cf/${DRONE_REPO,,}:`replace-slash ${DRONE_SOURCE_BRANCH}`" -s "success" -u "${DRONE_BUILD_LINK}"
   environment:
     GITEA_TOKEN:
       from_secret: GITEA_TOKEN
@@ -226,7 +62,18 @@ steps:
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
-- name: helm-deployment-upgrade-963e0f1ae9f7ab2130d2a2feb26d2b1a
+- name: helm-values-generator-fdd35b09d0dfa67966144ad4c900f4e4
+  pull: always
+  image: registry.vepay.cf/ci-tools
+  commands:
+  - touch values.yaml
+  - yq write values.yaml "enableTunnel" "true" -i
+  - yq write values.yaml "image.app.repository" "registry.vepay.cf/${DRONE_REPO,,}" -i
+  - yq write values.yaml "image.app.tag" "${DRONE_BUILD_NUMBER}" -i
+  - yq write values.yaml "ingress.hosts[0].host" "`replace-slash ${DRONE_SOURCE_BRANCH}`-test.192-168-110-1.nip.io" -i
+  - yq write values.yaml "ingress.hosts[0].paths[0]" "/" -i
+
+- name: helm-deployment-upgrade-4a7cfdcd5b1eb6305c359f7cfe55c468
   image: pelotech/drone-helm3
   settings:
     add_repos:
@@ -241,26 +88,21 @@ steps:
       from_secret: KUBE_TOKEN
     mode: upgrade
     namespace: api-testing
-    release: ${DRONE_SOURCE_BRANCH//\//-}-test
+    release: ${DRONE_REPO_NAMESPACE,,}-${DRONE_REPO_NAME,,}-pr-${DRONE_PULL_REQUEST}
     skip_tls_verify: true
     update_dependencies: true
-    values:
-    - enableTunnel=true
-    - image.app.repository=registry.vepay.cf/${DRONE_REPO,,}
-    - image.app.tag=${DRONE_BUILD_NUMBER}
-    - ingress.hosts[0].host=${DRONE_SOURCE_BRANCH//\//-}-test.192-168-110-1.nip.io
-    - ingress.hosts[0].paths[0]=/
+    values_files:
+    - values.yaml
     wait_for_upgrade: true
 
-- name: notify-gitea-test-url
+- name: notify-app-test-url-f21881d9d60ce2c617572d34333d4507
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
-  - gitea-status "app-test/url"
+  - gitea-status -t "app-test/url" -m "http://`replace-slash ${DRONE_SOURCE_BRANCH}`-test.192-168-110-1.nip.io/" -s "success" -u "http://`replace-slash ${DRONE_SOURCE_BRANCH}`-test.192-168-110-1.nip.io/"
   environment:
     GITEA_TOKEN:
       from_secret: GITEA_TOKEN
-    WORK_BRANCH: ${DRONE_SOURCE_BRANCH}-test
 
 image_pull_secrets:
 - dockerconfig
@@ -270,9 +112,140 @@ trigger:
   - develop
   event:
   - pull_request
-  repo:
-    exclude:
-    - backend/processing
+
+---
+kind: pipeline
+type: kubernetes
+name: build-deploy-development-push
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: docker-tag-295b3c44309601b1d345bccaaede9d84
+  pull: always
+  image: registry.vepay.cf/ci-tools
+  commands:
+  - echo -n "`replace-slash ${DRONE_BUILD_NUMBER}`" > .tags
+  - echo -n ",`replace-slash ${DRONE_BRANCH}`" >> .tags
+
+- name: docker-image-build
+  image: plugins/docker
+  settings:
+    password:
+      from_secret: DOCKER_PASSWORD
+    registry: registry.vepay.cf
+    repo: registry.vepay.cf/${DRONE_REPO,,}
+    username:
+      from_secret: DOCKER_USERNAME
+
+- name: notify-docker-image-url-eca48fa70abdf632ae75cf9e811aacef
+  pull: always
+  image: registry.vepay.cf/ci-tools
+  commands:
+  - gitea-status -t "docker-image/url" -m "registry.vepay.cf/${DRONE_REPO,,}:`replace-slash ${DRONE_BRANCH}`" -s "success" -u "${DRONE_BUILD_LINK}"
+  environment:
+    GITEA_TOKEN:
+      from_secret: GITEA_TOKEN
+
+- name: fetch-extract-helm-package-2636825aa6bb09be7a3998172154ea86
+  pull: if-not-exists
+  image: dtzar/helm-kubectl
+  commands:
+  - helm repo add vepay http://charts.service.vepay:8080/
+  - helm repo update
+  - helm pull --untar vepay/${DRONE_REPO_NAME}
+
+- name: helm-values-generator-8abeebbf741b4b2b91bd8d166770c575
+  pull: always
+  image: registry.vepay.cf/ci-tools
+  commands:
+  - touch values.yaml
+  - yq write values.yaml "enableTunnel" "true" -i
+  - yq write values.yaml "image.app.repository" "registry.vepay.cf/${DRONE_REPO,,}" -i
+  - yq write values.yaml "image.app.tag" "${DRONE_BUILD_NUMBER}" -i
+  - yq write values.yaml "ingress.hosts[0].host" "${DRONE_BRANCH}-test.192-168-110-1.nip.io" -i
+  - yq write values.yaml "ingress.hosts[0].paths[0]" "/" -i
+
+- name: helm-deployment-upgrade-45fed861e1060161ebf21250b0597f12
+  image: pelotech/drone-helm3
+  settings:
+    add_repos:
+    - vepay=http://charts.service.vepay:8080/
+    atomic_upgrade: true
+    chart: ${DRONE_REPO_NAME}
+    cleanup_failed_upgrade: true
+    kube_api_server: https://kubernetes.default.svc
+    kube_service_account:
+      from_secret: KUBE_SERVICE_ACCOUNT
+    kube_token:
+      from_secret: KUBE_TOKEN
+    mode: upgrade
+    namespace: api-testing
+    release: ${DRONE_REPO_NAMESPACE,,}-${DRONE_REPO_NAME,,}-${DRONE_BRANCH}
+    skip_tls_verify: true
+    update_dependencies: true
+    values_files:
+    - values.yaml
+    wait_for_upgrade: true
+
+- name: notify-app-test-url-d5289d220a377c598f2b12ace1e6baf0
+  pull: always
+  image: registry.vepay.cf/ci-tools
+  commands:
+  - gitea-status -t "app-test/url" -m "http://${DRONE_BRANCH}-test.192-168-110-1.nip.io/" -s "success" -u "http://${DRONE_BRANCH}-test.192-168-110-1.nip.io/"
+  environment:
+    GITEA_TOKEN:
+      from_secret: GITEA_TOKEN
+
+- name: helm-values-generator-14497889a73c3c7dcee2aae85b3be81d
+  pull: always
+  image: registry.vepay.cf/ci-tools
+  commands:
+  - touch values.yaml
+  - yq write values.yaml "enableTunnel" "false" -i
+  - yq write values.yaml "ingress.hosts[0].host" "${DRONE_BRANCH}.192-168-110-1.nip.io" -i
+
+- name: helm-deployment-upgrade-3606237ab0fb9dcc2c35d0bef846fdb8
+  image: pelotech/drone-helm3
+  settings:
+    add_repos:
+    - vepay=http://charts.service.vepay:8080/
+    atomic_upgrade: true
+    chart: ${DRONE_REPO_NAME}
+    cleanup_failed_upgrade: true
+    kube_api_server: https://kubernetes.default.svc
+    kube_service_account:
+      from_secret: KUBE_SERVICE_ACCOUNT
+    kube_token:
+      from_secret: KUBE_TOKEN
+    mode: upgrade
+    namespace: api-development
+    release: ${DRONE_REPO_NAMESPACE,,}-${DRONE_REPO_NAME,,}-${DRONE_BRANCH}
+    skip_tls_verify: true
+    update_dependencies: true
+    values_files:
+    - values.yaml
+    wait_for_upgrade: true
+
+- name: notify-app-url-6a966c92a9336ea69c61e587f038400b
+  pull: always
+  image: registry.vepay.cf/ci-tools
+  commands:
+  - gitea-status -t "app/url" -m "http://${DRONE_BRANCH}.192-168-110-1.nip.io/" -s "success" -u "http://${DRONE_BRANCH}.192-168-110-1.nip.io/"
+  environment:
+    GITEA_TOKEN:
+      from_secret: GITEA_TOKEN
+
+image_pull_secrets:
+- dockerconfig
+
+trigger:
+  branch:
+  - develop
+  event:
+  - push
 
 ---
 kind: pipeline
@@ -288,7 +261,10 @@ steps:
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
-  - echo -n "${DRONE_BUILD_NUMBER},${DRONE_BRANCH},latest,staging" > .tags
+  - echo -n "`replace-slash ${DRONE_BUILD_NUMBER}`" > .tags
+  - echo -n ",`replace-slash ${DRONE_BRANCH}`" >> .tags
+  - echo -n ",`replace-slash latest`" >> .tags
+  - echo -n ",`replace-slash staging`" >> .tags
 
 - name: docker-image-build
   image: plugins/docker
@@ -300,11 +276,11 @@ steps:
     username:
       from_secret: DOCKER_USERNAME
 
-- name: notify-gitea-docker-image-url
+- name: notify-docker-image-url-7fc49c6273886c2a7148cb9aa532c745
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
-  - gitea-status "docker-image/url" "registry.vepay.cf/${DRONE_REPO,,}:latest" "success" "${DRONE_BUILD_LINK}"
+  - gitea-status -t "docker-image/url" -m "registry.vepay.cf/${DRONE_REPO,,}:`replace-slash latest`" -s "success" -u "${DRONE_BUILD_LINK}"
   environment:
     GITEA_TOKEN:
       from_secret: GITEA_TOKEN
@@ -317,7 +293,18 @@ steps:
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
-- name: helm-deployment-upgrade-82ad7af807c8d579f564d6e00f7155b6
+- name: helm-values-generator-07d184fe0d6b1780f2a40242407d6d5c
+  pull: always
+  image: registry.vepay.cf/ci-tools
+  commands:
+  - touch values.yaml
+  - yq write values.yaml "enableTunnel" "false" -i
+  - yq write values.yaml "image.app.repository" "registry.vepay.cf/${DRONE_REPO,,}" -i
+  - yq write values.yaml "image.app.tag" "${DRONE_BUILD_NUMBER}" -i
+  - yq write values.yaml "ingress.hosts[0].host" "test.192-168-110-1.nip.io" -i
+  - yq write values.yaml "ingress.hosts[0].paths[0]" "/" -i
+
+- name: helm-deployment-upgrade-88f631278222ffc1fe7e7f55bdf697d7
   image: pelotech/drone-helm3
   settings:
     add_repos:
@@ -332,26 +319,21 @@ steps:
       from_secret: KUBE_TOKEN
     mode: upgrade
     namespace: api-staging
-    release: ${DRONE_BRANCH}
+    release: staging
     skip_tls_verify: true
     update_dependencies: true
-    values:
-    - enableTunnel=false
-    - image.app.repository=registry.vepay.cf/${DRONE_REPO,,}
-    - image.app.tag=${DRONE_BUILD_NUMBER}
-    - ingress.hosts[0].host=test.192-168-110-1.nip.io
-    - ingress.hosts[0].paths[0]=/
+    values_files:
+    - values.yaml
     wait_for_upgrade: true
 
-- name: notify-gitea-url
+- name: notify-app-url-05f68b3941ae95a6f31b220f3042ba34
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
-  - gitea-status
+  - gitea-status -t "app/url" -m "http://test.192-168-110-1.nip.io/" -s "success" -u "http://test.192-168-110-1.nip.io/"
   environment:
     GITEA_TOKEN:
       from_secret: GITEA_TOKEN
-    WORK_BRANCH: test
 
 image_pull_secrets:
 - dockerconfig
@@ -396,6 +378,14 @@ get:
 
 ---
 kind: secret
+name: KUBE_CERTIFICATE
+
+get:
+  path: deploy-app-user-token-dwh67
+  name: ca.crt
+
+---
+kind: secret
 name: GITEA_TOKEN
 
 get:
@@ -404,6 +394,6 @@ get:
 
 ---
 kind: signature
-hmac: 68f25fa6f13140cb856cd4157833ee388e15f3d8c7e894508cfe17432d40116d
+hmac: a6823ddac24911c5cf2dda4712197df743c9e16685948e111499f831d87067b3
 
 ...
