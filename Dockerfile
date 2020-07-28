@@ -9,9 +9,10 @@ ENV ENVIRONMENT ${ENVIRONMENT}
 COPY . ${APACHE_DOCUMENT_ROOT}/
 
 RUN set -ex \
-    && rm -rf ${APACHE_DOCUMENT_ROOT}/vendor \
-    && composer --working-dir="${APACHE_DOCUMENT_ROOT}/" --ansi --no-interaction --no-cache install \
-    \
+    # @TODO when kube comes into VF
+    # && rm -rf ${APACHE_DOCUMENT_ROOT}/vendor \
+    # && composer --working-dir="${APACHE_DOCUMENT_ROOT}/" --ansi --no-interaction --no-cache install \
+    # \
     && chmod +x ${APACHE_DOCUMENT_ROOT}/yii \
     && chmod +x ${APACHE_DOCUMENT_ROOT}/init \
     && ${APACHE_DOCUMENT_ROOT}/init --env=${ENVIRONMENT} \

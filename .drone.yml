@@ -39,11 +39,11 @@ steps:
     - failure
     - success
 
-- name: docker-tag-f9a32b4ab2477fbd8d5ecb47cfba825c
+- name: docker-tag-35b0c9c8e1cb333da9ea3b98e95cdf4a
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
-  - echo -n "${DRONE_BUILD_NUMBER},${DRONE_BRANCH//\//-}" > .tags
+  - echo -n "${DRONE_BUILD_NUMBER},${DRONE_BRANCH//[\/_+ ]/-}" > .tags
 
 - name: docker-image-build
   image: plugins/docker
@@ -59,7 +59,7 @@ steps:
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
-  - gitea-status "docker-image/url" "registry.vepay.cf/${DRONE_REPO,,}:${DRONE_BRANCH//\//-}" "success" "${DRONE_BUILD_LINK}"
+  - gitea-status "docker-image/url" "registry.vepay.cf/${DRONE_REPO,,}:${DRONE_BRANCH//[\/_+ ]/-}" "success" "${DRONE_BUILD_LINK}"
   environment:
     GITEA_TOKEN:
       from_secret: GITEA_TOKEN
@@ -72,7 +72,7 @@ steps:
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
-- name: helm-deployment-upgrade-f43c7461bb3dd2a6709d0e1da0d8baa3
+- name: helm-deployment-upgrade-b86954ab01a92cf504c12f1c45bfa956
   image: pelotech/drone-helm3
   settings:
     add_repos:
@@ -87,18 +87,18 @@ steps:
       from_secret: KUBE_TOKEN
     mode: upgrade
     namespace: api-testing
-    release: ${DRONE_BRANCH//\//-}-test
+    release: ${DRONE_BRANCH//[\/_+ ]/-}-test
     skip_tls_verify: true
     update_dependencies: true
     values:
     - enableTunnel=true
     - image.app.repository=registry.vepay.cf/${DRONE_REPO,,}
     - image.app.tag=${DRONE_BUILD_NUMBER}
-    - ingress.hosts[0].host=${DRONE_BRANCH//\//-}-test.192-168-110-1.nip.io
+    - ingress.hosts[0].host=${DRONE_BRANCH//[\/_+ ]/-}-test.192-168-110-1.nip.io
     - ingress.hosts[0].paths[0]=/
     wait_for_upgrade: true
 
-- name: helm-deployment-upgrade-3e2a33720ff5d3008c8faefb0e9d144f
+- name: helm-deployment-upgrade-e760fdd1e48020987bd048b104788834
   image: pelotech/drone-helm3
   settings:
     add_repos:
@@ -113,14 +113,14 @@ steps:
       from_secret: KUBE_TOKEN
     mode: upgrade
     namespace: api-development
-    release: ${DRONE_BRANCH//\//-}
+    release: ${DRONE_BRANCH//[\/_+ ]/-}
     skip_tls_verify: true
     update_dependencies: true
     values:
     - enableTunnel=false
     - image.app.repository=registry.vepay.cf/${DRONE_REPO,,}
     - image.app.tag=${DRONE_BUILD_NUMBER}
-    - ingress.hosts[0].host=${DRONE_BRANCH//\//-}.192-168-110-1.nip.io
+    - ingress.hosts[0].host=${DRONE_BRANCH//[\/_+ ]/-}.192-168-110-1.nip.io
     - ingress.hosts[0].paths[0]=/
     wait_for_upgrade: true
   when:
@@ -193,11 +193,11 @@ steps:
     - failure
     - success
 
-- name: docker-tag-2dc165c30f388d81a7132e1bb29dd0a9
+- name: docker-tag-f21475675ad2bfb0d560fd26805ee909
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
-  - echo -n "${DRONE_BUILD_NUMBER},${DRONE_SOURCE_BRANCH//\//-}" > .tags
+  - echo -n "${DRONE_BUILD_NUMBER},${DRONE_SOURCE_BRANCH//[\/_+ ]/-}" > .tags
 
 - name: docker-image-build
   image: plugins/docker
@@ -213,7 +213,7 @@ steps:
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
-  - gitea-status "docker-image/url" "registry.vepay.cf/${DRONE_REPO,,}:${DRONE_SOURCE_BRANCH//\//-}" "success" "${DRONE_BUILD_LINK}"
+  - gitea-status "docker-image/url" "registry.vepay.cf/${DRONE_REPO,,}:${DRONE_SOURCE_BRANCH//[\/_+ ]/-}" "success" "${DRONE_BUILD_LINK}"
   environment:
     GITEA_TOKEN:
       from_secret: GITEA_TOKEN
@@ -226,7 +226,7 @@ steps:
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
-- name: helm-deployment-upgrade-963e0f1ae9f7ab2130d2a2feb26d2b1a
+- name: helm-deployment-upgrade-7d25de9411aa56f19267b7984442d60f
   image: pelotech/drone-helm3
   settings:
     add_repos:
@@ -241,14 +241,14 @@ steps:
       from_secret: KUBE_TOKEN
     mode: upgrade
     namespace: api-testing
-    release: ${DRONE_SOURCE_BRANCH//\//-}-test
+    release: ${DRONE_SOURCE_BRANCH//[\/_+ ]/-}-test
     skip_tls_verify: true
     update_dependencies: true
     values:
     - enableTunnel=true
     - image.app.repository=registry.vepay.cf/${DRONE_REPO,,}
     - image.app.tag=${DRONE_BUILD_NUMBER}
-    - ingress.hosts[0].host=${DRONE_SOURCE_BRANCH//\//-}-test.192-168-110-1.nip.io
+    - ingress.hosts[0].host=${DRONE_SOURCE_BRANCH//[\/_+ ]/-}-test.192-168-110-1.nip.io
     - ingress.hosts[0].paths[0]=/
     wait_for_upgrade: true
 
@@ -404,6 +404,6 @@ get:
 
 ---
 kind: signature
-hmac: 68f25fa6f13140cb856cd4157833ee388e15f3d8c7e894508cfe17432d40116d
+hmac: 448326f81d302d4d32cdf212b2f49a2300e8d26ab81c72318f0fbab6e0a9d843
 
 ...
