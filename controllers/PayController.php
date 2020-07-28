@@ -207,7 +207,7 @@ class PayController extends Controller
                         'url' => $ret['url'],
                         'pa' => $ret['pa'],
                         'md' => $ret['md'],
-                        'termurl' => $payform->GetRetUrl($params['ID']),
+                        'termurl' => $payform->GetRetUrl($params['ID'], $ret['md']),
                     ];
                 } elseif ($ret['status'] == 2) {
                     //отменить счет
@@ -282,7 +282,7 @@ class PayController extends Controller
         Yii::warning("PayForm done id=".$id);
 
         if ($params) {
-            $md = Yii::$app->request->post('MD', '');
+            $md = Yii::$app->request->get('md', '');
             if ($params['Status'] == 0 && !empty($md)) {
                 //завершить платеж
                 if ($params['IdUsluga'] == 1) {
@@ -298,7 +298,17 @@ class PayController extends Controller
                     'MD' => $md,
                     'PaRes' => Yii::$app->request->post('PaRes')
                 ]);
-                //ret статус проверить?
+
+                if($ret['status'] == 1) {
+                    $payschets->confirmPay([
+                        'idpay' => $params['ID'],
+                        'result_code' => 1,
+                        'trx_id' => 0,
+                        'ApprovalCode' => '',
+                        'RRN' => '',
+                        'message' => ''
+                    ]);
+                }
             }
             return $this->redirect(\yii\helpers\Url::to('/pay/orderok?id='.$id));
 
