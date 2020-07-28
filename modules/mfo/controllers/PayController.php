@@ -9,9 +9,12 @@ use app\models\crypt\CardToken;
 use app\models\kfapi\KfCard;
 use app\models\kfapi\KfFormPay;
 use app\models\kfapi\KfPay;
+use app\models\kfapi\KfPayParts;
 use app\models\mfo\MfoReq;
 use app\models\payonline\CreatePay;
 use app\models\Payschets;
+use app\services\payment\payment_strategies\CreateFormMfoAftPartsStrategy;
+use app\services\payment\payment_strategies\IMfoStrategy;
 use Yii;
 use yii\base\Exception;
 use yii\helpers\VarDumper;
@@ -138,6 +141,35 @@ class PayController extends Controller
             'id' => (int)$params['IdPay'],
             'url' => $kfPay->GetPayForm($params['IdPay'])
         ];
+    }
+
+    public function actionLkParts()
+    {
+        $mfoReq = new MfoReq();
+        $mfoReq->LoadData(Yii::$app->request->getRawBody());
+
+        // TODO: refact
+        $kfPay = new KfPayParts();
+        $kfPay->scenario = KfPayParts::SCENARIO_FORM;
+        $kfPay->load($mfoReq->Req(), '');
+        if (!$kfPay->validate()) {
+            Yii::warning("pay/lk: ".$kfPay->GetError());
+            return ['status' => 0, 'message' => $kfPay->GetError()];
+        }
+
+        Yii::warning('/pay/lk mfo='. $mfoReq->mfo . " sum=".$kfPay->amount . " extid=".$kfPay->extid, 'mfo');
+
+        $gate = $kfPay->IsAftGate($mfoReq->mfo) ? TCBank::$AFTGATE : TCBank::$ECOMGATE;
+
+        /** @var IMfoStrategy $mfoStrategy */
+        $mfoStrategy = null;
+        if($kfPay->IsAftGate($mfoReq->mfo)) {
+            $mfoStrategy = new CreateFormMfoAftPartsStrategy($mfoReq);
+        } else {
+
+        }
+
+        return $mfoStrategy->exec();
     }
 
     /**
