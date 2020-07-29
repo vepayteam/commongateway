@@ -55,21 +55,21 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         <div class="form-group">
                             <label class="col-sm-2 control-label">Адрес возврата на страницу сайта (успех)</label>
                             <div class="col-sm-10 col-md-6">
-                                <input type="url" name="Settings[UrlReturn]" value="<?=Html::encode($settings->UrlReturn)?>" <?=($IsAdmin ? '' : 'disabled')?> maxlength="300" class="form-control">
+                                <input type="url" name="Settings[UrlReturn]" value="<?=Html::encode($settings->UrlReturn)?>" maxlength="300" class="form-control">
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label class="col-sm-2 control-label">Адрес возврата на страницу сайта (ошибка)</label>
                             <div class="col-sm-10 col-md-6">
-                                <input type="url" name="Settings[UrlReturnFail]" value="<?=Html::encode($settings->UrlReturnFail)?>" <?=($IsAdmin ? '' : 'disabled')?> maxlength="300" class="form-control">
+                                <input type="url" name="Settings[UrlReturnFail]" value="<?=Html::encode($settings->UrlReturnFail)?>" maxlength="300" class="form-control">
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label class="col-sm-2 control-label">Адрес возврата на страницу сайта (отмена)</label>
                             <div class="col-sm-10 col-md-6">
-                                <input type="url" name="Settings[UrlReturnCancel]" value="<?=Html::encode($settings->UrlReturnCancel)?>" <?=($IsAdmin ? '' : 'disabled')?> maxlength="300" class="form-control">
+                                <input type="url" name="Settings[UrlReturnCancel]" value="<?=Html::encode($settings->UrlReturnCancel)?>" maxlength="300" class="form-control">
                             </div>
                         </div>
 
