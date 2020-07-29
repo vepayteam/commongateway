@@ -146,7 +146,7 @@ class ReceiveStatemets
             $ret[] = [
                 "id" =>  $statement['id'],
                 "number" => $statement['number'],
-                "date" => $statement['datecr'] ?? $statement['date'],
+                "date" => $statement['date'] ?? $statement['datecr'],
                 "datedoc" => $statement['datedoc'] ?? $statement['date'],
                 "summ" => round($statement['summ'],2),
                 "description" => $statement['description'] ?? '',
