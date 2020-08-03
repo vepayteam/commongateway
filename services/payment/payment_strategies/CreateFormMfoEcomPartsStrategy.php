@@ -9,6 +9,7 @@ use app\models\bank\TcbGate;
 use app\models\kfapi\KfPayParts;
 use app\models\mfo\MfoReq;
 use app\models\payonline\CreatePay;
+use app\models\PayschetPart;
 use Yii;
 use yii\base\Exception;
 use yii\mutex\FileMutex;
@@ -60,6 +61,13 @@ class CreateFormMfoEcomPartsStrategy implements IMfoStrategy
             }
         }
         $params = $pay->payToMfo(null, [$kfPay->document_id, $kfPay->fullname], $kfPay, $usl, TCBank::$bank, $this->mfoReq->mfo,0);
+        foreach ($this->mfoReq->Req()['parts'] as $part) {
+            $payschetPart = new PayschetPart();
+            $payschetPart->PayschetId = $params['IdPay'];
+            $payschetPart->PartnerId = $part['merchant_id'];
+            $payschetPart->Amount = $part['amount'] * 100;
+            $payschetPart->save();
+        }
         if (!empty($kfPay->extid)) {
             $mutex->release('getPaySchetExt' . $kfPay->extid);
         }

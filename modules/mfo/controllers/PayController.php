@@ -7,11 +7,13 @@ use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\crypt\CardToken;
 use app\models\kfapi\KfCard;
+use app\models\kfapi\KfCardParts;
 use app\models\kfapi\KfFormPay;
 use app\models\kfapi\KfPay;
 use app\models\kfapi\KfPayParts;
 use app\models\mfo\MfoReq;
 use app\models\payonline\CreatePay;
+use app\models\PayschetPart;
 use app\models\Payschets;
 use app\services\payment\payment_strategies\CreateFormMfoAftPartsStrategy;
 use app\services\payment\payment_strategies\CreateFormMfoEcomPartsStrategy;
@@ -291,6 +293,7 @@ class PayController extends Controller
         return ['status' => 1, 'message' => '', 'id' => (int)$params['IdPay']];
     }
 
+
     // TODO: refact to strategies
     public function actionAutoParts()
     {
@@ -311,8 +314,8 @@ class PayController extends Controller
             return ['status' => 0, 'message' => 'Нет такой карты'];
         }
 
-        $kfPay = new KfPay();
-        $kfPay->scenario = KfPay::SCENARIO_AUTO;
+        $kfPay = new KfPayParts();
+        $kfPay->scenario = KfPayParts::SCENARIO_AUTO;
         $kfPay->load($mfo->Req(), '');
         if (!$kfPay->validate()) {
             Yii::warning("pay/auto: ".$kfPay->GetError());
@@ -363,6 +366,15 @@ class PayController extends Controller
 
         $kfPay->timeout = 30;
         $params = $pay->payToMfo($kfCard->user, [$kfPay->extid, $Card->ID, $TcbGate->AutoPayIdGate], $kfPay, $usl, TCBank::$bank, $mfo->mfo, $TcbGate->AutoPayIdGate);
+
+        foreach ($mfo->Req()['parts'] as $part) {
+            $payschetPart = new PayschetPart();
+            $payschetPart->PayschetId = $params['IdPay'];
+            $payschetPart->PartnerId = $part['merchant_id'];
+            $payschetPart->Amount = $part['amount'] * 100;
+            $payschetPart->save();
+        }
+
         if (!empty($kfPay->extid)) {
             $mutex->release('getPaySchetExt' . $kfPay->extid);
         }
