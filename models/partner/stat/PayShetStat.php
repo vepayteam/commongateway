@@ -75,88 +75,44 @@ class PayShetStat extends Model
         $CNTPAGE = 100;
 
         $IdPart = $IsAdmin ? $this->IdPart : UserLk::getPartnerId(Yii::$app->user);
-        $select = [
-            'COUNT(ps.ID) as c',
-            'SUM(ps.SummPay) AS SummPay',
-            'SUM(ps.ComissSumm) AS ComissSumm',
-            'SUM(ps.ComissSumm - ps.BankComis + ps.MerchVozn) AS VoznagPS',
-            'SUM(ps.BankComis) AS BankComis',
 
-        ];
-        $query = $this->buildQuery($select, $IdPart);
-
-        $cnt = $sumPay = $sumComis = $voznagps = $bankcomis = 0;
-        $res = $query->cache(10)->one();
-
-        $sumPay = $res['SummPay'];
-        $sumComis = $res['ComissSumm'];
-        $voznagps = $res['VoznagPS'];
-        $bankcomis = $res['BankComis'];
-        $cnt = $res['c'];
-
-        $select = [
-            'ps.ID',
-            'ps.Extid',
-            'qp.NameUsluga',
-            'ps.SummPay',
-            'ps.ComissSumm',
-            'ps.MerchVozn',
-            'ps.BankComis',
-            'ps.DateCreate',
-            'ps.DateOplat',
-            'ps.PayType',
-            'ps.ExtBillNumber',
-            'ps.Status',
-            'ps.Period',
-            'u.`UserDeviceType`',
-            'ps.IdKard',
-            'ps.CardType',
-            'ps.QrParams',
-            'ps.IdShablon',
-            'ps.IdQrProv',
-            'ps.IdAgent',
-            'qp.IsCustom',
-            'ps.ErrorInfo',
-            'ps.BankName',
-            'ps.CountryUser',
-            'ps.CityUser',
-            'qp.ProvVoznagPC',
-            'qp.ProvVoznagMin',
-            'qp.ProvComisPC',
-            'qp.ProvComisMin',
-            'ps.sms_accept',
-            'ps.Dogovor',
-            'ps.FIO',
-            'ps.RCCode'
-        ];
-        $query = $this->buildQuery($select, $IdPart);
-
-        if (!$nolimit) {
-            if ($page > 0) {
-                $query->offset($CNTPAGE * $page);
-            }
-            $query->orderBy('`ID` DESC')->limit($CNTPAGE);
-        }
-
-        $ret = [];
-        foreach ($query->each() as $row) {
-            $row['VoznagSumm'] = $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
-
-            $ret[] = $row;
-        }
-        return ['data' => $ret, 'cnt' => $cnt, 'cntpage' => $CNTPAGE, 'sumpay' => $sumPay, 'sumcomis' => $sumComis, 'bankcomis' => $bankcomis, 'voznagps' => $voznagps];
-    }
-
-    /**
-     * @param $select
-     * @param $IdPart
-     * @return Query
-     */
-    private function buildQuery($select, $IdPart)
-    {
         $query = new Query();
         $query
-            ->select($select)
+            ->select([
+                'ps.ID',
+                'ps.Extid',
+                'qp.NameUsluga',
+                'ps.SummPay',
+                'ps.ComissSumm',
+                'ps.MerchVozn',
+                'ps.BankComis',
+                'ps.DateCreate',
+                'ps.DateOplat',
+                'ps.PayType',
+                'ps.ExtBillNumber',
+                'ps.Status',
+                'ps.Period',
+                'u.`UserDeviceType`',
+                'ps.IdKard',
+                'ps.CardType',
+                'ps.QrParams',
+                'ps.IdShablon',
+                'ps.IdQrProv',
+                'ps.IdAgent',
+                'qp.IsCustom',
+                'ps.ErrorInfo',
+                'ps.BankName',
+                'ps.CountryUser',
+                'ps.CityUser',
+                'qp.ProvVoznagPC',
+                'qp.ProvVoznagMin',
+                'qp.ProvComisPC',
+                'qp.ProvComisMin',
+                'ps.sms_accept',
+                'ps.Dogovor',
+                'ps.FIO',
+                'ps.RCCode'
+            ])
             ->from('`pay_schet` AS ps FORCE INDEX(DateCreate_idx)')
             ->leftJoin('`banks` AS b', 'ps.Bank = b.ID')
             ->leftJoin('`uslugatovar` AS qp', 'ps.IdUsluga = qp.ID')
@@ -190,7 +146,33 @@ class PayShetStat extends Model
         if (count($this->params) > 0) {
             if (!empty($this->params[0])) $query->andWhere(['like', 'ps.Dogovor', $this->params[0]]);
         }
-        return $query;
+
+        $cnt = $sumPay = $sumComis = $voznagps = $bankcomis = 0;
+        $allres = $query->cache(10)->all();
+
+        foreach ($allres as $row) {
+            $sumPay += $row['SummPay'];
+            $sumComis += $row['ComissSumm'];
+            $voznagps += $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
+            $bankcomis += $row['BankComis'];
+            $cnt++;
+        }
+
+        if (!$nolimit) {
+            if ($page > 0) {
+                $query->offset($CNTPAGE * $page);
+            }
+            $query->orderBy('`ID` DESC')->limit($CNTPAGE);
+        }
+        $res = $query->cache(3)->all();
+
+        $ret = [];
+        foreach ($res as $row) {
+            $row['VoznagSumm'] = $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
+
+            $ret[] = $row;
+        }
+        return ['data' => $ret, 'cnt' => $cnt, 'cntpage' => $CNTPAGE, 'sumpay' => $sumPay, 'sumcomis' => $sumComis, 'bankcomis' => $bankcomis, 'voznagps' => $voznagps];
     }
 
     public function GetError()
