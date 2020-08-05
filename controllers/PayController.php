@@ -40,10 +40,47 @@ class PayController extends Controller
      */
     public function beforeAction($action)
     {
-        if (in_array($action->id, ['form', 'orderdone', 'orderok'])) {
+        if (in_array($action->id, [
+            'form-data',
+            'save-data',
+            'form',
+            'orderdone',
+            'orderok'
+        ])) {
             $this->enableCsrfValidation = false;
         }
         return parent::beforeAction($action);
+    }
+
+    public function actionFormData($id)
+    {
+        Yii::warning("SetData open id=".$id);
+        $payschets = new Payschets();
+        //данные счета для оплаты
+        $params = $payschets->getSchetData($id, null);
+        $formData = $payschets->getSchetFormData($id);
+
+        if (!$params || !TU::IsInPay($params['IsCustom']) || !$formData) {
+            throw new NotFoundHttpException("Счет для оплаты не найден");
+        }
+
+        //разрешить открытие во фрейме на сайте мерчанта
+        $csp = "default-src 'self' 'unsafe-inline' https://mc.yandex.ru; img-src 'self' data: https://mc.yandex.ru; connect-src 'self' https://mc.yandex.ru;";
+        if (!empty($params['URLSite'])) {
+            $csp .= ' frame-src ' . $params['URLSite'].';';
+        }
+        Yii::$app->response->headers->add('Content-Security-Policy', $csp);
+        return $this->render('formdata', ['params' => $params, 'formData' => $formData]);
+    }
+
+    public function actionSaveData($id)
+    {
+        Yii::warning("SaveData open id=".$id);
+        $payschets = new Payschets();
+        if (!$payschets->validateAndSaveSchetFormData($id, Yii::$app->request->post())) {
+            throw new BadRequestHttpException();
+        }
+        return $this->redirect(\yii\helpers\Url::to('/pay/form/'.$id));
     }
 
     /**
@@ -170,7 +207,7 @@ class PayController extends Controller
                         'url' => $ret['url'],
                         'pa' => $ret['pa'],
                         'md' => $ret['md'],
-                        'termurl' => $payform->GetRetUrl($params['ID']),
+                        'termurl' => $payform->GetRetUrl($params['ID'], $ret['md']),
                     ];
                 } elseif ($ret['status'] == 2) {
                     //отменить счет
@@ -245,7 +282,7 @@ class PayController extends Controller
         Yii::warning("PayForm done id=".$id);
 
         if ($params) {
-            $md = Yii::$app->request->post('MD', '');
+            $md = Yii::$app->request->get('md', '');
             if ($params['Status'] == 0 && !empty($md)) {
                 //завершить платеж
                 if ($params['IdUsluga'] == 1) {
@@ -261,12 +298,22 @@ class PayController extends Controller
                     'MD' => $md,
                     'PaRes' => Yii::$app->request->post('PaRes')
                 ]);
-                //ret статус проверить?
+
+                if($ret['status'] == 1) {
+                    $payschets->confirmPay([
+                        'idpay' => $params['ID'],
+                        'result_code' => 1,
+                        'trx_id' => 0,
+                        'ApprovalCode' => '',
+                        'RRN' => '',
+                        'message' => ''
+                    ]);
+                }
             }
             // TODO:
-            if($params['IDPartner'] == '3') {
+            if($params['IdUsluga'] == 1 && $params['IdOrg'] == '3') {
                 return $this->redirect("https://cashtoyou.ru/registration/third/");
-            } elseif ($params['IDPartner'] == '8') {
+            } elseif ($params['IdUsluga'] == 1 && $params['IdOrg'] == '8') {
                 return $this->redirect("https://oneclickmoney.ru/registration/third/");
             } else {
                 return $this->redirect(\yii\helpers\Url::to('/pay/orderok?id='.$params['ID']));
@@ -297,10 +344,24 @@ class PayController extends Controller
             if (!$params) {
                 throw new NotFoundHttpException();
             }
+
+            // Если платеж не в ожидание, и у платежа имеется PostbackUrl, отправляем
+            if(!empty($params['PostbackUrl']) && in_array($res['status'], [1, 2, 3])) {
+                $data = [
+                    'status' => $res['status'],
+                    'id' => $params['ID'],
+                    'amount' => $params['Amount'],
+                    'extid' => $params['Extid'],
+                    'card_num' => $params['CardNum'],
+                    'card_holder' => $params['CardHolder'],
+                ];
+                $this->sendPostbackRequest($params['PostbackUrl'], $data);
+            }
+
             if (in_array($res['status'], [1, 3])) {
                 if (!empty($params['SuccessUrl'])) {
                     //перевод на ok
-                    return $this->redirect(Payschets::RedirectUrl($params['SuccessUrl'],$params['Extid']));
+                    return $this->redirect(Payschets::RedirectUrl($params['SuccessUrl'], $id, $params['Extid']));
                 } else {
                     return $this->render('paydone', [
                         'message' => 'Оплата прошла успешно.'
@@ -310,10 +371,10 @@ class PayController extends Controller
             } elseif (in_array($res['status'], [2])) {
                 if (!empty($params['FailedUrl']) && (mb_stripos($res['message'], 'Отказ от оплаты') === false || empty($params['CancelUrl']))) {
                     //перевод на fail
-                    return $this->redirect(Payschets::RedirectUrl($params['FailedUrl'], $params['Extid']));
+                    return $this->redirect(Payschets::RedirectUrl($params['FailedUrl'], $id, $params['Extid']));
                 } elseif (!empty($params['CancelUrl'])) {
                     //перевод на cancel
-                    return $this->redirect(Payschets::RedirectUrl($params['CancelUrl'], $params['Extid']));
+                    return $this->redirect(Payschets::RedirectUrl($params['CancelUrl'], $id, $params['Extid']));
                 } else {
                     return $this->render('paycancel', ['message' => $res['message']]);
                 }
@@ -343,4 +404,27 @@ class PayController extends Controller
         }
     }
 
+    private function sendPostbackRequest($url, $data)
+    {
+        // TODO: refact to service
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_POSTFIELDS => json_encode($data),
+            CURLOPT_HTTPHEADER => array(
+                "Content-Type: application/json"
+            ),
+        ));
+
+        $response = curl_exec($curl);
+        curl_close($curl);
+    }
 }

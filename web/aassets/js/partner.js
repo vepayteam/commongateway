@@ -770,6 +770,11 @@
                 if (linklink) {
                     linklink.abort();
                 }
+
+                // Заблокированные поля, чтобы попали в form.serialize() временно включаем
+                var disabledInputs = form.find(':input:disabled');
+                disabledInputs.removeAttr('disabled');
+
                 linklink = $.ajax({
                     type: "POST",
                     url: '/partner/settings/settingssave',
@@ -791,6 +796,8 @@
                         toastr.error("Ошибка запроса", "Ошибка");
                     }
                 });
+
+                disabledInputs.attr('disabled', 'disabled');
                 return false;
             });
         },
@@ -1091,30 +1098,22 @@
                 return false;
             });
 
-            $('#comisotchetresult').off().on('click', 'a[data-action="vyvyodsum"]', function () {
-
-                toastr.options = {
-                    closeButton: true,
-                    progressBar: true,
-                    showMethod: 'slideDown',
-                    timeOut: 1000
+            $('#modal-vyvyodsum__submit').on('click', function () {
+                var summ = $('#modal-vyvyodsum__summ').val() * 100;
+                var data = {
+                    'partner': $('#modal-vyvyodsum__submit').data('idPartner'),
+                    'type': $('#modal-vyvyodsum__submit').data('type'),
+                    'datefrom': $('#modal-vyvyodsum__submit').data('datefrom'),
+                    'dateto': $('#modal-vyvyodsum__submit').data('dateto'),
+                    'summ': summ,
+                    'isCron': 0
                 };
-
-                let idPartner = $(this).attr('data-id');
-                let type = $(this).attr('data-type');
-                let dtfrom = $('[name="datefrom"]').val();
-                let dtto = $('[name="dateto"]').val();
-                let summ = $(this).attr('data-summ');
-
-                if (!confirm("Вывести вознаграждение " + (summ / 100.00).toFixed(2) + " руб.?")) {
-                    return false;
-                }
 
                 //вывод
                 linklink = $.ajax({
                     type: "POST",
                     url: '/partner/admin/vyvodvoznag',
-                    data: {'partner': idPartner, 'type': type, 'isCron': 0, 'summ': summ, 'datefrom': dtfrom, 'dateto': dtto},
+                    data: data,
                     beforeSend: function () {
                         $('#comisotchetresult').closest('.ibox-content').toggleClass('sk-loading');
                     },
@@ -1126,13 +1125,40 @@
                         } else {
                             toastr.error("Ошибка", data.message);
                         }
+                        $('#modal-vyvyodsum').modal('toggle');
                     },
                     error: function () {
                         $('#comisotchetform').closest('.ibox-content').toggleClass('sk-loading');
                         toastr.error("Ошибка", "Ошибка запроса.");
+                        $('#modal-vyvyodsum').modal('toggle');
                     }
                 });
 
+            });
+
+            $('#comisotchetresult').off().on('click', 'a[data-action="vyvyodsum"]', function () {
+
+                toastr.options = {
+                    closeButton: true,
+                    progressBar: true,
+                    showMethod: 'slideDown',
+                    timeOut: 1000
+                };
+
+                let idPartner = $(this).attr('data-id');
+                let type = $(this).attr('data-type');
+                let datefrom = $('[name="datefrom"]').val();
+                let dateto = $('[name="dateto"]').val();
+                let summ = $(this).attr('data-summ');
+
+                $('#modal-vyvyodsum__summ').val(summ/100);
+
+                $('#modal-vyvyodsum__submit').data('idPartner', idPartner);
+                $('#modal-vyvyodsum__submit').data('type', type);
+                $('#modal-vyvyodsum__submit').data('datefrom', datefrom);
+                $('#modal-vyvyodsum__submit').data('dateto', dateto);
+
+                $('#modal-vyvyodsum').modal('toggle');
                 return false;
             });
 
