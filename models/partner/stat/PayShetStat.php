@@ -89,7 +89,7 @@ class PayShetStat extends Model
         foreach ($allres as $row) {
             $sumPay = $row['SummPay'];
             $sumComis = $row['ComissSumm'];
-            $voznagps = $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
+            $voznagps = $row['Voznag'];
             $bankcomis = $row['BankComis'];
         }
 
