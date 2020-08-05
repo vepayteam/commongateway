@@ -6,7 +6,7 @@ namespace app\models\kfapi;
 
 use yii\base\Model;
 
-class KfPayParts extends KfPay
+class   KfPayParts extends KfPay
 {
     const SCENARIO_FORM = "form";
     const SCENARIO_AUTO = "auto";

@@ -111,9 +111,10 @@ class AuthService
             ->one();
     }
 
+
     /**
-     * @param string $token
-     * @return bool
+     * @param $token
+     * @return array|null
      * @throws \yii\web\BadRequestHttpException
      */
     public function validateToken($token)
@@ -122,16 +123,16 @@ class AuthService
         $validateTokenFrom->token = $token;
 
         if(!$validateTokenFrom->validate()) {
-            return false;
+            return null;
         }
 
         $validateTokenClient = new ValidateTokenClient();
         $response = $validateTokenClient->call($validateTokenFrom);
 
         if($response['status'] == 200) {
-            return true;
+            return $response['result'];
         } else {
-            return false;
+            return null;
         }
     }
 

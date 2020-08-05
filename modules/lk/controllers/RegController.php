@@ -5,6 +5,7 @@ namespace app\modules\lk\controllers;
 
 
 use app\models\api\CorsTrait;
+use app\services\auth\AuthService;
 use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
@@ -48,12 +49,17 @@ class RegController extends Controller
 
     public function actionCreate()
     {
+        if(!$this->isAuthCanCreateUser()) {
+            throw new ForbiddenHttpException();
+        }
         $data = json_decode(Yii::$app->request->rawBody, true);
+
+
 
 
     }
 
-    protected function authCanCreateUser()
+    protected function isAuthCanCreateUser()
     {
         $headers = Yii::$app->request->headers;
 
@@ -62,8 +68,20 @@ class RegController extends Controller
         }
 
         $token = explode(' ', $headers['Authorization'])[1];
+        $this->getAuthService()->validateToken($token);
+
+
 
     }
 
+    /**
+     * @return AuthService
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\di\NotInstantiableException
+     */
+    protected function getAuthService()
+    {
+        return Yii::$container->get('AuthService');
+    }
 
 }
