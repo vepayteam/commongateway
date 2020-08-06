@@ -57,6 +57,7 @@ class RegController extends Controller
 
 
 
+
     }
 
     protected function isAuthCanCreateUser()
@@ -68,10 +69,13 @@ class RegController extends Controller
         }
 
         $token = explode(' ', $headers['Authorization'])[1];
-        $this->getAuthService()->validateToken($token);
+        $tokenData = $this->getAuthService()->validateToken($token);
 
+        if(!in_array('admin', $tokenData['role_names'])) {
+            return false;
+        }
 
-
+        return true;
     }
 
     /**
