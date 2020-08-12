@@ -2,10 +2,16 @@
 
 namespace app\models\bank;
 
+use app\models\bank\mts_soap\PerfomP2P;
+use app\models\bank\mts_soap\RegisterP2P;
+use app\models\bank\mts_soap\SoapRequestBuilder;
 use app\models\payonline\Cards;
+use app\models\payonline\Partner;
 use app\models\Payschets;
 use app\models\TU;
 use qfsx\yii2\curl\Curl;
+use SoapClient;
+use SoapHeader;
 use Yii;
 use yii\helpers\Json;
 
@@ -13,7 +19,9 @@ class MTSBank implements IBank
 {
     public static $bank = 3;
 
-    private $bankUrl = 'https://oplata.mtsbank.ru/payment/';
+    private $bankUrl = 'https://oplata.mtsbank.ru/payment';
+    private $bankP2PUrl = 'https://oplata.mtsbank.ru/payment/webservices/p2p?wsdl';
+    private $bankP2PUrlWsdl = 'https://oplata.mtsbank.ru/payment/webservices/p2p';
     private $bankUrlClient = '';
     private $shopId = 'vepay-api';
     private $certFile = 'vepay';
@@ -42,6 +50,9 @@ class MTSBank implements IBank
     {
         if (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] == 'Y') {
             $this->bankUrl = 'https://web.rbsuat.com/mtsbank';
+            $this->bankP2PUrl = 'https://web.rbsuat.com/mtsbank/webservices/p2p';
+            $this->bankP2PUrlWsdl = 'https://web.rbsuat.com/mtsbank/webservices/p2p?wsdl';
+            $this->backUrls['ok'] = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . '/pay/orderok?orderid=';
         }
 
         if ($mtsGate) {
@@ -202,16 +213,69 @@ class MTSBank implements IBank
         $payschets = new Payschets();
         $params = $payschets->getSchetData($data['IdPay']);
 
-        // TODO:
-        $params['card'] = [
-            'number' => $data['CardNum'],
+        $formData = [
+            'amount' => (int)$params['SummFull'],
+            'orderNumber' => $params['ID'],
+            'orderDescription' => $params['NameUsluga'],
+            'returnUrl' => $this->backUrls['ok'] . $params['ID'],
+            'failUrl' => $this->backUrls['ok'] . $params['ID'],
+            'transactionTypeIndicator' => 'D',
+            'type' => 'WITHOUT_FROM_CARD',
+            'features' => [
+                'feature' => 'WITHOUT_FROM_CARD',
+            ]
         ];
 
-        $ret = $this->RegisterTransferToCard($params);
-        if ($ret['status'] == 1) {
-            $ret = $this->PayOrder($params, $ret['transac']);
+        $registerP2P = new RegisterP2P();
+        if(!$registerP2P->load($formData, '') || !$registerP2P->validate()) {
+            throw new \Exception('Ошибка данных');
         }
-        return $ret;
+
+        $partner = Partner::findOne(['ID' => $params['IDPartner']]);
+
+        $response = (new SoapRequestBuilder($this->bankP2PUrl, 'registerP2P', $registerP2P))
+            ->addSecurity($partner->MtsLoginOct, $partner->MtsPasswordOct)
+            ->addBody()
+            ->sendRequest();
+
+        $responseReturn = $response->xpath('//Body/registerP2PResponse/return')[0];
+        $errorResponse = (string)$responseReturn->attributes()['errorCode'];
+        $errorMessage = (string)$responseReturn->attributes()['errorMessage'];
+
+        if($errorResponse != 0) {
+            throw new \Exception($errorMessage);
+        }
+        $orderId = (string)$response->xpath('//Body/registerP2PResponse/return/orderId')[0];
+
+
+        $data = [
+            'orderId' => $orderId,
+            'type' => 'WITHOUT_FROM_CARD',
+            'toCard' => [
+                'pan' => $data['CardNum'],
+                'cvc' => '',
+                'expirationYear' => '',
+                'expirationMonth' => '',
+                'cardholderName' => '',
+            ],
+        ];
+
+        $performP2P = new PerfomP2P();
+        if(!$performP2P->load($data, '') || !$performP2P->validate()) {
+            throw new \Exception('Ошибка данных');
+        }
+
+        $response = (new SoapRequestBuilder($this->bankP2PUrl, 'performP2P', $performP2P))
+            ->addSecurity($partner->MtsLoginOct, $partner->MtsPasswordOct)
+            ->addBody()
+            ->sendRequest();
+
+
+        $a = 0;
+
+
+
+
     }
 
     /**
@@ -460,7 +524,7 @@ class MTSBank implements IBank
     // TODO: refact DRY
     private function RegisterTransferToCard(array $params)
     {
-        $action = '/rest/register.do';
+        $action = '/registerP2P';
         $queryData = [
             'token' => $this->keyFile,
             'orderNumber' => $params['ID'],

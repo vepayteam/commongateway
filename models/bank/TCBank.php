@@ -10,6 +10,7 @@ use app\models\Payschets;
 use app\models\queue\BinBDInfoJob;
 use app\models\TU;
 use qfsx\yii2\curl\Curl;
+use SimpleXMLElement;
 use Yii;
 use yii\helpers\Json;
 
@@ -1537,6 +1538,14 @@ class TCBank implements IBank
         }
 
         return 0;
+    }
+
+    private function buildSoapRequestRawBody($method, $data)
+    {
+        $xml = new SimpleXMLElement('<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                  xmlns:p2p="http://engine.paymentgate.ru/webservices/p2p" />');
+
+
     }
 
 }
