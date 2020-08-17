@@ -155,6 +155,7 @@ class PayController extends Controller
 
                 $bankClass = Banks::getBankClassByPayment($partner);
                 $payschets->ChangeBank($params['ID'], $bankClass::$bank);
+                $params['Bank'] = $bankClass::$bank;
                 $merchBank = BankMerchant::Create($params);
                 $ret = $merchBank->PayXml($params);
 

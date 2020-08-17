@@ -73,7 +73,7 @@ class SoapRequestBuilder extends Model
         $methodNode->appendChild($argNode);
 
         foreach ($this->model->attributes as $k => $value) {
-            if(!$value) {
+            if(!$value || $k == 'type') {
                 continue;
             }
 
@@ -81,6 +81,9 @@ class SoapRequestBuilder extends Model
                 $node = $this->dom->createElement($k);
                 $argNode->appendChild($node);
                 foreach ($value as $kItem => $vItem) {
+                    if(!$vItem) {
+                        continue;
+                    }
                     $elNode = $this->dom->createElement($kItem, $vItem);
                     $node->appendChild($elNode);
                 }

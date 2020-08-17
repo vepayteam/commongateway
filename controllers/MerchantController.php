@@ -7,6 +7,7 @@ use app\models\api\Reguser;
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\kfapi\KfCard;
+use app\models\kfapi\KfFormPay;
 use app\models\kfapi\KfPay;
 use app\models\kfapi\KfRequest;
 use app\models\payonline\CreatePay;
@@ -155,6 +156,26 @@ class MerchantController extends Controller
             'message' => ''
         ];
 
+    }
+
+    public function actionFormPay()
+    {
+        $kf = new KfRequest();
+        $kf->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody(), 0);
+
+        $kfFormPay = new KfFormPay();
+        $kfFormPay->scenario = KfFormPay::SCENARIO_FORM;
+        $kfFormPay->load($kf->req, '');
+        if (!$kfFormPay->validate()) {
+            return ['status' => 0, 'message' => $kfFormPay->GetError()];
+        }
+        $result = $this->actionPay();
+
+        if($result['status'] == 1) {
+            $kfFormPay->createFormElements($result['id']);
+            $result['url'] = $kfFormPay->GetPayForm($result['id']);
+        }
+        return $result;
     }
 
     /**
