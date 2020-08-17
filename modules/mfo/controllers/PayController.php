@@ -55,6 +55,7 @@ class PayController extends Controller
     {
         return [
             'lk' => ['POST'],
+            'form-lk' => ['POST'],
             'auto' => ['POST'],
             'state' => ['POST'],
         ];

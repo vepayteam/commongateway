@@ -37,7 +37,12 @@ class MerchantController extends Controller
     public function behaviors()
     {
         $behaviors = parent::behaviors();
-        if (in_array(Yii::$app->controller->action->id, ['pay', 'state', 'reverseorder'])) {
+        if (in_array(Yii::$app->controller->action->id, [
+            'form-pay',
+            'pay',
+            'state',
+            'reverseorder'
+        ])) {
             $this->updateBehaviorsCors($behaviors);
         }
         return $behaviors;
@@ -46,9 +51,10 @@ class MerchantController extends Controller
     protected function verbs()
     {
         return [
+            'form-pay' => ['POST'],
             'pay' => ['POST'],
             'state' => ['POST'],
-            'reverseorder' => ['POST']
+            'reverseorder' => ['POST'],
         ];
     }
 
@@ -59,7 +65,12 @@ class MerchantController extends Controller
      */
     public function beforeAction($action)
     {
-        if (in_array($action->id, ['pay', 'state', 'reverseorder'])) {
+        if (in_array($action->id, [
+            'form-pay',
+            'pay',
+            'state',
+            'reverseorder'
+        ])) {
             $this->enableCsrfValidation = false;
         }
         return parent::beforeAction($action);

@@ -46,10 +46,47 @@ class PayController extends Controller
      */
     public function beforeAction($action)
     {
-        if (in_array($action->id, ['form', 'orderdone', 'orderok'])) {
+        if (in_array($action->id, [
+            'form-data',
+            'save-data',
+            'form',
+            'orderdone',
+            'orderok',
+        ])) {
             $this->enableCsrfValidation = false;
         }
         return parent::beforeAction($action);
+    }
+
+    public function actionFormData($id)
+    {
+        Yii::warning("SetData open id=".$id);
+        $payschets = new Payschets();
+        //данные счета для оплаты
+        $params = $payschets->getSchetData($id, null);
+        $formData = $payschets->getSchetFormData($id);
+
+        if (!$params || !TU::IsInPay($params['IsCustom']) || !$formData) {
+            throw new NotFoundHttpException("Счет для оплаты не найден");
+        }
+
+        //разрешить открытие во фрейме на сайте мерчанта
+        $csp = "default-src 'self' 'unsafe-inline' https://mc.yandex.ru; img-src 'self' data: https://mc.yandex.ru; connect-src 'self' https://mc.yandex.ru;";
+        if (!empty($params['URLSite'])) {
+            $csp .= ' frame-src ' . $params['URLSite'].';';
+        }
+        Yii::$app->response->headers->add('Content-Security-Policy', $csp);
+        return $this->render('formdata', ['params' => $params, 'formData' => $formData]);
+    }
+
+    public function actionSaveData($id)
+    {
+        Yii::warning("SaveData open id=".$id);
+        $payschets = new Payschets();
+        if (!$payschets->validateAndSaveSchetFormData($id, Yii::$app->request->post())) {
+            throw new BadRequestHttpException();
+        }
+        return $this->redirect(\yii\helpers\Url::to('/pay/form/'.$id));
     }
 
     /**
@@ -301,7 +338,7 @@ class PayController extends Controller
             if (in_array($res['status'], [1, 3])) {
                 if (!empty($params['SuccessUrl'])) {
                     //перевод на ok
-                    return $this->redirect(Payschets::RedirectUrl($params['SuccessUrl'],$params['Extid']));
+                    return $this->redirect(Payschets::RedirectUrl($params['SuccessUrl'], $id, $params['Extid']));
                 } else {
                     return $this->render('paydone', [
                         'message' => 'Оплата прошла успешно.'
@@ -311,10 +348,10 @@ class PayController extends Controller
             } elseif (in_array($res['status'], [2])) {
                 if (!empty($params['FailedUrl']) && (mb_stripos($res['message'], 'Отказ от оплаты') === false || empty($params['CancelUrl']))) {
                     //перевод на fail
-                    return $this->redirect(Payschets::RedirectUrl($params['FailedUrl'], $params['Extid']));
+                    return $this->redirect(Payschets::RedirectUrl($params['FailedUrl'], $id, $params['Extid']));
                 } elseif (!empty($params['CancelUrl'])) {
                     //перевод на cancel
-                    return $this->redirect(Payschets::RedirectUrl($params['CancelUrl'], $params['Extid']));
+                    return $this->redirect(Payschets::RedirectUrl($params['CancelUrl'], $id, $params['Extid']));
                 } else {
                     return $this->render('paycancel', ['message' => $res['message']]);
                 }
