@@ -770,11 +770,6 @@
                 if (linklink) {
                     linklink.abort();
                 }
-
-                // Заблокированные поля, чтобы попали в form.serialize() временно включаем
-                var disabledInputs = form.find(':input:disabled');
-                disabledInputs.removeAttr('disabled');
-
                 linklink = $.ajax({
                     type: "POST",
                     url: '/partner/settings/settingssave',
@@ -796,8 +791,6 @@
                         toastr.error("Ошибка запроса", "Ошибка");
                     }
                 });
-
-                disabledInputs.attr('disabled', 'disabled');
                 return false;
             });
         },
