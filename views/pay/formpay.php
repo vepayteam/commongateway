@@ -1,6 +1,9 @@
 <?php
 /* @var \yii\web\View $this */
 /* @var array $params */
+/* @var array $apple */
+/* @var array $google */
+/* @var array $samsung */
 /* @var \app\models\payonline\PayForm $payform */
 
 use yii\bootstrap\ActiveForm;
@@ -135,6 +138,37 @@ use yii\bootstrap\Html;
         </div>
     </div>
 
+    <div class="row nopadding margin-top24" id="applepay" style="display: none">
+        <div class="col-xs-12">
+            <input type="hidden" class="idPay" name="PayForm[IdPay]" value="<?=$params['ID']?>">
+            <input type="hidden" class="user_hash" name="user_hash" value="">
+            <?= Html::button('<i class="fa fa-apple" aria-hidden="true"></i> PAY', [
+                'class' => 'btn btn-success paybtn',
+                'id' => 'applepaybtn'
+            ]); ?>
+        </div>
+    </div>
+    <div class="row nopadding margin-top24" id="googlepay" style="display: none">
+        <div class="col-xs-12">
+            <input type="hidden" class="idPay" name="PayForm[IdPay]" value="<?=$params['ID']?>">
+            <input type="hidden" class="user_hash" name="user_hash" value="">
+            <?= Html::button('<i class="fa fa-google" aria-hidden="true"></i> PAY', [
+                'class' => 'btn btn-success paybtn',
+                'id' => 'googlepaybtn'
+            ]); ?>
+        </div>
+    </div>
+    <div class="row nopadding margin-top24" id="samsungpay" style="display: none">
+        <div class="col-xs-12">
+            <input type="hidden" class="idPay" name="PayForm[IdPay]" value="<?=$params['ID']?>">
+            <input type="hidden" class="user_hash" name="user_hash" value="">
+            <?= Html::button('SAMSUNG PAY', [
+                'class' => 'btn btn-success paybtn',
+                'id' => 'samsungpaybtn'
+            ]); ?>
+        </div>
+    </div>
+
     <div class="row nopadding margin-top24">
         <div class="col-xs-12">
             <div class="errmessage" style="display: none">
@@ -175,6 +209,22 @@ use yii\bootstrap\Html;
 <noscript><div><img src="https://mc.yandex.ru/watch/56963551" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <?php
 $this->registerJs('payform.init();');
+if (isset($apple['IsUseApplepay']) && $apple['IsUseApplepay'] && isset($apple['Apple_MerchantID']) && !empty($apple['Apple_MerchantID'])) {
+    $this->registerJs('payform.applepay("' . $apple['Apple_MerchantID'] . '", "' . ($params['SummFull'] / 100.0) . '", "' . $params['NamePartner'] . '");');
+}
+if (isset($google['IsUseGooglepay']) && $google['IsUseGooglepay']) {
+    $this->registerJsFile('https://pay.google.com/gp/p/js/pay.js');
+    $this->registerJs('payform.googlepay("' .
+        $google['Google_MerchantID'] . '", "' .
+        number_format($params['SummFull'] / 100.0, 2, '.', '') . '", "' .
+        $params['NamePartner'] . '", "' .
+        'mtsbank", "' .
+        (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] == 'Y' ? 1 : 0) .
+        '");'
+    );
+}
+if (isset($samsung['IsUseSamsungpay']) && $samsung['IsUseSamsungpay']) {
+    $this->registerJs('payform.samsungpay("' . $samsung['Samsung_MerchantID'] . '", "' . number_format($params['SummFull'] / 100.0, 2, '.', '') . '", "' . $params['NamePartner'] . '");');
+}
 $this->registerJs('setTimeout(tracking.sendToServer, 500)', \yii\web\View::POS_READY);
 $this->registerJsFile('/payasset/js/ym.js');
-?>

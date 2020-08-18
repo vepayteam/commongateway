@@ -26,6 +26,7 @@ class PayAsset extends AssetBundle
         'payasset/js/fingerprint2.js', //отпечаток пользователя
         'payasset/js/tracking.js', //компоновка работы ua-parser + fingerprint
         'payasset/js/payform.js',
+        'payasset/js/formdata.js',
         'payasset/js/customvalidation.js',
     ];
     public $depends = [

@@ -1036,35 +1036,8 @@
                 showClose: true
             });
 
-            $('#veekenddays').on('submit', function () {
-                if (linklink) {
-                    linklink.abort();
-                }
-                linklink = $.ajax({
-                    type: "POST",
-                    url: '/partner/admin/saveveekenddays',
-                    data: $('#veekenddays').serialize(),
-                    beforeSend: function () {
-                        $('#veekenddays').closest('.ibox-content').toggleClass('sk-loading');
-                    },
-                    success: function (data) {
-                        $('#veekenddays').closest('.ibox-content').toggleClass('sk-loading');
-                        if (data.status == 1) {
-                            toastr.success("OK", data.message);
-                        } else {
-                            toastr.error("Ошибка", data.message);
-                        }
-                    },
-                    error: function () {
-                        $('#veekenddays').closest('.ibox-content').toggleClass('sk-loading');
-                        toastr.error("Ошибка", "Ошибка запроса.");
-                    }
-                });
-                return false;
-            });
-
-
-            $('#comisotchetform').on('submit', function () {
+            $('#comisotchetform').on('submit', function (e) {
+                e.preventDefault();
                 if (linklink) {
                     linklink.abort();
                 }
@@ -1420,6 +1393,32 @@
                 return false;
             });
 
+            $('#btnEditPartnerApplepay').on('click',function (e) {
+                e.preventDefault();
+                let form = new FormData($("#formEditPartnerApplepay")[0]);
+                $.ajax({
+                    type: "POST",
+                    url: '/partner/partner/partner-applepay-save',
+                    data: form,
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    beforeSend: function () {
+                    },
+                    success: function (data) {
+                        if (data.status == 0) {
+                            toastr.error(data.message, "Ошибка");
+                        } else {
+                            toastr.success("OK", "Ключи Apple Pay сохранены");
+                        }
+                    },
+                    error: function () {
+                        toastr.error("Ошибка запроса", "Ошибка");
+                    }
+                });
+                return false;
+            });
+
             $('#btnEditPartnerKkm').on('click',function (e) {
                 e.preventDefault();
                 let form = new FormData($("#formEditPartnerKkm")[0]);
@@ -1695,7 +1694,69 @@
                 });
                 return false;
             });
-        }
+        },
+
+        adminsettings: function () {
+            $('#veekenddays').on('submit', function (e) {
+                e.preventDefault();
+                if (linklink) {
+                    linklink.abort();
+                }
+                linklink = $.ajax({
+                    type: "POST",
+                    url: '/partner/settings/saveveekenddays',
+                    data: $('#veekenddays').serialize(),
+                    beforeSend: function () {
+                        $('#veekenddays').closest('.ibox-content').toggleClass('sk-loading');
+                    },
+                    success: function (data) {
+                        $('#veekenddays').closest('.ibox-content').toggleClass('sk-loading');
+                        if (data.status == 1) {
+                            toastr.success("OK", data.message);
+                        } else {
+                            toastr.error("Ошибка", data.message);
+                        }
+                    },
+                    error: function () {
+                        $('#veekenddays').closest('.ibox-content').toggleClass('sk-loading');
+                        toastr.error("Ошибка", "Ошибка запроса.");
+                    }
+                });
+                return false;
+            });
+        },
+
+        banksconf: function () {
+            $('#banksconf').on('submit', function (e) {
+                e.preventDefault();
+                if (linklink) {
+                    linklink.abort();
+                }
+                linklink = $.ajax({
+                    type: "POST",
+                    url: '/partner/settings/savebankconf',
+                    data: $('#banksconf').serialize(),
+                    beforeSend: function () {
+                        $('#banksconf').closest('.ibox-content').toggleClass('sk-loading');
+                    },
+                    success: function (data) {
+                        $('#banksconf').closest('.ibox-content').toggleClass('sk-loading');
+                        if (data.status == 1) {
+                            toastr.success("OK", data.message);
+                        } else {
+                            toastr.error("Ошибка", data.message);
+                        }
+                    },
+                    error: function () {
+                        $('#banksconf').closest('.ibox-content').toggleClass('sk-loading');
+                        toastr.error("Ошибка", "Ошибка запроса.");
+                    }
+                });
+                return false;
+            });
+        },
+
+
     };
 
     let commInfo = {

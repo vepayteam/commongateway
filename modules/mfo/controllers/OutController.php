@@ -5,6 +5,8 @@ namespace app\modules\mfo\controllers;
 use app\models\antifraud\AntiFraud;
 use app\models\antifraud\AntiFraudRefund;
 use app\models\api\CorsTrait;
+use app\models\bank\BankMerchant;
+use app\models\bank\Banks;
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\crypt\CardToken;
@@ -14,7 +16,9 @@ use app\models\mfo\MfoReq;
 use app\models\mfo\MfoTestError;
 use app\models\payonline\Cards;
 use app\models\payonline\CreatePay;
+use app\models\payonline\Partner;
 use app\models\Payschets;
+use app\models\TU;
 use Yii;
 use yii\base\Exception;
 use yii\mutex\FileMutex;
@@ -102,9 +106,12 @@ class OutController extends Controller
 
         Yii::warning('out/paycard mfo=' . $mfo->mfo . " sum=" . $kfOut->amount . " extid=" . $kfOut->extid, 'mfo');
 
-        $TcbGate = new TcbGate($mfo->mfo, TCBank::$OCTGATE);
+        $bank = BankMerchant::GetWorkBankOut();
+
+        $typeUsl = TU::$TOCARD;
+        $bankGate = BankMerchant::Gate($mfo->mfo, $bank, $typeUsl);
         $usl = $kfOut->GetUslug($mfo->mfo);
-        if (!$usl || !$TcbGate->IsGate()) {
+        if (!$usl || !$bankGate || !$bankGate->IsGate()) {
             return ['status' => 0, 'message' => 'Нет шлюза'];
         }
 
@@ -175,8 +182,12 @@ class OutController extends Controller
             return ['status' => 1, 'id' => $params['IdPay']];
         }*/
 
-        $tcBank = new TCBank($TcbGate);
-        $ret = $tcBank->transferToCard($params);
+        $partner = Partner::findOne(['ID' => $params['IDPartner']]);
+        $bankClass = Banks::getBankClassByTransferToCard($partner);
+        $payschets->ChangeBank($params['IdPay'], $bankClass::$bank);
+
+        $merchBank = BankMerchant::Get($bankClass::$bank, $bankGate);
+        $ret = $merchBank->transferToCard($params);
         if ($ret && $ret['status'] == 1) {
             //сохранение номера транзакции
             $payschets->SetBankTransact([
@@ -211,15 +222,19 @@ class OutController extends Controller
         $kfOut->load($mfo->Req(), '');
         if (!$kfOut->validate()) {
             Yii::warning("out/payacc: " . $kfOut->GetError(), 'mfo');
-            return ['status' => 0];
+            return ['status' => 0, 'message' => $kfOut->GetError()];
         }
 
         $kfOut->descript = str_replace(" ", " ", $kfOut->descript); //0xA0 пробел на 0x20
 
-        $TcbGate = new TcbGate($mfo->mfo, TCBank::$SCHETGATE);
+        $bank = BankMerchant::GetWorkBankOut();
+
+        $typeUsl = TU::$TOSCHET;
+        $bankGate = BankMerchant::Gate($mfo->mfo, $bank, $typeUsl);
+
         $usl = $kfOut->GetUslug($mfo->mfo);
-        if (!$usl || !$TcbGate->IsGate()) {
-            return ['status' => 0];
+        if (!$usl || !$bankGate || !$bankGate->IsGate()) {
+            return ['status' => 0, 'message' => 'Нет шлюза'];
         }
 
         $pay = new CreatePay();
@@ -232,10 +247,10 @@ class OutController extends Controller
             $params = $pay->getPaySchetExt($kfOut->extid, $usl, $mfo->mfo);
             if ($params) {
                 if ($kfOut->amount == $params['sumin']) {
-                    return ['status' => 1, 'id' => (int)$params['IdPay']];
+                    return ['status' => 1, 'id' => (int)$params['IdPay'], 'message' => ''];
                 } else {
                     Yii::warning("out/payacc: Нарушение уникальности запроса", 'mfo');
-                    return ['status' => 0, 'id' => 0];
+                    return ['status' => 0, 'id' => 0, 'message' => 'Нарушение уникальности запроса'];
                 }
             }
         }
@@ -252,8 +267,8 @@ class OutController extends Controller
         $params['account'] = $kfOut->account;
         $params['descript'] = $kfOut->descript;
 
-        $tcBank = new TCBank($TcbGate);
-        $ret = $tcBank->transferToAccount($params);
+        $merchBank = BankMerchant::Get($bank, $bankGate);
+        $ret = $merchBank->transferToAccount($params);
         if ($ret && $ret['status'] == 1) {
             //сохранение номера транзакции
             $payschets = new Payschets();
@@ -267,7 +282,7 @@ class OutController extends Controller
             $pay->CancelReq($params['IdPay'],'Платеж не проведен');
         }
 
-        return ['status' => 1, 'id' => (int)$params['IdPay']];
+        return ['status' => 1, 'id' => (int)$params['IdPay'], 'message' => ''];
     }
 
     /**
@@ -289,15 +304,19 @@ class OutController extends Controller
         $kfOut->load($mfo->Req(), '');
         if (!$kfOut->validate()) {
             Yii::warning("out/payacc: " . $kfOut->GetError(), 'mfo');
-            return ['status' => 0];
+            return ['status' => 0, 'message' => $kfOut->GetError()];
         }
 
         $kfOut->descript = str_replace(" ", " ", $kfOut->descript); //0xA0 пробел на 0x20
 
-        $TcbGate = new TcbGate($mfo->mfo, TCBank::$SCHETGATE);
+        $bank = BankMerchant::GetWorkBankOut();
+
+        $typeUsl = TU::$TOSCHET;
+        $bankGate = BankMerchant::Gate($mfo->mfo, $bank, $typeUsl);
+
         $usl = $kfOut->GetUslug($mfo->mfo);
-        if (!$usl || !$TcbGate->IsGate()) {
-            return ['status' => 0];
+        if (!$usl || !$bankGate || !$bankGate->IsGate()) {
+            return ['status' => 0, 'message' => 'Нет шлюза'];
         }
 
         $pay = new CreatePay();
@@ -310,10 +329,10 @@ class OutController extends Controller
             $params = $pay->getPaySchetExt($kfOut->extid, $usl, $mfo->mfo);
             if ($params) {
                 if ($kfOut->amount == $params['sumin']) {
-                    return ['status' => 1, 'id' => (int)$params['IdPay']];
+                    return ['status' => 1, 'id' => (int)$params['IdPay'], 'message' => ''];
                 } else {
                     Yii::warning("out/payul: Нарушение уникальности запроса", 'mfo');
-                    return ['status' => 0, 'id' => 0];
+                    return ['status' => 0, 'id' => 0, 'message' => 'Нарушение уникальности запроса'];
                 }
             }
         }
@@ -331,8 +350,8 @@ class OutController extends Controller
         $params['account'] = $kfOut->account;
         $params['descript'] = $kfOut->descript;
 
-        $tcBank = new TCBank($TcbGate);
-        $ret = $tcBank->transferToAccount($params);
+        $merchBank = BankMerchant::Get($bank, $bankGate);
+        $ret = $merchBank->transferToAccount($params);
         if ($ret && $ret['status'] == 1) {
             //сохранение номера транзакции
             $payschets = new Payschets();
@@ -346,7 +365,7 @@ class OutController extends Controller
             $pay->CancelReq($params['IdPay'],'Платеж не проведен');
         }
 
-        return ['status' => 1, 'id' => (int)$params['IdPay']];
+        return ['status' => 1, 'id' => (int)$params['IdPay'], 'message' => ''];
     }
 
     /**

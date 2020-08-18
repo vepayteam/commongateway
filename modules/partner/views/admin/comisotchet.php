@@ -23,21 +23,6 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                 </div>
                 <div class="ibox-content">
                     <div class="row">
-                    <form class="form-horizontal m-t-md" id="veekenddays">
-                        <div class="form-group"><label class="col-sm-2 control-label">Праздничные дни</label>
-                            <div class="col-sm-10 col-md-6">
-                                <input type="text" name="veekenddays" value="<?=$veekends?>" maxlength="200" class="form-control">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="col-sm-offset-2 col-sm-4">
-                                <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
-                                <button class="btn btn-sm btn-primary" type="submit">Сохранить</button>
-                            </div>
-                        </div>
-                    </form>
-                    </div>
-                    <div class="row">
                     <form class="form-horizontal m-t-md" id="comisotchetform">
                         <div class="form-group"><label class="col-sm-2 control-label">Дата</label>
                             <div class="col-sm-10 col-md-6">

@@ -3,6 +3,8 @@
 namespace app\models;
 
 use app\models\antifraud\AntiFraud;
+use app\models\bank\BankCheck;
+use app\models\bank\MTSBank;
 use app\models\crypt\CardToken;
 use app\models\payonline\BalancePartner;
 use app\models\payonline\Cards;
@@ -101,6 +103,7 @@ class Payschets
                 ps.sms_accept,
                 qu.IDPartner,
                 ps.IdOrg,
+                ps.IPAddressUser,
                 p.IsUseKKmPrint
             FROM
                 `pay_schet` AS ps
@@ -117,6 +120,47 @@ class Payschets
             return $query;
         }
         return null;
+    }
+
+    /**
+     * Получаем элементы формы для доп информации платежа
+     * @param $idPay
+     * @return array|\yii\db\DataReader
+     * @throws Exception
+     */
+    public function getSchetFormData($idPay)
+    {
+        $q = sprintf('SELECT * FROM pay_schet_forms WHERE PayschetId = %d', $idPay);
+        $result = Yii::$app->db->createCommand($q)->queryAll();
+        return $result;
+    }
+
+    /**
+     * @param int $idPay
+     * @param $data
+     * @return bool
+     * @throws Exception
+     */
+    public function validateAndSaveSchetFormData($idPay, $data)
+    {
+        $schetFormData = $this->getSchetFormData($idPay);
+        foreach ($schetFormData as $item) {
+            if(array_key_exists($item['Name'], $data)) {
+                if($item['Regex']) {
+                    $regex = sprintf('/%s/u', $item['Regex']);
+                    if(!preg_match($regex, $data[$item['Name']])) {
+                        return false;
+                    }
+                }
+                $q = sprintf(
+                    'UPDATE `vepay`.`pay_schet_forms` SET `Value` = \'%s\' WHERE `Id` = %d',
+                    $data[$item['Name']],
+                    $item['Id']
+                );
+                Yii::$app->db->createCommand($q)->execute();
+            }
+        }
+        return true;
     }
 
     /**
@@ -209,6 +253,9 @@ class Payschets
                             $this->ChangeBalance($query, $params['idpay']);
                         }
 
+                        $BankCheck = new BankCheck();
+                        $BankCheck->UpdateLastCheck($query['Bank']);
+
                         if ($transaction->isActive) {
                             $transaction->commit();
                         }
@@ -238,6 +285,10 @@ class Payschets
                         $res = false;
 
                     }
+
+                    $BankCheck = new BankCheck();
+                    $BankCheck->UpdateLastWork($query['Bank']);
+
                 } else {
                     if ($transaction) {
                         $transaction->rollBack();
@@ -765,7 +816,8 @@ class Payschets
                 pr.ID AS IdOrg,
                 pr.SchetTcbNominal,
                 ut.ExtReestrIDUsluga,
-                p.Dogovor
+                p.Dogovor,
+                p.Bank
               FROM
                 `pay_schet` AS p
                 LEFT JOIN `uslugatovar` AS ut ON ut.ID = p.IdUsluga
@@ -944,11 +996,34 @@ class Payschets
         }
     }
 
-    public static function RedirectUrl($url, $Extid)
+    public function ChangeBank($IdPay, $bank)
     {
+        Yii::$app->db->createCommand()->update('pay_schet', [
+            'bank' => $bank,
+        ], ['ID' => $IdPay])->execute();
+
+    }
+
+    public static function RedirectUrl($url, $PayId, $Extid)
+    {
+        $getParams = self::BuildGetParamsByRedirectUrl($PayId, $Extid);
         if (!empty($url)) {
-            return $url.(mb_stripos($url,"?")>0?"&":"?")."extid=".urlencode($Extid);
+            return $url.(mb_stripos($url,"?")>0?"&":"?").$getParams;
         }
         return '';
+    }
+
+    public static function BuildGetParamsByRedirectUrl($PayId, $Extid)
+    {
+        $resultArray = [
+            "extid=".urlencode($Extid),
+        ];
+        $payschets = new self();
+        $data = $payschets->getSchetFormData($PayId);
+
+        foreach ($data as $row) {
+            $resultArray[] = urlencode($row['Name']).'='.urlencode($row['Value']);
+        }
+        return implode('&', $resultArray);
     }
 }
