@@ -143,6 +143,6 @@ class BankMerchant
      */
     public static function GetWorkBankOut()
     {
-        return MTSBank::$bank;
+        return TCBank::$bank;
     }
 }
