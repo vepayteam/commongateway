@@ -46,8 +46,8 @@ class KfPayParts extends KfPay
             [['id'], 'integer', 'on' => self::SCENARIO_STATE],
             [['id'], 'required', 'on' => self::SCENARIO_STATE],
 
-            [['parts'], 'required', 'on' => [self::SCENARIO_FORM, self::SCENARIO_AUTO]],
-            [['parts'], 'validateParts', 'on' => [self::SCENARIO_FORM, self::SCENARIO_AUTO]],
+            [['parts'], 'required', 'on' => [self::SCENARIO_FORM, self::SCENARIO_STATE]],
+            [['parts'], 'validateParts', 'on' => [self::SCENARIO_FORM, self::SCENARIO_STATE]],
 
         ];
     }

@@ -9,7 +9,6 @@ use app\models\bank\TcbGate;
 use app\models\kfapi\KfPayParts;
 use app\models\mfo\MfoReq;
 use app\models\payonline\CreatePay;
-use app\models\PayschetPart;
 use Yii;
 use yii\base\Exception;
 use yii\mutex\FileMutex;
@@ -62,12 +61,14 @@ class CreateFormMfoAftPartsStrategy implements IMfoStrategy
         }
         $params = $pay->payToMfo(null, [$kfPay->document_id, $kfPay->fullname], $kfPay, $usl, TCBank::$bank, $this->mfoReq->mfo,0);
 
-        foreach ($this->mfoReq->Req()['parts'] as $part) {
-            $payschetPart = new PayschetPart();
-            $payschetPart->PayschetId = $params['IdPay'];
-            $payschetPart->PartnerId = $part['merchant_id'];
-            $payschetPart->Amount = $part['amount'] * 100;
-            $payschetPart->save();
+        foreach ($kfPay->parts as $part) {
+            $tcbGate = $this->getTkbGate($part['merchant_id']);
+
+            if(!$tcbGate->IsGate()) {
+                return [
+                    'status' => 0,
+                    'message' => 'Услуга не найдена'];
+            }
         }
 
         if (!empty($kfPay->extid)) {

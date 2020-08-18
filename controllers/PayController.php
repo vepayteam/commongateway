@@ -406,7 +406,6 @@ class PayController extends Controller
 
     private function sendPostbackRequest($url, $data)
     {
-        // TODO: refact to service
         $curl = curl_init();
 
         curl_setopt_array($curl, array(
