@@ -121,47 +121,6 @@ class Payschets
     }
 
     /**
-     * Получаем элементы формы для доп информации платежа
-     * @param $idPay
-     * @return array|\yii\db\DataReader
-     * @throws Exception
-     */
-    public function getSchetFormData($idPay)
-    {
-        $q = sprintf('SELECT * FROM pay_schet_forms WHERE PayschetId = %d', $idPay);
-        $result = Yii::$app->db->createCommand($q)->queryAll();
-        return $result;
-    }
-
-    /**
-     * @param int $idPay
-     * @param $data
-     * @return bool
-     * @throws Exception
-     */
-    public function validateAndSaveSchetFormData($idPay, $data)
-    {
-        $schetFormData = $this->getSchetFormData($idPay);
-        foreach ($schetFormData as $item) {
-            if(array_key_exists($item['Name'], $data)) {
-                if($item['Regex']) {
-                    $regex = sprintf('/%s/u', $item['Regex']);
-                    if(!preg_match($regex, $data[$item['Name']])) {
-                        return false;
-                    }
-                }
-                $q = sprintf(
-                    'UPDATE `vepay`.`pay_schet_forms` SET `Value` = \'%s\' WHERE `Id` = %d',
-                    $data[$item['Name']],
-                    $item['Id']
-                );
-                Yii::$app->db->createCommand($q)->execute();
-            }
-        }
-        return true;
-    }
-
-    /**
      * Cохранение транзакции банка
      * @param array $params [idpay, trx_id, url]
      * @return boolean
@@ -999,26 +958,11 @@ class Payschets
         }
     }
 
-    public static function RedirectUrl($url, $PayId, $Extid)
+    public static function RedirectUrl($url, $Extid)
     {
-        $getParams = self::BuildGetParamsByRedirectUrl($PayId, $Extid);
         if (!empty($url)) {
-            return $url.(mb_stripos($url,"?")>0?"&":"?").$getParams;
+            return $url.(mb_stripos($url,"?")>0?"&":"?")."extid=".urlencode($Extid);
         }
         return '';
-    }
-
-    public static function BuildGetParamsByRedirectUrl($PayId, $Extid)
-    {
-        $resultArray = [
-            "extid=".urlencode($Extid),
-        ];
-        $payschets = new self();
-        $data = $payschets->getSchetFormData($PayId);
-
-        foreach ($data as $row) {
-            $resultArray[] = urlencode($row['Name']).'='.urlencode($row['Value']);
-        }
-        return implode('&', $resultArray);
     }
 }

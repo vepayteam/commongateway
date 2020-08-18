@@ -7,7 +7,6 @@ use app\models\api\Reguser;
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\kfapi\KfCard;
-use app\models\kfapi\KfFormPay;
 use app\models\kfapi\KfPay;
 use app\models\kfapi\KfRequest;
 use app\models\payonline\CreatePay;
@@ -42,13 +41,7 @@ class MerchantController extends Controller
     public function behaviors()
     {
         $behaviors = parent::behaviors();
-        if (in_array(Yii::$app->controller->action->id, [
-            'form-pay',
-            'pay-parts',
-            'pay',
-            'state',
-            'reverseorder'
-        ])) {
+        if (in_array(Yii::$app->controller->action->id, ['pay', 'state', 'reverseorder'])) {
             $this->updateBehaviorsCors($behaviors);
         }
         return $behaviors;
@@ -57,7 +50,6 @@ class MerchantController extends Controller
     protected function verbs()
     {
         return [
-            'form-pay' => ['POST'],
             'pay' => ['POST'],
             'pay-parts' => ['POST'],
             'state' => ['POST'],
@@ -72,13 +64,7 @@ class MerchantController extends Controller
      */
     public function beforeAction($action)
     {
-        if (in_array($action->id, [
-            'form-pay',
-            'pay',
-            'pay-parts',
-            'state',
-            'reverseorder'
-        ])) {
+        if (in_array($action->id, ['pay', 'state', 'reverseorder'])) {
             $this->enableCsrfValidation = false;
         }
         return parent::beforeAction($action);
@@ -101,26 +87,6 @@ class MerchantController extends Controller
     public function actionSwagger()
     {
         return Yii::$app->response->sendFile(Yii::$app->basePath . '/doc/merchant.yaml', '', ['inline' => true, 'mimeType' => 'application/yaml']);
-    }
-
-    public function actionFormPay()
-    {
-        $kf = new KfRequest();
-        $kf->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody(), 0);
-
-        $kfFormPay = new KfFormPay();
-        $kfFormPay->scenario = KfFormPay::SCENARIO_FORM;
-        $kfFormPay->load($kf->req, '');
-        if (!$kfFormPay->validate()) {
-            return ['status' => 0, 'message' => $kfFormPay->GetError()];
-        }
-        $result = $this->actionPay();
-
-        if($result['status'] == 1) {
-            $kfFormPay->createFormElements($result['id']);
-            $result['url'] = $kfFormPay->GetPayForm($result['id']);
-        }
-        return $result;
     }
 
     /**
