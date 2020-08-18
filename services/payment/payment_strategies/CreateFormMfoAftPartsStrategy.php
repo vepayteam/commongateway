@@ -35,8 +35,11 @@ class CreateFormMfoAftPartsStrategy implements IMfoStrategy
             return ['status' => 0, 'message' => $kfPay->GetError()];
         }
 
-        $TcbGate = new TcbGate($this->mfoReq->mfo, TCBank::$AFTGATE);
-        $usl = $kfPay->GetUslug($this->mfoReq->mfo, TCBank::$AFTGATE);
+        Yii::warning('/pay/lk mfo='. $this->mfoReq->mfo . " sum=".$kfPay->amount . " extid=".$kfPay->extid, 'mfo');
+
+        $gate = $kfPay->IsAftGate($this->mfoReq->mfo) ? TCBank::$AFTGATE : TCBank::$ECOMGATE;
+        $TcbGate = new TcbGate($this->mfoReq->mfo, $gate);
+        $usl = $kfPay->GetUslug($this->mfoReq->mfo, $gate);
 
         if (!$usl || !$TcbGate->IsGate()) {
             return ['status' => 0, 'message' => 'Нет шлюза'];
@@ -60,17 +63,6 @@ class CreateFormMfoAftPartsStrategy implements IMfoStrategy
             }
         }
         $params = $pay->payToMfo(null, [$kfPay->document_id, $kfPay->fullname], $kfPay, $usl, TCBank::$bank, $this->mfoReq->mfo,0);
-
-        foreach ($kfPay->parts as $part) {
-            $tcbGate = $this->getTkbGate($part['merchant_id']);
-
-            if(!$tcbGate->IsGate()) {
-                return [
-                    'status' => 0,
-                    'message' => 'Услуга не найдена'];
-            }
-        }
-
         if (!empty($kfPay->extid)) {
             $mutex->release('getPaySchetExt' . $kfPay->extid);
         }
