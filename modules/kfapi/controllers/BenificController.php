@@ -110,10 +110,10 @@ class BenificController extends Controller
             return ['status' => 0, 'message' => 'Номинальный счет не найден'];
         }
 
-        $TcbGate = new TcbGate($KfBenific->IdPartner, TCBank::$AFTGATE);
+        $TcbGate = new TcbGate($kf->IdPartner, TCBank::$AFTGATE);
         $tcBank = new TCBank($TcbGate);
         $ret = $tcBank->RegisterBenificiar([
-            'req' => $KfBenific->GetSoapForm($KfBenific->partner)
+            'req' => $KfBenific->GetSoapForm($kf->partner)
         ]);
 
         if (isset($ret['status']) && $ret['status'] == 1) {
