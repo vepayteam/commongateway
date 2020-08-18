@@ -52,13 +52,14 @@ class CreateFormJkhStrategy implements IPaymentStrategy
         Yii::warning('/merchant/pay id='. $this->request->IdPartner . " sum=".$kfPay->amount . " extid=".$kfPay->extid, 'mfo');
 
         $pay = $this->createPay();
+
         $mutex = new FileMutex();
         if (!empty($kfPay->extid)) {
             //проверка на повторный запрос
             if (!$mutex->acquire('getPaySchetExt' . $kfPay->extid, 30)) {
                 throw new Exception('getPaySchetExt: error lock!');
             }
-            $paramsExist = $pay->getPaySchetExt($kfPay->extid, $usl, $this->request->IdPartner);
+            $paramsExist = $pay->getPaySchetExt($kfPay->extid, $usl, $kf->IdPartner);
             if ($paramsExist) {
                 if ($kfPay->amount == $paramsExist['sumin']) {
                     return ['status' => 1, 'id' => (int)$paramsExist['IdPay'], 'url' => $kfPay->GetPayForm($paramsExist['IdPay']), 'message' => ''];
@@ -68,7 +69,7 @@ class CreateFormJkhStrategy implements IPaymentStrategy
             }
         }
 
-        $params = $pay->payToMfo($this->getUser(), [$kfPay->descript], $kfPay, $usl, TCBank::$bank, $this->request->IdPartner, 0);
+        $params = $pay->payToMfo($user, [$kfPay->descript], $kfPay, $usl, TCBank::$bank, $kf->IdPartner, 0);
         if (!empty($kfPay->extid)) {
             $mutex->release('getPaySchetExt' . $kfPay->extid);
         }

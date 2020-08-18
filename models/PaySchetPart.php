@@ -14,7 +14,7 @@ use yii\db\ActiveRecord;
  * @param int $pay_schet_id
  * @param int $summ
  */
-class PayschetPart extends ActiveRecord
+class PaySchetPart extends ActiveRecord
 {
 
     public static function tableName()

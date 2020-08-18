@@ -166,18 +166,6 @@ $config = [
         ],
         'antifraud' => [
             'class' => 'app\modules\antifraud\Module',
-        ],
-        'suppliers' => [
-            'class' => 'app\modules\suppliers\Module',
-        ],
-
-        'openapireader' => [
-            'class' => \bestyii\openapiReader\Module::class,
-            'defaultDoc'=>'suppliers',
-            'path' => [
-                'suppliers'=>'@app/modules/suppliers',
-
-            ],
         ]
     ],
 ];
@@ -199,12 +187,6 @@ if (YII_ENV_DEV) {
             'job' => [
                 'class' => \yii\queue\gii\Generator::class,
             ],
-            'rest-model' => [ // generator name
-                'class' => 'bestyii\giiRest\generators\model\Generator',
-            ],
-            'rest-crud' => [ // generator name
-                'class' => 'bestyii\giiRest\generators\crud\Generator',
-            ]
         ],
     ];
 
