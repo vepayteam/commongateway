@@ -72,6 +72,29 @@ steps:
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
+- name: helm-deployment-uninstall-963e0f1ae9f7ab2130d2a2feb26d2b1a
+  image: pelotech/drone-helm3
+  settings:
+    add_repos:
+    - vepay=http://charts.service.vepay:8080/
+    atomic_upgrade: true
+    chart: ${DRONE_REPO_NAME}
+    cleanup_failed_upgrade: true
+    kube_api_server: https://kubernetes.default.svc
+    kube_service_account:
+      from_secret: KUBE_SERVICE_ACCOUNT
+    kube_token:
+      from_secret: KUBE_TOKEN
+    mode: uninstall
+    namespace: api-testing
+    release: ${DRONE_SOURCE_BRANCH//\//-}-test
+    skip_tls_verify: true
+    update_dependencies: true
+    wait_for_upgrade: true
+  when:
+    branch:
+    - develop
+
 - name: helm-deployment-upgrade-f43c7461bb3dd2a6709d0e1da0d8baa3
   image: pelotech/drone-helm3
   settings:
@@ -404,6 +427,6 @@ get:
 
 ---
 kind: signature
-hmac: d54b0a4698b0d52caf02a3ffef1d5feaa0f0950d03fd75fdfac5535b16d13151
+hmac: 04a83526bdfdd661f8778d479121997ecf2db25c761428fa1df510db63435639
 
 ...
