@@ -19,7 +19,6 @@ RUN set -ex \
     && chmod -R g+w ${APACHE_DOCUMENT_ROOT}/runtime \
     && chmod -R g+w ${APACHE_DOCUMENT_ROOT}/web/assets \
     && chmod -R g+w ${APACHE_DOCUMENT_ROOT}/web/shopdata \
-    && /docker-entrypoint.d/cleanup.bash \
-    && chmod -R a+rwx ${APACHE_DOCUMENT_ROOT}/vendor
+    && /docker-entrypoint.d/cleanup.bash
 
 USER ${RUN_USER}:${RUN_GROUP}
