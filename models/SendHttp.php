@@ -30,7 +30,7 @@ class SendHttp
         return $this->sendCurlGet($url,
             http_build_query([
                 'id' => $ShopIdOrder,
-                'sum' => str_replace(['.', ',', '_'], '', $SummPay),
+                'sum' => preg_replace('/[^0-9]/', '', $SummPay),
                 'status' => $status,
                 'transact' => $ID,
                 'key' => md5($ShopIdOrder.$SummPay.$status.$ID.$key)
@@ -56,7 +56,7 @@ class SendHttp
             http_build_query([
                 'extid' => $Extid,
                 'id' => $ID,
-                'sum' => str_replace(['.', ',', '_'], '', $SummPay),
+                'sum' => preg_replace('/[^0-9]/', '', $SummPay),
                 'status' => $status,
                 'key' => md5($Extid.$ID.$SummPay.$status.$key)
             ])
@@ -82,7 +82,7 @@ class SendHttp
             http_build_query([
                 'id' => $ID,
                 'extid' => $extid,
-                'sum' => str_replace(['.', ',', '_'], '', $SummPay),
+                'sum' => preg_replace('/[^0-9]/', '', $SummPay),
                 'prov' => $prov,
                 'ls' => $ls,
                 'status' => $status,
