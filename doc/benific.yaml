@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
-  title: API УПРИД
-  description: Vepay API УПРИД.
+  title: API Бенифициара
+  description: Vepay API Бенифициара.
   version: 1.0.5
 security:
   - Login: []
@@ -12,7 +12,7 @@ tags:
   - name: Callback
     description: Оповещения
 servers:
-  - url: https://test.vepay.online/kfapi
+  - url: https://api.vepay.online/kfapi
 paths:
   /benific/reg:
     post:
