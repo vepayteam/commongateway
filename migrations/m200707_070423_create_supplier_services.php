@@ -1,8 +1,5 @@
 <?php
 
-use app\modules\suppliers\models\Supplier;
-use app\modules\suppliers\models\SupplierService;
-use app\modules\suppliers\models\SupplierServiceType;
 use yii\db\Migration;
 
 /**
@@ -15,7 +12,7 @@ class m200707_070423_create_supplier_services extends Migration
      */
     public function safeUp()
     {
-        $this->createTable(SupplierService::tableName(), [
+        $this->createTable('supplier_services', [
             'Id' => $this->primaryKey(),
             'SupplierId' => $this->integer()->notNull(),
             'TypeId' => $this->integer()->notNull(),
@@ -23,17 +20,17 @@ class m200707_070423_create_supplier_services extends Migration
         ]);
         $this->addForeignKey(
             'fk-supplier_services-SupplierId',
-            SupplierService::tableName(),
+            'supplier_services',
             'SupplierId',
-            Supplier::tableName(),
+            'suppliers',
             'Id',
             'CASCADE'
         );
         $this->addForeignKey(
             'fk-supplier_services-TypeId',
-            SupplierService::tableName(),
+            'supplier_services',
             'TypeId',
-            SupplierServiceType::tableName(),
+            'supplier_service_types',
             'Id',
             'CASCADE'
         );
@@ -44,17 +41,17 @@ class m200707_070423_create_supplier_services extends Migration
      */
     public function safeDown()
     {
+        $this->dropTable('supplier_services');
         $this->dropForeignKey(
             'fk-supplier_services-SupplierId',
-            SupplierService::tableName()
+            'supplier_services'
         );
         $this->dropForeignKey(
             'fk-supplier_services-TypeId',
-            SupplierService::tableName()
+            'supplier_services'
         );
-        $this->dropTable(SupplierService::tableName());
 
-        return true;
+        return false;
     }
 
     /*

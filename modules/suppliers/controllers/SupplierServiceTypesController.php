@@ -2,48 +2,46 @@
 
 namespace app\modules\suppliers\controllers;
 
-use app\modules\suppliers\models\Supplier;
-use app\services\suppliers\SuppliersService;
 use Yii;
+use app\modules\suppliers\models\SupplierServiceType;
 use yii\data\ActiveDataProvider;
-use yii\web\BadRequestHttpException;
+use app\modules\suppliers\controllers\BaseController;
 use yii\web\NotFoundHttpException;
 use yii\web\ServerErrorHttpException;
 
 /**
  * @OA\Tag(
- *   name="Suppliers",
- *   description="Поставщики",
- *   @OA\ExternalDocumentation(
- *     description="",
- *     url="http://dakara.cn"
- *   )
+ *   name="SupplierServiceTypes",
+ *   description="",
  * )
  */
-class SuppliersController extends BaseController
+class SupplierServiceTypesController extends BaseController
 {
-    public $modelClass = 'app\services\suppliers\models\Supplier';
-
-    protected function verbs()
-    {
-        return [
-            'create' => ['POST'],
-        ];
-    }
+    public $modelClass = 'app\modules\suppliers\models\SupplierServiceType';
 
     /**
      * @OA\Get(
-     *     path="/suppliers",
-     *     summary="Supplier",
-     *     tags={"Suppliers"},
+     *     path="/supplier-service-types",
+     *     summary="SupplierServiceType",
+     *     tags={"SupplierServiceTypes"},
      *     description="",
-     *     operationId="findSupplier",
+     *     operationId="findSupplierServiceType",
+     *     @OA\Parameter(
+     *         name="ids",
+     *         in="query",
+     *         description="逗号隔开的 id",
+     *         required=false,
+     *         @OA\Schema(
+     *           type="string",
+     *           @OA\Items(type="string"),
+     *         ),
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="",
      *         @OA\Schema(
      *             type="array",
-     *             @OA\Items(ref="#/components/schemas/Supplier")
+     *             @OA\Items(ref="#/components/schemas/SupplierServiceType")
      *         ),
      *     ),
      *     @OA\Response(
@@ -54,17 +52,19 @@ class SuppliersController extends BaseController
      */
     public function actionIndex()
     {
-        $models = $this->getSuppliersService()->getSuppliersByPartnerId($this->partnerId);
-        return $models;
+        $dataProvider = new ActiveDataProvider([
+            'query' => SupplierServiceType::find()->with('creator')->with('updater'),
+        ]);
+        return $dataProvider;
     }
 
     /**
      * @OA\Get(
-     *     path="/suppliers/{id}",
+     *     path="/supplier-service-types/{id}",
      *     summary="",
      *     description="",
-     *     operationId="getSupplierById",
-     *     tags={"Suppliers"},
+     *     operationId="getSupplierServiceTypeById",
+     *     tags={"SupplierServiceTypes"},
      *     @OA\Parameter(
      *         description="id",
      *         in="path",
@@ -78,7 +78,7 @@ class SuppliersController extends BaseController
      *     @OA\Response(
      *         response=200,
      *         description="",
-     *         @OA\JsonContent(ref="#/components/schemas/Supplier")
+     *         @OA\JsonContent(ref="#/components/schemas/SupplierServiceType")
      *     ),
      *     @OA\Response(
      *         response="400",
@@ -92,55 +92,53 @@ class SuppliersController extends BaseController
      */
     public function actionView($id)
     {
-        $models = $this->getSuppliersService()->getSupplierByPartnerId($id, $this->partnerId);
-        return $models;
+        return $this->findModel($id);
     }
 
     /**
      * @OA\Post(
-     *     path="/suppliers",
-     *     tags={"Suppliers"},
-     *     operationId="addSupplier",
+     *     path="/supplier-service-types",
+     *     tags={"SupplierServiceTypes"},
+     *     operationId="addSupplierServiceType",
      *     summary="",
      *     description="",
      *   @OA\RequestBody(
      *       required=true,
      *       description="",
-     *       @OA\JsonContent(ref="#/components/schemas/Supplier"),
+     *       @OA\JsonContent(ref="#/components/schemas/SupplierServiceType"),
      *       @OA\MediaType(
      *           mediaType="multipart/form-data",
-     *           @OA\Schema(ref="#/components/schemas/Supplier")
+     *           @OA\Schema(ref="#/components/schemas/SupplierServiceType")
      *       )
      *   ),
      *     @OA\Response(
      *         response=201,
      *         description="",
-     *         @OA\JsonContent(ref="#/components/schemas/Supplier")
+     *         @OA\JsonContent(ref="#/components/schemas/SupplierServiceType")
      *     ),
      *     @OA\Response(
-     *         response=400,
+     *         response=405,
      *         description="",
      *     )
      * )
      */
     public function actionCreate()
     {
-        $model = $this->getSuppliersService()->createSupplierByPartnerId($this->partnerId, $this->body);
-
-        if($model === false) {
-            throw new BadRequestHttpException();
+        $model = new SupplierServiceType();
+        if ($model->load(Yii::$app->getRequest()->getBodyParams(), '') && $model->save()) {
+            $response = Yii::$app->getResponse();
+            $response->setStatusCode(201);
+        } elseif (!$model->hasErrors()) {
+            throw new ServerErrorHttpException('Failed to create the object for unknown reason.');
         }
-
-        $response = Yii::$app->getResponse();
-        $response->setStatusCode(201);
         return $model;
     }
 
     /**
      * @OA\Put(
-     *     path="/suppliers/{id}",
-     *     tags={"Suppliers"},
-     *     operationId="updateSupplierById",
+     *     path="/supplier-service-types/{id}",
+     *     tags={"SupplierServiceTypes"},
+     *     operationId="updateSupplierServiceTypeById",
      *     summary="",
      *     description="",
      *     @OA\Parameter(
@@ -155,17 +153,17 @@ class SuppliersController extends BaseController
      *     ),
      *   @OA\RequestBody(
      *       required=true,
-     *       description="",
-     *       @OA\JsonContent(ref="#/components/schemas/Supplier"),
+     *       description="SupplierServiceType",
+     *       @OA\JsonContent(ref="#/components/schemas/SupplierServiceType"),
      *       @OA\MediaType(
      *           mediaType="multipart/form-data",
-     *           @OA\Schema(ref="#/components/schemas/Supplier")
+     *           @OA\Schema(ref="#/components/schemas/SupplierServiceType")
      *       )
      *   ),
      *     @OA\Response(
      *         response=200,
      *         description="",
-     *         @OA\JsonContent(ref="#/components/schemas/Supplier")
+     *         @OA\JsonContent(ref="#/components/schemas/SupplierServiceType")
      *     ),
      *     @OA\Response(
      *         response=400,
@@ -183,23 +181,24 @@ class SuppliersController extends BaseController
      */
     public function actionUpdate($id)
     {
-        $model = $this->getSuppliersService()->updateSupplierByPartnerId($id, $this->partnerId, $this->body);
-        if($model === false) {
-            throw new BadRequestHttpException();
+        $model = $this->findModel($id);
+        if ($model->load(Yii::$app->request->getBodyParams(), '') && $model->save()) {
+            Yii::$app->response->setStatusCode(200);
+        } elseif (!$model->hasErrors()) {
+            throw new ServerErrorHttpException('Failed to update the object for unknown reason.');
         }
-
         return $model;
     }
 
     /**
      * @OA\Delete(
-     *     path="/suppliers/{id}",
-     *     summary="",
+     *     path="/supplier-service-types/{id}",
+     *     summary="删除SupplierServiceType",
      *     description="",
-     *     operationId="deleteSupplier",
-     *     tags={"Suppliers"},
+     *     operationId="deleteSupplierServiceType",
+     *     tags={"SupplierServiceTypes"},
      *     @OA\Parameter(
-     *         description="",
+     *         description="需要删除数据的ID",
      *         in="path",
      *         name="id",
      *         required=true,
@@ -224,7 +223,7 @@ class SuppliersController extends BaseController
      */
     public function actionDelete($id)
     {
-        $model = $this->getSuppliersService()->getSupplierByPartnerId($id, $this->partnerId);
+        $model = $this->findModel($id);
         if ($model->delete() === false) {
             throw new ServerErrorHttpException('Failed to delete the object for unknown reason.');
         }
@@ -232,12 +231,17 @@ class SuppliersController extends BaseController
     }
 
     /**
-     * @return SuppliersService
-     * @throws \yii\base\InvalidConfigException
-     * @throws \yii\di\NotInstantiableException
+     * Finds the SupplierServiceType model based on its primary key value.
+     * If the model is not found, a 404 HTTP exception will be thrown.
+     * @param integer $id
+     * @return SupplierServiceType the loaded model
+     * @throws NotFoundHttpException if the model cannot be found
      */
-    protected function getSuppliersService()
+    protected function findModel($id)
     {
-        return Yii::$container->get('SuppliersService');
+        if (($model = SupplierServiceType::findOne($id)) !== null) {
+            return $model;
+        }
+        throw new NotFoundHttpException('The requested SupplierServiceType does not exist.');
     }
 }

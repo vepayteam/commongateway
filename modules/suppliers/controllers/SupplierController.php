@@ -2,30 +2,33 @@
 
 namespace app\modules\suppliers\controllers;
 
+use app\modules\suppliers\models\Supplier;
 use Yii;
-use app\modules\suppliers\models\SupplierService;
 use yii\data\ActiveDataProvider;
-use app\modules\suppliers\controllers\BaseController;
 use yii\web\NotFoundHttpException;
 use yii\web\ServerErrorHttpException;
 
 /**
  * @OA\Tag(
- *   name="SupplierServices",
- *   description="",
+ *   name="Suppliers",
+ *   description="Поставщики",
+ *   @OA\ExternalDocumentation(
+ *     description="",
+ *     url="http://dakara.cn"
+ *   )
  * )
  */
-class SupplierServicesController extends BaseController
+class SupplierController extends BaseController
 {
-    public $modelClass = 'app\modules\suppliers\models\SupplierService';
+    public $modelClass = 'app\services\suppliers\models\Supplier';
 
     /**
      * @OA\Get(
-     *     path="/supplier-services",
-     *     summary="SupplierService",
-     *     tags={"SupplierServices"},
+     *     path="/suppliers",
+     *     summary="Supplier",
+     *     tags={"Suppliers"},
      *     description="",
-     *     operationId="findSupplierService",
+     *     operationId="findSupplier",
      *     @OA\Parameter(
      *         name="ids",
      *         in="query",
@@ -41,7 +44,7 @@ class SupplierServicesController extends BaseController
      *         description="",
      *         @OA\Schema(
      *             type="array",
-     *             @OA\Items(ref="#/components/schemas/SupplierService")
+     *             @OA\Items(ref="#/components/schemas/Supplier")
      *         ),
      *     ),
      *     @OA\Response(
@@ -53,18 +56,18 @@ class SupplierServicesController extends BaseController
     public function actionIndex()
     {
         $dataProvider = new ActiveDataProvider([
-            'query' => SupplierService::find()->with('creator')->with('updater'),
+            'query' => Supplier::find(),
         ]);
         return $dataProvider;
     }
 
     /**
      * @OA\Get(
-     *     path="/supplier-services/{id}",
+     *     path="/suppliers/{id}",
      *     summary="",
      *     description="",
-     *     operationId="getSupplierServiceById",
-     *     tags={"SupplierServices"},
+     *     operationId="getSupplierById",
+     *     tags={"Suppliers"},
      *     @OA\Parameter(
      *         description="id",
      *         in="path",
@@ -78,7 +81,7 @@ class SupplierServicesController extends BaseController
      *     @OA\Response(
      *         response=200,
      *         description="",
-     *         @OA\JsonContent(ref="#/components/schemas/SupplierService")
+     *         @OA\JsonContent(ref="#/components/schemas/Supplier")
      *     ),
      *     @OA\Response(
      *         response="400",
@@ -97,24 +100,24 @@ class SupplierServicesController extends BaseController
 
     /**
      * @OA\Post(
-     *     path="/supplier-services/create",
-     *     tags={"SupplierServices"},
-     *     operationId="addSupplierService",
+     *     path="/suppliers",
+     *     tags={"Suppliers"},
+     *     operationId="addSupplier",
      *     summary="",
      *     description="",
      *   @OA\RequestBody(
      *       required=true,
-     *       description="SupplierService",
-     *       @OA\JsonContent(ref="#/components/schemas/SupplierService"),
+     *       description="",
+     *       @OA\JsonContent(ref="#/components/schemas/Supplier"),
      *       @OA\MediaType(
      *           mediaType="multipart/form-data",
-     *           @OA\Schema(ref="#/components/schemas/SupplierService")
+     *           @OA\Schema(ref="#/components/schemas/Supplier")
      *       )
      *   ),
      *     @OA\Response(
      *         response=201,
      *         description="",
-     *         @OA\JsonContent(ref="#/components/schemas/SupplierService")
+     *         @OA\JsonContent(ref="#/components/schemas/Supplier")
      *     ),
      *     @OA\Response(
      *         response=405,
@@ -124,7 +127,7 @@ class SupplierServicesController extends BaseController
      */
     public function actionCreate()
     {
-        $model = new SupplierService();
+        $model = new Supplier();
         if ($model->load(Yii::$app->getRequest()->getBodyParams(), '') && $model->save()) {
             $response = Yii::$app->getResponse();
             $response->setStatusCode(201);
@@ -136,9 +139,9 @@ class SupplierServicesController extends BaseController
 
     /**
      * @OA\Put(
-     *     path="/supplier-services/update/{id}",
-     *     tags={"SupplierServices"},
-     *     operationId="updateSupplierServiceById",
+     *     path="/suppliers/{id}",
+     *     tags={"Suppliers"},
+     *     operationId="updateSupplierById",
      *     summary="",
      *     description="",
      *     @OA\Parameter(
@@ -153,17 +156,17 @@ class SupplierServicesController extends BaseController
      *     ),
      *   @OA\RequestBody(
      *       required=true,
-     *       description="SupplierService",
-     *       @OA\JsonContent(ref="#/components/schemas/SupplierService"),
+     *       description="",
+     *       @OA\JsonContent(ref="#/components/schemas/Supplier"),
      *       @OA\MediaType(
      *           mediaType="multipart/form-data",
-     *           @OA\Schema(ref="#/components/schemas/SupplierService")
+     *           @OA\Schema(ref="#/components/schemas/Supplier")
      *       )
      *   ),
      *     @OA\Response(
      *         response=200,
      *         description="",
-     *         @OA\JsonContent(ref="#/components/schemas/SupplierService")
+     *         @OA\JsonContent(ref="#/components/schemas/Supplier")
      *     ),
      *     @OA\Response(
      *         response=400,
@@ -192,11 +195,11 @@ class SupplierServicesController extends BaseController
 
     /**
      * @OA\Delete(
-     *     path="/supplier-services/{id}",
+     *     path="/suppliers/{id}",
      *     summary="",
      *     description="",
-     *     operationId="deleteSupplierService",
-     *     tags={"SupplierServices"},
+     *     operationId="deleteSupplier",
+     *     tags={"Suppliers"},
      *     @OA\Parameter(
      *         description="",
      *         in="path",
@@ -231,17 +234,17 @@ class SupplierServicesController extends BaseController
     }
 
     /**
-     * Finds the SupplierService model based on its primary key value.
+     * Finds the Supplier model based on its primary key value.
      * If the model is not found, a 404 HTTP exception will be thrown.
      * @param integer $id
-     * @return SupplierService the loaded model
+     * @return Supplier the loaded model
      * @throws NotFoundHttpException if the model cannot be found
      */
     protected function findModel($id)
     {
-        if (($model = SupplierService::findOne($id)) !== null) {
+        if (($model = Supplier::findOne($id)) !== null) {
             return $model;
         }
-        throw new NotFoundHttpException('The requested SupplierService does not exist.');
+        throw new NotFoundHttpException('The requested Supplier does not exist.');
     }
 }

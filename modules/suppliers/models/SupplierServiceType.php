@@ -32,12 +32,6 @@ use Yii;
  */
 class SupplierServiceType extends \yii\db\ActiveRecord
 {
-    const SERVICE_TYPE_ID_JKH = 1;
-
-    const SERVICE_TYPE_IDS = [
-        self::SERVICE_TYPE_ID_JKH => 'ЖКХ',
-    ];
-
     /**
      * {@inheritdoc}
      */

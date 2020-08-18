@@ -1,6 +1,5 @@
 <?php
 
-use app\modules\suppliers\models\SupplierServiceType;
 use yii\db\Migration;
 
 /**
@@ -13,18 +12,10 @@ class m200707_070001_create_supplier_service_types extends Migration
      */
     public function safeUp()
     {
-        $this->createTable(SupplierServiceType::tableName(), [
+        $this->createTable('supplier_service_types', [
             'Id' => $this->primaryKey(),
             'Name' => $this->string(250)->notNull(),
         ]);
-
-        foreach (SupplierServiceType::SERVICE_TYPE_IDS as $k => $name) {
-            $model = new SupplierServiceType();
-            $model->Id = $k;
-            $model->Name = $name;
-            $model->save();
-        }
-
     }
 
     /**
@@ -32,9 +23,9 @@ class m200707_070001_create_supplier_service_types extends Migration
      */
     public function safeDown()
     {
-        $this->dropTable(SupplierServiceType::tableName());
+        $this->dropTable('supplier_service_types');
 
-        return true;
+        return false;
     }
 
     /*

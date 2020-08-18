@@ -12,7 +12,6 @@ use app\models\kfapi\KfRequest;
 use app\models\payonline\CreatePay;
 use app\models\Payschets;
 use app\services\payment\payment_strategies\CreateFormEcomStrategy;
-use app\services\payment\payment_strategies\CreateFormJkhPartsStrategy;
 use app\services\payment\payment_strategies\CreateFormJkhStrategy;
 use app\services\payment\payment_strategies\IPaymentStrategy;
 use app\services\payment\PaymentService;
@@ -177,18 +176,6 @@ class MerchantController extends Controller
 //            'url' => $kfPay->GetPayForm($params['IdPay']),
 //            'message' => ''
 //        ];
-    }
-
-    public function actionPayParts()
-    {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
-        $kfRequest = new KfRequest();
-        $kfRequest->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody(), 0);
-        /** @var IPaymentStrategy $paymentStrategy */
-        $paymentStrategy = new CreateFormJkhPartsStrategy($kfRequest);
-
-
     }
 
     /**

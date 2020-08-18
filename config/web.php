@@ -149,7 +149,6 @@ $config = [
     'container' => [
         'singletons' => [
             'PaymentService' => ['class' => 'app\services\payment\PaymentService'],
-            'SuppliersService' => ['class' => 'app\services\suppliers\SuppliersService'],
         ],
     ],
     'modules' => [
@@ -172,7 +171,7 @@ $config = [
             'class' => 'app\modules\suppliers\Module',
         ],
 
-        'suppliers-docs' => [
+        'openapireader' => [
             'class' => \bestyii\openapiReader\Module::class,
             'defaultDoc'=>'suppliers',
             'path' => [

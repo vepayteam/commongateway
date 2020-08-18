@@ -44,8 +44,6 @@ class TCBank
     public static $VYVODOCTGATE = 8;
     public static $PEREVODOCTGATE = 9;
 
-
-
     /**
      * TCBank constructor. (new)
      * @param TcbGate|null $tcbGate

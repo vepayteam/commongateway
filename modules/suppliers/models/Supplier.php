@@ -8,6 +8,12 @@ use Yii;
 *      schema="Supplier",
 *      required={"Name"},
 *     @OA\Property(
+*        property="Id",
+*        description="",
+*        type="integer",
+*        format="int64",
+*    ),
+*     @OA\Property(
 *        property="Name",
 *        description="",
 *        type="string",
@@ -26,7 +32,6 @@ use Yii;
  * This is the model class for table "suppliers".
  *
  * @property int $Id
- * @property int $PartnerId
  * @property string $Name
  * @property string $SchetTcb
  *
@@ -48,7 +53,7 @@ class Supplier extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['Name', 'PartnerId'], 'required'],
+            [['Name'], 'required'],
             [['Name'], 'string', 'max' => 250],
             [['SchetTcb'], 'string', 'max' => 40],
         ];
@@ -72,13 +77,6 @@ class Supplier extends \yii\db\ActiveRecord
     public function getSupplierServices()
     {
         return $this->hasMany(SupplierService::className(), ['SupplierId' => 'Id']);
-    }
-
-    public static function findOneByPartnerId($id, $partnerId)
-    {
-        return self::find()
-            ->where(['PartnerId' => $partnerId, 'Id' => $id])
-            ->one();
     }
 
 }
