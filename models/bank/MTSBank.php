@@ -210,72 +210,66 @@ class MTSBank implements IBank
      */
     public function transferToCard(array $data)
     {
-        $payschets = new Payschets();
-        $params = $payschets->getSchetData($data['IdPay']);
-
-        $formData = [
-            'amount' => (int)$params['SummFull'],
-            'orderNumber' => $params['ID'],
-            'orderDescription' => $params['NameUsluga'],
-            'returnUrl' => $this->backUrls['ok'] . $params['ID'],
-            'failUrl' => $this->backUrls['ok'] . $params['ID'],
-            'transactionTypeIndicator' => 'D',
-            'type' => 'WITHOUT_FROM_CARD',
-            'features' => [
-                'feature' => 'WITHOUT_FROM_CARD',
-            ]
-        ];
-
-        $registerP2P = new RegisterP2P();
-        if(!$registerP2P->load($formData, '') || !$registerP2P->validate()) {
-            throw new \Exception('Ошибка данных');
-        }
-
-        $partner = Partner::findOne(['ID' => $params['IDPartner']]);
-
-        $response = (new SoapRequestBuilder($this->bankP2PUrl, 'registerP2P', $registerP2P))
-            ->addSecurity($partner->MtsLoginOct, $partner->MtsPasswordOct)
-            ->addBody()
-            ->sendRequest();
-
-        $responseReturn = $response->xpath('//Body/registerP2PResponse/return')[0];
-        $errorResponse = (string)$responseReturn->attributes()['errorCode'];
-        $errorMessage = (string)$responseReturn->attributes()['errorMessage'];
-
-        if($errorResponse != 0) {
-            throw new \Exception($errorMessage);
-        }
-        $orderId = (string)$response->xpath('//Body/registerP2PResponse/return/orderId')[0];
-
-
-        $data = [
-            'orderId' => $orderId,
-            'type' => 'WITHOUT_FROM_CARD',
-            'toCard' => [
-                'pan' => $data['CardNum'],
-                'cvc' => '',
-                'expirationYear' => '',
-                'expirationMonth' => '',
-                'cardholderName' => '',
-            ],
-        ];
-
-        $performP2P = new PerfomP2P();
-        if(!$performP2P->load($data, '') || !$performP2P->validate()) {
-            throw new \Exception('Ошибка данных');
-        }
-
-        $response = (new SoapRequestBuilder($this->bankP2PUrl, 'performP2P', $performP2P))
-            ->addSecurity($partner->MtsLoginOct, $partner->MtsPasswordOct)
-            ->addBody()
-            ->sendRequest();
-
-
-        $a = 0;
-
-
-
-
+        throw new \Exception('Перечисление денег на карту через МТС банк недоступен');
+//        $payschets = new Payschets();
+//        $params = $payschets->getSchetData($data['IdPay']);
+//
+//        $formData = [
+//            'amount' => (int)$params['SummFull'],
+//            'orderNumber' => $params['ID'],
+//            'orderDescription' => $params['NameUsluga'],
+//            'returnUrl' => $this->backUrls['ok'] . $params['ID'],
+//            'failUrl' => $this->backUrls['ok'] . $params['ID'],
+//            'transactionTypeIndicator' => 'D',
+//            'type' => 'WITHOUT_FROM_CARD',
+//            'features' => [
+//                'feature' => 'WITHOUT_FROM_CARD',
+//            ]
+//        ];
+//
+//        $registerP2P = new RegisterP2P();
+//        if(!$registerP2P->load($formData, '') || !$registerP2P->validate()) {
+//            throw new \Exception('Ошибка данных');
+//        }
+//
+//        $partner = Partner::findOne(['ID' => $params['IDPartner']]);
+//
+//        $response = (new SoapRequestBuilder($this->bankP2PUrl, 'registerP2P', $registerP2P))
+//            ->addSecurity($partner->MtsLoginOct, $partner->MtsPasswordOct)
+//            ->addBody()
+//            ->sendRequest();
+//
+//        $responseReturn = $response->xpath('//Body/registerP2PResponse/return')[0];
+//        $errorResponse = (string)$responseReturn->attributes()['errorCode'];
+//        $errorMessage = (string)$responseReturn->attributes()['errorMessage'];
+//
+//        if($errorResponse != 0) {
+//            throw new \Exception($errorMessage);
+//        }
+//        $orderId = (string)$response->xpath('//Body/registerP2PResponse/return/orderId')[0];
+//
+//
+//        $data = [
+//            'orderId' => $orderId,
+//            'type' => 'WITHOUT_FROM_CARD',
+//            'toCard' => [
+//                'pan' => $data['CardNum'],
+//                'cvc' => '',
+//                'expirationYear' => '',
+//                'expirationMonth' => '',
+//                'cardholderName' => '',
+//            ],
+//        ];
+//
+//        $performP2P = new PerfomP2P();
+//        if(!$performP2P->load($data, '') || !$performP2P->validate()) {
+//            throw new \Exception('Ошибка данных');
+//        }
+//
+//        $response = (new SoapRequestBuilder($this->bankP2PUrl, 'performP2P', $performP2P))
+//            ->addSecurity($partner->MtsLoginOct, $partner->MtsPasswordOct)
+//            ->addBody()
+//            ->sendRequest();
     }
 
     /**
