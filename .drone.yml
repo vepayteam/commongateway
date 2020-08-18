@@ -98,7 +98,7 @@ steps:
     - ingress.hosts[0].paths[0]=/
     wait_for_upgrade: true
 
-- name: helm-deployment-upgrade-3e2a33720ff5d3008c8faefb0e9d144f
+- name: helm-deployment-upgrade-7a1466f191d016faae35fe0323b0000e
   image: pelotech/drone-helm3
   settings:
     add_repos:
@@ -112,7 +112,7 @@ steps:
     kube_token:
       from_secret: KUBE_TOKEN
     mode: upgrade
-    namespace: api-development
+    namespace: api-develop
     release: ${DRONE_BRANCH//\//-}
     skip_tls_verify: true
     update_dependencies: true
@@ -404,6 +404,6 @@ get:
 
 ---
 kind: signature
-hmac: 68f25fa6f13140cb856cd4157833ee388e15f3d8c7e894508cfe17432d40116d
+hmac: d54b0a4698b0d52caf02a3ffef1d5feaa0f0950d03fd75fdfac5535b16d13151
 
 ...
