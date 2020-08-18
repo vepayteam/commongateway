@@ -7,6 +7,7 @@ platform:
   os: linux
   arch: amd64
 
+
 steps:
   - name: feature-docker-tag-review
     image: alpine
@@ -25,24 +26,6 @@ steps:
     when:
       branch:
       - feat/*
-  
-  - name: fix-docker-tag-review
-    image: alpine
-    privileged: false
-    commands:
-    - echo -n "${DRONE_SOURCE_BRANCH##fix/}" | tr '[:upper:]' '[:lower:]' > .tags
-    when:
-      branch:
-      - fix/*
-
-  - name: hotfix-docker-tag-review
-    image: alpine
-    privileged: false
-    commands:
-    - echo -n "${DRONE_SOURCE_BRANCH##hotfix/}" | tr '[:upper:]' '[:lower:]' > .tags
-    when:
-      branch:
-      - hotfix/*
 
   - name: docker-tag-staging
     image: alpine
@@ -65,21 +48,21 @@ steps:
       repo: registry.vepay.cf/${DRONE_REPO,,}
     when:
       branch:
-        - feature/*
-        - feat/*
-        - fix/*
-        - hotfix/*
-        - develop
+      - feature/*
+      - feat/*
+      - develop
 
 trigger:
+  event:
+    include:
+      - pull_request
+      - push
   branch:
     - feature/*
     - feat/*
-    - fix/*
-    - hotfix/*
     - develop
 ---
 kind: signature
-hmac: ad35a8e78d11caa822ba6fd9b8dc78e96894e4855b0522b49a599a18e01ca9ad
+hmac: 414301d12459c61f7ca45b029897509a7545604808923ef6ae47a7173c4b6593
 
 ...
