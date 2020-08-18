@@ -14,11 +14,7 @@ ENV APACHE_DOCUMENT_ROOT=/www/
 COPY . /www/
 
 RUN set -ex \
-    && apt-get update \
-    && apt-get install -y npm nodejs git zlib1g-dev unzip \
     && curl -sS -o /etc/ssl/cacert.pem https://curl.haxx.se/ca/cacert.pem \
-    && update-ca-certificates \
-    \
     && cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini \
     && sed -ri -e "s,^short_open_tag = Off,short_open_tag = On," /usr/local/etc/php/php.ini \
     && sed -ri -e "s,;date.timezone =,date.timezone = ${TIMEZONE}," /usr/local/etc/php/php.ini \
@@ -26,17 +22,16 @@ RUN set -ex \
     && sed -ri -e "s,;openssl.cafile =,openssl.cafile = "/etc/ssl/cacert.pem"," /usr/local/etc/php/php.ini \
     && sed -ri -e "s!/var/www/html!${APACHE_DOCUMENT_ROOT}!g" /etc/apache2/sites-available/*.conf \
     && sed -ri -e "s!/var/www/!${APACHE_DOCUMENT_ROOT}!g" /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf \
-    && sed -ri -e "s!:80!:${APACHE_HTTP_PORT}!g" /etc/apache2/sites-available/*.conf \
-    && sed -ri -e "s!:443!:${APACHE_HTTPS_PORT}!g" /etc/apache2/sites-available/*.conf \
-    && sed -ri -e "s!80!${APACHE_HTTP_PORT}!g" /etc/apache2/ports.conf \
-    && sed -ri -e "s!443!${APACHE_HTTPS_PORT}!g" /etc/apache2/ports.conf \
-    && echo 'ServerName vepay' | tee -a /etc/apache2/apache2.conf \
+    && sed -ri -e "s!:80!${APACHE_HTTP_PORT}!g" /etc/apache2/sites-available/*.conf \
+    && sed -ri -e "s!:443!${APACHE_HTTPS_PORT}!g" /etc/apache2/sites-available/*.conf \
     && a2dismod mpm_event mpm_worker ssl status \
     && a2enmod rewrite charset_lite headers \
     && a2enconf docker-php \
     && apache2ctl configtest \
-    && docker-php-ext-install mysqli zip \
-    && docker-php-ext-enable opcache mysqli zip \
+    && /usr/local/bin/docker-php-ext-enable opcache \
+    \
+    && apt-get update \
+    && apt-get install -y npm nodejs git mariadb-client \
     \
     && npm install uglify-es clean-css-cli -g \
     && curl -sS https://getcomposer.org/installer -o /tmp/composer-setup.php \
@@ -48,13 +43,12 @@ RUN set -ex \
     && /www/init --env=test \
     && /www/yii cache/flush-all --interactive 0 \
     \
-    && apt-get remove -y npm nodejs git unzip \
+    && apt-get remove -y npm nodejs git \
     && apt-get autoremove --purge -y \
     && rm -rf /var/lib/apt/lists/* \
               /etc/apt/sources.list.d/*.list \
               /www/node_modules/ \
               /root/.composer \
-              /tmp/composer-setup.php \
     \
     && mkdir -p /www/key/ \
     && echo -n '1234567890' > /www/key/key.txt \
@@ -66,6 +60,21 @@ RUN set -ex \
     && chmod -R g+w /www/web/assets \
     && chmod -R g+w /www/web/shopdata \
     && chown -R 1000:1000 /www/
+#     && echo $'\n\
+# <?php\n\
+# \n\
+# return [\n\
+# 'class' => 'yii\db\Connection',\n\
+# 'dsn' => 'mysql:host='+getenv("MYSQL_HOST", "mysql")+';port='+getenv("MYSQL_PORT", 3306)+';dbname='+getenv("MYSQL_DB", "vepay"),\n\
+# 'username' => getenv("MYSQL_USER", "vepay"),\n\
+# 'password' => getenv("MYSQL_PASSWORD", "vepay"),\n\
+# 'charset' => 'utf8',\n\
+# \n\
+# // Schema cache options (for production environment)\n\
+# //'enableSchemaCache' => true,\n\
+# //'schemaCacheDuration' => 60,\n\
+# //'schemaCache' => 'cache',	\n\
+# ];\n' > /www/config/db.php
 
 EXPOSE ${APACHE_HTTP_PORT}
 USER 1000:1000
