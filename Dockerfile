@@ -10,7 +10,7 @@ RUN set -ex \
     \
     && chmod +x ${APACHE_DOCUMENT_ROOT}/yii \
     && chmod +x ${APACHE_DOCUMENT_ROOT}/init \
-    && ${APACHE_DOCUMENT_ROOT}/init --env=dev \
+    && ${APACHE_DOCUMENT_ROOT}/init --env=test \
     && ${APACHE_DOCUMENT_ROOT}/yii cache/flush-all --interactive 0 \
     \
     && sed -ri -e 's!host=localhost!host=0.0.0.0!g' config/db.php \
