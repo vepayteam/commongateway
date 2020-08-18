@@ -17,8 +17,8 @@ class m200703_110825_create_pay_schet_parts extends Migration
         $this->createTable(PayschetPart::tableName(), [
             'Id' => $this->primaryKey(),
             'PayschetId' => $this->integer()->notNull(),
-            'PartnerId' => $this->integer()->notNull(),
-            'Amount' => $this->integer()->notNull(),
+            'SupplierServiceId' => $this->integer()->notNull(),
+            'Summ' => $this->integer()->notNull(),
         ]);
 
     }

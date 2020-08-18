@@ -51,9 +51,8 @@ class MerchantController extends Controller
     {
         return [
             'pay' => ['POST'],
-            'pay-parts' => ['POST'],
             'state' => ['POST'],
-            'reverseorder' => ['POST'],
+            'reverseorder' => ['POST']
         ];
     }
 
@@ -188,7 +187,8 @@ class MerchantController extends Controller
         $kfRequest->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody(), 0);
         /** @var IPaymentStrategy $paymentStrategy */
         $paymentStrategy = new CreateFormJkhPartsStrategy($kfRequest);
-        return $paymentStrategy->exec();
+
+
     }
 
     /**

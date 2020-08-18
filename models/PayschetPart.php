@@ -11,9 +11,8 @@ use yii\db\ActiveRecord;
  * @package app\models
  *
  * @param int $id
- * @param int $PayschetId
- * @param int $PartnerId
- * @param int $Amount
+ * @param int $pay_schet_id
+ * @param int $summ
  */
 class PayschetPart extends ActiveRecord
 {
