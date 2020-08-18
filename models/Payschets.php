@@ -480,26 +480,16 @@ class Payschets
                 }
             } else {
                 //погашение
-                $payschetParts = PayschetPart::find()->where('PayscheId', $IdPay)->all();
-                if($payschetParts) {
-                    foreach ($payschetParts as $payschetPart) {
-                        $info = sprintf('Платеж № %d Часть № %d ', $IdPay, $payschetPart->Id);
-
-                        $BalanceIn = new BalancePartner(BalancePartner::IN, $payschetPart->PartnerId);
-                        $BalanceIn->Inc($payschetPart->Amount, $info, 2, $IdPay, 0);
-                    }
-
-                } else {
-                    $BalanceIn = new BalancePartner(BalancePartner::IN, $query['IdOrg']);
-                    $BalanceIn->Inc($query['SummPay'], 'Платеж ' . $IdPay, 2, $IdPay, 0);
-                    $usl = Uslugatovar::findOne(['ID' => $query['IdUsluga']]);
-                    if ($usl) {
-                        $comis = $usl->calcComissOrg($query['SummPay']);
-                        if ($comis) {
-                            $BalanceIn->Dec($comis, 'Комиссия ' . $IdPay, 5, $IdPay, 0);
-                        }
+                $BalanceIn = new BalancePartner(BalancePartner::IN, $query['IdOrg']);
+                $BalanceIn->Inc($query['SummPay'], 'Платеж ' . $IdPay, 2, $IdPay, 0);
+                $usl = Uslugatovar::findOne(['ID' => $query['IdUsluga']]);
+                if ($usl) {
+                    $comis = $usl->calcComissOrg($query['SummPay']);
+                    if ($comis) {
+                        $BalanceIn->Dec($comis, 'Комиссия ' . $IdPay, 5, $IdPay, 0);
                     }
                 }
+
             }
         }
     }

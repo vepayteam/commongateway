@@ -44,7 +44,7 @@ trait PaymentFormTrait
             $payschetPart = new PayschetPart();
             $payschetPart->PayschetId = $params['IdPay'];
             $payschetPart->PartnerId = $part['merchant_id'];
-            $payschetPart->Amount = $part['amount'] * 100;
+            $payschetPart->Amount = $part['amount'];
             $payschetPart->save();
         }
     }
