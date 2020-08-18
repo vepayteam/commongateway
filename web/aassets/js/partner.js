@@ -1098,44 +1098,6 @@
                 return false;
             });
 
-            $('#modal-vyvyodsum__submit').on('click', function () {
-                var summ = $('#modal-vyvyodsum__summ').val() * 100;
-                var data = {
-                    'partner': $('#modal-vyvyodsum__submit').data('idPartner'),
-                    'type': $('#modal-vyvyodsum__submit').data('type'),
-                    'datefrom': $('#modal-vyvyodsum__submit').data('datefrom'),
-                    'dateto': $('#modal-vyvyodsum__submit').data('dateto'),
-                    'summ': summ,
-                    'isCron': 0
-                };
-
-                //вывод
-                linklink = $.ajax({
-                    type: "POST",
-                    url: '/partner/admin/vyvodvoznag',
-                    data: data,
-                    beforeSend: function () {
-                        $('#comisotchetresult').closest('.ibox-content').toggleClass('sk-loading');
-                    },
-                    success: function (data) {
-                        $('#comisotchetform').closest('.ibox-content').toggleClass('sk-loading');
-                        if (data.status == 1) {
-                            toastr.success("OK", data.message);
-                            $('#comisotchetform').trigger('submit');
-                        } else {
-                            toastr.error("Ошибка", data.message);
-                        }
-                        $('#modal-vyvyodsum').modal('toggle');
-                    },
-                    error: function () {
-                        $('#comisotchetform').closest('.ibox-content').toggleClass('sk-loading');
-                        toastr.error("Ошибка", "Ошибка запроса.");
-                        $('#modal-vyvyodsum').modal('toggle');
-                    }
-                });
-
-            });
-
             $('#comisotchetresult').off().on('click', 'a[data-action="vyvyodsum"]', function () {
 
                 toastr.options = {
@@ -1147,18 +1109,37 @@
 
                 let idPartner = $(this).attr('data-id');
                 let type = $(this).attr('data-type');
-                let datefrom = $('[name="datefrom"]').val();
-                let dateto = $('[name="dateto"]').val();
+                let dtfrom = $('[name="datefrom"]').val();
+                let dtto = $('[name="dateto"]').val();
                 let summ = $(this).attr('data-summ');
 
-                $('#modal-vyvyodsum__summ').val(summ/100);
+                if (!confirm("Вывести вознаграждение " + (summ / 100.00).toFixed(2) + " руб.?")) {
+                    return false;
+                }
 
-                $('#modal-vyvyodsum__submit').data('idPartner', idPartner);
-                $('#modal-vyvyodsum__submit').data('type', type);
-                $('#modal-vyvyodsum__submit').data('datefrom', datefrom);
-                $('#modal-vyvyodsum__submit').data('dateto', dateto);
+                //вывод
+                linklink = $.ajax({
+                    type: "POST",
+                    url: '/partner/admin/vyvodvoznag',
+                    data: {'partner': idPartner, 'type': type, 'isCron': 0, 'summ': summ, 'datefrom': dtfrom, 'dateto': dtto},
+                    beforeSend: function () {
+                        $('#comisotchetresult').closest('.ibox-content').toggleClass('sk-loading');
+                    },
+                    success: function (data) {
+                        $('#comisotchetform').closest('.ibox-content').toggleClass('sk-loading');
+                        if (data.status == 1) {
+                            toastr.success("OK", data.message);
+                            $('#comisotchetform').trigger('submit');
+                        } else {
+                            toastr.error("Ошибка", data.message);
+                        }
+                    },
+                    error: function () {
+                        $('#comisotchetform').closest('.ibox-content').toggleClass('sk-loading');
+                        toastr.error("Ошибка", "Ошибка запроса.");
+                    }
+                });
 
-                $('#modal-vyvyodsum').modal('toggle');
                 return false;
             });
 

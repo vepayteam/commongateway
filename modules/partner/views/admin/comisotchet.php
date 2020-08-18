@@ -106,25 +106,4 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
         </div>
     </div>
 
-<div id="modal-vyvyodsum" class="modal fade" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title">Вывод вознаграждения</h4>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="exampleInputEmail1">Сумма для вывода</label>
-                    <input id="modal-vyvyodsum__summ" type="number" class="form-control">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Отмена</button>
-                <button id="modal-vyvyodsum__submit" type="button" class="btn btn-primary">Вывести</button>
-            </div>
-        </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-
 <?php $this->registerJs('lk.comisotchet()'); ?>
