@@ -26,7 +26,6 @@ class KfPayParts extends KfPay
     public $successurl = '';
     public $failurl = '';
     public $cancelurl = '';
-    public $postbackurl = '';
 
     public $parts = [];
 
@@ -37,7 +36,7 @@ class KfPayParts extends KfPay
             [['extid'], 'string', 'max' => 40, 'on' => [self::SCENARIO_FORM, self::SCENARIO_AUTO]],
             [['document_id'], 'string', 'max' => 40, 'on' => [self::SCENARIO_FORM]],
             [['fullname'], 'string', 'max' => 80, 'on' => [self::SCENARIO_FORM]],
-            [['successurl', 'failurl', 'cancelurl', 'postbackurl'], 'url', 'on' => [self::SCENARIO_FORM]],
+            [['successurl', 'failurl', 'cancelurl'], 'url', 'on' => [self::SCENARIO_FORM]],
             [['successurl', 'failurl', 'cancelurl'], 'string', 'max' => 300, 'on' => [self::SCENARIO_FORM]],
             [['descript'], 'string', 'max' => 200, 'on' => [self::SCENARIO_FORM]],
             [['card'], 'integer', 'on' => self::SCENARIO_AUTO],
@@ -66,14 +65,7 @@ class KfPayParts extends KfPay
 
     public function validateParts()
     {
-        foreach ($this->parts as $part) {
-            if(!array_key_exists('merchant_id', $part)
-                || !array_key_exists('amount', $part)
-                || !preg_match('/[0-9]+/', $part['amount'])
-            ) {
-                $this->addError('parts', 'Части платежа невалидны');
-            }
-        }
+        $a = 0;
     }
 
     private function setAmount($amount)
