@@ -13,6 +13,8 @@ tags:
     description: Запросы списания со счета
   - name: Account
     description: Запросы баланса
+  - name: Benific
+    description: Бенифициары
   - name: Callback
     description: Оповещения
 servers:
@@ -274,6 +276,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StatusStatements"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /benific/reg:
+    post:
+      tags:
+        - Benific
+      summary: Регистрация бенифициара
+      description: Запрос регистрации бенифициара
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Benific"
+        description: Параметры запроса
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResult"
         default:
           description: Error (40X,500)
           content:

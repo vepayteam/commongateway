@@ -3,6 +3,8 @@
 namespace app\models;
 
 use app\models\antifraud\AntiFraud;
+use app\models\bank\BankCheck;
+use app\models\bank\MTSBank;
 use app\models\crypt\CardToken;
 use app\models\payonline\BalancePartner;
 use app\models\payonline\Cards;
@@ -68,7 +70,6 @@ class Payschets
                 u.`Fam`,
                 u.`Name`,
                 u.`Otch`,
-                u.`ExtOrg`,
                 ps.`ExtBillNumber`,
                 ps.`DateCreate`,
                 qu.NameUsluga,
@@ -81,7 +82,6 @@ class Payschets
                 ps.SuccessUrl,
                 ps.FailedUrl,
                 ps.CancelUrl,
-                ps.PostbackUrl,
                 p.IsMfo,
                 ps.Bank,
                 ps.Extid,
@@ -103,6 +103,7 @@ class Payschets
                 ps.sms_accept,
                 qu.IDPartner,
                 ps.IdOrg,
+                ps.IPAddressUser,
                 p.IsUseKKmPrint
             FROM
                 `pay_schet` AS ps
@@ -252,6 +253,9 @@ class Payschets
                             $this->ChangeBalance($query, $params['idpay']);
                         }
 
+                        $BankCheck = new BankCheck();
+                        $BankCheck->UpdateLastCheck($query['Bank']);
+
                         if ($transaction->isActive) {
                             $transaction->commit();
                         }
@@ -281,6 +285,10 @@ class Payschets
                         $res = false;
 
                     }
+
+                    $BankCheck = new BankCheck();
+                    $BankCheck->UpdateLastWork($query['Bank']);
+
                 } else {
                     if ($transaction) {
                         $transaction->rollBack();
@@ -468,20 +476,6 @@ class Payschets
      */
     private function ChangeBalance($query, $IdPay)
     {
-        // TODO: refact strategies
-        // Если есть части платежа, проводим только их
-        $payschetParts = PayschetPart::find()->where(['PayschetId' => $IdPay])->all();
-        if($payschetParts) {
-            foreach ($payschetParts as $payschetPart) {
-                $info = sprintf('Платеж № %d Часть № %d ', $IdPay, $payschetPart->Id);
-
-                $BalanceIn = new BalancePartner(BalancePartner::IN, $payschetPart->PartnerId);
-                $BalanceIn->Inc($payschetPart->Amount, $info, 2, $IdPay, 0);
-            }
-            return;
-        }
-
-
         if (!empty($query['SchetTcbNominal'])) {
             //номинальный счет
             if (in_array($query['IsCustom'], [TU::$TOCARD, TU::$TOSCHET])) {
@@ -545,6 +539,7 @@ class Payschets
                         $BalanceIn->Dec($comis, 'Комиссия ' . $IdPay, 5, $IdPay, 0);
                     }
                 }
+
             }
         }
     }
@@ -821,7 +816,8 @@ class Payschets
                 pr.ID AS IdOrg,
                 pr.SchetTcbNominal,
                 ut.ExtReestrIDUsluga,
-                p.Dogovor
+                p.Dogovor,
+                p.Bank
               FROM
                 `pay_schet` AS p
                 LEFT JOIN `uslugatovar` AS ut ON ut.ID = p.IdUsluga
@@ -998,6 +994,14 @@ class Payschets
             ], ['ID' => $IdPay])->execute();
         } catch (Exception $e) {
         }
+    }
+
+    public function ChangeBank($IdPay, $bank)
+    {
+        Yii::$app->db->createCommand()->update('pay_schet', [
+            'bank' => $bank,
+        ], ['ID' => $IdPay])->execute();
+
     }
 
     public static function RedirectUrl($url, $PayId, $Extid)

@@ -71,7 +71,7 @@ class MfoTestError
 
     public function TestStatements()
     {
-        $fl = file_get_contents(\Yii::$app->basePath.'/_data/statements.json');
+        $fl = file_get_contents(\Yii::$app->basePath.'/tests/_data/statements.json');
         $statements = Json::decode($fl)['statements'];
         $ret = [];
         foreach ($statements as $statement) {
@@ -154,7 +154,7 @@ class MfoTestError
 
     public function TestNominalStatements()
     {
-        $fl = file_get_contents(\Yii::$app->basePath.'/_data/nomilal.json');
+        $fl = file_get_contents(\Yii::$app->basePath.'/tests/_data/nomilal.json');
         $st = Json::decode($fl);
         $st = self::array_change_key_case_recursive($st,CASE_LOWER);
         return ['status' => 1, 'statements' => $st['documents']];
@@ -162,7 +162,7 @@ class MfoTestError
 
     public function TestTransitStatements()
     {
-        $fl = file_get_contents(\Yii::$app->basePath.'/_data/transit.json');
+        $fl = file_get_contents(\Yii::$app->basePath.'/tests/_data/transit.json');
         $st = Json::decode($fl);
         $st = self::array_change_key_case_recursive($st,CASE_LOWER);
         return ['status' => 1, 'statements' => $st['statement']];

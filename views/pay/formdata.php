@@ -38,11 +38,11 @@ use yii\bootstrap\Html;
                 <?php foreach($formData as $item): ?>
                     <div class="form-group">
                         <label><?=$item['Title']?></label>
-                        <input type="text" name="<?=$item['Name']?>" class="form-control" data-inputmask-regex="<?=$item['Regex']?>">
+                        <input id="save-data-form__<?=$item['Name']?>" type="text" name="<?=$item['Name']?>" class="form-control" data-inputmask-regex="<?=$item['Regex']?>">
                     </div>
                 <?php endforeach; ?>
                 <div class="form-group">
-                    <button type="submit" class="btn btn-primary">Далее</button>
+                    <button id="save-data-form__submit" type="submit" class="btn btn-primary">Далее</button>
                 </div>
             </form>
 

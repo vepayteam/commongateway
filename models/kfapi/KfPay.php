@@ -7,7 +7,6 @@ use app\models\payonline\Cards;
 use app\models\TU;
 use Yii;
 use yii\base\Model;
-use yii\db\Query;
 
 class KfPay extends Model
 {
@@ -29,7 +28,6 @@ class KfPay extends Model
     public $successurl = '';
     public $failurl = '';
     public $cancelurl = '';
-    public $postbackurl = '';
 
     public function rules()
     {
@@ -38,8 +36,8 @@ class KfPay extends Model
             [['extid'], 'string', 'max' => 40, 'on' => [self::SCENARIO_FORM, self::SCENARIO_AUTO]],
             [['document_id'], 'string', 'max' => 40, 'on' => [self::SCENARIO_FORM]],
             [['fullname'], 'string', 'max' => 80, 'on' => [self::SCENARIO_FORM]],
-            [['successurl', 'failurl', 'cancelurl', 'postbackurl'], 'url', 'on' => [self::SCENARIO_FORM]],
-            [['successurl', 'failurl', 'cancelurl', 'postbackurl'], 'string', 'max' => 300, 'on' => [self::SCENARIO_FORM]],
+            [['successurl', 'failurl', 'cancelurl'], 'url', 'on' => [self::SCENARIO_FORM]],
+            [['successurl', 'failurl', 'cancelurl'], 'string', 'max' => 300, 'on' => [self::SCENARIO_FORM]],
             [['descript'], 'string', 'max' => 200, 'on' => [self::SCENARIO_FORM]],
             [['card'], 'integer', 'on' => self::SCENARIO_AUTO],
             [['timeout'], 'integer', 'min' => 10, 'max' => 59, 'on' => [self::SCENARIO_FORM]],
@@ -60,19 +58,18 @@ class KfPay extends Model
     /**
      * Услуга эквайринга еком или афт
      * @param $org
-     * @param $gate
+     * @param $typeUsl
      * @return false|string|null
      * @throws \yii\db\Exception
      */
-    public function GetUslug($org, $gate)
+    public function GetUslug($org, $typeUsl)
     {
-        $query = (new Query())->select('ID')->from('uslugatovar')->where(['IDPartner' => $org, 'IsDeleted' => 0]);
-        if ($gate == TCBank::$AFTGATE) {
-            $query->andWhere(['IsCustom' => TU::$POGASHATF]);
-        } else {
-            $query->andWhere(['IsCustom' => [TU::$POGASHECOM, TU::$ECOM]]);
-        }
-        return $query->limit(1)->scalar();
+        return Yii::$app->db->createCommand("
+            SELECT `ID` 
+            FROM `uslugatovar`
+            WHERE `IDPartner` = :IDMFO AND `IsCustom` = :TYPEUSL AND `IsDeleted` = 0
+        ", [':IDMFO' => $org, ':TYPEUSL' => $typeUsl]
+        )->queryScalar();
     }
 
     /**
@@ -141,13 +138,14 @@ class KfPay extends Model
     /**
      * Использовать шлюз AFT
      * @param $IdPartner
+     * @param int $bank
      * @return bool|int
      * @throws \yii\db\Exception
      */
-    public function IsAftGate($IdPartner)
+    public function IsAftGate($IdPartner, $bank = 2)
     {
         $res = Yii::$app->db->createCommand("
-            SELECT `IsAftOnly`, `LoginTkbAft`
+            SELECT `IsAftOnly`, `LoginTkbAft`, `MtsLoginAft`
             FROM `partner`
             WHERE `ID` = :IDMFO
         ", [':IDMFO' => $IdPartner]
@@ -157,7 +155,7 @@ class KfPay extends Model
             return 1;
         }
 
-        if (empty($res['LoginTkbAft'])) {
+        if (($bank == 3 && empty($res['MtsLoginAft'])) || ($bank == 2 && empty($res['LoginTkbAft']))) {
             return 0;
         }
         return $this->amount > self::AFTMINSUMM;

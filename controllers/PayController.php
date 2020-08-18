@@ -4,11 +4,17 @@ namespace app\controllers;
 
 use app\models\antifraud\AntiFraud;
 use app\models\antifraud\tables\AFFingerPrit;
+use app\models\bank\BankMerchant;
+use app\models\bank\ApplePay;
+use app\models\bank\Banks;
+use app\models\bank\GooglePay;
+use app\models\bank\IBank;
+use app\models\bank\MTSBank;
+use app\models\bank\SamsungPay;
 use app\models\bank\TCBank;
-use app\models\bank\TcbGate;
 use app\models\crypt\Tokenizer;
-use app\models\mfo\MfoTestError;
 use app\models\payonline\Cards;
+use app\models\payonline\Partner;
 use app\models\payonline\PayForm;
 use app\models\Payschets;
 use app\models\TU;
@@ -45,7 +51,7 @@ class PayController extends Controller
             'save-data',
             'form',
             'orderdone',
-            'orderok'
+            'orderok',
         ])) {
             $this->enableCsrfValidation = false;
         }
@@ -104,12 +110,22 @@ class PayController extends Controller
                 $payschets->SetIpAddress($params['ID']);
 
                 //разрешить открытие во фрейме на сайте мерчанта
-                $csp = "default-src 'self' 'unsafe-inline' https://mc.yandex.ru; img-src 'self' data: https://mc.yandex.ru; connect-src 'self' https://mc.yandex.ru;";
+                $csp = "default-src 'self' 'unsafe-inline' https://mc.yandex.ru https://pay.google.com; ".
+                    "img-src 'self' data: https://mc.yandex.ru https://google.com/pay https://google.com/pay https://www.gstatic.com; ".
+                    "connect-src 'self' https://mc.yandex.ru https://play.google.com;";
                 if (!empty($params['URLSite'])) {
                     $csp .= ' frame-src ' . $params['URLSite'].';';
                 }
                 Yii::$app->response->headers->add('Content-Security-Policy', $csp);
-                return $this->render('formpay', ['params' => $params, 'payform' => $payform]);
+
+                $ApplePay = new ApplePay();
+                $apple = $ApplePay->GetConf($params['IDPartner']);
+                $GooglePay = new GooglePay();
+                $google = $GooglePay->GetConf($params['IDPartner']);
+                $SamsungPay = new SamsungPay();
+                $samsung = $SamsungPay->GetConf($params['IDPartner']);
+
+                return $this->render('formpay', ['params' => $params, 'apple' => $apple, 'google' => $google, 'samsung' => $samsung, 'payform' => $payform]);
 
             } else {
                 return $this->redirect(\yii\helpers\Url::to('/pay/orderok?id='.$id));
@@ -140,6 +156,9 @@ class PayController extends Controller
             //данные счета для оплаты
             $payschets = new Payschets();
             $params = $payschets->getSchetData($payform->IdPay, null);
+
+            $partner = Partner::findOne(['ID' => $params['IDPartner']]);
+
             if ($params && $params['DateCreate'] + $params['TimeElapsed'] > time()) {
 
                 Yii::$app->session->set('IdPay', $params['ID']);
@@ -163,27 +182,19 @@ class PayController extends Controller
                 //занести данные карты
                 $payschets->SetCardPay($params['ID'], $params['card']);
 
-                //$params['Bank'] == 2
-                $gate = TCBank::$ECOMGATE;
-                if ($params['IsCustom'] == TU::$JKH) {
-                    $gate = TCBank::$JKHGATE;
-                } elseif ($params['IsCustom'] == TU::$POGASHATF) {
-                    $gate = TCBank::$AFTGATE;
+                if ($params['IsCustom'] == TU::$POGASHATF) {
                     if (Cards::GetTypeCard($payform->CardNumber) == 6) {
                         //карты маэстро только по еком надо
-                        $gate = TCBank::$ECOMGATE;
-                        $payschets->ChangeUsluga($params['ID'], $params['IDPartner'], TU::$POGASHECOM);
+                        $params['IsCustom'] = TU::$POGASHECOM;
+                        $payschets->ChangeUsluga($params['ID'], $params['IDPartner'], $params['IsCustom']);
                     }
                 }
 
-                if ($params['IdUsluga'] == 1) {
-                    //регистрация карты
-                    $TcbGate = new TcbGate($params['IdOrg'], TCBank::$AUTOPAYGATE);
-                } else {
-                    $TcbGate = new TcbGate($params['IDPartner'], $gate);
-                }
-                $tcBank = new TCBank($TcbGate);
-                $ret = $tcBank->PayXml($params);
+                $bankClass = Banks::getBankClassByPayment($partner);
+                $payschets->ChangeBank($params['ID'], $bankClass::$bank);
+                $params['Bank'] = $bankClass::$bank;
+                $merchBank = BankMerchant::Create($params);
+                $ret = $merchBank->PayXml($params);
 
                 if ($ret['status'] == 1) {
                     $payschets->SetStartPay($params['ID'], $ret['transac'], $payform->Email);
@@ -207,7 +218,7 @@ class PayController extends Controller
                         'url' => $ret['url'],
                         'pa' => $ret['pa'],
                         'md' => $ret['md'],
-                        'termurl' => $payform->GetRetUrl($params['ID'], $ret['md']),
+                        'termurl' => $payform->GetRetUrl($params['ID']),
                     ];
                 } elseif ($ret['status'] == 2) {
                     //отменить счет
@@ -282,42 +293,19 @@ class PayController extends Controller
         Yii::warning("PayForm done id=".$id);
 
         if ($params) {
-            $md = Yii::$app->request->get('md', '');
+            $md = Yii::$app->request->post('MD', '');
             if ($params['Status'] == 0 && !empty($md)) {
                 //завершить платеж
-                if ($params['IdUsluga'] == 1) {
-                    //регистрация карты
-                    $TcbGate = new TcbGate($params['IdOrg'], TCBank::$AUTOPAYGATE);
-                } else {
-                    $TcbGate = new TcbGate($params['IDPartner'], null, $params['IsCustom']);
-                }
-
-                $tcBank = new TCBank($TcbGate);
-                $ret = $tcBank->ConfirmXml([
+                $merchBank = BankMerchant::Create($params);
+                $ret = $merchBank->ConfirmXml([
                     'ID' => $params['ID'],
+                    'ExtBillNumber' => $params['ExtBillNumber'],
                     'MD' => $md,
                     'PaRes' => Yii::$app->request->post('PaRes')
                 ]);
-
-                if($ret['status'] == 1) {
-                    $payschets->confirmPay([
-                        'idpay' => $params['ID'],
-                        'result_code' => 1,
-                        'trx_id' => 0,
-                        'ApprovalCode' => '',
-                        'RRN' => '',
-                        'message' => ''
-                    ]);
-                }
+                //ret статус проверить?
             }
-            // TODO:
-            if($params['IdUsluga'] == 1 && $params['IdOrg'] == '3') {
-                return $this->redirect("https://cashtoyou.ru/registration/third/");
-            } elseif ($params['IdUsluga'] == 1 && $params['IdOrg'] == '8') {
-                return $this->redirect("https://oneclickmoney.ru/registration/third/");
-            } else {
-                return $this->redirect(\yii\helpers\Url::to('/pay/orderok?id='.$params['ID']));
-            }
+            return $this->redirect(\yii\helpers\Url::to('/pay/orderok?id='.$id));
 
         } else {
             throw new NotFoundHttpException();
@@ -338,25 +326,14 @@ class PayController extends Controller
         if ($id && $id == $SesIdPay) {
             //завершение оплаты + в колбэк приходит + в планировщике проверяется статус
             sleep(5); //подождать завершения оплаты
-            $tcBank = new TCBank();
-            $res = $tcBank->confirmPay($id);
-            $params = $res['Params'];
+
+            $payschets = new Payschets();
+            $params = $payschets->getSchetData($id, null);
             if (!$params) {
                 throw new NotFoundHttpException();
             }
-
-            // Если платеж не в ожидание, и у платежа имеется PostbackUrl, отправляем
-            if(!empty($params['PostbackUrl']) && in_array($res['status'], [1, 2, 3])) {
-                $data = [
-                    'status' => $res['status'],
-                    'id' => $params['ID'],
-                    'amount' => $params['Amount'],
-                    'extid' => $params['Extid'],
-                    'card_num' => $params['CardNum'],
-                    'card_holder' => $params['CardHolder'],
-                ];
-                $this->sendPostbackRequest($params['PostbackUrl'], $data);
-            }
+            $merchBank = BankMerchant::Create($params);
+            $res = $merchBank->confirmPay($id);
 
             if (in_array($res['status'], [1, 3])) {
                 if (!empty($params['SuccessUrl'])) {
@@ -386,6 +363,105 @@ class PayController extends Controller
         }
     }
 
+    public function actionApplepayvalidate()
+    {
+        if (Yii::$app->request->isAjax) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+
+            $payschets = new Payschets();
+            $params = $payschets->getSchetData((int)Yii::$app->request->post('IdPay'),null);
+            if (!$params) {
+                throw new NotFoundHttpException();
+            }
+
+            $bank = BankMerchant::GetApplePayBank();
+            $payschets->ChangeBank($params['ID'], $bank);
+
+            $validationURL = Yii::$app->request->post('validationURL');
+            if (!empty($validationURL)) {
+                $ApplePay = new ApplePay();
+                return [
+                    'status' => $ApplePay->ValidateSession($params['IDPartner'], $validationURL)
+                ];
+            }
+            return ['status' => 0];
+        }
+        return '';
+    }
+
+    public function actionApplepaycreate()
+    {
+        if (Yii::$app->request->isAjax) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+
+            $payschets = new Payschets();
+            $params = $payschets->getSchetData((int)Yii::$app->request->post('IdPay'),null);
+            if (!$params) {
+                throw new NotFoundHttpException();
+            }
+
+            $paymentToken = Yii::$app->request->post('paymentToken');
+            $merchBank = BankMerchant::Create($params);
+            $ApplePay = new ApplePay();
+            $res = $merchBank->PayApple($params + ['Apple_MerchantID' => $ApplePay->GetConf($params['IDPartner'])['Apple_MerchantID'], 'PaymentToken' => $paymentToken]);
+
+            if ($res) {
+                return ['status' => 1];
+            }
+            return ['status' => 0, 'message' => 'Ошибка запроса'];
+            //return $this->redirect(\yii\helpers\Url::to('/pay/orderok?id='.$params['ID']));
+        }
+        return '';
+    }
+
+    public function actionGooglepaycreate()
+    {
+        if (Yii::$app->request->isAjax) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+
+            $payschets = new Payschets();
+            $params = $payschets->getSchetData((int)Yii::$app->request->post('IdPay'),null);
+            if (!$params) {
+                throw new NotFoundHttpException();
+            }
+
+            $paymentToken = Yii::$app->request->post('paymentToken');
+            $merchBank = BankMerchant::Create($params);
+            $res = $merchBank->PayGoogle($params + ['PaymentToken' => $paymentToken]);
+
+            if ($res) {
+                return ['status' => 1];
+            }
+            return ['status' => 0, 'message' => 'Ошибка запроса'];
+            //return $this->redirect(\yii\helpers\Url::to('/pay/orderok?id='.$params['ID']));
+        }
+        return '';
+    }
+
+    public function actionSamsungpaycreate()
+    {
+        if (Yii::$app->request->isAjax) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+
+            $payschets = new Payschets();
+            $params = $payschets->getSchetData((int)Yii::$app->request->post('IdPay'),null);
+            if (!$params) {
+                throw new NotFoundHttpException();
+            }
+
+            $paymentToken = Yii::$app->request->post('paymentToken');
+            $merchBank = BankMerchant::Create($params);
+            $res = $merchBank->PaySamsung($params + ['PaymentToken' => $paymentToken]);
+
+            if ($res) {
+                return ['status' => 1];
+            }
+            return ['status' => 0, 'message' => 'Ошибка запроса'];
+            //return $this->redirect(\yii\helpers\Url::to('/pay/orderok?id='.$params['ID']));
+        }
+        return '';
+    }
+
 //    public function actionRegisterTracking(){
 //        Yii::$app->response->format = Response::FORMAT_JSON;
 //        if ()
@@ -404,27 +480,4 @@ class PayController extends Controller
         }
     }
 
-    private function sendPostbackRequest($url, $data)
-    {
-        // TODO: refact to service
-        $curl = curl_init();
-
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_POSTFIELDS => json_encode($data),
-            CURLOPT_HTTPHEADER => array(
-                "Content-Type: application/json"
-            ),
-        ));
-
-        $response = curl_exec($curl);
-        curl_close($curl);
-    }
 }

@@ -95,33 +95,9 @@ class AdminController extends Controller
     {
         if (UserLk::IsAdmin(Yii::$app->user)) {
             $fltr = new StatFilter();
-            $opt = Options::findOne(['Name' => 'disabledday']);
-            return $this->render('comisotchet', ['partnerlist' => $fltr->getPartnersList(false, true), 'veekends' => $opt ? $opt->Value : '']);
-        } else {
-            throw new NotFoundHttpException();
-        }
-    }
-
-    /**
-     * @return array
-     * @throws NotFoundHttpException
-     */
-    public function actionSaveveekenddays()
-    {
-        if (Yii::$app->request->isAjax) {
-            Yii::$app->response->format = Response::FORMAT_JSON;
-            $opt = Options::findOne(['Name' => 'disabledday']);
-            if (!$opt) {
-                $opt = new Options();
-                $opt->Name = 'disabledday';
-            }
-            $opt->Value = Yii::$app->request->post('veekenddays', '');
-            if ($opt->save(false)) {
-                return ['status' => 1, 'message' => 'Данные внесены'];
-            } else {
-                return ['status' => 0, 'message' => 'Ошибка сохранения'];
-            }
-
+            return $this->render('comisotchet', [
+                'partnerlist' => $fltr->getPartnersList(false, true)
+            ]);
         } else {
             throw new NotFoundHttpException();
         }

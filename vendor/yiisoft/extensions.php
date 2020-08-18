@@ -3,49 +3,22 @@
 $vendorDir = dirname(__DIR__);
 
 return array (
-  '2amigos/qrcode-library' => 
+  'yiisoft/yii2-bootstrap' => 
   array (
-    'name' => '2amigos/qrcode-library',
-    'version' => '1.1.2.0',
+    'name' => 'yiisoft/yii2-bootstrap',
+    'version' => '2.0.10.0',
     'alias' => 
     array (
-      '@Da/QrCode' => $vendorDir . '/2amigos/qrcode-library/src',
+      '@yii/bootstrap' => $vendorDir . '/yiisoft/yii2-bootstrap/src',
     ),
   ),
-  'bestyii/yii2-gii-rest' => 
+  'yiisoft/yii2-swiftmailer' => 
   array (
-    'name' => 'bestyii/yii2-gii-rest',
-    'version' => '0.0.2.0',
+    'name' => 'yiisoft/yii2-swiftmailer',
+    'version' => '2.1.2.0',
     'alias' => 
     array (
-      '@bestyii/giiRest' => $vendorDir . '/bestyii/yii2-gii-rest/src',
-    ),
-  ),
-  'bestyii/yii2-openapi-reader' => 
-  array (
-    'name' => 'bestyii/yii2-openapi-reader',
-    'version' => '9999999-dev',
-    'alias' => 
-    array (
-      '@bestyii/openapiReader' => $vendorDir . '/bestyii/yii2-openapi-reader/src',
-    ),
-  ),
-  'kartik-v/yii2-mpdf' => 
-  array (
-    'name' => 'kartik-v/yii2-mpdf',
-    'version' => '9999999-dev',
-    'alias' => 
-    array (
-      '@kartik/mpdf' => $vendorDir . '/kartik-v/yii2-mpdf/src',
-    ),
-  ),
-  'qfsx/yii2-curl' => 
-  array (
-    'name' => 'qfsx/yii2-curl',
-    'version' => '9999999-dev',
-    'alias' => 
-    array (
-      '@qfsx/yii2/curl' => $vendorDir . '/qfsx/yii2-curl/src',
+      '@yii/swiftmailer' => $vendorDir . '/yiisoft/yii2-swiftmailer/src',
     ),
   ),
   'toriphes/yii2-console-runner' => 
@@ -57,13 +30,31 @@ return array (
       '@toriphes/console' => $vendorDir . '/toriphes/yii2-console-runner',
     ),
   ),
-  'yiisoft/yii2-bootstrap' => 
+  'yiisoft/yii2-debug' => 
   array (
-    'name' => 'yiisoft/yii2-bootstrap',
-    'version' => '2.0.10.0',
+    'name' => 'yiisoft/yii2-debug',
+    'version' => '2.1.13.0',
     'alias' => 
     array (
-      '@yii/bootstrap' => $vendorDir . '/yiisoft/yii2-bootstrap/src',
+      '@yii/debug' => $vendorDir . '/yiisoft/yii2-debug/src',
+    ),
+  ),
+  'yiisoft/yii2-gii' => 
+  array (
+    'name' => 'yiisoft/yii2-gii',
+    'version' => '2.1.4.0',
+    'alias' => 
+    array (
+      '@yii/gii' => $vendorDir . '/yiisoft/yii2-gii/src',
+    ),
+  ),
+  'yiisoft/yii2-faker' => 
+  array (
+    'name' => 'yiisoft/yii2-faker',
+    'version' => '2.0.4.0',
+    'alias' => 
+    array (
+      '@yii/faker' => $vendorDir . '/yiisoft/yii2-faker',
     ),
   ),
   'yiisoft/yii2-queue' => 
@@ -84,40 +75,31 @@ return array (
       '@yii/queue/sqs' => $vendorDir . '/yiisoft/yii2-queue/src/drivers/sqs',
     ),
   ),
-  'yiisoft/yii2-swiftmailer' => 
+  'kartik-v/yii2-mpdf' => 
   array (
-    'name' => 'yiisoft/yii2-swiftmailer',
-    'version' => '2.1.2.0',
+    'name' => 'kartik-v/yii2-mpdf',
+    'version' => '9999999-dev',
     'alias' => 
     array (
-      '@yii/swiftmailer' => $vendorDir . '/yiisoft/yii2-swiftmailer/src',
+      '@kartik/mpdf' => $vendorDir . '/kartik-v/yii2-mpdf/src',
     ),
   ),
-  'yiisoft/yii2-debug' => 
+  'qfsx/yii2-curl' => 
   array (
-    'name' => 'yiisoft/yii2-debug',
-    'version' => '2.1.13.0',
+    'name' => 'qfsx/yii2-curl',
+    'version' => '9999999-dev',
     'alias' => 
     array (
-      '@yii/debug' => $vendorDir . '/yiisoft/yii2-debug/src',
+      '@qfsx/yii2/curl' => $vendorDir . '/qfsx/yii2-curl/src',
     ),
   ),
-  'yiisoft/yii2-faker' => 
+  '2amigos/qrcode-library' => 
   array (
-    'name' => 'yiisoft/yii2-faker',
-    'version' => '2.0.4.0',
+    'name' => '2amigos/qrcode-library',
+    'version' => '1.1.2.0',
     'alias' => 
     array (
-      '@yii/faker' => $vendorDir . '/yiisoft/yii2-faker',
-    ),
-  ),
-  'yiisoft/yii2-gii' => 
-  array (
-    'name' => 'yiisoft/yii2-gii',
-    'version' => '2.1.4.0',
-    'alias' => 
-    array (
-      '@yii/gii' => $vendorDir . '/yiisoft/yii2-gii/src',
+      '@Da/QrCode' => $vendorDir . '/2amigos/qrcode-library/src',
     ),
   ),
 );

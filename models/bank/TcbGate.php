@@ -7,8 +7,9 @@ namespace app\models\bank;
 use app\models\TU;
 use Yii;
 
-class TcbGate
+class TcbGate implements IBankGate
 {
+    public $bank = 2;
     public $IdPartner = 0;
     public $typeGate;
     public $AutoPayIdGate = 0;
@@ -131,4 +132,19 @@ class TcbGate
         return false;
     }
 
+    /**
+     * @return int
+     */
+    public function getTypeGate()
+    {
+        return $this->typeGate;
+    }
+
+    /**
+     * @return int
+     */
+    public function getBank()
+    {
+        return $this->bank;
+    }
 }

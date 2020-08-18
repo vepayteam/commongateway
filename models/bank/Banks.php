@@ -2,6 +2,8 @@
 
 namespace app\models\bank;
 
+use app\models\Options;
+use app\models\payonline\Partner;
 use Yii;
 
 /**
@@ -24,9 +26,25 @@ use Yii;
  * @property float $FreepayVozn
  * @property float $FreepayVoznMin
  * @property float $VyvodBankComis
+ * @property int $LastWorkIn
+ * @property int $LastInPay
+ * @property int $LastInCheck
+ * @property int $UsePayIn
+ * @property int $UseApplePay
+ * @property int $UseGooglePay
+ * @property int $UseSamsungPay
+ * @property int $SortOrder
  */
 class Banks extends \yii\db\ActiveRecord
 {
+    const DEFAULT_BANK_CLASS = TCBank::class;
+    const BANK_CLASSES = [
+        2 => TCBank::class,
+        3 => MTSBank::class,
+    ];
+    const BANK_BY_PAYMENT_OPTION_NAME = 'bank_payment_id';
+    const BANK_BY_TRANSFER_IN_CARD_OPTION_NAME = 'bank_transfer_to_card_id';
+
     /**
      * {@inheritdoc}
      */
@@ -36,13 +54,70 @@ class Banks extends \yii\db\ActiveRecord
     }
 
     /**
+     * @param Partner|null $partner
+     * @return string
+     */
+    public static function getBankClassByPayment(Partner $partner = null)
+    {
+        $id = null;
+        $option = Options::findOne(['Name' => self::BANK_BY_PAYMENT_OPTION_NAME]);
+        if(is_null($partner) || !$partner->BankForPaymentId || $option->Value != -1) {
+            $id = $option->Value;
+        } else {
+            $id = $partner->BankForPaymentId;
+        }
+
+        $bankClassIds = array_keys(self::BANK_CLASSES);
+        if(in_array($id, $bankClassIds)) {
+            return self::BANK_CLASSES[$id];
+        } else {
+            return self::DEFAULT_BANK_CLASS;
+        }
+    }
+
+    /**
+     * @param Partner|null $partner
+     * @return string
+     */
+    public static function getBankClassByTransferToCard(Partner $partner = null)
+    {
+        $id = null;
+        $option = Options::findOne(['Name' => self::BANK_BY_TRANSFER_IN_CARD_OPTION_NAME]);
+        if(is_null($partner) || !$partner->BankForTransferToCardId || $option->Value != -1) {
+            $id = $option->Value;
+        } else {
+            $id = $partner->BankForTransferToCardId;
+        }
+
+        $bankClassIds = array_keys(self::BANK_CLASSES);
+        if(in_array($id, $bankClassIds)) {
+            return self::BANK_CLASSES[$id];
+        } else {
+            return self::DEFAULT_BANK_CLASS;
+        }
+    }
+
+    /**
+     * @return array
+     */
+    public static function getBanksByDropdown()
+    {
+        $result = [];
+        /** @var Banks $bank */
+        foreach(Banks::find()->select('ID, Name')->all() as $bank) {
+            $result[$bank->ID] = $bank->Name;
+        }
+        return $result;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function rules()
     {
         return [
             [['ID', 'Name'], 'required'],
-            [['ID'], 'integer'],
+            [['ID', 'LastWorkIn', 'LastInPay', 'LastInCheck', 'UsePayIn', 'UseApplePay', 'UseGooglePay', 'UseSamsungPay', 'SortOrder'], 'integer'],
             [['JkhComis', 'JkhComisMin', 'EcomComis', 'EcomComisMin', 'AFTComis', 'AFTComisMin', 'OCTComis', 'OCTComisMin',
                 'OCTVozn', 'OCTVoznMin', 'FreepayComis', 'FreepayComisMin', 'FreepayVozn', 'FreepayVoznMin', 'VyvodBankComis'
             ], 'number'],
@@ -73,7 +148,7 @@ class Banks extends \yii\db\ActiveRecord
             'FreepayComisMin' => 'Freepay, не менее руб',
             'FreepayVozn' => 'Freepay вознаграждение %',
             'FreepayVoznMin' => 'Freepay, не менее руб',
-            'VyvodBankComis' => 'Сумма за вывод средтсв, руб'
+            'VyvodBankComis' => 'Сумма за вывод средтсв, руб',
         ];
     }
 }

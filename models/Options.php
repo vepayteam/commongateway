@@ -43,4 +43,15 @@ class Options extends \yii\db\ActiveRecord
             'Value' => 'Value',
         ];
     }
+
+    public static function getAllToArray()
+    {
+        $result = [];
+        foreach (self::find()->all() as $option) {
+            $result[$option->Name] = $option->Value;
+        }
+        return $result;
+    }
+
+
 }
