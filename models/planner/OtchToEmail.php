@@ -29,7 +29,7 @@ class OtchToEmail
 
     public function run()
     {
-        $dateFrom = date('d.m.Y H:i', strtotime('yesterday')-1);
+        $dateFrom = date('d.m.Y H:i', strtotime('yesterday')-86400*1000);
         $dateTo = date('d.m.Y H:i', strtotime('today')-1);
         echo "from ".$dateFrom." to ".$dateTo."\r\n";
         Yii::warning("from ".$dateFrom." to ".$dateTo, "rsbcron");
