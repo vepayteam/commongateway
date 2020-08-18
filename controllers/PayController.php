@@ -170,7 +170,7 @@ class PayController extends Controller
                         'url' => $ret['url'],
                         'pa' => $ret['pa'],
                         'md' => $ret['md'],
-                        'termurl' => $payform->GetRetUrl($params['ID'], $ret['md']),
+                        'termurl' => $payform->GetRetUrl($params['ID']),
                     ];
                 } elseif ($ret['status'] == 2) {
                     //отменить счет
@@ -245,7 +245,7 @@ class PayController extends Controller
         Yii::warning("PayForm done id=".$id);
 
         if ($params) {
-            $md = Yii::$app->request->get('md', '');
+            $md = Yii::$app->request->post('MD', '');
             if ($params['Status'] == 0 && !empty($md)) {
                 //завершить платеж
                 if ($params['IdUsluga'] == 1) {
@@ -261,17 +261,7 @@ class PayController extends Controller
                     'MD' => $md,
                     'PaRes' => Yii::$app->request->post('PaRes')
                 ]);
-
-                if($ret['status'] == 1) {
-                    $payschets->confirmPay([
-                        'idpay' => $params['ID'],
-                        'result_code' => 1,
-                        'trx_id' => 0,
-                        'ApprovalCode' => '',
-                        'RRN' => '',
-                        'message' => ''
-                    ]);
-                }
+                //ret статус проверить?
             }
             // TODO:
             if($params['IdUsluga'] == 1 && $params['ExtOrg'] == '3') {

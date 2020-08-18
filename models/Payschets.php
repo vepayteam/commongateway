@@ -426,7 +426,6 @@ class Payschets
      */
     private function ChangeBalance($query, $IdPay)
     {
-        // TODO: refact strategies
         if (!empty($query['SchetTcbNominal'])) {
             //номинальный счет
             if (in_array($query['IsCustom'], [TU::$TOCARD, TU::$TOSCHET])) {
@@ -481,9 +480,7 @@ class Payschets
                 }
             } else {
                 //погашение
-                $payschetParts = PayschetPart::find()->where(['PayschetId' => $IdPay])->all();
-
-                // Если есть части платежа, проводим только их
+                $payschetParts = PayschetPart::find()->where('PayscheId', $IdPay)->all();
                 if($payschetParts) {
                     foreach ($payschetParts as $payschetPart) {
                         $info = sprintf('Платеж № %d Часть № %d ', $IdPay, $payschetPart->Id);
