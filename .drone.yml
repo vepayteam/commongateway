@@ -78,25 +78,8 @@ trigger:
     - fix/*
     - hotfix/*
     - develop
-
-image_pull_secrets:
-  - dockerconfig
-
----
-kind: secret
-name: DOCKER_USERNAME
-get:
-  path: docker
-  name: username
-
----
-kind: secret
-name: DOCKER_PASSWORD
-get:
-  path: docker
-  name: password
 ---
 kind: signature
-hmac: 503c83524a9df2c9c6f5ec024b572acd7b224bdb079e9a555f9d8b3fb9cbe3da
+hmac: ad35a8e78d11caa822ba6fd9b8dc78e96894e4855b0522b49a599a18e01ca9ad
 
 ...
