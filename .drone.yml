@@ -78,9 +78,8 @@ trigger:
     - fix/*
     - hotfix/*
     - develop
-
 ---
 kind: signature
-hmac: 438b5cdb5a04643b8bda748178e32e0f008352a94798f0c1f1f4fe1c9a97344d
+hmac: ad35a8e78d11caa822ba6fd9b8dc78e96894e4855b0522b49a599a18e01ca9ad
 
 ...
