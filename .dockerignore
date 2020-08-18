@@ -10,9 +10,6 @@ node_modules/
 migrations/*.zip
 **/*.log
 *.bat
-*.cmd
 *.md
 .gitignore
 Dockerfile
-.tags
-.drone.yml
