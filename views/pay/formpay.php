@@ -206,7 +206,7 @@ use yii\bootstrap\Html;
 
 </section>
 </div>
-<noscript><div><img src="https://mc.yandex.ru/watch/56963551" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<noscript><div><img src="https://mc.yandex.ru/watch/66552382" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <?php
 $this->registerJs('payform.init();');
 if (isset($apple['IsUseApplepay']) && $apple['IsUseApplepay'] && isset($apple['Apple_MerchantID']) && !empty($apple['Apple_MerchantID'])) {
@@ -228,3 +228,4 @@ if (isset($samsung['IsUseSamsungpay']) && $samsung['IsUseSamsungpay']) {
 }
 $this->registerJs('setTimeout(tracking.sendToServer, 500)', \yii\web\View::POS_READY);
 $this->registerJsFile('/payasset/js/ym.js');
+?>
