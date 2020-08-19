@@ -9,6 +9,7 @@ use app\models\kfapi\KfPay;
 use app\models\kfapi\KfRequest;
 use app\models\payonline\CreatePay;
 use app\models\Payschets;
+use app\models\TU;
 use Yii;
 use yii\base\Exception;
 use yii\mutex\FileMutex;
@@ -74,9 +75,9 @@ class PayController extends Controller
             return ['status' => 0, 'message' => $kfPay->GetError()];
         }
 
-        $gate = $kfPay->IsAftGate($kf->IdPartner) ? TCBank::$AFTGATE : TCBank::$ECOMGATE;
-        $TcbGate = new TcbGate($kf->IdPartner, $gate);
-        $usl = $kfPay->GetUslug($kf->IdPartner, $gate);
+        $typeUsl = $kfPay->IsAftGate($kf->IdPartner) ? TU::$POGASHATF : TU::$POGASHECOM;
+        $TcbGate = new TcbGate($kf->IdPartner, null, $typeUsl);
+        $usl = $kfPay->GetUslug($kf->IdPartner, $typeUsl);
         if (!$usl || !$TcbGate->IsGate()) {
             return ['status' => 0, 'message' => 'Услуга не найдена'];
         }

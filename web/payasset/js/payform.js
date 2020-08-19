@@ -171,6 +171,151 @@
             $('#md3ds').val(md);
             $('#termurl3ds').val(termurl);
             $('#form3ds').trigger('submit');
+        },
+
+        applepay: function (merchantIdentifier, amount, label) {
+            if (window.ApplePaySession) {
+                let id = $('[name="PayForm[IdPay]"]').val();
+                let promise = window.ApplePaySession.canMakePaymentsWithActiveCard(merchantIdentifier);
+                promise.then(function (canMakePayments) {
+                    if (canMakePayments) {
+                        // Display Apple Pay button here.
+                        $('#applepay').show();
+
+                        $('#applepaybtn').off().on('click', function () {
+                            const paymentRequest = {
+                                total: {
+                                    label: label,
+                                    amount: amount
+                                },
+                                countryCode: 'RU',
+                                currencyCode: 'RUB',
+                                merchantCapabilities: ['supports3DS'],
+                                supportedNetworks: ['masterCard', 'visa']
+                            };
+
+                            const applePaySession = new window.ApplePaySession(1, paymentRequest);
+                            applePaySession.onvalidatemerchant = (event) => {
+                                // отправляем запрос на валидацию сессии
+                                $.ajax({
+                                    type: 'POST',
+                                    url: "/pay/applepayvalidate",
+                                    data: {'validationURL': event.validationURL, 'IdPay': id},
+                                    success: function (data, textStatus, jqXHR) {
+                                        // завершаем валидацию платежной сессии
+                                        applePaySession.completeMerchantValidation(data.merchantSession);
+                                    },
+                                    error: function (jqXHR, textStatus, errorThrown) {
+                                        applePaySession.abort();
+                                    }
+                                });
+                            };
+
+                            applePaySession.onpaymentauthorized = (event) => {
+                                //приходит после подтверждения польцем - завершить оплату
+                                //передать токен в банк
+                                $.ajax({
+                                    type: 'POST',
+                                    url: "/pay/applepaycreate",
+                                    data: {'paymentToken': event.token, 'IdPay': id},
+                                    success: function (data, textStatus, jqXHR) {
+                                        //$("#loader").hide();
+                                        if (data.status == 1) {
+                                            applePaySession.completePayment(applePaySession.STATUS_SUCCESS);
+                                            window.location.href = '/pay/orderok/'+id;
+                                        } else {
+                                            $('#error_message').html(data.message);
+                                        }
+                                    },
+                                    error: function (jqXHR, textStatus, errorThrown) {
+                                        //$("#loader").hide();
+                                        $('#error_message').html("Ошибка запроса");
+                                    }
+                                });
+                            }
+
+                            applePaySession.begin();
+                        });
+
+                    }
+                });
+            }
+        },
+
+        googlepay: function (merchantIdentifier, amount, label, gate, istest) {
+            if (google) {
+                let paymentsClient = new google.payments.api.PaymentsClient({environment: istest ? 'TEST' : 'PROD'});
+
+                let getGooglePaymentDataConfiguration = {
+                    merchantId: merchantIdentifier,
+                    environment: istest ? 'TEST' : 'PROD',
+                    transactionInfo: {
+                        totalPriceStatus: 'FINAL',
+                        totalPrice: amount,
+                        currencyCode: 'RUB' //ISO 4217
+                    },
+                    paymentMethodTokenizationParameters: {
+                        tokenizationType: 'PAYMENT_GATEWAY',
+                        parameters: {
+                            gateway: gate, //
+                            gatewayMerchantId: merchantIdentifier //
+                        }
+                    },
+                    allowedPaymentMethods: ['CARD', 'TOKENIZED_CARD'],
+                    cardRequirements: {
+                        allowedCardNetworks: ['MASTERCARD', 'VISA']
+                    },
+                    phoneNumberRequired: false,
+                    emailRequired: false
+                }
+
+                paymentsClient.isReadyToPay(({allowedPaymentMethods: ['CARD', 'TOKENIZED_CARD']}))
+                    .then(function (response) {
+                        if (response.result) {
+                            //кнопка
+                            $('#googlepay').show();
+                        }
+                    })
+                    .catch(function (err) {
+                        // show error in developer console for debugging
+                        console.error(err);
+                    });
+
+                $('#googlepay').off().on('click', function () {
+                    paymentsClient.loadPaymentData(getGooglePaymentDataConfiguration)
+                        .then(function (paymentData) {
+                            $.ajax({
+                                type: 'POST',
+                                url: "/pay/googlepaycreate",
+                                data: {'paymentToken': paymentData, 'IdPay': id},
+                                success: function (data, textStatus, jqXHR) {
+                                    //$("#loader").hide();
+                                    if (data.status == 1) {
+                                        if (data.acsUrl == undefined) {
+                                            window.location.href = '/pay/orderok/' + id;
+                                        } else {
+                                            payform.load3ds(data.acsUrl, data.paReq, data.md, data.termUrl);
+                                        }
+                                    } else {
+                                        $('#error_message').html(data.message);
+                                    }
+                                },
+                                error: function (jqXHR, textStatus, errorThrown) {
+                                    //$("#loader").hide();
+                                    $('#error_message').html("Ошибка запроса");
+                                }
+                            });
+
+                        }).catch(function (err) {
+                        // show error in developer console for debugging
+                        console.error(err);
+                    });
+                });
+            }
+        },
+
+        samsungpay: function (merchantIdentifier, amount, label) {
+
         }
 
     };
