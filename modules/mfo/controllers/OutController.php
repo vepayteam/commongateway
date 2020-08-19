@@ -182,7 +182,7 @@ class OutController extends Controller
             return ['status' => 1, 'id' => $params['IdPay']];
         }*/
 
-        $partner = Partner::findOne(['ID' => $params['IDPartner']]);
+        $partner = Partner::findOne(['ID' => $mfo->mfo]);
         $bankClass = Banks::getBankClassByTransferToCard($partner);
         $payschets->ChangeBank($params['IdPay'], $bankClass::$bank);
 
