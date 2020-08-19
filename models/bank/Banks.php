@@ -61,10 +61,10 @@ class Banks extends \yii\db\ActiveRecord
     {
         $id = null;
         $option = Options::findOne(['Name' => self::BANK_BY_PAYMENT_OPTION_NAME]);
-        if(is_null($partner) || !$partner->BankForPaymentId || $option->Value != -1) {
-            $id = $option->Value;
-        } else {
+        if(!is_null($partner) && $partner->BankForPaymentId) {
             $id = $partner->BankForPaymentId;
+        } else {
+            $id = $option->Value;
         }
 
         $bankClassIds = array_keys(self::BANK_CLASSES);
