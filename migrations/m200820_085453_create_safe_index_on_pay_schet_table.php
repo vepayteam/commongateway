@@ -1,0 +1,113 @@
+<?php
+
+use yii\db\Migration;
+
+/**
+ * Handles the creation of indexes.
+ */
+class m200820_085453_create_safe_index_on_pay_schet_table extends Migration
+{
+    /**
+     * {@inheritdoc}
+     */
+    public function safeUp()
+    {
+        $this->createIndex(
+            "idx_pay_schet_extid",
+            "pay_schet",
+            "Extid"
+        );
+        $this->createIndex(
+            "idx_pay_schet_idusluga",
+            "pay_schet",
+            "IdUsluga"
+        );
+        $this->createIndex(
+            "idx_pay_schet_extbillnumber",
+            "pay_schet",
+            "ExtBillNumber"
+        );
+        $this->createIndex(
+            "idx_pay_schet_idorg",
+            "pay_schet",
+            "IdOrg"
+        );
+        $this->createIndex(
+            "idx_pay_schet_sms_accept",
+            "pay_schet",
+            "sms_accept"
+        );
+        $this->createIndex(
+            "idx_pay_schet_iduser",
+            "pay_schet",
+            "IdUser"
+        );
+        $this->createIndex(
+            "idx_pay_schet_idkard",
+            "pay_schet",
+            "IdKard"
+        );
+        $this->createIndex(
+            "idx_pay_schet_idorder",
+            "pay_schet",
+            "IdOrder"
+        );
+        $this->createIndex(
+            "idx_pay_schet_idgroupoplat",
+            "pay_schet",
+            "IdGroupOplat"
+        );
+        $this->createIndex(
+            "idx_pay_schet_datecreate",
+            "pay_schet",
+            "DateCreate"
+        );
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function safeDown()
+    {
+        $this->dropIndex(
+            "idx_pay_schet_extid",
+            "pay_schet"
+        );
+        $this->dropIndex(
+            "idx_pay_schet_idusluga",
+            "pay_schet"
+        );
+        $this->dropIndex(
+            "idx_pay_schet_extbillnumber",
+            "pay_schet"
+        );
+        $this->dropIndex(
+            "idx_pay_schet_idorg",
+            "pay_schet"
+        );
+        $this->dropIndex(
+            "idx_pay_schet_sms_accept",
+            "pay_schet"
+        );
+        $this->dropIndex(
+            "idx_pay_schet_iduser",
+            "pay_schet"
+        );
+        $this->dropIndex(
+            "idx_pay_schet_idkard",
+            "pay_schet"
+        );
+        $this->dropIndex(
+            "idx_pay_schet_idorder",
+            "pay_schet"
+        );
+        $this->dropIndex(
+            "idx_pay_schet_idgroupoplat",
+            "pay_schet"
+        );
+        $this->dropIndex(
+            "idx_pay_schet_datecreate",
+            "pay_schet"
+        );
+    }
+}
