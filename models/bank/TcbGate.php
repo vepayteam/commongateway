@@ -30,36 +30,47 @@ class TcbGate implements IBankGate
     }
 
     /**
+     * Соотношение типа услуги и шлюза банка
+     * @return array
+     */
+    public static function GetIsCustomBankGates()
+    {
+        return [
+            TU::$TOCARD => TCBank::$OCTGATE,
+            TU::$POGASHATF => TCBank::$AFTGATE,
+            TU::$AVTOPLATATF => TCBank::$AFTGATE,
+            TU::$TOSCHET => TCBank::$SCHETGATE,
+            TU::$POGASHECOM => TCBank::$ECOMGATE,
+            TU::$ECOM => TCBank::$ECOMGATE,
+            TU::$VYPLATVOZN => TCBank::$VYVODGATE,
+            TU::$VYVODPAYS => TCBank::$VYVODGATE,
+            TU::$JKH => TCBank::$JKHGATE,
+            TU::$REGCARD => TCBank::$AUTOPAYGATE,
+            TU::$AVTOPLATECOM => TCBank::$AUTOPAYGATE,
+            TU::$REVERSCOMIS => TCBank::$PEREVODGATE,
+            TU::$PEREVPAYS => TCBank::$PEREVODGATE,
+            TU::$REVERSCOMIS => TCBank::$PEREVODGATE,
+            TU::$PEREVPAYS => TCBank::$PEREVODGATE,
+
+            TU::$ECOMPARTS => TCBank::$PARTSGATE,
+            TU::$JKHPARTS => TCBank::$PARTSGATE,
+            TU::$POGASHATFPARTS => TCBank::$PARTSGATE,
+            TU::$AVTOPLATATFPARTS => TCBank::$PARTSGATE,
+            TU::$POGASHATFPARTS => TCBank::$PARTSGATE,
+            TU::$AVTOPLATECOMPARTS => TCBank::$PARTSGATE,
+        ];
+    }
+
+    /**
      * Шлюз ТКБ по услуге (!не все услуги к шлюзу 1 к 1)
      * @param $IsCustom
      * @return int
      */
     public function SetTypeGate($IsCustom)
     {
-        if ($IsCustom == TU::$TOCARD) {
-            //выдача на карту
-            $this->typeGate = TCBank::$OCTGATE;
-        } elseif (in_array($IsCustom, [TU::$POGASHATF, TU::$AVTOPLATATF])) {
-            //aft
-            $this->typeGate = TCBank::$AFTGATE;
-        } elseif ($IsCustom == TU::$TOSCHET) {
-            //выдача на счет
-            $this->typeGate = TCBank::$SCHETGATE;
-        } elseif (in_array($IsCustom, [TU::$POGASHECOM, TU::$ECOM])) {
-            //ecom
-            $this->typeGate = TCBank::$ECOMGATE;
-        } elseif (in_array($IsCustom, [TU::$VYPLATVOZN, TU::$VYVODPAYS])) {
-            //вывод платежей и вознаграждения
-            $this->typeGate = TCBank::$VYVODGATE;
-        } elseif ($IsCustom == TU::$JKH) {
-            //жкх
-            $this->typeGate = TCBank::$JKHGATE;
-        } elseif (in_array($IsCustom, [TU::$REGCARD, TU::$AVTOPLATECOM])) {
-            //автоплатеж
-            $this->typeGate = TCBank::$AUTOPAYGATE;
-        } elseif (in_array($IsCustom, [TU::$REVERSCOMIS, TU::$PEREVPAYS])) {
-            //перевод с погашение на выдачу и возмещение комиссии банка
-            $this->typeGate = TCBank::$PEREVODGATE;
+        $isCustomBankGates = TcbGate::GetIsCustomBankGates();
+        if(array_key_exists($IsCustom, $isCustomBankGates)) {
+            return $isCustomBankGates[$IsCustom];
         }
 
         return $this->typeGate;
@@ -81,7 +92,8 @@ class TcbGate implements IBankGate
                 `LoginTkbAuto1`, `LoginTkbAuto2`, `LoginTkbAuto3`, `LoginTkbAuto4`, `LoginTkbAuto5`, `LoginTkbAuto6`, `LoginTkbAuto7`,
                 `KeyTkbAuto1`, `KeyTkbAuto2`, `KeyTkbAuto3`, `KeyTkbAuto4`, `KeyTkbAuto5`, `KeyTkbAuto6`, `KeyTkbAuto7`, 
                 `LoginTkbVyvod`, `KeyTkbVyvod`, `LoginTkbPerevod`, `KeyTkbPerevod`,
-                `LoginTkbOctVyvod`, `KeyTkbOctVyvod`, `LoginTkbOctPerevod`, `KeyTkbOctPerevod`
+                `LoginTkbOctVyvod`, `KeyTkbOctVyvod`, `LoginTkbOctPerevod`, `KeyTkbOctPerevod`,
+                `LoginTkbParts`
             FROM 
                 `partner` 
             WHERE 
@@ -110,6 +122,7 @@ class TcbGate implements IBankGate
     {
         $gates = $this->GetGates();
 
+        // TODO: переделать под универсальный для банков
         if (in_array($this->typeGate, [TCBank::$OCTGATE, TCBank::$SCHETGATE]) && $gates && !empty($gates['LoginTkbOct'])) {
             return true;
         } elseif ($this->typeGate == TCBank::$AFTGATE && $gates && !empty($gates['LoginTkbAft'])) {
@@ -127,6 +140,8 @@ class TcbGate implements IBankGate
         } elseif ($this->typeGate == TCBank::$PEREVODOCTGATE && $gates && !empty($gates['LoginTkbOctPerevod'])) {
             return true;
         } elseif ($this->typeGate == TCBank::$VYVODOCTGATE && $gates && !empty($gates['LoginTkbOctVyvod'])) {
+            return true;
+        } elseif ($this->typeGate == TCBank::$PARTSGATE && $gates && !empty($gates['LoginTkbParts'])) {
             return true;
         }
         return false;

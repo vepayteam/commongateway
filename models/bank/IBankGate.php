@@ -13,7 +13,9 @@ interface IBankGate
      */
     public function __construct($IdPartner, $typeGate, $IsCustom = null);
 
-    /**
+    public static function GetIsCustomBankGates();
+
+        /**
      * Шлюз по услуге
      * @param $IsCustom
      * @return int

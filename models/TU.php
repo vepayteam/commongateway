@@ -21,6 +21,13 @@ class TU
     public static $REVERSCOMIS = 21; //возмещение комиссии
     public static $PEREVPAYS = 23; //перевод на выдачу
 
+    public static $JKHPARTS = 100; //оплата жкх с разбивкой
+    public static $ECOMPARTS = 102; //оплата еком с разбивкой
+    public static $POGASHATFPARTS = 110; //покашение афт с разбивкой
+    public static $AVTOPLATATFPARTS = 112; //автоплатеж афт с разбивкой
+    public static $POGASHECOMPARTS = 114; //покашение еком с разбивкой
+    public static $AVTOPLATECOMPARTS = 116; //автоплатеж еком с разбивкой
+
     public static function IsOutMfo($type)
     {
         return in_array($type, self::OutMfo());
@@ -48,7 +55,10 @@ class TU
 
     public static function InPay()
     {
-        return [self::$JKH, self::$REGCARD, self::$ECOM, self::$POGASHATF, self::$POGASHECOM];
+        return [
+            self::$JKH, self::$REGCARD, self::$ECOM, self::$POGASHATF, self::$POGASHECOM,
+            self::$JKHPARTS, self::$ECOMPARTS, self::$POGASHATFPARTS, self::$POGASHECOMPARTS,
+        ];
     }
 
     public static function IsInMfo($type)
@@ -58,7 +68,10 @@ class TU
 
     public static function InMfo()
     {
-        return [self::$POGASHATF, self::$AVTOPLATATF, self::$POGASHECOM, self::$AVTOPLATECOM];
+        return [
+            self::$POGASHATF, self::$AVTOPLATATF, self::$POGASHECOM, self::$AVTOPLATECOM,
+            self::$POGASHATFPARTS, self::$AVTOPLATATFPARTS, self::$POGASHECOMPARTS, self::$AVTOPLATECOMPARTS,
+        ];
     }
 
     public static function IsInAuto($type)
@@ -68,7 +81,10 @@ class TU
 
     public static function AutoPay()
     {
-        return [self::$AVTOPLATATF,self::$AVTOPLATECOM];
+        return [
+            self::$AVTOPLATATF, self::$AVTOPLATECOM,
+            self::$AVTOPLATATFPARTS, self::$AVTOPLATECOMPARTS,
+        ];
     }
 
     public static function NoPart()

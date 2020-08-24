@@ -12,6 +12,9 @@ use app\models\kfapi\KfPay;
 use app\models\kfapi\KfRequest;
 use app\models\payonline\CreatePay;
 use app\models\Payschets;
+use app\services\payment\payment_strategies\CreateFormEcomPartsStrategy;
+use app\services\payment\payment_strategies\CreateFormJkhPartsStrategy;
+use app\services\payment\payment_strategies\IPaymentStrategy;
 use Yii;
 use yii\db\Exception;
 use yii\mutex\FileMutex;
@@ -39,6 +42,7 @@ class MerchantController extends Controller
         $behaviors = parent::behaviors();
         if (in_array(Yii::$app->controller->action->id, [
             'form-pay',
+            'pay-parts',
             'pay',
             'state',
             'reverseorder'
@@ -52,6 +56,7 @@ class MerchantController extends Controller
     {
         return [
             'form-pay' => ['POST'],
+            'pay-parts' => ['POST'],
             'pay' => ['POST'],
             'state' => ['POST'],
             'reverseorder' => ['POST'],
@@ -67,6 +72,7 @@ class MerchantController extends Controller
     {
         if (in_array($action->id, [
             'form-pay',
+            'pay-parts',
             'pay',
             'state',
             'reverseorder'
@@ -187,6 +193,23 @@ class MerchantController extends Controller
             $result['url'] = $kfFormPay->GetPayForm($result['id']);
         }
         return $result;
+    }
+
+    public function actionPayParts()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $kfRequest = new KfRequest();
+        $kfRequest->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody(), 0);
+        /** @var IPaymentStrategy $paymentStrategy */
+        $paymentStrategy = null;
+
+        if ($kfRequest->GetReq('type', 0) == 1) {
+            $paymentStrategy = new CreateFormJkhPartsStrategy($kfRequest);
+        } else {
+            $paymentStrategy = new CreateFormEcomPartsStrategy($kfRequest);
+        }
+        return $paymentStrategy->exec();
     }
 
     /**

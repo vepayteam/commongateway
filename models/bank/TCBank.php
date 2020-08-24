@@ -45,6 +45,8 @@ class TCBank implements IBank
     public static $VYVODOCTGATE = 8;
     public static $PEREVODOCTGATE = 9;
 
+    public static $PARTSGATE = 100;
+
     /**
      * TCBank constructor
      * @param TcbGate|null $tcbGate
@@ -106,6 +108,10 @@ class TCBank implements IBank
             //перевод со счета выплат внутри банка
             $this->shopId = $params['LoginTkbOctPerevod'];
             $this->keyFile = $params['KeyTkbOctPerevod'];
+        } elseif ($type == self::$PARTSGATE && !empty($params['LoginTkbParts'])) {
+            //платежи с разбивкой
+            $this->shopId = $params['LoginTkbParts'];
+            $this->keyFile = $params['KeyTkbParts'];
         }
 
         $this->type = $type;

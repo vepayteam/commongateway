@@ -41,6 +41,8 @@ class MTSBank implements IBank
     public static $VYVODOCTGATE = 8;
     public static $PEREVODOCTGATE = 9;
 
+    public static $PARTSGATE = 100;
+
     /**
      * MTSBank constructor
      * @param MtsGate|null $mtsGate
@@ -62,10 +64,6 @@ class MTSBank implements IBank
 
     public function SetMfoGate(MtsGate $mtsGate)
     {
-        if (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] == 'Y') {
-            return;
-        }
-
         if (in_array($mtsGate->getTypeGate(), [self::$OCTGATE, self::$SCHETGATE]) && !empty($params['LoginTkbOct'])) {
             //выдача на карту OCT, и на счет
             $this->shopId = $mtsGate->gates['MtsLogin'];
@@ -114,6 +112,11 @@ class MTSBank implements IBank
             $this->shopId = $mtsGate->gates['MtsLogin'];
             $this->certFile = $mtsGate->gates['MtsPassword'];
             $this->keyFile = $mtsGate->gates['MtsToken'];
+        } elseif ($mtsGate->getTypeGate() == self::$PARTSGATE && !empty($params['LoginTkbParts'])) {
+            //платежи с разбивкой
+            $this->shopId = $mtsGate->gates['MtsLoginParts'];
+            $this->certFile = $mtsGate->gates['MtsPasswordParts'];
+            $this->keyFile = $mtsGate->gates['MtsTokenParts'];
         }
     }
 
