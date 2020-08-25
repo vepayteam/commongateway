@@ -30,39 +30,48 @@ class MtsGate implements IBankGate
     }
 
     /**
+     * Соотношение типа услуги и шлюза банка
+     * @return array
+     */
+    public static function GetIsCustomBankGates()
+    {
+        return [
+            TU::$TOCARD => MTSBank::$OCTGATE,
+            TU::$POGASHATF => MTSBank::$AFTGATE,
+            TU::$AVTOPLATATF => MTSBank::$AFTGATE,
+            TU::$TOSCHET => MTSBank::$SCHETGATE,
+            TU::$POGASHECOM => MTSBank::$ECOMGATE,
+            TU::$ECOM => MTSBank::$ECOMGATE,
+            TU::$VYPLATVOZN => MTSBank::$VYVODGATE,
+            TU::$VYVODPAYS => MTSBank::$VYVODGATE,
+            TU::$JKH => MTSBank::$JKHGATE,
+            TU::$REGCARD => MTSBank::$AUTOPAYGATE,
+            TU::$AVTOPLATECOM => MTSBank::$AUTOPAYGATE,
+            TU::$REVERSCOMIS => MTSBank::$PEREVODGATE,
+            TU::$PEREVPAYS => MTSBank::$PEREVODGATE,
+            TU::$REVERSCOMIS => MTSBank::$PEREVODGATE,
+            TU::$PEREVPAYS => MTSBank::$PEREVODGATE,
+
+            TU::$ECOMPARTS => MTSBank::$PARTSGATE,
+            TU::$JKHPARTS => MTSBank::$PARTSGATE,
+            TU::$POGASHECOMPARTS => MTSBank::$PARTSGATE,
+            TU::$AVTOPLATATFPARTS => MTSBank::$PARTSGATE,
+            TU::$POGASHATFPARTS => MTSBank::$PARTSGATE,
+            TU::$AVTOPLATECOMPARTS => MTSBank::$PARTSGATE,
+        ];
+    }
+
+    /**
      * Шлюз по услуге
      * @param $IsCustom
      * @return int
      */
     public function SetTypeGate($IsCustom)
     {
-        if ($IsCustom == TU::$TOCARD) {
-            //выдача на карту
-            $this->typeGate = MTSBank::$OCTGATE;
-        } elseif (in_array($IsCustom, [TU::$POGASHATF, TU::$AVTOPLATATF])) {
-            //aft
-            $this->typeGate = MTSBank::$AFTGATE;
-        } elseif ($IsCustom == TU::$TOSCHET) {
-            //выдача на счет
-            $this->typeGate = MTSBank::$SCHETGATE;
-        } elseif (in_array($IsCustom, [TU::$POGASHECOM, TU::$ECOM])) {
-            //ecom
-            $this->typeGate = MTSBank::$ECOMGATE;
-        } elseif (in_array($IsCustom, [TU::$VYPLATVOZN, TU::$VYVODPAYS])) {
-            //вывод платежей и вознаграждения
-            $this->typeGate = MTSBank::$VYVODGATE;
-        } elseif ($IsCustom == TU::$JKH) {
-            //жкх
-            $this->typeGate = MTSBank::$JKHGATE;
-        } elseif (in_array($IsCustom, [TU::$REGCARD, TU::$AVTOPLATECOM])) {
-            //автоплатеж
-            $this->typeGate = MTSBank::$AUTOPAYGATE;
-        } elseif (in_array($IsCustom, [TU::$REVERSCOMIS, TU::$PEREVPAYS])) {
-            //перевод с погашение на выдачу и возмещение комиссии банка
-            $this->typeGate = MTSBank::$PEREVODGATE;
+        $isCustomBankGates = MtsGate::GetIsCustomBankGates();
+        if(array_key_exists($IsCustom, $isCustomBankGates)) {
+            $this->typeGate = $isCustomBankGates[$IsCustom];
         }
-
-        return $this->typeGate;
     }
 
     /**
@@ -85,7 +94,11 @@ class MtsGate implements IBankGate
                 `MtsTokenOct`,
                 `MtsLoginJkh`, 
                 `MtsPasswordJkh`,
-                `MtsTokenJkh`
+                `MtsTokenJkh`,
+                
+                `MtsLoginParts`, 
+                `MtsPasswordParts`,
+                `MtsTokenParts`
             FROM 
                 `partner` 
             WHERE 

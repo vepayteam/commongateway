@@ -146,6 +146,12 @@ $config = [
         ],
     ],
     'params' => $params,
+    'container' => [
+        'singletons' => [
+            'PaymentService' => ['class' => 'app\services\payment\PaymentService'],
+            'BalanceService' => ['class' => 'app\services\balance\BalanceService'],
+        ],
+    ],
     'modules' => [
         'partner' => [
             'class' => 'app\modules\partner\Module',

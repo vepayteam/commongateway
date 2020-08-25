@@ -55,9 +55,12 @@ use yii\web\UploadedFile;
  * @property string $KeyTkbVyvod
  * @property string $LoginTkbJkh
  * @property string $KeyTkbJkh
+ * @property string $LoginTkbParts
+ * @property string $KeyTkbParts
  * @property string $SchetTcb
  * @property string $SchetTcbTransit
  * @property string $SchetTcbNominal
+ * @property string $SchetTcbParts
  * @property string $LoginTkbAuto1
  * @property string $LoginTkbAuto2
  * @property string $LoginTkbAuto3
@@ -120,6 +123,8 @@ use yii\web\UploadedFile;
  * @property string $MtsLoginOct
  * @property string $MtsPasswordOct
  * @property string $MtsTokenOct
+ * @property string $MtsPasswordParts
+ * @property string $MtsTokenParts
  * @property int $BankForPaymentId
  * @property int $BankForTransferToCardId
  *
