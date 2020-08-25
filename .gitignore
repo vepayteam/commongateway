@@ -34,3 +34,4 @@ vepay.md5.out
 !models/geolocation/GeoLite2-ASN.mmdb
 /models/telegram/vepay.session
 .vscode
+key/key.txt
