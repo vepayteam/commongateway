@@ -31,7 +31,8 @@ $act = PartUserAccess::getSelRazdel(\Yii::$app->controller->action);
                 <li class="<?= $act[51] ?>"><a href="/partner/mfo/balance"><i class="fa fa-money"></i> <span
                                 class="nav-label">Баланс</span></a></li>
             <?php endif; ?>
-
+            <li class="<?= $act[51] ?>"><a href="/partner/mfo/parts-balance"><i class="fa fa-money"></i> <span
+                            class="nav-label">Баланс по разбивке</span></a></li>
             <?php if ($IsAdmin || $IsMfo || ((count($razdels) == 0 || isset($razdels[1]) || isset($razdels[18])))) : ?>
                 <li class="<?= !empty($act[1]) || !empty($act[21])? "active": ''?>">
                     <a href="" aria-expanded="<?= !empty($act[1]) || !empty($act[21]) ? 'true' : 'false' ?>">

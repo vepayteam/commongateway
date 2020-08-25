@@ -54,7 +54,7 @@ class MtsGate implements IBankGate
 
             TU::$ECOMPARTS => MTSBank::$PARTSGATE,
             TU::$JKHPARTS => MTSBank::$PARTSGATE,
-            TU::$POGASHATFPARTS => MTSBank::$PARTSGATE,
+            TU::$POGASHECOMPARTS => MTSBank::$PARTSGATE,
             TU::$AVTOPLATATFPARTS => MTSBank::$PARTSGATE,
             TU::$POGASHATFPARTS => MTSBank::$PARTSGATE,
             TU::$AVTOPLATECOMPARTS => MTSBank::$PARTSGATE,
@@ -70,10 +70,8 @@ class MtsGate implements IBankGate
     {
         $isCustomBankGates = MtsGate::GetIsCustomBankGates();
         if(array_key_exists($IsCustom, $isCustomBankGates)) {
-            return $isCustomBankGates[$IsCustom];
+            $this->typeGate = $isCustomBankGates[$IsCustom];
         }
-
-        return $this->typeGate;
     }
 
     /**
@@ -96,7 +94,11 @@ class MtsGate implements IBankGate
                 `MtsTokenOct`,
                 `MtsLoginJkh`, 
                 `MtsPasswordJkh`,
-                `MtsTokenJkh`
+                `MtsTokenJkh`,
+                
+                `MtsLoginParts`, 
+                `MtsPasswordParts`,
+                `MtsTokenParts`
             FROM 
                 `partner` 
             WHERE 

@@ -54,7 +54,7 @@ class TcbGate implements IBankGate
 
             TU::$ECOMPARTS => TCBank::$PARTSGATE,
             TU::$JKHPARTS => TCBank::$PARTSGATE,
-            TU::$POGASHATFPARTS => TCBank::$PARTSGATE,
+            TU::$POGASHECOMPARTS => TCBank::$PARTSGATE,
             TU::$AVTOPLATATFPARTS => TCBank::$PARTSGATE,
             TU::$POGASHATFPARTS => TCBank::$PARTSGATE,
             TU::$AVTOPLATECOMPARTS => TCBank::$PARTSGATE,
@@ -62,18 +62,14 @@ class TcbGate implements IBankGate
     }
 
     /**
-     * Шлюз ТКБ по услуге (!не все услуги к шлюзу 1 к 1)
      * @param $IsCustom
-     * @return int
      */
     public function SetTypeGate($IsCustom)
     {
         $isCustomBankGates = TcbGate::GetIsCustomBankGates();
         if(array_key_exists($IsCustom, $isCustomBankGates)) {
-            return $isCustomBankGates[$IsCustom];
+            $this->typeGate = $isCustomBankGates[$IsCustom];
         }
-
-        return $this->typeGate;
     }
 
     /**

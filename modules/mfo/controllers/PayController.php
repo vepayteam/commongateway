@@ -97,7 +97,9 @@ class PayController extends Controller
             $usl = $kfPay->GetUslug($mfo->mfo, $typeUsl);
         }
         $bank = BankMerchant::GetWorkBank($mfo->mfo, $typeUsl);
-        if (!$usl || !$bank) {
+        // TODO:
+        // if (!$usl || !$bank) {
+        if (!$usl) {
             return ['status' => 0, 'message' => 'Услуга не найдена'];
         }
 
@@ -118,7 +120,9 @@ class PayController extends Controller
                 }
             }
         }
-        $params = $pay->payToMfo(null, [$kfPay->document_id, $kfPay->fullname], $kfPay, $usl, $bank::$bank, $mfo->mfo,0);
+        // TODO:
+        // $params = $pay->payToMfo(null, [$kfPay->document_id, $kfPay->fullname], $kfPay, $usl, $bank::$bank, $mfo->mfo,0);
+        $params = $pay->payToMfo(null, [$kfPay->document_id, $kfPay->fullname], $kfPay, $usl, 2, $mfo->mfo,0);
         if (!empty($kfPay->extid)) {
             $mutex->release('getPaySchetExt' . $kfPay->extid);
         }        //PCI DSS

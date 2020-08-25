@@ -6,9 +6,12 @@ use app\models\mfo\MfoBalance;
 use app\models\partner\PartUserAccess;
 use app\models\partner\UserLk;
 use app\models\payonline\Partner;
+use app\services\balance\BalanceService;
+use app\services\balance\models\PartsBalanceForm;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
+use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -104,6 +107,57 @@ class MfoController extends Controller
     }
 
     /**
+     * Балансы МФО
+     *
+     * @return string
+     * @throws \yii\db\Exception
+     */
+    public function actionPartsBalance()
+    {
+        $partners = null;
+        $data = null;
+        $partners = ArrayHelper::index(
+            Partner::find()->select(['ID', 'Name'])->where(['IsBlocked' => 0, 'IsDeleted' => 0])->all(), 'ID'
+        );
+
+        if(Yii::$app->request->isPost) {
+            $post = Yii::$app->request->post();
+            $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+            if ($IsAdmin) {
+                $post['partnerId'] = (int)Yii::$app->request->post('partnerId');
+            } else {
+                $post['partnerId'] = UserLk::getPartnerId(Yii::$app->user);
+            }
+
+            $partsBalanceForm = new PartsBalanceForm();
+            if($partsBalanceForm->load($post, '') || !$partsBalanceForm->validate()) {
+                $data = $this->getBalanceService()->getPartsBalance($partsBalanceForm);
+            }
+        }
+
+        return $this->render('parts_balance', compact('partners', 'data'));
+        if (UserLk::IsAdmin(Yii::$app->user)) {
+            $sel = $this->selectPartner($idpartner, false, true);
+            if (empty($sel)) {
+
+                $partner = Partner::findOne(['ID' => $idpartner]);
+                $MfoBalance = new MfoBalance($partner);
+
+                return $this->render('parts_balance');
+            } else {
+                return $sel;
+            }
+        } else {
+
+            $idpartner = UserLk::getPartnerId(Yii::$app->user);
+            $partner = Partner::findOne(['ID' => $idpartner]);
+
+            $MfoBalance = new MfoBalance($partner);
+            return $this->render('parts_balance');
+        }
+    }
+
+    /**
      * Выписка по счету
      *
      * @return array|Response
@@ -189,5 +243,15 @@ class MfoController extends Controller
         } else {
             throw new NotFoundHttpException();
         }
+    }
+
+    /**
+     * @return BalanceService
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\di\NotInstantiableException
+     */
+    protected function getBalanceService()
+    {
+        return Yii::$container->get('BalanceService');
     }
 }
