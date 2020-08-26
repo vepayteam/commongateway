@@ -82,6 +82,7 @@ class Payschets
                 ps.SuccessUrl,
                 ps.FailedUrl,
                 ps.CancelUrl,
+                ps.PostbackUrl,
                 p.IsMfo,
                 ps.Bank,
                 ps.Extid,
