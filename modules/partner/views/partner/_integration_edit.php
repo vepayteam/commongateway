@@ -43,7 +43,7 @@ $form = ActiveForm::begin([
     ],
 ]);
 
-echo $form->field($partner, 'BankForPaymentId')->dropDownList(array_merge([-1 => 'Любой'], Banks::getBanksByDropdown()), ['class' => 'form-control']);
+echo $form->field($partner, 'BankForPaymentId')->dropDownList(Banks::getBanksByDropdown(), ['class' => 'form-control']);
 if ($partner->IsMfo) {
     echo $form->field($partner, 'SchetTcb')->textInput(['class' => 'form-control']);
     echo $form->field($partner, 'SchetTcbTransit')->textInput(['class' => 'form-control']);
