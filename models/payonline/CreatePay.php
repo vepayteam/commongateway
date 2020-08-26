@@ -464,6 +464,11 @@ class CreatePay
         } elseif (!empty($this->Provparams->Usluga->UrlReturnCancel)) {
             $this->setReturnUrlCancel($IdPay, $this->Provparams->Usluga->UrlReturnCancel);
         }
+
+        if (!empty($KfPay->postbackurl)) {
+            $this->setReturnUrlPostback($IdPay, $KfPay->postbackurl);
+        }
+
         return ['IdPay' => $IdPay, 'summ' => $this->Provparams->summ + $this->Provparams->calcComiss(), 'TimeElapsed' => round($KfPay->timeout), 'checkurl' => $this->Provparams->Usluga->UrlCheckReq];
     }
 
@@ -714,6 +719,14 @@ class CreatePay
     {
         Yii::$app->db->createCommand()->update('pay_schet', [
             'CancelUrl' => $UrlReturnCancel
+        ], ['ID' => $IdPay])->execute();
+
+    }
+
+    private function setReturnUrlPostback($IdPay, $UrlReturnPostback)
+    {
+        Yii::$app->db->createCommand()->update('pay_schet', [
+            'PostbackUrl' => $UrlReturnPostback
         ], ['ID' => $IdPay])->execute();
 
     }
