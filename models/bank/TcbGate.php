@@ -89,7 +89,7 @@ class TcbGate implements IBankGate
                 `KeyTkbAuto1`, `KeyTkbAuto2`, `KeyTkbAuto3`, `KeyTkbAuto4`, `KeyTkbAuto5`, `KeyTkbAuto6`, `KeyTkbAuto7`, 
                 `LoginTkbVyvod`, `KeyTkbVyvod`, `LoginTkbPerevod`, `KeyTkbPerevod`,
                 `LoginTkbOctVyvod`, `KeyTkbOctVyvod`, `LoginTkbOctPerevod`, `KeyTkbOctPerevod`,
-                `LoginTkbParts`
+                `LoginTkbParts`, `KeyTkbParts`
             FROM 
                 `partner` 
             WHERE 
