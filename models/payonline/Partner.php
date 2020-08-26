@@ -156,6 +156,7 @@ class Partner extends \yii\db\ActiveRecord
             [['UrAdres', 'PostAdres'], 'string', 'max' => 1000],
             [['UrAdres', 'PostAdres', 'Apple_PayProcCert'], 'string', 'max' => 1000],
             [['Name', 'UrLico'], 'string', 'max' => 250],
+            [['MtsLoginParts', 'MtsPasswordParts', 'MtsTokenParts'], 'string', 'max' => 500],
             [['URLSite', 'PodpisantFull', 'PodpDoljpost', 'PodpDoljpostRod', 'PodpOsnovan', 'PodpOsnovanRod',
                 'KontTehFio', 'KontFinansFio', 'BankName', 'PaaswordApi', 'MtsLogin', 'MtsPassword', 'MtsToken',
                 'Apple_MerchantID', 'Apple_displayName', 'Apple_KeyPasswd', 'Apple_MerchIdentKey', 'Apple_MerchIdentCert',
@@ -163,15 +164,15 @@ class Partner extends \yii\db\ActiveRecord
             ], 'string', 'max' => 100],
             [['KeyTkbAft', 'KeyTkbEcom', 'KeyTkbVyvod', 'KeyTkbPerevod', 'KeyTkbAuto1', 'KeyTkbAuto2',
                 'KeyTkbAuto3', 'KeyTkbAuto4', 'KeyTkbAuto5', 'KeyTkbAuto6', 'KeyTkbAuto7', 'IpAccesApi', 'KeyTkbJkh',
-                'KeyTkbOct', 'KeyTkbOctVyvod', 'KeyTkbOctPerevod'
+                'KeyTkbOct', 'KeyTkbOctVyvod', 'KeyTkbOctPerevod', 'KeyTkbParts'
             ], 'string', 'max' => 300],
             [['PodpisantShort', 'RSchet', 'KSchet', 'Phone', 'Email', 'KontTehEmail', 'KontTehPhone',
                 'KontFinansEmail', 'KontFinansPhone', 'LoginTkbAft', 'LoginTkbEcom', 'LoginTkbVyvod', 'LoginTkbPerevod',
                 'LoginTkbAuto1', 'LoginTkbAuto2', 'LoginTkbAuto3', 'LoginTkbAuto4', 'LoginTkbAuto5', 'LoginTkbAuto6',
-                'LoginTkbAuto7', 'LoginTkbJkh', 'LoginTkbOct', 'LoginTkbOctVyvod', 'LoginTkbOctPerevod'
+                'LoginTkbAuto7', 'LoginTkbJkh', 'LoginTkbOct', 'LoginTkbOctVyvod', 'LoginTkbOctPerevod', 'LoginTkbParts'
             ], 'string', 'max' => 50],
             [['Email', 'KontTehEmail', 'KontFinansEmail', 'EmailNotif'], '\app\models\EmailListValidator'],
-            [['INN', 'KPP', 'BikBank', 'OGRN', 'NumDogovor', 'DateDogovor', 'SchetTcb', 'SchetTcbTransit', 'SchetTcbNominal', 'SchetTCBUnreserve'], 'string', 'max' => 20],
+            [['INN', 'KPP', 'BikBank', 'OGRN', 'NumDogovor', 'DateDogovor', 'SchetTcb', 'SchetTcbTransit', 'SchetTcbNominal', 'SchetTcbParts', 'SchetTCBUnreserve'], 'string', 'max' => 20],
             [['Name', 'UrLico', 'UrAdres', 'PostAdres', 'Phone'], 'required', 'on' => self::SCENARIO_SELFREG],
             [['INN', 'OGRN', 'PodpisantShort', 'PodpisantFull', 'PodpOsnovan', 'PodpOsnovanRod'], 'required', 'on' => self::SCENARIO_SELFREG, 'when' => function($model) {
                 return in_array($model->UrState, [0, 1]);
@@ -262,8 +263,9 @@ class Partner extends \yii\db\ActiveRecord
             'KeyTkbOctVyvod' => 'Пароль ТКБ Вывод со счета выдачи',
             'LoginTkbOctPerevod' => 'Логин ТКБ Перевод со счета выдачи',
             'KeyTkbOctPerevod' => 'Пароль ТКБ Перевод со счета выдачи',
-            'LoginTkbOctParts' => 'Логин ТКБ разбивка платежей',
-            'KeyTkbOctParts' => 'Пароль ТКБ разбивка платежей',
+            'SchetTcbParts' => 'Номер счета разбивка платежей',
+            'LoginTkbParts' => 'Логин ТКБ разбивка платежей',
+            'KeyTkbParts' => 'Пароль ТКБ разбивка платежей',
             'IsAutoPerevodToVydacha' => 'Автоперечисления на счет выдачи',
             'IsCommonSchetVydacha' => 'Один счет на выдачу и погашение',
             'EmailNotif' => 'E-mail для оповещения',
