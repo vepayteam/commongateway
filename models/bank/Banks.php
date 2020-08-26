@@ -102,7 +102,9 @@ class Banks extends \yii\db\ActiveRecord
      */
     public static function getBanksByDropdown()
     {
-        $result = [];
+        $result = [
+            '-1' => 'По умолчанию',
+        ];
         /** @var Banks $bank */
         foreach(Banks::find()->select('ID, Name')->all() as $bank) {
             $result[$bank->ID] = $bank->Name;
