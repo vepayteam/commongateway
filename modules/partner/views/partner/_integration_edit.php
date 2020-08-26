@@ -134,6 +134,10 @@ if ($partner->IsMfo) {
     echo $form->field($partner, 'KeyTkbAuto1')->textInput(['class' => 'form-control']);
 }
 
+echo $form->field($partner, 'SchetTcbParts')->textInput(['class' => 'form-control']);
+echo $form->field($partner, 'LoginTkbParts')->textInput(['class' => 'form-control']);
+echo $form->field($partner, 'KeyTkbParts')->textInput(['class' => 'form-control']);
+
 echo $form->field($partner, 'MtsLogin')->textInput(['class' => 'form-control']);
 echo $form->field($partner, 'MtsPassword')->textInput(['class' => 'form-control']);
 echo $form->field($partner, 'MtsToken')->textInput(['class' => 'form-control']);
@@ -144,6 +148,10 @@ echo $form->field($partner,'MtsTokenAft')->textInput(['class' => 'form-control']
 echo $form->field($partner,'MtsLoginOct')->textInput(['class' => 'form-control']);
 echo $form->field($partner,'MtsPasswordOct')->textInput(['class' => 'form-control']);
 echo $form->field($partner,'MtsTokenOct')->textInput(['class' => 'form-control']);
+
+echo $form->field($partner,'MtsLoginParts')->textInput(['class' => 'form-control']);
+echo $form->field($partner,'MtsPasswordParts')->textInput(['class' => 'form-control']);
+echo $form->field($partner,'MtsTokenParts')->textInput(['class' => 'form-control']);
 
 ?>
 <div class="row">
