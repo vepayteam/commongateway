@@ -339,6 +339,7 @@ class PayController extends Controller
             if(!empty($params['PostbackUrl']) && in_array($res['status'], [1, 2, 3])) {
                 $data = [
                     'status' => $res['status'],
+                    'message' => $res['message'],
                     'id' => $params['ID'],
                     'amount' => $params['SummPay'],
                     'extid' => $params['Extid'],
