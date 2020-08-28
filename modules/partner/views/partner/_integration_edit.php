@@ -142,6 +142,9 @@ echo $form->field($partner, 'MtsLogin')->textInput(['class' => 'form-control']);
 echo $form->field($partner, 'MtsPassword')->textInput(['class' => 'form-control']);
 echo $form->field($partner, 'MtsToken')->textInput(['class' => 'form-control']);
 
+echo $form->field($partner,'MtsLoginJkh')->textInput(['class' => 'form-control']);
+echo $form->field($partner,'MtsPasswordJkh')->textInput(['class' => 'form-control']);
+echo $form->field($partner,'MtsTokenJkh')->textInput(['class' => 'form-control']);
 echo $form->field($partner,'MtsLoginAft')->textInput(['class' => 'form-control']);
 echo $form->field($partner,'MtsPasswordAft')->textInput(['class' => 'form-control']);
 echo $form->field($partner,'MtsTokenAft')->textInput(['class' => 'form-control']);
