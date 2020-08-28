@@ -56,7 +56,7 @@ class KfCard extends Model
      * @return Cards|null
      * @throws \yii\db\Exception
      */
-    public function FindKard($IdPartner, $type = -1)
+    public function FindKard($IdPartner, $type=-1)
     {
         $query = (new Query())
             ->select(['c.`ID` AS IdCard', 'u.`ID` AS IdUser'])
