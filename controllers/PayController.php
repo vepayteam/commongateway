@@ -346,7 +346,13 @@ class PayController extends Controller
                     'card_num' => $params['CardNum'],
                     'card_holder' => $params['CardHolder'],
                 ];
-                $this->sendPostbackRequest($params['PostbackUrl'], $data);
+
+                // TODO: queue
+                try {
+                    $this->sendPostbackRequest($params['PostbackUrl'], $data);
+                } catch (\Exception $e) {
+                    Yii::warning("Error $id postbackurl: ".$e->getMessage());
+                }
             }
 
             if (in_array($res['status'], [1, 3])) {
