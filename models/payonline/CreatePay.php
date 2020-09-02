@@ -238,8 +238,10 @@ class CreatePay
      * @return bool
      * @throws \yii\db\Exception
      */
-    protected function addPayschet($agent = 0, $idCardActivate = 0, $TypeWidget = 0, $Bank = 0, $IdOrg = 0, $Extid = '', $AutoPayIdGate = 0, $timeout = 900, $dogovor = '', $fio = '')
+    protected function addPayschet($agent = 0, $idCardActivate = 0, $TypeWidget = 0, $Bank = 0, $IdOrg = 0, $Extid = '', $AutoPayIdGate = 0, $timeout = 86400, $dogovor = '', $fio = '')
     {
+        // !!! изменен default переменной $timeout, старое значение 900
+
         // добавляем в таблицу pay_schet
         Yii::$app->db->createCommand()
             ->insert('pay_schet', [
