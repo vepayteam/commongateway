@@ -10,10 +10,11 @@ use app\models\Payschets;
 use app\models\queue\BinBDInfoJob;
 use app\models\TU;
 use qfsx\yii2\curl\Curl;
+use SimpleXMLElement;
 use Yii;
 use yii\helpers\Json;
 
-class TCBank
+class TCBank implements IBank
 {
     public const BIC = '044525388';
 
@@ -26,7 +27,7 @@ class TCBank
     private $keyFile;
     private $caFile;
     private static $orderState = [0 => 'Обрабатывается', 1 => 'Исполнен', 2 => 'Отказано', 3 => 'Возврат'];
-    private $backUrls = ['ok' => 'https://api.vepay.online/merchant/orderok?orderid='];
+    private $backUrls = ['ok' => 'https://api.vepay.online/pay/orderok?orderid='];
 
     public static $bank = 2;
     private $type = 0;
@@ -44,9 +45,10 @@ class TCBank
     public static $VYVODOCTGATE = 8;
     public static $PEREVODOCTGATE = 9;
 
+    public static $PARTSGATE = 100;
 
     /**
-     * TCBank constructor. (new)
+     * TCBank constructor
      * @param TcbGate|null $tcbGate
      * @throws \yii\db\Exception
      */
@@ -106,6 +108,10 @@ class TCBank
             //перевод со счета выплат внутри банка
             $this->shopId = $params['LoginTkbOctPerevod'];
             $this->keyFile = $params['KeyTkbOctPerevod'];
+        } elseif ($type == self::$PARTSGATE && !empty($params['LoginTkbParts'])) {
+            //платежи с разбивкой
+            $this->shopId = $params['LoginTkbParts'];
+            $this->keyFile = $params['KeyTkbParts'];
         }
 
         $this->type = $type;
@@ -249,7 +255,7 @@ class TCBank
      * @return array
      * @throws \yii\db\Exception
      */
-    public function reversOrder($IdPay): array
+    public function reversOrder($IdPay)
     {
         $payschets = new Payschets();
         //данные счета
@@ -1422,6 +1428,36 @@ class TCBank
     }
 
     /**
+     * Оплата ApplePay
+     * @param array $params
+     * @return array
+     */
+    public function PayApple(array $params)
+    {
+        return ['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0];
+    }
+
+    /**
+     * Оплата GooglePay
+     * @param array $params
+     * @return array
+     */
+    public function PayGoogle(array $params)
+    {
+        return ['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0];
+    }
+
+    /**
+     * Оплата SamsungPay
+     * @param array $params
+     * @return array
+     */
+    public function PaySamsung(array $params)
+    {
+        return ['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0];
+    }
+
+    /**
      * Финиш оплаты без формы (PCI DSS)
      * @param array $params
      * @return array
@@ -1508,6 +1544,14 @@ class TCBank
         }
 
         return 0;
+    }
+
+    private function buildSoapRequestRawBody($method, $data)
+    {
+        $xml = new SimpleXMLElement('<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                  xmlns:p2p="http://engine.paymentgate.ru/webservices/p2p" />');
+
+
     }
 
 }

@@ -12,10 +12,6 @@ use yii\base\Model;
 
 class KfBenific extends Model
 {
-    const INDIVIDUAL_TYPE_REG = 0;
-    const SOLE_PROPRIETOR_TYPE_REG = 1;
-    const LEGAL_PERSON_TYPE_REG = 2;
-
     public $registrationtype;
     public $ownershipform;
     public $ownershipgroup;
@@ -53,8 +49,6 @@ class KfBenific extends Model
     public $actualaddres;
     public $groundforparticipation;
     public $joiningdate;
-
-    public $partner;
 
     public $result;
 
@@ -174,7 +168,7 @@ class KfBenific extends Model
         $client = $dom->createElement("client");
         $Request->appendChild($client);
 
-        if ($this->registrationtype == self::SOLE_PROPRIETOR_TYPE_REG) {
+        if ($this->registrationtype == 1) {
             //ИП
             $client->appendChild($dom->createElement("RegistrationType", "Individual"));
             $Individual = $dom->createElement("Individual");
@@ -259,7 +253,7 @@ class KfBenific extends Model
             $Individual->appendChild($dom->createElement("OwnershipFormGrouping", $this->ownershipGroupTypes[$this->ownershipgroup]));
 
         }
-        if ($this->registrationtype == self::LEGAL_PERSON_TYPE_REG) {
+        if ($this->registrationtype == 2) {
             //ЮЛ
             $client->appendChild($dom->createElement("RegistrationType", "Juridical"));
             $Juridical = $dom->createElement("Juridical");
@@ -367,7 +361,7 @@ class KfBenific extends Model
             $Juridical->appendChild($dom->createElement("MspPerson", $this->msp));
             $Juridical->appendChild($dom->createElement("LegalFormsOfBusiness", $this->legalFormsOfBusinessTypes[$this->legalformsofbusiness]));
         }
-        if ($this->registrationtype == self::INDIVIDUAL_TYPE_REG) {
+        if ($this->registrationtype == 0) {
             //физлицо
 
             $client->appendChild($dom->createElement("RegistrationType", "PhysicalPerson"));

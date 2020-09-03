@@ -15,11 +15,11 @@ steps:
   - commitsar -v -s
   failure: ignore
 
-- name: notify-conventional-commits-92dd82a6ba7e676ab8b076809a35bc98
+- name: notify-conventional-commits-d9a15f04d119de2e804273c7b67e9f02
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
-  - gitea-status -t "conventional-commits" -m "${DRONE_STAGE_STATUS}" -s "${DRONE_STAGE_STATUS}" -u "${DRONE_BUILD_LINK}"
+  - gitea-status -t "conventional-commits" -m "-ignored-" -s "${DRONE_STAGE_STATUS}" -u "${DRONE_BUILD_LINK}"
   environment:
     GITEA_TOKEN:
       from_secret: GITEA_TOKEN
@@ -394,6 +394,6 @@ get:
 
 ---
 kind: signature
-hmac: a6823ddac24911c5cf2dda4712197df743c9e16685948e111499f831d87067b3
+hmac: 9718bed8d28292707e6198e996b7c57ccb7debbe91b79b94c6acaed6dc1e8a87
 
 ...

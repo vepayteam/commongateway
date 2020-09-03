@@ -51,7 +51,6 @@ class CheckpayCron
                     m.Status,
                     m.DateLastUpdate,
                     m.Bank,
-                    m.PostbackUrl,
                     us.IsCustom
                 FROM
                     pay_schet AS m
@@ -75,29 +74,8 @@ class CheckpayCron
                 while ($value = $query->read()) {
                     if (!empty($value['ExtBillNumber'])) {
 
-                        $bank = $value['Bank'];
-                        $order = '0';
-                        if ($value['Bank'] == TCBank::$bank) {
-                            //ткб
-                            $order = $value['ID'];
-                        }
-
-                        $merchBank = BankMerchant::Get($bank);
-                        $mesg = $merchBank->confirmPay($order, 0, true);
-
-                        // Если платеж не в ожидание, и у платежа имеется PostbackUrl, отправляем
-                        if($mesg['status'] > 0 && !empty($params['PostbackUrl'])) {
-                            $data = [
-                                'status' => $mesg['status'],
-                                'message' => $mesg['message'],
-                                'id' => $params['ID'],
-                                'amount' => $params['Amount'],
-                                'extid' => $params['Extid'],
-                                'card_num' => $params['CardNum'],
-                                'card_holder' => $params['CardHolder'],
-                            ];
-                            $this->sendPostbackRequest($params['PostbackUrl'], $data);
-                        }
+                        $merchBank = BankMerchant::Get($value['Bank']);
+                        $mesg = $merchBank->confirmPay($value['ID'], 0, true);
 
                         echo "check " . $value['ID'] . " - " . $value['ExtBillNumber'] . " - " . $mesg['message'] . "\n";
                         Yii::warning("check " . $value['ID'] . " - " . $value['ExtBillNumber'] . " - " . $mesg['message'] . "\r\n", 'rsbcron');
@@ -230,31 +208,5 @@ class CheckpayCron
             // в случае возникновения ошибки при выполнении одного из запросов выбрасывается исключение
             Yii::warning("checkToExport-error: " . $e->getMessage(), 'rsbcron');
         }
-    }
-
-
-
-    private function sendPostbackRequest($url, $data)
-    {
-        // TODO: refact to service
-        $curl = curl_init();
-
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_POSTFIELDS => json_encode($data),
-            CURLOPT_HTTPHEADER => array(
-                "Content-Type: application/json"
-            ),
-        ));
-
-        $response = curl_exec($curl);
-        curl_close($curl);
     }
 }

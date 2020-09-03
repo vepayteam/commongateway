@@ -447,7 +447,6 @@ class CreatePay
         $this->user = $user;
 
         $IdPay = $this->addPayschet(0, 0, 3, $bank, $IdOrg, $KfPay->extid, $AutoPayIdGate,$KfPay->timeout * 60, $KfPay->document_id, $KfPay->fullname);
-        // TODO: refact
         if (!empty($KfPay->successurl)) {
             $this->setReturnUrl($IdPay, $KfPay->successurl);
         } elseif (!empty($this->Provparams->Usluga->UrlReturn)) {
@@ -467,7 +466,7 @@ class CreatePay
         }
 
         if (!empty($KfPay->postbackurl)) {
-            $this->setPostbackUrl($IdPay, $KfPay->postbackurl);
+            $this->setReturnUrlPostback($IdPay, $KfPay->postbackurl);
         }
 
         return ['IdPay' => $IdPay, 'summ' => $this->Provparams->summ + $this->Provparams->calcComiss(), 'TimeElapsed' => round($KfPay->timeout), 'checkurl' => $this->Provparams->Usluga->UrlCheckReq];
@@ -724,11 +723,12 @@ class CreatePay
 
     }
 
-    private function setPostbackUrl($IdPay, $UrlPostback)
+    private function setReturnUrlPostback($IdPay, $UrlReturnPostback)
     {
         Yii::$app->db->createCommand()->update('pay_schet', [
-            'PostbackUrl' => $UrlPostback
+            'PostbackUrl' => $UrlReturnPostback
         ], ['ID' => $IdPay])->execute();
+
     }
 
 }

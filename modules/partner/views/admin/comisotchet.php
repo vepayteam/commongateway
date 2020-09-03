@@ -23,21 +23,6 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                 </div>
                 <div class="ibox-content">
                     <div class="row">
-                    <form class="form-horizontal m-t-md" id="veekenddays">
-                        <div class="form-group"><label class="col-sm-2 control-label">Праздничные дни</label>
-                            <div class="col-sm-10 col-md-6">
-                                <input type="text" name="veekenddays" value="<?=$veekends?>" maxlength="200" class="form-control">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="col-sm-offset-2 col-sm-4">
-                                <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
-                                <button class="btn btn-sm btn-primary" type="submit">Сохранить</button>
-                            </div>
-                        </div>
-                    </form>
-                    </div>
-                    <div class="row">
                     <form class="form-horizontal m-t-md" id="comisotchetform">
                         <div class="form-group"><label class="col-sm-2 control-label">Дата</label>
                             <div class="col-sm-10 col-md-6">
@@ -106,25 +91,25 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
         </div>
     </div>
 
-<div id="modal-vyvyodsum" class="modal fade" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title">Вывод вознаграждения</h4>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="exampleInputEmail1">Сумма для вывода</label>
-                    <input id="modal-vyvyodsum__summ" type="number" class="form-control">
+    <div id="modal-vyvyodsum" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">Вывод вознаграждения</h4>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Отмена</button>
-                <button id="modal-vyvyodsum__submit" type="button" class="btn btn-primary">Вывести</button>
-            </div>
-        </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="exampleInputEmail1">Сумма для вывода</label>
+                        <input id="modal-vyvyodsum__summ" type="number" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Отмена</button>
+                    <button id="modal-vyvyodsum__submit" type="button" class="btn btn-primary">Вывести</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
 
 <?php $this->registerJs('lk.comisotchet()'); ?>

@@ -44,30 +44,11 @@ class DefaultController extends Controller
 
     /**
      * Renders the index view for the module
-     * @return string
-     */
-    public function actionBenificSwagger()
-    {
-        $this->layout = '@app/views/layouts/swaggerlayout';
-        return $this->render('@app/views/site/apidoc', ['url' => '/kfapi/default/swagger-benific']);
-    }
-
-    /**
-     * Renders the index view for the module
      * @return Response
      */
     public function actionSwagger()
     {
         return Yii::$app->response->sendFile(Yii::$app->basePath . '/doc/kf.yaml', '', ['inline' => true, 'mimeType' => 'application/yaml']);
-    }
-
-    /**
-     * Renders the index view for the module
-     * @return Response
-     */
-    public function actionSwaggerBenific()
-    {
-        return Yii::$app->response->sendFile(Yii::$app->basePath . '/doc/benific.yaml', '', ['inline' => true, 'mimeType' => 'application/yaml']);
     }
 
 }

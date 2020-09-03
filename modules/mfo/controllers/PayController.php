@@ -3,11 +3,11 @@
 namespace app\modules\mfo\controllers;
 
 use app\models\api\CorsTrait;
+use app\models\bank\BankMerchant;
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\crypt\CardToken;
 use app\models\kfapi\KfCard;
-use app\models\kfapi\KfCardParts;
 use app\models\kfapi\KfFormPay;
 use app\models\kfapi\KfPay;
 use app\models\kfapi\KfPayParts;
@@ -15,6 +15,7 @@ use app\models\mfo\MfoReq;
 use app\models\payonline\CreatePay;
 use app\models\PayschetPart;
 use app\models\Payschets;
+use app\models\TU;
 use app\services\payment\payment_strategies\CreateFormMfoAftPartsStrategy;
 use app\services\payment\payment_strategies\CreateFormMfoEcomPartsStrategy;
 use app\services\payment\payment_strategies\IMfoStrategy;
@@ -58,31 +59,12 @@ class PayController extends Controller
     protected function verbs()
     {
         return [
-            'form-lk' => ['POST'],
             'lk' => ['POST'],
+            'form-lk' => ['POST'],
+            'lk-parts' => ['POST'],
             'auto' => ['POST'],
             'state' => ['POST'],
         ];
-    }
-
-    public function actionFormLk()
-    {
-        $mfo = new MfoReq();
-        $mfo->LoadData(Yii::$app->request->getRawBody());
-
-        $kfFormPay = new KfFormPay();
-        $kfFormPay->scenario = KfFormPay::SCENARIO_FORM;
-        $kfFormPay->load($mfo->Req(), '');
-        if (!$kfFormPay->validate()) {
-            return ['status' => 0, 'message' => $kfFormPay->GetError()];
-        }
-        $result = $this->actionLk();
-
-        if($result['status'] == 1) {
-            $kfFormPay->createFormElements($result['id']);
-            $result['url'] = $kfFormPay->GetPayForm($result['id']);
-        }
-        return $result;
     }
 
     /**
@@ -108,12 +90,17 @@ class PayController extends Controller
 
         Yii::warning('/pay/lk mfo='. $mfo->mfo . " sum=".$kfPay->amount . " extid=".$kfPay->extid, 'mfo');
 
-        $gate = $kfPay->IsAftGate($mfo->mfo) ? TCBank::$AFTGATE : TCBank::$ECOMGATE;
-        $TcbGate = new TcbGate($mfo->mfo, $gate);
-        $usl = $kfPay->GetUslug($mfo->mfo, $gate);
-
-        if (!$usl || !$TcbGate->IsGate()) {
-            return ['status' => 0, 'message' => 'Нет шлюза'];
+        $typeUsl = $kfPay->IsAftGate($mfo->mfo) ? TU::$POGASHATF : TU::$POGASHECOM;
+        $usl = $kfPay->GetUslug($mfo->mfo, $typeUsl);
+        if ($typeUsl == TU::$POGASHECOM && !$usl) {
+            $typeUsl = TU::$ECOM;
+            $usl = $kfPay->GetUslug($mfo->mfo, $typeUsl);
+        }
+        $bank = BankMerchant::GetWorkBank($mfo->mfo, $typeUsl);
+        // TODO:
+        // if (!$usl || !$bank) {
+        if (!$usl) {
+            return ['status' => 0, 'message' => 'Услуга не найдена'];
         }
 
         $pay = new CreatePay();
@@ -133,17 +120,38 @@ class PayController extends Controller
                 }
             }
         }
-        $params = $pay->payToMfo(null, [$kfPay->document_id, $kfPay->fullname], $kfPay, $usl, TCBank::$bank, $mfo->mfo,0);
+        // TODO:
+        // $params = $pay->payToMfo(null, [$kfPay->document_id, $kfPay->fullname], $kfPay, $usl, $bank::$bank, $mfo->mfo,0);
+        $params = $pay->payToMfo(null, [$kfPay->document_id, $kfPay->fullname], $kfPay, $usl, 2, $mfo->mfo,0);
         if (!empty($kfPay->extid)) {
             $mutex->release('getPaySchetExt' . $kfPay->extid);
-        }
-        //PCI DSS
+        }        //PCI DSS
         return [
             'status' => 1,
             'message' => '',
             'id' => (int)$params['IdPay'],
             'url' => $kfPay->GetPayForm($params['IdPay'])
         ];
+    }
+
+    public function actionFormLk()
+    {
+        $mfo = new MfoReq();
+        $mfo->LoadData(Yii::$app->request->getRawBody());
+
+        $kfFormPay = new KfFormPay();
+        $kfFormPay->scenario = KfFormPay::SCENARIO_FORM;
+        $kfFormPay->load($mfo->Req(), '');
+        if (!$kfFormPay->validate()) {
+            return ['status' => 0, 'message' => $kfFormPay->GetError()];
+        }
+        $result = $this->actionLk();
+
+        if($result['status'] == 1) {
+            $kfFormPay->createFormElements($result['id']);
+            $result['url'] = $kfFormPay->GetPayForm($result['id']);
+        }
+        return $result;
     }
 
     public function actionLkParts()
@@ -156,26 +164,25 @@ class PayController extends Controller
         $kfPay->scenario = KfPayParts::SCENARIO_FORM;
         $kfPay->load($mfoReq->Req(), '');
         if (!$kfPay->validate()) {
-            Yii::warning("pay/lk: ".$kfPay->GetError());
+            Yii::warning("pay/lk: " . $kfPay->GetError());
             return ['status' => 0, 'message' => $kfPay->GetError()];
         }
 
-        Yii::warning('/pay/lk mfo='. $mfoReq->mfo . " sum=".$kfPay->amount . " extid=".$kfPay->extid, 'mfo');
+        Yii::warning('/pay/lk mfo=' . $mfoReq->mfo . " sum=" . $kfPay->amount . " extid=" . $kfPay->extid, 'mfo');
 
         $gate = $kfPay->IsAftGate($mfoReq->mfo) ? TCBank::$AFTGATE : TCBank::$ECOMGATE;
 
         /** @var IMfoStrategy $mfoStrategy */
         $mfoStrategy = null;
-        if($kfPay->IsAftGate($mfoReq->mfo)) {
+        if ($kfPay->IsAftGate($mfoReq->mfo)) {
             $mfoStrategy = new CreateFormMfoAftPartsStrategy($mfoReq);
         } else {
             $mfoStrategy = new CreateFormMfoEcomPartsStrategy($mfoReq);
         }
-
         return $mfoStrategy->exec();
     }
 
-    /**
+        /**
      * Автопогашение займа
      * @return array
      * @throws BadRequestHttpException
@@ -293,7 +300,6 @@ class PayController extends Controller
         return ['status' => 1, 'message' => '', 'id' => (int)$params['IdPay']];
     }
 
-
     // TODO: refact to strategies
     public function actionAutoParts()
     {
@@ -322,7 +328,7 @@ class PayController extends Controller
             return ['status' => 0, 'message' => $kfPay->GetError()];
         }
 
-        $TcbGate = new TcbGate($mfo->mfo, TCBank::$AUTOPAYGATE);
+        $TcbGate = new TcbGate($mfo->mfo, TCBank::$PARTSGATE);
         $usl = $kfPay->GetUslugAuto($mfo->mfo);
 
         if (!$usl || !$TcbGate->IsGate()) {
@@ -429,14 +435,16 @@ class PayController extends Controller
 
         $IdPay = $mfo->GetReq('id');
 
-        $tcBank = new TCBank();
-        $ret = $tcBank->confirmPay($IdPay, $mfo->mfo);
-        if ($ret && isset($ret['status']) && $ret['IdPay'] != 0) {
-            $state = ['status' => (int)$ret['status'], 'message' => (string)$ret['message'], 'rc' => isset($ret['rc']) ?(string)$ret['rc'] : ''];
-        } else {
-            $state = ['status' => 0, 'message' => 'Счет не найден'];
+        $payschets = new Payschets();
+        $params = $payschets->getSchetData($IdPay,null, $mfo->mfo);
+        if ($params) {
+            $merchBank = BankMerchant::Create($params);
+            $ret = $merchBank->confirmPay($IdPay, $mfo->mfo);
+            if ($ret && isset($ret['status']) && $ret['IdPay'] != 0) {
+                return ['status' => (int)$ret['status'], 'message' => (string)$ret['message'], 'rc' => isset($ret['rc']) ?(string)$ret['rc'] : ''];
+            }
         }
-        return $state;
+        return ['status' => 0, 'message' => 'Счет не найден'];
     }
 
 }

@@ -296,7 +296,7 @@ class WidgetController extends Controller
             if (in_array($res['status'], [1, 3])) {
                 if (!empty($params['SuccessUrl'])) {
                     //перевод на ok
-                    return $this->redirect(Payschets::RedirectUrl($params['SuccessUrl'], $id, $params['Extid']));
+                    return $this->redirect(Payschets::RedirectUrl($params['SuccessUrl'],$params['Extid']));
                 } else {
                     return $this->render('paydone', [
                         'message' => 'Оплата прошла успешно.'
@@ -307,9 +307,9 @@ class WidgetController extends Controller
                 if (!empty($params['FailedUrl'])) {
                     //перевод на fail
                     if (mb_stripos($res['message'], 'Отказ от оплаты') === false) {
-                        return $this->redirect(Payschets::RedirectUrl($params['FailedUrl'], $id, $params['Extid']));
+                        return $this->redirect(Payschets::RedirectUrl($params['FailedUrl'], $params['Extid']));
                     } else {
-                        return $this->redirect(Payschets::RedirectUrl($params['CancelUrl'], $id, $params['Extid']));
+                        return $this->redirect(Payschets::RedirectUrl($params['CancelUrl'], $params['Extid']));
                     }
                 } else {
                     return $this->render('paycancel', ['message' => $res['message']]);

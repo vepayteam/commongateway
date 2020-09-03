@@ -2,6 +2,7 @@
 
 namespace app\modules\partner\controllers;
 
+use app\models\bank\BankMerchant;
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\kkt\OnlineKassa;
@@ -171,15 +172,8 @@ class StatController extends Controller
 
             $ps = $payschets->getSchetData(Yii::$app->request->post('id'), '', $org);
             if ($ps && $ps['Status'] == 1) {
-                //$params['Bank'] == 2
-                if ($ps['IdUsluga'] == 1) {
-                    //регистрация карты
-                    $TcbGate = new TcbGate($ps['IdOrg'], TCBank::$AUTOPAYGATE);
-                } else {
-                    $TcbGate = new TcbGate($ps['IDPartner'], null, $ps['IsCustom']);
-                }
-                $Merchant = new TCBank($TcbGate);
-                $res = $Merchant->reversOrder($ps['ID']);
+                $merchBank = BankMerchant::Create($ps);
+                $res = $merchBank->reversOrder($ps['ID']);
                 if ($res['state'] == 1) {
                     $payschets->SetReversPay($ps['ID']);
                     return ['status' => 1, 'message' => 'Операция отменена'];
@@ -328,7 +322,7 @@ class StatController extends Controller
         $fltr = new StatFilter();
         $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
         return $this->render('saledraft', [
-            'uslugilist' => $fltr->getTypeUslugLiust(TU::InAllBySaledraft())
+            'uslugilist' => $fltr->getTypeUslugLiust(TU::InAll())
         ]);
     }
 

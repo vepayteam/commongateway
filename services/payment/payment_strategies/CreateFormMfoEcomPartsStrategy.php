@@ -10,6 +10,7 @@ use app\models\kfapi\KfPayParts;
 use app\models\mfo\MfoReq;
 use app\models\payonline\CreatePay;
 use app\models\PayschetPart;
+use app\models\TU;
 use Yii;
 use yii\base\Exception;
 use yii\mutex\FileMutex;
@@ -22,7 +23,7 @@ class CreateFormMfoEcomPartsStrategy implements IMfoStrategy
 
     public function __construct(MfoReq $mfoReq)
     {
-        $this->gate = TCBank::$AFTGATE;
+        $this->gate = TCBank::$PARTSGATE;
         $this->mfoReq = $mfoReq;
     }
 
@@ -36,8 +37,8 @@ class CreateFormMfoEcomPartsStrategy implements IMfoStrategy
             return ['status' => 0, 'message' => $kfPay->GetError()];
         }
 
-        $TcbGate = new TcbGate($this->mfoReq->mfo, TCBank::$ECOMGATE);
-        $usl = $kfPay->GetUslug($this->mfoReq->mfo, TCBank::$ECOMGATE);
+        $TcbGate = new TcbGate($this->mfoReq->mfo, $this->gate);
+        $usl = $kfPay->GetUslug($this->mfoReq->mfo, TU::$POGASHECOMPARTS);
 
         if (!$usl || !$TcbGate->IsGate()) {
             return ['status' => 0, 'message' => 'Нет шлюза'];

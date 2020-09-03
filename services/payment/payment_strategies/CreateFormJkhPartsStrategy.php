@@ -28,7 +28,7 @@ class CreateFormJkhPartsStrategy implements IPaymentStrategy
 
     public function __construct(KfRequest $kfRequest)
     {
-        $this->gate = TCBank::$JKHGATE;
+        $this->gate = TCBank::$PARTSGATE;
         $this->request = $kfRequest;
     }
 
@@ -42,18 +42,9 @@ class CreateFormJkhPartsStrategy implements IPaymentStrategy
         }
 
         $usl = $this->getUsl();
-        if (!$usl) {
+        $tcbGate = $this->getTkbGate($this->request->IdPartner);
+        if (!$usl || !$tcbGate->IsGate()) {
             return ['status' => 0, 'message' => 'Услуга не найдена'];
-        }
-
-        foreach ($kfPay->parts as $part) {
-            $tcbGate = $this->getTkbGate($part['merchant_id']);
-
-            if(!$tcbGate->IsGate()) {
-                return [
-                    'status' => 0,
-                    'message' => 'Услуга не найдена'];
-            }
         }
 
         Yii::warning('/merchant/pay id='. $this->request->IdPartner . " sum=".$kfPay->amount . " extid=".$kfPay->extid, 'mfo');
@@ -93,12 +84,11 @@ class CreateFormJkhPartsStrategy implements IPaymentStrategy
 
     private function getUsl()
     {
-
         return Yii::$app->db->createCommand("
             SELECT `ID` 
             FROM `uslugatovar`
             WHERE `IDPartner` = :IDMFO AND `IsCustom` = :TYPEUSL AND `IsDeleted` = 0
-        ", [':IDMFO' => $this->request->IdPartner, ':TYPEUSL' => TU::$JKH]
+        ", [':IDMFO' => $this->request->IdPartner, ':TYPEUSL' => TU::$JKHPARTS]
         )->queryScalar();
     }
 }

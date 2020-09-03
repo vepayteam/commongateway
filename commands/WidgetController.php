@@ -5,6 +5,7 @@ namespace app\commands;
 use app\models\bank\TCBank;
 use app\models\bank\WithdrawTCBankIterable;
 use app\models\mfo\DistributionReports;
+use app\models\payonline\Partner;
 use app\models\Payschets;
 use app\models\planner\AlarmsSend;
 use app\models\planner\OtchToEmail;
@@ -20,6 +21,7 @@ use yii\console\Controller;
 use app\models\payonline\OrderNotif;
 use app\models\planner\CheckpayCron;
 use app\models\planner\Notification;
+use yii\db\Transaction;
 use yii\helpers\VarDumper;
 
 class WidgetController extends Controller
@@ -210,5 +212,64 @@ class WidgetController extends Controller
 
         $ReceiveTelegram = new ReceiveTelegram();
         $ReceiveTelegram->execute();
+    }
+
+    public function actionSyncBalance($idPartner, $type)
+    {
+        $partner = Partner::findOne(['ID' => $idPartner]);
+
+        if(!$partner || !in_array($type, ['in', 'out'])) {
+            echo "Error!";
+            return;
+        }
+
+        $table = $type == 'in' ? 'partner_orderin' : 'partner_orderout';
+        $field = $type == 'in' ? 'BalanceIn' : 'BalanceOut';
+
+        $q = sprintf("SELECT SUM(Summ) AS Summ FROM %s WHERE IdPartner = %d", $table, $idPartner);
+        $summ = Yii::$app->db->createCommand($q)->queryScalar();
+
+        $old = $partner[$field];
+        $partner[$field] = $summ;
+        $partner->save();
+        echo sprintf('Old: %d New %d', $old, $summ);
+    }
+
+    public function actionCorrectBalance($idPartner, $type, $summ)
+    {
+        $partner = Partner::findOne(['ID' => $idPartner]);
+
+        if(!$partner || !in_array($type, ['in', 'out'])) {
+            echo "Error!";
+            return;
+        }
+
+        $field = $type == 'in' ? 'BalanceIn' : 'BalanceOut';
+
+        $transaction = Yii::$app->db->beginTransaction();
+
+        try {
+            $partner = Partner::findOne(['ID' => $idPartner]);
+            $oldBalance = $partner[$field];
+            $newBalance = $partner[$field] + $summ;
+            $q = sprintf(
+                'INSERT INTO partner_orderin (`IdPartner`, `Comment`, `Summ`, `DateOp`, `TypeOrder`, `SummAfter`) VALUES (%d, \'correct\', %d, %d, 0, %d)',
+                $idPartner,
+                $summ,
+                time(),
+                $newBalance
+            );
+            Yii::$app->db->createCommand($q)->execute();
+
+            $partner[$field] = $newBalance;
+            $partner->save();
+            $transaction->commit();
+            echo "Old: $oldBalance New: $newBalance";
+
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            throw $e;
+        }
+
     }
 }

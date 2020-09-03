@@ -34,6 +34,9 @@ class SendEmail extends Model
     public function send($email, $emailfrom, $subject, $content)
     {
         $emailfrom = [empty($emailfrom) ? $this->fromEmail : $emailfrom => 'Vepay'];
+        if (Yii::$app->params['TESTMODE'] == "Y") {
+            $email = "ayuriev@vepay.online";
+        }
         try {
             $this->mailer->compose('@app/mail/layouts/html', ['content' => $content])
                 ->setTo($this->explodeMail($email))
