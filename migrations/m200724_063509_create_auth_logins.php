@@ -15,6 +15,7 @@ class m200724_063509_create_auth_logins extends Migration
     {
         $this->createTable(User::tableName(), [
             'ID' => $this->primaryKey()->unsigned(),
+            'PartnerId' => $this->integer()->defaultValue(0),
             'Email' => $this->string(),
             'Login' => $this->string(),
             'PhoneNumber' => $this->string(),

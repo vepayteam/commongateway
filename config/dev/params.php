@@ -7,7 +7,6 @@ return [
     'buhEmail' => 'support@vepay.online',
     'DEVMODE' => 'Y',
     'TESTMODE' => 'Y',
-    'accountServiceUrl' => 'http://accounts.192-168-110-1.nip.io/api',
 	'key' => '',
     'keycancel' => '',
     'info' => [
@@ -38,6 +37,14 @@ return [
         'sno' => "",
         'host' => '',
         'token' => ''
-    ]
+    ],
+
+    'services' => [
+        'accounts' => [
+            'url' => 'http://vpbc-102-test.192-168-110-2.nip.io/api',
+            'superuserLogin' => 'superuser',
+            'superuserPassword' => 'Default12345',
+        ],
+    ],
 	
 ];

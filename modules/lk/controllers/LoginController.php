@@ -7,6 +7,7 @@ namespace app\modules\lk\controllers;
 use app\models\api\CorsTrait;
 use app\services\auth\AuthService;
 use app\services\auth\models\LoginForm;
+use app\services\auth\models\RegForm;
 use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
@@ -51,16 +52,13 @@ class LoginController extends Controller
     {
         $loginForm = new LoginForm();
 
-        if (Yii::$app->request->isPost) {
-            if(!$loginForm->load(Yii::$app->request->post()) || !$loginForm->validate()) {
-                return $this->render('in', [
-                    'loginForm' => $loginForm
-                ]);
-            }
-
-            if($this->getAuthService()->login($loginForm)) {
-                return $this->redirect('/lk/main/');
-            }
+        if (
+            Yii::$app->request->isPost
+            && $loginForm->load(Yii::$app->request->post())
+            && $loginForm->validate()
+            && $this->getAuthService()->login($loginForm)
+        ) {
+            return $this->redirect('/lk/');
         }
 
         return $this->render('in', [
@@ -68,30 +66,28 @@ class LoginController extends Controller
         ]);
     }
 
-
-    public function actionInByPhone()
-    {
-        $loginForm = new LoginForm();
-
-        if (Yii::$app->request->isPost) {
-            if(!$loginForm->load(Yii::$app->request->post()) || !$loginForm->validate()) {
-                return $this->render('in', compact($loginForm));
-            }
-            return $this->inByPhonePost();
-        }
-
-        return $this->render('in-by-phone', compact($loginForm));
-
-    }
-
-    private function inByPhonePost()
-    {
-
-    }
-
     public function actionReg()
     {
-        return $this->render('reg');
+        $regForm = new RegForm();
+
+        if(
+            Yii::$app->request->isPost
+            && $regForm->load(Yii::$app->request->post())
+            && $regForm->validate()
+            && $this->getAuthService()->reg($regForm)
+        ) {
+            return $this->redirect('/lk/login/in');
+        }
+
+        return $this->render('reg', [
+            'regForm' => $regForm
+        ]);
+    }
+
+    public function actionOut()
+    {
+        $this->getAuthService()->logout();
+        return $this->redirect('/lk/');
     }
 
     /**

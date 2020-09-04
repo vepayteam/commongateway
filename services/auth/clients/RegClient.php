@@ -8,24 +8,25 @@ use app\services\auth\AuthService;
 use app\services\auth\models\IClientForm;
 use app\services\auth\models\LoginForm;
 use PhpAmqpLib\Message\AMQPMessage;
+use Requests;
 use Yii;
 use yii\base\Model;
 use yii\web\BadRequestHttpException;
 
-class RefreshTokenClient extends BaseClient
+class RegClient extends BaseClient
 {
-    protected $uri = '/refresh_token';
+    protected $uri = '/add_account';
 
-    public function call(IClientForm $refreshForm)
+    public function call(IClientForm $regForm)
     {
-        $data = $refreshForm->asArray();
+        $data = $regForm->asArray();
         $response = $this->sendRequest($data);
 
-        if($response) {
+        if($response && array_key_exists('result', $response)) {
             return $response;
         }
 
-        throw new BadRequestHttpException('Ошибка авторизации');
+        throw new BadRequestHttpException('Ошибка регистрации');
     }
 
 

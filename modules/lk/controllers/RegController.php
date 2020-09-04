@@ -5,7 +5,9 @@ namespace app\modules\lk\controllers;
 
 
 use app\models\api\CorsTrait;
+use app\models\payonline\Partner;
 use app\services\auth\AuthService;
+use app\services\auth\models\User;
 use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
@@ -49,33 +51,29 @@ class RegController extends Controller
 
     public function actionCreate()
     {
-        if(!$this->isAuthCanCreateUser()) {
-            throw new ForbiddenHttpException();
-        }
         $data = json_decode(Yii::$app->request->rawBody, true);
 
-
-
-
-
-    }
-
-    protected function isAuthCanCreateUser()
-    {
-        $headers = Yii::$app->request->headers;
-
-        if(!array_key_exists('Authorization', $headers)) {
-            return false;
+        if(!$this->getAuthService()->isCanRegUser($data['access_token'])) {
+            throw new ForbiddenHttpException();
         }
 
-        $token = explode(' ', $headers['Authorization'])[1];
-        $tokenData = $this->getAuthService()->validateToken($token);
+        $partner = Partner::findOne(['Name' => $data['merchant_name']]);
 
-        if(!in_array('admin', $tokenData['role_names'])) {
-            return false;
+        if(!$partner) {
+            throw new BadRequestHttpException();
         }
 
-        return true;
+        $user = new User();
+        $user->PartnerId = $partner->ID;
+        $user->Login = $data['login'];
+        $user->Email = $data['email'];
+        $user->PhoneNumber = $data['phone_number'];
+
+        if($user->save()) {
+            Yii::$app->response->statusCode = 201;
+        } else {
+            throw new BadRequestHttpException();
+        }
     }
 
     /**

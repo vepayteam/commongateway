@@ -12,6 +12,7 @@ use yii\web\IdentityInterface;
  * Class User
  * @package app\services\auth\models
  * @property int $ID
+ * @property int $PartnerId
  * @property string $Email
  * @property string $Login
  * @property string $PhoneNumber

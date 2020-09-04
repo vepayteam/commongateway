@@ -22,7 +22,7 @@ class LoginClient extends BaseClient
         $data = $loginForm->asArray();
         $response = $this->sendRequest($data);
 
-        if($response) {
+        if($response && array_key_exists('result', $response)) {
             return $response;
         }
 

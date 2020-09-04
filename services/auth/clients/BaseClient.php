@@ -19,7 +19,7 @@ abstract class BaseClient
 
     public function __construct()
     {
-        $this->url = Yii::$app->params['accountServiceUrl'];
+        $this->url = Yii::$app->params['services']['accounts']['url'];
     }
 
     abstract function call(IClientForm $model);

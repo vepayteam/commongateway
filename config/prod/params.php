@@ -38,6 +38,14 @@ return [
         'sno' => "",
         'host' => '',
         'token' => ''
-    ]
+    ],
+
+    'services' => [
+        'accounts' => [
+            'url' => '',
+            'superuserLogin' => 'superuser',
+            'superuserPassword' => '',
+        ],
+    ],
 	
 ];

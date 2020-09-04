@@ -38,6 +38,14 @@ return [
         'sno' => "",
         'host' => '',
         'token' => ''
-    ]
+    ],
+
+    'services' => [
+        'accounts' => [
+            'url' => 'http://vpbc-102-test.192-168-110-2.nip.io/api',
+            'superuserLogin' => 'superuser',
+            'superuserPassword' => 'Default12345',
+        ],
+    ],
 	
 ];
