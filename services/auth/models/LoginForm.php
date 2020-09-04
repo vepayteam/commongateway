@@ -26,7 +26,6 @@ class LoginForm extends Model implements IClientForm
 
     public function asArray()
     {
-
         return [
             $this->typeLogin => $this->login,
             'password' => $this->password,
@@ -40,8 +39,9 @@ class LoginForm extends Model implements IClientForm
      */
     public function load($data, $formName = null)
     {
+        parent::load($data, $formName);
         $emailPattern = '/^[a-zA-Z0-9!#$%&\'*+\\/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&\'*+\\/=?^_`{|}~-]+)*@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$/iu';
-        $phonePattern = '/\+?[0-9]{10:11}/iu';
+        $phonePattern = '/^\+?[0-9]{10,11}$/iu';
 
         $this->typeLogin = self::BASIC_TYPE_LOGIN;
         if(preg_match($emailPattern, $this->login)) {
@@ -49,7 +49,6 @@ class LoginForm extends Model implements IClientForm
         } elseif (preg_match($phonePattern, $this->login)) {
             $this->typeLogin = self::PHONE_TYPE_LOGIN;
         }
-        return parent::load($data, $formName);
+        return true;
     }
-
 }

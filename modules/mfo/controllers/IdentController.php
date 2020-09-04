@@ -114,7 +114,5 @@ class IdentController extends Controller
         }
 
         return ['status' => 0];
-
     }
-
 }

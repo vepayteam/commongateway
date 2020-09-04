@@ -28,7 +28,4 @@ class RegClient extends BaseClient
 
         throw new BadRequestHttpException('Ошибка регистрации');
     }
-
-
-
 }

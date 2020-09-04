@@ -45,6 +45,7 @@ return [
             'url' => '',
             'superuserLogin' => 'superuser',
             'superuserPassword' => '',
+            'canRegUserRole' => 'php_account_admin',
         ],
     ],
 	

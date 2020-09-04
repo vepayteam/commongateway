@@ -23,5 +23,4 @@ class RegCreateForm extends Model
             'refresh_token' => $this->refreshToken,
         ];
     }
-
 }
