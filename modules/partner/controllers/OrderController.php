@@ -85,6 +85,7 @@ class OrderController extends Controller
     public function actionAdd()
     {
         $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+        $IdPart = UserLk::getPartnerId(Yii::$app->user);
         if ($IsAdmin) {
             $sel = $this->selectPartner($IdPart);
             if (empty($sel)) {
@@ -112,9 +113,23 @@ class OrderController extends Controller
     {
         if (Yii::$app->request->isAjax) {
             Yii::$app->response->format = Response::FORMAT_JSON;
+            $orderto = Yii::$app->request->post();
+
+            $OrderTo = $orderto['OrderPay']['OrderTo'] ?? [];
+            $basket = null;
+            foreach($OrderTo as $key => $value) {
+                foreach($value as $k => $val) {
+                    $basket[$k][$key] = $val;
+                }
+            }
 
             $order = new OrderPay();
-            $order->load(Yii::$app->request->post(), 'OrderPay');
+            $order->load($orderto, 'OrderPay');
+
+            if($basket) {
+                $order->OrderTo = json_encode($basket);
+            }
+
             if ($order->validate()) {
                 $order->save(false);
 
