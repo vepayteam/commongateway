@@ -355,6 +355,13 @@ class PayController extends Controller
                 }
             }
 
+            // TODO:
+            if($params['IdUsluga'] == 1 && $params['ExtOrg'] == '3') {
+                return $this->redirect("https://cashtoyou.ru/registration/third/");
+            } elseif ($params['IdUsluga'] == 1 && $params['IDPartner'] == '8') {
+                return $this->redirect("https://oneclickmoney.ru/registration/third/");
+            }
+
             if (in_array($res['status'], [1, 3])) {
                 if (!empty($params['SuccessUrl'])) {
                     //перевод на ok
