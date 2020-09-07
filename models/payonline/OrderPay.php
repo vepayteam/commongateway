@@ -21,6 +21,7 @@ use Yii;
  * @property int $StateOrder status - 0 - ojidaet 1 - oplachen 2 - otshibka
  * @property string $IdPaySchet id pay_schet
  * @property int $IdDeleted 1 - udaleno
+ * @property string $OrderTo корзина
  */
 class OrderPay extends \yii\db\ActiveRecord
 {
@@ -44,6 +45,7 @@ class OrderPay extends \yii\db\ActiveRecord
             [['EmailTo'], 'email'],
             [['SumOrder'], 'number'],
             [['EmailTo', 'SmsTo'], 'string', 'max' => 50],
+            // [['OrderTo'], 'string'],
         ];
     }
 
@@ -67,6 +69,7 @@ class OrderPay extends \yii\db\ActiveRecord
             'StateOrder' => 'Статус',
             'IdPaySchet' => 'id pay_schet',
             'IdDeleted' => '1 - udaleno',
+            'OrderTo' => 'корзина',
         ];
     }
 
@@ -83,6 +86,7 @@ class OrderPay extends \yii\db\ActiveRecord
             $this->DateAdd = time();
         }
         $this->SumOrder = round($this->SumOrder * 100.0);
+        // $this->OrderTo = json_encode($this->OrderTo);
         return parent::beforeSave($insert);
     }
 
