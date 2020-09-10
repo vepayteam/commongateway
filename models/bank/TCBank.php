@@ -885,26 +885,10 @@ class TCBank implements IBank
         $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
 
         if (isset($ans['xml']) && !empty($ans['xml'])) {
-            $xml = $this->parseAns($ans['xml']);
-            if (isset($xml['Status']) && $xml['Status'] == '0') {
-                $res = "";
-                if (isset($xml['Inn'])) {
-                    $res1 = $xml['Inn']['Status'];
-                }
-                if (isset($xml['Snils'])) {
-                    $res2 = $xml['Snils']['Status'];
-                }
-                if (isset($xml['Passport'])) {
-                    $res = $xml['Passport']['Status'];
-                }
-                if (isset($xml['PassportDeferred'])) {
-                    $res4 = $xml['PassportDeferred']['Status'];
-                }
-                return ['status' => $res, 'message' => ''];
-            }
+            return ['status' => 1, 'result' => $ans['xml']];
         }
 
-        return ['status' => 0, 'message' => ''];
+        return ['status' => 0, 'result' => ''];
     }
 
     /**
