@@ -107,7 +107,7 @@ class IdentificationUser
         Yii::$app->db->createCommand()->update(
             'user_identification', [
                 'StateOp' => $status,
-                'ErrorMessage' => $message
+                'ErrorMessage' => json_encode($message)
             ], '`ID` = :ID ', [':ID' => $id]
         )->execute();
 
