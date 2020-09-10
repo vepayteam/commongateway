@@ -109,7 +109,7 @@ class IdentController extends Controller
                 }
                 return $ret;
             } elseif ($iu->StateOp > 0) {
-                return ['status' => $iu->StateOp, 'result' => $iu->StateOp];
+                return ['status' => $iu->StateOp, 'result' => json_decode($iu->Status)];
             }
         }
 
