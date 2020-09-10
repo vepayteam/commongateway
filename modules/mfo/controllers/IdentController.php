@@ -105,11 +105,11 @@ class IdentController extends Controller
                 $tcBank = new TCBank($TcbGate);
                 $ret = $tcBank->personGetIndentResult($id);
                 if ($ret) {
-                    $iu->SetStatus($id, $ret['status'], $ret['message']);
+                    $iu->SetStatus($id, $ret['status'], $ret['result']);
                 }
-                return ['status' => $ret['status'], 'message' => $ret['message']];
+                return $ret;
             } elseif ($iu->StateOp > 0) {
-                return ['status' => $iu->StateOp, 'message' => $iu->StateOp];
+                return ['status' => $iu->StateOp, 'result' => $iu->StateOp];
             }
         }
 
