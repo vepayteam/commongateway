@@ -98,9 +98,8 @@ class IdentificationUser
 
     public function SetTansac($id, $transac)
     {
-        Yii::$app->db->createCommand()->update('user_identification', [
-            'TransNum' => $transac, '`ID` = :ID ', [':ID' => $id]
-        ])->execute();
+        $q = sprintf('UPDATE `user_identification` SET `TransNum` = %s WHERE `ID` = %d', $transac, $id);
+        Yii::$app->db->createCommand($q)->execute();
     }
 
     public function SetStatus($id, $status, $message)
