@@ -860,7 +860,7 @@ class TCBank implements IBank
         Yii::warning("isXml: " . (isset($ans['xml']) && !empty($ans['xml'])), 'merchant');
         if (isset($ans['xml']) && !empty($ans['xml'])) {
             $xml = $this->parseAns($ans['xml']);
-            Yii::warning("xml: " . json_encode($xml), 'merchant');
+            Yii::warning("xml: " . $xml, 'merchant');
             Yii::warning("isOrderId: " . (isset($xml['OrderId']) && !empty($xml['OrderId'])), 'merchant');
             if (isset($ans['xml']['OrderId']) && !empty($ans['xml']['OrderId'])) {
                 return ['status' => 1, 'transac' => $ans['xml']['OrderId']];
