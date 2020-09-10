@@ -76,7 +76,8 @@ class IdentificationUser
             SELECT
                 `ID`,
                 `StateOp`,
-                `ErrorMessage`
+                `ErrorMessage`,
+                `Status`
             FROM
                 `user_identification`   
             WHERE
@@ -104,13 +105,11 @@ class IdentificationUser
 
     public function SetStatus($id, $status, $message)
     {
-        Yii::$app->db->createCommand()->update(
-            'user_identification', [
-                'StateOp' => $status,
-                'ErrorMessage' => json_encode($message)
-            ], '`ID` = :ID ', [':ID' => $id]
-        )->execute();
-
+        $q = sprintf(
+            'UPDATE `user_identification` SET `StateOp` = %d, `Status` = \'%s\' WHERE `ID` = %d',
+            $status, json_encode($message), $id
+        );
+        Yii::$app->db->createCommand($q)->execute();
     }
 
 }
