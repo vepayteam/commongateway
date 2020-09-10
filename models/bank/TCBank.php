@@ -857,7 +857,7 @@ class TCBank implements IBank
 
         $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action, $addHead);
 
-        Yii::warning("isXml: " . (isset($ans['xml']) && !empty($ans['xml'])), 'merchant');
+        Yii::warning("isXml: " . (isset($ans['xml']) && !empty($ans['xml'])), 'test');
         if (isset($ans['xml']) && !empty($ans['xml'])) {
             $xml = $this->parseAns($ans['xml']);
             Yii::warning("xmlStr: " . $ans['xml'], 'merchant');
