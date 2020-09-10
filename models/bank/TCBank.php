@@ -857,12 +857,12 @@ class TCBank implements IBank
 
         $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action, $addHead);
 
-        Yii::warning("isXml: " . (isset($ans['xml']) && !empty($ans['xml'])), 'test');
+        Yii::warning("isXml: " . (isset($ans['xml']) && !empty($ans['xml'])), 'merchant');
         if (isset($ans['xml']) && !empty($ans['xml'])) {
             $xml = $this->parseAns($ans['xml']);
-            Yii::warning("xmlStr: " . $ans['xml'], 'test');
-            Yii::warning("xml: " . json_encode($xml), 'test');
-            Yii::warning("isOrderId: " . (isset($xml['OrderId']) && !empty($xml['OrderId'])), 'test');
+            Yii::warning("xmlStr: " . $ans['xml'], 'merchant');
+            Yii::warning("xml: " . json_encode($xml), 'merchant');
+            Yii::warning("isOrderId: " . (isset($xml['OrderId']) && !empty($xml['OrderId'])), 'merchant');
             if (isset($xml['OrderId']) && !empty($xml['OrderId'])) {
                 return ['status' => 1, 'transac' => $xml['OrderId']];
             }
