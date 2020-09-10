@@ -819,11 +819,11 @@ class TCBank implements IBank
         $action = "/api/government/identification/simplifiedpersonidentification";
         $queryData = [
             'ExtId' => $id,
-            'Name' => $params['nam'],
-            'Fam' => $params['fam'],
-            'Otch' => $params['otc'],
-            'PaspSer' => strval($params['paspser']),
-            'PaspNum' => strval($params['paspnum'])
+            'FirstName' => $params['nam'],
+            'LastName' => $params['fam'],
+            'Patronymic' => $params['otc'],
+            'Series' => strval($params['paspser']),
+            'Number' => strval($params['paspnum'])
         ];
 
         if (!empty($params['birth'])) {
@@ -836,16 +836,16 @@ class TCBank implements IBank
             $queryData['Snils'] = $params['snils'];
         }
         if (!empty($params['paspcode'])) {
-            $queryData['PaspPodr'] = $params['paspcode'];
+            $queryData['IssueData'] = $params['paspcode'];
         }
         if (!empty($params['paspdate'])) {
-            $queryData['PaspDate'] = $params['paspdate'];
+            $queryData['IssueCode'] = $params['paspdate'];
         }
         if (!empty($params['paspvid'])) {
-            $queryData['PaspVidan'] = $params['paspvid'];
+            $queryData['Issuer'] = $params['paspvid'];
         }
         if (!empty($params['phone'])) {
-            $queryData['Phone'] = $params['phone'];
+            $queryData['PhoneNumber'] = $params['phone'];
         }
 
         $queryData = Json::encode($queryData);
