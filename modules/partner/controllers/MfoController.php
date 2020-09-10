@@ -135,26 +135,7 @@ class MfoController extends Controller
             }
         }
 
-        return $this->render('parts_balance', compact('partners', 'data'));
-        if (UserLk::IsAdmin(Yii::$app->user)) {
-            $sel = $this->selectPartner($idpartner, false, true);
-            if (empty($sel)) {
-
-                $partner = Partner::findOne(['ID' => $idpartner]);
-                $MfoBalance = new MfoBalance($partner);
-
-                return $this->render('parts_balance');
-            } else {
-                return $sel;
-            }
-        } else {
-
-            $idpartner = UserLk::getPartnerId(Yii::$app->user);
-            $partner = Partner::findOne(['ID' => $idpartner]);
-
-            $MfoBalance = new MfoBalance($partner);
-            return $this->render('parts_balance');
-        }
+        return $this->render('parts_balance', compact('partners', 'data', 'partsBalanceForm'));
     }
 
     /**

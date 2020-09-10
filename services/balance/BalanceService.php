@@ -16,10 +16,8 @@ class BalanceService
 
         $q = PayschetPart::find()
             ->addSelect([
-                'pay_schet_parts.PartnerId',
-                'pay_schet_parts.PayschetId',
-                'pay_schet.Extid',
-                'pay_schet_parts.Amount',
+                'pay_schet.*',
+                'pay_schet_parts.*',
             ])
             ->innerJoin('pay_schet', 'pay_schet.ID = pay_schet_parts.PayschetId')
             ->where([

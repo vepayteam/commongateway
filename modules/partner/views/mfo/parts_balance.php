@@ -8,6 +8,8 @@
 /* @var $partners array */
 /* @var $data array */
 
+/* @var $partsBalanceForm \app\services\balance\models\PartsBalanceForm */
+
 use app\models\partner\UserLk;
 use yii\web\View;
 
@@ -25,6 +27,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                 <h5>Выписка</h5>
             </div>
             <div class="ibox-content">
+
                 <form class="form-horizontal" id="parts-balance__form" method="post">
 
                     <div class="form-group">
@@ -39,10 +42,14 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                 </div>
                             </div>
                             <div class="input-daterange input-group">
-                                <input type="text" name="datefrom" value="<?= date("d.m.Y") ?> 00:00" maxlength="10"
+
+                                <input type="text" name="PartnerBalanceForm[datefrom]"
+                                       value="<?= $partnerBalanceForm['datefrom'] ?? date("d.m.Y") ?> 00:00" maxlength="10"
                                        class="form-control">
                                 <span class="input-group-addon">по</span>
-                                <input type="text" name="dateto" value="<?= date("d.m.Y") ?> 23:59" maxlength="10"
+                                <input type="text" name="PartnerBalanceForm[dateto]"
+                                       value="<?= $partnerBalanceForm['dateto'] ?? date("d.m.Y") ?> 23:59"
+                                       maxlength="10"
                                        class="form-control">
                             </div>
                         </div>
@@ -52,9 +59,15 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         <div class="col-sm-offset-2 col-sm-4">
                             <?php if (UserLk::IsAdmin(Yii::$app->user)): ?>
                                 <label for="parts-balance__form__partner-select">Партнер</label>
-                                <select class="form-control" name="partnerId" id="parts-balance__form__partner-select">
+                                <select class="form-control" name="PartnerBalanceForm[partnerId]"
+                                        id="parts-balance__form__partner-select">
                                     <?php foreach ($partners as $partner): ?>
-                                        <option value="<?= $partner->ID ?>"><?= $partner->Name ?></option>
+                                        <option
+                                                value="<?= $partner->ID ?>"
+                                            <?= ($partnerBalanceForm['partnerId'] && $partnerBalanceForm['partnerId'] == $partner->ID) ? 'selected="selected' : '' ?>
+                                        >
+                                            <?= $partner->Name ?>
+                                        </option>
                                     <?php endforeach; ?>
                                 </select>
                             <?php else: ?>
@@ -62,7 +75,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                        value="<?= UserLk::getPartnerId(Yii::$app->user) ?>">
                             <?php endif; ?>
                             <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
-                            <input name="sort" type="hidden" id="sortstatem" value="0">
+                            <input name="PartnerBalanceForm[sort]" type="hidden" id="sortstatem" value="0">
                             <input id="parts-balance__form__submit" type="submit" class="btn btn-sm btn-primary"
                                    value="Найти" style="margin-top: 20px">
                         </div>
@@ -79,17 +92,20 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                 </div>
                 <div class="table-responsive" id="parts-balance__result">
                     <div class="panel-group" id="parts-balance__accordion" role="tablist" aria-multiselectable="true">
-                        <?php if($data): ?>
+                        <?php if ($data): ?>
                             <?php foreach ($data as $partnerId => $partnerBlock): ?>
                                 <div class="panel panel-default">
                                     <div class="panel-heading" role="tab" id="headingOne">
                                         <h4 class="panel-title">
-                                            <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse-<?=$partnerId?>" aria-expanded="true" aria-controls="collapseOne">
-                                                <?=$partners[$partnerId]->Name?>
+                                            <a role="button" data-toggle="collapse" data-parent="#accordion"
+                                               href="#collapse-<?= $partnerId ?>" aria-expanded="true"
+                                               aria-controls="collapseOne">
+                                                <?= $partners[$partnerId]->Name ?>
                                             </a>
                                         </h4>
                                     </div>
-                                    <div id="collapse-<?=$partnerId?>" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+                                    <div id="collapse-<?= $partnerId ?>" class="panel-collapse collapse" role="tabpanel"
+                                         aria-labelledby="headingOne">
                                         <div class="panel-body">
                                             <table class="table table-striped">
                                                 <thead>
@@ -100,11 +116,11 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                                 </tr>
                                                 </thead>
                                                 <tbody>
-                                                <?php foreach($partnerBlock as $row): ?>
+                                                <?php foreach ($partnerBlock as $row): ?>
                                                     <tr>
-                                                        <th scope="row"><?=$row['PayschetId']?></th>
-                                                        <td><?=$row['Extid']?></td>
-                                                        <td><?=$row['Amount']/100?></td>
+                                                        <th scope="row"><?= $row['PayschetId'] ?></th>
+                                                        <td><?= $row['Extid'] ?></td>
+                                                        <td><?= $row['Amount'] / 100 ?></td>
                                                     </tr>
                                                 <?php endforeach; ?>
                                                 </tbody>
