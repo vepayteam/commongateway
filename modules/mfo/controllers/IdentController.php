@@ -100,17 +100,13 @@ class IdentController extends Controller
         $id = $iu->FindReq($inId, $mfo->mfo);
 
         if ($id) {
-            if ($iu->StateOp == 0) {
-                $TcbGate = new TcbGate($mfo->mfo, TCBank::$ECOMGATE);
-                $tcBank = new TCBank($TcbGate);
-                $ret = $tcBank->personGetIndentResult($id);
-                if ($ret) {
-                    $iu->SetStatus($id, $ret['status'], $ret['result']);
-                }
-                return $ret;
-            } elseif ($iu->StateOp > 0) {
-                return ['status' => $iu->StateOp, 'result' => json_decode($iu->Status)];
+            $TcbGate = new TcbGate($mfo->mfo, TCBank::$ECOMGATE);
+            $tcBank = new TCBank($TcbGate);
+            $ret = $tcBank->personGetIndentResult($id);
+            if ($ret) {
+                $iu->SetStatus($id, $ret['status'], $ret['result']);
             }
+            return $ret;
         }
 
         return ['status' => 0];
