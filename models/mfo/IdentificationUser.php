@@ -10,6 +10,7 @@ class IdentificationUser
 {
     public $StateOp;
     public $ErrorMessage;
+    public $Status;
     /**
      * @param $user
      * @param $extId
@@ -91,6 +92,7 @@ class IdentificationUser
         if ($res) {
             $this->StateOp = $res['StateOp'];
             $this->ErrorMessage = $res['ErrorMessage'];
+            $this->Status = $res['Status'];
             return $res['ID'];
         } else {
             return 0;
