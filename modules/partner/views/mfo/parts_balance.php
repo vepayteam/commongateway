@@ -7,10 +7,12 @@
 
 /* @var $partners array */
 /* @var $data array */
+/* @var $columns array */
 
 /* @var $partsBalanceForm \app\services\balance\models\PartsBalanceForm */
 
 use app\models\partner\UserLk;
+use app\services\balance\models\PartsBalanceForm;
 use yii\web\View;
 
 $this->title = "баланс по разбивке";
@@ -19,6 +21,8 @@ $this->params['breadtitle'] = "Баланс по разбивке";
 $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 
 ?>
+
+
 
 <div class="row">
     <div class="col-sm-12">
@@ -43,12 +47,12 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                             </div>
                             <div class="input-daterange input-group">
 
-                                <input type="text" name="PartnerBalanceForm[datefrom]"
-                                       value="<?= $partnerBalanceForm['datefrom'] ?? date("d.m.Y") ?> 00:00" maxlength="10"
+                                <input id="part-balance__form__datefrom" type="text" name="datefrom"
+                                       value="<?=date("d.m.Y")?> 00:00" maxlength="10"
                                        class="form-control">
                                 <span class="input-group-addon">по</span>
-                                <input type="text" name="PartnerBalanceForm[dateto]"
-                                       value="<?= $partnerBalanceForm['dateto'] ?? date("d.m.Y") ?> 23:59"
+                                <input id="part-balance__form__dateto" type="text" name="dateto"
+                                       value="<?=date("d.m.Y")?> 23:59"
                                        maxlength="10"
                                        class="form-control">
                             </div>
@@ -59,7 +63,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         <div class="col-sm-offset-2 col-sm-4">
                             <?php if (UserLk::IsAdmin(Yii::$app->user)): ?>
                                 <label for="parts-balance__form__partner-select">Партнер</label>
-                                <select class="form-control" name="PartnerBalanceForm[partnerId]"
+                                <select id="part-balance__form__partnerId" class="form-control"
                                         id="parts-balance__form__partner-select">
                                     <?php foreach ($partners as $partner): ?>
                                         <option
@@ -92,6 +96,11 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                 </div>
                 <div class="table-responsive" id="parts-balance__result">
                     <div class="panel-group" id="parts-balance__accordion" role="tablist" aria-multiselectable="true">
+
+                        <table id="example" class="display" style="width:100%">
+
+                        </table>
+
                         <?php if ($data): ?>
                             <?php foreach ($data as $partnerId => $partnerBlock): ?>
                                 <div class="panel panel-default">
@@ -104,9 +113,13 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                             </a>
                                         </h4>
                                     </div>
+
+
+
                                     <div id="collapse-<?= $partnerId ?>" class="panel-collapse collapse" role="tabpanel"
                                          aria-labelledby="headingOne">
                                         <div class="panel-body">
+
                                             <table class="table table-striped">
                                                 <thead>
                                                 <tr>
@@ -139,5 +152,6 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
     </div>
 
 </div>
-
-<?php $this->registerJs('lk.mfobalance()'); ?>
+<script>
+    var datatableColumns = <?=json_encode(PartsBalanceForm::getDatatableColumns())?>
+</script>

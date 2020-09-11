@@ -10,31 +10,52 @@ use app\services\balance\models\PartsBalanceForm;
 class BalanceService
 {
 
+
     public function getPartsBalance(PartsBalanceForm $partsBalanceForm)
     {
-        $result = [];
-
+        $result = [
+            'draw' => $partsBalanceForm->draw,
+        ];
         $q = PayschetPart::find()
-            ->addSelect([
-                'pay_schet.*',
-                'pay_schet_parts.*',
-            ])
             ->innerJoin('pay_schet', 'pay_schet.ID = pay_schet_parts.PayschetId')
+            ->innerJoin('partner', 'partner.ID = pay_schet_parts.PartnerId')
             ->where([
                 'pay_schet.IdOrg' => $partsBalanceForm->getPartner()->ID,
                 'pay_schet.Status' => '1',
             ])
-            ->andWhere(['>=', 'pay_schet.DateCreate', strtotime($partsBalanceForm->datefrom)])
-            ->andWhere(['<=', 'pay_schet.DateCreate', strtotime($partsBalanceForm->dateto)])
-            ->asArray()
-            ->all();
+            ->andWhere(['>=', 'pay_schet.DateCreate', strtotime($partsBalanceForm->filters['datefrom'].':00')])
+            ->andWhere(['<=', 'pay_schet.DateCreate', strtotime($partsBalanceForm->filters['dateto'])]);
 
-        foreach ($q as $row) {
-            if(!array_key_exists($row['PartnerId'], $result)) {
-                $result[$row['PartnerId']] = [];
+        $result['recordsTotal'] = $q->count();
+
+        foreach ($partsBalanceForm->columns as $column) {
+            if(!empty($column['search']['value'])) {
+                $q->andWhere([
+                    'like',
+                    $column['name'],
+                    '%'.$column['search']['value'].'%'
+                ]);
             }
-            $result[$row['PartnerId']][] = $row;
         }
+
+        $result['recordsFiltered'] = $q->count();
+
+        $q->limit($partsBalanceForm->length);
+        $q->offset($partsBalanceForm->start);
+
+        // подмена даты
+        $columns = PartsBalanceForm::COLUMNS_BY_PARTS_BALANCE;
+        unset($columns['DateCreate']);
+        $columns = array_keys($columns);
+        $columns[] = 'FROM_UNIXTIME(pay_schet.DateCreate) AS DateCreate';
+
+        $columnNOrder = $partsBalanceForm->order[0]['column'];
+        $orderColumn = $partsBalanceForm->columns[$columnNOrder]['data'];
+        $orderDir = $partsBalanceForm->order[0]['dir'];
+        $q->orderBy($orderColumn.' '.$orderDir);
+
+        $q->addSelect($columns);
+        $result['data'] = $q->asArray()->all();
         return $result;
     }
 

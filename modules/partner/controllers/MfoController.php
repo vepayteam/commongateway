@@ -21,6 +21,8 @@ class MfoController extends Controller
 {
     use SelectPartnerTrait;
 
+    public $enableCsrfValidation = false;
+
     public function behaviors()
     {
         return [
@@ -66,6 +68,7 @@ class MfoController extends Controller
     {
         return [
             'index' => ['GET', 'POST'],
+            'parts-balance-processing' => ['GET', 'POST'],
         ];
     }
 
@@ -136,6 +139,19 @@ class MfoController extends Controller
         }
 
         return $this->render('parts_balance', compact('partners', 'data', 'partsBalanceForm'));
+    }
+
+    public function actionPartsBalanceProcessing()
+    {
+        $this->enableCsrfValidation = false;
+        $post = Yii::$app->request->post();
+
+        $partsBalanceForm = new PartsBalanceForm();
+        if(!$partsBalanceForm->load($post, '') || !$partsBalanceForm->validate()) {
+            $a = 0;
+        }
+
+        return $this->asJson($this->getBalanceService()->getPartsBalance($partsBalanceForm));
     }
 
     /**
