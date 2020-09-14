@@ -496,7 +496,8 @@ class MTSBank implements IBank
     {
         $action = '/rest/register.do';
         $queryData = [
-            'token' => $this->keyFile,
+            'userName' => $this->shopId,
+            'password' => $this->certFile,
             'orderNumber' => $params['ID'],
             'amount' => $params['SummFull'],
             'description' => 'Оплата по счету ' . $params['ID'],
