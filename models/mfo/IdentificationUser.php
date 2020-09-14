@@ -109,7 +109,7 @@ class IdentificationUser
     {
         $q = sprintf(
             'UPDATE `user_identification` SET `StateOp` = %d, `Status` = \'%s\' WHERE `ID` = %d',
-            $status, quotemeta(json_encode($message)), $id
+            $status, json_encode($message), $id
         );
         Yii::$app->db->createCommand($q)->execute();
     }
