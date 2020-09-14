@@ -79,9 +79,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                        value="<?= UserLk::getPartnerId(Yii::$app->user) ?>">
                             <?php endif; ?>
                             <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
-                            <input name="PartnerBalanceForm[sort]" type="hidden" id="sortstatem" value="0">
-                            <input id="parts-balance__form__submit" type="submit" class="btn btn-sm btn-primary"
-                                   value="Найти" style="margin-top: 20px">
+                            <button id="parts-balance__form__submit" type="submit" class="btn btn-sm btn-primary" style="margin-top: 20px">Найти</button>
                         </div>
                     </div>
 
@@ -97,7 +95,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                 <div class="table-responsive" id="parts-balance__result">
                     <div class="panel-group" id="parts-balance__accordion" role="tablist" aria-multiselectable="true">
 
-                        <table id="example" class="display" style="width:100%">
+                        <table id="example" class="table table-bordered display nowrap" style="width:100%">
 
                         </table>
 
@@ -152,6 +150,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
     </div>
 
 </div>
+<?php $this->registerJs('lk.mfobalance()'); ?>
 <script>
     var datatableColumns = <?=json_encode(PartsBalanceForm::getDatatableColumns())?>
 </script>

@@ -1,7 +1,23 @@
 $(document).ready(function() {
+    'use strict';
+
+    if(typeof datatableColumns == 'undefined') {
+        return false;
+    }
+
     var datatable = $('#example').DataTable({
+        "scrollX": true,
         "processing": true,
         "serverSide": true,
+        "colReorder": true,
+        fixedHeader: true,
+        orderCellsTop: true,
+        "dom": 'lBCrtip',
+        "lengthMenu": [[25, 100, 500, -1], [25, 100, 500, "All"]],
+        "buttons": [
+            'copy', 'excel'
+        ],
+
         "columns": datatableColumns,
         "ajax": function (data, callback) {
 
@@ -28,9 +44,30 @@ $(document).ready(function() {
         }
     } );
 
-    // $("#parts-balance__form__submit").click(function(e) {
-    //     e.preventDefault();
-    //     datatable.ajax.reload();
-    //     return false;
-    // });
+    yadcf.init(datatable, [
+
+        {
+            column_number: 0,
+            filter_type: "text",
+            filter_delay: 500
+        },
+        {
+            column_number: 1,
+            filter_type: "text",
+            filter_delay: 500
+        },
+        {
+            column_number: 4,
+            filter_type: "text",
+            filter_delay: 500
+        },
+
+    ]);
+
+
+    $("#parts-balance__form__submit").click(function(e) {
+        e.preventDefault();
+        datatable.ajax.reload();
+        return false;
+    });
 });

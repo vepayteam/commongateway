@@ -33,7 +33,7 @@ class BalanceService
                 $q->andWhere([
                     'like',
                     $column['name'],
-                    '%'.$column['search']['value'].'%'
+                    $column['search']['value']
                 ]);
             }
         }

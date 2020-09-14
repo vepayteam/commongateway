@@ -16,10 +16,10 @@ class PartsBalanceForm extends Model
         'pay_schet_parts.Amount' => 'Сумма части',
         'DateCreate' => 'Дата создания',
         'pay_schet.Extid' => 'Extid',
-        'pay_schet.SummPay' => 'Сумма платежа',
-        'pay_schet.ComissSumm' => 'Комиссия',
-        'pay_schet.MerchVozn' => 'Возн мерчанта',
-        'pay_schet.BankComis' => 'Комисс банка',
+        'pay_schet.SummPay' => 'Сумма платежа, коп',
+        'pay_schet.ComissSumm' => 'Комиссия, коп',
+        'pay_schet.MerchVozn' => 'Возн мерчанта, коп',
+        'pay_schet.BankComis' => 'Комисс банка, коп',
         'pay_schet.ErrorInfo' => 'Сообщение',
         'pay_schet.CardNum' => 'Номер карты',
         'pay_schet.CardHolder' => 'Владелец карты',
@@ -70,8 +70,16 @@ class PartsBalanceForm extends Model
     {
         $result = [];
         foreach (self::COLUMNS_BY_PARTS_BALANCE as $k => $name) {
+            $arr = explode('.', $k);
+
+            $dataName = $k;
+            if(count($arr) == 2) {
+                $dataName = $arr[1];
+            }
+
             $result[] = [
-                'data' => $k,
+                'data' => $dataName,
+                'name' => $k,
                 'title' => $name,
             ];
         }
