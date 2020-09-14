@@ -103,9 +103,6 @@ class IdentController extends Controller
             $TcbGate = new TcbGate($mfo->mfo, TCBank::$ECOMGATE);
             $tcBank = new TCBank($TcbGate);
             $ret = $tcBank->personGetIndentResult($id);
-            if ($ret) {
-                $iu->SetStatus($id, $ret['status'], $ret['result']);
-            }
             return $ret;
         }
 
