@@ -35,3 +35,6 @@ vepay.md5.out
 /models/telegram/vepay.session
 .vscode
 key/key.txt
+.vagrant
+Vagrantfile
+*.log
