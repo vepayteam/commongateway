@@ -36,7 +36,7 @@ $(document).ready(function() {
             // debugger;
             $.ajax({
                 'method': 'POST',
-                'url': '/partner/mfo/parts-balance-processing',
+                'url': processingUri,
                 'data': dataRequest
             }).done(function(response) {
                 callback(response);
@@ -44,25 +44,7 @@ $(document).ready(function() {
         }
     } );
 
-    yadcf.init(datatable, [
-
-        {
-            column_number: 0,
-            filter_type: "text",
-            filter_delay: 500
-        },
-        {
-            column_number: 1,
-            filter_type: "text",
-            filter_delay: 500
-        },
-        {
-            column_number: 4,
-            filter_type: "text",
-            filter_delay: 500
-        },
-
-    ]);
+    yadcf.init(datatable, );
 
 
     $("#parts-balance__form__submit").click(function(e) {

@@ -12,8 +12,7 @@
 /* @var $partsBalanceForm \app\services\balance\models\PartsBalanceForm */
 
 use app\models\partner\UserLk;
-use app\services\balance\models\PartsBalanceForm;
-use yii\web\View;
+use app\services\balance\models\PartsBalancePartnerForm;
 
 $this->title = "баланс по разбивке";
 
@@ -66,7 +65,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                 <select id="part-balance__form__partnerId" class="form-control"
                                         id="parts-balance__form__partner-select">
                                     <?php foreach ($partners as $partner): ?>
-                                        <option>
+                                        <option value="<?= $partner->ID ?>">
                                             <?= $partner->Name ?>
                                         </option>
                                     <?php endforeach; ?>
@@ -104,8 +103,8 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 </div>
 <?php $this->registerJs('lk.mfobalance()'); ?>
 <script>
-    var datatableColumns = <?=json_encode(PartsBalanceForm::getDatatableColumns())?>
-    var processingUri = '/partner/mfo/parts-balance-processing';
+    var datatableColumns = <?=json_encode(PartsBalancePartnerForm::getDatatableColumns())?>
+    var processingUri = '/partner/mfo/parts-balance-partner-processing';
     var datatableFilters = [
         {
             column_number: 0,
@@ -118,10 +117,14 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
             filter_delay: 500
         },
         {
-            column_number: 4,
+            column_number: 5,
             filter_type: "text",
             filter_delay: 500
         },
-
+        {
+            column_number: 6,
+            filter_type: "text",
+            filter_delay: 500
+        },
     ];
 </script>

@@ -24,15 +24,41 @@ $act = PartUserAccess::getSelRazdel(\Yii::$app->controller->action);
                 </div>
             </li>
 
-            <li class="<?= $act[-1] ?>"><a href="/partner"><i class="fa fa-home"></i> <span
-                            class="nav-label">Главная</span></a></li>
+            <li class="<?= $_SERVER['REQUEST_URI'] == '/partner' ? 'active' : '' ?>">
+                <a href="/partner">
+                    <i class="fa fa-home"></i>
+                    <span class="nav-label">Главная</span>
+                </a>
+            </li>
 
             <?php if ($IsAdmin || $IsMfo) : ?>
-                <li class="<?= $act[51] ?>"><a href="/partner/mfo/balance"><i class="fa fa-money"></i> <span
-                                class="nav-label">Баланс</span></a></li>
+                <li class="<?= $_SERVER['REQUEST_URI'] == '/partner/mfo/balance' ? 'active' : '' ?>">
+                    <a href="/partner/mfo/balance">
+                        <i class="fa fa-money"></i>
+                        <span class="nav-label">Баланс</span>
+                    </a>
+                </li>
             <?php endif; ?>
-            <li class="<?= $act[51] ?>"><a href="/partner/mfo/parts-balance"><i class="fa fa-money"></i> <span
-                            class="nav-label">Баланс по разбивке</span></a></li>
+
+            <li class="">
+                <a href="/partner/mfo/parts-balance"
+                   aria-expanded="<?= in_array($_SERVER['REQUEST_URI'], ['/partner/mfo/parts-balance', '/partner/mfo/parts-balance-partner']) ? 'true' : 'false' ?>"
+                >
+                    <i class="fa fa-list"></i>
+                    <span class="nav-label"> Баланс по разбивке</span>
+                    <span class="fa arrow"></span>
+                </a>
+                <ul class="nav nav-second-level collapse <?= in_array($_SERVER['REQUEST_URI'], ['/partner/mfo/parts-balance', '/partner/mfo/parts-balance-partner']) ? 'in' : '' ?>"
+                    aria-expanded="true" style="">
+                    <li class="<?= $_SERVER['REQUEST_URI'] == '/partner/mfo/parts-balance' ? 'active' : '' ?>">
+                        <a href="/partner/mfo/parts-balance">Платформа</a>
+                    </li>
+                    <li class="<?= $_SERVER['REQUEST_URI'] == '/partner/mfo/parts-balance-partner' ? 'active' : '' ?>">
+                        <a href="/partner/mfo/parts-balance-partner">Партнер</a>
+                    </li>
+                </ul>
+            </li>
+
             <?php if ($IsAdmin || $IsMfo || ((count($razdels) == 0 || isset($razdels[1]) || isset($razdels[18])))) : ?>
                 <li class="<?= !empty($act[1]) || !empty($act[21])? "active": ''?>">
                     <a href="" aria-expanded="<?= !empty($act[1]) || !empty($act[21]) ? 'true' : 'false' ?>">

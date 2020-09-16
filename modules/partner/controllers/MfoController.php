@@ -119,26 +119,17 @@ class MfoController extends Controller
     {
         $partners = null;
         $data = null;
-        $partners = ArrayHelper::index(
-            Partner::find()->select(['ID', 'Name'])->where(['IsBlocked' => 0, 'IsDeleted' => 0])->all(), 'ID'
-        );
 
-        if(Yii::$app->request->isPost) {
-            $post = Yii::$app->request->post();
-            $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-            if ($IsAdmin) {
-                $post['partnerId'] = (int)Yii::$app->request->post('partnerId');
-            } else {
-                $post['partnerId'] = UserLk::getPartnerId(Yii::$app->user);
-            }
-
-            $partsBalanceForm = new PartsBalanceForm();
-            if($partsBalanceForm->load($post, '') || !$partsBalanceForm->validate()) {
-                $data = $this->getBalanceService()->getPartsBalance($partsBalanceForm);
-            }
+        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+        if ($IsAdmin) {
+            $partners = ArrayHelper::index(
+                Partner::find()->select(['ID', 'Name'])->where(['IsBlocked' => 0, 'IsDeleted' => 0])->all(), 'ID'
+            );
+        } else {
+            $partners = [];
         }
 
-        return $this->render('parts_balance', compact('partners', 'data', 'partsBalanceForm'));
+        return $this->render('parts_balance', compact('partners'));
     }
 
     public function actionPartsBalanceProcessing()
@@ -147,12 +138,58 @@ class MfoController extends Controller
         $post = Yii::$app->request->post();
 
         $partsBalanceForm = new PartsBalanceForm();
+        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+        if ($IsAdmin) {
+            $post['filters']['partnerId'] = (int)Yii::$app->request->post('partnerId');
+        } else {
+            $post['filters']['partnerId'] = UserLk::getPartnerId(Yii::$app->user);
+        }
+
         if(!$partsBalanceForm->load($post, '') || !$partsBalanceForm->validate()) {
             $a = 0;
         }
 
         return $this->asJson($this->getBalanceService()->getPartsBalance($partsBalanceForm));
     }
+
+    public function actionPartsBalancePartner()
+    {
+        $partners = null;
+        $data = null;
+
+        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+        if ($IsAdmin) {
+            $partners = ArrayHelper::index(
+                Partner::find()->select(['ID', 'Name'])->where(['IsBlocked' => 0, 'IsDeleted' => 0])->all(), 'ID'
+            );
+        } else {
+            $partners = [];
+        }
+
+        return $this->render('parts_balance_partner', compact('partners'));
+    }
+
+    public function actionPartsBalancePartnerProcessing()
+    {
+        $this->enableCsrfValidation = false;
+        $post = Yii::$app->request->post();
+
+        $partsBalanceForm = new PartsBalanceForm();
+        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+        if ($IsAdmin) {
+            $post['filters']['partnerId'] = (int)Yii::$app->request->post('partnerId');
+        } else {
+            $post['filters']['partnerId'] = UserLk::getPartnerId(Yii::$app->user);
+        }
+
+        if(!$partsBalanceForm->load($post, '') || !$partsBalanceForm->validate()) {
+            $a = 0;
+        }
+
+        return $this->asJson($this->getBalanceService()->getPartsBalance($partsBalanceForm));
+
+    }
+
 
     /**
      * Выписка по счету
