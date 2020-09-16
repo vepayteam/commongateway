@@ -497,7 +497,7 @@ class Payschets
                 $BalanceIn->Inc($query['SummPay'], 'Платеж ' . $IdPay, 2, $IdPay, 0);
                 $usl = Uslugatovar::findOne(['ID' => $query['IdUsluga']]);
                 $comis = $usl->calcComissOrg($query['SummPay']);
-                if ($comis) {
+                if ($comis && !empty($query['CardNum'])) {
                     $BalanceOut = new BalancePartner(BalancePartner::OUT, $query['IdOrg']);
                     $BalanceOut->Dec($comis, 'Комиссия ' . $IdPay, 5, $IdPay, 0);
                 }
@@ -515,8 +515,8 @@ class Payschets
                     }
                 }
             } elseif (in_array($query['IsCustom'], [TU::$VYPLATVOZN, TU::$REVERSCOMIS])) {
-                //перечисление вознаграждения - без списания баланса, возмещение комиссии банка тоже
-                //noop
+                $BalanceOut = new BalancePartner(BalancePartner::OUT, $query['IdOrg']);
+                $BalanceOut->Dec($query['SummPay'], 'Перечисление вознаграждения. Платеж ' . $IdPay, 3, $IdPay, 0);
             } elseif (in_array($query['IsCustom'], [TU::$VYVODPAYS, TU::$PEREVPAYS])) {
                 //перевод денег мфо
                 $partner = Partner::findOne(['ID' => $query['ExtReestrIDUsluga']]);
@@ -528,6 +528,13 @@ class Payschets
                     //со счета погашения переводится
                     $BalanceIn = new BalancePartner(BalancePartner::IN, $query['ExtReestrIDUsluga']);
                     $BalanceIn->Dec($query['SummPay'], 'Списание на перевод средств ' . $IdPay, 1, $IdPay, 0);
+                    $usl = Uslugatovar::findOne(['ID' => $query['IdUsluga']]);
+                    if ($usl) {
+                        $comis = $usl->calcComissOrg($query['SummPay']);
+                        if ($comis) {
+                            $BalanceIn->Dec($comis, 'Комиссия ' . $IdPay, 5, $IdPay, 0);
+                        }
+                    }
                 }
             } else {
                 //погашение
@@ -818,7 +825,8 @@ class Payschets
                 pr.SchetTcbNominal,
                 ut.ExtReestrIDUsluga,
                 p.Dogovor,
-                p.Bank
+                p.Bank,
+                p.CardNum
               FROM
                 `pay_schet` AS p
                 LEFT JOIN `uslugatovar` AS ut ON ut.ID = p.IdUsluga
