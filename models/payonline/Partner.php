@@ -127,6 +127,7 @@ use yii\web\UploadedFile;
  * @property string $MtsTokenParts
  * @property int $BankForPaymentId
  * @property int $BankForTransferToCardId
+ * @property Uslugatovar[] $uslugatovars
  *
  */
 class Partner extends \yii\db\ActiveRecord
@@ -621,5 +622,10 @@ class Partner extends \yii\db\ActiveRecord
 
         return ['status' => 1];
 
+    }
+
+    public function getUslugatovars()
+    {
+        return $this->hasMany(Uslugatovar::class, ['IDPartner' => 'ID']);
     }
 }
