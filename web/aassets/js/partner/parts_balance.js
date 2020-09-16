@@ -44,7 +44,7 @@ $(document).ready(function() {
         }
     } );
 
-    yadcf.init(datatable, );
+    yadcf.init(datatable, datatableFilters);
 
 
     $("#parts-balance__form__submit").click(function(e) {

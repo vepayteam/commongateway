@@ -67,7 +67,7 @@ class BalanceService
         ];
         $q = PayschetPart::find()
             ->innerJoin('pay_schet', 'pay_schet.ID = pay_schet_parts.PayschetId')
-            ->innerJoin('partner', 'partner.ID = pay_schet.PartnerId')
+            ->innerJoin('partner', 'partner.ID = pay_schet_parts.PartnerId')
             ->where([
                 'pay_schet_parts.PartnerId' => $partsBalancePartnerForm->getPartner()->ID,
                 'pay_schet.Status' => '1',

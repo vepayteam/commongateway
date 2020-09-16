@@ -8,6 +8,7 @@ use app\models\partner\UserLk;
 use app\models\payonline\Partner;
 use app\services\balance\BalanceService;
 use app\services\balance\models\PartsBalanceForm;
+use app\services\balance\models\PartsBalancePartnerForm;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
@@ -139,9 +140,7 @@ class MfoController extends Controller
 
         $partsBalanceForm = new PartsBalanceForm();
         $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-        if ($IsAdmin) {
-            $post['filters']['partnerId'] = (int)Yii::$app->request->post('partnerId');
-        } else {
+        if (!$IsAdmin) {
             $post['filters']['partnerId'] = UserLk::getPartnerId(Yii::$app->user);
         }
 
@@ -174,20 +173,17 @@ class MfoController extends Controller
         $this->enableCsrfValidation = false;
         $post = Yii::$app->request->post();
 
-        $partsBalanceForm = new PartsBalanceForm();
+        $partsBalancePartnerForm = new PartsBalancePartnerForm();
         $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-        if ($IsAdmin) {
-            $post['filters']['partnerId'] = (int)Yii::$app->request->post('partnerId');
-        } else {
+        if (!$IsAdmin) {
             $post['filters']['partnerId'] = UserLk::getPartnerId(Yii::$app->user);
         }
 
-        if(!$partsBalanceForm->load($post, '') || !$partsBalanceForm->validate()) {
+        if(!$partsBalancePartnerForm->load($post, '') || !$partsBalancePartnerForm->validate()) {
             $a = 0;
         }
 
-        return $this->asJson($this->getBalanceService()->getPartsBalance($partsBalanceForm));
-
+        return $this->asJson($this->getBalanceService()->getPartsBalancePartner($partsBalancePartnerForm));
     }
 
 

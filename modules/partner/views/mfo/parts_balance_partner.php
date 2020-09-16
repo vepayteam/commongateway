@@ -14,9 +14,9 @@
 use app\models\partner\UserLk;
 use app\services\balance\models\PartsBalancePartnerForm;
 
-$this->title = "баланс по разбивке";
+$this->title = "Баланс по разбивке (Партнер)";
 
-$this->params['breadtitle'] = "Баланс по разбивке";
+$this->params['breadtitle'] = "Баланс по разбивке (Партнер)";
 $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 
 ?>
@@ -103,7 +103,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 </div>
 <?php $this->registerJs('lk.mfobalance()'); ?>
 <script>
-    var datatableColumns = <?=json_encode(PartsBalancePartnerForm::getDatatableColumns())?>
+    var datatableColumns = <?=json_encode(PartsBalancePartnerForm::getDatatableColumns())?>;
     var processingUri = '/partner/mfo/parts-balance-partner-processing';
     var datatableFilters = [
         {

@@ -15,9 +15,9 @@ use app\models\partner\UserLk;
 use app\services\balance\models\PartsBalanceForm;
 use yii\web\View;
 
-$this->title = "баланс по разбивке";
+$this->title = "Баланс по разбивке (Платформа)";
 
-$this->params['breadtitle'] = "Баланс по разбивке";
+$this->params['breadtitle'] = "Баланс по разбивке (Платформа)";
 $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 
 ?>
@@ -66,7 +66,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                 <select id="part-balance__form__partnerId" class="form-control"
                                         id="parts-balance__form__partner-select">
                                     <?php foreach ($partners as $partner): ?>
-                                        <option>
+                                        <option value="<?= $partner->ID ?>">
                                             <?= $partner->Name ?>
                                         </option>
                                     <?php endforeach; ?>
@@ -104,7 +104,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 </div>
 <?php $this->registerJs('lk.mfobalance()'); ?>
 <script>
-    var datatableColumns = <?=json_encode(PartsBalanceForm::getDatatableColumns())?>
+    var datatableColumns = <?=json_encode(PartsBalanceForm::getDatatableColumns())?>;
     var processingUri = '/partner/mfo/parts-balance-processing';
     var datatableFilters = [
         {
