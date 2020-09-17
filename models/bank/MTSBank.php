@@ -684,7 +684,7 @@ class MTSBank implements IBank
         $post = http_build_query($postArr);
         $timout = 110;
         $curl = new Curl();
-        Yii::warning("req: login = " . $this->shopId . " url = " . $url . "\r\n" . $this->MaskCardLog($post), 'merchant');
+        Yii::warning("req: login = " . $this->shopId . " url = " . $url . "\r\n" . $this->MaskLog($post), 'merchant');
         try {
             $curl->reset()
                 ->setOption(CURLOPT_TIMEOUT, $timout)
@@ -734,12 +734,15 @@ class MTSBank implements IBank
         return $ans;
     }
 
-    private function MaskCardLog($post)
+    private function MaskLog($post)
     {
         if (preg_match('/PAN=(\d+)/ius', $post, $m)) {
             $post = str_ireplace($m[1], Cards::MaskCard($m[1]), $post);
         }
         if (preg_match('/CVC=(\d+)/ius', $post, $m)) {
+            $post = str_ireplace($m[1], "***", $post);
+        }
+        if (preg_match('/password=([^\&]+)/ius', $post, $m)) {
             $post = str_ireplace($m[1], "***", $post);
         }
         return $post;
