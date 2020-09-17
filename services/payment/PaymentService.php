@@ -8,10 +8,12 @@ use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\kfapi\KfPay;
 use app\models\kfapi\KfRequest;
+use app\models\PayschetPart;
 use app\services\payment\payment_strategies\CreateFormEcomStrategy;
 use app\services\payment\payment_strategies\CreateFormJkhStrategy;
 use app\services\payment\payment_strategies\IPaymentStrategy;
 use Yii;
+use yii\db\Query;
 
 class PaymentService
 {
@@ -34,6 +36,17 @@ class PaymentService
     }
 
 
+    public function sendPartsToPartners()
+    {
+        
+        
+        
+    }
 
+    private function getPartnerWhosNeedSendParts()
+    {
+        $q = new Query();
+        $q->select(['ps.IdOrg'])->from(PayschetPart::tableName());
+    }
 
 }

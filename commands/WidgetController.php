@@ -272,4 +272,9 @@ class WidgetController extends Controller
         }
 
     }
+
+    public function actionPartsBalanceSendToPartners()
+    {
+
+    }
 }
