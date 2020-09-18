@@ -356,9 +356,9 @@ class PayController extends Controller
             }
 
             // TODO:
-            if($params['IdUsluga'] == 1 && $params['ExtOrg'] == '3') {
+            if($params['IdUsluga'] == 1 && $params['IdOrg'] == '3') {
                 return $this->redirect("https://cashtoyou.ru/registration/third/");
-            } elseif ($params['IdUsluga'] == 1 && $params['IDPartner'] == '8') {
+            } elseif ($params['IdUsluga'] == 1 && $params['IdOrg'] == '8') {
                 return $this->redirect("https://oneclickmoney.ru/registration/third/");
             }
 
