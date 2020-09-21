@@ -603,8 +603,7 @@ class MTSBank implements IBank
         $queryData = [
             'userName' => $this->shopId,
             'password' => $this->certFile,
-            //'orderId' => $params['ExtBillNumber'],
-            'orderNumber' => $params['ID']
+            'orderId' => $params['ExtBillNumber'],
         ];
 
         $ans = $this->curlXmlReq($queryData, $this->bankUrl.$action);
