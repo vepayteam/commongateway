@@ -10,6 +10,7 @@ class IdentificationUser
 {
     public $StateOp;
     public $ErrorMessage;
+    public $Status;
     /**
      * @param $user
      * @param $extId
@@ -76,7 +77,8 @@ class IdentificationUser
             SELECT
                 `ID`,
                 `StateOp`,
-                `ErrorMessage`
+                `ErrorMessage`,
+                `Status`
             FROM
                 `user_identification`   
             WHERE
@@ -90,6 +92,7 @@ class IdentificationUser
         if ($res) {
             $this->StateOp = $res['StateOp'];
             $this->ErrorMessage = $res['ErrorMessage'];
+            $this->Status = $res['Status'];
             return $res['ID'];
         } else {
             return 0;
@@ -98,20 +101,17 @@ class IdentificationUser
 
     public function SetTansac($id, $transac)
     {
-        Yii::$app->db->createCommand()->update('user_identification', [
-            'TransNum' => $transac, '`ID` = :ID ', [':ID' => $id]
-        ])->execute();
+        $q = sprintf('UPDATE `user_identification` SET `TransNum` = %s WHERE `ID` = %d', $transac, $id);
+        Yii::$app->db->createCommand($q)->execute();
     }
 
     public function SetStatus($id, $status, $message)
     {
-        Yii::$app->db->createCommand()->update(
-            'user_identification', [
-                'StateOp' => $status,
-                'ErrorMessage' => $message
-            ], '`ID` = :ID ', [':ID' => $id]
-        )->execute();
-
+        $q = sprintf(
+            'UPDATE `user_identification` SET `StateOp` = %d, `Status` = \'%s\' WHERE `ID` = %d',
+            $status, json_encode($message), $id
+        );
+        Yii::$app->db->createCommand($q)->execute();
     }
 
 }

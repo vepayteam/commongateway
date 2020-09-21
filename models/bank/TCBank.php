@@ -819,11 +819,11 @@ class TCBank implements IBank
         $action = "/api/government/identification/simplifiedpersonidentification";
         $queryData = [
             'ExtId' => $id,
-            'Name' => $params['nam'],
-            'Fam' => $params['fam'],
-            'Otch' => $params['otc'],
-            'PaspSer' => strval($params['paspser']),
-            'PaspNum' => strval($params['paspnum'])
+            'FirstName' => $params['nam'],
+            'LastName' => $params['fam'],
+            'Patronymic' => $params['otc'],
+            'Series' => strval($params['paspser']),
+            'Number' => strval($params['paspnum'])
         ];
 
         if (!empty($params['birth'])) {
@@ -836,16 +836,16 @@ class TCBank implements IBank
             $queryData['Snils'] = $params['snils'];
         }
         if (!empty($params['paspcode'])) {
-            $queryData['PaspPodr'] = $params['paspcode'];
+            $queryData['IssueData'] = $params['paspcode'];
         }
         if (!empty($params['paspdate'])) {
-            $queryData['PaspDate'] = $params['paspdate'];
+            $queryData['IssueCode'] = $params['paspdate'];
         }
         if (!empty($params['paspvid'])) {
-            $queryData['PaspVidan'] = $params['paspvid'];
+            $queryData['Issuer'] = $params['paspvid'];
         }
         if (!empty($params['phone'])) {
-            $queryData['Phone'] = $params['phone'];
+            $queryData['PhoneNumber'] = $params['phone'];
         }
 
         $queryData = Json::encode($queryData);
@@ -858,9 +858,8 @@ class TCBank implements IBank
         $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action, $addHead);
 
         if (isset($ans['xml']) && !empty($ans['xml'])) {
-            $xml = $this->parseAns($ans['xml']);
-            if (isset($xml['Status']) && $xml['Status'] == '0') {
-                return ['status' => 1, 'transac' => $xml['ordernumber']];
+            if (isset($ans['xml']['OrderId']) && !empty($ans['xml']['OrderId'])) {
+                return ['status' => 1, 'transac' => $ans['xml']['OrderId']];
             }
         }
 
@@ -886,26 +885,10 @@ class TCBank implements IBank
         $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
 
         if (isset($ans['xml']) && !empty($ans['xml'])) {
-            $xml = $this->parseAns($ans['xml']);
-            if (isset($xml['Status']) && $xml['Status'] == '0') {
-                $res = "";
-                if (isset($xml['Inn'])) {
-                    $res1 = $xml['Inn']['Status'];
-                }
-                if (isset($xml['Snils'])) {
-                    $res2 = $xml['Snils']['Status'];
-                }
-                if (isset($xml['Passport'])) {
-                    $res = $xml['Passport']['Status'];
-                }
-                if (isset($xml['PassportDeferred'])) {
-                    $res4 = $xml['PassportDeferred']['Status'];
-                }
-                return ['status' => $res, 'message' => ''];
-            }
+            return ['status' => 1, 'result' => $ans['xml']];
         }
 
-        return ['status' => 0, 'message' => ''];
+        return ['status' => 0, 'result' => ''];
     }
 
     /**

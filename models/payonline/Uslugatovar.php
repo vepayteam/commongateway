@@ -2,7 +2,9 @@
 
 namespace app\models\payonline;
 
+use app\models\partner\admin\VoznagStat;
 use Yii;
+use yii\caching\TagDependency;
 
 /**
  * This is the model class for table "uslugatovar".
@@ -271,6 +273,14 @@ class Uslugatovar extends \yii\db\ActiveRecord
             $comis = $this->ProvComisMin * 100.0;
         }
         return $comis;
+    }
+
+    public function save($runValidation = true, $attributeNames = null)
+    {
+        if($this->ID) {
+            TagDependency::invalidate(Yii::$app->cache, VoznagStat::STAT_DAY_TAG_PREFIX . $this->ID);
+        }
+        return parent::save($runValidation, $attributeNames);
     }
 
 

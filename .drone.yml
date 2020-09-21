@@ -293,7 +293,7 @@ steps:
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
-- name: helm-values-generator-07d184fe0d6b1780f2a40242407d6d5c
+- name: helm-values-generator-3cf8ee39fbf19994190d313ea5db4dfd
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
@@ -301,6 +301,8 @@ steps:
   - yq write values.yaml "enableTunnel" "false" -i
   - yq write values.yaml "image.app.repository" "registry.vepay.cf/${DRONE_REPO,,}" -i
   - yq write values.yaml "image.app.tag" "${DRONE_BUILD_NUMBER}" -i
+  - yq write values.yaml "image.app.tag" "latest" -i
+  - yq write values.yaml "image.app.pullPolicy" "Always" -i
   - yq write values.yaml "ingress.hosts[0].host" "test.192-168-110-1.nip.io" -i
   - yq write values.yaml "ingress.hosts[0].paths[0]" "/" -i
 
@@ -394,6 +396,6 @@ get:
 
 ---
 kind: signature
-hmac: 9718bed8d28292707e6198e996b7c57ccb7debbe91b79b94c6acaed6dc1e8a87
+hmac: 8544698bff2906bbc5c1dad28fe52c06741c6cd0176b01ab5704bf11ac9134ea
 
 ...
