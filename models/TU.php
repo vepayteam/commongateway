@@ -27,7 +27,7 @@ class TU
     public static $AVTOPLATATFPARTS = 112; //автоплатеж афт с разбивкой
     public static $POGASHECOMPARTS = 114; //покашение еком с разбивкой
     public static $AVTOPLATECOMPARTS = 116; //автоплатеж еком с разбивкой
-    public static $VYVODPAYSPARTS = 119; //автоплатеж еком с разбивкой
+    public static $VYVODPAYSPARTS = 119; //перечисление по разбивке
 
 
     public static function IsOutMfo($type)
