@@ -11,20 +11,23 @@ class PartsBalanceForm extends Model
 {
 
     const COLUMNS_BY_PARTS_BALANCE = [
-        'pay_schet.ID' => 'ID счета',
-        'partner.Name' => 'Имя партнера',
-        'pay_schet_parts.Amount' => 'Сумма части',
-        'DateCreate' => 'Дата создания',
-        'pay_schet.Extid' => 'Extid',
-        'pay_schet.SummPay' => 'Сумма платежа, коп',
-        'pay_schet.ComissSumm' => 'Комиссия, коп',
-        'pay_schet.MerchVozn' => 'Возн мерчанта, коп',
-        'pay_schet.BankComis' => 'Комисс банка, коп',
-        'pay_schet.ErrorInfo' => 'Сообщение',
-        'pay_schet.CardNum' => 'Номер карты',
-        'pay_schet.CardHolder' => 'Владелец карты',
-        'pay_schet.Dogovor' => 'Договор',
-        'pay_schet.FIO' => 'ФИО',
+        'pay_schet.ID AS ID' => 'ID счета',
+        'partner.Name AS Name' => 'Имя партнера',
+        'pay_schet_parts.Amount AS Amount' => 'Сумма части',
+        'DateCreate AS DateCreate' => 'Дата создания',
+        'pay_schet.Extid AS Extid' => 'Extid',
+        'pay_schet.SummPay AS SummPay' => 'Сумма платежа, коп',
+        'pay_schet.ComissSumm AS ComissSumm' => 'Комиссия, коп',
+        'pay_schet.MerchVozn AS MerchVozn' => 'Возн мерчанта, коп',
+        'pay_schet.BankComis AS BankComis' => 'Комисс банка, коп',
+        'pay_schet.ErrorInfo AS ErrorInfo' => 'Сообщение',
+        'pay_schet.CardNum AS CardNum' => 'Номер карты',
+        'pay_schet.CardHolder AS CardHolder' => 'Владелец карты',
+        'pay_schet.Dogovor AS Dogovor' => 'Договор',
+        'pay_schet.FIO AS FIO' => 'ФИО',
+
+        'vyvod_parts.PayschetId AS PayschetId' => 'ИД платежа вывода',
+        'VyvodDateCreate AS VyvodDateCreate' => 'Дата вывода',
     ];
 
     private $partner;
@@ -70,7 +73,7 @@ class PartsBalanceForm extends Model
     {
         $result = [];
         foreach (self::COLUMNS_BY_PARTS_BALANCE as $k => $name) {
-            $arr = explode('.', $k);
+            $arr = explode(' AS ', $k);
 
             $dataName = $k;
             if(count($arr) == 2) {

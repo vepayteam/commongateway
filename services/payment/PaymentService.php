@@ -6,12 +6,10 @@ namespace app\services\payment;
 
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
-use app\models\kfapi\KfPay;
 use app\models\kfapi\KfRequest;
 use app\models\partner\admin\VyvodParts;
 use app\models\payonline\CreatePay;
 use app\models\payonline\Partner;
-use app\models\payonline\PartnerBankRekviz;
 use app\models\payonline\Provparams;
 use app\models\payonline\Uslugatovar;
 use app\models\PayschetPart;
@@ -23,7 +21,6 @@ use app\services\payment\payment_strategies\IPaymentStrategy;
 use Carbon\Carbon;
 use Yii;
 use yii\db\Query;
-use yii\web\BadRequestHttpException;
 
 class PaymentService
 {
@@ -41,11 +38,12 @@ class PaymentService
                 break;
         }
 
-
         return $paymentStrategy->exec();
     }
 
-
+    /**
+     *
+     */
     public function sendPartsToPartners()
     {
         $dateFrom = Carbon::now()->addDays(-1)->startOfDay();
@@ -63,6 +61,14 @@ class PaymentService
         }
     }
 
+    /**
+     * @param Partner $senderPartner
+     * @param Partner $recipientPartner
+     * @param Carbon $dateFrom
+     * @param Carbon $dateTo
+     * @return boolean
+     * @throws \yii\db\Exception
+     */
     private function payPartsSenderToRecipient(Partner $senderPartner, Partner $recipientPartner, Carbon $dateFrom, Carbon $dateTo)
     {
         $tr = Yii::$app->db->beginTransaction();
@@ -102,7 +108,7 @@ class PaymentService
         if(!$usl) {
             echo "VyvodParts: error mfo=" . $senderPartner->ID . " У получателя нет услуги перечисления разбивки " . "\r\n";
             $tr->rollBack();
-            return 0;
+            return false;
         }
 
         // TODO: multibank
@@ -130,7 +136,7 @@ class PaymentService
         if (!$idpay) {
             echo "VyvodParts: error mfo=" . $senderPartner->ID . " idpay=" . $idpay . "\r\n";
             $tr->rollBack();
-            return 0;
+            return false;
         }
 
         $vyvodParts->PayschetId = $idpay['IdPay'];
@@ -186,7 +192,7 @@ class PaymentService
             $payschetPart->VyvodId = $vyvodParts->Id;
             $payschetPart->save();
         }
-        return 1;
+        return true;
     }
 
     /**

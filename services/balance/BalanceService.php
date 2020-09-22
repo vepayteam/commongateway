@@ -20,6 +20,7 @@ class BalanceService
         $q = PayschetPart::find()
             ->innerJoin('pay_schet', 'pay_schet.ID = pay_schet_parts.PayschetId')
             ->innerJoin('partner', 'partner.ID = pay_schet_parts.PartnerId')
+            ->leftJoin('vyvod_parts', 'vyvod_parts.ID = pay_schet_parts.VyvodId AND vyvod_parts.Status = 1')
             ->where([
                 'pay_schet.IdOrg' => $partsBalanceForm->getPartner()->ID,
                 'pay_schet.Status' => '1',
@@ -31,9 +32,10 @@ class BalanceService
 
         foreach ($partsBalanceForm->columns as $column) {
             if(!empty($column['search']['value'])) {
+                $arr = explode(' AS ', $column['name']);
                 $q->andWhere([
                     'like',
-                    $column['name'],
+                    $arr[0],
                     $column['search']['value']
                 ]);
             }
@@ -47,8 +49,10 @@ class BalanceService
         // подмена даты
         $columns = PartsBalanceForm::COLUMNS_BY_PARTS_BALANCE;
         unset($columns['DateCreate']);
+        unset($columns['VyvodDateCreate']);
         $columns = array_keys($columns);
         $columns[] = 'FROM_UNIXTIME(pay_schet.DateCreate) AS DateCreate';
+        $columns[] = 'FROM_UNIXTIME(vyvod_parts.DateCreate) AS VyvodDateCreate';
 
         $columnNOrder = $partsBalanceForm->order[0]['column'];
         $orderColumn = $partsBalanceForm->columns[$columnNOrder]['data'];
@@ -68,6 +72,7 @@ class BalanceService
         $q = PayschetPart::find()
             ->innerJoin('pay_schet', 'pay_schet.ID = pay_schet_parts.PayschetId')
             ->innerJoin('partner', 'partner.ID = pay_schet_parts.PartnerId')
+            ->leftJoin('vyvod_parts', 'vyvod_parts.ID = pay_schet_parts.VyvodId AND vyvod_parts.Status = 1')
             ->where([
                 'pay_schet_parts.PartnerId' => $partsBalancePartnerForm->getPartner()->ID,
                 'pay_schet.Status' => '1',
@@ -79,9 +84,10 @@ class BalanceService
 
         foreach ($partsBalancePartnerForm->columns as $column) {
             if(!empty($column['search']['value'])) {
+                $arr = explode(' AS ', $column['name']);
                 $q->andWhere([
                     'like',
-                    $column['name'],
+                    $arr[0],
                     $column['search']['value']
                 ]);
             }
@@ -95,8 +101,10 @@ class BalanceService
         // подмена даты
         $columns = PartsBalancePartnerForm::COLUMNS_BY_PARTS_BALANCE;
         unset($columns['DateCreate']);
+        unset($columns['VyvodDateCreate']);
         $columns = array_keys($columns);
         $columns[] = 'FROM_UNIXTIME(pay_schet.DateCreate) AS DateCreate';
+        $columns[] = 'FROM_UNIXTIME(vyvod_parts.DateCreate) AS VyvodDateCreate';
 
         $columnNOrder = $partsBalancePartnerForm->order[0]['column'];
         $orderColumn = $partsBalancePartnerForm->columns[$columnNOrder]['data'];

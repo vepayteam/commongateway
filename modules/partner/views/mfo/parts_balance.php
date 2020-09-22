@@ -122,6 +122,11 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
             filter_type: "text",
             filter_delay: 500
         },
+        {
+            column_number: 14,
+            filter_type: "text",
+            filter_delay: 500
+        },
 
     ];
 </script>

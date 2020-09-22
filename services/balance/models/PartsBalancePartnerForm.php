@@ -11,13 +11,17 @@ class PartsBalancePartnerForm extends Model
 {
 
     const COLUMNS_BY_PARTS_BALANCE = [
-        'pay_schet.ID' => 'ID счета',
-        'partner.Name' => 'Имя партнера',
-        'pay_schet_parts.Amount' => 'Сумма части, коп',
+        'pay_schet.ID AS ID' => 'ID счета',
+        'partner.Name AS Name' => 'Имя партнера',
+        'pay_schet_parts.Amount AS Amount' => 'Сумма части, коп',
         'DateCreate' => 'Дата создания',
-        'pay_schet.ErrorInfo' => 'Сообщение',
-        'pay_schet.Dogovor' => 'Договор',
-        'pay_schet.FIO' => 'ФИО',
+        'pay_schet.ErrorInfo AS ErrorInfo' => 'Сообщение',
+        'pay_schet.Dogovor AS Dogovor' => 'Договор',
+        'pay_schet.FIO AS FIO' => 'ФИО',
+
+        'vyvod_parts.PayschetId AS PayschetId' => 'ИД платежа вывода',
+        'vyvod_parts.Amount AS AmountVyvod' => 'Сумма платежа вывода',
+        'VyvodDateCreate AS VyvodDateCreate' => 'Дата вывода',
     ];
 
     private $partner;
@@ -63,7 +67,7 @@ class PartsBalancePartnerForm extends Model
     {
         $result = [];
         foreach (self::COLUMNS_BY_PARTS_BALANCE as $k => $name) {
-            $arr = explode('.', $k);
+            $arr = explode(' AS ', $k);
 
             $dataName = $k;
             if(count($arr) == 2) {
