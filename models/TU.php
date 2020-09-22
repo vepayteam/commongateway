@@ -27,6 +27,8 @@ class TU
     public static $AVTOPLATATFPARTS = 112; //автоплатеж афт с разбивкой
     public static $POGASHECOMPARTS = 114; //покашение еком с разбивкой
     public static $AVTOPLATECOMPARTS = 116; //автоплатеж еком с разбивкой
+    public static $VYVODPAYSPARTS = 119; //автоплатеж еком с разбивкой
+
 
     public static function IsOutMfo($type)
     {
@@ -89,7 +91,7 @@ class TU
 
     public static function NoPart()
     {
-        return [self::$REGCARD, self::$VYVODPAYS, self::$VYPLATVOZN, self::$REVERSCOMIS, self::$PEREVPAYS];
+        return [self::$REGCARD, self::$VYVODPAYS, self::$VYPLATVOZN, self::$REVERSCOMIS, self::$PEREVPAYS, self::$VYVODPAYSPARTS];
     }
 
 }

@@ -17,9 +17,10 @@ class m200921_071921_create_vyvod_parts extends Migration
             'Id' => $this->primaryKey(),
             'SenderId' => $this->integer()->notNull(),
             'RecipientId' => $this->integer()->notNull(),
-            'PaychetId' => $this->integer()->notNull(),
+            'PayschetId' => $this->integer()->notNull(),
             'Amount' => $this->integer()->notNull(),
             'DateCreate' => $this->integer()->notNull(),
+            'Status' => $this->integer()->notNull(),
         ]);
     }
 

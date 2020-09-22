@@ -15,6 +15,7 @@ use yii\base\Model;
  * @property int $PayschetId
  * @property int $Amount
  * @property int $DateCreate
+ * @property int $Status
  *
  */
 class VyvodParts extends \yii\db\ActiveRecord

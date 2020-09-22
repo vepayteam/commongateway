@@ -14,6 +14,7 @@ use yii\db\ActiveRecord;
  * @param int $PayschetId
  * @param int $PartnerId
  * @param int $Amount
+ * @param int $VyvodId
  */
 class PayschetPart extends ActiveRecord
 {

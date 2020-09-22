@@ -128,6 +128,7 @@ use yii\web\UploadedFile;
  * @property int $BankForPaymentId
  * @property int $BankForTransferToCardId
  * @property Uslugatovar[] $uslugatovars
+ * @property PartnerBankRekviz $partner_bank_rekviz
  *
  */
 class Partner extends \yii\db\ActiveRecord
