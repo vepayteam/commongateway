@@ -83,6 +83,9 @@ $act = PartUserAccess::getSelRazdel(\Yii::$app->controller->action);
                         <li class="<?= !empty($act[14]) || !empty($act[15]) || !empty($act[16]) || !empty($act[17]) || !empty($act[23]) ? 'active' : '' ?>">
                             <a href="/partner/stat/recurrentcard">Регулярные платежи</a>
                         </li>
+                        <li class="<?= $_SERVER['REQUEST_URI'] == '/partner/stat/ident' ? 'active' : '' ?>">
+                            <a href="/partner/stat/ident">Статистика идентификации</a>
+                        </li>
                     </ul>
                 </li>
             <?php endif; ?>

@@ -32,6 +32,7 @@ use kartik\mpdf\Pdf;
 use Yii;
 use yii\base\DynamicModel;
 use yii\filters\AccessControl;
+use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
 use yii\helpers\VarDumper;
 use yii\web\Controller;
@@ -769,5 +770,28 @@ class StatController extends Controller
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         );
         return $content['data'];
+    }
+
+    public function actionIdent()
+    {
+        $partners = null;
+        $data = null;
+
+        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+        if ($IsAdmin) {
+            $partners = ArrayHelper::index(
+                Partner::find()->select(['ID', 'Name'])->where(['IsBlocked' => 0, 'IsDeleted' => 0])->all(), 'ID'
+            );
+        } else {
+            $partners = [];
+        }
+
+        return $this->render('ident', compact('partners'));
+
+    }
+
+    public function actionIdentProcessing()
+    {
+
     }
 }
