@@ -8,6 +8,7 @@ use app\models\partner\UserLk;
 use app\models\payonline\Partner;
 use app\services\balance\BalanceService;
 use app\services\balance\models\PartsBalanceForm;
+use app\services\balance\models\PartsBalancePartnerForm;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
@@ -20,6 +21,8 @@ use yii\web\Response;
 class MfoController extends Controller
 {
     use SelectPartnerTrait;
+
+    public $enableCsrfValidation = false;
 
     public function behaviors()
     {
@@ -66,6 +69,7 @@ class MfoController extends Controller
     {
         return [
             'index' => ['GET', 'POST'],
+            'parts-balance-processing' => ['GET', 'POST'],
         ];
     }
 
@@ -116,46 +120,72 @@ class MfoController extends Controller
     {
         $partners = null;
         $data = null;
-        $partners = ArrayHelper::index(
-            Partner::find()->select(['ID', 'Name'])->where(['IsBlocked' => 0, 'IsDeleted' => 0])->all(), 'ID'
-        );
 
-        if(Yii::$app->request->isPost) {
-            $post = Yii::$app->request->post();
-            $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-            if ($IsAdmin) {
-                $post['partnerId'] = (int)Yii::$app->request->post('partnerId');
-            } else {
-                $post['partnerId'] = UserLk::getPartnerId(Yii::$app->user);
-            }
-
-            $partsBalanceForm = new PartsBalanceForm();
-            if($partsBalanceForm->load($post, '') || !$partsBalanceForm->validate()) {
-                $data = $this->getBalanceService()->getPartsBalance($partsBalanceForm);
-            }
-        }
-
-        return $this->render('parts_balance', compact('partners', 'data'));
-        if (UserLk::IsAdmin(Yii::$app->user)) {
-            $sel = $this->selectPartner($idpartner, false, true);
-            if (empty($sel)) {
-
-                $partner = Partner::findOne(['ID' => $idpartner]);
-                $MfoBalance = new MfoBalance($partner);
-
-                return $this->render('parts_balance');
-            } else {
-                return $sel;
-            }
+        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+        if ($IsAdmin) {
+            $partners = ArrayHelper::index(
+                Partner::find()->select(['ID', 'Name'])->where(['IsBlocked' => 0, 'IsDeleted' => 0])->all(), 'ID'
+            );
         } else {
-
-            $idpartner = UserLk::getPartnerId(Yii::$app->user);
-            $partner = Partner::findOne(['ID' => $idpartner]);
-
-            $MfoBalance = new MfoBalance($partner);
-            return $this->render('parts_balance');
+            $partners = [];
         }
+
+        return $this->render('parts_balance', compact('partners'));
     }
+
+    public function actionPartsBalanceProcessing()
+    {
+        $this->enableCsrfValidation = false;
+        $post = Yii::$app->request->post();
+
+        $partsBalanceForm = new PartsBalanceForm();
+        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+        if (!$IsAdmin) {
+            $post['filters']['partnerId'] = UserLk::getPartnerId(Yii::$app->user);
+        }
+
+        if(!$partsBalanceForm->load($post, '') || !$partsBalanceForm->validate()) {
+            $a = 0;
+        }
+
+        return $this->asJson($this->getBalanceService()->getPartsBalance($partsBalanceForm));
+    }
+
+    public function actionPartsBalancePartner()
+    {
+        $partners = null;
+        $data = null;
+
+        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+        if ($IsAdmin) {
+            $partners = ArrayHelper::index(
+                Partner::find()->select(['ID', 'Name'])->where(['IsBlocked' => 0, 'IsDeleted' => 0])->all(), 'ID'
+            );
+        } else {
+            $partners = [];
+        }
+
+        return $this->render('parts_balance_partner', compact('partners'));
+    }
+
+    public function actionPartsBalancePartnerProcessing()
+    {
+        $this->enableCsrfValidation = false;
+        $post = Yii::$app->request->post();
+
+        $partsBalancePartnerForm = new PartsBalancePartnerForm();
+        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+        if (!$IsAdmin) {
+            $post['filters']['partnerId'] = UserLk::getPartnerId(Yii::$app->user);
+        }
+
+        if(!$partsBalancePartnerForm->load($post, '') || !$partsBalancePartnerForm->validate()) {
+            $a = 0;
+        }
+
+        return $this->asJson($this->getBalanceService()->getPartsBalancePartner($partsBalancePartnerForm));
+    }
+
 
     /**
      * Выписка по счету
