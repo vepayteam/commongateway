@@ -7,16 +7,22 @@
 
 /* @var $partners array */
 /* @var $data array */
+/* @var $columns array */
+
+/* @var $partsBalanceForm \app\services\balance\models\PartsBalanceForm */
 
 use app\models\partner\UserLk;
+use app\services\balance\models\PartsBalanceForm;
 use yii\web\View;
 
-$this->title = "баланс по разбивке";
+$this->title = "Баланс по разбивке (Платформа)";
 
-$this->params['breadtitle'] = "Баланс по разбивке";
+$this->params['breadtitle'] = "Баланс по разбивке (Платформа)";
 $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 
 ?>
+
+
 
 <div class="row">
     <div class="col-sm-12">
@@ -25,6 +31,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                 <h5>Выписка</h5>
             </div>
             <div class="ibox-content">
+
                 <form class="form-horizontal" id="parts-balance__form" method="post">
 
                     <div class="form-group">
@@ -39,10 +46,14 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                 </div>
                             </div>
                             <div class="input-daterange input-group">
-                                <input type="text" name="datefrom" value="<?= date("d.m.Y") ?> 00:00" maxlength="10"
+
+                                <input id="part-balance__form__datefrom" type="text" name="datefrom"
+                                       value="<?=date("d.m.Y")?> 00:00" maxlength="10"
                                        class="form-control">
                                 <span class="input-group-addon">по</span>
-                                <input type="text" name="dateto" value="<?= date("d.m.Y") ?> 23:59" maxlength="10"
+                                <input id="part-balance__form__dateto" type="text" name="dateto"
+                                       value="<?=date("d.m.Y")?> 23:59"
+                                       maxlength="10"
                                        class="form-control">
                             </div>
                         </div>
@@ -52,9 +63,12 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         <div class="col-sm-offset-2 col-sm-4">
                             <?php if (UserLk::IsAdmin(Yii::$app->user)): ?>
                                 <label for="parts-balance__form__partner-select">Партнер</label>
-                                <select class="form-control" name="partnerId" id="parts-balance__form__partner-select">
+                                <select id="part-balance__form__partnerId" class="form-control"
+                                        id="parts-balance__form__partner-select">
                                     <?php foreach ($partners as $partner): ?>
-                                        <option value="<?= $partner->ID ?>"><?= $partner->Name ?></option>
+                                        <option value="<?= $partner->ID ?>">
+                                            <?= $partner->Name ?>
+                                        </option>
                                     <?php endforeach; ?>
                                 </select>
                             <?php else: ?>
@@ -62,9 +76,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                        value="<?= UserLk::getPartnerId(Yii::$app->user) ?>">
                             <?php endif; ?>
                             <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
-                            <input name="sort" type="hidden" id="sortstatem" value="0">
-                            <input id="parts-balance__form__submit" type="submit" class="btn btn-sm btn-primary"
-                                   value="Найти" style="margin-top: 20px">
+                            <button id="parts-balance__form__submit" type="submit" class="btn btn-sm btn-primary" style="margin-top: 20px">Найти</button>
                         </div>
                     </div>
 
@@ -79,43 +91,10 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                 </div>
                 <div class="table-responsive" id="parts-balance__result">
                     <div class="panel-group" id="parts-balance__accordion" role="tablist" aria-multiselectable="true">
-                        <?php if($data): ?>
-                            <?php foreach ($data as $partnerId => $partnerBlock): ?>
-                                <div class="panel panel-default">
-                                    <div class="panel-heading" role="tab" id="headingOne">
-                                        <h4 class="panel-title">
-                                            <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse-<?=$partnerId?>" aria-expanded="true" aria-controls="collapseOne">
-                                                <?=$partners[$partnerId]->Name?>
-                                            </a>
-                                        </h4>
-                                    </div>
-                                    <div id="collapse-<?=$partnerId?>" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
-                                        <div class="panel-body">
-                                            <table class="table table-striped">
-                                                <thead>
-                                                <tr>
-                                                    <th>ID</th>
-                                                    <th>Extid</th>
-                                                    <th>Сумма, руб.</th>
-                                                </tr>
-                                                </thead>
-                                                <tbody>
-                                                <?php foreach($partnerBlock as $row): ?>
-                                                    <tr>
-                                                        <th scope="row"><?=$row['PayschetId']?></th>
-                                                        <td><?=$row['Extid']?></td>
-                                                        <td><?=$row['Amount']/100?></td>
-                                                    </tr>
-                                                <?php endforeach; ?>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <h3>Нет данных для отображения</h3>
-                        <?php endif; ?>
+
+                        <table id="example" class="table table-bordered display nowrap" style="width:100%">
+
+                        </table>
                     </div>
                 </div>
             </div>
@@ -123,5 +102,31 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
     </div>
 
 </div>
-
 <?php $this->registerJs('lk.mfobalance()'); ?>
+<script>
+    var datatableColumns = <?=json_encode(PartsBalanceForm::getDatatableColumns())?>;
+    var processingUri = '/partner/mfo/parts-balance-processing';
+    var datatableFilters = [
+        {
+            column_number: 0,
+            filter_type: "text",
+            filter_delay: 500
+        },
+        {
+            column_number: 1,
+            filter_type: "text",
+            filter_delay: 500
+        },
+        {
+            column_number: 4,
+            filter_type: "text",
+            filter_delay: 500
+        },
+        {
+            column_number: 14,
+            filter_type: "text",
+            filter_delay: 500
+        },
+
+    ];
+</script>

@@ -58,6 +58,7 @@ class MtsGate implements IBankGate
             TU::$AVTOPLATATFPARTS => MTSBank::$PARTSGATE,
             TU::$POGASHATFPARTS => MTSBank::$PARTSGATE,
             TU::$AVTOPLATECOMPARTS => MTSBank::$PARTSGATE,
+            TU::$VYVODPAYSPARTS => MTSBank::$PARTSGATE,
         ];
     }
 
@@ -144,6 +145,8 @@ class MtsGate implements IBankGate
         } elseif ($this->typeGate == MTSBank::$PEREVODOCTGATE && $gates && !empty($gates['MtsLogin'])) {
             return true;
         } elseif ($this->typeGate == MTSBank::$VYVODOCTGATE && $gates && !empty($gates['MtsLogin'])) {
+            return true;
+        } elseif ($this->typeGate == MTSBank::$PARTSGATE && $gates && !empty($gates['MtsLoginParts'])) {
             return true;
         }
         return false;

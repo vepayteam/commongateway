@@ -55,6 +55,9 @@ class PartnerAsset extends AssetBundle
 
         'aassets/plugins/colorpicker/css/colorpicker.css',
         'aassets/css/partner/jquery.multiselect.css',
+
+        'aassets/datatables/datatables.min.css',
+        'aassets/datatables/yadcf-0.9.3/jquery.dataTables.yadcf.css',
     ];
     public $js = [
 
@@ -140,6 +143,9 @@ class PartnerAsset extends AssetBundle
         'aassets/js/antifraud/antifraud.js',
         'aassets/js/partner/act.js',
         'aassets/js/partner/news.js',
+        'aassets/datatables/datatables.min.js',
+        'aassets/datatables/yadcf-0.9.3/jquery.dataTables.yadcf.js',
+        'aassets/js/partner/parts_balance.js',
 
     ];
     public $depends = [

@@ -16,6 +16,7 @@ use app\models\planner\UpdateStatems;
 use app\models\planner\VyvodSumPay;
 use app\models\planner\VyvodVoznagPlanner;
 use app\models\telegram\Telegram;
+use app\services\payment\PaymentService;
 use Yii;
 use yii\console\Controller;
 use app\models\payonline\OrderNotif;
@@ -271,5 +272,20 @@ class WidgetController extends Controller
             throw $e;
         }
 
+    }
+
+    public function actionPartsBalanceSendToPartners()
+    {
+        $this->getPaymentService()->sendPartsToPartners();
+    }
+
+    /**
+     * @return PaymentService
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\di\NotInstantiableException
+     */
+    private function getPaymentService()
+    {
+        return Yii::$container->get('PaymentService');
     }
 }
