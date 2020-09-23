@@ -12,6 +12,7 @@ use app\models\site\CheckPay;
 use app\models\site\ContactForm;
 use app\models\site\PartnerReg;
 use app\models\telegram\Telegram;
+use Carbon\Carbon;
 use Yii;
 use yii\bootstrap\ActiveForm;
 use yii\db\Exception;
@@ -308,6 +309,11 @@ class SiteController extends Controller
             }
         }
         return $this->redirect(['index']);
+    }
+
+    public function actionTest()
+    {
+        print_r(Carbon::now()->addDays(-1)->timestamp);
     }
 
 }

@@ -78,6 +78,7 @@ class Uslugatovar extends \yii\db\ActiveRecord
         0 => 'Телепорт',
     ];
 
+    // TODO: use TU
     public static $TypeCustom_str = [
         1 => 'Регистрация карты',
         11 => 'Выплата на счет',
@@ -99,6 +100,7 @@ class Uslugatovar extends \yii\db\ActiveRecord
         112 => 'Автоплатеж по займу AFT с разбивкой',
         102 => 'Оплата товара/услуги с разбивкой',
         100 => 'Оплата ЖКХ с разбивкой',
+        119 => 'Перечисление по разбивке',
 
     ];
 
