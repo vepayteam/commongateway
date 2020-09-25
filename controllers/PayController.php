@@ -327,7 +327,7 @@ class PayController extends Controller
         $SesIdPay = Yii::$app->session->get('IdPay');
         if ($id && $id == $SesIdPay) {
             //завершение оплаты + в колбэк приходит + в планировщике проверяется статус
-            // sleep(5); //подождать завершения оплаты
+            sleep(5); //подождать завершения оплаты
 
             $payschets = new Payschets();
             $params = $payschets->getSchetData($id, null);
