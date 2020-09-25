@@ -407,7 +407,7 @@ class PayController extends Controller
 
         $payschets = new Payschets();
         $params = $payschets->getSchetData($id, null);
-        if (!$params) {
+        if (!$params || $params['Status'] != 1) {
             throw new NotFoundHttpException();
         }
 
@@ -429,7 +429,7 @@ class PayController extends Controller
 
         $payschets = new Payschets();
         $params = $payschets->getSchetData($id, null);
-        if (!$params) {
+        if (!$params || $params['Status'] != 1) {
             throw new NotFoundHttpException();
         }
 
