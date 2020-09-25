@@ -105,6 +105,10 @@ class Payschets
                 qu.IDPartner,
                 ps.IdOrg,
                 ps.IPAddressUser,
+                ps.Dogovor,
+                ps.FIO,
+                p.Name AS PartnerName,
+                p.Phone AS PartnerPhone,
                 p.IsUseKKmPrint
             FROM
                 `pay_schet` AS ps
