@@ -1,0 +1,93 @@
+@font-face {
+    font-family: TTNormsPro;
+    font-weight: 400;
+    src: url(../fonts/3B00B8_0_0.eot);
+    src: url(../fonts/3B00B8_0_0.eot?#iefix) format("embedded-opentype"), url(../fonts/3B00B8_0_0.woff2) format("woff2"), url(../fonts/3B00B8_0_0.woff) format("woff"), url(../fonts/3B00B8_0_0.ttf) format("truetype")
+}
+
+@font-face {
+    font-family: TTNormsPro;
+    font-weight: 500;
+    src: url(/fonts/3B00B8_1_0.eot);
+    src: url(/fonts/3B00B8_1_0.eot?#iefix) format("embedded-opentype"), url(../fonts/3B00B8_1_0.woff2) format("woff2"), url(../fonts/3B00B8_1_0.woff) format("woff"), url(../fonts/3B00B8_1_0.ttf) format("truetype")
+}
+
+@font-face {
+    font-family: TTNormsPro;
+    font-weight: 700;
+    src: url(../fonts/3B00B8_2_0.eot);
+    src: url(../fonts/3B00B8_2_0.eot?#iefix) format("embedded-opentype"), url(../fonts/3B00B8_2_0.woff2) format("woff2"), url(../fonts/3B00B8_2_0.woff) format("woff"), url(../fonts/3B00B8_2_0.ttf) format("truetype")
+}
+
+body, html {
+    height: 100%
+}
+
+body {
+    background-color: #b3b3b3;
+    margin: 0;
+    padding: 0
+}
+
+.bg-wrapper {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center
+}
+
+.c-close {
+    background-color: #fff;
+    padding: 20px
+}
+
+.c-action-right {
+    text-align: right;
+    width: 100%
+}
+
+.c-content {
+    background-color: #f5f5f5;
+    margin: 10px 30px;
+    padding: 80px 100px
+}
+
+@media (max-width: 600px) {
+    .c-content {
+        margin: 10px;
+        padding: 24px
+    }
+}
+
+.c-h1 {
+    margin: 0;
+    font-size: 18px;
+    line-height: 22px;
+    color: #9b9b9b
+}
+
+.c-h1, .c-h2 {
+    padding: 0;
+    font-weight: 700
+}
+
+.c-h2 {
+    font-size: 16px;
+    line-height: 19px;
+    color: #000;
+    margin: 50px 0 0
+}
+
+.c-p {
+    padding: 0;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 17px;
+    color: #000;
+    margin: 24px 0 0
+}
