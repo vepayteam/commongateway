@@ -28,10 +28,13 @@ use app\models\Payschets;
 use app\models\queue\SendMailJob;
 use app\models\SendEmail;
 use app\models\TU;
+use app\services\ident\IdentService;
+use app\services\ident\models\IdentStatisticForm;
 use kartik\mpdf\Pdf;
 use Yii;
 use yii\base\DynamicModel;
 use yii\filters\AccessControl;
+use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
 use yii\helpers\VarDumper;
 use yii\web\Controller;
@@ -40,6 +43,8 @@ use yii\web\Response;
 
 class StatController extends Controller
 {
+    public $enableCsrfValidation = false;
+
     public function behaviors()
     {
         return [
@@ -769,5 +774,50 @@ class StatController extends Controller
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         );
         return $content['data'];
+    }
+
+    public function actionIdent()
+    {
+        $partners = null;
+        $data = null;
+
+        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+        if ($IsAdmin) {
+            $partners = ArrayHelper::index(
+                Partner::find()->select(['ID', 'Name'])->where(['IsBlocked' => 0, 'IsDeleted' => 0])->all(), 'ID'
+            );
+        } else {
+            $partners = [];
+        }
+
+        return $this->render('ident', compact('partners'));
+
+    }
+
+    public function actionIdentProcessing()
+    {
+        $this->enableCsrfValidation = false;
+        $post = Yii::$app->request->post();
+
+        $identStatisticForm = new IdentStatisticForm();
+        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+        if (!$IsAdmin) {
+            $post['filters']['partnerId'] = UserLk::getPartnerId(Yii::$app->user);
+        }
+
+        if(!$identStatisticForm->load($post, '') || !$identStatisticForm->validate()) {
+            $a = 0;
+        }
+        return $this->asJson($this->getIdentService()->getIdentStatistic($identStatisticForm));
+    }
+
+    /**
+     * @return IdentService
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\di\NotInstantiableException
+     */
+    private function getIdentService()
+    {
+        return Yii::$container->get('IdentService');
     }
 }

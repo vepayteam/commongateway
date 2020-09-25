@@ -18,6 +18,7 @@ use app\models\payonline\Partner;
 use app\models\payonline\PayForm;
 use app\models\Payschets;
 use app\models\TU;
+use kartik\mpdf\Pdf;
 use Yii;
 use yii\db\Exception;
 use yii\helpers\VarDumper;
@@ -321,6 +322,7 @@ class PayController extends Controller
      */
     public function actionOrderok($id)
     {
+        // TODO: DRY
         Yii::warning("PayForm orderok id=".$id);
         $SesIdPay = Yii::$app->session->get('IdPay');
         if ($id && $id == $SesIdPay) {
@@ -363,6 +365,10 @@ class PayController extends Controller
             }
 
             if (in_array($res['status'], [1, 3])) {
+
+                $this->layout = 'order_done';
+                return $this->render('order-ok', ['params' => $params]);
+
                 if (!empty($params['SuccessUrl'])) {
                     //перевод на ok
                     return $this->redirect(Payschets::RedirectUrl($params['SuccessUrl'], $id, $params['Extid']));
@@ -388,6 +394,62 @@ class PayController extends Controller
         } else {
             throw new NotFoundHttpException();
         }
+    }
+
+    public function actionOrderPrint($id)
+    {
+        // TODO: DRY
+        Yii::warning("PayForm orderprint id=".$id);
+        $SesIdPay = Yii::$app->session->get('IdPay');
+        if (!$id || $id != $SesIdPay) {
+            throw new NotFoundHttpException();
+        }
+
+        $payschets = new Payschets();
+        $params = $payschets->getSchetData($id, null);
+        if (!$params || $params['Status'] != 1) {
+            throw new NotFoundHttpException();
+        }
+
+        $this->layout = null;
+        return $this->render('order-print', [
+            'params' => $params,
+            'isPage' => true,
+        ]);
+    }
+
+    public function actionOrderInvoice($id)
+    {
+        // TODO: DRY
+        Yii::warning("PayForm orderinvoice id=".$id);
+        $SesIdPay = Yii::$app->session->get('IdPay');
+        if (!$id || $id != $SesIdPay) {
+            throw new NotFoundHttpException();
+        }
+
+        $payschets = new Payschets();
+        $params = $payschets->getSchetData($id, null);
+        if (!$params || $params['Status'] != 1) {
+            throw new NotFoundHttpException();
+        }
+
+        $content = $this->renderPartial('order-print', [
+            'params' => $params,
+            'isPage' => false,
+        ]);
+
+        $pdf = new Pdf([
+            // 'mode' => Pdf::MODE_CORE,
+            'format' => Pdf::FORMAT_A4,
+            'orientation' => Pdf::ORIENT_PORTRAIT,
+            'destination' => Pdf::DEST_BROWSER,
+            'content' => $content,
+            'cssFile' => '@webroot/aassets/css/order-print.css',
+            // 'cssInline' => '.kv-heading-1{font-size:18px}',
+        ]);
+
+        // return the pdf output as per the destination setting
+        return $pdf->render();
     }
 
     public function actionApplepayvalidate()
@@ -530,5 +592,7 @@ class PayController extends Controller
         $response = curl_exec($curl);
         curl_close($curl);
     }
+
+
 
 }

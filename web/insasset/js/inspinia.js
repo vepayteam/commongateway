@@ -16,7 +16,9 @@ $(document).ready(function () {
     }
 
     // MetisMenu
-    $('#side-menu').metisMenu();
+    import('/insasset/js/plugins/metisMenu/jquery.metisMenu.js').then(function(module) {
+        $('#side-menu').metisMenu();
+    });
 
     // Collapse ibox function
     $('.collapse-link').on('click', function () {

@@ -174,6 +174,7 @@ $config = [
         'singletons' => [
             'PaymentService' => ['class' => 'app\services\payment\PaymentService'],
             'BalanceService' => ['class' => 'app\services\balance\BalanceService'],
+            'IdentService' => ['class' => 'app\services\ident\IdentService'],
         ],
     ],
     'modules' => [
