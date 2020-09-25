@@ -106,15 +106,20 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 <?php $this->registerJs('lk.mfobalance()'); ?>
 <script>
     var datatableColumns = <?=json_encode(IdentStatisticForm::getDatatableColumns())?>;
-    var processingUri = '/partner/ident/parts-balance-processing';
+    var processingUri = '/partner/stat/ident-processing';
     var datatableFilters = [
         {
-            column_number: 0,
+            column_number: 1,
             filter_type: "text",
             filter_delay: 500
         },
         {
-            column_number: 1,
+            column_number: 2,
+            filter_type: "text",
+            filter_delay: 500
+        },
+        {
+            column_number: 3,
             filter_type: "text",
             filter_delay: 500
         },
@@ -124,7 +129,22 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
             filter_delay: 500
         },
         {
-            column_number: 14,
+            column_number: 5,
+            filter_type: "text",
+            filter_delay: 500
+        },
+        {
+            column_number: 6,
+            filter_type: "text",
+            filter_delay: 500
+        },
+        {
+            column_number: 7,
+            filter_type: "text",
+            filter_delay: 500
+        },
+        {
+            column_number: 8,
             filter_type: "text",
             filter_delay: 500
         },

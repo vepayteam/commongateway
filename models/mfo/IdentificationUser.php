@@ -50,7 +50,8 @@ class IdentificationUser
             'PaspVidan' => strval($params['paspvid']),
             'Phone' => strval($params['phone']),
             'PhoneCode' => strval($params['phonecode']),
-            'StateOp' => 0
+            'StateOp' => 0,
+            'DateCreate' => time(),
         ];
 
         if ($user && $user->ID) {

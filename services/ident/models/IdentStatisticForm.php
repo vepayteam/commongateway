@@ -10,23 +10,19 @@ use yii\base\Model;
 class IdentStatisticForm extends Model
 {
     const COLUMNS_BY_PARTS_BALANCE = [
-        'pay_schet.ID AS ID' => 'ID счета',
-        'partner.Name AS Name' => 'Имя партнера',
-        'pay_schet_parts.Amount AS Amount' => 'Сумма части',
-        'DateCreate AS DateCreate' => 'Дата создания',
-        'pay_schet.Extid AS Extid' => 'Extid',
-        'pay_schet.SummPay AS SummPay' => 'Сумма платежа, коп',
-        'pay_schet.ComissSumm AS ComissSumm' => 'Комиссия, коп',
-        'pay_schet.MerchVozn AS MerchVozn' => 'Возн мерчанта, коп',
-        'pay_schet.BankComis AS BankComis' => 'Комисс банка, коп',
-        'pay_schet.ErrorInfo AS ErrorInfo' => 'Сообщение',
-        'pay_schet.CardNum AS CardNum' => 'Номер карты',
-        'pay_schet.CardHolder AS CardHolder' => 'Владелец карты',
-        'pay_schet.Dogovor AS Dogovor' => 'Договор',
-        'pay_schet.FIO AS FIO' => 'ФИО',
-
-        'vyvod_parts.PayschetId AS PayschetId' => 'ИД платежа вывода',
-        'VyvodDateCreate AS VyvodDateCreate' => 'Дата вывода',
+        'DateCreate AS DateCreate' => 'Дата запроса',
+        'user_identification.ID AS ID' => 'ID',
+        'user_identification.TransNum AS TransNum' => 'Код транзакции',
+        'user_identification.Name AS Name' => 'Имя',
+        'user_identification.Fam AS Fam' => 'Фамилия',
+        'user_identification.Otch AS Otch' => 'Отчество',
+        'user_identification.Inn AS Inn' => 'ИНН',
+        'user_identification.Snils AS Snils' => 'СНИЛС',
+        'user_identification.PaspSer AS PaspSer' => 'Паспорт серия',
+        'user_identification.PaspNum AS PaspNum' => 'Паспорт номер',
+        'user_identification.PaspPodr AS PaspPodr' => 'Паспорт подразд.',
+        'user_identification.PaspDate AS PaspDate' => 'Паспорт дата',
+        'user_identification.PaspVidan AS PaspVidan' => 'Папорт выдан',
     ];
 
     private $partner;
