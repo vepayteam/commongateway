@@ -33,6 +33,7 @@ use yii\web\View;
                 <?php if ($IsAdmin) : ?>
                     <li class=""><a data-toggle="tab" href="#tab-2"> Услуги</a></li>
                     <li class=""><a data-toggle="tab" href="#tab-3"> Настройки</a></li>
+                    <li class=""><a data-toggle="tab" href="#tab-5"> Опции</a></li>
                 <?php endif; ?>
                 <?php /*if ($IsAdmin || $roleUser == 1) : ?>
                     <li class=""><a data-toggle="tab" href="#tab-4"> Доступ к кабинету</a></li>
@@ -61,6 +62,13 @@ use yii\web\View;
                     <div id="tab-3" class="tab-pane">
                         <div class="panel-body">
                             <?=$this->render('_integration_edit', ['partner' => $partner, 'settings' => $settings]);?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+                <?php if ($IsAdmin): ?>
+                    <div id="tab-5" class="tab-pane">
+                        <div class="panel-body">
+                            <?=$this->render('_options', ['partner' => $partner]);?>
                         </div>
                     </div>
                 <?php endif; ?>

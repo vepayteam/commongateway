@@ -7,6 +7,8 @@ use app\models\mfo\MfoSettings;
 use app\models\partner\UserLk;
 use app\models\sms\tables\AccessSms;
 use app\models\TU;
+use app\services\partners\models\PartnerOption;
+use app\services\partners\models\PartnerOptions;
 use Yii;
 use yii\web\UploadedFile;
 
@@ -628,5 +630,10 @@ class Partner extends \yii\db\ActiveRecord
     public function getUslugatovars()
     {
         return $this->hasMany(Uslugatovar::class, ['IDPartner' => 'ID']);
+    }
+
+    public function getOptions()
+    {
+        return $this->hasMany(PartnerOption::class, ['PartnerId' => 'ID']);
     }
 }

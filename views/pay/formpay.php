@@ -6,6 +6,7 @@
 /* @var array $samsung */
 /* @var \app\models\payonline\PayForm $payform */
 
+use app\services\partners\models\PartnerOption;
 use yii\bootstrap\ActiveForm;
 use yii\bootstrap\Html;
 ?>
@@ -19,10 +20,10 @@ use yii\bootstrap\Html;
         </div>
     </div>
     <?php if ($params['IdUsluga'] == 1) : ?>
-        <?php /* TODO: */if(in_array($params['IdOrg'], ['3','8'])): ?>
+        <?php $partnerCardRegTextHeaderOption = PartnerOption::findOne(['PartnerId' => $params['IdOrg'], 'Name' => PartnerOption::CARD_REG_TEXT_HEADER_NAME]) ?>
+        <?php if($partnerCardRegTextHeaderOption): ?>
             <div class="infotop">
-                Для проверки актуальности Вашей банковской карты с нее будет списана сумма до 10 р.
-                После окончания проверки, списанная сумма вернется на карту.
+                <?= $partnerCardRegTextHeaderOption['Value'] ?>
             </div>
         <?php else: ?>
             <div class="infotop">
