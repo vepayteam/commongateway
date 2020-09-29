@@ -1561,6 +1561,37 @@
                 });
                 return false;
             });
+
+            $('#partner-options__submit').on('click', function(e) {
+                e.preventDefault();
+
+                let form = $('#partner-options__form');
+                linklink = $.ajax({
+                    type: "POST",
+                    url: '/partner/partner/options-save',
+                    data: form.serialize(),
+                    beforeSend: function () {
+                        form.closest('.ibox-content').toggleClass('sk-loading');
+                    },
+                    success: function (data) {
+                        form.closest('.ibox-content').toggleClass('sk-loading');
+                        if (data.status == 1) {
+                            toastr.success("OK", "Изменения сохранены");
+                        } else {
+                            toastr.error(data.message, "Ошибка");
+                        }
+                    },
+                    error: function (data) {
+                        form.closest('.ibox-content').toggleClass('sk-loading');
+                        toastr.error("Ошибка запроса", "Ошибка");
+                    }
+                });
+                return false;
+
+
+
+                return false;
+            });
         },
 
         savepatnerpart: function (form) {
