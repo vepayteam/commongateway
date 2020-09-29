@@ -14,6 +14,7 @@ use app\models\partner\UserLk;
 use app\models\payonline\Partner;
 use app\models\payonline\PartnerBankRekviz;
 use app\models\payonline\Uslugatovar;
+use app\services\partners\PartnersService;
 use Yii;
 use yii\filters\AccessControl;
 use yii\helpers\Url;
@@ -523,6 +524,30 @@ class PartnerController extends Controller
             return ['status' => 1, 'id' => $us->ID];
         }
         return '';
+    }
+
+    public function actionOptionsSave()
+    {
+        if (!Yii::$app->request->isAjax || Yii::$app->request->isPjax) {
+            return '';
+        }
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        if($this->getPartnersService()->saveOptions(Yii::$app->request->post())) {
+            return ['status' => 1];
+        } else {
+            return ['status' => 2];
+        }
+    }
+
+    /**
+     * @return PartnersService
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\di\NotInstantiableException
+     */
+    private function getPartnersService()
+    {
+        return Yii::$container->get('PartnersService');
     }
 
 }
