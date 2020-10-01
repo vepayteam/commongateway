@@ -23,9 +23,9 @@ class MTSBank implements IBank
     private $bankP2PUrl = 'https://oplata.mtsbank.ru/payment/webservices/p2p?wsdl';
     private $bankP2PUrlWsdl = 'https://oplata.mtsbank.ru/payment/webservices/p2p';
     private $bankUrlClient = '';
-    private $shopId = 'vepay-api';
-    private $certFile = 'vepay';
-    private $keyFile = 'ma5m5b0vn7ucd1q4njsmceuul1';
+    private $shopId;
+    private $certFile;
+    private $keyFile;
     private $caFile;
     private static $orderState = [0 => 'Обрабатывается', 1 => 'Исполнен', 2 => 'Отказано', 3 => 'Возврат'];
     private $backUrls = ['ok' => 'https://api.vepay.online/pay/orderok?orderid='];
@@ -65,58 +65,59 @@ class MTSBank implements IBank
     public function SetMfoGate(MtsGate $mtsGate)
     {
         $params = $mtsGate->GetGates();
-        if (in_array($mtsGate->getTypeGate(), [self::$OCTGATE, self::$SCHETGATE]) && !empty($params['MtsLoginOct'])) {
+        $type = $mtsGate->getTypeGate();
+        $this->type = $type;
+
+        if (in_array($type, [self::$OCTGATE, self::$SCHETGATE]) && !empty($params['MtsLoginOct'])) {
             //выдача на карту OCT, и на счет
             $this->shopId = $mtsGate->gates['MtsLoginOct'];
             $this->certFile = $mtsGate->gates['MtsPasswordOct'];
             $this->keyFile = $mtsGate->gates['MtsTokenOct'];
-        } elseif ($mtsGate->getTypeGate() == self::$AFTGATE && !empty($params['MtsLoginAft'])) {
+        } elseif ($type == self::$AFTGATE && !empty($params['MtsLoginAft'])) {
             //прием с карты AFT
             $this->shopId = $mtsGate->gates['MtsLoginAft'];
             $this->certFile = $mtsGate->gates['MtsPasswordAft'];
             $this->keyFile = $mtsGate->gates['MtsTokenAft'];
-        } elseif ($mtsGate->getTypeGate() == self::$ECOMGATE && !empty($params['MtsLogin'])) {
+        } elseif ($type == self::$ECOMGATE && !empty($params['MtsLoginEcom'])) {
             //ecom
-            $this->shopId = $mtsGate->gates['MtsLogin'];
-            $this->certFile = $mtsGate->gates['MtsPassword'];
-            $this->keyFile = $mtsGate->gates['MtsToken'];
-        } elseif ($mtsGate->getTypeGate() == self::$VYVODGATE && !empty($params['MtsLoginOct'])) {
+            $this->shopId = $mtsGate->gates['MtsLoginEcom'];
+            $this->certFile = $mtsGate->gates['MtsPasswordEcom'];
+            $this->keyFile = $mtsGate->gates['MtsTokenEcom'];
+        } elseif ($type == self::$VYVODGATE && !empty($params['MtsLoginVyvod'])) {
             //вывод платежей
-            $this->shopId = $mtsGate->gates['MtsLoginOct'];
-            $this->certFile = $mtsGate->gates['MtsPasswordOct'];
-            $this->keyFile = $mtsGate->gates['MtsTokenOct'];
-        } elseif ($mtsGate->getTypeGate() == self::$JKHGATE && !empty($params['MtsLoginJkh'])) {
+            $this->shopId = $mtsGate->gates['MtsLoginVyvod'];
+            $this->certFile = $mtsGate->gates['MtsPasswordVyvod'];
+            $this->keyFile = $mtsGate->gates['MtsTokenVyvod'];
+        } elseif ($type == self::$JKHGATE && !empty($params['MtsLoginJkh'])) {
             //жкх платежи
             $this->shopId = $mtsGate->gates['MtsLoginJkh'];
             $this->certFile = $mtsGate->gates['MtsPasswordJkh'];
             $this->keyFile = $mtsGate->gates['MtsTokenJkh'];
-        } elseif ($mtsGate->getTypeGate() == self::$AUTOPAYGATE && !empty($params['MtsLogin'])) {
+        } elseif ($type == self::$AUTOPAYGATE && !empty($params['MtsLoginAuto'])) {
             //авторплатеж
-            $this->shopId = $mtsGate->gates['MtsLoginJkh'];
-            $this->certFile = $mtsGate->gates['MtsPasswordJkh'];
-            $this->keyFile = $mtsGate->gates['MtsTokenJkh'];
-        } elseif ($mtsGate->getTypeGate() == self::$PEREVODGATE && !empty($params['MtsLogin'])) {
+            $this->shopId = $mtsGate->gates['MtsLoginAuto'];
+            $this->certFile = $mtsGate->gates['MtsPasswordAuto'];
+            $this->keyFile = $mtsGate->gates['MtsTokenAuto'];
+        } elseif ($type == self::$PEREVODGATE && !empty($params['MtsLoginPerevod'])) {
             //перевод зарезервированной комиссии обратно
-            $this->shopId = $mtsGate->gates['MtsLogin'];
-            $this->certFile = $mtsGate->gates['MtsPassword'];
-            $this->keyFile = $mtsGate->gates['MtsToken'];
-        } elseif ($mtsGate->getTypeGate() == self::$VYVODOCTGATE && !empty($params['MtsLoginOct'])) {
-            //вывод со счета выплат
-            $this->shopId = $mtsGate->gates['MtsLoginOct'];
-            $this->certFile = $mtsGate->gates['MtsPasswordOct'];
-            $this->keyFile = $mtsGate->gates['MtsTokenOct'];
-        } elseif ($mtsGate->getTypeGate() == self::$PEREVODOCTGATE && !empty($params['MtsLoginOct'])) {
+            $this->shopId = $mtsGate->gates['MtsLoginPerevod'];
+            $this->certFile = $mtsGate->gates['MtsPasswordPerevod'];
+            $this->keyFile = $mtsGate->gates['MtsTokenPerevod'];
+        } elseif ($type == self::$VYVODOCTGATE && !empty($params['MtsLoginOctVyvod'])) {
+            //выводсо счета выплат
+            $this->shopId = $mtsGate->gates['MtsLoginOctVyvod'];
+            $this->certFile = $mtsGate->gates['MtsPasswordOctVyvod'];
+            $this->keyFile = $mtsGate->gates['MtsTokenOctVyvod'];
+        } elseif ($type == self::$PEREVODOCTGATE && !empty($params['MtsLoginOctPerevod'])) {
             //перевод со счета выплат внутри банка
-            $this->shopId = $mtsGate->gates['MtsLoginOct'];
-            $this->certFile = $mtsGate->gates['MtsPasswordOct'];
-            $this->keyFile = $mtsGate->gates['MtsTokenOct'];
-        } elseif ($mtsGate->getTypeGate() == self::$PARTSGATE && !empty($params['MtsLoginParts'])) {
+            $this->shopId = $mtsGate->gates['MtsLoginOctPerevod'];
+            $this->certFile = $mtsGate->gates['MtsPasswordOctPerevod'];
+            $this->keyFile = $mtsGate->gates['MtsTokenOctPerevod'];
+        } elseif ($type == self::$PARTSGATE && !empty($params['MtsLoginParts'])) {
             //платежи с разбивкой
             $this->shopId = $mtsGate->gates['MtsLoginParts'];
             $this->certFile = $mtsGate->gates['MtsPasswordParts'];
             $this->keyFile = $mtsGate->gates['MtsTokenParts'];
-        } else {
-            throw new \Exception('Ошибка выбора шлюза');
         }
     }
 

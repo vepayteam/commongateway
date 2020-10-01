@@ -152,6 +152,25 @@ echo $form->field($partner,'MtsLoginOct')->textInput(['class' => 'form-control']
 echo $form->field($partner,'MtsPasswordOct')->textInput(['class' => 'form-control']);
 echo $form->field($partner,'MtsTokenOct')->textInput(['class' => 'form-control']);
 
+echo $form->field($partner,'MtsLoginEcom')->textInput(['class' => 'form-control']);
+echo $form->field($partner,'MtsPasswordEcom')->textInput(['class' => 'form-control']);
+echo $form->field($partner,'MtsTokenEcom')->textInput(['class' => 'form-control']);
+echo $form->field($partner,'MtsLoginVyvod')->textInput(['class' => 'form-control']);
+echo $form->field($partner,'MtsPasswordVyvod')->textInput(['class' => 'form-control']);
+echo $form->field($partner,'MtsTokenVyvod')->textInput(['class' => 'form-control']);
+echo $form->field($partner,'MtsLoginAuto')->textInput(['class' => 'form-control']);
+echo $form->field($partner,'MtsPasswordAuto')->textInput(['class' => 'form-control']);
+echo $form->field($partner,'MtsTokenAuto')->textInput(['class' => 'form-control']);
+echo $form->field($partner,'MtsLoginPerevod')->textInput(['class' => 'form-control']);
+echo $form->field($partner,'MtsPasswordPerevod')->textInput(['class' => 'form-control']);
+echo $form->field($partner,'MtsTokenPerevod')->textInput(['class' => 'form-control']);
+echo $form->field($partner,'MtsLoginOctVyvod')->textInput(['class' => 'form-control']);
+echo $form->field($partner,'MtsPasswordOctVyvod')->textInput(['class' => 'form-control']);
+echo $form->field($partner,'MtsTokenOctVyvod')->textInput(['class' => 'form-control']);
+echo $form->field($partner,'MtsLoginOctPerevod')->textInput(['class' => 'form-control']);
+echo $form->field($partner,'MtsPasswordOctPerevod')->textInput(['class' => 'form-control']);
+echo $form->field($partner,'MtsTokenOctPerevod')->textInput(['class' => 'form-control']);
+
 echo $form->field($partner,'MtsLoginParts')->textInput(['class' => 'form-control']);
 echo $form->field($partner,'MtsPasswordParts')->textInput(['class' => 'form-control']);
 echo $form->field($partner,'MtsTokenParts')->textInput(['class' => 'form-control']);
