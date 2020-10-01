@@ -86,6 +86,7 @@ class CheckpayCron
             // в случае возникновения ошибки при выполнении одного из запросов выбрасывается исключение
             echo "error: " . $e->getMessage() . "\n";
             Yii::warning("checkStatePay-error: " . $e->getMessage(), 'rsbcron');
+            Yii::warning($e->getTraceAsString(), 'rsbcron');
         }
 
     }
@@ -204,9 +205,11 @@ class CheckpayCron
         } catch (\yii\db\Exception $e) {
             // в случае возникновения ошибки при выполнении одного из запросов выбрасывается исключение
             Yii::warning("checkToExport-error: " . $e->getMessage(), 'rsbcron');
+            Yii::warning($e->getTraceAsString(), 'rsbcron');
         } catch (\Exception $e) {
             // в случае возникновения ошибки при выполнении одного из запросов выбрасывается исключение
             Yii::warning("checkToExport-error: " . $e->getMessage(), 'rsbcron');
+            Yii::warning($e->getTraceAsString(), 'rsbcron');
         }
     }
 }
