@@ -176,6 +176,7 @@ $config = [
             'BalanceService' => ['class' => 'app\services\balance\BalanceService'],
             'IdentService' => ['class' => 'app\services\ident\IdentService'],
             'PartnersService' => ['class' => 'app\services\partners\PartnersService'],
+            'AuthService' => ['class' => 'app\services\auth\AuthService'],
         ],
     ],
     'modules' => [
@@ -193,7 +194,10 @@ $config = [
         ],
         'antifraud' => [
             'class' => 'app\modules\antifraud\Module',
-        ]
+        ],
+        'lk' => [
+            'class' => 'app\modules\lk\Module',
+        ],
     ],
 ];
 

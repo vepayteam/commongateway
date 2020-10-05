@@ -8,6 +8,7 @@ return [
     'buhEmail' => 'support@vepay.online',
     'DEVMODE' => 'N',
     'TESTMODE' => 'N',
+    'accountServiceUrl' => '',
 	'key' => '',
     'keycancel' => '',
     'info' => [
@@ -38,6 +39,15 @@ return [
         'sno' => "",
         'host' => '',
         'token' => ''
-    ]
+    ],
+
+    'services' => [
+        'accounts' => [
+            'url' => '',
+            'superuserLogin' => 'superuser',
+            'superuserPassword' => '',
+            'canRegUserRole' => 'php_account_admin',
+        ],
+    ],
 	
 ];
