@@ -31,6 +31,7 @@ class BankMerchant
      */
     public static function Create($params)
     {
+        // TODO: DRY
         if ($params['Bank'] == TCBank::$bank) {
             if ($params['IdUsluga'] == 1) {
                 //регистрация карты
@@ -40,7 +41,12 @@ class BankMerchant
             }
             return new TCBank($TcbGate);
         } elseif ($params['Bank'] == MTSBank::$bank) {
-            $mtsGate = new MtsGate($params['IDPartner'], null, $params['IsCustom']);
+            if ($params['IdUsluga'] == 1) {
+                //регистрация карты
+                $mtsGate = new MtsGate($params['IdOrg'], MTSBank::$AUTOPAYGATE);
+            } else {
+                $mtsGate = new MtsGate($params['IDPartner'], null, $params['IsCustom']);
+            }
             return new MTSBank($mtsGate);
         }
         return new TCBank();

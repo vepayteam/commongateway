@@ -50,11 +50,14 @@ class MTSBank implements IBank
      */
     public function __construct($mtsGate = null)
     {
+        if(isset(Yii::$app->params['domain']) && !empty(Yii::$app->params['domain'])) {
+            $this->backUrls['ok'] = Yii::$app->params['domain'] . '/pay/orderok?orderid=';
+        }
+
         if (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] == 'Y') {
             $this->bankUrl = 'https://web.rbsuat.com/mtsbank';
             $this->bankP2PUrl = 'https://web.rbsuat.com/mtsbank/webservices/p2p';
             $this->bankP2PUrlWsdl = 'https://web.rbsuat.com/mtsbank/webservices/p2p?wsdl';
-            $this->backUrls['ok'] = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . '/pay/orderok?orderid=';
         }
 
         if ($mtsGate) {
