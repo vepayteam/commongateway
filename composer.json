@@ -33,8 +33,10 @@
         "geoip2/geoip2" : "~2.0",
         "kartik-v/yii2-mpdf": "dev-master",
         "toriphes/yii2-console-runner": "*",
+        "nesbot/carbon": "^2.40",
         "2amigos/qrcode-library" : "*",
-        "nesbot/carbon": "^2.40"
+        "php-amqplib/php-amqplib": "^2.11",
+        "rmccue/requests": "^1.7"
     },
     "require-dev": {
         "yiisoft/yii2-debug": "~2.1.0",
