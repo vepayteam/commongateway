@@ -7,6 +7,8 @@ use app\models\mfo\MfoSettings;
 use app\models\partner\UserLk;
 use app\models\sms\tables\AccessSms;
 use app\models\TU;
+use app\services\partners\models\PartnerOption;
+use app\services\partners\models\PartnerOptions;
 use Yii;
 use yii\web\UploadedFile;
 
@@ -163,6 +165,13 @@ class Partner extends \yii\db\ActiveRecord
                 'MtsLoginAft', 'MtsPasswordAft', 'MtsTokenAft',
                 'MtsLoginJkh', 'MtsPasswordJkh', 'MtsTokenJkh',
                 'MtsLoginOct', 'MtsPasswordOct', 'MtsTokenOct',
+
+                'MtsLoginEcom', 'MtsPasswordEcom', 'MtsTokenEcom',
+                'MtsLoginVyvod', 'MtsPasswordVyvod', 'MtsTokenVyvod',
+                'MtsLoginAuto', 'MtsPasswordAuto', 'MtsTokenAuto',
+                'MtsLoginPerevod', 'MtsPasswordPerevod', 'MtsTokenPerevod',
+                'MtsLoginOctVyvod', 'MtsPasswordOctVyvod', 'MtsTokenOctVyvod',
+                'MtsLoginOctPerevod', 'MtsPasswordOctPerevod', 'MtsTokenOctPerevod',
                 ], 'string', 'max' => 500
             ],
             [['URLSite', 'PodpisantFull', 'PodpDoljpost', 'PodpDoljpostRod', 'PodpOsnovan', 'PodpOsnovanRod',
@@ -281,6 +290,7 @@ class Partner extends \yii\db\ActiveRecord
             'OrangeDataConKey' => 'Ключ для подключения',
             'OrangeDataConCert' => 'Сертификат для подключения',
             'IsUseKKmPrint' => 'Использование ККМ',
+
             'MtsLogin' => 'Логин МТС Банк',
             'MtsPassword' => 'Пароль МТС Банк',
             'MtsToken' => 'Токен МТС Банк',
@@ -290,9 +300,29 @@ class Partner extends \yii\db\ActiveRecord
             'MtsLoginAft' => 'Логин МТС Банк AFT',
             'MtsPasswordAft' => 'Пароль МТС Банк AFT',
             'MtsTokenAft' => 'Токен МТС Банк AFT',
-            'MtsLoginOct' => 'Логин МТС Банк OCT',
-            'MtsPasswordOct' => 'Пароль МТС Банк OCT',
-            'MtsTokenOct' => 'Токен МТС Банк OCT',
+            'MtsLoginOct' => 'Логин МТС Банк OCT и ПСР',
+            'MtsPasswordOct' => 'Пароль МТС Банк OCT и ПСР',
+            'MtsTokenOct' => 'Токен МТС Банк OCT и ПСР',
+
+            'MtsLoginEcom' => 'Логин МТС Банк Ecom',
+            'MtsPasswordEcom' => 'Пароль МТС Банк Ecom',
+            'MtsTokenEcom' => 'Токен МТС Банк Ecom',
+            'MtsLoginVyvod' => 'Логин МТС Банк Вывод со счета погашений',
+            'MtsPasswordVyvod' => 'Пароль МТС Банк Вывод со счета погашений',
+            'MtsTokenVyvod' => 'Токен МТС Банк Вывод со счета погашений',
+            'MtsLoginAuto' => 'Логин МТС Банк Автоплатеж',
+            'MtsPasswordAuto' => 'Пароль МТС Банк Автоплатеж',
+            'MtsTokenAuto' => 'Токен МТС Банк Автоплатеж',
+            'MtsLoginPerevod' => 'Логин МТС Банк Перевод со счета погашений',
+            'MtsPasswordPerevod' => 'Пароль МТС Банк Перевод со счета погашений',
+            'MtsTokenPerevod' => 'Токен МТС Банк Перевод со счета погашений',
+            'MtsLoginOctVyvod' => 'Логин МТС Банк Вывод со счета выдачи',
+            'MtsPasswordOctVyvod' => 'Пароль МТС Банк Вывод со счета выдачи',
+            'MtsTokenOctVyvod' => 'Токен МТС Банк Вывод со счета выдачи',
+            'MtsLoginOctPerevod' => 'Логин МТС Банк Перевод со счета выдачи',
+            'MtsPasswordOctPerevod' => 'Пароль МТС Перевод со счета выдачи',
+            'MtsTokenOctPerevod' => 'Токен МТС Банк Перевод со счета выдачи',
+
             'MtsLoginParts' => 'Логин МТС Банк разбивка платежей',
             'MtsPasswordParts' => 'Пароль МТС Банк разбивка платежей',
             'MtsTokenParts' => 'Токен МТС Банк разбивка платежей',
@@ -628,5 +658,10 @@ class Partner extends \yii\db\ActiveRecord
     public function getUslugatovars()
     {
         return $this->hasMany(Uslugatovar::class, ['IDPartner' => 'ID']);
+    }
+
+    public function getOptions()
+    {
+        return $this->hasMany(PartnerOption::class, ['PartnerId' => 'ID']);
     }
 }

@@ -13,6 +13,7 @@ use app\models\bank\MTSBank;
 use app\models\bank\SamsungPay;
 use app\models\bank\TCBank;
 use app\models\crypt\Tokenizer;
+use app\models\partner\UserLk;
 use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\payonline\PayForm;
@@ -325,7 +326,9 @@ class PayController extends Controller
         // TODO: DRY
         Yii::warning("PayForm orderok id=".$id);
         $SesIdPay = Yii::$app->session->get('IdPay');
-        if ($id && $id == $SesIdPay) {
+        if (
+            (!Yii::$app->user->isGuest && UserLk::IsAdmin(Yii::$app->user)) || ($id && $id == $SesIdPay)
+        ) {
             //завершение оплаты + в колбэк приходит + в планировщике проверяется статус
             sleep(5); //подождать завершения оплаты
 

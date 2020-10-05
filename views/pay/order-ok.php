@@ -42,3 +42,8 @@
         <div class="r-body-info-sum"><span>Сумма</span> <b><?= round($params['SummFull'] / 100, 2) ?> ₽</b></div>
     </div>
 </div>
+<script>
+    setTimeout(function() {
+        window.location = "<?= $params['SuccessUrl'] ?>";
+    }, 3000);
+</script>
