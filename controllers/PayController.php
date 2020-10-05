@@ -159,7 +159,7 @@ class PayController extends Controller
             $payschets = new Payschets();
             $params = $payschets->getSchetData($payform->IdPay, null);
 
-            $partner = Partner::findOne(['ID' => $params['IDPartner']]);
+            $partner = Partner::findOne(['ID' => $params['IdOrg']]);
 
             if ($params && $params['DateCreate'] + $params['TimeElapsed'] > time()) {
 

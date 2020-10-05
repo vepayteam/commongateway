@@ -1,0 +1,16 @@
+<svg width="42" height="43" viewBox="0 0 42 43" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g clip-path="url(#clip0)" filter="url(#filter0_d)">
+    <circle cx="20.9999" cy="21.1218" r="10.9999" fill="#74698C"/>
+    <path d="M25 17.1218L17 25.1218" stroke="white" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M17 17.1218L25 25.1218" stroke="white" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <defs>
+    <filter id="filter0_d" x="0" y="0.121826" width="42" height="42" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape"/>
+    </filter>
+    <clipPath id="clip0">
+      <rect width="22" height="22" fill="white" transform="translate(10 10.1218)"/>
+    </clipPath>
+  </defs>
+</svg>
