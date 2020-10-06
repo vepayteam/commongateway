@@ -4,8 +4,6 @@ namespace app\controllers;
 
 use app\models\api\CorsTrait;
 use app\models\api\Reguser;
-use app\models\bank\BankMerchant;
-use app\models\bank\IBank;
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\kfapi\KfCard;
@@ -14,7 +12,6 @@ use app\models\kfapi\KfPay;
 use app\models\kfapi\KfRequest;
 use app\models\payonline\CreatePay;
 use app\models\Payschets;
-use app\models\TU;
 use app\services\payment\payment_strategies\CreateFormEcomPartsStrategy;
 use app\services\payment\payment_strategies\CreateFormJkhPartsStrategy;
 use app\services\payment\payment_strategies\IPaymentStrategy;
