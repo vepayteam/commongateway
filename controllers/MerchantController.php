@@ -4,6 +4,8 @@ namespace app\controllers;
 
 use app\models\api\CorsTrait;
 use app\models\api\Reguser;
+use app\models\bank\BankMerchant;
+use app\models\bank\IBank;
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\kfapi\KfCard;
@@ -12,6 +14,7 @@ use app\models\kfapi\KfPay;
 use app\models\kfapi\KfRequest;
 use app\models\payonline\CreatePay;
 use app\models\Payschets;
+use app\models\TU;
 use app\services\payment\payment_strategies\CreateFormEcomPartsStrategy;
 use app\services\payment\payment_strategies\CreateFormJkhPartsStrategy;
 use app\services\payment\payment_strategies\IPaymentStrategy;
@@ -131,7 +134,7 @@ class MerchantController extends Controller
             $usl = $kfPay->GetUslugEcom($kf->IdPartner);
         }
         $TcbGate = new TcbGate($kf->IdPartner, $gate);
-        if (!$usl || !$TcbGate->IsGate()) {
+        if (!$usl) {
             return ['status' => 0, 'message' => 'Услуга не найдена'];
         }
 
@@ -160,7 +163,7 @@ class MerchantController extends Controller
             }
         }
 
-        $params = $pay->payToMfo($user, [$kfPay->descript], $kfPay, $usl, TCBank::$bank, $kf->IdPartner, 0);
+        $params = $pay->payToMfo($user, [$kfPay->descript], $kfPay, $usl, 2, $kf->IdPartner, 0);
         if (!empty($kfPay->extid)) {
             $mutex->release('getPaySchetExt' . $kfPay->extid);
         }
