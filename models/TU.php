@@ -47,7 +47,10 @@ class TU
 
     public static function InAll()
     {
-        return [self::$JKH, self::$REGCARD, self::$ECOM, self::$POGASHATF, self::$AVTOPLATATF, self::$POGASHECOM, self::$AVTOPLATECOM];
+        return [
+            self::$JKH, self::$REGCARD, self::$ECOM, self::$POGASHATF, self::$AVTOPLATATF, self::$POGASHECOM, self::$AVTOPLATECOM,
+            self::$JKHPARTS, self::$ECOMPARTS, self::$POGASHATFPARTS, self::$POGASHECOMPARTS,
+        ];
     }
 
     public static function IsInPay($type)
