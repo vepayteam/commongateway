@@ -10,7 +10,10 @@ use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\queue\BinBDInfoJob;
 use app\models\TU;
+use app\services\payment\forms\CreatePayForm;
+use app\services\payment\forms\tkb\PayRequest;
 use app\services\payment\models\PartnerBankGate;
+use app\services\payment\models\PaySchet;
 use qfsx\yii2\curl\Curl;
 use SimpleXMLElement;
 use Yii;
@@ -1268,6 +1271,51 @@ class TKBankAdapter implements IBankAdapter
 
         return ['status' => 0, 'message' => ''];
 
+    }
+
+
+    public function pay(CreatePayForm $createPayForm)
+    {
+        $action = '/api/tcbpay/gate/registerorderfromunregisteredcardwof';
+
+        $paySchet = $createPayForm->getPaySchet();
+        $payRequest = new PayRequest();
+        $payRequest->OrderId = $paySchet->ID;
+        $payRequest->Amount = $paySchet->getSummFull();
+        $payRequest->Description = 'Оплата по счету ' . $paySchet->ID;
+        $payRequest->TTL = '00.00:' . ($paySchet->TimeElapsed / 60) . ':00';
+
+        // TODO: сделать объектом
+        $payRequest->CardInfo = [
+            'CardNumber' => $createPayForm->CardNumber,
+            'CardHolder' => $createPayForm->CardHolder,
+            'ExpirationYear' => intval("20" . $createPayForm->CardYear),
+            'ExpirationMonth' => intval($createPayForm->CardMonth),
+            'CVV' => $createPayForm->CardCVC,
+        ];
+
+        if(!empty($paySchet->UserEmail)) {
+            $payRequest->ClientInfo = [
+                'Email' => $paySchet->UserEmail,
+            ] ;
+        }
+        $queryData = Json::encode($payRequest->getAttributes());
+
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            $xml = $this->parseAns($ans['xml']);
+            if (isset($xml['Status']) && $xml['Status'] == '0') {
+                return ['status' => 1,
+                    'transac' => $xml['ordernumber'],
+                    'url' => $xml['acsurl'],
+                    'pa' => $xml['pareq'],
+                    'md' => $xml['md']
+                ];
+            } else {
+                return ['status' => 2, 'message' => $xml['errorinfo']['errormessage']];
+            }
+        }
+
+        return ['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0];
     }
 
     /**

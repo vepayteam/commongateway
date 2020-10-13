@@ -5,7 +5,9 @@ namespace app\services\payment\banks;
 
 
 use app\models\payonline\Uslugatovar;
+use app\services\payment\forms\CreatePayForm;
 use app\services\payment\models\PartnerBankGate;
+use app\services\payment\models\PaySchet;
 
 interface IBankAdapter
 {
@@ -37,6 +39,13 @@ interface IBankAdapter
      * @return array|mixed
      */
     public function transferToCard(array $data);
+
+    /**
+     * @param PaySchet $paySchet
+     * @param CreatePayForm $createPayForm
+     * @return mixed
+     */
+    public function pay(CreatePayForm $createPayForm);
 
     /**
      * Оплата без формы (PCI DSS)

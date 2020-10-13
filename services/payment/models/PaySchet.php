@@ -5,6 +5,7 @@ namespace app\services\payment\models;
 use app\models\payonline\Partner;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
+use app\services\payment\exceptions\GateException;
 use Yii;
 
 /**
@@ -68,6 +69,7 @@ use Yii;
  * @property string|null $UserEmail
  * @property string|null $RCCode
  * @property Uslugatovar $uslugatovar
+ * @property Partner $partner
  */
 class PaySchet extends \yii\db\ActiveRecord
 {
@@ -185,5 +187,46 @@ class PaySchet extends \yii\db\ActiveRecord
     public function getPartner()
     {
         return $this->hasOne(Partner::className(), ['ID' => 'IdOrg']);
+    }
+
+    public function getBank()
+    {
+        return $this->hasOne(Bank::className(), ['ID' => 'Bank']);
+    }
+
+    public function isOld()
+    {
+        return ($this->DateCreate + $this->TimeElapsed) < time();
+    }
+
+    /**
+     * @return int
+     */
+    public function getSummFull()
+    {
+        return $this->SummPay + $this->ComissSumm;
+    }
+
+    /**
+     * @param PartnerBankGate $partnerBankGate
+     * @return $this
+     * @throws GateException
+     */
+    public function changeGate(PartnerBankGate $partnerBankGate)
+    {
+        $uslugatovar = $this->partner->getUslugatovars()->where([
+            'IsCustom' => $partnerBankGate->TU,
+            'Deleted' => 0,
+        ])->one();
+
+        if(!$uslugatovar) {
+            throw new GateException('Нет услуги');
+        }
+
+        $this->Bank = $partnerBankGate->BankId;
+        $this->link('uslugatovar', $uslugatovar);
+        $this->save();
+
+        return $this;
     }
 }

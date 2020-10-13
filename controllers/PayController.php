@@ -19,6 +19,8 @@ use app\models\payonline\Partner;
 use app\models\payonline\PayForm;
 use app\models\Payschets;
 use app\models\TU;
+use app\services\payment\forms\CreatePayForm;
+use app\services\payment\models\PaySchet;
 use kartik\mpdf\Pdf;
 use Yii;
 use yii\db\Exception;
@@ -145,6 +147,22 @@ class PayController extends Controller
      */
     public function actionCreatepay()
     {
+        if(!Yii::$app->request->isAjax) {
+            throw new NotFoundHttpException();
+        }
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $form = new CreatePayForm();
+
+        if(!$form->load(Yii::$app->request->post(), 'PayForm') || !$form->validate()) {
+            return ['status' => 0, 'message' => $form->GetError()];
+        }
+        Yii::warning("PayForm create id=" . $form->IdPay);
+        Yii::$app->session->set('IdPay', $form->IdPay);
+
+        $paySchet = PaySchet::findOne(['ID' => $form->IdPay]);
+
+
         if (Yii::$app->request->isAjax) {
             Yii::$app->response->format = Response::FORMAT_JSON;
             $payform = new PayForm();
