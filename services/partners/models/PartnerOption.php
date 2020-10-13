@@ -21,6 +21,7 @@ class PartnerOption extends \yii\db\ActiveRecord
         self::CARD_REG_TEXT_HEADER_NAME => [
             'title' => 'Текст сообщения при регистрации карты',
             'type' => 'textarea',
+            'default' => 'Cписанная cумма, списанная с карты, при успешном списании, вернется обратно на вашу банковскую карту.',
         ],
     ];
 
