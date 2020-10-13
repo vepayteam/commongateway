@@ -1,11 +1,25 @@
 <?php
 
 
-namespace app\models\bank;
+namespace app\services\payment\banks;
 
 
-interface IBank
+use app\models\payonline\Uslugatovar;
+use app\services\payment\models\PartnerBankGate;
+
+interface IBankAdapter
 {
+    /**
+     * @param PartnerBankGate $partnerBankGate
+     * @return mixed
+     */
+    public function setGate(PartnerBankGate $partnerBankGate);
+
+    /**
+     * @return int
+     */
+    public function getBankId();
+
     /**
      * Завершение оплаты (запрос статуса)
      *
@@ -66,4 +80,5 @@ interface IBank
      * @throws \yii\db\Exception
      */
     public function reversOrder($IdPay);
+
 }

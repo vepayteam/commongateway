@@ -139,4 +139,12 @@ class MfoReq
             return 'https://api.vepay.online/mfo/default/outcard/' . $IdPay;
         }
     }
+
+    /**
+     * @return Partner
+     */
+    public function getPartner()
+    {
+        return Partner::findOne(['ID' => $this->mfo]);
+    }
 }

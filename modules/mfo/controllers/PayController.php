@@ -16,9 +16,13 @@ use app\models\payonline\CreatePay;
 use app\models\PayschetPart;
 use app\models\Payschets;
 use app\models\TU;
+use app\services\payment\exceptions\CreatePayException;
+use app\services\payment\exceptions\GateException;
+use app\services\payment\forms\MfoLkPayForm;
 use app\services\payment\payment_strategies\CreateFormMfoAftPartsStrategy;
 use app\services\payment\payment_strategies\CreateFormMfoEcomPartsStrategy;
 use app\services\payment\payment_strategies\IMfoStrategy;
+use app\services\payment\payment_strategies\mfo\MfoPayLkCreateStrategy;
 use Yii;
 use yii\base\Exception;
 use yii\helpers\VarDumper;
@@ -80,57 +84,29 @@ class PayController extends Controller
         $mfo = new MfoReq();
         $mfo->LoadData(Yii::$app->request->getRawBody());
 
-        $kfPay = new KfPay();
-        $kfPay->scenario = KfPay::SCENARIO_FORM;
-        $kfPay->load($mfo->Req(), '');
-        if (!$kfPay->validate()) {
-            Yii::warning("pay/lk: ".$kfPay->GetError());
-            return ['status' => 0, 'message' => $kfPay->GetError()];
+        $form = new MfoLkPayForm();
+        $form->partner = $mfo->getPartner();
+        if (!$form->load($mfo->Req(), '') || !$form->validate()) {
+            Yii::warning("pay/lk: " . $form->GetError());
+            return ['status' => 0, 'message' => $form->getError()];
         }
 
-        Yii::warning('/pay/lk mfo='. $mfo->mfo . " sum=".$kfPay->amount . " extid=".$kfPay->extid, 'mfo');
-
-        $typeUsl = $kfPay->IsAftGate($mfo->mfo) ? TU::$POGASHATF : TU::$POGASHECOM;
-        $usl = $kfPay->GetUslug($mfo->mfo, $typeUsl);
-        if ($typeUsl == TU::$POGASHECOM && !$usl) {
-            $typeUsl = TU::$ECOM;
-            $usl = $kfPay->GetUslug($mfo->mfo, $typeUsl);
-        }
-        $bank = BankMerchant::GetWorkBank($mfo->mfo, $typeUsl);
-        // TODO:
-        // if (!$usl || !$bank) {
-        if (!$usl) {
-            return ['status' => 0, 'message' => 'Услуга не найдена'];
+        Yii::warning('/pay/lk mfo='. $mfo->mfo . " sum=" . $form->amount . " extid=" . $form->extid, 'mfo');
+        $paymentStrategy = new MfoPayLkCreateStrategy($form);
+        try {
+            $payschet = $paymentStrategy->exec();
+        } catch (CreatePayException $e) {
+            return ['status' => 0, 'message' => $e->getMessage()];
+        } catch (GateException $e) {
+            return ['status' => 0, 'message' => $e->getMessage()];
         }
 
-        $pay = new CreatePay();
-        $mutex = new FileMutex();
-        if (!empty($kfPay->extid)) {
-            //проверка на повторный запрос
-            if (!$mutex->acquire('getPaySchetExt' . $kfPay->extid, 30)) {
-                throw new Exception('getPaySchetExt: error lock!');
-            }
-            $paramsExist = $pay->getPaySchetExt($kfPay->extid, $usl, $mfo->mfo);
-            if ($paramsExist) {
-                if ($kfPay->amount == $paramsExist['sumin']) {
-                    return ['status' => 1, 'message' => '', 'id' => (int)$paramsExist['IdPay'], 'url' => $kfPay->GetPayForm($paramsExist['IdPay'])];
-                } else {
-                    Yii::warning("pay/lk: Нарушение уникальности запроса");
-                    return ['status' => 0, 'message' => 'Нарушение уникальности запроса'];
-                }
-            }
-        }
-        // TODO:
-        // $params = $pay->payToMfo(null, [$kfPay->document_id, $kfPay->fullname], $kfPay, $usl, $bank::$bank, $mfo->mfo,0);
-        $params = $pay->payToMfo(null, [$kfPay->document_id, $kfPay->fullname], $kfPay, $usl, 2, $mfo->mfo,0);
-        if (!empty($kfPay->extid)) {
-            $mutex->release('getPaySchetExt' . $kfPay->extid);
-        }        //PCI DSS
+        $urlForm = Yii::$app->params['domain'] . '/pay/form/' . $payschet->ID;
         return [
             'status' => 1,
-            'message' => '',
-            'id' => (int)$params['IdPay'],
-            'url' => $kfPay->GetPayForm($params['IdPay'])
+            'id' => (int)$payschet->ID,
+            'url' => $urlForm,
+            'message' => ''
         ];
     }
 

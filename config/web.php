@@ -18,6 +18,7 @@ $config = [
         '@bower' => '@vendor/bower-asset',
         '@npm'   => '@vendor/npm-asset',
         '@runtime'=>'@app/runtime',
+        '@web' => $params['domain'],
     ],
     'components' => [
         'request' => [

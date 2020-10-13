@@ -9,6 +9,7 @@ use app\models\sms\tables\AccessSms;
 use app\models\TU;
 use app\services\partners\models\PartnerOption;
 use app\services\partners\models\PartnerOptions;
+use app\services\payment\models\PartnerBankGate;
 use Yii;
 use yii\web\UploadedFile;
 
@@ -663,5 +664,10 @@ class Partner extends \yii\db\ActiveRecord
     public function getOptions()
     {
         return $this->hasMany(PartnerOption::class, ['PartnerId' => 'ID']);
+    }
+
+    public function getBankGates()
+    {
+        return $this->hasMany(PartnerBankGate::class, ['PartnerId' => 'ID']);
     }
 }

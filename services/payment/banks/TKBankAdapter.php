@@ -1,32 +1,39 @@
 <?php
 
 
-namespace app\models\bank;
+namespace app\services\payment\banks;
 
 use app\models\mfo\MfoReq;
 use app\models\payonline\Cards;
 use app\models\payonline\User;
+use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\queue\BinBDInfoJob;
 use app\models\TU;
+use app\services\payment\models\PartnerBankGate;
 use qfsx\yii2\curl\Curl;
 use SimpleXMLElement;
 use Yii;
 use yii\helpers\Json;
 
-class TCBank implements IBank
+class TKBankAdapter implements IBankAdapter
 {
     public const BIC = '044525388';
+    const BANK_URL = 'https://pay.tkbbank.ru';
+    const BANK_URL_TEST = 'https://paytest.online.tkbbank.ru';
 
-    private $bankUrl = 'https://pay.tkbbank.ru';
-    private $bankUrlXml = 'https://193.232.101.14:8204';
-    private $bankUrlClient = 'https://pay.tkbbank.ru';
+    const BANK_URL_XML = 'https://193.232.101.14:8204';
+    const BANK_URL_XML_TEST = 'https://193.232.101.14:8203';
+
+    /** @var PartnerBankGate */
+    protected $gate;
+
+    private $bankUrl;
+    private $bankUrlXml;
     private $shopId;
     private $UserCert;
     private $UserKey;
     private $keyFile;
-    private $caFile;
-    private static $orderState = [0 => 'Обрабатывается', 1 => 'Исполнен', 2 => 'Отказано', 3 => 'Возврат'];
     private $backUrls = ['ok' => 'https://api.vepay.online/pay/orderok?orderid='];
 
     public static $bank = 2;
@@ -34,87 +41,25 @@ class TCBank implements IBank
     private $IsCard = 0;
     private $IsAft = 0;
 
-    public static $JKHGATE = 0;
-    public static $SCHETGATE = 1;
-    public static $AFTGATE = 2;
-    public static $ECOMGATE = 3;
-    public static $VYVODGATE = 4;
-    public static $AUTOPAYGATE = 5;
-    public static $PEREVODGATE = 6;
-    public static $OCTGATE = 7;
-    public static $VYVODOCTGATE = 8;
-    public static $PEREVODOCTGATE = 9;
-
-    public static $PARTSGATE = 100;
-
-    /**
-     * TCBank constructor
-     * @param TcbGate|null $tcbGate
-     * @throws \yii\db\Exception
-     */
-    public function __construct($tcbGate = null)
+    public function setGate(PartnerBankGate $partnerBankGate)
     {
-        $this->UserCert = Yii::$app->basePath . '/config/tcbcert/vepay.crt';
-        $this->UserKey = Yii::$app->basePath . '/config/tcbcert/vepay.key';
+        $this->gate = $partnerBankGate;
 
         if (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] == 'Y') {
-            $this->bankUrl = 'https://paytest.online.tkbbank.ru';
-            $this->bankUrlXml = 'https://193.232.101.14:8203';
-        }
-
-        if ($tcbGate) {
-            $this->SetMfoGate($tcbGate->typeGate, $tcbGate->GetGates());
+            $this->bankUrl = self::BANK_URL_TEST;
+            $this->bankUrlXml = self::BANK_URL_XML_TEST;
+        } else {
+            $this->bankUrl = self::BANK_URL;
+            $this->bankUrlXml = self::BANK_URL_XML;
         }
     }
 
-    public function SetMfoGate($type, $params)
+    /**
+     * @return int
+     */
+    public function getBankId()
     {
-        if (in_array($type, [self::$OCTGATE, self::$SCHETGATE]) && !empty($params['LoginTkbOct'])) {
-            //выдача на карту OCT, и на счет
-            $this->shopId = $params['LoginTkbOct'];
-            $this->keyFile = $params['KeyTkbOct'];
-        } elseif ($type == self::$AFTGATE && !empty($params['LoginTkbAft'])) {
-            //прием с карты AFT
-            $this->shopId = $params['LoginTkbAft'];
-            $this->keyFile = $params['KeyTkbAft'];
-        } elseif ($type == self::$ECOMGATE && !empty($params['LoginTkbEcom'])) {
-            //ecom
-            $this->shopId = $params['LoginTkbEcom'];
-            $this->keyFile = $params['KeyTkbEcom'];
-        } elseif ($type == self::$VYVODGATE && !empty($params['LoginTkbVyvod'])) {
-            //вывод платежей
-            $this->shopId = $params['LoginTkbVyvod'];
-            $this->keyFile = $params['KeyTkbVyvod'];
-        } elseif ($type == self::$JKHGATE && !empty($params['LoginTkbJkh'])) {
-            //жкх платежи
-            $this->shopId = $params['LoginTkbJkh'];
-            $this->keyFile = $params['KeyTkbJkh'];
-        } elseif ($type == self::$AUTOPAYGATE) {
-            //авторплатеж
-            $gateAutoId = $params['AutoPayIdGate'] ?? 0;
-            if ($gateAutoId && !empty($params['LoginTkbAuto'.intval($gateAutoId)])) {
-                $this->shopId = $params['LoginTkbAuto' . intval($gateAutoId)];
-                $this->keyFile = $params['KeyTkbAuto' . intval($gateAutoId)];
-            }
-        } elseif ($type == self::$PEREVODGATE && !empty($params['LoginTkbPerevod'])) {
-            //перевод зарезервированной комиссии обратно
-            $this->shopId = $params['LoginTkbPerevod'];
-            $this->keyFile = $params['KeyTkbPerevod'];
-        } elseif ($type == self::$VYVODOCTGATE && !empty($params['LoginTkbOctVyvod'])) {
-            //выводсо счета выплат
-            $this->shopId = $params['LoginTkbOctVyvod'];
-            $this->keyFile = $params['KeyTkbOctVyvod'];
-        } elseif ($type == self::$PEREVODOCTGATE && !empty($params['LoginTkbOctPerevod'])) {
-            //перевод со счета выплат внутри банка
-            $this->shopId = $params['LoginTkbOctPerevod'];
-            $this->keyFile = $params['KeyTkbOctPerevod'];
-        } elseif ($type == self::$PARTSGATE && !empty($params['LoginTkbParts'])) {
-            //платежи с разбивкой
-            $this->shopId = $params['LoginTkbParts'];
-            $this->keyFile = $params['KeyTkbParts'];
-        }
-
-        $this->type = $type;
+        return self::$bank;
     }
 
     /**
@@ -144,15 +89,7 @@ class TCBank implements IBank
         return ['error' => 1];
     }
 
-    /**
-     * Завершение оплаты (запрос статуса)
-     *
-     * @param string $idpay
-     * @param int $org
-     * @param bool $isCron
-     * @return array [status (1 - оплачен, 2,3 - не оплачен, 0 - в процессе), message, IdPay (id pay_schet), Params]
-     * @throws \yii\db\Exception
-     */
+
     public function confirmPay($idpay, $org = 0, $isCron = false)
     {
         $mesg = '';
@@ -164,31 +101,6 @@ class TCBank implements IBank
             $state = $params['Status'];
             $ApprovalCode = $RRN = $RCCode = '';
             if ($params['Status'] == 0 && $params['sms_accept'] == 1) {
-
-                //шлюз
-                if ($params['IdUsluga'] == 1) {
-                    $TcbGate = new TcbGate($params['IdOrg'], self::$AUTOPAYGATE);
-                } else {
-                    $TcbGate = new TcbGate($params['IDPartner'], $this->type, $params['IsCustom']);
-                }
-                if ($params['AutoPayIdGate']) {
-                    $TcbGate->AutoPayIdGate = $params['AutoPayIdGate'];
-                }
-                $this->SetMfoGate($TcbGate->typeGate, $TcbGate->GetGates());
-
-                if ($params['IdUsluga'] == 1) {
-                    $this->IsCard = 1;
-                    if (empty($params['UrlFormPay'])) {
-                        //карта для выдачи - не в ТКБ
-                        return ['status' => 0, 'message' => '', 'IdPay' => $params['ID'], 'Params' => $params];
-                    } elseif (mb_stripos($params['UrlFormPay'], "tkbbank.ru") === false) {
-                        //через платеж привязка - статус для платежа
-                        $this->IsCard = 0;
-                    }
-                }
-                if (in_array($params['IsCustom'], [TU::$POGASHATF, TU::$AVTOPLATATF])) {
-                    $this->IsAft = 1;
-                }
                 $status = $this->checkStatusOrder($params, $isCron);
 
                 $mesg = $status['xml']['orderinfo']['statedescription'] ?? '';
@@ -209,7 +121,7 @@ class TCBank implements IBank
                             'type' => Cards::GetTypeCard($status['xml']['orderadditionalinfo']['cardnumber']),
                             'holder' => isset($status['xml']['orderadditionalinfo']['cardholder']) ? $status['xml']['orderadditionalinfo']['cardholder'] : ''
                         ];
-                        $payschets->UpdateCardExtId($params['IdUser'], $card, $params['ID'], TCBank::$bank);
+                        $payschets->UpdateCardExtId($params['IdUser'], $card, $params['ID'], self::$bank);
                     }
 
                     if ($status['state'] == 1) {
@@ -570,20 +482,19 @@ class TCBank implements IBank
      */
     private function curlXmlReq($post, $url, $addHeader = [], $jsonReq = true)
     {
-        //$timout = 50;
-        //if (!$jsonReq) {
-            $timout = 110;
-        //}
+
+        $timout = 110;
+
         $curl = new Curl();
-        Yii::warning("req: login = " . $this->shopId . " url = " . $url . "\r\n" . Cards::MaskCardLog($post), 'merchant');
+        Yii::warning("req: login = " . $this->gate->Login . " url = " . $url . "\r\n" . Cards::MaskCardLog($post), 'merchant');
         try {
             $curl->reset()
                 ->setOption(CURLOPT_TIMEOUT, $timout)
                 ->setOption(CURLOPT_CONNECTTIMEOUT, $timout)
                 ->setOption(CURLOPT_HTTPHEADER, array_merge([
                         $jsonReq ? 'Content-type: application/json' : 'Content-Type: application/soap+xml; charset=utf-8',
-                        'TCB-Header-Login: ' . $this->shopId,
-                        'TCB-Header-Sign: ' . $this->HmacSha1($post, $this->keyFile),
+                        'TCB-Header-Login: ' . $this->gate->Login,
+                        'TCB-Header-Sign: ' . $this->HmacSha1($post, $this->gate->Token),
                         'TCB-Header-SerializerType: LowerCase'
                     ], $addHeader))
                 ->setOption(CURLOPT_SSL_VERIFYHOST, false)
@@ -1536,5 +1447,4 @@ class TCBank implements IBank
 
 
     }
-
 }

@@ -3,6 +3,7 @@
 namespace app\models\payonline;
 
 use app\models\partner\admin\VoznagStat;
+use app\services\payment\models\UslugatovarType;
 use Yii;
 use yii\caching\TagDependency;
 
@@ -233,6 +234,11 @@ class Uslugatovar extends \yii\db\ActiveRecord
     public function getPartner_bank_rekviz()
     {
         return $this->hasOne(PartnerBankRekviz::className(), ['ID' => 'IdBankRekviz']);
+    }
+
+    public function getType()
+    {
+        return $this->hasOne(UslugatovarType::className(), ['Id' => 'IsCustom']);
     }
 
     /**

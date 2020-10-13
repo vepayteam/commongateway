@@ -11,12 +11,22 @@ use app\models\kfapi\KfFormPay;
 use app\models\kfapi\KfPay;
 use app\models\kfapi\KfRequest;
 use app\models\payonline\CreatePay;
+use app\models\payonline\Partner;
+use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
+use app\services\payment\banks\BankAdapterBuilder;
+use app\services\payment\banks\IBankAdapter;
+use app\services\payment\exceptions\CreatePayException;
+use app\services\payment\exceptions\GateException;
+use app\services\payment\forms\MerchantPayForm;
+use app\services\payment\models\UslugatovarType;
 use app\services\payment\payment_strategies\CreateFormEcomPartsStrategy;
 use app\services\payment\payment_strategies\CreateFormJkhPartsStrategy;
 use app\services\payment\payment_strategies\IPaymentStrategy;
+use app\services\payment\payment_strategies\merchant\MerchantPayCreateStrategy;
 use Yii;
 use yii\db\Exception;
+use yii\helpers\Url;
 use yii\mutex\FileMutex;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
@@ -116,63 +126,32 @@ class MerchantController extends Controller
         $kf = new KfRequest();
         $kf->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody(), 0);
 
-        $kfPay = new KfPay();
-        $kfPay->scenario = KfPay::SCENARIO_FORM;
-        $kfPay->load($kf->req, '');
-        if (!$kfPay->validate()) {
-            return ['status' => 0, 'message' => $kfPay->GetError()];
+        $form = new MerchantPayForm();
+        $form->partner = $kf->partner;
+
+        if (!$form->load($kf->req, '') || !$form->validate()) {
+            Yii::warning("merchant/pay: " . $form->GetError());
+            return ['status' => 0, 'message' => $form->getError()];
         }
 
-        if ($kf->GetReq('type', 0) == 1) {
-            $gate = TCBank::$JKHGATE;
-            $usl = $kfPay->GetUslugJkh($kf->IdPartner);
-        } else {
-            $gate = TCBank::$ECOMGATE;
-            $usl = $kfPay->GetUslugEcom($kf->IdPartner);
-        }
-        $TcbGate = new TcbGate($kf->IdPartner, $gate);
-        if (!$usl || !$TcbGate->IsGate()) {
-            return ['status' => 0, 'message' => 'Услуга не найдена'];
-        }
+        Yii::warning('/merchant/pay merchant='. $form->partner->ID . " sum="  . $form->amount . " extid=" . $form->extid, 'mfo');
+        $paymentStrategy = new MerchantPayCreateStrategy($form);
 
-        Yii::warning('/merchant/pay id='. $kf->IdPartner . " sum=".$kfPay->amount . " extid=".$kfPay->extid, 'mfo');
-
-        $user = null;
-        if ($kf->GetReq('regcard',0)) {
-            $reguser = new Reguser();
-            $user = $reguser->findUser('0', $kf->IdPartner . '-' . time(), md5($kf->IdPartner . '-' . time()), $kf->IdPartner, false);
+        try {
+            $payschet = $paymentStrategy->exec();
+        } catch (CreatePayException $e) {
+            return ['status' => 0, 'message' => $e->getMessage()];
+        } catch (GateException $e) {
+            return ['status' => 0, 'message' => $e->getMessage()];
         }
 
-        $pay = new CreatePay($user);
-        $mutex = new FileMutex();
-        if (!empty($kfPay->extid)) {
-            //проверка на повторный запрос
-            if (!$mutex->acquire('getPaySchetExt' . $kfPay->extid, 30)) {
-                throw new Exception('getPaySchetExt: error lock!');
-            }
-            $paramsExist = $pay->getPaySchetExt($kfPay->extid, $usl, $kf->IdPartner);
-            if ($paramsExist) {
-                if ($kfPay->amount == $paramsExist['sumin']) {
-                    return ['status' => 1, 'id' => (int)$paramsExist['IdPay'], 'url' => $kfPay->GetPayForm($paramsExist['IdPay']), 'message' => ''];
-                } else {
-                    return ['status' => 0, 'id' => 0, 'url' => '', 'message' => 'Нарушение уникальности запроса'];
-                }
-            }
-        }
-
-        $params = $pay->payToMfo($user, [$kfPay->descript], $kfPay, $usl, TCBank::$bank, $kf->IdPartner, 0);
-        if (!empty($kfPay->extid)) {
-            $mutex->release('getPaySchetExt' . $kfPay->extid);
-        }
-
-        //PCI DSS
+        $urlForm = Yii::$app->params['domain'] . '/pay/form/' . $payschet->ID;
         return [
             'status' => 1,
-            'id' => (int)$params['IdPay'],
-            'url' => $kfPay->GetPayForm($params['IdPay']),
+            'id' => (int)$payschet->ID,
+            'url' => $urlForm,
             'message' => ''
         ];
-
     }
 
     public function actionFormPay()

@@ -1,6 +1,6 @@
 <?php
 
-namespace app\models\bank;
+namespace app\services\payment\banks;
 
 use app\models\bank\mts_soap\PerfomP2P;
 use app\models\bank\mts_soap\RegisterP2P;
@@ -9,15 +9,20 @@ use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\Payschets;
 use app\models\TU;
+use app\services\payment\models\PartnerBankGate;
 use qfsx\yii2\curl\Curl;
 use SoapClient;
 use SoapHeader;
 use Yii;
 use yii\helpers\Json;
 
-class MTSBank implements IBank
+class MTSBankAdapter implements IBankAdapter
 {
     public static $bank = 3;
+
+    const BANK_URL = 'https://oplata.mtsbank.ru/payment';
+    const BANK_URL_TEST = 'https://web.rbsuat.com/mtsbank';
+
 
     private $bankUrl = 'https://oplata.mtsbank.ru/payment';
     private $bankP2PUrl = 'https://oplata.mtsbank.ru/payment/webservices/p2p?wsdl';
@@ -43,85 +48,23 @@ class MTSBank implements IBank
 
     public static $PARTSGATE = 100;
 
-    /**
-     * MTSBank constructor
-     * @param MtsGate|null $mtsGate
-     * @throws \yii\db\Exception
-     */
-    public function __construct($mtsGate = null)
+    public function setGate(PartnerBankGate $partnerBankGate)
     {
-        if(isset(Yii::$app->params['domain']) && !empty(Yii::$app->params['domain'])) {
-            $this->backUrls['ok'] = Yii::$app->params['domain'] . '/pay/orderok?orderid=';
-        }
+        $this->gate = $partnerBankGate;
 
         if (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] == 'Y') {
-            $this->bankUrl = 'https://web.rbsuat.com/mtsbank';
-            $this->bankP2PUrl = 'https://web.rbsuat.com/mtsbank/webservices/p2p';
-            $this->bankP2PUrlWsdl = 'https://web.rbsuat.com/mtsbank/webservices/p2p?wsdl';
-        }
-
-        if ($mtsGate) {
-            $this->SetMfoGate($mtsGate);
+            $this->bankUrl = self::BANK_URL_TEST;
+        } else {
+            $this->bankUrl = self::BANK_URL;
         }
     }
 
-    public function SetMfoGate(MtsGate $mtsGate)
+    /**
+     * @return int
+     */
+    public function getBankId()
     {
-        $params = $mtsGate->GetGates();
-        $type = $mtsGate->getTypeGate();
-        $this->type = $type;
-
-        if (in_array($type, [self::$OCTGATE, self::$SCHETGATE]) && !empty($params['MtsLoginOct'])) {
-            //выдача на карту OCT, и на счет
-            $this->shopId = $mtsGate->gates['MtsLoginOct'];
-            $this->certFile = $mtsGate->gates['MtsPasswordOct'];
-            $this->keyFile = $mtsGate->gates['MtsTokenOct'];
-        } elseif ($type == self::$AFTGATE && !empty($params['MtsLoginAft'])) {
-            //прием с карты AFT
-            $this->shopId = $mtsGate->gates['MtsLoginAft'];
-            $this->certFile = $mtsGate->gates['MtsPasswordAft'];
-            $this->keyFile = $mtsGate->gates['MtsTokenAft'];
-        } elseif ($type == self::$ECOMGATE && !empty($params['MtsLoginEcom'])) {
-            //ecom
-            $this->shopId = $mtsGate->gates['MtsLoginEcom'];
-            $this->certFile = $mtsGate->gates['MtsPasswordEcom'];
-            $this->keyFile = $mtsGate->gates['MtsTokenEcom'];
-        } elseif ($type == self::$VYVODGATE && !empty($params['MtsLoginVyvod'])) {
-            //вывод платежей
-            $this->shopId = $mtsGate->gates['MtsLoginVyvod'];
-            $this->certFile = $mtsGate->gates['MtsPasswordVyvod'];
-            $this->keyFile = $mtsGate->gates['MtsTokenVyvod'];
-        } elseif ($type == self::$JKHGATE && !empty($params['MtsLoginJkh'])) {
-            //жкх платежи
-            $this->shopId = $mtsGate->gates['MtsLoginJkh'];
-            $this->certFile = $mtsGate->gates['MtsPasswordJkh'];
-            $this->keyFile = $mtsGate->gates['MtsTokenJkh'];
-        } elseif ($type == self::$AUTOPAYGATE && !empty($params['MtsLoginAuto'])) {
-            //авторплатеж
-            $this->shopId = $mtsGate->gates['MtsLoginAuto'];
-            $this->certFile = $mtsGate->gates['MtsPasswordAuto'];
-            $this->keyFile = $mtsGate->gates['MtsTokenAuto'];
-        } elseif ($type == self::$PEREVODGATE && !empty($params['MtsLoginPerevod'])) {
-            //перевод зарезервированной комиссии обратно
-            $this->shopId = $mtsGate->gates['MtsLoginPerevod'];
-            $this->certFile = $mtsGate->gates['MtsPasswordPerevod'];
-            $this->keyFile = $mtsGate->gates['MtsTokenPerevod'];
-        } elseif ($type == self::$VYVODOCTGATE && !empty($params['MtsLoginOctVyvod'])) {
-            //выводсо счета выплат
-            $this->shopId = $mtsGate->gates['MtsLoginOctVyvod'];
-            $this->certFile = $mtsGate->gates['MtsPasswordOctVyvod'];
-            $this->keyFile = $mtsGate->gates['MtsTokenOctVyvod'];
-        } elseif ($type == self::$PEREVODOCTGATE && !empty($params['MtsLoginOctPerevod'])) {
-            //перевод со счета выплат внутри банка
-            $this->shopId = $mtsGate->gates['MtsLoginOctPerevod'];
-            $this->certFile = $mtsGate->gates['MtsPasswordOctPerevod'];
-            $this->keyFile = $mtsGate->gates['MtsTokenOctPerevod'];
-        } elseif ($type == self::$PARTSGATE && !empty($params['MtsLoginParts'])) {
-            //платежи с разбивкой
-            $this->shopId = $mtsGate->gates['MtsLoginParts'];
-            $this->certFile = $mtsGate->gates['MtsPasswordParts'];
-            $this->keyFile = $mtsGate->gates['MtsTokenParts'];
-        }
+        return self::$bank;
     }
 
     /**
@@ -145,17 +88,6 @@ class MTSBank implements IBank
             $ApprovalCode = $RRN = '';
             if ($params['Status'] == 0 && $params['sms_accept'] == 1) {
 
-                //шлюз
-                if ($params['IdUsluga'] == 1) {
-                    $MtsGate = new MtsGate($params['IdOrg'], self::$AUTOPAYGATE);
-                } else {
-                    $MtsGate = new MtsGate($params['IDPartner'], null, $params['IsCustom']);
-                }
-                if ($params['AutoPayIdGate']) {
-                    $MtsGate->AutoPayIdGate = $params['AutoPayIdGate'];
-                }
-                $this->SetMfoGate($MtsGate);
-
                 $status = $this->checkStatusOrder($params, $isCron);
 
                 if (isset($status['xml']['orderinfo']['statedescription'])) {
@@ -177,7 +109,7 @@ class MTSBank implements IBank
                             'type' => Cards::GetTypeCard($status['xml']['orderadditionalinfo']['cardnumber']),
                             'holder' => isset($status['xml']['orderadditionalinfo']['cardholder']) ? $status['xml']['orderadditionalinfo']['cardholder'] : ''
                         ];
-                        $payschets->UpdateCardExtId($params['IdUser'], $card, $params['ID'], MtsBank::$bank);
+                        $payschets->UpdateCardExtId($params['IdUser'], $card, $params['ID'], MTSBankAdapter::$bank);
                     }
 
                     if ($status['state'] == 1) {
