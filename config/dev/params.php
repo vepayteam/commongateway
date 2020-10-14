@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'domain' => 'http://dev.vepay.online',
     'adminEmail' => 'support@vepay.online',
     'robotEmail' => 'robot@vepay.online',
     'infoEmail' => 'support@vepay.online',

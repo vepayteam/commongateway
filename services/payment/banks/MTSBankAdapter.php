@@ -9,7 +9,23 @@ use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\Payschets;
 use app\models\TU;
+use app\services\payment\banks\bank_adapter_responses\BaseResponse;
+use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
+use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
+use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
+use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\exceptions\GateException;
+use app\services\payment\forms\AutoPayForm;
+use app\services\payment\forms\CheckStatusPayForm;
+use app\services\payment\forms\CreatePayForm;
+use app\services\payment\forms\DonePayForm;
+use app\services\payment\forms\mts\CheckStatusPayRequest;
+use app\services\payment\forms\mts\ConfirmPayRequest;
+use app\services\payment\forms\mts\CreatePayRequest;
+use app\services\payment\forms\mts\PayOrderRequest;
+use app\services\payment\forms\OkPayForm;
 use app\services\payment\models\PartnerBankGate;
+use app\services\payment\models\PaySchet;
 use qfsx\yii2\curl\Curl;
 use SoapClient;
 use SoapHeader;
@@ -19,6 +35,9 @@ use yii\helpers\Json;
 class MTSBankAdapter implements IBankAdapter
 {
     public static $bank = 3;
+
+    /** @var PartnerBankGate */
+    protected $gate;
 
     const BANK_URL = 'https://oplata.mtsbank.ru/payment';
     const BANK_URL_TEST = 'https://web.rbsuat.com/mtsbank';
@@ -682,4 +701,221 @@ class MTSBankAdapter implements IBankAdapter
         return $post;
     }
 
+    /**
+     * @param CreatePayForm $createPayForm
+     * @return CreatePayResponse
+     */
+    public function createPay(CreatePayForm $createPayForm)
+    {
+        $createPayResponse = $this->_registerOrder($createPayForm->getPaySchet());
+
+        if ($createPayResponse->status == BaseResponse::STATUS_DONE) {
+            $createPayResponse = $this->_payOrder($createPayForm, $createPayResponse);
+        }
+        return $createPayResponse;
+    }
+
+    /**
+     * @param PaySchet $paySchet
+     * @return CreatePayResponse
+     */
+    protected function _registerOrder(PaySchet $paySchet)
+    {
+        $action = '/rest/register.do';
+
+        $createPayRequest = new CreatePayRequest();
+        $createPayRequest->userName = $this->gate->Login;
+        $createPayRequest->password = $this->gate->Password;
+        $createPayRequest->orderNumber = $paySchet->ID;
+        $createPayRequest->amount = $paySchet->getSummFull();
+        $createPayRequest->description = 'Оплата по счету ' . $paySchet->ID;
+        $createPayRequest->returnUrl = Yii::$app->params['domain'] . '/pay/orderok?orderid=' . $paySchet->ID;
+        $createPayRequest->sessionTimeoutSecs = $paySchet->TimeElapsed;
+
+        $queryData = $createPayRequest->getAttributes();
+
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+
+        $createPayResponse = new CreatePayResponse();
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            if (!isset($ans['xml']['errorCode']) || $ans['xml']['errorCode'] == 0) {
+                $createPayResponse->status = BaseResponse::STATUS_DONE;
+                $createPayResponse->transac = $ans['xml']['orderId'];
+            } else {
+                $createPayResponse->status = BaseResponse::STATUS_ERROR;
+                $createPayResponse->message = $ans['xml']['errorMessage'];
+                $createPayResponse->fatal = 1;
+            }
+        } else {
+            $createPayResponse->status = BaseResponse::STATUS_ERROR;
+            $createPayResponse->message = 'Ошибка запроса, попробуйте повторить позднее';
+            $createPayResponse->fatal = 0;
+        }
+        return $createPayResponse;
+    }
+
+    /**
+     * @param CreatePayForm $createPayForm
+     * @param CreatePayResponse $createPayResponse
+     * @return CreatePayResponse
+     */
+    protected function _payOrder(CreatePayForm $createPayForm, CreatePayResponse $createPayResponse)
+    {
+        $action = '/rest/paymentorder.do';
+
+        $payOrderRequest = new PayOrderRequest();
+        $payOrderRequest->userName = $this->gate->Login;
+        $payOrderRequest->password = $this->gate->Password;
+        $payOrderRequest->MDORDER = $createPayResponse->transac;
+        $payOrderRequest->PAN = $createPayForm->CardNumber;
+        $payOrderRequest->CVC = $createPayForm->CardCVC;
+        $payOrderRequest->YYYY = (int)('20' . $createPayForm->CardYear);
+        $payOrderRequest->MM = (int)$createPayForm->CardMonth;
+        $payOrderRequest->TEXT = $createPayForm->CardHolder;
+        $payOrderRequest->language = 'ru';
+        $payOrderRequest->ip = $createPayForm->getPaySchet()->IPAddressUser;
+
+
+        $queryData = $payOrderRequest->getAttributes();
+
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl.$action);
+
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            if (!isset($ans['xml']['errorCode']) || $ans['xml']['errorCode'] == 0) {
+                $createPayResponse->status = BaseResponse::STATUS_DONE;
+                $createPayResponse->url = $ans['xml']['acsUrl'] ?? '';
+                $createPayResponse->pa = $ans['xml']['paReq'] ?? '';
+                $createPayResponse->md = $createPayResponse->transac;
+            } else {
+                $createPayResponse->status = BaseResponse::STATUS_ERROR;
+                $createPayResponse->message = $ans['xml']['errorCode'] . ':' . $ans['xml']['errorMessage'];
+                $createPayResponse->fatal = 1;
+            }
+        } else {
+            $createPayResponse->status = BaseResponse::STATUS_ERROR;
+            $createPayResponse->message = 'Ошибка запроса, попробуйте повторить позднее';
+            $createPayResponse->fatal = 0;
+
+        }
+        return $createPayResponse;
+    }
+
+    /**
+     * @param DonePayForm $donePayForm
+     * @return ConfirmPayResponse
+     */
+    public function confirm(DonePayForm $donePayForm)
+    {
+        $action = '/rest/finish3dsPayment.do';
+
+        $confirmPayRequest = new ConfirmPayRequest();
+        $confirmPayRequest->userName = $this->gate->Login;
+        $confirmPayRequest->password = $this->gate->Password;
+        $confirmPayRequest->mdOrder = $donePayForm->getPaySchet()->ExtBillNumber;
+        $confirmPayRequest->paRes = $donePayForm->paRes;
+
+        $queryData = $confirmPayRequest->getAttributes();
+
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl.$action);
+
+        $confirmPayResponse = new ConfirmPayResponse();
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            if (!isset($ans['xml']['errorCode']) || $ans['xml']['errorCode'] == 0) {
+                $confirmPayResponse->status = BaseResponse::STATUS_DONE;
+                $confirmPayResponse->transac = $donePayForm->getPaySchet()->ExtBillNumber;
+            } else {
+                $confirmPayResponse->status = BaseResponse::STATUS_ERROR;
+                $confirmPayResponse->message = $ans['xml']['errorCode'] . ":" . $ans['xml']['errorMessage'];
+            }
+        } else {
+            $confirmPayResponse->status = BaseResponse::STATUS_ERROR;
+            $confirmPayResponse->message = 'Ошибка запроса, попробуйте повторить позднее';
+        }
+
+        return $confirmPayResponse;
+    }
+
+    /**
+     * @param OkPayForm $okPayForm
+     * @return CheckStatusPayResponse
+     */
+    public function checkStatusPay(OkPayForm $okPayForm)
+    {
+        $action = '/rest/getOrderStatusExtended.do';
+        $checkStatusPayRequest = new CheckStatusPayRequest();
+        $checkStatusPayRequest->userName = $this->gate->Login;
+        $checkStatusPayRequest->password = $this->gate->Password;
+        $checkStatusPayRequest->orderId = $okPayForm->getPaySchet()->ExtBillNumber;
+
+        $queryData = $checkStatusPayRequest->getAttributes();
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+
+        $checkStatusPayResponse = new CheckStatusPayResponse();
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            if (!isset($ans['xml']['errorCode']) || $ans['xml']['errorCode'] == 0) {
+                $status = $this->convertState($ans['xml']['orderStatus']);
+
+                $checkStatusPayResponse->status = $status;
+                $checkStatusPayResponse->xml = [
+                    'orderinfo' => [
+                        'statedescription' => $ans['xml']['actionCodeDescription']
+                    ],
+                    'orderadditionalinfo' => [
+                        'rrn' => $ans['xml']['authRefNum'] ?? null,
+                        'cardnumber' => $ans['xml']['cardAuthInfo']['maskedPan'] ?? null,
+                        'expiry' => isset($ans['xml']['cardAuthInfo']['expiration']) ? substr($ans['xml']['cardAuthInfo']['expiration'], 4,2).substr($ans['xml']['cardAuthInfo']['expiration'], 2,2) : null,
+                        'idcard' => $ans['xml']['cardAuthInfo']['approvalCode'] ?? null,
+                        'type' => Cards::GetTypeCard($ans['xml']['cardAuthInfo']['maskedPan']),
+                        'holder' => $ans['xml']['cardAuthInfo']['cardholderName'] ?? null,
+                    ]
+                ];
+            } else {
+                $error = $ans['xml']['errorCode'];
+                $message = $ans['xml']['errorMessage'];
+
+                // TODO: const
+                if ($error == 6) {
+                    //не найден в банке - если в кроне запрос, то отменить
+                    if (Yii::$app instanceof \yii\console\Application
+                        && isset($okPayForm->getPaySchet()->uslugatovar->IsCustom)
+                        && TU::IsInPay($okPayForm->getPaySchet()->uslugatovar->IsCustom)
+                    ) {
+                        //не найден в банке - если в кроне запрос, то отменить
+                        $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
+                        $checkStatusPayResponse->xml = [
+                            'orderinfo' => [
+                                'statedescription' => 'Платеж не проведен',
+                            ]
+                        ];
+                    } else {
+                        $checkStatusPayResponse->status = BaseResponse::STATUS_CREATED;
+                        $checkStatusPayResponse->xml = [
+                            'orderinfo' => [
+                                'statedescription' => 'В обработке',
+                            ]
+                        ];
+                    }
+                } else {
+                    $checkStatusPayResponse->status = BaseResponse::STATUS_CREATED;
+                    $checkStatusPayResponse->xml = [
+                        'orderinfo' => [
+                            'statedescription' => $message,
+                        ]
+                    ];
+                }
+            }
+        }
+
+        return $checkStatusPayResponse;
+    }
+
+    /**
+     * @param AutoPayForm $autoPayForm
+     * @return CreateRecurrentPayResponse|void
+     * @throws GateException
+     */
+    public function recurrentPay(AutoPayForm $autoPayForm)
+    {
+        throw new GateException('Метод недоступен');
+    }
 }

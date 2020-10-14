@@ -9,28 +9,45 @@ use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
 use app\models\TU;
+use app\services\payment\banks\bank_adapter_responses\BaseResponse;
+use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\models\PartnerBankGate;
+use app\services\payment\models\PayCard;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
+use app\services\payment\PaymentService;
+use Yii;
 use yii\db\Exception;
 
 class CreatePayStrategy
 {
     /** @var CreatePayForm */
-    protected $payForm;
+    protected $createPayForm;
+
+    /** @var PaymentService */
+    protected $paymentService;
+    /** @var CreatePayResponse  */
+    protected $createPayResponse;
 
     public function __construct(CreatePayForm $payForm)
     {
-        $this->payForm = $payForm;
+        $this->createPayForm = $payForm;
+        $this->paymentService = Yii::$container->get('PaymentService');
     }
 
+    /**
+     * @return PaySchet|null
+     * @throws CreatePayException
+     * @throws Exception
+     * @throws GateException
+     */
     public function exec()
     {
-        $paySchet = $this->payForm->getPaySchet();
+        $paySchet = $this->createPayForm->getPaySchet();
 
         if($paySchet->isOld()) {
             throw new CreatePayException('Время для оплаты истекло');
@@ -40,12 +57,8 @@ class CreatePayStrategy
         // для погашений, карты маэстро только по еком надо
         if (
             $paySchet->uslugatovar->IsCustom == UslugatovarType::POGASHATF
-            && Cards::GetTypeCard($this->payForm->CardNumber) == Cards::BRANDS['MAESTRO']
+            && Cards::GetTypeCard($this->createPayForm->CardNumber) == Cards::BRANDS['MAESTRO']
         ) {
-            $uslugatovarType = UslugatovarType::findOne([
-                'Id' => UslugatovarType::POGASHECOM,
-            ]);
-
             /** @var PartnerBankGate $partnerBankGate */
             $partnerBankGate = PartnerBankGate::find()->where([
                 'PartnerId' => $paySchet->partner->ID,
@@ -62,12 +75,31 @@ class CreatePayStrategy
         $bankAdapterBuilder = new BankAdapterBuilder();
         $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar);
 
-        $response = $bankAdapterBuilder->getBankAdapter()->pay($this->payForm);
+        $this->createPayResponse = $bankAdapterBuilder->getBankAdapter()->createPay($this->createPayForm);
 
-        if($response['status'] == 2) {
-
+        if(in_array($this->createPayResponse->status, [BaseResponse::STATUS_CANCEL, BaseResponse::STATUS_ERROR])) {
+            $this->paymentService->cancelPay($paySchet, $this->createPayResponse->message);
+            return $paySchet;
         }
 
+        $paySchet->sms_accept = 1;
+        $paySchet->UserClickPay = 1;
+        $paySchet->UrlFormPay = '/pay/form/' . $paySchet->ID;
+        $paySchet->ExtBillNumber = $this->createPayResponse->transac;
+        $paySchet->UserEmail = $this->createPayForm->Email;
+        $paySchet->CountSendOK = 0;
+        $paySchet->save(false);
+
+        if($bankAdapterBuilder->getUslugatovar()->ID == Uslugatovar::TYPE_REG_CARD) {
+            $payCard = new PayCard();
+            $payCard->number = $this->createPayForm->CardNumber;
+            $payCard->holder = $this->createPayForm->CardHolder;
+            $payCard->expYear = $this->createPayForm->CardYear;
+            $payCard->expMonth = $this->createPayForm->CardMonth;
+            $payCard->cvv = $this->createPayForm->CardCVC;
+
+            $this->paymentService->tokenizeCard($paySchet, $payCard);
+        }
 
         return $paySchet;
     }
@@ -77,38 +109,34 @@ class CreatePayStrategy
     {
         $cartToken = new CardToken();
         $token = $cartToken->CheckExistToken(
-            $this->payForm->CardNumber,
-            $this->payForm->CardMonth.$this->payForm->CardYear
+            $this->createPayForm->CardNumber,
+            $this->createPayForm->CardMonth.$this->createPayForm->CardYear
         );
 
         if ($token == 0) {
             $token = $cartToken->CreateToken(
-                $this->payForm->CardNumber,
-                $this->payForm->CardMonth . $this->payForm->CardYear,
-                $this->payForm->CardHolder
+                $this->createPayForm->CardNumber,
+                $this->createPayForm->CardMonth . $this->createPayForm->CardYear,
+                $this->createPayForm->CardHolder
             );
         }
 
-        $paySchet->CardNum = Cards::MaskCard($this->payForm->CardNumber);
-        $paySchet->CardType = Cards::GetCardBrand(Cards::GetTypeCard($this->payForm->CardNumber));
-        $paySchet->CardHolder = mb_substr($this->payForm->CardHolder, 0, 99);
-        $paySchet->CardExp = $this->payForm->CardMonth . $this->payForm->CardYear;
+        $paySchet->CardNum = Cards::MaskCard($this->createPayForm->CardNumber);
+        $paySchet->CardType = Cards::GetCardBrand(Cards::GetTypeCard($this->createPayForm->CardNumber));
+        $paySchet->CardHolder = mb_substr($this->createPayForm->CardHolder, 0, 99);
+        $paySchet->CardExp = $this->createPayForm->CardMonth . $this->createPayForm->CardYear;
         $paySchet->IdShablon = $token;
 
-        if(!$paySchet->validate() || !$paySchet->save()) {
+        if(!$paySchet->save()) {
             throw new CreatePayException('Ошибка валидации данных счета');
         }
     }
 
-    protected function responseIsBad()
+    /**
+     * @return CreatePayResponse
+     */
+    public function getCreatePayResponse()
     {
-        $payschets->confirmPay([
-            'idpay' => $params['ID'],
-            'result_code' => 2,
-            'trx_id' => 0,
-            'ApprovalCode' => '',
-            'RRN' => '',
-            'message' => $ret['message']
-        ]);
+        return $this->createPayResponse;
     }
 }

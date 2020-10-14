@@ -34,6 +34,7 @@ use yii\web\View;
                     <li class=""><a data-toggle="tab" href="#tab-2"> Услуги</a></li>
                     <li class=""><a data-toggle="tab" href="#tab-3"> Настройки</a></li>
                     <li class=""><a data-toggle="tab" href="#tab-5"> Опции</a></li>
+                    <li class=""><a data-toggle="tab" href="#tab-6"> Шлюзы банка</a></li>
                 <?php endif; ?>
                 <?php /*if ($IsAdmin || $roleUser == 1) : ?>
                     <li class=""><a data-toggle="tab" href="#tab-4"> Доступ к кабинету</a></li>
@@ -69,6 +70,14 @@ use yii\web\View;
                     <div id="tab-5" class="tab-pane">
                         <div class="panel-body">
                             <?=$this->render('_options', ['partner' => $partner]);?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <?php if ($IsAdmin): ?>
+                    <div id="tab-6" class="tab-pane">
+                        <div class="panel-body">
+                            <?=$this->render('_gates_edit', ['partner' => $partner]);?>
                         </div>
                     </div>
                 <?php endif; ?>

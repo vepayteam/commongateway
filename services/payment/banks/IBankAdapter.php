@@ -4,11 +4,20 @@
 namespace app\services\payment\banks;
 
 
-use app\models\payonline\Uslugatovar;
+use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
+use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
+use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
+use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\exceptions\GateException;
+use app\services\payment\forms\AutoPayForm;
+use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
+use app\services\payment\forms\DonePayForm;
+use app\services\payment\forms\OkPayForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 
+// TODO: удалить лишние методы
 interface IBankAdapter
 {
     /**
@@ -21,6 +30,13 @@ interface IBankAdapter
      * @return int
      */
     public function getBankId();
+
+    /**
+     * TODO: rename to confirmPay
+     * @param DonePayForm $donePayForm
+     * @return ConfirmPayResponse
+     */
+    public function confirm(DonePayForm $donePayForm);
 
     /**
      * Завершение оплаты (запрос статуса)
@@ -43,9 +59,9 @@ interface IBankAdapter
     /**
      * @param PaySchet $paySchet
      * @param CreatePayForm $createPayForm
-     * @return mixed
+     * @return CreatePayResponse
      */
-    public function pay(CreatePayForm $createPayForm);
+    public function createPay(CreatePayForm $createPayForm);
 
     /**
      * Оплата без формы (PCI DSS)
@@ -89,5 +105,18 @@ interface IBankAdapter
      * @throws \yii\db\Exception
      */
     public function reversOrder($IdPay);
+
+    /**
+     * @param CheckStatusPayForm $checkStatusPayForm
+     * @return CheckStatusPayResponse
+     */
+    public function checkStatusPay(OkPayForm $okPayForm);
+
+    /**
+     * @param AutoPayForm $autoPayForm
+     * @return CreateRecurrentPayResponse
+     * @throws GateException
+     */
+    public function recurrentPay(AutoPayForm $autoPayForm);
 
 }

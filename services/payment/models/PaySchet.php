@@ -73,6 +73,18 @@ use Yii;
  */
 class PaySchet extends \yii\db\ActiveRecord
 {
+    const STATUS_WAITING = 0;
+    const STATUS_DONE = 1;
+    const STATUS_ERROR = 2;
+    const STATUS_CANCEL = 3;
+
+    const STATUSES = [
+        self::STATUS_WAITING,
+        self::STATUS_DONE,
+        self::STATUS_ERROR,
+        self::STATUS_CANCEL,
+    ];
+
     /**
      * {@inheritdoc}
      */
@@ -176,7 +188,7 @@ class PaySchet extends \yii\db\ActiveRecord
 
     public function getUslugatovar()
     {
-        return $this->hasOne(Uslugatovar::tableName(), ['ID' => 'IdUsluga']);
+        return $this->hasOne(Uslugatovar::className(), ['ID' => 'IdUsluga']);
     }
 
     public function getUser()
@@ -194,6 +206,15 @@ class PaySchet extends \yii\db\ActiveRecord
         return $this->hasOne(Bank::className(), ['ID' => 'Bank']);
     }
 
+    public function save($runValidation = true, $attributeNames = null)
+    {
+        $this->DateLastUpdate = time();
+        return parent::save($runValidation, $attributeNames);
+    }
+
+    /**
+     * @return bool
+     */
     public function isOld()
     {
         return ($this->DateCreate + $this->TimeElapsed) < time();
@@ -225,7 +246,7 @@ class PaySchet extends \yii\db\ActiveRecord
 
         $this->Bank = $partnerBankGate->BankId;
         $this->link('uslugatovar', $uslugatovar);
-        $this->save();
+        $this->save(false);
 
         return $this;
     }

@@ -68,7 +68,7 @@ class CreateFormMfoAftPartsStrategy implements IMfoStrategy
             $payschetPart->PayschetId = $params['IdPay'];
             $payschetPart->PartnerId = $part['merchant_id'];
             $payschetPart->Amount = $part['amount'] * 100;
-            $payschetPart->save();
+            $payschetPart->save(false);
         }
 
         if (!empty($kfPay->extid)) {

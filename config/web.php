@@ -178,6 +178,7 @@ $config = [
             'IdentService' => ['class' => 'app\services\ident\IdentService'],
             'PartnersService' => ['class' => 'app\services\partners\PartnersService'],
             'AuthService' => ['class' => 'app\services\auth\AuthService'],
+            'NotificationsService' => ['class' => 'app\services\notifications\NotificationsService'],
         ],
     ],
     'modules' => [

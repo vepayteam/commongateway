@@ -48,6 +48,7 @@ class BankAdapterBuilder
             throw new GateException($e->getMessage());
         }
 
+        $this->bankAdapter->setGate($this->partnerBankGate);
         return $this;
     }
 

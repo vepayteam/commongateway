@@ -2,6 +2,8 @@
 
 namespace app\services\payment\models;
 
+use app\models\bank\Banks;
+use app\models\payonline\Partner;
 use Yii;
 
 /**
@@ -11,6 +13,7 @@ use Yii;
  * @property int $PartnerId
  * @property int $BankId
  * @property string|null $TU
+ * @property string|null $SchetNumber
  * @property string|null $Login
  * @property string|null $Token
  * @property string|null $Password
@@ -20,6 +23,10 @@ use Yii;
  * @property string|null $AdvParam_4
  * @property int|null $Priority
  * @property int|null $Enable
+ * @property Banks $bank
+ * @property Partner $partner
+ * @property UslugatovarType $uslugatovarType
+ *
  */
 class PartnerBankGate extends \yii\db\ActiveRecord
 {
@@ -64,5 +71,20 @@ class PartnerBankGate extends \yii\db\ActiveRecord
             'Priority' => 'Priority',
             'Enable' => 'Enable',
         ];
+    }
+
+    public function getPartner()
+    {
+        return $this->hasOne(Partner::class, ['ID' => 'PartnerId']);
+    }
+
+    public function getUslugatovarType()
+    {
+        return $this->hasOne(UslugatovarType::class, ['ID' => 'TU']);
+    }
+
+    public function getBank()
+    {
+        return $this->hasOne(Banks::class, ['ID' => 'BankId']);
     }
 }

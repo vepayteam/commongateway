@@ -10,8 +10,21 @@ use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\queue\BinBDInfoJob;
 use app\models\TU;
+use app\services\payment\banks\bank_adapter_responses\BaseResponse;
+use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
+use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
+use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
+use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\exceptions\BankAdapterResponseException;
+use app\services\payment\forms\AutoPayForm;
+use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
-use app\services\payment\forms\tkb\PayRequest;
+use app\services\payment\forms\DonePayForm;
+use app\services\payment\forms\OkPayForm;
+use app\services\payment\forms\tkb\CheckStatusPayRequest;
+use app\services\payment\forms\tkb\CreatePayRequest;
+use app\services\payment\forms\tkb\CreateRecurrentPayRequest;
+use app\services\payment\forms\tkb\DonePayRequest;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use qfsx\yii2\curl\Curl;
@@ -1273,51 +1286,6 @@ class TKBankAdapter implements IBankAdapter
 
     }
 
-
-    public function pay(CreatePayForm $createPayForm)
-    {
-        $action = '/api/tcbpay/gate/registerorderfromunregisteredcardwof';
-
-        $paySchet = $createPayForm->getPaySchet();
-        $payRequest = new PayRequest();
-        $payRequest->OrderId = $paySchet->ID;
-        $payRequest->Amount = $paySchet->getSummFull();
-        $payRequest->Description = 'Оплата по счету ' . $paySchet->ID;
-        $payRequest->TTL = '00.00:' . ($paySchet->TimeElapsed / 60) . ':00';
-
-        // TODO: сделать объектом
-        $payRequest->CardInfo = [
-            'CardNumber' => $createPayForm->CardNumber,
-            'CardHolder' => $createPayForm->CardHolder,
-            'ExpirationYear' => intval("20" . $createPayForm->CardYear),
-            'ExpirationMonth' => intval($createPayForm->CardMonth),
-            'CVV' => $createPayForm->CardCVC,
-        ];
-
-        if(!empty($paySchet->UserEmail)) {
-            $payRequest->ClientInfo = [
-                'Email' => $paySchet->UserEmail,
-            ] ;
-        }
-        $queryData = Json::encode($payRequest->getAttributes());
-
-        if (isset($ans['xml']) && !empty($ans['xml'])) {
-            $xml = $this->parseAns($ans['xml']);
-            if (isset($xml['Status']) && $xml['Status'] == '0') {
-                return ['status' => 1,
-                    'transac' => $xml['ordernumber'],
-                    'url' => $xml['acsurl'],
-                    'pa' => $xml['pareq'],
-                    'md' => $xml['md']
-                ];
-            } else {
-                return ['status' => 2, 'message' => $xml['errorinfo']['errormessage']];
-            }
-        }
-
-        return ['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0];
-    }
-
     /**
      * Оплата без формы (PCI DSS)
      * @param array $params
@@ -1492,7 +1460,181 @@ class TKBankAdapter implements IBankAdapter
     {
         $xml = new SimpleXMLElement('<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
                   xmlns:p2p="http://engine.paymentgate.ru/webservices/p2p" />');
+    }
 
+    /**
+     * @param CreatePayForm $createPayForm
+     * @return CreatePayResponse
+     * @throws BankAdapterResponseException
+     */
+    public function createPay(CreatePayForm $createPayForm)
+    {
+        $action = '/api/tcbpay/gate/registerorderfromunregisteredcardwof';
 
+        $paySchet = $createPayForm->getPaySchet();
+        $createPayRequest = new CreatePayRequest();
+        $createPayRequest->OrderId = $paySchet->ID;
+        $createPayRequest->Amount = $paySchet->getSummFull();
+        $createPayRequest->Description = 'Оплата по счету ' . $paySchet->ID;
+        $createPayRequest->TTL = '00.00:' . ($paySchet->TimeElapsed / 60) . ':00';
+
+        $createPayRequest->CardInfo = [
+            'CardNumber' => $createPayForm->CardNumber,
+            'CardHolder' => $createPayForm->CardHolder,
+            'ExpirationYear' => intval("20" . $createPayForm->CardYear),
+            'ExpirationMonth' => intval($createPayForm->CardMonth),
+            'CVV' => $createPayForm->CardCVC,
+        ];
+
+        if(!empty($paySchet->UserEmail)) {
+            $createPayRequest->ClientInfo = [
+                'Email' => $paySchet->UserEmail,
+            ] ;
+        }
+        $queryData = Json::encode($createPayRequest->getAttributes());
+
+        // TODO: response as object
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+
+        $payResponse = new CreatePayResponse();
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            $xml = $this->parseAns($ans['xml']);
+            if (isset($xml['Status']) && $xml['Status'] == '0') {
+                $payResponse->status = 1;
+                $payResponse->transac = $xml['ordernumber'];
+                $payResponse->url = $xml['acsurl'];
+                $payResponse->pa = $xml['pareq'];
+                $payResponse->md = $xml['md'];
+
+            } else {
+                $payResponse->status = BaseResponse::STATUS_ERROR;
+                $payResponse->message = $xml['errorinfo']['errormessage'];
+            }
+        } else {
+            throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
+        }
+
+        return $payResponse;
+    }
+
+    /**
+     * @param DonePayForm $donePayForm
+     * @return $confirmPayResponse
+     */
+    public function confirm(DonePayForm $donePayForm)
+    {
+        $action = '/api/tcbpay/gate/registerorderfromcardfinish';
+
+        $donePayRequest = new DonePayRequest();
+        $donePayRequest->OrderId = $donePayForm->IdPay;
+        $donePayRequest->MD = $donePayForm->md;
+        $donePayRequest->PaRes = $donePayForm->paRes;
+
+        $queryData = Json::encode($donePayRequest->getAttributes());
+
+        $confirmPayResponse = new ConfirmPayResponse();
+
+        // TODO: response as object
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            $xml = $this->parseAns($ans['xml']);
+            if (isset($xml['Status']) && $xml['Status'] == '0') {
+                $confirmPayResponse->status = BaseResponse::STATUS_DONE;
+                $confirmPayResponse->message = 'OK';
+                $confirmPayResponse->transac = $xml['ordernumber'];
+            } else {
+                $confirmPayResponse->status = BaseResponse::STATUS_ERROR;
+                $confirmPayResponse->message = $xml['errorinfo']['errormessage'];
+            }
+        } else {
+            throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
+        }
+
+        if(!$confirmPayResponse->validate()) {
+            throw new BankAdapterResponseException('Ошибка формата ответа');
+        }
+
+        return $confirmPayResponse;
+    }
+
+    /**
+     * @param OkPayForm $okPayForm
+     * @return CheckStatusPayResponse|mixed
+     * @throws BankAdapterResponseException
+     */
+    public function checkStatusPay(OkPayForm $okPayForm)
+    {
+        $action = '/api/tcbpay/gate/getorderstate';
+
+        $checkStatusPayRequest = new CheckStatusPayRequest();
+        $checkStatusPayRequest->OrderID = $okPayForm->IdPay;
+
+        $queryData = Json::encode($checkStatusPayRequest->getAttributes());
+        $response = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+
+        $checkStatusPayResponse = new CheckStatusPayResponse();
+        Yii::warning("checkStatusOrder: " . $this->logArr($response), 'merchant');
+        if (isset($response['xml']) && !empty($response['xml'])) {
+            $xml = $this->parseAns($response['xml']);
+            if ($xml && isset($xml['errorinfo']['errorcode']) && $xml['errorinfo']['errorcode'] == 1) {
+
+                $checkStatusPayResponse->status = BaseResponse::STATUS_CREATED;
+                $checkStatusPayResponse->xml = ['orderinfo' => ['statedescription' => 'В обработке']];
+            } else {
+                $status = $this->convertState($xml);
+
+                if(!in_array($status, BaseResponse::STATUSES)) {
+                    throw new BankAdapterResponseException('Ошибка преобразования статусов');
+                }
+                $checkStatusPayResponse->status = $status;
+                $checkStatusPayResponse->xml = $xml;
+            }
+            if(isset($xml['errorinfo']['errormessage'])) {
+                $checkStatusPayResponse->message = $xml['errorinfo']['errormessage'];
+            }
+        } else {
+            throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
+        }
+
+        return $checkStatusPayResponse;
+    }
+
+    /**
+     * @param AutoPayForm $autoPayForm
+     * @return CreateRecurrentPayResponse
+     */
+    public function recurrentPay(AutoPayForm $autoPayForm)
+    {
+        $action = '/api/v1/card/unregistered/debit/wof/no3ds';
+
+        $createRecurrentPayRequest = new CreateRecurrentPayRequest();
+        $createRecurrentPayRequest->ExtId = $autoPayForm->paySchet->ID;
+        $createRecurrentPayRequest->Amount = $autoPayForm->paySchet->getSummFull();
+        $createRecurrentPayRequest->Description = 'Оплата по счету ' . $autoPayForm->paySchet->ID;
+
+        $card = $autoPayForm->getCard();
+        $createRecurrentPayRequest->CardInfo = [
+            'CardNumber' => $card->CardNumber,
+            'CardHolder' => $card->CardHolder,
+            'ExpirationYear' => (int)("20" . $card->getYear()),
+            'ExpirationMonth' => (int)($card->getMonth()),
+        ];
+
+        $queryData = Json::encode($createRecurrentPayRequest->getAttributes());
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+
+        $createRecurrentPayResponse = new CreateRecurrentPayResponse();
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            $xml = $this->parseAns($ans['xml']);
+            if (isset($xml['ordernumber'])) {
+                $createRecurrentPayResponse->status = BaseResponse::STATUS_DONE;
+                $createRecurrentPayResponse->transac = $xml['ordernumber'];
+                return $createRecurrentPayResponse;
+            }
+        }
+
+        $createRecurrentPayResponse->status = BaseResponse::STATUS_ERROR;
+        $createRecurrentPayResponse->message = '';
+        return $createRecurrentPayResponse;
     }
 }

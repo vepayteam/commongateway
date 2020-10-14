@@ -19,6 +19,8 @@ use yii\web\UnauthorizedHttpException;
 
 class MfoReq
 {
+    /** @var Partner */
+    protected $partner;
     /* @var $user User */
     public $user = null;
 
@@ -141,10 +143,13 @@ class MfoReq
     }
 
     /**
-     * @return Partner
+     * @return Partner|null
      */
     public function getPartner()
     {
-        return Partner::findOne(['ID' => $this->mfo]);
+        if(!$this->partner) {
+            $this->partner = Partner::findOne(['ID' => $this->mfo]);
+        }
+        return $this->partner;
     }
 }
