@@ -28,13 +28,14 @@ trait PayPartsTrait
         $dateFrom = Carbon::now()->addDays(-1)->startOfDay();
         $dateTo = Carbon::now()->startOfDay();
 
-        $senderPartnerIds = $this->getPartsSenderPartnerIds($dateFrom, $dateTo);
+        $senderPartners = $this->getPartsSenderPartners($dateFrom, $dateTo);
 
-        foreach ($senderPartnerIds as $senderPartnerId) {
-            $recipientPartnerIds = $this->getPartsRecipientPartnerIds($senderPartnerId, $dateFrom, $dateTo);
-            foreach ($recipientPartnerIds as $recipientPartnerId) {
-                $senderPartner = Partner::findOne(['ID' => $senderPartnerId]);
-                $recipientPartner = Partner::findOne(['ID' => $recipientPartnerId]);
+        /** @var Partner $senderPartner */
+        foreach ($senderPartners as $senderPartner) {
+            $recipientPartners = $this->getPartsRecipientPartners($senderPartner, $dateFrom, $dateTo);
+
+            /** @var Partner $recipientPartner */
+            foreach ($recipientPartners as $recipientPartner) {
                 $this->payPartsSenderToRecipient($senderPartner, $recipientPartner, $dateFrom, $dateTo);
             }
         }
@@ -178,14 +179,12 @@ trait PayPartsTrait
     /**
      * @param Carbon $dateFrom
      * @param Carbon $dateTo
-     * @return array
+     * @return Partner[]
      */
-    private function getPartsSenderPartnerIds(Carbon $dateFrom, Carbon $dateTo)
+    private function getPartsSenderPartners(Carbon $dateFrom, Carbon $dateTo)
     {
-        $result = [];
-
         $query = new Query();
-        $data = $query
+        $partnerSenderIds = $query
             ->select([
                 'p.IdOrg',
             ])
@@ -198,11 +197,9 @@ trait PayPartsTrait
             ->andWhere(['>=', 'p.DateCreate', $dateFrom->timestamp])
             ->andWhere(['<=', 'p.DateCreate', $dateTo->timestamp])
             ->groupBy('p.IdOrg')
-            ->all();
+            ->column();
 
-        foreach ($data as $row) {
-            $result[] = $row['IdOrg'];
-        }
+        $result = Partner::find()->where(['in', 'ID', $partnerSenderIds])->all();
         return $result;
     }
 
@@ -210,13 +207,12 @@ trait PayPartsTrait
      * @param $partnerId
      * @param Carbon $dateFrom
      * @param Carbon $dateTo
-     * @return array
+     * @return Partner[]
      */
-    private function getPartsRecipientPartnerIds($partnerId, Carbon $dateFrom, Carbon $dateTo)
+    private function getPartsRecipientPartners($partner, Carbon $dateFrom, Carbon $dateTo)
     {
-        $result = [];
         $query = new Query();
-        $data = $query
+        $partnerRecipientIds = $query
             ->select([
                 'pp.PartnerId',
             ])
@@ -225,16 +221,14 @@ trait PayPartsTrait
             ->where([
                 'pp.VyvodId' => 0,
                 'p.Status' => 1,
-                'p.IdOrg' => $partnerId,
+                'p.IdOrg' => $partner->ID,
             ])
             ->andWhere(['>=', 'p.DateCreate', $dateFrom->timestamp])
             ->andWhere(['<=', 'p.DateCreate', $dateTo->timestamp])
             ->groupBy('pp.PartnerId')
-            ->all();
+            ->column();
 
-        foreach ($data as $row) {
-            $result[] = $row['PartnerId'];
-        }
+        $result = Partner::find()->where(['in', 'ID', $partnerRecipientIds])->all();
         return $result;
     }
 
