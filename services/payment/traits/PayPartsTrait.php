@@ -51,81 +51,101 @@ trait PayPartsTrait
      */
     private function payPartsSenderToRecipient(Partner $senderPartner, Partner $recipientPartner, Carbon $dateFrom, Carbon $dateTo)
     {
-        $tr = Yii::$app->db->beginTransaction();
+        $transaction = Yii::$app->db->beginTransaction();
 
-        $vyvodParts = new VyvodParts();
-        $vyvodParts->SenderId = $senderPartner->ID;
-        $vyvodParts->RecipientId = $recipientPartner->ID;
-        $vyvodParts->PayschetId = 0;
-        $vyvodParts->Amount = 0;
-        $vyvodParts->DateCreate = Carbon::now()->timestamp;
-        $vyvodParts->Status = VyvodParts::STATUS_CREATED;
-        $vyvodParts->save();
+        $transactionOk = true;
+        try {
+            $vyvodParts = new VyvodParts();
+            $vyvodParts->SenderId = $senderPartner->ID;
+            $vyvodParts->RecipientId = $recipientPartner->ID;
+            $vyvodParts->PayschetId = 0;
+            $vyvodParts->Amount = 0;
+            $vyvodParts->DateCreate = Carbon::now()->timestamp;
+            $vyvodParts->Status = VyvodParts::STATUS_CREATED;
+            $transactionOk &= $vyvodParts->save(false);
 
-        $data = PayschetPart::find()
-            ->innerJoin('pay_schet', 'pay_schet.ID = pay_schet_parts.PayschetId')
-            ->where([
-                'pay_schet_parts.VyvodId' => 0,
-                'pay_schet.Status' => 1,
-                'pay_schet_parts.PartnerId' => $recipientPartner->ID,
-                'pay_schet.IdOrg' => $senderPartner->ID,
+            $data = PayschetPart::find()
+                ->innerJoin('pay_schet', 'pay_schet.ID = pay_schet_parts.PayschetId')
+                ->where([
+                    'pay_schet_parts.VyvodId' => 0,
+                    'pay_schet.Status' => 1,
+                    'pay_schet_parts.PartnerId' => $recipientPartner->ID,
+                    'pay_schet.IdOrg' => $senderPartner->ID,
 
-            ])
-            ->andWhere(['=', 'pay_schet.IdOrg', $senderPartner->ID])
-            ->andWhere(['>=', 'pay_schet.DateCreate', $dateFrom->timestamp])
-            ->andWhere(['<=', 'pay_schet.DateCreate', $dateTo->timestamp])
-            ->all();
+                ])
+                ->andWhere(['=', 'pay_schet.IdOrg', $senderPartner->ID])
+                ->andWhere(['>=', 'pay_schet.DateCreate', $dateFrom->timestamp])
+                ->andWhere(['<=', 'pay_schet.DateCreate', $dateTo->timestamp])
+                ->all();
 
-        /** @var PayschetPart $row */
-        foreach ($data as $payschetPart) {
-            $vyvodParts->Amount += $payschetPart->Amount;
+            /** @var PayschetPart $row */
+            foreach ($data as $payschetPart) {
+                $vyvodParts->Amount += $payschetPart->Amount;
+            }
+
+            $usl = Uslugatovar::findOne([
+                'IDPartner' => $senderPartner->ID,
+                'IsCustom' => TU::$VYVODPAYSPARTS,
+            ]);
+
+            if(!$usl) {
+                Yii::warning("VyvodParts: error mfo=" . $senderPartner->ID . " У получателя нет услуги перечисления разбивки ", 'pay-parts');
+                $transaction->rollBack();
+                return false;
+            }
+
+            // TODO: multibank
+            $descript = sprintf(
+                'Перечисление сумм разбивок для %s (%d) за %s',
+                $recipientPartner->Name,
+                $recipientPartner->ID,
+                $dateFrom->locale('ru')->format('d-m-Y')
+            );
+            $pay = new CreatePay();
+            $Provparams = new Provparams;
+            $Provparams->prov = $usl;
+
+            if(!$recipientPartner->partner_bank_rekviz) {
+                $transaction->rollBack();
+                throw new \Exception('У партнера-получателя нет реквизитов');
+            }
+
+            $Provparams->param = [
+                $recipientPartner->partner_bank_rekviz[0]->RaschShetPolushat,
+                $recipientPartner->partner_bank_rekviz[0]->BIKPoluchat,
+                $recipientPartner->partner_bank_rekviz[0]->NamePoluchat,
+                $recipientPartner->partner_bank_rekviz[0]->INNPolushat,
+                $recipientPartner->partner_bank_rekviz[0]->KPPPoluchat,
+                $descript,
+            ];
+            $Provparams->summ = $vyvodParts->Amount;
+            $Provparams->Usluga = $usl;
+
+            $idpay = $pay->createPay($Provparams,0, 3, TCBank::$bank, $senderPartner->ID, 'vozparts '. $vyvodParts->Id, 0);
+            if (!$idpay) {
+                Yii::warning("VyvodParts: error mfo=" . $senderPartner->ID . " idpay=" . $idpay, 'pay-parts');
+                $transaction->rollBack();
+                return false;
+            }
+
+            $vyvodParts->PayschetId = $idpay['IdPay'];
+            $transactionOk &= $vyvodParts->save(false);
+
+            if($transactionOk) {
+                $transaction->commit();
+            } else {
+                $transaction->rollBack();
+            }
+
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            throw $e;
+        } catch (\Throwable $e) {
+            $transaction->rollBack();
+            throw $e;
         }
 
-        $usl = Uslugatovar::findOne([
-            'IDPartner' => $senderPartner->ID,
-            'IsCustom' => TU::$VYVODPAYSPARTS,
-        ]);
-
-        if(!$usl) {
-            echo "VyvodParts: error mfo=" . $senderPartner->ID . " У получателя нет услуги перечисления разбивки " . "\r\n";
-            $tr->rollBack();
-            return false;
-        }
-
-        // TODO: multibank
-        $descript = sprintf(
-            'Перечисление сумм разбивок для %s (%d) за %s',
-            $recipientPartner->Name,
-            $recipientPartner->ID,
-            $dateFrom->locale('ru')->format('d-m-Y')
-        );
-        $pay = new CreatePay();
-        $Provparams = new Provparams;
-        $Provparams->prov = $usl;
-        $Provparams->param = [
-            $recipientPartner->partner_bank_rekviz[0]->RaschShetPolushat,
-            $recipientPartner->partner_bank_rekviz[0]->BIKPoluchat,
-            $recipientPartner->partner_bank_rekviz[0]->NamePoluchat,
-            $recipientPartner->partner_bank_rekviz[0]->INNPolushat,
-            $recipientPartner->partner_bank_rekviz[0]->KPPPoluchat,
-            $descript
-        ];
-        $Provparams->summ = $vyvodParts->Amount;
-        $Provparams->Usluga = $usl;
-
-        $idpay = $pay->createPay($Provparams,0, 3, TCBank::$bank, $senderPartner->ID, 'vozparts '. $vyvodParts->Id, 0);
-        if (!$idpay) {
-            echo "VyvodParts: error mfo=" . $senderPartner->ID . " idpay=" . $idpay . "\r\n";
-            $tr->rollBack();
-            return false;
-        }
-
-        $vyvodParts->PayschetId = $idpay['IdPay'];
-        $vyvodParts->save();
-
-        $tr->commit();
-
-        echo "VyvodVoznag: mfo=" . $senderPartner->ID . " idpay=" . $idpay . "\r\n";
+        Yii::warning("VyvodVoznag: mfo=" . $senderPartner->ID . " idpay=" . $idpay, 'pay-parts');
 
         $TcbGate = new TcbGate($senderPartner->ID,TCBank::$PARTSGATE);
         $bank = new TCBank($TcbGate);
@@ -148,9 +168,8 @@ trait PayPartsTrait
                 'url' => ''
             ]);
 
-            echo "VyvodParts: mfo=" . $senderPartner->ID . ", transac=" . $ret['transac'] . "\r\n";
+            Yii::warning("VyvodParts: mfo=" . $senderPartner->ID . ", transac=" . $ret['transac'], 'pay-parts');
 
-            //статус не будем смотреть
             $payschets->confirmPay([
                 'idpay' => $vyvodParts->PayschetId,
                 'result_code' => 1,
