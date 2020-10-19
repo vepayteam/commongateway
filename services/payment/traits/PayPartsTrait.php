@@ -131,6 +131,54 @@ trait PayPartsTrait
             $vyvodParts->PayschetId = $idpay['IdPay'];
             $transactionOk &= $vyvodParts->save(false);
 
+            Yii::warning("VyvodVoznag: mfo=" . $senderPartner->ID . " idpay=" . $idpay, 'pay-parts');
+
+            $TcbGate = new TcbGate($senderPartner->ID,TCBank::$PARTSGATE);
+            $bank = new TCBank($TcbGate);
+            $ret = $bank->transferToAccount([
+                'IdPay' => $vyvodParts->PayschetId,
+                'account' => $recipientPartner->partner_bank_rekviz[0]->RaschShetPolushat,
+                'bic' => $recipientPartner->partner_bank_rekviz[0]->BIKPoluchat,
+                'summ' => $vyvodParts->Amount,
+                'name' => $recipientPartner->partner_bank_rekviz[0]->NamePoluchat,
+                'inn' => $recipientPartner->partner_bank_rekviz[0]->INNPolushat,
+                'descript' => $descript
+            ]);
+
+            if ($ret && $ret['status'] == 1) {
+                //сохранение номера транзакции
+                $payschets = new Payschets();
+                $payschets->SetBankTransact([
+                    'idpay' => $vyvodParts->PayschetId,
+                    'trx_id' => $ret['transac'],
+                    'url' => ''
+                ]);
+
+                Yii::warning("VyvodParts: mfo=" . $senderPartner->ID . ", transac=" . $ret['transac'], 'pay-parts');
+
+                $payschets->confirmPay([
+                    'idpay' => $vyvodParts->PayschetId,
+                    'result_code' => 1,
+                    'trx_id' => $ret['transac'],
+                    'ApprovalCode' => '',
+                    'RRN' => '',
+                    'message' => ''
+                ]);
+
+                $vyvodParts->Status = VyvodParts::STATUS_COMPLETED;
+                $transactionOk &= $vyvodParts->save(false);
+            } else {
+                //не вывелось
+                $vyvodParts->Status = VyvodParts::STATUS_ERROR;
+                $transactionOk &= $vyvodParts->save(false);
+            }
+
+            /** @var PayschetPart $row */
+            foreach ($data as $payschetPart) {
+                $payschetPart->VyvodId = $vyvodParts->Id;
+                $transactionOk &= $payschetPart->save(false);
+            }
+
             if($transactionOk) {
                 $transaction->commit();
             } else {
@@ -145,53 +193,6 @@ trait PayPartsTrait
             throw $e;
         }
 
-        Yii::warning("VyvodVoznag: mfo=" . $senderPartner->ID . " idpay=" . $idpay, 'pay-parts');
-
-        $TcbGate = new TcbGate($senderPartner->ID,TCBank::$PARTSGATE);
-        $bank = new TCBank($TcbGate);
-        $ret = $bank->transferToAccount([
-            'IdPay' => $vyvodParts->PayschetId,
-            'account' => $recipientPartner->partner_bank_rekviz[0]->RaschShetPolushat,
-            'bic' => $recipientPartner->partner_bank_rekviz[0]->BIKPoluchat,
-            'summ' => $vyvodParts->Amount,
-            'name' => $recipientPartner->partner_bank_rekviz[0]->NamePoluchat,
-            'inn' => $recipientPartner->partner_bank_rekviz[0]->INNPolushat,
-            'descript' => $descript
-        ]);
-
-        if ($ret && $ret['status'] == 1) {
-            //сохранение номера транзакции
-            $payschets = new Payschets();
-            $payschets->SetBankTransact([
-                'idpay' => $vyvodParts->PayschetId,
-                'trx_id' => $ret['transac'],
-                'url' => ''
-            ]);
-
-            Yii::warning("VyvodParts: mfo=" . $senderPartner->ID . ", transac=" . $ret['transac'], 'pay-parts');
-
-            $payschets->confirmPay([
-                'idpay' => $vyvodParts->PayschetId,
-                'result_code' => 1,
-                'trx_id' => $ret['transac'],
-                'ApprovalCode' => '',
-                'RRN' => '',
-                'message' => ''
-            ]);
-
-            $vyvodParts->Status = VyvodParts::STATUS_COMPLETED;
-            $vyvodParts->save();
-        } else {
-            //не вывелось
-            $vyvodParts->Status = VyvodParts::STATUS_ERROR;
-            $vyvodParts->save();
-        }
-
-        /** @var PayschetPart $row */
-        foreach ($data as $payschetPart) {
-            $payschetPart->VyvodId = $vyvodParts->Id;
-            $payschetPart->save();
-        }
         return true;
     }
 
