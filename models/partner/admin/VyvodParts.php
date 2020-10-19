@@ -20,6 +20,10 @@ use yii\base\Model;
  */
 class VyvodParts extends \yii\db\ActiveRecord
 {
+    const STATUS_CREATED = 0;
+    const STATUS_COMPLETED = 1;
+    const STATUS_ERROR = 2;
+
     public static function tableName()
     {
         return 'vyvod_parts';
