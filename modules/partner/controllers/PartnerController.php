@@ -15,10 +15,13 @@ use app\models\payonline\Partner;
 use app\models\payonline\PartnerBankRekviz;
 use app\models\payonline\Uslugatovar;
 use app\services\partners\PartnersService;
+use app\services\payment\models\PartnerBankGate;
 use Yii;
 use yii\filters\AccessControl;
 use yii\helpers\Url;
+use yii\web\BadRequestHttpException;
 use yii\web\Controller;
+use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
@@ -538,6 +541,46 @@ class PartnerController extends Controller
         } else {
             return ['status' => 2];
         }
+    }
+
+    public function actionSaveGate()
+    {
+        if(!UserLk::IsAdmin(Yii::$app->user)) {
+            throw new ForbiddenHttpException();
+        }
+        if (!Yii::$app->request->isAjax) {
+            throw new BadRequestHttpException();
+        }
+
+        $post = Yii::$app->request->post();
+
+        /** @var PartnerBankGate $partnerBankGate */
+        $partnerBankGate = null;
+
+        // TODO:
+        if($post['Enable'] == 'on') {
+            $post['Enable'] = 1;
+        } else {
+            $post['Enable'] = 0;
+        }
+
+        if($post['Id']) {
+            $partnerBankGate = PartnerBankGate::findOne(['Id' => $post['Id']]);
+            if (!$partnerBankGate) {
+                throw new BadRequestHttpException();
+            }
+        } else {
+            $partnerBankGate = new PartnerBankGate();
+        }
+
+        $partnerBankGate->load($post, '');
+
+        if($partnerBankGate->save()) {
+            return $this->asJson(['status' => 1]);
+        } else {
+            return $this->asJson(['status' => 2]);
+        }
+
     }
 
     /**

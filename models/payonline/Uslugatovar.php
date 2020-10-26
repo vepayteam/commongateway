@@ -3,6 +3,7 @@
 namespace app\models\payonline;
 
 use app\models\partner\admin\VoznagStat;
+use app\services\payment\models\UslugatovarType;
 use Yii;
 use yii\caching\TagDependency;
 
@@ -72,6 +73,8 @@ use yii\caching\TagDependency;
  */
 class Uslugatovar extends \yii\db\ActiveRecord
 {
+    const TYPE_REG_CARD = 1;
+
     public static $TypePay_str = [0 => 'Банковская карта', 1 => 'Банковская карта'];
     public static $TypeExport_str = [0 => 'в Телепорт', 1 => 'в Банк по реестру', 2 => 'online'];
     public static $TypeReestr_str = [
@@ -80,7 +83,7 @@ class Uslugatovar extends \yii\db\ActiveRecord
 
     // TODO: use TU
     public static $TypeCustom_str = [
-        1 => 'Регистрация карты',
+        self::TYPE_REG_CARD => 'Регистрация карты',
         11 => 'Выплата на счет',
         13 => 'Выдача займа на карту',
         10 => 'Погашение займа AFT',
@@ -233,6 +236,11 @@ class Uslugatovar extends \yii\db\ActiveRecord
     public function getPartner_bank_rekviz()
     {
         return $this->hasOne(PartnerBankRekviz::className(), ['ID' => 'IdBankRekviz']);
+    }
+
+    public function getType()
+    {
+        return $this->hasOne(UslugatovarType::className(), ['Id' => 'IsCustom']);
     }
 
     /**

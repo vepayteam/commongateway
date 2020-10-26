@@ -19,6 +19,8 @@ use yii\web\UnauthorizedHttpException;
 
 class MfoReq
 {
+    /** @var Partner */
+    protected $partner;
     /* @var $user User */
     public $user = null;
 
@@ -138,5 +140,16 @@ class MfoReq
         } else {
             return 'https://api.vepay.online/mfo/default/outcard/' . $IdPay;
         }
+    }
+
+    /**
+     * @return Partner|null
+     */
+    public function getPartner()
+    {
+        if(!$this->partner) {
+            $this->partner = Partner::findOne(['ID' => $this->mfo]);
+        }
+        return $this->partner;
     }
 }

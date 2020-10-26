@@ -13,6 +13,8 @@ use Yii;
  */
 class Options extends \yii\db\ActiveRecord
 {
+    const BASE_BANK_BY_TU_NAME_SUFFIX = 'base_bank_name__';
+
     /**
      * {@inheritdoc}
      */

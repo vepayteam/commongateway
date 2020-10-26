@@ -4,116 +4,107 @@
 namespace app\services\balance;
 
 
-use app\models\PayschetPart;
-use app\services\balance\models\PartsBalanceForm;
-use app\services\balance\models\PartsBalancePartnerForm;
+use app\models\payonline\BalancePartner;
+use app\models\payonline\Partner;
+use app\models\payonline\Uslugatovar;
+use app\models\TU;
+use app\services\payment\models\PaySchet;
 
 class BalanceService
 {
-
-
-    public function getPartsBalance(PartsBalanceForm $partsBalanceForm)
+    /**
+     * @param PaySchet $paySchet
+     * @return bool
+     * @throws \yii\db\Exception
+     */
+    public function changeBalance(PaySchet $paySchet)
     {
-        $result = [
-            'draw' => $partsBalanceForm->draw,
-        ];
-        $q = PayschetPart::find()
-            ->innerJoin('pay_schet', 'pay_schet.ID = pay_schet_parts.PayschetId')
-            ->innerJoin('partner', 'partner.ID = pay_schet_parts.PartnerId')
-            ->leftJoin('vyvod_parts', 'vyvod_parts.ID = pay_schet_parts.VyvodId AND vyvod_parts.Status = 1')
-            ->where([
-                'pay_schet.IdOrg' => $partsBalanceForm->getPartner()->ID,
-                'pay_schet.Status' => '1',
-            ])
-            ->andWhere(['>=', 'pay_schet.DateCreate', strtotime($partsBalanceForm->filters['datefrom'].':00')])
-            ->andWhere(['<=', 'pay_schet.DateCreate', strtotime($partsBalanceForm->filters['dateto'])]);
-
-        $result['recordsTotal'] = $q->count();
-
-        foreach ($partsBalanceForm->columns as $column) {
-            if(!empty($column['search']['value'])) {
-                $arr = explode(' AS ', $column['name']);
-                $q->andWhere([
-                    'like',
-                    $arr[0],
-                    $column['search']['value']
-                ]);
-            }
+        if(isset($paySchet->partner->SchetTcbNominal) && !empty($paySchet->partner->SchetTcbNominal)) {
+            return $this->changeBalanceIfHaveNominalSchet($paySchet);
+        } else {
+            return $this->changeBalanceIfNotHaveNominalSchet($paySchet);
         }
-
-        $result['recordsFiltered'] = $q->count();
-
-        $q->limit($partsBalanceForm->length);
-        $q->offset($partsBalanceForm->start);
-
-        // подмена даты
-        $columns = PartsBalanceForm::COLUMNS_BY_PARTS_BALANCE;
-        unset($columns['DateCreate']);
-        unset($columns['VyvodDateCreate']);
-        $columns = array_keys($columns);
-        $columns[] = 'FROM_UNIXTIME(pay_schet.DateCreate) AS DateCreate';
-        $columns[] = 'FROM_UNIXTIME(vyvod_parts.DateCreate) AS VyvodDateCreate';
-
-        $columnNOrder = $partsBalanceForm->order[0]['column'];
-        $orderColumn = $partsBalanceForm->columns[$columnNOrder]['data'];
-        $orderDir = $partsBalanceForm->order[0]['dir'];
-        $q->orderBy($orderColumn.' '.$orderDir);
-
-        $q->addSelect($columns);
-        $result['data'] = $q->asArray()->all();
-        return $result;
     }
 
-    public function getPartsBalancePartner(PartsBalancePartnerForm $partsBalancePartnerForm)
+    /**
+     * @param PaySchet $paySchet
+     * @return bool
+     * @throws \yii\db\Exception
+     */
+    protected function changeBalanceIfHaveNominalSchet(PaySchet $paySchet)
     {
-        $result = [
-            'draw' => $partsBalancePartnerForm->draw,
-        ];
-        $q = PayschetPart::find()
-            ->innerJoin('pay_schet', 'pay_schet.ID = pay_schet_parts.PayschetId')
-            ->innerJoin('partner', 'partner.ID = pay_schet_parts.PartnerId')
-            ->leftJoin('vyvod_parts', 'vyvod_parts.ID = pay_schet_parts.VyvodId AND vyvod_parts.Status = 1')
-            ->where([
-                'pay_schet_parts.PartnerId' => $partsBalancePartnerForm->getPartner()->ID,
-                'pay_schet.Status' => '1',
-            ])
-            ->andWhere(['>=', 'pay_schet.DateCreate', strtotime($partsBalancePartnerForm->filters['datefrom'].':00')])
-            ->andWhere(['<=', 'pay_schet.DateCreate', strtotime($partsBalancePartnerForm->filters['dateto'])]);
+        if (in_array($paySchet->uslugatovar->IsCustom, [TU::$TOCARD, TU::$TOSCHET])) {
+            //при выдаче списание суммы со счета погашения (номинального), комиссии с транзитного счета (выдачи)
+            $BalanceIn = new BalancePartner(BalancePartner::IN, $paySchet->IdOrg);
+            $BalanceIn->Dec($paySchet->SummPay, 'Платеж ' . $paySchet->ID, 3, $paySchet->ID, 0);
+            $BalanceOut = new BalancePartner(BalancePartner::OUT, $paySchet->IdOrg);
 
-        $result['recordsTotal'] = $q->count();
+            $comis = $paySchet->uslugatovar->calcComissOrg($paySchet->SummPay);
+            if ($comis) {
+                $BalanceOut->Dec($comis, 'Комиссия ' . $paySchet->ID, 5, $paySchet->ID, 0);
+            }
 
-        foreach ($partsBalancePartnerForm->columns as $column) {
-            if(!empty($column['search']['value'])) {
-                $arr = explode(' AS ', $column['name']);
-                $q->andWhere([
-                    'like',
-                    $arr[0],
-                    $column['search']['value']
-                ]);
+        } elseif (in_array($paySchet->uslugatovar->IsCustom, [TU::$POGASHECOM, TU::$POGASHATF])) {
+            //погашение
+            $BalanceIn = new BalancePartner(BalancePartner::IN, $paySchet->IdOrg);
+            $BalanceIn->Inc($paySchet->SummPay, 'Платеж ' . $paySchet->ID, 2, $paySchet->ID, 0);
+
+            $comis = $paySchet->uslugatovar->calcComissOrg($paySchet->SummPay);
+
+            if ($comis && !empty($paySchet->CardNum)) {
+                $BalanceOut = new BalancePartner(BalancePartner::OUT, $paySchet->IdOrg);
+                $BalanceOut->Dec($comis, 'Комиссия ' . $paySchet->ID, 5, $paySchet->ID, 0);
             }
         }
+        return true;
+    }
 
-        $result['recordsFiltered'] = $q->count();
+    /**
+     * @param PaySchet $paySchet
+     * @return bool
+     * @throws \yii\db\Exception
+     */
+    protected function changeBalanceIfNotHaveNominalSchet(PaySchet $paySchet)
+    {
+        if (in_array($paySchet->uslugatovar->IsCustom, [TU::$TOCARD, TU::$TOSCHET])) {
+            //выплата
+            $BalanceOut = new BalancePartner(BalancePartner::OUT, $paySchet->IdOrg);
+            $BalanceOut->Dec($paySchet->SummPay, 'Платеж ' . $paySchet->ID, 3, $paySchet->ID, 0);
 
-        $q->limit($partsBalancePartnerForm->length);
-        $q->offset($partsBalancePartnerForm->start);
+            $comis = $paySchet->uslugatovar->calcComissOrg($paySchet->SummPay);
+            if ($comis) {
+                $BalanceOut->Dec($comis, 'Комиссия ' . $paySchet->ID, 5, $paySchet->ID, 0);
+            }
+        } elseif (in_array($paySchet->uslugatovar->IsCustom, [TU::$VYPLATVOZN, TU::$REVERSCOMIS])) {
+            $BalanceOut = new BalancePartner(BalancePartner::OUT, $paySchet->IdOrg);
+            $BalanceOut->Dec($paySchet->SummPay, 'Перечисление вознаграждения. Платеж ' . $paySchet->ID, 3, $paySchet->ID, 0);
+        } elseif (in_array($paySchet->uslugatovar->IsCustom, [TU::$VYVODPAYS, TU::$PEREVPAYS])) {
+            //перевод денег мфо
+            $partner = Partner::findOne(['ID' => $paySchet->uslugatovar->ExtReestrIDUsluga]);
+            if ($partner && $partner->IsCommonSchetVydacha) {
+                //со счета выдачи
+                $BalanceOut = new BalancePartner(BalancePartner::OUT, $paySchet->uslugatovar->ExtReestrIDUsluga);
+                $BalanceOut->Dec($paySchet->SummPay, 'Списание на перевод средств ' . $paySchet->ID, 1, $paySchet->ID, 0);
+            } else {
+                //со счета погашения переводится
+                $BalanceIn = new BalancePartner(BalancePartner::IN, $paySchet->uslugatovar->ExtReestrIDUsluga);
+                $BalanceIn->Dec($paySchet->SummPay, 'Списание на перевод средств ' . $paySchet->ID, 1, $paySchet->ID, 0);
 
-        // подмена даты
-        $columns = PartsBalancePartnerForm::COLUMNS_BY_PARTS_BALANCE;
-        unset($columns['DateCreate']);
-        unset($columns['VyvodDateCreate']);
-        $columns = array_keys($columns);
-        $columns[] = 'FROM_UNIXTIME(pay_schet.DateCreate) AS DateCreate';
-        $columns[] = 'FROM_UNIXTIME(vyvod_parts.DateCreate) AS VyvodDateCreate';
-
-        $columnNOrder = $partsBalancePartnerForm->order[0]['column'];
-        $orderColumn = $partsBalancePartnerForm->columns[$columnNOrder]['data'];
-        $orderDir = $partsBalancePartnerForm->order[0]['dir'];
-        $q->orderBy($orderColumn.' '.$orderDir);
-
-        $q->addSelect($columns);
-        $result['data'] = $q->asArray()->all();
-        return $result;
+                $comis = $paySchet->uslugatovar->calcComissOrg($paySchet->SummPay);
+                if ($comis) {
+                    $BalanceIn->Dec($comis, 'Комиссия ' . $paySchet->ID, 5, $paySchet->ID, 0);
+                }
+            }
+        } else {
+            //погашение
+            $BalanceIn = new BalancePartner(BalancePartner::IN, $paySchet->IdOrg);
+            $BalanceIn->Inc($paySchet->SummPay, 'Платеж ' . $paySchet->ID, 2, $paySchet->ID, 0);
+            $comis = $paySchet->uslugatovar->calcComissOrg($paySchet->SummPay);
+            if ($comis) {
+                $BalanceIn->Dec($comis, 'Комиссия ' . $paySchet->ID, 5, $paySchet->ID, 0);
+            }
+        }
+        return true;
     }
 
 }
