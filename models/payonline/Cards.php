@@ -244,7 +244,11 @@ class Cards extends \yii\db\ActiveRecord
     {
         $type = '';
         if ($CardType >= 0 && $CardType <= 8) {
-            $type = self::BRANDS[$CardType];
+            foreach (self::BRANDS as $name => $v) {
+                if($CardType == $v) {
+                    return $name;
+                }
+            }
         }
         return $type;
     }
