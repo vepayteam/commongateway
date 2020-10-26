@@ -1587,11 +1587,74 @@
                     }
                 });
                 return false;
+            });
 
-
+            // bank gates
+            $('#partner-edit__bank-gates-table__add-button').on('click', function(e) {
+                $('#partner-edit__bank-gates-edit-modal__gate-form').trigger('reset');
+                $('#partner-edit__bank-gates-edit-modal').modal('show');
 
                 return false;
-            });
+            })
+
+            $('.partner-edit__bank-gates-table__edit-button').on('click', function(e) {
+                let $form = $('#partner-edit__bank-gates-edit-modal__gate-form');
+                let gate = $(this).parents('tr').data('gate');
+                $form.trigger('reset');
+
+                if(gate.Enable === 1) {
+                    $form.find('input[name=Enable]').attr('checked', true);
+                } else {
+                    $form.find('input[name=Enable]').attr('checked', false);
+                }
+
+                $form.find('input[name=Id]').val(gate.Id);
+                $form.find('input[name=Active]').val(gate.Active);
+                $form.find('input[name=Priority]').val(gate.Priority);
+                $form.find('select[name=BankId]').val(gate.BankId);
+                $form.find('select[name=TU]').val(gate.TU);
+                $form.find('input[name=SchetNumber]').val(gate.SchetNumber);
+                $form.find('input[name=Login]').val(gate.Login);
+                $form.find('input[name=Token]').val(gate.Token);
+                $form.find('input[name=Password]').val(gate.Password);
+                $form.find('input[name=AdvParam_1]').val(gate.AdvParam_1);
+                $form.find('input[name=AdvParam_2]').val(gate.AdvParam_2);
+                $form.find('input[name=AdvParam_3]').val(gate.AdvParam_3);
+                $form.find('input[name=AdvParam_4]').val(gate.AdvParam_4);
+
+                $('#partner-edit__bank-gates-edit-modal').modal('show');
+                return false;
+            })
+
+            $('#partner-edit__bank-gates-edit-modal__save-button').on('click', function(e) {
+                let data = $('#partner-edit__bank-gates-edit-modal__gate-form').serialize();
+
+                $.ajax({
+                    'method': 'POST',
+                    'url': '/partner/partner/save-gate',
+                    'data': data,
+                    'success': function(response) {
+                        if (response.status == 1) {
+                            alert('Успешно сохранен');
+
+                            let partnerId = $('#partner-edit__bank-gates-edit-modal__gate-form')
+                                .find('input[name=PartnerId]').val();
+                            let currentUri = $(location).attr('pathname') + $(location).attr('hash');
+                            if(currentUri == `/partner/partner/partner-edit/${partnerId}#tab-6`) {
+                                document.location.reload();
+                            } else {
+                                window.location = `/partner/partner/partner-edit/${partnerId}#tab-6`;
+                            }
+
+                        } else {
+                            alert('Ошибка');
+                        }
+                    }
+                })
+
+                return false;
+            })
+
         },
 
         savepatnerpart: function (form) {

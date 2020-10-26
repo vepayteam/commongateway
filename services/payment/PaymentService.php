@@ -4,17 +4,11 @@
 namespace app\services\payment;
 
 
-use app\models\bank\TCBank;
-use app\models\bank\TcbGate;
+use app\models\bank\BankCheck;
 use app\models\kfapi\KfRequest;
-use app\models\partner\admin\VyvodParts;
-use app\models\payonline\CreatePay;
-use app\models\payonline\Partner;
-use app\models\payonline\Provparams;
-use app\models\payonline\Uslugatovar;
-use app\models\PayschetPart;
-use app\models\Payschets;
-use app\models\TU;
+use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
+use app\services\payment\forms\SetPayOkForm;
+use app\services\payment\models\PaySchet;
 use app\services\payment\payment_strategies\CreateFormEcomStrategy;
 use app\services\payment\payment_strategies\CreateFormJkhStrategy;
 use app\services\payment\payment_strategies\IPaymentStrategy;
@@ -22,6 +16,7 @@ use app\services\payment\traits\PayPartsTrait;
 use Carbon\Carbon;
 use Yii;
 use yii\db\Query;
+use yii\mutex\FileMutex;
 
 class PaymentService
 {

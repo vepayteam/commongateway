@@ -26,7 +26,18 @@ use Yii;
  */
 class Cards extends \yii\db\ActiveRecord
 {
-    public const BRANDS = ['VISA', 'MASTERCARD', 'MIR', 'AMERICAN EXPRESS', 'JCB', 'DINNERSCLUB', 'MAESTRO', 'DISCOVER', 'CHINA UNIONPAY'];
+    public const BRANDS = [
+        'VISA' => 0,
+        'MASTERCARD' => 1,
+        'MIR' => 2,
+        'AMERICAN EXPRESS' => 3,
+        'JCB' => 4,
+        'DINNERSCLUB' => 5,
+        'MAESTRO' => 6,
+        'DISCOVER' => 7,
+        'CHINA UNIONPAY' => 8,
+    ];
+
     /**
      * @inheritdoc
      */
@@ -192,9 +203,6 @@ class Cards extends \yii\db\ActiveRecord
 
         // число корректно, если сумма равна 10
         return (($sum % 10) == 0);
-
-        //$tcBank = new TCBank();
-        //$info = $tcBank->getCardInfo(['card' => $card]);
     }
 
     /**
@@ -204,41 +212,24 @@ class Cards extends \yii\db\ActiveRecord
      */
     public static function GetTypeCard($CardNumber)
     {
-        /*
-         Номера карт начинаются с
-            2-Мир
-            3- American Express, JCB International, Diners Club
-            ____30,36,38-Diners Club
-            ____31,35-JCB International
-            ____34,37-American Express
-            4- VISA
-            5- MasterCard, Maestro
-            ____50,56,57,58-Maestro
-            ____51,52,53,54,55-MasterCard
-            6- Maestro, China UnionPay, Discover
-            ____60-Discover
-            ____62 - China UnionPay
-            ____63, 67 - Maestro
-            7-УЭК
-         */
         if (mb_substr($CardNumber, 0, 1) == '4') {
-            return 0; //visa
+            return self::BRANDS['VISA']; //visa
         } elseif (in_array(mb_substr($CardNumber, 0, 2), ['51', '52', '53', '54', '55'])) {
-            return 1; //mastercard
+            return self::BRANDS['MASTERCARD']; //mastercard
         } elseif (mb_substr($CardNumber, 0, 1) == '2') {
-            return 2; //mir
+            return self::BRANDS['MIR']; //mir
         } elseif (in_array(mb_substr($CardNumber, 0, 2), ['50', '56', '57', '58', '63', '67'])) {
-            return 6; //Maestro
+            return self::BRANDS['MAESTRO']; //Maestro
         } elseif (in_array(mb_substr($CardNumber, 0, 2), ['34', '37'])) {
-            return 3; //american express
+            return self::BRANDS['AMERICAN EXPRESS']; //american express
         } elseif (in_array(mb_substr($CardNumber, 0, 2), ['31', '35'])) {
-            return 4; //JCB
+            return self::BRANDS['JCB']; //JCB
         } elseif (in_array(mb_substr($CardNumber, 0, 2), ['30', '36', '38'])) {
-            return 5; //Dinnersclub
+            return self::BRANDS['DINNERSCLUB']; //Dinnersclub
         } elseif (mb_substr($CardNumber, 0, 2) == '60') {
-            return 7; //Discover
+            return self::BRANDS['DISCOVER']; //Discover
         } elseif (mb_substr($CardNumber, 0, 2) == '62') {
-            return 8; //China UnionPay
+            return self::BRANDS['CHINA UNIONPAY']; //China UnionPay
         }
 
         return 0;
