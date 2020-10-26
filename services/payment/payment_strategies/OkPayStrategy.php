@@ -209,8 +209,8 @@ class OkPayStrategy
                     $transactionOk &= $this->paymentService->cancelPay($paySchet);
 
                     /** @var NotificationsService $notificationService */
-                    $notificationService = Yii::$container->get('NotificationService');
-                    $transactionOk &= $notificationService->addNotificationByPaySchet($paySchet);
+                    $notificationsService = Yii::$container->get('NotificationsService');
+                    $transactionOk &= $notificationsService->addNotificationByPaySchet($paySchet);
 
                     if(!$transaction->isActive || !$transactionOk) {
                         $transaction->rollBack();

@@ -20,6 +20,7 @@ class MerchantPayForm extends BaseForm
     public $failurl = '';
     public $cancelurl = '';
     public $postbackurl = '';
+    public $postbackurl_v2 = '';
 
     public function rules()
     {
@@ -29,8 +30,8 @@ class MerchantPayForm extends BaseForm
             [['extid'], 'string', 'max' => 40],
             [['document_id'], 'string', 'max' => 40],
             [['fullname'], 'string', 'max' => 80],
-            [['successurl', 'failurl', 'cancelurl', 'postbackurl'], 'url'],
-            [['successurl', 'failurl', 'cancelurl', 'postbackurl'], 'string', 'max' => 300],
+            [['successurl', 'failurl', 'cancelurl', 'postbackurl', 'postbackurl_v2'], 'url'],
+            [['successurl', 'failurl', 'cancelurl', 'postbackurl', 'postbackurl_v2'], 'string', 'max' => 300],
             [['descript'], 'string', 'max' => 200],
             [['timeout'], 'integer', 'min' => 10, 'max' => 59],
             [['amount'], 'required'],

@@ -1579,6 +1579,7 @@ class TKBankAdapter implements IBankAdapter
             if ($xml && isset($xml['errorinfo']['errorcode']) && $xml['errorinfo']['errorcode'] == 1) {
 
                 $checkStatusPayResponse->status = BaseResponse::STATUS_CREATED;
+                $checkStatusPayResponse->message = 'В обработке';
                 $checkStatusPayResponse->xml = ['orderinfo' => ['statedescription' => 'В обработке']];
             } else {
                 $status = $this->convertState($xml);
@@ -1588,9 +1589,7 @@ class TKBankAdapter implements IBankAdapter
                 }
                 $checkStatusPayResponse->status = $status;
                 $checkStatusPayResponse->xml = $xml;
-            }
-            if(isset($xml['errorinfo']['errormessage'])) {
-                $checkStatusPayResponse->message = $xml['errorinfo']['errormessage'];
+                $checkStatusPayResponse->message = $checkStatusPayResponse->xml['orderinfo']['statedescription'];
             }
         } else {
             throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');

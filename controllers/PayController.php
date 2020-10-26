@@ -282,6 +282,7 @@ class PayController extends Controller
         $paySchet = $okPayStrategy->exec();
 
         // Если платеж не в ожидание, и у платежа имеется PostbackUrl, отправляем
+        // TODO: in strategy
         if(!empty($paySchet->PostbackUrl)
             && in_array($paySchet->Status, [PaySchet::STATUS_DONE, PaySchet::STATUS_ERROR, PaySchet::STATUS_CANCEL])
         ) {
@@ -298,6 +299,27 @@ class PayController extends Controller
             // TODO: queue
             try {
                 $this->sendPostbackRequest($paySchet->PostbackUrl, $data);
+            } catch (\Exception $e) {
+                Yii::warning("Error $id postbackurl: ".$e->getMessage());
+            }
+        }
+
+        if(!empty($paySchet->PostbackUrl_v2)
+            && in_array($paySchet->Status, [PaySchet::STATUS_DONE, PaySchet::STATUS_ERROR, PaySchet::STATUS_CANCEL])
+        ) {
+            $data = [
+                'status' => $paySchet->Status,
+                'message' => $paySchet->ErrorInfo,
+                'id' => $paySchet->ID,
+                'amount' => $paySchet->SummPay,
+                'extid' => $paySchet->Extid,
+                'fullname' => $paySchet->FIO,
+                'document_id' => $paySchet->Dogovor,
+            ];
+
+            // TODO: queue
+            try {
+                $this->sendPostbackRequest($paySchet->PostbackUrl_v2, $data);
             } catch (\Exception $e) {
                 Yii::warning("Error $id postbackurl: ".$e->getMessage());
             }
