@@ -637,7 +637,7 @@ class MTSBankAdapter implements IBankAdapter
         $post = http_build_query($postArr);
         $timout = 110;
         $curl = new Curl();
-        Yii::warning("req: login = " . $this->shopId . " url = " . $url . "\r\n" . $this->MaskLog($post), 'merchant');
+        Yii::warning("req: login = " . $this->gate->Login . " url = " . $url . "\r\n" . $this->MaskLog($post), 'merchant');
         try {
             $curl->reset()
                 ->setOption(CURLOPT_TIMEOUT, $timout)

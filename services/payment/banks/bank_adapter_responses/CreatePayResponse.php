@@ -22,7 +22,7 @@ class CreatePayResponse extends BaseResponse
      */
     public function getRetUrl($paySchetId)
     {
-        return Yii::$app->params['domain'] . '/pay/orderdone?id='.$paySchetId;
+        return Yii::$app->params['domain'] . '/pay/orderdone/'.$paySchetId;
     }
 
 }
