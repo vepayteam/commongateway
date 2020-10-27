@@ -100,6 +100,7 @@ class MerchantPayCreateStrategy
         $paySchet->FailedUrl = $this->payForm->failurl;
         $paySchet->CancelUrl = $this->payForm->cancelurl;
         $paySchet->PostbackUrl = $this->payForm->postbackurl;
+        $paySchet->PostbackUrl_v2 = $this->payForm->postbackurl_v2;
 
         $paySchet->FIO = $this->payForm->fullname;
         $paySchet->Dogovor = $this->payForm->document_id;

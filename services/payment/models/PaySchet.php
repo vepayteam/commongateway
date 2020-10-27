@@ -63,6 +63,7 @@ use Yii;
  * @property string|null $FailedUrl url dlia vozvrata pri otkaze
  * @property string|null $CancelUrl
  * @property string|null $PostbackUrl
+ * @property string|null $PostbackUrl_v2
  * @property int|null $sms_accept
  * @property string|null $Dogovor
  * @property string|null $FIO
