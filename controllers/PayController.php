@@ -263,6 +263,9 @@ class PayController extends Controller
     {
         Yii::warning("PayForm orderok id=" . $id);
 
+        // Дадим время, чтобы банк закрыл платеж
+        sleep(5);
+
         $SesIdPay = Yii::$app->session->get('IdPay');
         if(
             !UserLk::IsAdmin(Yii::$app->user)
