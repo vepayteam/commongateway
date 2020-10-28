@@ -94,6 +94,9 @@ class PayController extends Controller
             return ['status' => 0, 'message' => $form->getError()];
         }
 
+        // рубли в копейки
+        $form->amount *= 100;
+
         Yii::warning('/pay/lk mfo='. $mfo->mfo . " sum=" . $form->amount . " extid=" . $form->extid, 'mfo');
         $paymentStrategy = new MfoPayLkCreateStrategy($form);
         try {
@@ -181,6 +184,9 @@ class PayController extends Controller
             Yii::warning("pay/auto: ошибка валидации формы");
             return ['status' => 0, 'message' => $autoPayForm->getError()];
         }
+
+        // рубли в копейки
+        $autoPayForm->amount *= 100;
 
         $mfoAutoPayStrategy = new MfoAutoPayStrategy($autoPayForm);
         try {
