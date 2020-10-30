@@ -9,6 +9,7 @@ use app\models\payonline\User;
 use app\models\Payschets;
 use app\models\queue\BinBDInfoJob;
 use app\models\TU;
+use app\services\ident\IdentService;
 use qfsx\yii2\curl\Curl;
 use SimpleXMLElement;
 use Yii;
@@ -92,7 +93,7 @@ class TCBank implements IBank
         } elseif ($type == self::$AUTOPAYGATE) {
             //авторплатеж
             $gateAutoId = $params['AutoPayIdGate'] ?? 0;
-            if ($gateAutoId && !empty($params['LoginTkbAuto'.intval($gateAutoId)])) {
+            if ($gateAutoId && !empty($params['LoginTkbAuto' . intval($gateAutoId)])) {
                 $this->shopId = $params['LoginTkbAuto' . intval($gateAutoId)];
                 $this->keyFile = $params['KeyTkbAuto' . intval($gateAutoId)];
             }
@@ -572,7 +573,7 @@ class TCBank implements IBank
     {
         //$timout = 50;
         //if (!$jsonReq) {
-            $timout = 110;
+        $timout = 110;
         //}
         $curl = new Curl();
         Yii::warning("req: login = " . $this->shopId . " url = " . $url . "\r\n" . Cards::MaskCardLog($post), 'merchant');
@@ -581,11 +582,11 @@ class TCBank implements IBank
                 ->setOption(CURLOPT_TIMEOUT, $timout)
                 ->setOption(CURLOPT_CONNECTTIMEOUT, $timout)
                 ->setOption(CURLOPT_HTTPHEADER, array_merge([
-                        $jsonReq ? 'Content-type: application/json' : 'Content-Type: application/soap+xml; charset=utf-8',
-                        'TCB-Header-Login: ' . $this->shopId,
-                        'TCB-Header-Sign: ' . $this->HmacSha1($post, $this->keyFile),
-                        'TCB-Header-SerializerType: LowerCase'
-                    ], $addHeader))
+                    $jsonReq ? 'Content-type: application/json' : 'Content-Type: application/soap+xml; charset=utf-8',
+                    'TCB-Header-Login: ' . $this->shopId,
+                    'TCB-Header-Sign: ' . $this->HmacSha1($post, $this->keyFile),
+                    'TCB-Header-SerializerType: LowerCase'
+                ], $addHeader))
                 ->setOption(CURLOPT_SSL_VERIFYHOST, false)
                 ->setOption(CURLOPT_SSL_CIPHER_LIST, 'TLSv1')
                 ->setOption(CURLOPT_SSL_VERIFYPEER, false)
@@ -794,7 +795,7 @@ class TCBank implements IBank
 
         $queryData = Json::encode($data);
 
-        $ans = $this->curlXmlReq($queryData,$this->bankUrlXml.$action);
+        $ans = $this->curlXmlReq($queryData, $this->bankUrlXml . $action);
 
         if (isset($ans['xml']) && !empty($ans['xml'])) {
             $xml = $this->parseAns($ans['xml']);
@@ -885,10 +886,14 @@ class TCBank implements IBank
         $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
 
         if (isset($ans['xml']) && !empty($ans['xml'])) {
-            return ['status' => 1, 'result' => $ans['xml']];
+            return [
+                'status' => 1,
+                'checkStatus' => $this->getIdentService()->getCheckStatusByStateResponse($ans['xml']),
+                'result' => $ans['xml']
+            ];
         }
 
-        return ['status' => 0, 'result' => ''];
+        return ['status' => 2, 'result' => ''];
     }
 
     /**
@@ -1058,7 +1063,7 @@ class TCBank implements IBank
 
         $queryData = Json::encode($queryData);
 
-        $ans = $this->curlXmlReq($queryData, $this->bankUrl.$action);
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
 
         //$ans['xml'] = '{"Statement":[{"Id":169721172315,"DateDoc":"2019-12-26T00:00:00","Operdate":"2019-12-27T00:00:00","DocNumber":6,"DocSumm":{"Sum":5000.0,"Currency":"RUB"},"DocSummD":-5000.0,"PayerName":"ТКБ БАНК ПАО//9731051046","PayerBik":"044525388","PayerBank":"ТКБ БАНК ПАО","PayerBankAccount":"30101810800000000388","PayerINN":"9731051046","PayerAccount":"30232810100000089118","PayerKPP":"770901001","PayeeName":"ИП Шулькина Елена Андреевна","PayeeBik":"044525092","PayeeBank":"МОСКОВСКИЙ ФИЛИАЛ АО КБ \"МОДУЛЬБАНК\"","PayeeBankAccount":"30101810645250000092","PayeeAccount":"40802810970010219076","PayeeINN":"780423122803","Description":"Вывод средств с виртуального счета. e2bdb4f9-b161-449a-99ba-1e1fb028b4dc","IsCredit":false,"Ro":"01","IsCharge":false,"Queue":"5"},{"Id":169721161191,"DateDoc":"2019-12-26T00:00:00","Operdate":"2019-12-26T00:00:00","DocNumber":6,"DocSumm":{"Sum":45.0,"Currency":"RUB"},"DocSummD":-45.0,"PayerName":"ООО \"ЛЕМОН ОНЛАЙН\"","PayerBik":"044525388","PayerBank":"ТКБ БАНК ПАО","PayerBankAccount":"30101810800000000388","PayerINN":"7709129705","PayerAccount":"30232810100000089118","PayerKPP":"770901001","PayeeName":"ТКБ БАНК ПАО","PayeeBik":"044525388","PayeeBank":"ТКБ БАНК ПАО","PayeeBankAccount":"30101810800000000388","PayeeAccount":"70601810300002740215","PayeeKPP":"770901001","PayeeINN":"7709129705","Description":"Комиссия Банка за проведение операции по документу № 6 от 27.12.2019 года","IsCredit":false,"Ro":"17","IsCharge":false,"Queue":"5"},{"Id":169686144588,"DateDoc":"2019-12-26T00:00:00","Operdate":"2019-12-26T00:00:00","DocNumber":19,"DocSumm":{"Sum":45.0,"Currency":"RUB"},"DocSummD":-45.0,"PayerName":"ООО \"ЛЕМОН ОНЛАЙН\"","PayerBik":"044525388","PayerBank":"ТКБ БАНК ПАО","PayerBankAccount":"30101810800000000388","PayerINN":"7709129705","PayerAccount":"30232810100000089118","PayerKPP":"770901001","PayeeName":"ТКБ БАНК ПАО","PayeeBik":"044525388","PayeeBank":"ТКБ БАНК ПАО","PayeeBankAccount":"30101810800000000388","PayeeAccount":"70601810300002740215","PayeeKPP":"770901001","PayeeINN":"7709129705","Description":"Комиссия Банка за проведение операции по документу № 19 от 26.12.2019 года","IsCredit":false,"Ro":"17","IsCharge":false,"Queue":"5"},{"Id":169648342687,"DateDoc":"2019-12-26T00:00:00","Operdate":"2019-12-26T00:00:00","DocNumber":42,"DocSumm":{"Sum":35000.0,"Currency":"RUB"},"DocSummD":35000.0,"PayerName":"ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ \"ЛЕМОН ОНЛАЙН\"","PayerBik":"046015207","PayerBank":"ФИЛИАЛ \"РОСТОВСКИЙ\" АО \"АЛЬФА-БАНК\"","PayerBankAccount":"30101810500000000207","PayerINN":"9731051046","PayerAccount":"40702810226000005976","PayeeName":"ООО \"ЛЕМОН ОНЛАЙН\"","PayeeBik":"044525388","PayeeBank":"ТКБ БАНК ПАО","PayeeBankAccount":"30101810800000000388","PayeeAccount":"30232810100000089118","PayeeKPP":"770901001","PayeeINN":"9731051046","Description":"Пополнение транзитного счета: 30232810100000089118 по договору  И-0294/19 от 17.12.2019г. Сумма 35000-00 Без налога (НДС)","IsCredit":true,"Ro":"01","IsCharge":false,"Queue":"5"},{"Id":169298935004,"DateDoc":"2019-12-24T00:00:00","Operdate":"2019-12-25T00:00:00","DocNumber":41,"DocSumm":{"Sum":10000.0,"Currency":"RUB"},"DocSummD":10000.0,"PayerName":"ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ \"ЛЕМОН ОНЛАЙН\"","PayerBik":"046015207","PayerBank":"ФИЛИАЛ \"РОСТОВСКИЙ\" АО \"АЛЬФА-БАНК\"","PayerBankAccount":"30101810500000000207","PayerINN":"9731051046","PayerAccount":"40702810226000005976","PayeeName":"ООО \"ЛЕМОН ОНЛАЙН\"","PayeeBik":"044525388","PayeeBank":"ТКБ БАНК ПАО","PayeeBankAccount":"30101810800000000388","PayeeAccount":"30232810100000089118","PayeeKPP":"770901001","PayeeINN":"9731051046","Description":"Пополнение транзитного счета: 30232810100000089118 по договору  И-0294/19 от 17.12.2019г. Сумма 10000-00 Без налога (НДС)","IsCredit":true,"Ro":"01","IsCharge":false,"Queue":"5"}]}';
         //$ans['xml'] = Json::decode($ans['xml']);
@@ -1094,7 +1099,7 @@ class TCBank implements IBank
 
         $queryData = Json::encode($queryData);
 
-        $ans = $this->curlXmlReq($queryData, $this->bankUrlXml.$action);
+        $ans = $this->curlXmlReq($queryData, $this->bankUrlXml . $action);
 
         //$ans['xml'] = '';
         //$ans['xml'] = Json::decode($ans['xml']);
@@ -1130,7 +1135,7 @@ class TCBank implements IBank
 
         $queryData = Json::encode($queryData);
 
-        $ans = $this->curlXmlReq($queryData, $this->bankUrl.$action);
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
 
         //$ans['xml'] = '{"Transactions":[{"Account":"40701810820020100001","AccountCredit":"40701810820020100001","AccountDebet":"30102810900000000388","BranchID":0,"CardAmount":200000.0,"CardCurrency":"XTS","CardDeviceType":0,"CardID":0,"CardNetID":0,"Comment":"Пополнение лицевого счета МСБ ОНЛАЙН на электронной платформе \"ЛЕМОН ОНЛАЙН\" Сумма 200000-00 Без налога (НДС)","ExecDate":"2019-12-25T00:00:00","FeeAmount":0.0,"FeeMerchBankAmount":0.0,"Hold":false,"ID":169382686642,"IsCash":false,"IsFee":false,"IsInet":false,"IsOnline":false,"NOper":0.0,"OperDate":"2019-12-25T00:00:00","PayCurrency":"RUB","PriRas":"C","TotalAmount":200000.0,"TransactID":0,"ValNetAmount":200000.0,"ValNetCurrency":"RUB"},{"Account":"40701810820020100001","AccountCredit":"40701810820020100001","AccountDebet":"30102810900000000388","BranchID":0,"CardAmount":5000.0,"CardCurrency":"XTS","CardDeviceType":0,"CardID":0,"CardNetID":0,"Comment":"Пополнение лицевого счета владельца ИНН 121524898903 на электронной платформе \"ЛЕМОН ОНЛАЙН\" Сумма Без налога (НДС)","ExecDate":"2019-12-24T00:00:00","FeeAmount":0.0,"FeeMerchBankAmount":0.0,"Hold":false,"ID":169067401209,"IsCash":false,"IsFee":false,"IsInet":false,"IsOnline":false,"NOper":0.0,"OperDate":"2019-12-24T00:00:00","PayCurrency":"RUB","PriRas":"C","TotalAmount":5000.0,"TransactID":0,"ValNetAmount":5000.0,"ValNetCurrency":"RUB"},{"Account":"40701810820020100001","AccountCredit":"40701810820020100001","AccountDebet":"30102810900000000388","BranchID":0,"CardAmount":5000.0,"CardCurrency":"XTS","CardDeviceType":0,"CardID":0,"CardNetID":0,"Comment":"Пополнение лицевого счета владельца ИНН 332400408444 на электронной платформе \"ЛЕМОН ОНЛАЙН\" Сумма Без налога (НДС) Без НДС","ExecDate":"2019-12-24T00:00:00","FeeAmount":0.0,"FeeMerchBankAmount":0.0,"Hold":false,"ID":169071053989,"IsCash":false,"IsFee":false,"IsInet":false,"IsOnline":false,"NOper":0.0,"OperDate":"2019-12-24T00:00:00","PayCurrency":"RUB","PriRas":"C","TotalAmount":5000.0,"TransactID":0,"ValNetAmount":5000.0,"ValNetCurrency":"RUB"},{"Account":"40701810820020100001","AccountCredit":"40701810820020100001","AccountDebet":"30102810900000000388","BranchID":0,"CardAmount":182000.0,"CardCurrency":"XTS","CardDeviceType":0,"CardID":0,"CardNetID":0,"Comment":"Пополнение лицевого счета МСБ ОНЛАЙН на электронной платформе \"ЛЕМОН ОНЛАЙН\" Сумма 182000-00 Без налога (НДС)","ExecDate":"2019-12-24T00:00:00","FeeAmount":0.0,"FeeMerchBankAmount":0.0,"Hold":false,"ID":169082413799,"IsCash":false,"IsFee":false,"IsInet":false,"IsOnline":false,"NOper":0.0,"OperDate":"2019-12-24T00:00:00","PayCurrency":"RUB","PriRas":"C","TotalAmount":182000.0,"TransactID":0,"ValNetAmount":182000.0,"ValNetCurrency":"RUB"},{"Account":"40701810820020100001","AccountCredit":"40701810820020100001","AccountDebet":"30102810900000000388","BranchID":0,"CardAmount":10000.0,"CardCurrency":"XTS","CardDeviceType":0,"CardID":0,"CardNetID":0,"Comment":"Пополнение лицевого счета владельца ИНН 744408469746 на электронной платформе \"ЛЕМОН ОНЛАЙН\" Сумма Без налога (НДС)","ExecDate":"2019-12-24T00:00:00","FeeAmount":0.0,"FeeMerchBankAmount":0.0,"Hold":false,"ID":169114032397,"IsCash":false,"IsFee":false,"IsInet":false,"IsOnline":false,"NOper":0.0,"OperDate":"2019-12-24T00:00:00","PayCurrency":"RUB","PriRas":"C","TotalAmount":10000.0,"TransactID":0,"ValNetAmount":10000.0,"ValNetCurrency":"RUB"},{"Account":"40701810820020100001","AccountCredit":"40701810820020100001","AccountDebet":"30102810900000000388","BranchID":0,"CardAmount":50000.0,"CardCurrency":"XTS","CardDeviceType":0,"CardID":0,"CardNetID":0,"Comment":"Пополнение лицевого счета владельца ИНН 502771963554 на электронной платформе \"ЛЕМОН ОНЛАЙН\" Сумма Без налога (НДС)","ExecDate":"2019-12-24T00:00:00","FeeAmount":0.0,"FeeMerchBankAmount":0.0,"Hold":false,"ID":169153340417,"IsCash":false,"IsFee":false,"IsInet":false,"IsOnline":false,"NOper":0.0,"OperDate":"2019-12-24T00:00:00","PayCurrency":"RUB","PriRas":"C","TotalAmount":50000.0,"TransactID":0,"ValNetAmount":50000.0,"ValNetCurrency":"RUB"}]}';
         //$ans['xml'] = Json::decode($ans['xml']);
@@ -1485,7 +1490,7 @@ class TCBank implements IBank
         $queryData = $params['req'];
 
         $ans = $this->curlXmlReq($queryData,
-            $this->bankUrlXml.$action,
+            $this->bankUrlXml . $action,
             ['SOAPAction: "http://cft.transcapital.ru/CftNominalIntegrator/SetBeneficiary"'],
             false
         );
@@ -1535,6 +1540,16 @@ class TCBank implements IBank
                   xmlns:p2p="http://engine.paymentgate.ru/webservices/p2p" />');
 
 
+    }
+
+    /**
+     * @return IdentService
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\di\NotInstantiableException
+     */
+    protected function getIdentService()
+    {
+        return Yii::$container->get('IdentService');
     }
 
 }
