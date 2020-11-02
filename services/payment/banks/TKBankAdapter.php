@@ -15,8 +15,10 @@ use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\banks\traits\TKBank3DSTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\forms\AutoPayForm;
+use app\services\payment\forms\Check3DSVersionResponse;
 use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
@@ -25,6 +27,7 @@ use app\services\payment\forms\tkb\CheckStatusPayRequest;
 use app\services\payment\forms\tkb\CreatePayRequest;
 use app\services\payment\forms\tkb\CreateRecurrentPayRequest;
 use app\services\payment\forms\tkb\DonePayRequest;
+use app\services\payment\interfaces\Issuer3DSVersionInterface;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use qfsx\yii2\curl\Curl;
@@ -34,6 +37,8 @@ use yii\helpers\Json;
 
 class TKBankAdapter implements IBankAdapter
 {
+    use TKBank3DSTrait;
+
     public const BIC = '044525388';
     const BANK_URL = 'https://pay.tkbbank.ru';
     const BANK_URL_TEST = 'https://paytest.online.tkbbank.ru';
@@ -1469,6 +1474,14 @@ class TKBankAdapter implements IBankAdapter
      */
     public function createPay(CreatePayForm $createPayForm)
     {
+        /** @var Check3DSVersionResponse $check3DSVersionResponse */
+        $check3DSVersionResponse = $this->check3DSVersion($createPayForm);
+
+        if(in_array($check3DSVersionResponse->version, Issuer3DSVersionInterface::V_2)) {
+            $this->createPay3DSv2($createPayForm, $check3DSVersionResponse);
+        }
+
+
         $action = '/api/tcbpay/gate/registerorderfromunregisteredcardwof';
 
         $paySchet = $createPayForm->getPaySchet();

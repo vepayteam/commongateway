@@ -251,4 +251,9 @@ class PaySchet extends \yii\db\ActiveRecord
 
         return $this;
     }
+
+    public function getOrderdoneUrl()
+    {
+        return Yii::$app->params['domain'] . '/orderdone/' . $this->ID;
+    }
 }
