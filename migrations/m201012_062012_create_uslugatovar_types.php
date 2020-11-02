@@ -24,7 +24,9 @@ class m201012_062012_create_uslugatovar_types extends Migration
             ]);
        }
        else { $this->alterColumn($tableName, 'Name', $this->string()->notNull()); }
-       if(($this->db->getTable($tableName)->hasIndex($indexName)){ $this->dropIndex($indexName, $tableName); }
+
+       try { $this->dropIndex($indexName, $tableName); }
+       catch (\Exception $e) {}
 
         $this->createIndex(
             'idx_'.UslugatovarType::tableName().'_id', UslugatovarType::tableName(),
