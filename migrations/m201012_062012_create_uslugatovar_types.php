@@ -13,11 +13,19 @@ class m201012_062012_create_uslugatovar_types extends Migration
      */
     public function safeUp()
     {
-        $this->createTable(UslugatovarType::tableName(), [
-            'Id' => $this->integer(),
-            'Name' => $this->string()->notNull(),
-            'DefaultBankId' => $this->integer()->defaultValue(-1),
-        ]);
+        $tableName = UslugatovarType::tableName();
+        $indexName = 'idx_'.UslugatovarType::tableName().'_id', UslugatovarType::tableName();
+
+        if (Yii::$app->db->getTableSchema($tableName, true) === null) {
+            $this->createTable($tableName, [
+                'Id' => $this->integer(),
+                'Name' => $this->string()->notNull(),
+                'DefaultBankId' => $this->integer()->defaultValue(-1),
+            ]);
+       }
+       else { $this->alterColumn($tableName, 'Name', $this->string()->notNull()) }
+       if(($this->db->getTable($tableName)->hasIndex($indexName)){ $this->dropIndex($indexName); }
+
         $this->createIndex(
             'idx_'.UslugatovarType::tableName().'_id', UslugatovarType::tableName(),
             'id',
