@@ -16,23 +16,19 @@ class m201012_062012_create_uslugatovar_types extends Migration
         $tableName = UslugatovarType::tableName();
         $indexName = 'idx_'.$tableName.'_id';
 
-        if (Yii::$app->db->getTableSchema($tableName, true) === null) {
-            $this->createTable($tableName, [
-                'Id' => $this->integer(),
-                'Name' => $this->string()->notNull(),
-                'DefaultBankId' => $this->integer()->defaultValue(-1),
-            ]);
-       }
-       else { $this->alterColumn($tableName, 'Name', $this->string()->notNull()); }
+        if (Yii::$app->db->getTableSchema($tableName, true)) {
+            try {
+                $this->dropIndex($indexName, $tableName);
 
-       try { $this->dropIndex($indexName, $tableName); }
-       catch (\Exception $e) {}
+            } catch (\Exception $e) {}
+            $this->dropTable($tableName);
+        }
 
-        $this->createIndex(
-            'idx_'.UslugatovarType::tableName().'_id', UslugatovarType::tableName(),
-            'id',
-            $unique = true
-        );
+        $this->createTable($tableName, [
+            'Id' => $this->integer(),
+            'Name' => $this->string()->notNull(),
+            'DefaultBankId' => $this->integer()->defaultValue(-1),
+        ]);
 
         foreach (UslugatovarType::getAll() as $id => $name) {
             $uslugatovarType = new UslugatovarType();
@@ -47,7 +43,9 @@ class m201012_062012_create_uslugatovar_types extends Migration
      */
     public function safeDown()
     {
-        $this->dropIndex('idx_'.UslugatovarType::tableName().'_id', UslugatovarType::tableName());
+        try {
+            $this->dropIndex('idx_'.UslugatovarType::tableName().'_id', UslugatovarType::tableName());
+        } catch (\Exception $e) {}
         $this->dropTable(UslugatovarType::tableName());
 
         return true;
