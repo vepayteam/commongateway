@@ -6,6 +6,9 @@ return [
     'username' => 'vepay',
     'password' => '',
     'charset' => 'utf8',
+    'on afterOpen' => function($event) {
+        $event->sender->createCommand("SET NAMES utf8;")->execute();
+    }
 	
     // Schema cache options (for production environment)
     //'enableSchemaCache' => true,
