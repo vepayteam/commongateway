@@ -25,7 +25,7 @@ class m201012_062012_create_uslugatovar_types extends Migration
             'Name' => $this->string()->notNull(),
             'DefaultBankId' => $this->integer()->defaultValue(-1),
         ]);
-        $this->createIndex($indexName, 'id', $unique = true);
+        $this->createIndex($indexName, $tableName, 'id', $unique = true);
 
         foreach (UslugatovarType::getAll() as $id => $name) {
             $uslugatovarType = new UslugatovarType();
