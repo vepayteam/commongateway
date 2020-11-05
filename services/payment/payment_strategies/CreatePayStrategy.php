@@ -94,6 +94,7 @@ class CreatePayStrategy
         $paySchet->AuthValue3DS = $this->createPayResponse->authValue;
         $paySchet->DsTransId = $this->createPayResponse->dsTransId;
         $paySchet->Eci = $this->createPayResponse->eci;
+        $paySchet->CardRefId3DS = $this->createPayResponse->cardRefId;
 
         $paySchet->save(false);
 

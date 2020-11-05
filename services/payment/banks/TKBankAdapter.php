@@ -1595,6 +1595,8 @@ class TKBankAdapter implements IBankAdapter
 
         if($paySchet->IsNeed3DSVerif) {
 
+        } else {
+            return $this->finishBy3DSv2($donePayForm);
         }
 
     }
@@ -1619,16 +1621,16 @@ class TKBankAdapter implements IBankAdapter
         $queryData = Json::encode($donePay3DSv2Request->getAttributes());
         $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
 
-        if(!isset($ans['OrderId'])) {
+        if(!isset($ans['xml']['OrderId'])) {
             throw new CreatePayException('Ошибка подтверждения платежа 3DS v2');
         }
 
-        $paySchet->ExtBillNumber = $ans['OrderId'];
+        $paySchet->ExtBillNumber = $ans['xml']['OrderId'];
         $paySchet->save(false);
 
         $confirmPayResponse->status = BaseResponse::STATUS_DONE;
         $confirmPayResponse->message = 'Успешно';
-        $confirmPayResponse->transac = $ans['OrderId'];
+        $confirmPayResponse->transac = $ans['xml']['OrderId'];
 
         return $confirmPayResponse;
     }

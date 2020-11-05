@@ -34,6 +34,10 @@ trait TKBank3DSTrait
         $check3DSVerisonRequest->Amount = $paySchet->getSummFull();
         $check3DSVerisonRequest->CardInfo = [
             'CardNumber' => $createPayForm->CardNumber,
+            'CardHolder' => $createPayForm->CardHolder,
+            'ExpirationYear' => '20' . $createPayForm->CardYear,
+            'ExpirationMonth' => $createPayForm->CardMonth,
+            'CVV' => $createPayForm->CardCVC,
         ];
 
         $queryData = Json::encode($check3DSVerisonRequest->getAttributes());
@@ -56,7 +60,7 @@ trait TKBank3DSTrait
             $check3DSVersionResponse->version = $ans['xml']['DsInfo']['ProtocolVersion'];
             $check3DSVersionResponse->transactionId = $ans['xml']['ThreeDSServerTransID'];
             $check3DSVersionResponse->url = $ans['xml']['DsInfo']['ThreeDSMethodURL'];
-            $check3DSVersionResponse->cardRefId = $ans['xml']['DsInfo']['CardRefId'];
+            $check3DSVersionResponse->cardRefId = $ans['xml']['CardRefId'];
         }
 
         return $check3DSVersionResponse;
