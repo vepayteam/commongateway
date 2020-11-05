@@ -4,11 +4,15 @@
 namespace app\services\payment\banks\traits;
 
 
+use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\Check3DSVersionResponse;
+use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\exceptions\BankAdapterResponseException;
+use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\tkb\Authenticate3DSv2Request;
 use app\services\payment\forms\tkb\Check3DSVersionRequest;
+use app\services\payment\forms\tkb\CreatePay3DS2Request;
 use app\services\payment\interfaces\Issuer3DSVersionInterface;
 use Yii;
 use yii\helpers\Json;
@@ -22,7 +26,7 @@ trait TKBank3DSTrait
      */
     protected function check3DSVersion(CreatePayForm $createPayForm)
     {
-        $action = '/api/v1/card/unregistered/debit/3ds2check';
+        $action = '/api/v1/card/unregistered/debit/3ds2check/storecard';
 
         $paySchet = $createPayForm->getPaySchet();
         $check3DSVerisonRequest = new Check3DSVersionRequest();
@@ -52,11 +56,18 @@ trait TKBank3DSTrait
             $check3DSVersionResponse->version = $ans['xml']['DsInfo']['ProtocolVersion'];
             $check3DSVersionResponse->transactionId = $ans['xml']['ThreeDSServerTransID'];
             $check3DSVersionResponse->url = $ans['xml']['DsInfo']['ThreeDSMethodURL'];
+            $check3DSVersionResponse->cardRefId = $ans['xml']['DsInfo']['CardRefId'];
         }
 
         return $check3DSVersionResponse;
     }
 
+    /**
+     * @param CreatePayForm $createPayForm
+     * @param Check3DSVersionResponse $check3DSVersionResponse
+     * @return CreatePayResponse
+     * @throws CreatePayException
+     */
     protected function createPay3DSv2(CreatePayForm $createPayForm, Check3DSVersionResponse $check3DSVersionResponse)
     {
         $action = '/api/v1/card/unregistered/debit/3ds2Authenticate';
@@ -83,7 +94,7 @@ trait TKBank3DSTrait
                 'ScreenHeight' => 1080,
                 'ScreenWidth' => 1920,
                 'TZ' => -180,
-                $headers->has('User-Agent') ? $headers['User-Agent'] :  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,like Gecko) Chrome/70.0.3538.110 Safari/537.36",
+                'UserAgent' => $headers->has('User-Agent') ? $headers['User-Agent'] :  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36",
             ],
             "ChallengeWindowSize" => "05",
             "ThreeDSCompInd" => "U",
@@ -96,8 +107,29 @@ trait TKBank3DSTrait
         // TODO: response as object
         $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
 
-        $a = 0;
+        if(!isset($ans['xml'])) {
+            throw new CreatePayException('Ошибка аутентификации клиента');
+        }
 
+        $payResponse = new CreatePayResponse();
+        $payResponse->vesion3DS = $check3DSVersionResponse->version;
+        $payResponse->status = BaseResponse::STATUS_DONE;
+        $payResponse->cardRefId = $check3DSVersionResponse->cardRefId;
+
+        if(array_key_exists('ChallengeData', $ans['xml'])) {
+            // если нужна авторизация 3ds через форму
+            $payResponse->url = $ans['xml']['ChallengeData']['AcsUrl'];
+            $payResponse->creq = $ans['xml']['ChallengeData']['Creq'];
+        } elseif (array_key_exists('AuthenticationData', $ans['xml'])) {
+            $payResponse->isNeed3DSVerif = false;
+            $payResponse->authValue = $ans['xml']['AuthenticationData']['AuthenticationValue'];
+            $payResponse->dsTransId = $ans['xml']['AuthenticationData']['DsTransID'];
+            $payResponse->eci = $ans['xml']['AuthenticationData']['Eci'];
+        } else {
+            $payResponse->status = BaseResponse::STATUS_ERROR;
+        }
+
+        return $payResponse;
     }
 
 }

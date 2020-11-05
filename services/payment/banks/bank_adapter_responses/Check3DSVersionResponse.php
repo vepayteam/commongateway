@@ -8,4 +8,5 @@ class Check3DSVersionResponse extends BaseResponse
     public $version;
     public $transactionId;
     public $url;
+    public $cardRefId;
 }
