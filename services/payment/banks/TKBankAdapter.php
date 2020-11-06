@@ -1616,6 +1616,7 @@ class TKBankAdapter implements IBankAdapter
             'CardRefId' => $paySchet->CardRefId3DS,
         ];
 
+        $donePay3DSv2Request->AuthenticationData = json_decode(Yii::$app->cache->get('PaySchet_3DSv2_AuthData_' . $paySchet->ID), true);
         $confirmPayResponse = new ConfirmPayResponse();
 
         $queryData = Json::encode($donePay3DSv2Request->getAttributes());

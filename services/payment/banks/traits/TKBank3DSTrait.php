@@ -125,6 +125,9 @@ trait TKBank3DSTrait
             $payResponse->url = $ans['xml']['ChallengeData']['AcsUrl'];
             $payResponse->creq = $ans['xml']['ChallengeData']['Creq'];
         } elseif (array_key_exists('AuthenticationData', $ans['xml'])) {
+
+            Yii::$app->cache->set('PaySchet_3DSv2_AuthData_' . $paySchet->ID, json_encode($ans['xml']['AuthenticationData']), 3600);
+
             $payResponse->isNeed3DSVerif = false;
             $payResponse->authValue = $ans['xml']['AuthenticationData']['AuthenticationValue'];
             $payResponse->dsTransId = $ans['xml']['AuthenticationData']['DsTransID'];
