@@ -240,6 +240,9 @@ class PayController extends Controller
         $donePayForm->IdPay = $id;
         $donePayForm->md = Yii::$app->request->post('MD', null);
         $donePayForm->paRes = Yii::$app->request->post('PaRes', null);
+        $donePayForm->cres = Yii::$app->request->post('cres', null);
+
+        Yii::warning('Orderdone ' . $id . 'POST: ' . json_encode(Yii::$app->request->post()));
 
         if(!$donePayForm->paySchetExist()) {
             throw new NotFoundHttpException();

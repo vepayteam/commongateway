@@ -8,11 +8,13 @@ use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\Check3DSVersionResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\exceptions\BankAdapterResponseException;
+use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\tkb\Authenticate3DSv2Request;
 use app\services\payment\forms\tkb\Check3DSVersionRequest;
 use app\services\payment\forms\tkb\CreatePay3DS2Request;
+use app\services\payment\interfaces\Cache3DSv2Interface;
 use app\services\payment\interfaces\Issuer3DSVersionInterface;
 use Yii;
 use yii\helpers\Json;
@@ -36,7 +38,7 @@ trait TKBank3DSTrait
             'CardNumber' => $createPayForm->CardNumber,
             'CardHolder' => $createPayForm->CardHolder,
             'ExpirationYear' => '20' . $createPayForm->CardYear,
-            'ExpirationMonth' => $createPayForm->CardMonth,
+            'ExpirationMonth' => str_pad($createPayForm->CardMonth, 2, '0', STR_PAD_LEFT),
             'CVV' => $createPayForm->CardCVC,
         ];
 
@@ -115,6 +117,10 @@ trait TKBank3DSTrait
             throw new CreatePayException('Ошибка аутентификации клиента');
         }
 
+        if($ans['xml']['AuthenticationData']['Eci'] == '1') {
+            throw new Check3DSv2Exception('');
+        }
+
         $payResponse = new CreatePayResponse();
         $payResponse->vesion3DS = $check3DSVersionResponse->version;
         $payResponse->status = BaseResponse::STATUS_DONE;
@@ -125,9 +131,11 @@ trait TKBank3DSTrait
             $payResponse->url = $ans['xml']['ChallengeData']['AcsUrl'];
             $payResponse->creq = $ans['xml']['ChallengeData']['Creq'];
         } elseif (array_key_exists('AuthenticationData', $ans['xml'])) {
-
-            Yii::$app->cache->set('PaySchet_3DSv2_AuthData_' . $paySchet->ID, json_encode($ans['xml']['AuthenticationData']), 3600);
-
+            Yii::$app->cache->set(
+                Cache3DSv2Interface::CACHE_PREFIX_AUTH_DATA . $paySchet->ID,
+                json_encode($ans['xml']['AuthenticationData']),
+                3600
+            );
             $payResponse->isNeed3DSVerif = false;
             $payResponse->authValue = $ans['xml']['AuthenticationData']['AuthenticationValue'];
             $payResponse->dsTransId = $ans['xml']['AuthenticationData']['DsTransID'];

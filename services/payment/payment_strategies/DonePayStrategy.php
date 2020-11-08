@@ -8,6 +8,7 @@ use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\interfaces\Issuer3DSVersionInterface;
 use app\services\payment\models\PaySchet;
+use yii\web\NotFoundHttpException;
 
 class DonePayStrategy
 {
@@ -31,11 +32,13 @@ class DonePayStrategy
         $paySchet = $this->donePayForm->getPaySchet();
 
         if($paySchet->Status == PaySchet::STATUS_WAITING) {
-
             $bankAdapterBuilder = new BankAdapterBuilder();
             $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar);
 
             $this->donePayResponse = $bankAdapterBuilder->getBankAdapter()->confirm($this->donePayForm);
+            return $paySchet;
+        } else {
+            throw new NotFoundHttpException();
         }
     }
 
