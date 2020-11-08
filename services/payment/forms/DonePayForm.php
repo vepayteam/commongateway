@@ -12,6 +12,7 @@ class DonePayForm extends Model
     public $IdPay;
     public $md;
     public $paRes;
+    public $cres;
 
     public function rules()
     {
