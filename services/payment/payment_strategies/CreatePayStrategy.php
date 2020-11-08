@@ -88,6 +88,14 @@ class CreatePayStrategy
         $paySchet->ExtBillNumber = $this->createPayResponse->transac;
         $paySchet->UserEmail = $this->createPayForm->Email;
         $paySchet->CountSendOK = 0;
+
+        $paySchet->Version3DS = $this->createPayResponse->vesion3DS;
+        $paySchet->IsNeed3DSVerif = ($this->createPayResponse->isNeed3DSVerif ? 1 : 0);
+        $paySchet->AuthValue3DS = $this->createPayResponse->authValue;
+        $paySchet->DsTransId = $this->createPayResponse->dsTransId;
+        $paySchet->Eci = $this->createPayResponse->eci;
+        $paySchet->CardRefId3DS = $this->createPayResponse->cardRefId;
+
         $paySchet->save(false);
 
         if($bankAdapterBuilder->getUslugatovar()->ID == Uslugatovar::TYPE_REG_CARD) {

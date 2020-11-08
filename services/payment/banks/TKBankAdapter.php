@@ -11,20 +11,28 @@ use app\models\Payschets;
 use app\models\queue\BinBDInfoJob;
 use app\models\TU;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
+use app\services\payment\banks\bank_adapter_responses\Check3DSVersionResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\banks\traits\TKBank3DSTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
+use app\services\payment\exceptions\Check3DSv2Exception;
+use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\tkb\CheckStatusPayRequest;
+use app\services\payment\forms\tkb\Confirm3DSv2Request;
 use app\services\payment\forms\tkb\CreatePayRequest;
 use app\services\payment\forms\tkb\CreateRecurrentPayRequest;
+use app\services\payment\forms\tkb\DonePay3DSv2Request;
 use app\services\payment\forms\tkb\DonePayRequest;
+use app\services\payment\interfaces\Cache3DSv2Interface;
+use app\services\payment\interfaces\Issuer3DSVersionInterface;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use qfsx\yii2\curl\Curl;
@@ -34,6 +42,8 @@ use yii\helpers\Json;
 
 class TKBankAdapter implements IBankAdapter
 {
+    use TKBank3DSTrait;
+
     public const BIC = '044525388';
     const BANK_URL = 'https://pay.tkbbank.ru';
     const BANK_URL_TEST = 'https://paytest.online.tkbbank.ru';
@@ -1469,6 +1479,26 @@ class TKBankAdapter implements IBankAdapter
      */
     public function createPay(CreatePayForm $createPayForm)
     {
+        /** @var Check3DSVersionResponse $check3DSVersionResponse */
+        $check3DSVersionResponse = $this->check3DSVersion($createPayForm);
+
+        if(in_array($check3DSVersionResponse->version, Issuer3DSVersionInterface::V_2)) {
+            try {
+                $payResponse = $this->createPay3DSv2($createPayForm, $check3DSVersionResponse);
+                // TODO: refact on tokenize
+                Yii::$app->cache->set(Cache3DSv2Interface::CACHE_PREFIX_CARD_NUMBER . $createPayForm->getPaySchet()->ID, $createPayForm->CardNumber, 3600);
+            } catch (Check3DSv2Exception $e) {
+                $payResponse = $this->createPay3DSv1($createPayForm, $check3DSVersionResponse);
+            }
+        } else {
+            $payResponse = $this->createPay3DSv1($createPayForm, $check3DSVersionResponse);
+        }
+
+        return $payResponse;
+    }
+
+    protected function createPay3DSv1($createPayForm, $check3DSVersionResponse)
+    {
         $action = '/api/tcbpay/gate/registerorderfromunregisteredcardwof';
 
         $paySchet = $createPayForm->getPaySchet();
@@ -1523,6 +1553,17 @@ class TKBankAdapter implements IBankAdapter
      */
     public function confirm(DonePayForm $donePayForm)
     {
+        $paySchet = $donePayForm->getPaySchet();
+
+        if(in_array($paySchet->Version3DS, Issuer3DSVersionInterface::V_2)) {
+            return $this->confirmBy3DSv2($donePayForm);
+        } else {
+            return $this->confirmBy3DSv1($donePayForm);
+        }
+    }
+
+    protected function confirmBy3DSv1(DonePayForm $donePayForm)
+    {
         $action = '/api/tcbpay/gate/registerorderfromcardfinish';
 
         $donePayRequest = new DonePayRequest();
@@ -1553,6 +1594,90 @@ class TKBankAdapter implements IBankAdapter
         if(!$confirmPayResponse->validate()) {
             throw new BankAdapterResponseException('Ошибка формата ответа');
         }
+
+        return $confirmPayResponse;
+    }
+
+    /**
+     * @param DonePayForm $donePayForm
+     * @return ConfirmPayResponse
+     * @throws BankAdapterResponseException
+     * @throws CreatePayException
+     */
+    protected function confirmBy3DSv2(DonePayForm $donePayForm)
+    {
+        $paySchet = $donePayForm->getPaySchet();
+
+        if($paySchet->IsNeed3DSVerif) {
+            $this->validateBy3DSv2($donePayForm);
+        }
+        return $this->finishBy3DSv2($donePayForm);
+    }
+
+
+    /**
+     * @param DonePayForm $donePayForm
+     * @return bool
+     * @throws BankAdapterResponseException
+     */
+    protected function validateBy3DSv2(DonePayForm $donePayForm)
+    {
+        $action = '/api/v1/card/unregistered/debit/3ds2Validate';
+
+        $confirm3DSv2Request = new Confirm3DSv2Request();
+        $confirm3DSv2Request->ExtID = $donePayForm->getPaySchet()->ID;
+        $confirm3DSv2Request->Amount = $donePayForm->getPaySchet()->getSummFull();
+        $confirm3DSv2Request->Cres = $donePayForm->cres;
+        // TODO: refact on tokenize
+        $confirm3DSv2Request->CardInfo = [
+            'CardNumber' => Yii::$app->cache->get(Cache3DSv2Interface::CACHE_PREFIX_CARD_NUMBER . $donePayForm->getPaySchet()->ID),
+        ];
+
+        $queryData = Json::encode($confirm3DSv2Request->getAttributes());
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+
+        if (isset($ans['xml']['AuthenticationData']) && !empty($ans['xml']['AuthenticationData'])) {
+            Yii::$app->cache->set(
+                Cache3DSv2Interface::CACHE_PREFIX_AUTH_DATA . $donePayForm->getPaySchet()->ID,
+                json_encode($ans['xml']['AuthenticationData']),
+                3600
+            );
+            return true;
+        } else {
+            throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
+        }
+    }
+
+
+    protected function finishBy3DSv2(DonePayForm $donePayForm)
+    {
+        $action = '/api/v1/card/unregistered/debit/3ds2/wof/finish';
+
+        $paySchet = $donePayForm->getPaySchet();
+        $donePay3DSv2Request = new DonePay3DSv2Request();
+        $donePay3DSv2Request->ExtId = $paySchet->ID;
+        $donePay3DSv2Request->Amount = $paySchet->getSummFull();
+        $donePay3DSv2Request->Description = 'Оплата по счету ' . $paySchet->ID;
+        $donePay3DSv2Request->CardInfo = [
+            'CardRefId' => $paySchet->CardRefId3DS,
+        ];
+
+        $donePay3DSv2Request->AuthenticationData = json_decode(Yii::$app->cache->get('PaySchet_3DSv2_AuthData_' . $paySchet->ID), true);
+        $confirmPayResponse = new ConfirmPayResponse();
+
+        $queryData = Json::encode($donePay3DSv2Request->getAttributes());
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+
+        if(!isset($ans['xml']['OrderId'])) {
+            throw new CreatePayException('Ошибка подтверждения платежа 3DS v2');
+        }
+
+        $paySchet->ExtBillNumber = $ans['xml']['OrderId'];
+        $paySchet->save(false);
+
+        $confirmPayResponse->status = BaseResponse::STATUS_DONE;
+        $confirmPayResponse->message = 'Успешно';
+        $confirmPayResponse->transac = $ans['xml']['OrderId'];
 
         return $confirmPayResponse;
     }

@@ -71,6 +71,13 @@ use Yii;
  * @property string|null $RCCode
  * @property Uslugatovar $uslugatovar
  * @property Partner $partner
+ *
+ * @property string $Version3DS
+ * @property int $IsNeed3DSVerif
+ * @property string $DsTransId
+ * @property string $Eci
+ * @property string $AuthValue3DS
+ * @property string $CardRefId3DS
  */
 class PaySchet extends \yii\db\ActiveRecord
 {
@@ -250,5 +257,10 @@ class PaySchet extends \yii\db\ActiveRecord
         $this->save(false);
 
         return $this;
+    }
+
+    public function getOrderdoneUrl()
+    {
+        return Yii::$app->params['domain'] . '/orderdone/' . $this->ID;
     }
 }

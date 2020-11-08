@@ -206,7 +206,7 @@ class OkPayStrategy
 
 
                 } elseif ($checkStatusPayResponse->status != BaseResponse::STATUS_CREATED) {
-                    $transactionOk &= $this->paymentService->cancelPay($paySchet);
+                    $this->paymentService->cancelPay($paySchet);
 
                     /** @var NotificationsService $notificationService */
                     $notificationsService = Yii::$container->get('NotificationsService');
