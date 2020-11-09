@@ -117,10 +117,6 @@ trait TKBank3DSTrait
             throw new CreatePayException('Ошибка аутентификации клиента');
         }
 
-        if($ans['xml']['AuthenticationData']['Eci'] == '1') {
-            throw new Check3DSv2Exception('');
-        }
-
         $payResponse = new CreatePayResponse();
         $payResponse->vesion3DS = $check3DSVersionResponse->version;
         $payResponse->status = BaseResponse::STATUS_DONE;
@@ -131,6 +127,10 @@ trait TKBank3DSTrait
             $payResponse->url = $ans['xml']['ChallengeData']['AcsUrl'];
             $payResponse->creq = $ans['xml']['ChallengeData']['Creq'];
         } elseif (array_key_exists('AuthenticationData', $ans['xml'])) {
+            if($ans['xml']['AuthenticationData']['Eci'] == '1') {
+                throw new Check3DSv2Exception('');
+            }
+
             Yii::$app->cache->set(
                 Cache3DSv2Interface::CACHE_PREFIX_AUTH_DATA . $paySchet->ID,
                 json_encode($ans['xml']['AuthenticationData']),
