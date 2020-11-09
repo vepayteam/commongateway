@@ -167,6 +167,7 @@ class MfoAutoPayStrategy
         $paySchet->DateCreate = time();
         $paySchet->DateLastUpdate = time();
         $paySchet->IsAutoPay = 0;
+        $paySchet->sms_accept = 1;
 
         $paySchet->PostbackUrl = $this->autoPayForm->postbackurl;
 
