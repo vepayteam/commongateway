@@ -87,9 +87,8 @@ class MfoAutoPayStrategy
         }
 
         if($createRecurrentPayResponse->status == BaseResponse::STATUS_DONE) {
-            $paySchet->Status = PaySchet::STATUS_DONE;
+            $paySchet->Status = PaySchet::STATUS_WAITING;
             $paySchet->ExtBillNumber = $createRecurrentPayResponse->transac;
-            $paySchet->ErrorInfo = 'Успех';
         } else {
             $paySchet->Status = PaySchet::STATUS_ERROR;
             $paySchet->ErrorInfo = $createRecurrentPayResponse->message;
@@ -167,6 +166,7 @@ class MfoAutoPayStrategy
         $paySchet->DateCreate = time();
         $paySchet->DateLastUpdate = time();
         $paySchet->IsAutoPay = 0;
+        $paySchet->sms_accept = 1;
 
         $paySchet->PostbackUrl = $this->autoPayForm->postbackurl;
 
