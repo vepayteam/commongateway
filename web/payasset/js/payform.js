@@ -82,13 +82,15 @@
                         $("#loader").hide();
 
                         if (data.status == 1) {
-                            if(data.isNeed3DSVerif == 1) {
+                            if (data.isNeed3DSVerif == 1) {
                                 //ок - переход по url банка
                                 payform.load3ds(data.url, data.pa, data.md, data.creq, data.termurl);
                             } else {
                                 // если 3DS v2 и не требуется авторизация, переходим на orderdone
                                 window.location = data.termurl;
                             }
+                        } else if (data.status == 2 && data.url) {
+                            window.location = data.url;
                         } else {
                             $('#addtopay').prop('disabled', false);
                             $('#payform').show();
