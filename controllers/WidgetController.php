@@ -126,6 +126,7 @@ class WidgetController extends Controller
      */
     public function actionCreatepay()
     {
+        // TODO: переписать под стратегии
         if (Yii::$app->request->isAjax) {
             Yii::$app->response->format = Response::FORMAT_JSON;
 
@@ -212,6 +213,7 @@ class WidgetController extends Controller
                         'url' => $ret['url'],
                         'pa' => $ret['pa'],
                         'md' => $ret['md'],
+                        'creq' => '',
                         'termurl' => $payform->GetWidgetRetUrl($params['ID']),
                     ];
                 } elseif ($ret['status'] == 2) {

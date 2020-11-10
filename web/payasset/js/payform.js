@@ -84,7 +84,7 @@
                         if (data.status == 1) {
                             if(data.isNeed3DSVerif == 1) {
                                 //ок - переход по url банка
-                                payform.load3ds(data.url, data.pa, data.md, data.termurl);
+                                payform.load3ds(data.url, data.pa, data.md, data.creq, data.termurl);
                             } else {
                                 // если 3DS v2 и не требуется авторизация, переходим на orderdone
                                 window.location = data.termurl;
@@ -169,11 +169,12 @@
             return !err;
         },
 
-        load3ds: function (url, pa, md, termurl) {
+        load3ds: function (url, pa, md, creq, termurl) {
             $('#frame3ds').show();
             $('#form3ds').attr('action', url);
             $('#pareq3ds').val(pa);
             $('#md3ds').val(md);
+            $('#creq3ds').val(creq);
             $('#termurl3ds').val(termurl);
             $('#form3ds').trigger('submit');
         },
@@ -299,7 +300,7 @@
                                         if (data.acsUrl == undefined) {
                                             window.location.href = '/pay/orderok/' + id;
                                         } else {
-                                            payform.load3ds(data.acsUrl, data.paReq, data.md, data.termUrl);
+                                            payform.load3ds(data.acsUrl, data.paReq, data.md, data.creq, data.termUrl);
                                         }
                                     } else {
                                         $('#error_message').html(data.message);
