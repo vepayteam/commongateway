@@ -8,6 +8,7 @@ use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\Check3DSVersionResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\exceptions\BankAdapterResponseException;
+use app\services\payment\exceptions\Check3DSv2DuplicatedException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\forms\CreatePayForm;
@@ -47,6 +48,18 @@ trait TKBank3DSTrait
         $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
 
         $check3DSVersionResponse = new Check3DSVersionResponse();
+
+        // обработка ошибок
+        if(isset($ans['httperror']['Code'])) {
+            // ошибка дубликата
+            if($ans['httperror']['Code'] == 'OPERATION_DUPLICATED') {
+                $message = 'Ошибка дублирования запроса 3ds2check';
+                $createPayForm->getPaySchet()->Status = 2;
+                $createPayForm->getPaySchet()->ErrorInfo = $message;
+                $createPayForm->getPaySchet()->save(false);
+                throw new Check3DSv2DuplicatedException($message);
+            }
+        }
 
         if(!isset($ans['xml']['CardEnrolled'])) {
             throw new BankAdapterResponseException('Ошибка проверки версии 3ds');
