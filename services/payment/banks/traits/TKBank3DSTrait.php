@@ -142,7 +142,7 @@ trait TKBank3DSTrait
                 (int)$ans['xml']['AuthenticationData']['Eci'],
                 Issuer3DSVersionInterface::CURRENT_ECI_ARRAY
             )) {
-                throw new Check3DSv2Exception('Карта не поддерживается');
+                throw new Check3DSv2Exception('Карта не поддерживается, обратитесь в банк');
             }
 
             Yii::$app->cache->set(
