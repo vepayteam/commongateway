@@ -68,7 +68,7 @@
 
                         if (data.status == 1) {
                             //ок - переход по url банка
-                            widgetform.load3ds(data.url, data.pa, data.md, data.termurl);
+                            widgetform.load3ds(data.url, data.pa, data.md, data.creq, data.termurl);
                         } else {
                             $('#btnpaywidget').prop('disabled', false);
                             $('#widgetform').show();
@@ -117,7 +117,7 @@
             return !err;
         },
 
-        load3ds: function (url, pa, md, termurl) {
+        load3ds: function (url, pa, md, creq, termurl) {
             $('#frame3ds').show();
             $('#form3ds').attr('action', url);
             $('#pareq3ds').val(pa);
