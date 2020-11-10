@@ -12,6 +12,8 @@ use app\models\TU;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\BankAdapterBuilder;
+use app\services\payment\exceptions\BankAdapterResponseException;
+use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\CreatePayForm;
@@ -40,10 +42,12 @@ class CreatePayStrategy
     }
 
     /**
-     * @return PaySchet|null
+     * @return PaySchet
      * @throws CreatePayException
      * @throws Exception
      * @throws GateException
+     * @throws BankAdapterResponseException
+     * @throws Check3DSv2Exception
      */
     public function exec()
     {

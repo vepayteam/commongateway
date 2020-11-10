@@ -1476,6 +1476,8 @@ class TKBankAdapter implements IBankAdapter
      * @param CreatePayForm $createPayForm
      * @return CreatePayResponse
      * @throws BankAdapterResponseException
+     * @throws Check3DSv2Exception
+     * @throws CreatePayException
      */
     public function createPay(CreatePayForm $createPayForm)
     {
@@ -1483,13 +1485,9 @@ class TKBankAdapter implements IBankAdapter
         $check3DSVersionResponse = $this->check3DSVersion($createPayForm);
 
         if(in_array($check3DSVersionResponse->version, Issuer3DSVersionInterface::V_2)) {
-            try {
-                $payResponse = $this->createPay3DSv2($createPayForm, $check3DSVersionResponse);
-                // TODO: refact on tokenize
-                Yii::$app->cache->set(Cache3DSv2Interface::CACHE_PREFIX_CARD_NUMBER . $createPayForm->getPaySchet()->ID, $createPayForm->CardNumber, 3600);
-            } catch (Check3DSv2Exception $e) {
-                $payResponse = $this->createPay3DSv1($createPayForm, $check3DSVersionResponse);
-            }
+            $payResponse = $this->createPay3DSv2($createPayForm, $check3DSVersionResponse);
+            // TODO: refact on tokenize
+            Yii::$app->cache->set(Cache3DSv2Interface::CACHE_PREFIX_CARD_NUMBER . $createPayForm->getPaySchet()->ID, $createPayForm->CardNumber, 3600);
         } else {
             $payResponse = $this->createPay3DSv1($createPayForm, $check3DSVersionResponse);
         }

@@ -21,4 +21,9 @@ interface Issuer3DSVersionInterface
         self::V_21
     ];
 
+    const CURRENT_ECI_ARRAY = [
+        2,
+        5,
+    ];
+
 }
