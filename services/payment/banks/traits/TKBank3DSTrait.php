@@ -72,6 +72,16 @@ trait TKBank3DSTrait
             if(!in_array($ans['xml']['DsInfo']['ProtocolVersion'], Issuer3DSVersionInterface::V_2)) {
                 throw new BankAdapterResponseException('Ошибка проверки версии 3ds');
             }
+
+            // Если параметра нет, считаем дубликатом
+            if(!isset($ans['xml']['DsInfo']['ThreeDSMethodURL'])) {
+                $message = 'Ошибка дублирования запроса 3ds2check';
+                $createPayForm->getPaySchet()->Status = 2;
+                $createPayForm->getPaySchet()->ErrorInfo = $message;
+                $createPayForm->getPaySchet()->save(false);
+                throw new Check3DSv2DuplicatedException($message);
+            }
+
             $check3DSVersionResponse->version = $ans['xml']['DsInfo']['ProtocolVersion'];
             $check3DSVersionResponse->transactionId = $ans['xml']['ThreeDSServerTransID'];
             $check3DSVersionResponse->url = $ans['xml']['DsInfo']['ThreeDSMethodURL'];
