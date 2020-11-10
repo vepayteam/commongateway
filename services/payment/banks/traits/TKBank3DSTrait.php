@@ -137,7 +137,7 @@ trait TKBank3DSTrait
 
         if(array_key_exists('ChallengeData', $ans['xml'])) {
             // если нужна авторизация 3ds через форму
-            $payResponse->url = $ans['xml']['ChallengeData']['AcsUrl'];
+            $payResponse->url = $ans['xml']['ChallengeData']['AcsURL'];
             $payResponse->creq = $ans['xml']['ChallengeData']['Creq'];
         } elseif (array_key_exists('AuthenticationData', $ans['xml'])) {
             if($ans['xml']['AuthenticationData']['Eci'] == '1') {
