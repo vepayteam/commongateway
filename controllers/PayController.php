@@ -21,7 +21,9 @@ use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\TU;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
+use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2DuplicatedException;
+use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\CreatePayForm;
@@ -185,6 +187,10 @@ class PayController extends Controller
                 'message' => $e->getMessage(),
                 'url' => Yii::$app->params['domain'] . '/pay/orderok?id=' . $form->IdPay,
             ];
+        } catch (BankAdapterResponseException $e) {
+            return ['status' => 0, 'message' => $e->getMessage()];
+        } catch (Check3DSv2Exception $e) {
+            return ['status' => 0, 'message' => $e->getMessage()];
         } catch (Exception $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
         }

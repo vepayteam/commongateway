@@ -68,13 +68,8 @@ trait TKBank3DSTrait
         if($ans['xml']['CardEnrolled'] == 'N') {
             $check3DSVersionResponse->version = Issuer3DSVersionInterface::V_1;
         } else {
-
-            if(!in_array($ans['xml']['DsInfo']['ProtocolVersion'], Issuer3DSVersionInterface::V_2)) {
-                throw new BankAdapterResponseException('Ошибка проверки версии 3ds');
-            }
             $check3DSVersionResponse->version = $ans['xml']['DsInfo']['ProtocolVersion'];
             $check3DSVersionResponse->transactionId = $ans['xml']['ThreeDSServerTransID'];
-            $check3DSVersionResponse->url = $ans['xml']['DsInfo']['ThreeDSMethodURL'];
             $check3DSVersionResponse->cardRefId = $ans['xml']['CardRefId'];
         }
 
@@ -85,6 +80,7 @@ trait TKBank3DSTrait
      * @param CreatePayForm $createPayForm
      * @param Check3DSVersionResponse $check3DSVersionResponse
      * @return CreatePayResponse
+     * @throws Check3DSv2Exception
      * @throws CreatePayException
      */
     protected function createPay3DSv2(CreatePayForm $createPayForm, Check3DSVersionResponse $check3DSVersionResponse)
@@ -140,8 +136,13 @@ trait TKBank3DSTrait
             $payResponse->url = $ans['xml']['ChallengeData']['AcsURL'];
             $payResponse->creq = $ans['xml']['ChallengeData']['Creq'];
         } elseif (array_key_exists('AuthenticationData', $ans['xml'])) {
-            if($ans['xml']['AuthenticationData']['Eci'] == '1') {
-                throw new Check3DSv2Exception('');
+
+            // Поддерживается только определенные ECI
+            if(!in_array(
+                (int)$ans['xml']['AuthenticationData']['Eci'],
+                Issuer3DSVersionInterface::CURRENT_ECI_ARRAY
+            )) {
+                throw new Check3DSv2Exception('Карта не поддерживается, обратитесь в банк');
             }
 
             Yii::$app->cache->set(

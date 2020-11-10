@@ -8,6 +8,9 @@ use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\exceptions\BankAdapterResponseException;
+use app\services\payment\exceptions\Check3DSv2Exception;
+use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CheckStatusPayForm;
@@ -59,6 +62,9 @@ interface IBankAdapter
     /**
      * @param PaySchet $paySchet
      * @param CreatePayForm $createPayForm
+     * @throws BankAdapterResponseException
+     * @throws Check3DSv2Exception
+     * @throws CreatePayException
      * @return CreatePayResponse
      */
     public function createPay(CreatePayForm $createPayForm);
