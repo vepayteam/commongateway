@@ -291,11 +291,10 @@ class WidgetController extends Controller
                 'IdOrg' => $idPartner,
             ])
             ->andWhere(['is', 'UserUrlInform', null])
-            ->andWhere(['>', 'DateCreate', 1604188800])
-            ->all();
+            ->andWhere(['>', 'DateCreate', 1604188800]);
 
         /** @var PaySchet $paySchet */
-        foreach ($paySchets as $paySchet) {
+        foreach ($paySchets->each() as $paySchet) {
             $paySchet->UserUrlInform = $paySchet->uslugatovar->UrlInform;
             $paySchet->sms_accept = 1;
             $paySchet->save(false);
