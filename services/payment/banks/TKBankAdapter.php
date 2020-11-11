@@ -1641,6 +1641,13 @@ class TKBankAdapter implements IBankAdapter
                 3600
             );
             return true;
+        } elseif (isset($ans['xml']['authenticationData']) && !empty($ans['xml']['authenticationData'])) {
+            Yii::$app->cache->set(
+                Cache3DSv2Interface::CACHE_PREFIX_AUTH_DATA . $donePayForm->getPaySchet()->ID,
+                json_encode($ans['xml']['authenticationData']),
+                3600
+            );
+            return true;
         } else {
             throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
         }
