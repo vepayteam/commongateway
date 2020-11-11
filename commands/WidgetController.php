@@ -16,6 +16,8 @@ use app\models\planner\UpdateStatems;
 use app\models\planner\VyvodSumPay;
 use app\models\planner\VyvodVoznagPlanner;
 use app\models\telegram\Telegram;
+use app\services\notifications\NotificationsService;
+use app\services\payment\models\PaySchet;
 use app\services\payment\PaymentService;
 use Yii;
 use yii\console\Controller;
@@ -277,6 +279,30 @@ class WidgetController extends Controller
     public function actionPartsBalanceSendToPartners()
     {
         $this->getPaymentService()->sendPartsToPartners();
+    }
+
+    public function actionResendNotify($idPartner)
+    {
+        /** @var NotificationsService $notificationsService */
+        $notificationsService = Yii::$container->get('NotificationsService');
+
+        $paySchets = PaySchet::find()
+            ->where([
+                'IdOrg' => $idPartner,
+            ])
+            ->andWhere(['is', 'UserUrlInform', null])
+            ->andWhere(['>', 'DateCreate', 1604188800])
+            ->all();
+
+        /** @var PaySchet $paySchet */
+        foreach ($paySchets as $paySchet) {
+            $paySchet->UserUrlInform = $paySchet->uslugatovar->UrlInform;
+            $paySchet->sms_accept = 1;
+            $paySchet->save(false);
+
+            $notificationsService->addNotificationByPaySchet($paySchet);
+            Yii::warning('actionResendNotify: ' . $paySchet->ID, 'merchant');
+        }
     }
 
     /**
