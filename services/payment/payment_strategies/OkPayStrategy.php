@@ -174,7 +174,7 @@ class OkPayStrategy
                     }
 
                     //оповещения на почту и колбэком
-                    /** @var NotificationsService $notificationService */
+                    /** @var NotificationsService $notificationsService */
                     $notificationsService = Yii::$container->get('NotificationsService');
                     $transactionOk &= $notificationsService->addNotificationByPaySchet($paySchet);
 

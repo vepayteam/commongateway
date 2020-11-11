@@ -165,6 +165,7 @@ class MfoAutoPayStrategy
         $paySchet->BankComis = $bankAdapterBuilder->getUslugatovar()->calcBankComis($paySchet->SummPay);
         $paySchet->DateCreate = time();
         $paySchet->DateLastUpdate = time();
+        $paySchet->UserUrlInform = $bankAdapterBuilder->getUslugatovar()->UrlInform;
         $paySchet->IsAutoPay = 0;
         $paySchet->sms_accept = 1;
 
