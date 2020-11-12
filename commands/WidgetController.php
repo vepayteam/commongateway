@@ -156,9 +156,9 @@ class WidgetController extends Controller
                 echo "Run Notification ID=" . $value['IdNotif'] . " (" . $value['TypeNotif'] . ") count=" . $value['SendCount'] . "\n";
                 Yii::warning("Run Notification ID=" . $value['IdNotif'] . " (" . $value['TypeNotif'] . ") count=" . $value['SendCount'], 'rsbcron');
 
-                $this->fullReq = '';
-                $this->httpCode = 0;
-                $this->httpAns = '';
+                $notification->fullReq = '';
+                $notification->httpCode = 0;
+                $notification->httpAns = '';
 
                 try {
                     switch ($value['TypeNotif']) {
@@ -180,15 +180,15 @@ class WidgetController extends Controller
                         ->update('notification_pay', [
                             'SendCount' => $value['SendCount'] + 1,
                             'DateLastReq' => time(),
-                            'HttpCode' => $this->httpCode,
-                            'HttpAns' => $this->httpAns,
-                            'FullReq' => $this->fullReq
+                            'HttpCode' => $notification->httpCode,
+                            'HttpAns' => $notification->httpAns,
+                            'FullReq' => $notification->fullReq
                         ], '`ID` = :ID', [':ID' => $value['IdNotif']])
                         ->execute();
                     if ($res || $value['SendCount'] > 30) {
                         //завершить обработку
-                        if ($value['TypeNotif'] == 2 && $this->httpCode == 200 && $value['DateOplat'] > strtotime('today')) {
-                            $notification->addToRefundArray($this->httpAns, $value);
+                        if ($value['TypeNotif'] == 2 && $notification->httpCode == 200 && $value['DateOplat'] > strtotime('today')) {
+                            $notification->addToRefundArray($notification->httpAns, $value);
                         }
                         $connection->createCommand()
                             ->update('notification_pay', [
