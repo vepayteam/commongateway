@@ -129,12 +129,13 @@ class WidgetController extends Controller
                     p.UserEmail
                 FROM
                     `notification_pay` AS n
-                    LEFT JOIN `pay_schet` AS p ON (p.ID = n.IdPay)
-                    LEFT JOIN uslugatovar AS us ON (us.ID = p.IdUsluga)
+                    JOIN `pay_schet` AS p ON (p.ID = n.IdPay)
+                    JOIN uslugatovar AS us ON (us.ID = p.IdUsluga)
                 WHERE
                     p.IdOrg = ' . $idPartner . '
                     AND p.ID >= ' . $startId . ' AND p.ID <= ' . $finishId . '
                     AND n.DateSend = 0
+                ORDER BY p.ID DESC
                 LIMIT ' . 100 . ', ' . $page * 100 .' 
             ';
 
