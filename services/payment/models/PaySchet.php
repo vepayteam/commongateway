@@ -245,7 +245,7 @@ class PaySchet extends \yii\db\ActiveRecord
     {
         $uslugatovar = $this->partner->getUslugatovars()->where([
             'IsCustom' => $partnerBankGate->TU,
-            'Deleted' => 0,
+            'IsDeleted' => 0,
         ])->one();
 
         if(!$uslugatovar) {

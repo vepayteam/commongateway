@@ -103,6 +103,7 @@ class MerchantPayCreateStrategy
         $paySchet->PostbackUrl = $this->payForm->postbackurl;
         $paySchet->PostbackUrl_v2 = $this->payForm->postbackurl_v2;
 
+        $paySchet->sms_accept = 1;
         $paySchet->FIO = $this->payForm->fullname;
         $paySchet->Dogovor = $this->payForm->document_id;
 
