@@ -405,7 +405,7 @@ class WidgetController extends Controller
             ->andWhere(['>', 'pay_schet.DateCreate', $startDate]);
 
         if(!is_null($finishDate)) {
-            $q->andWhere(['<', 'DateCreate', $finishDate]);
+            $q->andWhere(['<', 'pay_schet.DateCreate', $finishDate]);
         }
 
         $page = 0;
