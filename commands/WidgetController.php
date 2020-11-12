@@ -281,7 +281,7 @@ class WidgetController extends Controller
         $this->getPaymentService()->sendPartsToPartners();
     }
 
-    public function actionResendNotify($idPartner)
+    public function actionResendNotify($idPartner, $startDate=1604188800, $finishDate=null)
     {
         /** @var NotificationsService $notificationsService */
         $notificationsService = Yii::$container->get('NotificationsService');
@@ -291,7 +291,11 @@ class WidgetController extends Controller
                 'IdOrg' => $idPartner,
             ])
             ->andWhere(['is', 'UserUrlInform', null])
-            ->andWhere(['>', 'DateCreate', 1604188800]);
+            ->andWhere(['>', 'DateCreate', $startDate]);
+
+        if(!is_null($finishDate)) {
+            $paySchets->andWhere(['<', 'DateCreate', $finishDate]);
+        }
 
         /** @var PaySchet $paySchet */
         foreach ($paySchets->each() as $paySchet) {
