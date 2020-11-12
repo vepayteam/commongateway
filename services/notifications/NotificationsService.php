@@ -56,11 +56,11 @@ class NotificationsService
                 ->execute();
         }
         //по http успешные и нет
-        if (!empty(!empty($paySchet->UserUrlInform))) {
+        if (!empty($paySchet->uslugatovar->UrlInform)) {
             Yii::$app->db->createCommand()
                 ->insert('notification_pay', [
                     'IdPay' => $paySchet->ID,
-                    'Email' => !empty($paySchet->UserUrlInform),
+                    'Email' => !empty($paySchet->uslugatovar->UrlInform),
                     'TypeNotif' => 2,
                     'DateCreate' => time(),
                     'DateSend' => 0
