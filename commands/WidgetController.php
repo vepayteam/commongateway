@@ -136,7 +136,7 @@ class WidgetController extends Controller
                     AND p.ID >= ' . $startId . ' AND p.ID <= ' . $finishId . '
                     AND n.DateSend = 0
                 ORDER BY p.ID DESC
-                LIMIT ' . 100 . ', ' . $page * 100 .' 
+                LIMIT ' . 100 . ($page > 0 ? "," . $page * 100 : "") .'  
             ';
 
             $query = $connection->createCommand($q)->query();
