@@ -60,7 +60,7 @@ class NotificationsService
             Yii::$app->db->createCommand()
                 ->insert('notification_pay', [
                     'IdPay' => $paySchet->ID,
-                    'Email' => !empty($paySchet->uslugatovar->UrlInform),
+                    'Email' => $paySchet->uslugatovar->UrlInform,
                     'TypeNotif' => 2,
                     'DateCreate' => time(),
                     'DateSend' => 0
