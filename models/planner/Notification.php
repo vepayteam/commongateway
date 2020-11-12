@@ -23,11 +23,11 @@ use yii\mutex\FileMutex;
 class Notification
 {
 
-    private $httpCode;
-    private $httpAns;
-    private $fullReq;
-    private $withdraw;
-    private $paysId = [];
+    public $httpCode;
+    public $httpAns;
+    public $fullReq;
+    public $withdraw;
+    public $paysId = [];
 
     /**
      * Оповещение об оплате
