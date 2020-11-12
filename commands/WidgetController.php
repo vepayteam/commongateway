@@ -97,6 +97,115 @@ class WidgetController extends Controller
 
     }
 
+    public function actionNotificationBlock($idPartner, $startId, $finishId)
+    {
+        $notification = new Notification();
+
+        $connection = Yii::$app->db;
+
+        $page = 0;
+
+        while(true) {
+
+            $q = '
+                SELECT
+                    p.ID,
+                    n.ID AS IdNotif,
+                    n.Email,
+                    n.TypeNotif,
+                    p.SummPay,
+                    p.QrParams,
+                    p.Status,
+                    us.EmailShablon,
+                    us.IsCustom,
+                    us.UrlInform,
+                    us.KeyInform,
+                    p.IdUsluga,
+                    p.UserUrlInform,
+                    p.UserKeyInform,
+                    p.Extid,
+                    n.SendCount,
+                    p.DateOplat,
+                    p.UserEmail
+                FROM
+                    `notification_pay` AS n
+                    JOIN `pay_schet` AS p ON (p.ID = n.IdPay)
+                    JOIN uslugatovar AS us ON (us.ID = p.IdUsluga)
+                WHERE
+                    p.IdOrg = ' . $idPartner . '
+                    AND p.ID >= ' . $startId . ' AND p.ID <= ' . $finishId . '
+                    AND n.DateSend = 0
+                ORDER BY p.ID DESC
+                LIMIT ' . 100 . ', ' . $page * 100 .' 
+            ';
+
+            $query = $connection->createCommand($q)->query();
+
+            if($query->count() == 0) {
+                break;
+            }
+
+            $page++;
+            while ($value = $query->read()) {
+                if(Yii::$app->cache->get('NotificationBlock' . $value['IdNotif'])) {
+                    continue;
+                }
+
+                Yii::$app->cache->set('NotificationBlock' . $value['IdNotif'], 1);
+
+                echo "Run Notification ID=" . $value['IdNotif'] . " (" . $value['TypeNotif'] . ") count=" . $value['SendCount'] . "\n";
+                Yii::warning("Run Notification ID=" . $value['IdNotif'] . " (" . $value['TypeNotif'] . ") count=" . $value['SendCount'], 'rsbcron');
+
+                $this->fullReq = '';
+                $this->httpCode = 0;
+                $this->httpAns = '';
+
+                try {
+                    switch ($value['TypeNotif']) {
+                        default:
+                        case 0:
+                            $res = $notification->sendToUser($value);
+                            break;
+                        case 1:
+                            $res = $notification->sendToShop($value);
+                            break;
+                        case 2:
+                            $res = $notification->sendReversHttp($value);
+                            break;
+                        case 3:
+                            $res = $notification->sendUserReversHttp($value);
+                            break;
+                    }
+                    $connection->createCommand()
+                        ->update('notification_pay', [
+                            'SendCount' => $value['SendCount'] + 1,
+                            'DateLastReq' => time(),
+                            'HttpCode' => $this->httpCode,
+                            'HttpAns' => $this->httpAns,
+                            'FullReq' => $this->fullReq
+                        ], '`ID` = :ID', [':ID' => $value['IdNotif']])
+                        ->execute();
+                    if ($res || $value['SendCount'] > 30) {
+                        //завершить обработку
+                        if ($value['TypeNotif'] == 2 && $this->httpCode == 200 && $value['DateOplat'] > strtotime('today')) {
+                            $notification->addToRefundArray($this->httpAns, $value);
+                        }
+                        $connection->createCommand()
+                            ->update('notification_pay', [
+                                'DateSend' => time()
+                            ], '`ID` = :ID', [':ID' => $value['IdNotif']])
+                            ->execute();
+                    }
+                } catch (\Exception $e) {
+                    Yii::error("Error Notification ID=" . $value['IdNotif'] . ": " . $e->getMessage(), 'rsbcron');
+                }
+            }
+            unset($value);
+        }
+
+
+    }
+
     /**
      * Vyvod prinatyh platejeii mfo (1d at 12:30)
      * @throws \yii\db\Exception
@@ -286,25 +395,38 @@ class WidgetController extends Controller
         /** @var NotificationsService $notificationsService */
         $notificationsService = Yii::$container->get('NotificationsService');
 
-        $paySchets = PaySchet::find()
+        $q = PaySchet::find()
+            ->leftJoin('notification_pay', 'notification_pay.IdPay = pay_schet.ID')
             ->where([
-                'IdOrg' => $idPartner,
+                'pay_schet.IdOrg' => $idPartner,
+                'notification_pay.ID' => null,
             ])
-            ->andWhere(['is', 'UserUrlInform', null])
-            ->andWhere(['>', 'DateCreate', $startDate]);
+            ->andWhere(['<>', 'pay_schet.Status', '0'])
+            ->andWhere(['>', 'pay_schet.DateCreate', $startDate]);
 
         if(!is_null($finishDate)) {
-            $paySchets->andWhere(['<', 'DateCreate', $finishDate]);
+            $q->andWhere(['<', 'DateCreate', $finishDate]);
         }
 
-        /** @var PaySchet $paySchet */
-        foreach ($paySchets->each() as $paySchet) {
-            $paySchet->UserUrlInform = $paySchet->uslugatovar->UrlInform;
-            $paySchet->sms_accept = 1;
-            $paySchet->save(false);
+        $page = 0;
+        while(true) {
+            $paySchets = $q->limit(100)->offset($page * 100)->all();
 
-            $notificationsService->addNotificationByPaySchet($paySchet);
-            Yii::warning('actionResendNotify: ' . $paySchet->ID, 'merchant');
+            if(count($paySchets) == 0) {
+                break;
+            }
+
+            /** @var PaySchet $paySchet */
+            foreach ($paySchets as $paySchet) {
+                $paySchet->UserUrlInform = $paySchet->uslugatovar->UrlInform;
+                $paySchet->sms_accept = 1;
+                $paySchet->save(false);
+
+                $notificationsService->addNotificationByPaySchet($paySchet);
+                usleep(20);
+            }
+            unset($paySchet);
+            $page++;
         }
     }
 

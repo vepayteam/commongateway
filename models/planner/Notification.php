@@ -137,7 +137,7 @@ class Notification
      *
      * @return bool
      */
-    private function sendToUser($value)
+    public function sendToUser($value)
     {
         $IdSchet = $value['ID'];
         $Email = $value['Email'];
@@ -172,7 +172,7 @@ class Notification
      *
      * @return bool
      */
-    private function sendToShop($value)
+    public function sendToShop($value)
     {
         if ($value['IsCustom'] > 0) {
             $IdSchet = $value['ID'];
@@ -208,7 +208,7 @@ class Notification
      * @return bool
      * @throws \Exception
      */
-    private function sendReversHttp($value)
+    public function sendReversHttp($value)
     {
         if ($value['IsCustom'] > 0) {
             $IdSchet = $value['ID'];
@@ -242,7 +242,7 @@ class Notification
      * @return bool
      * @throws \Exception
      */
-    private function sendUserReversHttp($value)
+    public function sendUserReversHttp($value)
     {
         $IdSchet = $value['ID'];
         $UrlInform = $value['UserUrlInform'];
@@ -289,7 +289,7 @@ class Notification
      * @param string $resp - ответ от МФО.
      * @param array $dataFromTable - результат выполнения sql запроса.
      */
-    private function addToRefundArray($resp, array $dataFromTable): void
+    public function addToRefundArray($resp, array $dataFromTable): void
     {
         $resp = json_decode($resp, true);
         if (JSON_ERROR_NONE == 0 && is_array($resp) && $this->reversFormatValidated($resp) && $resp['status'] != 0) { //проверяем на необходимый формат
