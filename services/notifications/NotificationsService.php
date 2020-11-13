@@ -30,7 +30,8 @@ class NotificationsService
                 ->execute();
         }
 
-        if (in_array($paySchet->TypeWidget, [0, 1]) && !empty($paySchet->UserUrlInform)) {
+        // TODO: проверить необходимость
+        if (false && in_array($paySchet->TypeWidget, [0, 1]) && !empty($paySchet->UserUrlInform)) {
             //http
             Yii::$app->db->createCommand()
                 ->insert('notification_pay', [
