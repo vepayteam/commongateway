@@ -173,7 +173,7 @@ class WidgetController extends Controller
                             $res = $notification->sendReversHttp($value);
                             break;
                         case 3:
-                            $res = $notification->sendUserReversHttp($value);
+                            // $res = $notification->sendUserReversHttp($value);
                             break;
                     }
                     $connection->createCommand()
