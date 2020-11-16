@@ -23,6 +23,7 @@ use app\services\payment\models\PaySchet;
 use app\services\payment\PaymentService;
 use Yii;
 use yii\db\Exception;
+use yii\db\Query;
 use yii\mutex\FileMutex;
 
 class OkPayStrategy
@@ -72,6 +73,18 @@ class OkPayStrategy
             $paySchet->RRN = $checkStatusPayResponse->xml['orderadditionalinfo']['rrn'] ?? '';
             $paySchet->RCCode = $checkStatusPayResponse->xml['orderadditionalinfo']['rc'] ?? '';
             $paySchet->save(false);
+        } elseif ($paySchet->sms_accept == 1) {
+            $q = new Query();
+            $count = $q->from('notification_pay')
+                ->where([
+                    'IdPay' => $paySchet->ID,
+                    'TypeNotif' => 2,
+                ])
+                ->count();
+
+            if($count == 0) {
+                $this->getNotificationsService()->addNotificationByPaySchet($paySchet);
+            }
         }
 
         return $paySchet;
@@ -209,7 +222,7 @@ class OkPayStrategy
                     $this->paymentService->cancelPay($paySchet);
 
                     /** @var NotificationsService $notificationService */
-                    $notificationsService = Yii::$container->get('NotificationsService');
+                    $notificationsService = $this->getNotificationsService();
                     $transactionOk &= $notificationsService->addNotificationByPaySchet($paySchet);
 
                     if(!$transaction->isActive || !$transactionOk) {
@@ -236,6 +249,16 @@ class OkPayStrategy
         }
 
         return $res;
+    }
+
+    /**
+     * @return NotificationsService
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\di\NotInstantiableException
+     */
+    protected function getNotificationsService()
+    {
+        return Yii::$container->get('NotificationsService');
     }
 
 }
