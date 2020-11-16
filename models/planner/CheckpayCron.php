@@ -160,7 +160,6 @@ class CheckpayCron
                 WHERE
                     m.Status = 0  
                     AND m.ExtBillNumber IS NULL
-                    AND m.UserClickPay = 0
                     AND m.DateLastUpdate < UNIX_TIMESTAMP() - m.TimeElapsed * 2                    
             ')->query();
 
