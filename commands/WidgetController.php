@@ -422,6 +422,8 @@ class WidgetController extends Controller
                 $paySchet->sms_accept = 1;
                 $paySchet->save(false);
 
+                echo $paySchet->ID . "\n";
+
                 $notificationsService->addNotificationByPaySchet($paySchet);
                 usleep(20);
             }

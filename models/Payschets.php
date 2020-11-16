@@ -15,6 +15,7 @@ use app\models\payonline\Uslugatovar;
 use app\models\queue\DraftPrintJob;
 use app\models\queue\ExportpayJob;
 use app\models\queue\ReverspayJob;
+use app\services\payment\models\PaySchet;
 use Yii;
 use yii\db\Exception;
 use yii\helpers\VarDumper;
@@ -629,7 +630,8 @@ class Payschets
                 ->execute();
         }
 
-        if (in_array($TypeWidget, [0, 1])) {
+        // TODO:
+        if (false && in_array($TypeWidget, [0, 1])) {
             if ($row && !empty($row['UserUrlInform'])) {
                 //http
                 Yii::$app->db->createCommand()
@@ -661,7 +663,10 @@ class Payschets
             ':IDPAY' => $IdPay
         ])->queryOne();
 
+
         if ($row) {
+            $paySchet = PaySchet::findOne(['ID' => $IdPay]);
+
             //по email успешные
             if (!empty($row['EmailReestr']) && $row['Status'] == 1) {
                 Yii::$app->db->createCommand()
@@ -675,11 +680,11 @@ class Payschets
                     ->execute();
             }
             //по http успешные и нет
-            if (!empty($row['UrlInform'])) {
+            if (!empty($paySchet->uslugatovar->UrlInform)) {
                 Yii::$app->db->createCommand()
                     ->insert('notification_pay', [
                         'IdPay' => $IdPay,
-                        'Email' => $row['UrlInform'],
+                        'Email' => $paySchet->uslugatovar->UrlInform,
                         'TypeNotif' => 2,
                         'DateCreate' => time(),
                         'DateSend' => 0
