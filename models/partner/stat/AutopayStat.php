@@ -83,9 +83,10 @@ class AutopayStat extends Model
             ->select(['c.ID'])
             ->from('`cards` AS c')
             ->leftJoin('`pay_schet` AS ps', 'ps.IdKard = c.ID')
+            ->leftJoin('`uslugatovar` AS u', 'u.ID = ps.IdUsluga')
             ->where(['between', 'ps.DateCreate', $datefrom, $dateto])
             ->andWhere(['c.TypeCard' => 0])
-            ->andWhere(['ps.IsAutoPay' => 1]);
+            ->andWhere(['in', 'u.IsCustom', TU::AutoPay()]);
         if ($IdPart > 0) {
             $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
@@ -98,9 +99,10 @@ class AutopayStat extends Model
             ->select(['ps.ID'])
             ->from('`pay_schet` AS ps')
             ->leftJoin('`cards` AS c', 'ps.IdKard = c.ID')
+            ->leftJoin('`uslugatovar` AS u', 'u.ID = ps.IdUsluga')
             ->where(['between', 'ps.DateCreate', $datefrom, $dateto])
             ->andWhere(['c.TypeCard' => 0])
-            ->andWhere(['ps.IsAutoPay' => 1]);
+            ->andWhere(['in', 'u.IsCustom', TU::AutoPay()]);
         if ($IdPart > 0) {
             $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
@@ -116,9 +118,11 @@ class AutopayStat extends Model
             ->select(['ps.SummPay'])
             ->from('`pay_schet` AS ps')
             ->leftJoin('`cards` AS c', 'ps.IdKard = c.ID')
+            ->leftJoin('`uslugatovar` AS u', 'u.ID = ps.IdUsluga')
             ->where(['between', 'ps.DateCreate', $datefrom, $dateto])
             ->andWhere(['c.TypeCard' => 0])
-            ->andWhere(['ps.IsAutoPay' => 1, 'ps.Status' => 1]);
+            ->andWhere(['ps.Status' => 1])
+            ->andWhere(['in', 'u.IsCustom', TU::AutoPay()]);
         if ($IdPart > 0) {
             $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
