@@ -28,7 +28,7 @@ class SecurityController extends Controller
         exec($cmd);
 
         $uploadCertForm = new UploadCertForm();
-        $uploadCertForm->certificate = file_get_contents($certPath . '/vepay.crt');
+        $uploadCertForm->certificate = $this->transformCert(file_get_contents($certPath . '/vepay.crt'));
         $uploadCertForm->password = $password;
 
         $runaIdentStateResponse = $this->getIdentService()->sendCertRuna($uploadCertForm);
@@ -38,6 +38,13 @@ class SecurityController extends Controller
         } else {
             echo 'Ошибка запроса';
         }
+    }
+
+    protected function transformCert($certStr)
+    {
+        $certStr = str_replace(['-----BEGIN CERTIFICATE-----', '-----END CERTIFICATE-----', "\r\n", "\n"], '', $certStr);
+        $certStr = base64_encode($certStr);
+        return $certStr;
     }
 
     /**
