@@ -1,7 +1,7 @@
 <?php
 
 
-namespace app\services\ident\models;
+namespace app\services\ident\forms;
 
 
 use app\models\payonline\Partner;

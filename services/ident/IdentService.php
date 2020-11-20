@@ -5,10 +5,13 @@ namespace app\services\ident;
 
 
 use app\services\ident\models\IdentStatisticForm;
+use app\services\ident\traits\RunaIdentTrait;
 use yii\db\Query;
 
 class IdentService
 {
+    use RunaIdentTrait;
+
     const LIST_CHECKS = ['Inn', 'Snils', 'Passport', 'PassportDeferred'];
     const BANK_STATUSES = [
         'NotProcessed' => '000',
