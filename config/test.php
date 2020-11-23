@@ -42,6 +42,16 @@ return [
         ],        
     ],
     'params' => $params,
+    'container' => [
+        'singletons' => [
+            'PaymentService' => ['class' => 'app\services\payment\PaymentService'],
+            'BalanceService' => ['class' => 'app\services\balance\BalanceService'],
+            'IdentService' => ['class' => 'app\services\ident\IdentService'],
+            'PartnersService' => ['class' => 'app\services\partners\PartnersService'],
+            'AuthService' => ['class' => 'app\services\auth\AuthService'],
+            'NotificationsService' => ['class' => 'app\services\notifications\NotificationsService'],
+        ],
+    ],
     'modules' => [
         'partner' => [
             'class' => 'app\modules\partner\Module',
@@ -51,6 +61,15 @@ return [
         ],
         'kfapi' => [
             'class' => 'app\modules\kfapi\Module',
+        ],
+        'keymodule' => [
+            'class' => 'app\modules\keymodule\Module',
+        ],
+        'antifraud' => [
+            'class' => 'app\modules\antifraud\Module',
+        ],
+        'lk' => [
+            'class' => 'app\modules\lk\Module',
         ],
     ],	
 ];
