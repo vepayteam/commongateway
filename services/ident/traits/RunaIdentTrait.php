@@ -87,7 +87,7 @@ trait RunaIdentTrait
      */
     protected function sendRunaRequest($method, Model $model, $mode)
     {
-        $certPath = Yii::getAlias('@app/config/runacert/');
+        $certPath = Yii::getAlias('@app/config/runacert');
         $url = sprintf(
             '%s/%s/%s/%s',
             Yii::$app->params['services']['ident']['runaDomain'],
@@ -98,29 +98,28 @@ trait RunaIdentTrait
 
         $data = $model->getAttributes();
 
-        $curl = curl_init();
+        $curl = curl_init($url);
 
         curl_setopt_array($curl, array(
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            // CURLOPT_SSLVERSION => 6,
-            CURLOPT_SSLCERT => $certPath . '/vepay.crt',
-            CURLOPT_SSLKEY => $certPath . '/vepay.key',
-
-            CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_POSTFIELDS => json_encode($data),
+            CURLOPT_SSLVERSION => CURL_SSLVERSION_TLSv1_0,
+            CURLOPT_CAINFO => $certPath . '/vepay.crt',
+            CURLOPT_CERTINFO => TRUE,
+            CURLOPT_POST => TRUE,
+            CURLOPT_RETURNTRANSFER => TRUE,
             CURLOPT_HTTPHEADER => array(
-                "Content-Type: application/json"
+                'Accept: application/json',
+                'Content-Type: application/json'
             ),
+            CURLOPT_POSTFIELDS => json_encode($data)
         ));
 
         try {
             $response = curl_exec($curl);
+            $error = curl_error($curl);
+
+            if(!empty($error)) {
+                throw new RunaIdentException($error);
+            }
             curl_close($curl);
             return json_decode($response, true);
         } catch (\Exception $e) {

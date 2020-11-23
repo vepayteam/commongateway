@@ -43,7 +43,6 @@ class SecurityController extends Controller
     protected function transformCert($certStr)
     {
         $certStr = str_replace(['-----BEGIN CERTIFICATE-----', '-----END CERTIFICATE-----', "\r\n", "\n"], '', $certStr);
-        $certStr = base64_encode($certStr);
         return $certStr;
     }
 
