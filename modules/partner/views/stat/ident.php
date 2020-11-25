@@ -13,12 +13,12 @@
 
 use app\models\partner\UserLk;
 use app\services\balance\models\PartsBalanceForm;
-use app\services\ident\models\IdentStatisticForm;
+use app\services\ident\forms\IdentStatisticForm;
 use yii\web\View;
 
-$this->title = "Баланс по разбивке (Платформа)";
+$this->title = "Статистика идентификации";
 
-$this->params['breadtitle'] = "Баланс по разбивке (Платформа)";
+$this->params['breadtitle'] = "Статистика идентификации";
 $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 
 ?>

@@ -4,7 +4,7 @@
 namespace app\services\ident;
 
 
-use app\services\ident\models\IdentStatisticForm;
+use app\services\ident\forms\IdentStatisticForm;
 use app\services\ident\traits\RunaIdentTrait;
 use yii\db\Query;
 
