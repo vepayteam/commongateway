@@ -101,11 +101,15 @@ trait RunaIdentTrait
         $curl = curl_init($url);
 
         curl_setopt_array($curl, array(
-            CURLOPT_SSLVERSION => CURL_SSLVERSION_TLSv1_0,
-            CURLOPT_CAINFO => $certPath . '/vepay.crt',
-            CURLOPT_CERTINFO => TRUE,
-            CURLOPT_POST => TRUE,
-            CURLOPT_RETURNTRANSFER => TRUE,
+            CURLOPT_SSLVERSION => CURL_SSLVERSION_TLSv1_2,
+            CURLOPT_SSLCERT => $certPath . '/vepay.crt',
+            CURLOPT_SSLKEY => $certPath . '/vepay.key',
+            CURLOPT_CERTINFO => true,
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_SSL_VERIFYHOST => false,
+            CURLOPT_SSL_VERIFYPEER => false,
+
             CURLOPT_HTTPHEADER => array(
                 'Accept: application/json',
                 'Content-Type: application/json'
