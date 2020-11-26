@@ -127,7 +127,7 @@ trait RunaIdentTrait
             curl_close($curl);
             return json_decode($response, true);
         } catch (\Exception $e) {
-            throw new RunaIdentException('Ошибка запроса');
+            throw $e;
         }
     }
 }
