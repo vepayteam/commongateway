@@ -4,7 +4,11 @@ namespace app\modules\partner\controllers;
 
 use app\models\api\Reguser;
 use app\models\bank\Banks;
+use app\models\bank\TCBank;
+use app\models\bank\TcbGate;
 use app\models\crypt\UserKeyLk;
+use app\models\mfo\MfoReq;
+use app\models\mfo\statements\ReceiveStatemets;
 use app\models\Options;
 use app\models\partner\admin\PerevodToPartner;
 use app\models\partner\admin\SystemVoznagList;
@@ -26,8 +30,11 @@ use Yii;
 use yii\db\Exception;
 use yii\db\Query;
 use yii\filters\AccessControl;
+use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
+use yii\web\BadRequestHttpException;
 use yii\web\Controller;
+use yii\web\HttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
@@ -619,5 +626,68 @@ class AdminController extends Controller
     public function actionPerformsql()
     {
         return $this->render('perfmon_db_server.php', ['mysql' => Yii::$app->db]);
+    }
+
+    /**
+     * Отчет для проверки синхронности данных о движении по счетам между нашей БД и Банком
+     * @param $partner_id
+     * @param null $from
+     * @param null $to
+     * @throws BadRequestHttpException
+     * @throws Exception
+     */
+    public function actionStatementDiff($partner_id, $from = null, $to = null)
+    {
+        $partner = Partner::findOne(['ID' => $partner_id]);
+        if (!$partner) {
+            throw new BadRequestHttpException('Не указан партнёр');
+        }
+
+        $dateFrom = $from ? strtotime($from) : strtotime('1990-01-01 00:00:00');
+        $dateTo = $to ? strtotime($to) : time();
+
+        $list = (new ReceiveStatemets($partner))->getAll($dateFrom, $dateTo);
+
+
+        if (empty($list)) {
+            throw new BadRequestHttpException("Выписка из банка пуста");
+        }
+
+        $list = ArrayHelper::index($list, 'id');
+
+        $appendListWithInternalData = function ($balanceType,  &$list) use ($partner_id, $dateFrom, $dateTo) {
+            $data = (new Query())
+                ->select('*')
+                ->from($balanceType)
+                ->where(['IdPartner' => $partner_id])
+                ->andWhere('DateOp BETWEEN :DATEFROM AND :DATETO', [
+                    ':DATEFROM' => $dateFrom,
+                    ':DATETO' => $dateTo]
+                )->indexBy('BnkId')
+                ->all();
+
+            if (!empty($data)) {
+                foreach ($data as $id => $row) {
+                    //если есть в нашей БД транзакция
+                    if (isset($list[$id])) {
+                        foreach ($row as $field => $value) {
+                            if ($field == 'Summ' || $field == 'SummAfter') {
+                                $value /= 100.0;
+                            }
+                            $list[$id]['OUR_' . $field] = $value;
+                        }
+                    }
+                }
+            }
+        };
+
+        $appendListWithInternalData('partner_orderin', $list);
+        $appendListWithInternalData('partner_orderout', $list);
+
+        header('Content-Type: application/csv');
+        header('Content-Disposition: attachment; filename="statement_'. $partner_id .'";');
+        $out = fopen('php://output', 'w');
+        fputcsv($out, $list);
+        fclose($out);
     }
 }

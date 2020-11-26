@@ -14,6 +14,7 @@ use app\models\payonline\Uslugatovar;
 use app\models\TU;
 use app\models\payonline\BalancePartner;
 use Yii;
+use yii\helpers\ArrayHelper;
 
 class ReceiveStatemets
 {
@@ -25,6 +26,51 @@ class ReceiveStatemets
     public function __construct(Partner $Partner)
     {
         $this->Partner = $Partner;
+    }
+
+    /**
+     * @param $dateFrom
+     * @param $dateTo
+     * @return array
+     * @throws \yii\db\Exception
+     */
+    public function getAll($dateFrom, $dateTo)
+    {
+        $list = [];
+        $mfo = new MfoReq();
+        $mfo->mfo = $this->Partner->ID;
+        $TcbGate = new TcbGate($this->Partner->ID, TCBank::$AFTGATE);
+        $tcBank = new TCBank($TcbGate);
+
+        foreach (['SchetTcbNominal', 'SchetTcbTransit', 'SchetTcb'] as $accountType) {
+            $isNominal = $accountType == 'SchetTcbNominal';
+            $account = $this->Partner->$accountType;
+            if (empty($account)) {
+                continue;
+            }
+
+            $request = [
+                'account' => $account,
+                'datefrom' => date('Y-m-d\TH:i:s', $dateFrom),
+                'dateto' => date('Y-m-d\TH:i:s', $dateTo)
+            ];
+
+            if ($isNominal) {
+                $res = $tcBank->getStatementNominal($request);
+            } else {
+                $res = $tcBank->getStatement($request);
+            }
+
+            if (isset($res['statements'])) {
+                if ($isNominal) {
+                    $appendingList = $this->ParseSatementsNominal($res['statements']);
+                } else {
+                    $appendingList = $this->ParseSatements($res['statements']);
+                }
+                $list = ArrayHelper::merge($list, $appendingList);
+            }
+        }
+        return $list;
     }
 
     /**
