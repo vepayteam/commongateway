@@ -108,8 +108,8 @@ trait RunaIdentTrait
             CURLOPT_CERTINFO => true,
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_SSL_VERIFYHOST => 2,
-            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => false,
+            CURLOPT_SSL_VERIFYPEER => false,
 
             CURLOPT_HTTPHEADER => array(
                 'Accept: application/json',
