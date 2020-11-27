@@ -8,6 +8,7 @@ use app\services\ident\exceptions\RunaIdentException;
 use app\services\ident\forms\RunaIdentInitForm;
 use app\services\ident\forms\RunaIdentStateForm;
 use app\services\ident\forms\UploadCertForm;
+use app\services\ident\interfaces\RunaIdentResponseInteface;
 use app\services\ident\models\IdentRuna;
 use app\services\ident\responses\RunaIdentInitResponse;
 use app\services\ident\responses\RunaIdentStateResponse;
@@ -21,7 +22,7 @@ trait RunaIdentTrait
     {
         try {
             $response = $this->sendRunaRequest('init', $runaIdentInitForm, 'verify_docs');
-            if($response['state_code'] != '00000') {
+            if($response['state_code'] != RunaIdentResponseInteface::RESPONSE_STATUS_INIT) {
                 throw new RunaIdentException($response['state_description']);
             }
         } catch (RunaIdentException $e) {
