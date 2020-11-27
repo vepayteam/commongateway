@@ -630,6 +630,7 @@ class AdminController extends Controller
 
     /**
      * Отчет для проверки синхронности данных о движении по счетам между нашей БД и Банком
+     * //TODO: вынести в отдельный класс и вызывать через консоль
      * @param $partner_id
      * @param null $from
      * @param null $to
@@ -654,6 +655,7 @@ class AdminController extends Controller
         }
 
         $list = ArrayHelper::index($list, 'id');
+
 
         $appendListWithInternalData = function ($balanceType,  &$list) use ($partner_id, $dateFrom, $dateTo) {
             $data = (new Query())
@@ -684,6 +686,7 @@ class AdminController extends Controller
         $appendListWithInternalData('partner_orderin', $list);
         $appendListWithInternalData('partner_orderout', $list);
 
+        //TODO: переписать на Yii::$app->response->sendFile()
         header('Content-Type: application/csv');
         header('Content-Disposition: attachment; filename="statement_'. $partner_id .'";');
         $out = fopen('php://output', 'w');

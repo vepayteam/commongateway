@@ -42,6 +42,7 @@ class ReceiveStatemets
         $TcbGate = new TcbGate($this->Partner->ID, TCBank::$AFTGATE);
         $tcBank = new TCBank($TcbGate);
 
+        //TODO вынеси в константы имена полей счетов
         foreach (['SchetTcbNominal', 'SchetTcbTransit', 'SchetTcb'] as $accountType) {
             $isNominal = $accountType == 'SchetTcbNominal';
             $account = $this->Partner->$accountType;
