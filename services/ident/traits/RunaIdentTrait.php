@@ -21,7 +21,7 @@ trait RunaIdentTrait
     {
         try {
             $response = $this->sendRunaRequest('init', $runaIdentInitForm, 'verify_docs');
-            if($response['state_code'] != '00000') {
+            if($response['state_code'] != '00000' && $response['state_code'] != '00008') {
                 throw new RunaIdentException($response['state_description']);
             }
         } catch (RunaIdentException $e) {
