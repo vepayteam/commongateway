@@ -31,6 +31,7 @@ use yii\db\Exception;
 use yii\db\Query;
 use yii\filters\AccessControl;
 use yii\helpers\ArrayHelper;
+use yii\helpers\Json;
 use yii\helpers\Url;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
@@ -686,11 +687,13 @@ class AdminController extends Controller
         $appendListWithInternalData('partner_orderin', $list);
         $appendListWithInternalData('partner_orderout', $list);
 
+        return Json::encode($list);
+
         //TODO: переписать на Yii::$app->response->sendFile()
-        header('Content-Type: application/csv');
+        /*header('Content-Type: application/csv');
         header('Content-Disposition: attachment; filename="statement_'. $id .'";');
         $out = fopen('php://output', 'w');
         fputcsv($out, $list);
-        fclose($out);
+        fclose($out);*/
     }
 }
