@@ -637,9 +637,9 @@ class AdminController extends Controller
      * @throws BadRequestHttpException
      * @throws Exception
      */
-    public function actionStatementDiff($partner_id, $from = null, $to = null)
+    public function actionStatementDiff($id, $from = null, $to = null)
     {
-        $partner = Partner::findOne(['ID' => $partner_id]);
+        $partner = Partner::findOne(['ID' => $id]);
         if (!$partner) {
             throw new BadRequestHttpException('Не указан партнёр');
         }
@@ -657,11 +657,11 @@ class AdminController extends Controller
         $list = ArrayHelper::index($list, 'id');
 
 
-        $appendListWithInternalData = function ($balanceType,  &$list) use ($partner_id, $dateFrom, $dateTo) {
+        $appendListWithInternalData = function ($balanceType,  &$list) use ($id, $dateFrom, $dateTo) {
             $data = (new Query())
                 ->select('*')
                 ->from($balanceType)
-                ->where(['IdPartner' => $partner_id])
+                ->where(['IdPartner' => $id])
                 ->andWhere('DateOp BETWEEN :DATEFROM AND :DATETO', [
                     ':DATEFROM' => $dateFrom,
                     ':DATETO' => $dateTo]
@@ -688,7 +688,7 @@ class AdminController extends Controller
 
         //TODO: переписать на Yii::$app->response->sendFile()
         header('Content-Type: application/csv');
-        header('Content-Disposition: attachment; filename="statement_'. $partner_id .'";');
+        header('Content-Disposition: attachment; filename="statement_'. $id .'";');
         $out = fopen('php://output', 'w');
         fputcsv($out, $list);
         fclose($out);
