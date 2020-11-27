@@ -637,7 +637,7 @@ class AdminController extends Controller
      * @throws BadRequestHttpException
      * @throws Exception
      */
-    public function actionStatementDiff($id, $from = null, $to = null)
+    public function actionStatementdiff($id, $from = null, $to = null)
     {
         $partner = Partner::findOne(['ID' => $id]);
         if (!$partner) {
