@@ -104,7 +104,6 @@ trait RunaIdentTrait
             CURLOPT_SSLVERSION => CURL_SSLVERSION_TLSv1_2,
             CURLOPT_SSLCERT => $certPath . '/vepay.crt',
             CURLOPT_SSLKEY => $certPath . '/vepay.key',
-            CURLOPT_CAINFO => $certPath . '/runa.crt',
             CURLOPT_CERTINFO => true,
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
