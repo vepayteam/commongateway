@@ -673,12 +673,7 @@ class AdminController extends Controller
                 foreach ($data as $id => $row) {
                     //если есть в нашей БД транзакция
                     if (isset($list[$id])) {
-                        foreach ($row as $field => $value) {
-                            if ($field == 'Summ' || $field == 'SummAfter') {
-                                $value /= 100.0;
-                            }
-                            $list[$id]['OUR_' . $field] = $value;
-                        }
+                        $list[$id]['our'] = $row;
                     }
                 }
             }
