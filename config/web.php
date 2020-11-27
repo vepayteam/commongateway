@@ -71,6 +71,7 @@ $config = [
                 'partner/logout' => 'partner/default/logout',
 
                 '/oferta' => '/site/oferta',
+                '/admin/statementdiff/<id:\d+>' => 'admin/statement-diff',
 
                 '<controller>/<id:\d+>' => '<controller>/index',
                 '<controller>/<action>' => '<controller>/<action>',
