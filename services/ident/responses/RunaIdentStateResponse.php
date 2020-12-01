@@ -12,4 +12,11 @@ class RunaIdentStateResponse extends Model
     public $tid;
     public $state_code;
     public $state_description;
+
+    public function rules()
+    {
+        return [
+            [['detail', 'tid', 'state_code', 'state_description'], 'safe'],
+        ];
+    }
 }

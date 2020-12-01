@@ -17,4 +17,11 @@ class RunaIdentInitResponse extends Model
     public $state_code;
     public $state_description;
 
+    public function rules()
+    {
+        return [
+            [['tid', 'state_code', 'state_description'], 'required'],
+        ];
+    }
+
 }
