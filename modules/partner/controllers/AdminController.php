@@ -660,20 +660,21 @@ class AdminController extends Controller
 
         $appendListWithInternalData = function ($balanceType,  &$list) use ($id, $dateFrom, $dateTo) {
             $data = (new Query())
-                ->select('*')
-                ->from($balanceType)
-                ->where(['IdPartner' => $id])
-                ->andWhere('DateOp BETWEEN :DATEFROM AND :DATETO', [
+                ->select('orders.*, sa.BnkId')
+                ->from($balanceType .' orders')
+                ->leftJoin('statements_account sa', 'orders.IdStatm = sa.ID')
+                ->where(['orders.IdPartner' => $id])
+                ->andWhere('orders.DateOp BETWEEN :DATEFROM AND :DATETO', [
                     ':DATEFROM' => $dateFrom,
                     ':DATETO' => $dateTo]
                 )->indexBy('BnkId')
                 ->all();
 
             if (!empty($data)) {
-                foreach ($data as $id => $row) {
+                foreach ($data as $data_id => $row) {
                     //если есть в нашей БД транзакция
-                    if (isset($list[$id])) {
-                        $list[$id]['our'] = $row;
+                    if (isset($list[$data_id])) {
+                        $list[$data_id]['our'] = $row;
                     }
                 }
             }
