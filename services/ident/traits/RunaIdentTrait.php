@@ -36,6 +36,8 @@ trait RunaIdentTrait
         $identRuna->Tid = $runaIdentInitResponse->tid;
         $identRuna->DateCreate = time();
 
+        Yii::warning('IdentRunaSave: ' . json_encode($identRuna->getAttributes()));
+
         if($identRuna->save()) {
             $runaIdentInitResponse->identRuna = $identRuna;
             return $runaIdentInitResponse;
@@ -101,6 +103,7 @@ trait RunaIdentTrait
 
         $curl = curl_init($url);
 
+        Yii::warning('RunaBank req: ' . $url . ' ' . json_encode($data));
         curl_setopt_array($curl, array(
             CURLOPT_SSLVERSION => CURL_SSLVERSION_TLSv1_2,
             CURLOPT_SSLCERT => $certPath . '/vepay.crt',
@@ -126,6 +129,7 @@ trait RunaIdentTrait
                 throw new RunaIdentException($error);
             }
             curl_close($curl);
+            Yii::warning('RunaBank res: ' . $response);
             return json_decode($response, true);
         } catch (\Exception $e) {
             throw $e;
