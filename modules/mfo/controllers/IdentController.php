@@ -157,7 +157,8 @@ class IdentController extends Controller
         $mfo->LoadData(Yii::$app->request->getRawBody());
 
         Yii::$app->session->set('partnerId', $mfo->mfo);
-        $identRunaId = Yii::$app->request->post('id', null);
+        $post = json_decode(Yii::$app->request->getRawBody(), true);
+        $identRunaId = (isset($post['id']) ? (int)$post['id'] : 0);
         $identRuna = IdentRuna::findOne(['Id' => $identRunaId, 'PartnerId' => $mfo->mfo]);
 
         if(!$identRuna) {
