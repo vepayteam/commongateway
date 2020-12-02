@@ -192,7 +192,7 @@ class IdentController extends Controller
 
         return [
             'status' => $runaIdentStateResponse->getStatus(),
-            'message' => $runaIdentStateResponse->details['description'],
+            'message' => $runaIdentStateResponse->state_description,
             'details' => $runaIdentStateResponse->details,
         ];
     }
