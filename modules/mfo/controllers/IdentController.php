@@ -191,7 +191,7 @@ class IdentController extends Controller
         }
 
         return [
-            'status' => $runaIdentStateResponse->details['code'] == "0" ? 1 : 2,
+            'status' => $runaIdentStateResponse->getStatus(),
             'message' => $runaIdentStateResponse->details['description'],
             'details' => $runaIdentStateResponse->details,
         ];

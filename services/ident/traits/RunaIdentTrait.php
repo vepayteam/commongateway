@@ -54,7 +54,7 @@ trait RunaIdentTrait
     public function runaState(RunaIdentStateForm $runaIdentStateForm)
     {
         try {
-            $response = $this->sendRunaRequest('state', $runaIdentStateForm, 'verify_docs');
+            $response = $this->sendRunaRequest('get_state', $runaIdentStateForm, 'verify_docs');
         } catch (RunaIdentException $e) {
             throw $e;
         }
