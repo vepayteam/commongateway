@@ -15,6 +15,7 @@ use app\services\ident\models\IdentRuna;
 use Yii;
 use yii\base\InvalidConfigException;
 use yii\di\NotInstantiableException;
+use yii\helpers\Json;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\web\ForbiddenHttpException;
@@ -125,7 +126,13 @@ class IdentController extends Controller
 
         Yii::$app->session->set('partnerId', $mfo->mfo);
         $runaIdentInitForm = new RunaIdentInitForm();
-        $post = json_decode(Yii::$app->request->getRawBody(), true);
+
+        try {
+            $post = json_decode(Yii::$app->request->getRawBody(), true);
+        } catch (\Exception $e) {
+            throw new BadRequestHttpException($e);
+        }
+
         $runaIdentInitForm->load($post, '');
 
         if(!$runaIdentInitForm->validate()) {
@@ -157,7 +164,12 @@ class IdentController extends Controller
         $mfo->LoadData(Yii::$app->request->getRawBody());
 
         Yii::$app->session->set('partnerId', $mfo->mfo);
-        $post = json_decode(Yii::$app->request->getRawBody(), true);
+
+        try {
+            $post = json_decode(Yii::$app->request->getRawBody(), true);
+        } catch (\Exception $e) {
+            throw new BadRequestHttpException($e);
+        }
         $identRunaId = (isset($post['id']) ? (int)$post['id'] : 0);
         $identRuna = IdentRuna::findOne(['Id' => $identRunaId, 'PartnerId' => $mfo->mfo]);
 
