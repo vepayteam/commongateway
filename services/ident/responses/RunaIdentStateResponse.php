@@ -8,6 +8,10 @@ use yii\base\Model;
 
 class RunaIdentStateResponse extends Model
 {
+    const STATUS_WAIT = 0;
+    const STATUS_SUCCESS = 1;
+    const STATUS_ERROR = 2;
+
     public $details;
     public $tid;
     public $state_code;
@@ -16,7 +20,23 @@ class RunaIdentStateResponse extends Model
     public function rules()
     {
         return [
-            [['detail', 'tid', 'state_code', 'state_description'], 'safe'],
+            [['details', 'tid', 'state_code', 'state_description'], 'safe'],
         ];
+    }
+
+    public function getStatus()
+    {
+        if(!isset($this->details['state_code'])) {
+            return self::STATUS_ERROR;
+        }
+
+        switch($this->details['state_code']) {
+            case '00000':
+                return self::STATUS_SUCCESS;
+            case '00008':
+                return self::STATUS_WAIT;
+            default:
+                return self::STATUS_ERROR;
+        }
     }
 }

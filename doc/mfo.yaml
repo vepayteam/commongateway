@@ -373,6 +373,60 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /ident/runa-init:
+    post:
+      tags:
+        - Ident
+      summary: Идентификация пользователя в Руна Банке
+      description: Отправляется запрос идентификации, в ответе на который возвращается id
+        операции. По нему в последующем необходимо уточнить статус выполнения
+        операции.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IdentRunaInit"
+        description: Параметры перевода
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusId"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /ident/runa-state:
+    post:
+      tags:
+        - Ident
+      summary: Статус идентификации в Руна Банке
+      description: Запрос результата операции
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IdentRunaState"
+        description: Параметры перевода
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentRunaStateResponse"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /сheck:
     post:
       tags:
@@ -843,6 +897,53 @@ components:
         snils:
           type: string
           description: СНИЛС (при необходимости проверки)
+    IdentRunaInit:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Идентификатор запроса (указывается повторном запросе, для проверки
+            кода отправленного на телефон)
+        passport_series:
+          type: string
+          description: Серия паспорта
+        passport_number:
+          type: string
+          description: Номер паспорта
+        name:
+          type: string
+          description: Имя
+        surname:
+          type: string
+          description: Фамилия
+        patronymic:
+          type: string
+          description: Отчество
+        inn:
+          type: string
+          description: ИНН, 12 знаков
+        snils:
+          type: string
+          description: СНИЛС, формата "000-000-000 00"
+    IdentRunaState:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Идентификатор запроса
+    IdentRunaStateResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Статус ответа, где 0 - в обработке,  1 - успешная идентификация, 2 - неуспешная
+        message:
+          type: string
+          description: Сообщение системы
+        details:
+          type: object
+          description: Ответ от банка
+
     CheckReq:
       type: object
       properties:
