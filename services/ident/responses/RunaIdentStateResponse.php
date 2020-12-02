@@ -24,13 +24,16 @@ class RunaIdentStateResponse extends Model
         ];
     }
 
+    /**
+     * @return int
+     */
     public function getStatus()
     {
-        if(!isset($this->details['state_code'])) {
+        if(!isset($this->state_code)) {
             return self::STATUS_ERROR;
         }
 
-        switch($this->details['state_code']) {
+        switch($this->state_code) {
             case '00000':
                 return self::STATUS_SUCCESS;
             case '00008':
