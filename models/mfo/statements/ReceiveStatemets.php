@@ -68,6 +68,12 @@ class ReceiveStatemets
                 } else {
                     $appendingList = $this->ParseSatements($res['statements']);
                 }
+                if (!empty($appendingList)) {
+                    foreach ($appendingList as &$row) {
+                        $row['our_schet_type'] = $accountType;
+                        $row['our_schet'] = $this->Partner->$accountType;
+                    }
+                }
                 $list = ArrayHelper::merge($list, $appendingList);
             }
         }
