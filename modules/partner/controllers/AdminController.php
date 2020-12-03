@@ -660,7 +660,7 @@ class AdminController extends Controller
 
         $appendListWithInternalData = function ($balanceType,  &$list) use ($id, $dateFrom, $dateTo) {
             $data = (new Query())
-                ->select('orders.*, sa.BnkId')
+                ->select('orders.*, sa.BnkId, sa.TypeAccount')
                 ->from($balanceType .' orders')
                 ->leftJoin('statements_account sa', 'orders.IdStatm = sa.ID')
                 ->where(['orders.IdPartner' => $id])
@@ -674,7 +674,8 @@ class AdminController extends Controller
                 foreach ($data as $data_id => $row) {
                     //если есть в нашей БД транзакция
                     if (isset($list[$data_id])) {
-                        $list[$data_id]['our'] = $row;
+                        $list[$data_id]['our_balance_type'] = $balanceType;
+                        $list[$data_id]['our_data'] = $row;
                     }
                 }
             }
@@ -684,12 +685,5 @@ class AdminController extends Controller
         $appendListWithInternalData('partner_orderout', $list);
 
         return Json::encode($list);
-
-        //TODO: переписать на Yii::$app->response->sendFile()
-        /*header('Content-Type: application/csv');
-        header('Content-Disposition: attachment; filename="statement_'. $id .'";');
-        $out = fopen('php://output', 'w');
-        fputcsv($out, $list);
-        fclose($out);*/
     }
 }
