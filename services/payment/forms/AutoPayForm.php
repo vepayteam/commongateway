@@ -31,11 +31,12 @@ class AutoPayForm extends Model
     public $card = 0;
     public $timeout = 30;
     public $postbackurl = '';
+    public $type;
 
     public function rules()
     {
         return [
-            [['amount', 'card'], 'required'],
+            [['amount', 'card', 'type'], 'required'],
             [['amount'], 'number', 'min' => 1, 'max' => 1000000],
             [['extid'], 'string', 'max' => 40],
             [['document_id'], 'string', 'max' => 40],
@@ -44,6 +45,7 @@ class AutoPayForm extends Model
             [['postbackurl'], 'string', 'max' => 300],
             [['descript'], 'string', 'max' => 200],
             [['card'], 'integer'],
+            [['type'], 'integer', 'min' => 0],
             [['card'], 'validateCard'],
         ];
     }
@@ -77,13 +79,13 @@ class AutoPayForm extends Model
                 ->where([
                     'u.ExtOrg' => $this->partner->ID,
                     'c.IsDeleted' => 0,
-                    'c.TypeCard' => 0,
+                    'c.TypeCard' => $this->type,
                     'c.ID' => $this->card
                 ]);
             $res = $query->one();
             if ($res && $res['IdCard'] && $res['IdUser']) {
                 $this->user = User::findOne(['ID' => $res['IdUser']]);
-                $this->_card = Cards::findOne(['ID' => $res['IdCard'], 'TypeCard' => 0, 'IsDeleted' => 0]);
+                $this->_card = Cards::findOne(['ID' => $res['IdCard'], 'TypeCard' => $this->type, 'IsDeleted' => 0]);
             }
         }
 
