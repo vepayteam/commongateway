@@ -15,12 +15,14 @@ class   KfPayParts extends KfPay
     const AFTMINSUMM = 1200;
 
     public $amount = 0;
+    public $merchant_id = 0;
     public $document_id = '';
     public $fullname = '';
     public $extid = '';
     public $descript = '';
     public $id;
     //public $type = 0;/*'type', */
+    public $type;
     public $card = 0;
     public $timeout = 15;
     public $successurl = '';
@@ -33,6 +35,7 @@ class   KfPayParts extends KfPay
     public function rules()
     {
         return [
+            [['extid', 'failurl', 'document_id', 'fullname', 'successurl', 'document_id', 'fullname' ], 'required', 'on' => [self::SCENARIO_FORM]],
             [['amount'], 'validateAmount', 'on' => [self::SCENARIO_FORM, self::SCENARIO_AUTO]],
             [['extid'], 'string', 'max' => 40, 'on' => [self::SCENARIO_FORM, self::SCENARIO_AUTO]],
             [['document_id'], 'string', 'max' => 40, 'on' => [self::SCENARIO_FORM]],
@@ -48,7 +51,7 @@ class   KfPayParts extends KfPay
 
             [['parts'], 'required', 'on' => [self::SCENARIO_FORM, self::SCENARIO_AUTO]],
             [['parts'], 'validateParts', 'on' => [self::SCENARIO_FORM, self::SCENARIO_AUTO]],
-
+            [['type'], 'integer', 'min' => 0,'on' => [self::SCENARIO_FORM]]
         ];
     }
 
@@ -56,6 +59,10 @@ class   KfPayParts extends KfPay
     {
         $amount = 0;
         foreach ($this->parts as $part) {
+            if(!is_numeric($part['amount'])) {
+                $this->addError('amount', 'Параметр parts/ammount должен быть числом');
+                continue;
+            }
             $amount += $part['amount'];
         }
         if ($amount < 1 || $amount > 1000000) {
@@ -70,6 +77,8 @@ class   KfPayParts extends KfPay
             if(!array_key_exists('merchant_id', $part)
                 || !array_key_exists('amount', $part)
                 || !preg_match('/[0-9]+/', $part['amount'])
+                || !is_numeric($part['merchant_id'])
+                || $part['merchant_id'] < 1
             ) {
                 $this->addError('parts', 'Части платежа невалидны');
             }
