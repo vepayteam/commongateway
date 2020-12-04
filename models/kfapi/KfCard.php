@@ -31,6 +31,7 @@ class KfCard extends Model
     public function rules()
     {
         return [
+            [['type' ,'timeout' ,'extid' ,'successurl', 'failurl', 'cancelurl'], 'required', 'on' => [self::SCENARIO_REG]],
             [['card', 'id', 'type'], 'integer'],
             [['extid'], 'string', 'max' => 40, 'on' => [self::SCENARIO_REG]],
             [['successurl', 'failurl', 'cancelurl'], 'url', 'on' => [self::SCENARIO_REG]],
@@ -38,7 +39,7 @@ class KfCard extends Model
             [['timeout'], 'integer', 'min' => 10, 'max' => 59, 'on' => [self::SCENARIO_REG]],
             [['card'], 'required', 'on' => self::SCENARIO_INFO],
             [['id'], 'required', 'on' => self::SCENARIO_GET],
-            [['type'], 'required', 'on' => self::SCENARIO_REG]
+            [['type'], 'integer', 'min' => 0, 'on' => self::SCENARIO_REG]
         ];
     }
 
