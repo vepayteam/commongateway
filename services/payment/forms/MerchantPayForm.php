@@ -25,6 +25,7 @@ class MerchantPayForm extends BaseForm
     public function rules()
     {
         return [
+            [['successurl', 'document_id', 'fullname', 'timeout'], 'required'],
             [['type'], 'integer', 'min' => 0],
             [['amount'], 'number', 'min' => 1, 'max' => 1000000],
             [['extid'], 'string', 'max' => 40],
