@@ -11,6 +11,7 @@ class RunaIdentInitForm extends Model
 {
     use ErrorModelTrait;
 
+    public $cid_origin;
     public $passport_series;
     public $passport_number;
     public $name;
@@ -22,7 +23,8 @@ class RunaIdentInitForm extends Model
     public function rules()
     {
         return [
-            [['passport_series', 'passport_number', 'name', 'surname'],'required'],
+            [['cid_origin', 'passport_series', 'passport_number', 'name', 'surname'], 'required'],
+            ['cid_origin', 'integer'],
             ['passport_series', 'string', 'min' => 4, 'max' => 4],
             ['passport_number', 'string', 'min' => 6, 'max' => 6],
             ['inn', 'string', 'min' => 12, 'max' => 12],
