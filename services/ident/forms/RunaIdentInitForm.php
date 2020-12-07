@@ -24,7 +24,7 @@ class RunaIdentInitForm extends Model
     {
         return [
             [['cid_origin', 'passport_series', 'passport_number', 'name', 'surname'], 'required'],
-            ['cid_origin', 'number'],
+            ['cid_origin', 'integer'],
             ['passport_series', 'string', 'min' => 4, 'max' => 4],
             ['passport_number', 'string', 'min' => 6, 'max' => 6],
             ['inn', 'string', 'min' => 12, 'max' => 12],
