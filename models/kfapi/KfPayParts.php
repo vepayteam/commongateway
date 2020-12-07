@@ -76,7 +76,7 @@ class   KfPayParts extends KfPay
             if(!array_key_exists('merchant_id', $part)
                 || !array_key_exists('amount', $part)
                 || !preg_match('/[0-9]+/', $part['amount'])
-                || !is_integer($part['merchant_id'])
+                || !is_numeric($part['merchant_id'])
                 || $part['merchant_id'] < 1
             ) {
                 $this->addError('parts', 'Части платежа невалидны');
