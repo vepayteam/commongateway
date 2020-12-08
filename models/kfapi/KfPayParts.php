@@ -35,7 +35,6 @@ class   KfPayParts extends KfPay
     public function rules()
     {
         return [
-            [['extid', 'failurl', 'document_id', 'fullname', 'successurl', 'document_id', 'fullname' ], 'required', 'on' => [self::SCENARIO_FORM]],
             [['amount'], 'validateAmount', 'on' => [self::SCENARIO_FORM, self::SCENARIO_AUTO]],
             [['extid'], 'string', 'max' => 40, 'on' => [self::SCENARIO_FORM, self::SCENARIO_AUTO]],
             [['document_id'], 'string', 'max' => 40, 'on' => [self::SCENARIO_FORM]],
