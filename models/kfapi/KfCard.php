@@ -31,7 +31,6 @@ class KfCard extends Model
     public function rules()
     {
         return [
-            [['type' ,'timeout' ,'extid' ,'successurl', 'failurl', 'cancelurl'], 'required', 'on' => [self::SCENARIO_REG]],
             [['card', 'id', 'type'], 'integer'],
             [['extid'], 'string', 'max' => 40, 'on' => [self::SCENARIO_REG]],
             [['successurl', 'failurl', 'cancelurl'], 'url', 'on' => [self::SCENARIO_REG]],

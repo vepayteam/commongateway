@@ -7,6 +7,7 @@ use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\mfo\IdentificationUser;
 use app\models\mfo\MfoReq;
+use app\models\payonline\Partner;
 use app\services\ident\exceptions\RunaIdentException;
 use app\services\ident\forms\RunaIdentInitForm;
 use app\services\ident\forms\RunaIdentStateForm;
@@ -134,6 +135,9 @@ class IdentController extends Controller
         }
 
         $runaIdentInitForm->load($post, '');
+
+        $partner = Partner::findOne(['ID' => $mfo->mfo]);
+        $runaIdentInitForm->cid_origin = $partner->RunaBankCid;
 
         if(!$runaIdentInitForm->validate()) {
             return [

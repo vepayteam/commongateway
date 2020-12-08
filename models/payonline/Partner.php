@@ -130,6 +130,7 @@ use yii\web\UploadedFile;
  * @property string $MtsTokenParts
  * @property int $BankForPaymentId
  * @property int $BankForTransferToCardId
+ * @property int $RunaBankCid
  * @property Uslugatovar[] $uslugatovars
  * @property PartnerBankRekviz $partner_bank_rekviz
  *
