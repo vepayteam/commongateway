@@ -28,6 +28,7 @@ use app\models\sms\tables\AccessSms;
 use toriphes\console\Runner;
 use Yii;
 use yii\db\Exception;
+use yii\db\Expression;
 use yii\db\Query;
 use yii\filters\AccessControl;
 use yii\helpers\ArrayHelper;
@@ -685,5 +686,84 @@ class AdminController extends Controller
         $appendListWithInternalData('partner_orderout', $list);
 
         return Json::encode($list);
+    }
+
+    /**
+     * синхронизирует баланс партнера на основе таблицы выписок
+     * @param $id - ид партнера
+     * @param bool $useUndefined - суммировать ли операции, которые попали в таблицу ни через наше апи ни через выписку
+     * @throws BadRequestHttpException
+     * @throws Exception
+     */
+    public function actionSyncbalance($id, $useUndefined = true)
+    {
+        $partner = Partner::findOne(['ID' => $id]);
+        if (!$partner) {
+            throw new BadRequestHttpException('Не указан партнёр');
+        }
+        $this->syncBalanceInternal($partner, BalancePartner::IN, $useUndefined);
+        $this->syncBalanceInternal($partner, BalancePartner::OUT, $useUndefined);
+    }
+
+    /**
+     * @param Partner $partner
+     * @param int $type - тип баланса
+     * @param $useUndefined - суммировать ли операции, которые попали в таблицу ни через наше апи ни через выписку
+     * @throws Exception
+     */
+    private function syncBalanceInternal($partner, $type, $useUndefined)
+    {
+        $partnerId = $partner->ID;
+        if ($type == BalancePartner::IN) {
+            $table = 'partner_orderin';
+            $typeAccount = 2;
+            $balance = new BalancePartner(BalancePartner::IN, $partnerId);
+            $balanceField = 'BalanceIn';
+        } else {
+            $table = 'partner_orderout';
+            $typeAccount = 0;
+            $balance = new BalancePartner(BalancePartner::OUT, $partnerId);
+            $balanceField = 'BalanceOut';
+        }
+
+        $data = (new Query())
+            ->select('sa.ID as IdStatm, sa.SummPP, sa.Description, sa.IsCredit')
+            ->from('statements_account sa')
+            ->leftJoin("$table b", 'sa.ID = b.IdStatm')
+            ->where([
+                'sa.TypeAccount' => $typeAccount,
+                'sa.IdPartner' => $partnerId
+            ])
+            ->andWhere('b.ID IS NULL')
+            ->all();
+
+        if (!empty($data)) {
+            foreach ($data as $row) {
+                $description = mb_substr($row['Description'], 0, 250);
+                if ($row['IsCredit']) {
+                    $balance->Inc($row['SummPP'], $description, 0, 0, $row['IdStatm']);
+                } else {
+                    $balance->Dec($row['SummPP'], $description, 0, 0, $row['IdStatm']);
+                }
+            }
+        }
+
+        $query = (new Query())
+            ->select(new Expression('SUM(Summ) AS Summ'))
+            ->from($table)
+            ->where([
+                'IdPartner' => $partnerId
+            ]);
+
+        if (!$useUndefined) {
+            $query->andWhere('(IdPay <> 0 OR IdStatm <> 0)');
+        }
+
+        $sum = $query->createCommand()->queryScalar();
+
+        $old = $partner[$balanceField];
+        $partner[$balanceField] = $sum;
+        $partner->save(false);
+        echo sprintf('%s: old=%d new=%d' . PHP_EOL, $table, $old, $sum);
     }
 }
