@@ -52,6 +52,14 @@ use yii\web\View;
                             </div>
                         </div>
 
+                        <div class="form-group hidden"><label class="col-sm-2 control-label"></label>
+                            <div class="btn-group" data-toggle="buttons">
+                                <label class="btn btn-white active">
+                                    <input type="radio" name="page" id="page0" value="0" autocomplete="off" checked> 1
+                                </label>
+                            </div>
+                        </div>
+
                     </form>
 
                     <div class="sk-spinner sk-spinner-wave">
@@ -62,6 +70,14 @@ use yii\web\View;
                         <div class="sk-rect5"></div>
                     </div>
                     <div id="sale-graphkonvers"></div>
+                    <div class="form-group"><label class="col-sm-2 control-label"></label>
+                        <label class="btn btn-white sk-pagination-item-tmp hidden">
+                            <input type="radio" name="page" value="0" autocomplete="off" checked> 10
+                        </label>
+                        <div id="sk-pagination" class="btn-group sk-pagination" data-toggle="buttons">
+
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -72,6 +72,7 @@ $config = [
 
                 '/oferta' => '/site/oferta',
                 '/admin/statementdiff/<id:\d+>' => 'admin/statement-diff',
+                '/admin/syncbalance/<id:\d+>' => 'admin/syncbalance',
 
                 '<controller>/<id:\d+>' => '<controller>/index',
                 '<controller>/<action>' => '<controller>/<action>',

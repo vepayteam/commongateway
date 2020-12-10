@@ -500,14 +500,44 @@
             lk.statgraphkonversload();
         },
 
-        statgraphkonversload: function () {
+        statgraphkonversSetPaging: function(data, form) {
+            let skp = $(".sk-pagination");
+            let template = $('.sk-pagination-item-tmp:first').clone();
+            let item;
+            let formData = form.clone();
+            skp.empty();
+            if(data.number_pages < 2) {
+                return;
+            }
+            template.removeClass('hidden');
+            data.number_pages++;
+            while (data.number_pages > 0) {
+                formData.find('input[name="page"]:checked').val(data.number_pages - 1);
+                item = template.clone();
+                item.text(data.number_pages);
+                item.attr('data_form', formData.serialize());
+                item.bind( "click", function() {
+                    lk.statgraphkonversload($( this ).attr("data_form"));
+                });
+                skp.prepend(item)
+                data.number_pages--;
+                if(data.number_pages == data.page) {
+                    item.addClass('active');
+                }
+            }
+        },
+
+        statgraphkonversload: function (dataForm) {
             if (linklink) {
                 linklink.abort();
+            }
+            if(typeof dataForm !== 'string') {
+                dataForm = $('#saleformkonvers').serialize();
             }
             linklink = $.ajax({
                 type: "POST",
                 url: '/partner/stat/salekonversdata',
-                data: $('#saleformkonvers').serialize(),
+                data: dataForm,
                 beforeSend: function () {
                     $("#sale-graphkonvers").empty();
                     $('#saleformkonvers').closest('.ibox-content').toggleClass('sk-loading');
@@ -526,6 +556,7 @@
                             parseTime: false,
                             resize: true
                         });
+                        lk.statgraphkonversSetPaging(data, $('#saleformkonvers'));
                     } else {
                         $('#sale-graphkonvers').html(data.message);
                     }
@@ -536,6 +567,8 @@
                 }
             });
         },
+
+
 
         statgraphplatelshik: function () {
 
