@@ -17,14 +17,16 @@ class StatGraph extends Model
     public $partner = 0;
     public $usluga = [];
     public $TypeUslug = [];
+    public $page;
 
     const SCENARIO_DAY = 'day';
     const SCENARIO_MONTH = 'month';
+    const PAGE_ITEMS_COUNT = 1000;
 
     public function rules()
     {
         return [
-            [['partner', 'datetype'], 'integer'],
+            [['partner', 'datetype', 'page'], 'integer'],
             [['datefrom', 'dateto'], 'date', 'format' => 'php:d.m.Y', 'on' => self::SCENARIO_DEFAULT],
             [['datefrom', 'dateto'], 'required', 'on' => self::SCENARIO_DEFAULT],
             [['datefrom', 'dateto'], 'date', 'format' => 'php:m.Y', 'on' => self::SCENARIO_MONTH],
@@ -227,33 +229,12 @@ class StatGraph extends Model
         $xkey = 'x';
         $ykey = 'a';
 
-        $rows = Yii::$app->db->cache(function () use ($IdPart, $datefrom, $dateto) {
+        $result = $this->GetSaleKonversQuery($IdPart, $datefrom, $dateto, $this->page);
+        if(!is_array($result)) {
+            return false;
+        }
 
-            $query = new Query();
-            $query
-                ->select(['SummPay', 'DateCreate', 'Status'])
-                ->from('`pay_schet` AS ps')
-                ->leftJoin('`uslugatovar` AS qp', 'ps.IdUsluga = qp.ID')
-                ->where('ps.DateCreate BETWEEN :DATEFROM AND :DATETO', [
-                    ':DATEFROM' => $datefrom, ':DATETO' => $dateto
-                ]);
-
-            if ($IdPart > 0) {
-                $query->andWhere('qp.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);
-            }
-            if (count($this->usluga) > 0) {
-                $query->andWhere(['in', 'qp.ID', $this->usluga]);
-            }
-            if (count($this->TypeUslug) > 0) {
-                $query->andWhere(['in', 'qp.IsCustom', $this->TypeUslug]);
-            } else {
-                $query->andWhere(['in', 'qp.IsCustom', TU::InAll()]);
-            }
-
-            return $query->all();
-        }, 60);
-
-        foreach ($rows as $row) {
+        foreach ($result['rows'] as $row) {
             if ($this->datetype == 1) {
                 $DatePay = date('m.Y', $row['DateCreate']);
             } else {
@@ -282,7 +263,38 @@ class StatGraph extends Model
             $dataJ[] = [$xkey => 0, $ykey => 0];
         }
 
-        return ['status' => 1, 'data' => $dataJ];
+        return ['status' => 1, 'number_pages' => $result['number_pages'], 'page' => $this->page, 'data' => $dataJ];
+    }
+
+    private function GetSaleKonversQuery($IdPart, $datefrom, $dateto, $page)
+    {
+        return Yii::$app->db->cache(function () use ($IdPart, $datefrom, $dateto, $page) {
+            $query = new Query();
+            $query
+                ->select(['SummPay', 'DateCreate', 'Status'])
+                ->from('`pay_schet` AS ps')
+                ->leftJoin('`uslugatovar` AS qp', 'ps.IdUsluga = qp.ID')
+                ->where('ps.DateCreate BETWEEN :DATEFROM AND :DATETO', [
+                    ':DATEFROM' => $datefrom, ':DATETO' => $dateto
+                ]);
+            if ($IdPart > 0) {
+                $query->andWhere('qp.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);
+            }
+            if (count($this->usluga) > 0) {
+                $query->andWhere(['in', 'qp.ID', $this->usluga]);
+            }
+            if (count($this->TypeUslug) > 0) {
+                $query->andWhere(['in', 'qp.IsCustom', $this->TypeUslug]);
+            } else {
+                $query->andWhere(['in', 'qp.IsCustom', TU::InAll()]);
+            }
+            $count = $query->count();
+            $result['number_pages'] = $count > self::PAGE_ITEMS_COUNT ? floor($count / self::PAGE_ITEMS_COUNT) : 1;
+            $query->limit(self::PAGE_ITEMS_COUNT);
+            $query->offset($page * self::PAGE_ITEMS_COUNT);
+            $result['rows'] = $query->all();
+            return $result;
+        }, 60);
     }
 
     /**
