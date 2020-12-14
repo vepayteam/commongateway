@@ -309,6 +309,16 @@ class ReceiveStatemets
                         //баланс выдачи
                         $BalanceOut->Inc($sumVyp, $description, 0, 0, $IdStatm);
                     }
+                } else {
+                    //списание со счета
+                    //0 - счет на выдачу 1 - счет на погашение 2 - номинальный счет
+                    if ($TypeSchet == 0 /*&& mb_stripos($description, 'Переводы по TCBPay') === false*/) {
+                        //баланс выдачи
+                        $BalanceOut->Dec($sumVyp, $description, 0, 0, $IdStatm);
+                    } elseif ($TypeSchet == 2) {
+                        //баланс номинального счета
+                        $BalanceIn->Dec($sumVyp, $description, 0, 0, $IdStatm);
+                    }
                 }
 
             } else {
