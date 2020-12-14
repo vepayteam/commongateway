@@ -39,6 +39,7 @@ use yii\web\Controller;
 use yii\web\HttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
+use app\services\files\FileService;
 
 class AdminController extends Controller
 {
@@ -272,36 +273,36 @@ class AdminController extends Controller
     public function actionTestapplog($id = 0)
     {
         if ($id == 0) {
-            return Yii::$app->response->sendFile(Yii::$app->basePath . "/runtime/logs/app.log");
+            FileService::send(Yii::$app->basePath . "/runtime/logs/app.log");
         } else {
-            return Yii::$app->response->sendFile(Yii::$app->basePath . "/runtime/logs/app.log.".intval($id));
+            FileService::send(Yii::$app->basePath . "/runtime/logs/app.log.".intval($id));
         }
     }
 
     public function actionTestmfolog($id = 0)
     {
         if ($id == 0) {
-            return Yii::$app->response->sendFile(Yii::$app->basePath . "/runtime/logs/mfo.log");
+            FileService::send(Yii::$app->basePath . "/runtime/logs/mfo.log");
         } else {
-            return Yii::$app->response->sendFile(Yii::$app->basePath . "/runtime/logs/mfo.log.".intval($id));
+            FileService::send(Yii::$app->basePath . "/runtime/logs/mfo.log.".intval($id));
         }
     }
 
     public function actionTestmerchantlog($id = 0)
     {
         if ($id == 0) {
-            return Yii::$app->response->sendFile(Yii::$app->basePath . "/runtime/logs/console/merchant.log");
+            FileService::send(Yii::$app->basePath . "/runtime/logs/console/merchant.log");
         } else {
-            return Yii::$app->response->sendFile(Yii::$app->basePath . "/runtime/logs/console/merchant.log.".intval($id));
+            FileService::send(Yii::$app->basePath . "/runtime/logs/console/merchant.log.".intval($id));
         }
     }
 
     public function actionTestrsbcronlog($id = 0)
     {
         if ($id == 0) {
-            return Yii::$app->response->sendFile(Yii::$app->basePath . "/runtime/logs/console/rsbcron.log");
+            FileService::send(Yii::$app->basePath . "/runtime/logs/console/rsbcron.log");
         } else {
-            return Yii::$app->response->sendFile(Yii::$app->basePath . "/runtime/logs/console/rsbcron.log.".intval($id));
+            FileService::send(Yii::$app->basePath . "/runtime/logs/console/rsbcron.log.".intval($id));
         }
     }
 
