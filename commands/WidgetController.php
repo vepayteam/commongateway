@@ -338,7 +338,8 @@ class WidgetController extends Controller
         $table = $type == 'in' ? 'partner_orderin' : 'partner_orderout';
         $field = $type == 'in' ? 'BalanceIn' : 'BalanceOut';
 
-        $q = sprintf("SELECT SUM(Summ) AS Summ FROM %s WHERE IdPartner = %d", $table, $idPartner);
+        //при синхронизации учитываем строго транзакции, полученные через импорт банковской выписки
+        $q = sprintf("SELECT SUM(Summ) AS Summ FROM %s WHERE IdPartner = %d AND IdStatm <> 0", $table, $idPartner);
         $summ = Yii::$app->db->createCommand($q)->queryScalar();
 
         $old = $partner[$field];

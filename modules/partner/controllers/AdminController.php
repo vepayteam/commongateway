@@ -691,27 +691,25 @@ class AdminController extends Controller
     /**
      * синхронизирует баланс партнера на основе таблицы выписок
      * @param $id - ид партнера
-     * @param bool $useUndefined - суммировать ли операции, которые попали в таблицу ни через наше апи ни через выписку
      * @throws BadRequestHttpException
      * @throws Exception
      */
-    public function actionSyncbalance($id, $useUndefined = true)
+    public function actionSyncbalance($id)
     {
         $partner = Partner::findOne(['ID' => $id]);
         if (!$partner) {
             throw new BadRequestHttpException('Не указан партнёр');
         }
-        $this->syncBalanceInternal($partner, BalancePartner::IN, $useUndefined);
-        $this->syncBalanceInternal($partner, BalancePartner::OUT, $useUndefined);
+        $this->syncBalanceInternal($partner, BalancePartner::IN);
+        $this->syncBalanceInternal($partner, BalancePartner::OUT);
     }
 
     /**
      * @param Partner $partner
      * @param int $type - тип баланса
-     * @param $useUndefined - суммировать ли операции, которые попали в таблицу ни через наше апи ни через выписку
      * @throws Exception
      */
-    private function syncBalanceInternal($partner, $type, $useUndefined)
+    private function syncBalanceInternal($partner, $type)
     {
         $partnerId = $partner->ID;
         if ($type == BalancePartner::IN) {
@@ -753,11 +751,15 @@ class AdminController extends Controller
             ->from($table)
             ->where([
                 'IdPartner' => $partnerId
-            ]);
-
-        if (!$useUndefined) {
-            $query->andWhere('(IdPay <> 0 OR IdStatm <> 0)');
-        }
+            ])
+            //при пересчете суммы баланса мы опираемся строго на транзакции
+            //полученные через выписки. транзакции которые были созданы
+            //через платежи в рамках этой системы не учитываются (IdPay <> 0)
+            //связано с тем, что в выписке приходят эти же самые платежи
+            //и происходят задвоение данных. связать транзакцию из выписки
+            //и транзакцию из нашей системы не получается
+            //TODO: поискать решение, чтобы связать выписки и наши транзакции
+            ->andWhere('IdStatm <> 0');
 
         $sum = $query->createCommand()->queryScalar();
 
