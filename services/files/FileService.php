@@ -22,7 +22,7 @@ class FileService
             header('Content-Length: ' . filesize($file));
             if ($fd = fopen($file, 'rb')) {
                 while (!feof($fd)) {
-                    print fread($fd, 1024);
+                    echo fread($fd, 1024);
                     usleep(1000);
                 }
                 fclose($fd);
