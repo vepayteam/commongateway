@@ -19,6 +19,11 @@ use yii\web\ForbiddenHttpException;
 use yii\web\MethodNotAllowedHttpException;
 use yii\web\Response;
 
+use app\services\card\Reg;
+use app\services\card\Del;
+use app\services\card\Get;
+use app\services\card\Info;
+
 
 class CardController extends Controller
 {
@@ -38,6 +43,10 @@ class CardController extends Controller
      */
     public function beforeAction($action)
     {
+        $version = (Yii::$app->request)->get('version');
+        if($version) {
+            $action->actionMethod = $action->actionMethod . $version;
+        }
         if ($this->checkBeforeAction()) {
             Yii::$app->response->format = Response::FORMAT_JSON;
             $this->enableCsrfValidation = false;
@@ -55,6 +64,43 @@ class CardController extends Controller
             'del' => ['POST']
         ];
     }
+
+    /**
+     * @return Response
+     */
+    public function actionRegV1()
+    {
+        $registration = Reg::exec();
+        return $this->asJson($registration->response);
+    }
+
+    /**
+     * @return Response
+     */
+    public function actionDelV1()
+    {
+        $registration = Del::exec();
+        return $this->asJson($registration->response);
+    }
+
+    /**
+     * @return Response
+     */
+    public function actionGetV1()
+    {
+        $registration = Get::exec();
+        return $this->asJson($registration->response);
+    }
+
+    /**
+     * @return Response
+     */
+    public function actionInfoV1()
+    {
+        $registration = Info::exec();
+        return $this->asJson($registration->response);
+    }
+
 
     /**
      * Информация по карте по ID

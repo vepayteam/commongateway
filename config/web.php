@@ -82,6 +82,7 @@ $config = [
                 '<module>/<action>' => '<module>/default/<action>',
                 '<module>/<action>/<id:\d+>' => '<module>/default/<action>',
                 'debug/<controller>/<action>' => 'debug/<controller>/<action>',
+                '<version:\w+>/<module>/<controller>/<action>' => '<module>/<controller>/<action>',
 
                 //['class' => 'yii\rest\UrlRule', 'controller' => ''],
             ],
