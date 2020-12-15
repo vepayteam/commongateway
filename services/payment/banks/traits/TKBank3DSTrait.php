@@ -17,6 +17,7 @@ use app\services\payment\forms\tkb\Check3DSVersionRequest;
 use app\services\payment\forms\tkb\CreatePay3DS2Request;
 use app\services\payment\interfaces\Cache3DSv2Interface;
 use app\services\payment\interfaces\Issuer3DSVersionInterface;
+use app\services\payment\models\PaySchet;
 use Yii;
 use yii\helpers\Json;
 
@@ -50,13 +51,23 @@ trait TKBank3DSTrait
         $check3DSVersionResponse = new Check3DSVersionResponse();
 
         // обработка ошибок
+        $check3DSCacheKey = PaySchet::CHECK_3DS_CACHE_PREFIX . $paySchet->ID;
         if(isset($ans['httperror']['Code'])) {
             // ошибка дубликата
-            if($ans['httperror']['Code'] == 'OPERATION_DUPLICATED') {
+            if(
+                $ans['httperror']['Code'] == 'OPERATION_DUPLICATED'
+                && Yii::$app->cache->exists($check3DSCacheKey)
+            ) {
+                try {
+                    $ans = json_decode(Yii::$app->cache->get($check3DSCacheKey), true);
+                } catch (\Exception $e) {
+                    $message = 'Ошибка данных 3ds2check';
+                    $paySchet->setError($message);
+                    throw new Check3DSv2DuplicatedException($message);
+                }
+            } elseif ($ans['httperror']['Code'] == 'OPERATION_DUPLICATED') {
                 $message = 'Ошибка дублирования запроса 3ds2check';
-                $createPayForm->getPaySchet()->Status = 2;
-                $createPayForm->getPaySchet()->ErrorInfo = $message;
-                $createPayForm->getPaySchet()->save(false);
+                $paySchet->setError($message);
                 throw new Check3DSv2DuplicatedException($message);
             }
         }
@@ -65,6 +76,7 @@ trait TKBank3DSTrait
             throw new BankAdapterResponseException('Ошибка проверки версии 3ds');
         }
 
+        Yii::$app->cache->set($check3DSCacheKey, json_encode($ans), 600);
         if($ans['xml']['CardEnrolled'] == 'N') {
             $check3DSVersionResponse->version = Issuer3DSVersionInterface::V_1;
         } else {
