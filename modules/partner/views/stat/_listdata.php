@@ -176,15 +176,3 @@ use app\models\TU;
         </tr></tbody>
     <?php endif; ?>
 </table>
-<script>
-    $(document).ready(function() {
-       $('.listadata__table__buttons__update-status-button').click(function(e) {
-           e.preventDefault();
-
-
-
-           return false;
-       })
-
-    });
-</script>

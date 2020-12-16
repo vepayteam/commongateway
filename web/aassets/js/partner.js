@@ -260,8 +260,6 @@
                     });
                 });
                 return false;
-
-                return false;
             });
         },
 
