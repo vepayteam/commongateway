@@ -30,6 +30,7 @@ use app\models\SendEmail;
 use app\models\TU;
 use app\services\ident\forms\IdentStatisticForm;
 use app\services\ident\IdentService;
+use app\services\payment\models\PaySchet;
 use kartik\mpdf\Pdf;
 use Yii;
 use yii\base\DynamicModel;
@@ -37,6 +38,7 @@ use yii\filters\AccessControl;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
 use yii\helpers\VarDumper;
+use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
@@ -189,6 +191,38 @@ class StatController extends Controller
             return ['status' => 0, 'message' => 'Ошибка запроса отмены'];
         } else {
             return $this->redirect('/partner');
+        }
+    }
+
+    /**
+     * Сбросить статус платежа
+     * @return array
+     */
+    public function actionUpdateStatusPay()
+    {
+        if (!Yii::$app->request->isAjax || !UserLk::IsAdmin(Yii::$app->user)) {
+            return ['status' => 2, 'message' => 'Ошибка запроса'];
+        }
+
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $paySchet = PaySchet::findOne([
+            'ID' => (int)Yii::$app->request->post('id', 0),
+        ]);
+
+        if(!$paySchet) {
+            return ['status' => 2, 'message' => 'Ошибка запроса'];
+        }
+
+        $paySchet->Status = 0;
+        $paySchet->ErrorInfo = 'Запрашивается статус';
+        $paySchet->sms_accept = 1;
+        // Поправка, чтобы попасть в период rsbcron
+        $paySchet->DateLastUpdate = time() - 3600 * 8;
+
+        if($paySchet->save(false)) {
+            return ['status' => 1, 'message' => 'Статус сброшен, ожидается обновление'];
+        } else {
+            return ['status' => 2, 'message' => 'Ошибка обновления'];
         }
     }
 

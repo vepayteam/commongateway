@@ -87,6 +87,12 @@ use app\models\TU;
                         <input class='btn btn-white btn-xs' data-action="cancelpay" data-id='<?= $row['ID'] ?>' type='button' value='Отменить'>
                     <?php endif; ?>
                         <input class="btn btn-white btn-xs excerpt" data-id="<?=$row['ID']?>" type="button" value="Выписка">
+                    <?php if ($IsAdmin && $row['Status'] != 0) : ?>
+                        <a class="btn btn-white btn-xs" data-action="update-status-pay"
+                           href="#" data-id="<?=$row['ID']?>">
+                            Обновить статус
+                        </a>
+                    <?php endif; ?>
                 </td>
             </tr>
 <?php endforeach; ?>
@@ -170,3 +176,15 @@ use app\models\TU;
         </tr></tbody>
     <?php endif; ?>
 </table>
+<script>
+    $(document).ready(function() {
+       $('.listadata__table__buttons__update-status-button').click(function(e) {
+           e.preventDefault();
+
+
+
+           return false;
+       })
+
+    });
+</script>
