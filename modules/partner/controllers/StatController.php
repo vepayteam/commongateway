@@ -216,8 +216,6 @@ class StatController extends Controller
         $paySchet->Status = 0;
         $paySchet->ErrorInfo = 'Запрашивается статус';
         $paySchet->sms_accept = 1;
-        // Поправка, чтобы попасть в период rsbcron
-        $paySchet->DateLastUpdate = time() - 3600 * 8;
 
         if($paySchet->save(false)) {
             return ['status' => 1, 'message' => 'Статус сброшен, ожидается обновление'];
