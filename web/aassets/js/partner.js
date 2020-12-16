@@ -203,6 +203,64 @@
                 });
                 return false;
             });
+
+            $('#statlistresult').on('click', '[data-action="update-status-pay"]', function() {
+                let idpay = $(this).attr('data-id');
+                swal({
+                    title: "Подтвердите запрос на обновление статуса",
+                    text: "Запрос встанет в очереь на обработку",
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#DD6B55",
+                    confirmButtonText: "Да, обновить!",
+                    cancelButtonText: "Нет, не обновлять",
+                    closeOnConfirm: false
+                }, function () {
+
+                    if (linklink) {
+                        linklink.abort();
+                    }
+                    linklink = $.ajax({
+                        type: "POST",
+                        url: '/partner/stat/update-status-pay',
+                        data: {'id': idpay},
+                        beforeSend: function () {
+                            $('#statlistform').closest('.ibox-content').toggleClass('sk-loading');
+                        },
+                        success: function (data) {
+                            $('#statlistform').closest('.ibox-content').toggleClass('sk-loading');
+                            if (data.status == 1) {
+                                swal({
+                                    title: "ОК",
+                                    text: data.message,
+                                    type: "success"
+                                }, function () {
+                                    $('#statlistform').trigger('submit');
+                                });
+                            } else {
+                                swal({
+                                    title: "Ошибка",
+                                    text: data.message,
+                                    type: "error"
+                                }, function () {
+                                    $('#statlistform').trigger('submit');
+                                });
+                            }
+                        },
+                        error: function () {
+                            $('#statlistform').closest('.ibox-content').toggleClass('sk-loading');
+                            swal({
+                                title: "Ошибка",
+                                text: "Ошибка запроса",
+                                type: "error"
+                            }, function () {
+                                $('#statlistform').trigger('submit');
+                            });
+                        }
+                    });
+                });
+                return false;
+            });
         },
 
         excerpt: function () {

@@ -93,6 +93,8 @@ class PaySchet extends \yii\db\ActiveRecord
         self::STATUS_CANCEL,
     ];
 
+    const CHECK_3DS_CACHE_PREFIX = 'pay_schet__check-3ds-response';
+
     /**
      * {@inheritdoc}
      */
@@ -259,8 +261,21 @@ class PaySchet extends \yii\db\ActiveRecord
         return $this;
     }
 
+    /**
+     * @return string
+     */
     public function getOrderdoneUrl()
     {
         return Yii::$app->params['domain'] . '/pay/orderdone/' . $this->ID;
+    }
+
+    /**
+     * @param string $message
+     */
+    public function setError(string $message)
+    {
+        $this->Status = 2;
+        $this->ErrorInfo = $message;
+        $this->save(false);
     }
 }
