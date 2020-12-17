@@ -25,6 +25,9 @@ class Reg extends CardBase
         ];
     }
 
+    /**
+     * On events
+     */
     public function onEvents(): void
     {
         $this->on(self::EVENT_VALIDATE_ERRORS, function ($e) {
@@ -32,6 +35,9 @@ class Reg extends CardBase
         });
     }
 
+    /**
+     * @throws Exception
+     */
     public function initModel(): void
     {
         if($this->checkStatus()) $this->fileMutex();
@@ -39,6 +45,10 @@ class Reg extends CardBase
         if($this->checkStatus()) $this->cardRegistration();
     }
 
+    /**
+     * @throws Exception
+     * @throws \yii\db\Exception
+     */
     private function fileMutex(): void
     {
         $this->result['mutex'] = new FileMutex();
@@ -56,12 +66,18 @@ class Reg extends CardBase
         }
     }
 
+    /**
+     * @throws \Exception
+     */
     private function getUser(): void
     {
         $reguser = new Reguser();
         $this->result['user']  = $reguser->findUser('0', $this->mfo->mfo.'-'.time().random_int(100,999), md5($this->mfo->mfo.'-'.time()), $this->mfo->mfo, false);
     }
 
+    /**
+     * Card registration
+     */
     private function cardRegistration(): void
     {
         $type = $this->mfo->GetReq('type');
@@ -75,6 +91,9 @@ class Reg extends CardBase
         }
     }
 
+    /**
+     * @throws \yii\db\Exception
+     */
     public function forAutopayment(): void
     {
         $pay = new CreatePay($this->result['user']);
@@ -91,6 +110,9 @@ class Reg extends CardBase
         ];
     }
 
+    /**
+     * @throws \yii\db\Exception
+     */
     private function forPayments(): void
     {
         $pay = new CreatePay($this->result['user']);

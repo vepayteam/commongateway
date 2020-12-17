@@ -3,21 +3,22 @@
 
 namespace app\services\card;
 
-use app\models\api\Reguser;
-use app\models\bank\TCBank;
 use Yii;
 use app\services\card\base\CardBase;
-use yii\base\Exception;
-use yii\mutex\FileMutex;
-use app\models\payonline\CreatePay;
 
 class Del extends CardBase
 {
     public function rules()
     {
-        return [];
+        return [
+            [['card', 'type'], 'required'],
+            [['card', 'id', 'type'], 'integer'],
+        ];
     }
 
+    /**
+     * On events
+     */
     public function onEvents(): void
     {
         $this->on(self::EVENT_VALIDATE_ERRORS, function ($e) {
@@ -25,9 +26,22 @@ class Del extends CardBase
         });
     }
 
+    /**
+     * @throws \yii\db\Exception
+     */
     public function initModel(): void
     {
-        echo __FUNCTION__;
+        $Card = $this->FindKard($this->mfo->mfo, 0);
+        if (!$Card) {
+            $Card = $this->FindKard($this->mfo->mfo, 1);
+        }
+        if ($Card) {
+            $Card->IsDeleted = 1;
+            $Card->save(false);
+            $this->response = ['status' => 1, 'message' => ''];
+        } else {
+            $this->response =  ['status' => 0, 'message' => 'Ошибка запроса'];
+        }
     }
 
 }

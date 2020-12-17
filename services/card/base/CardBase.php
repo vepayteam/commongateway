@@ -27,25 +27,30 @@ class CardBase extends Service
     /* @var null|User */
     public $user = null;
 
-    public function init()
-    {
-        $this->mfoReg();
-    }
-
     public function rules()
     {
         return [];
     }
 
+    /**
+     * @param array $params
+     */
+    public function loadProperties(array $params = []): void
+    {
+        $this->mfoReg();
+        $this->load($this->mfo->Req(), '');
+    }
+
+    /**
+     * @throws \yii\db\Exception
+     * @throws \yii\web\BadRequestHttpException
+     * @throws \yii\web\ForbiddenHttpException
+     * @throws \yii\web\UnauthorizedHttpException
+     */
     private function mfoReg():void
     {
         $this->mfo = new MfoReq();
         $this->mfo->LoadData(Yii::$app->request->getRawBody());
-    }
-
-    public function loadProperties(array $params = []): void
-    {
-        $this->load($this->mfo->Req(), '');
     }
 
     public function GetError()
