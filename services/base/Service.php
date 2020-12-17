@@ -5,8 +5,12 @@ namespace app\services\base;
 use yii\base\Model;
 use yii\base\ModelEvent;
 use app\common\entities\base\modifiers\base\Modifiers;
-use app\services\exceptions\base\Main as Exception;
 
+/**
+ * Class Service
+ * @package app\services\base
+ * Клас ещё не полностью реализован, как закончу, напишу докуметацию.
+ */
 class Service extends Model
 {
     public const ENTRY_POINT_NAME = 'initModel';
