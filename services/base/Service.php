@@ -24,12 +24,6 @@ class Service extends Model
     public $result;
     public $response;
 
-    public function __construct()
-    {
-        parent:: __construct();
-        return $this;
-    }
-
     /**
      * @param array $params
      * @return Service
@@ -42,6 +36,8 @@ class Service extends Model
     }
 
     /**
+     * Progress
+     * Стандартный алгоритм работы сервиса.
      * @param array $params
      * @return $this
      */
@@ -71,19 +67,26 @@ class Service extends Model
 
     /**
      * On events
+     * Метод предназначен для инициалтзации событий. Переопределяется в дочерних классах сервиса.
      */
     public function onEvents(): void
     {
 
     }
 
-    //Пока не реализованно
+    /**
+     * Пока не реализованно
+     * Предполагается автоматическое преобразование свойств модели. Для входящих данных.
+     */
     private function applyPropertiesModifiersIn(): void
     {
 
     }
 
-    //Пока не реализованно
+    /**
+     * Пока не реализованно
+     * Предполагается автоматическое преобразование свойств модели. Для исходящих данных.
+     */
     private function applyPropertiesModifiersOut(): void
     {
 
@@ -91,6 +94,7 @@ class Service extends Model
 
     /**
      * Check errors
+     * Реализация стандартного ответа. Если свойство $this->response не содержит данных, метод добавляет ошибки модели в ответ.
      */
     private function checkErrors() : void
     {
@@ -104,6 +108,7 @@ class Service extends Model
 
     /**
      * Set response
+     * Реализация стандартного ответа. Если свойство $this->response не содержит данных, метод создаёт стандартный ответ.
      */
     private function setResponse(): void
     {
@@ -117,12 +122,16 @@ class Service extends Model
 
     /**
      * @param array $params
+     * Реализация стандартного запроса.
      */
     public function loadProperties(array $params = []): void
     {
+        //Если параметры переданы методу Service::exec()
         if(is_array($params) && $params) {
             $this->load($params, '');
         }
+        //Добавить обработку GET запроса(в работе).
+        //Добавить обработку POST запроса(в работе).
     }
 
     /**
@@ -143,6 +152,7 @@ class Service extends Model
 
     /**
      * Default entry point
+     * Точка входа в сценарий по умолчанию. Переопределяется в дочерних класах сервиса.
      */
     public function initModel(): void
     {
