@@ -175,8 +175,10 @@ class PayController extends Controller
     public function actionAuto()
     {
         $mfo = new MfoReq();
+        Yii::warning('Authorization mfo/pay/auto', 'mfo_pay_auto');
         $mfo->LoadData(Yii::$app->request->getRawBody());
 
+        Yii::warning('Start AutoPayForm mfo/pay/auto', 'mfo_pay_auto');
         $autoPayForm = new AutoPayForm();
         $autoPayForm->partner = $mfo->getPartner();
         $autoPayForm->load($mfo->Req(), '');

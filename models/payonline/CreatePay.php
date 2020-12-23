@@ -277,7 +277,7 @@ class CreatePay
                 'FIO' => $fio,
             ])
             ->execute();
-
+        Yii::warning("addPayschet", 'payschet');
         $IdPay = Yii::$app->db->getLastInsertID();
         return $IdPay;
     }

@@ -77,6 +77,7 @@ class OutController extends Controller
     public function actionPaycard()
     {
         $mfo = new MfoReq();
+        Yii::warning('Authorization mfo/out/paycard', 'mfo_out_paycard');
         $mfo->LoadData(Yii::$app->request->getRawBody());
 
 
@@ -84,6 +85,7 @@ class OutController extends Controller
         $kfCard = new KfCard();
         $kfCard->scenario = KfCard::SCENARIO_INFO;
         $kfCard->load($mfo->Req(), '');
+        Yii::warning('Validate KfCard mfo/out/paycard', 'mfo_out_paycard');
         if ($kfCard->validate()) {
             $Card = $kfCard->FindKard($mfo->mfo);
         }
@@ -91,6 +93,7 @@ class OutController extends Controller
         $kfOut = new KfOut();
         $kfOut->scenario = $Card ? KfOut::SCENARIO_CARDID : KfOut::SCENARIO_CARD;
         $kfOut->load($mfo->Req(), '');
+        Yii::warning('Validate KfOut mfo/out/paycard', 'mfo_out_paycard');
         if (!$kfOut->validate()) {
             Yii::warning("out/paycard: " . $kfOut->GetError(), 'mfo');
             return ['status' => 0, 'message' => $kfOut->GetError()];
@@ -109,6 +112,7 @@ class OutController extends Controller
         $bank = BankMerchant::GetWorkBankOut();
 
         $typeUsl = TU::$TOCARD;
+        Yii::warning('Fet bank gate mfo/out/paycard', 'mfo_out_paycard');
         $bankGate = BankMerchant::Gate($mfo->mfo, $bank, $typeUsl);
         $usl = $kfOut->GetUslug($mfo->mfo);
         if (!$usl || !$bankGate || !$bankGate->IsGate()) {
@@ -116,6 +120,7 @@ class OutController extends Controller
         }
 
         $pay = new CreatePay();
+        Yii::warning('CreatePay mfo/out/paycard', 'mfo_out_paycard');
         $mutex = new FileMutex();
         if (!empty($kfOut->extid)) {
             //проверка на повторный запрос
@@ -139,6 +144,7 @@ class OutController extends Controller
             $token = $Card->IdPan;
         } else {
             //сформировать токен карты, если оплата без регистрации карты
+            Yii::warning('CardToken mfo/out/paycard', 'mfo_out_paycard');
             $cartToken = new CardToken();
             if (($token = $cartToken->CheckExistToken($kfOut->cardnum, 0)) == 0) {
                 $token = $cartToken->CreateToken($kfOut->cardnum, 0, '');
@@ -149,6 +155,7 @@ class OutController extends Controller
             }
         }
 
+        Yii::warning('payToCard mfo/out/paycard', 'mfo_out_paycard');
         //записывает в базу информацию о транзакции.
         $params = $pay->payToCard($kfCard->user, [Cards::MaskCard($kfOut->cardnum), $token, $kfOut->document_id, $kfOut->fullname], $kfOut, $usl, TCBank::$bank, $mfo->mfo);
         if (!empty($kfOut->extid)) {
@@ -157,6 +164,7 @@ class OutController extends Controller
         $params['CardNum'] = $kfOut->cardnum;
 
         $payschets = new Payschets();
+        Yii::warning('SetCardPay mfo/out/paycard', 'mfo_out_paycard');
         //данные карты
         $payschets->SetCardPay($params['IdPay'], [
             'number' => $kfOut->cardnum,
@@ -165,6 +173,7 @@ class OutController extends Controller
             'year' => 0
         ]);
 
+        Yii::warning('AntiFraudRefund mfo/out/paycard', 'mfo_out_paycard');
         //антифрод должен рабоатть после записи в базу.
         $anti_fraud = new AntiFraudRefund($params['IdPay'], $mfo->mfo, Cards::MaskCard($kfOut->cardnum));
         if (!$anti_fraud->validate()) {
@@ -182,14 +191,17 @@ class OutController extends Controller
             return ['status' => 1, 'id' => $params['IdPay']];
         }*/
 
+        Yii::warning('Find Partner mfo/out/paycard', 'mfo_out_paycard');
         $partner = Partner::findOne(['ID' => $mfo->mfo]);
         $bankClass = Banks::getBankClassByTransferToCard($partner);
         $payschets->ChangeBank($params['IdPay'], $bankClass::$bank);
 
+        Yii::warning('Get BankMerchant mfo/out/paycard', 'mfo_out_paycard');
         $merchBank = BankMerchant::Get($bankClass::$bank, $bankGate);
         $ret = $merchBank->transferToCard($params);
         if ($ret && $ret['status'] == 1) {
             //сохранение номера транзакции
+            Yii::warning('SetBankTransact mfo/out/paycard', 'mfo_out_paycard');
             $payschets->SetBankTransact([
                 'idpay' => $params['IdPay'],
                 'trx_id' => $ret['transac'],
@@ -197,6 +209,7 @@ class OutController extends Controller
             ]);
 
         } else {
+            Yii::error('CancelReq: mfo/out/paycard', 'mfo_out_paycard');
             $pay->CancelReq($params['IdPay'],'Платеж не проведен');
         }
 
