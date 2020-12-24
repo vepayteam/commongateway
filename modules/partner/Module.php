@@ -34,6 +34,7 @@ class Module extends \yii\base\Module
     {
         $logData = [
             'action' => $action->uniqueId,
+            'ip' => Yii::$app->request->remoteIP,
             'method' => Yii::$app->request->method,
             'isAjax' => Yii::$app->request->isAjax,
             'userId' => Yii::$app->user->isGuest ? null : Yii::$app->user->id,
