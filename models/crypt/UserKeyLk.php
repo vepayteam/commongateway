@@ -42,7 +42,7 @@ class UserKeyLk implements IdentityInterface
             ->one();
         //Максимальный срок неактивности пользователя 90 дней.
         if ($keyUser && $keyUser->DateLastLogin != 0 && $keyUser->DateLastLogin < time() - 90 * 86400) {
-//            self::LockUser($keyUser->ID, true); //@todo
+            self::LockUser($keyUser->ID, true);
         }
 
         if ($keyUser) {
