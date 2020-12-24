@@ -38,5 +38,3 @@ key/key.txt
 .vagrant
 Vagrantfile
 *.log
-
-web/assets
