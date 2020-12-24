@@ -23,7 +23,6 @@ class DeleteOldPan
             self::deleteAsCard();
             self::deleteAsPanToken();
             $transaction->commit();
-            echo 'success';
         } catch (\Exception $e) {
             $transaction->rollBack();
             throw $e;
@@ -50,10 +49,14 @@ class DeleteOldPan
                 $srokKard[] = $m . ($currentYear - $y) . " ";
             }
         }
+        if(!is_array($srokKard)) {
+            return;
+        }
         $srokKard =  implode(', ', $srokKard);
         $sql = "UPDATE cards c
         LEFT JOIN pan_token pt ON pt.ID = c.IdPan
-		SET pt.EncryptedPAN = null
+		SET pt.EncryptedPAN = null,
+        pt.CardHolder = null
         WHERE (c.DateAdd < UNIX_TIMESTAMP(DATE_SUB(NOW(), INTERVAL 5 YEAR)) AND pt.EncryptedPAN IS NOT NULL)
         OR (c.SrokKard IN ($srokKard) AND pt.EncryptedPAN IS NOT NULL)";
         Yii::$app->db->createCommand($sql)->execute();
@@ -67,7 +70,8 @@ class DeleteOldPan
         $currentYear = date ( 'y' );
         $currentMonth = date ( 'm' );
         $sql = "UPDATE pan_token pt
-        SET EncryptedPAN = null
+        SET EncryptedPAN = null,
+        CardHolder = null
         WHERE (pt.CreatedDate < UNIX_TIMESTAMP(DATE_SUB(NOW(), INTERVAL 5 YEAR))  AND pt.EncryptedPAN IS NOT NULL)
         OR (pt.ExpDateYear <= :Y AND pt.ExpDateMonth < :M AND pt.ExpDateYear > 0  AND pt.EncryptedPAN IS NOT NULL)
         ORDER BY CreatedDate DESC";
