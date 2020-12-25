@@ -53,7 +53,6 @@
                         $('#loginform .login').hide();
                         $('#loginform .password').hide();
                         let token = $('#loginform .token');
-                        console.log(token.prop('required'));
                         if (token.prop('required') !== undefined) {
                             toastr.error("Неверный токен", "Ошибка");
                         }
