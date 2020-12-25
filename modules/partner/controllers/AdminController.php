@@ -765,7 +765,7 @@ class AdminController extends Controller
         $sum = $query->createCommand()->queryScalar();
 
         $old = $partner[$balanceField];
-        $partner[$balanceField] = $sum;
+        $partner[$balanceField] = (int)$sum;
         $partner->save(false);
         echo sprintf('%s: old=%d new=%d' . PHP_EOL, $table, $old, $sum);
     }

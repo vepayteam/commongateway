@@ -5,6 +5,8 @@ namespace app\modules\keymodule\controllers;
 use app\models\crypt\KeyUsers;
 use app\models\crypt\UserKeyLk;
 use app\models\partner\PartnerUsers;
+use app\models\SendEmail;
+use app\services\auth\TwoFactorAuthService;
 use Yii;
 use yii\base\Action;
 use yii\filters\AccessControl;
@@ -69,11 +71,29 @@ class DefaultController extends Controller
                 Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
                 $login = Yii::$app->request->post('login');
                 $password = Yii::$app->request->post('passw');
+                $token = Yii::$app->request->post('token');
                 $user = UserKeyLk::findIdentity($login);
                 if ($user && $user->validatePassword($password) && UserKeyLk::NotErrCntLogin($user->getIdUser())) {
-                    //успех
-                    UserKeyLk::Login($user->getIdUser(), $login);
-                    return ['status' => 1];
+                    $twoFAService = new TwoFactorAuthService($user);
+                    $responseStatus = 4;
+
+                    if (!empty($token)) {
+                        if ($twoFAService->validateToken($token)) {
+                            //успех
+                            UserKeyLk::Login($user->getIdUser(), $login);
+                            $responseStatus = 1;
+                        } else {
+                            if ($twoFAService->sendToken()) {
+                                $responseStatus = 2;
+                            }
+                        }
+                        return ['status' => $responseStatus];
+                    } else {
+                        if ($twoFAService->sendToken()) {
+                            $responseStatus = 2;
+                        }
+                    }
+                    return ['status' => $responseStatus];
                 } else {
                     if ($user) {
                         //ошибка пароля или блок

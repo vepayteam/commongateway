@@ -41,6 +41,8 @@ return [
         'token' => ''
     ],
 
+    'testCards' => require(__DIR__ . '/test_cards.php'),
+
     'services' => [
         'accounts' => [
             'url' => '',

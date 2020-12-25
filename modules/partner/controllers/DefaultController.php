@@ -7,6 +7,8 @@ use app\models\partner\news\Newsread;
 use app\models\partner\PartnerUsers;
 use app\models\payonline\Partner;
 use app\models\payonline\User;
+use app\models\SendEmail;
+use app\services\auth\TwoFactorAuthService;
 use Yii;
 use yii\filters\AccessControl;
 use yii\helpers\Url;
@@ -97,11 +99,29 @@ class DefaultController extends Controller
             Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
             $id = Yii::$app->request->post('login');
             $password = Yii::$app->request->post('passw');
+            $token = Yii::$app->request->post('token');
             $user = UserLk::findIdentity($id);
             if ($user && UserLk::IsNotLoginLock($user->getId()) && $user->validatePassword($password)) {
-                UserLk::LogLogin($user->getId());
-                Yii::$app->user->login($user, 1800);
-                return ['status' => 1];
+                if ($user->getIsAdmin()) {
+                    $twoFAService = new TwoFactorAuthService($user);
+                    $responseStatus = 4;
+                    if (!empty($token)) {
+                        if ($twoFAService->validateToken($token)) {
+                            UserLk::LogLogin($user->getId());
+                            Yii::$app->user->login($user, 1800);
+                            $responseStatus = 1;
+                        }
+                    } else {
+                        if ($twoFAService->sendToken()) {
+                            $responseStatus = 2;
+                        }
+                    }
+                    return ['status' => $responseStatus];
+                } else {
+                    UserLk::LogLogin($user->getId());
+                    Yii::$app->user->login($user, 1800);
+                    return ['status' => 1];
+                }
             } else {
                 if ($user) {
                     UserLk::IncCntLogin($user->getId());
