@@ -11,7 +11,7 @@ class Del extends CardBase
     public function rules()
     {
         return [
-            [['card', 'type'], 'required'],
+            [['card'], 'required'],
             [['card', 'id', 'type'], 'integer'],
         ];
     }
