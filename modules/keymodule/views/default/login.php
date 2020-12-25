@@ -5,11 +5,14 @@
         </div>
         <h3>Авторизация</h3>
         <form class="m-t" method="post" role="form" action="" id="loginform">
-            <div class="form-group">
+            <div class="form-group login">
                 <input type="text" maxlength="20" class="form-control" placeholder="Логин" name="login" required="">
             </div>
-            <div class="form-group">
+            <div class="form-group password">
                 <input type="password" maxlength="20" class="form-control" placeholder="Пароль" name="passw" required="">
+            </div>
+            <div class="form-group token" style="display: none;">
+                <input type="password" maxlength="32" class="form-control" placeholder="Токен" name="token">
             </div>
             <button type="submit" class="btn btn-primary block full-width m-b">Вход</button>
 
@@ -40,10 +43,24 @@
                 beforeSend: function () {
                 },
                 success: function (data) {
-                    if (data.status !== 1) {
+                    if (data.status === 0) {
                         toastr.error("Неверный логин / пароль", "Ошибка");
-                    } else {
+                    }
+                    if (data.status === 1) {
                         window.location.href = '/keymodule/default/index';
+                    }
+                    if (data.status === 2) {
+                        $('#loginform .login').hide();
+                        $('#loginform .password').hide();
+                        let token = $('#loginform .token');
+                        console.log(token.prop('required'));
+                        if (token.prop('required') !== undefined) {
+                            toastr.error("Неверный токен", "Ошибка");
+                        }
+                        token.show().prop('required', true);
+                    }
+                    if (data.status === 4) {
+                        toastr.error("Неверный токен", "Ошибка");
                     }
                 },
                 error: function (e) {
