@@ -25,6 +25,7 @@ class Get extends CardBase
     {
         $this->on(self::EVENT_VALIDATE_ERRORS, function ($e) {
             Yii::warning("card/get: " . $this->GetError());
+            $this->response =$this->responseErrors();
             $this->response = ['status' => 0, 'message' => $this->GetErrors()];
         });
     }
