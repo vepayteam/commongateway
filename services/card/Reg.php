@@ -31,6 +31,7 @@ class Reg extends CardBase
     public function onEvents(): void
     {
         $this->on(self::EVENT_VALIDATE_ERRORS, function ($e) {
+            $this->response =$this->responseErrors();
             Yii::warning("card/reg: " . $this->GetError());
         });
     }
@@ -40,9 +41,24 @@ class Reg extends CardBase
      */
     public function initModel(): void
     {
-        if($this->checkStatus()) $this->fileMutex();
-        if($this->checkStatus()) $this->getUser();
-        if($this->checkStatus()) $this->cardRegistration();
+        $transaction = Yii::$app->db->beginTransaction();
+        try {
+            if($this->checkStatus()) $this->fileMutex();
+            if($this->checkStatus()) $this->getUser();
+            if($this->checkStatus()) $this->cardRegistration();
+            if($this->checkStatus()) {
+                $transaction->commit();
+            } else {
+                $transaction->rollBack();
+            }
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            throw $e;
+        } catch (\Throwable $e) {
+            $transaction->rollBack();
+            throw $e;
+        }
+
     }
 
     /**

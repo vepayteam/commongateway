@@ -32,6 +32,14 @@ class CardBase extends Service
         return [];
     }
 
+    public function responseErrors()
+    {
+        return [
+            'message' => json_encode($this->getErrors(), JSON_UNESCAPED_UNICODE),
+            'status' => 0
+        ];
+    }
+
     /**
      * @param array $params
      */

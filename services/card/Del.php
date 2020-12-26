@@ -22,6 +22,7 @@ class Del extends CardBase
     public function onEvents(): void
     {
         $this->on(self::EVENT_VALIDATE_ERRORS, function ($e) {
+            $this->response =$this->responseErrors();
             Yii::warning("card/del: " . $this->GetError());
         });
     }
