@@ -57,9 +57,6 @@ class SendEmail extends Model
     public function sendReestr($email, $subject, $content, $files = [])
     {
         $emailfrom = [$this->fromEmail => 'Vepay'];
-        if (Yii::$app->params['TESTMODE'] == "Y") {
-            $email = "ayuriev@vepay.online";
-        }
         $mailer = $this->mailer->compose('@app/mail/layouts/html', ['content' => $content])
             ->setTo($this->explodeMail($email))
             ->setFrom($emailfrom)
