@@ -31,21 +31,22 @@ class MerchantPayCreateStrategy
     {
         /** @var Uslugatovar $uslugatovar */
         $uslugatovar = $this->getUslugatovar();
-
+        Yii::warning('getUslugatovar', 'merchant_pay_create_strategy');
         if(!$uslugatovar) {
             throw new GateException('Услуга не найдена');
         }
-
+        Yii::warning('BankAdapterBuilder', 'merchant_pay_create_strategy');
         $bankAdapterBuilder = new BankAdapterBuilder();
         $bankAdapterBuilder->build($this->payForm->partner, $uslugatovar);
 
+        Yii::warning('getReplyRequest', 'merchant_pay_create_strategy');
         $replyPaySchet = $this->getReplyRequest($bankAdapterBuilder);
         if($replyPaySchet && $replyPaySchet->SummPay == $this->payForm->amount) {
             return $replyPaySchet;
         } elseif ($replyPaySchet && $replyPaySchet->SummPay != $this->payForm->amount) {
             throw new CreatePayException('Нарушение уникальности запроса');
         }
-
+        Yii::warning('createPaySchet', 'merchant_pay_create_strategy');
         $paySchet = $this->createPaySchet($bankAdapterBuilder);
         return $paySchet;
     }
