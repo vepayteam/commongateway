@@ -25,11 +25,11 @@ $form = ActiveForm::begin([
         <label class="control-label col-sm-3" for="partner-kpp"><?= $optionVariable['title'] ?></label>
         <div class="col-sm-8">
             <?php if ($optionVariable['type'] === 'textarea'): ?>
-                <textarea class="form-control partner-options__input" name="<?= $k ?>" rows="5"><?= $partnerOption ? $partnerOption->Value : PartnerOption::LIST[PartnerOption::CARD_REG_TEXT_HEADER_NAME]['default'] ?></textarea>
+                <textarea class="form-control partner-options__input" name="<?= $k ?>" rows="5"><?= $partnerOption ? $partnerOption->Value : PartnerOption::LIST[$k]['default'] ?></textarea>
             <?php else: ?>
-                <input type="text" id="partner-kpp" class="form-control partner-options__input"
+                <input type="<?=$optionVariable['type']?>" id="partner-kpp" class="form-control partner-options__input"
                        name="<?= $k ?>"
-                       value="<?= $partnerOption ? $partnerOption->Value : PartnerOption::LIST[PartnerOption::CARD_REG_TEXT_HEADER_NAME]['default'] ?>"
+                       value="<?= $partnerOption ? $partnerOption->Value : PartnerOption::LIST[$k]['default'] ?>"
                        aria-invalid="false"
                 >
             <?php endif; ?>

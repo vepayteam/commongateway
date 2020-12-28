@@ -17,11 +17,24 @@ class PartnerOption extends \yii\db\ActiveRecord
 {
     const CARD_REG_TEXT_HEADER_NAME = 'card-reg__text-header';
 
+    const EMAILS_BY_SEND_LATE_UPDATE_PAY_SCHETS_NAME = 'payment__emails_by_send_late_update_payschet';
+    const DELTA_TIME_LATE_UPDATE_PAY_SCHETS_NAME = 'payment__delta_time_late_update_payschet';
+
     const LIST = [
         self::CARD_REG_TEXT_HEADER_NAME => [
             'title' => 'Текст сообщения при регистрации карты',
             'type' => 'textarea',
             'default' => 'Cписанная cумма, списанная с карты, при успешном списании, вернется обратно на вашу банковскую карту.',
+        ],
+        self::EMAILS_BY_SEND_LATE_UPDATE_PAY_SCHETS_NAME => [
+            'title' => 'Emails для отправки реестров с поздним обновлением статуса, через запятую',
+            'type' => 'text',
+            'default' => '',
+        ],
+        self::DELTA_TIME_LATE_UPDATE_PAY_SCHETS_NAME => [
+            'title' => 'Время, после которого обнорвление статуса считать поздним, в секундах',
+            'type' => 'number',
+            'default' => '18000',
         ],
     ];
 

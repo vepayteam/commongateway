@@ -10,6 +10,7 @@ use app\models\partner\stat\export\csv\ToCSV;
 use app\models\payonline\Partner;
 use app\models\SendEmail;
 use app\modules\partner\models\PaySchetLogForm;
+use app\services\partners\models\PartnerOption;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\forms\SetPayOkForm;
 use app\services\payment\models\PaySchet;
@@ -119,46 +120,59 @@ class PaymentService
      */
     public function sendEmailsLateUpdatedPaySchets()
     {
-        $partnerIds = PaySchetLog::queryLateUpdatedPaySchets()
-            ->select('pay_schet.IdOrg')
-            ->groupBy('pay_schet.IdOrg')
-            ->asArray()
+        $partnerOptions = PartnerOption::find()
+            ->where(['Name' => PartnerOption::EMAILS_BY_SEND_LATE_UPDATE_PAY_SCHETS_NAME])
             ->all();
 
-        foreach ($partnerIds as $partnerId) {
-            $partner = Partner::findOne(['ID' => $partnerId]);
+        foreach ($partnerOptions as $partnerOption) {
+            if(empty($partnerOption->Value)) {
+                continue;
+            }
 
-            $data = PaySchetLog::queryLateUpdatedPaySchets()
-                ->select('pay_schet.ExtId, pay_schet_log.PaySchetId, FROM_UNIXTIME(pay_schet_log.DateCreate) AS , pay_schet_log.Status, pay_schet_log.ErrorInfo')
+            $deltaPartnerOption = PartnerOption::find()
+                ->where([
+                    'PartnerId' => $partnerOption->PartnerId,
+                    'Name' => PartnerOption::DELTA_TIME_LATE_UPDATE_PAY_SCHETS_NAME,
+                ])
+                ->one();
+
+            $data = PaySchetLog::queryLateUpdatedPaySchets((int)$deltaPartnerOption->Value)
+                ->select('pay_schet.ExtId, pay_schet_log.PaySchetId, FROM_UNIXTIME(pay_schet_log.DateCreate) AS DateCreate, pay_schet_log.Status, pay_schet_log.ErrorInfo')
                 ->asArray()
                 ->all();
-            $this->generateAndSendEmailsByPartner($partner, $data);
+
+            try {
+                $this->generateAndSendEmailsByPartner($partnerOption, $data);
+            } catch (\Exception $e) {
+                Yii::warning('sendEmailsLateUpdatedPaySchetsError: ' . $e->getMessage());
+            }
         }
     }
 
     /**
-     * @param Partner $partner
+     * @param PartnerOption $partnerOption
      * @param array $data
      */
-    private function generateAndSendEmailsByPartner(Partner $partner, array $data)
+    private function generateAndSendEmailsByPartner(PartnerOption $partnerOption, array $data)
     {
         $today = Carbon::now()->startOfDay();
 
         $path = Yii::getAlias('@runtime/acts/');
-        $filename = sprintf('%d_%d_%d_%d.%s', $partner->ID, $today->day, $today->month, $today->year, 'csv');
+        $filename = sprintf('%d_%d_%d_%d.%s', $partnerOption->PartnerId, $today->day, $today->month, $today->year, 'csv');
         $toCSV = new ToCSV($data, $path, $filename);
         $toCSV->export();
 
-        $sendEmail = new SendEmail();
-        $sendEmail->sendReestr(
-            $partner->Email,
-            'Отчет: платежи с поздним обновлением за ' . $today->day . '.' . $today->month,
-            '',
-            [[
-                'data' => file_get_contents($toCSV->fullpath()),
-                'name' => $filename,
-            ]]);
-
+        foreach (explode(',', $partnerOption->Value) as $email) {
+            $sendEmail = new SendEmail();
+            $sendEmail->sendReestr(
+                $email,
+                'Отчет: платежи с поздним обновлением за ' . $today->day . '.' . $today->month,
+                '',
+                [[
+                    'data' => file_get_contents($toCSV->fullpath()),
+                    'name' => $filename,
+                ]]);
+        }
         if (file_exists($toCSV->fullpath())){
             unlink($toCSV->fullpath());
         }
