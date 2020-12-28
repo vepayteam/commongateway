@@ -2,6 +2,7 @@
 
 namespace app\services\payment\models;
 
+use Carbon\Carbon;
 use Yii;
 
 /**
@@ -53,5 +54,17 @@ class PaySchetLog extends \yii\db\ActiveRecord
     public function getPaySchet()
     {
         return $this->hasOne(PaySchet::className(), ['ID' => 'PaySchetId']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public static function queryLateUpdatedPaySchets()
+    {
+        return self::find()
+            ->innerJoin('pay_schet', 'pay_schet.ID = pay_schet_log.PaySchetId')
+            ->andWhere(['>', 'pay_schet_log.DateCreate', Carbon::now()->startOfDay()->addDays(-1)->timestamp])
+            ->andWhere(['<', 'pay_schet_log.DateCreate', Carbon::now()->startOfDay()->timestamp])
+            ->andWhere(['<', 'pay_schet.DateCreate', Carbon::now()->startOfDay()->addDays(-1)->timestamp]);
     }
 }

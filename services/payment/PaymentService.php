@@ -119,18 +119,17 @@ class PaymentService
      */
     public function sendEmailsLateUpdatedPaySchets()
     {
-        $startToday = Carbon::now()->startOfDay();
-        $q = PaySchetLog::find()->with('paySchet')->where([
-            ['>', 'pay_schet_log.DateCreate', $startToday->addDays(-1)->timestamp],
-            ['<', 'pay_schet_log.DateCreate', $startToday->timestamp],
-            ['<', 'pay_schet.DateCreate', $startToday->addDays(-1)->timestamp],
-        ]);
+        $partnerIds = PaySchetLog::queryLateUpdatedPaySchets()
+            ->select('pay_schet.IdOrg')
+            ->groupBy('pay_schet.IdOrg')
+            ->asArray()
+            ->all();
 
-        $partnerIds = $q->select('IdOrg')->groupBy('IdOrg')->all();
         foreach ($partnerIds as $partnerId) {
             $partner = Partner::findOne(['ID' => $partnerId]);
-            $data = $q->select('pay_schet.ExtId, pay_schet_log.*')
-                ->andWhere(['pay_schet.IdOrd' => $partnerId])
+
+            $data = PaySchetLog::queryLateUpdatedPaySchets()
+                ->select('pay_schet.ExtId, pay_schet_log.PaySchetId, FROM_UNIXTIME(pay_schet_log.DateCreate) AS , pay_schet_log.Status, pay_schet_log.ErrorInfo')
                 ->asArray()
                 ->all();
             $this->generateAndSendEmailsByPartner($partner, $data);
@@ -145,7 +144,7 @@ class PaymentService
     {
         $today = Carbon::now()->startOfDay();
 
-        $path = Yii::getAlias('@runtime/acts');
+        $path = Yii::getAlias('@runtime/acts/');
         $filename = sprintf('%d_%d_%d_%d.%s', $partner->ID, $today->day, $today->month, $today->year, 'csv');
         $toCSV = new ToCSV($data, $path, $filename);
         $toCSV->export();
@@ -155,7 +154,10 @@ class PaymentService
             $partner->Email,
             'Отчет: платежи с поздним обновлением за ' . $today->day . '.' . $today->month,
             '',
-            [$toCSV->fullpath()]);
+            [[
+                'data' => file_get_contents($toCSV->fullpath()),
+                'name' => $filename,
+            ]]);
 
         if (file_exists($toCSV->fullpath())){
             unlink($toCSV->fullpath());
