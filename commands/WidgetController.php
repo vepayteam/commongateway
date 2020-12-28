@@ -343,7 +343,7 @@ class WidgetController extends Controller
         $summ = Yii::$app->db->createCommand($q)->queryScalar();
 
         $old = $partner[$field];
-        $partner[$field] = $summ;
+        $partner[$field] = (int)$summ;
         $partner->save();
         echo sprintf('Old: %d New %d', $old, $summ);
     }

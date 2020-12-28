@@ -24,10 +24,23 @@
                 beforeSend: function () {
                 },
                 success: function (data) {
-                    if (data.status !== 1) {
+                    if (data.status === 0) {
                         toastr.error("Неверный логин / пароль", "Ошибка");
-                    } else {
+                    }
+                    if (data.status === 1) {
                         window.location.href = '/partner/index';
+                    }
+                    if (data.status === 2) {
+                        $('#loginform .login').hide();
+                        $('#loginform .password').hide();
+                        let token = $('#loginform .token');
+                        if (token.prop('required') !== undefined) {
+                            toastr.error("Неверный токен", "Ошибка");
+                        }
+                        token.show().prop('required', true);
+                    }
+                    if (data.status === 4) {
+                        toastr.error("Неверный токен", "Ошибка");
                     }
                 },
                 error: function (error) {

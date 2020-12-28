@@ -15,6 +15,8 @@ class UserLk implements IdentityInterface
     private $isAdmin = false;
     private $roleUser = 0;
     private $partner = 0;
+    /** @var null|PartnerUsers  */
+    private $partnerModel = null;
     private $fio = "";
     private $IdUser = 0;
 
@@ -28,9 +30,11 @@ class UserLk implements IdentityInterface
      * @return UserLk|IdentityInterface the identity object that matches the given ID.
      * Null should be returned if such an identity cannot be found
      * or the identity is not in an active state (disabled, deleted, etc.)
+     * @return UserLk
      */
     public static function findIdentity($id)
     {
+        /** @var PartnerUsers $partner */
         $partner = PartnerUsers::find()
             ->where(['partner_users.login' => $id, 'partner_users.IsDeleted' => 0, 'partner_users.IsActive' => 1])
             ->leftJoin('partner', 'partner.ID = partner_users.IdPartner AND partner.IsDeleted = 0 AND partner.IsBlocked = 0')
@@ -45,6 +49,7 @@ class UserLk implements IdentityInterface
             $user->roleUser = $partner->RoleUser;
             $user->partner = $partner->IdPartner;
             $user->IdUser = $partner->ID;
+            $user->partnerModel = $partner;
 
             return $user;
         }
@@ -131,6 +136,14 @@ class UserLk implements IdentityInterface
     public function getPartner()
     {
         return $this->partner;
+    }
+
+    /**
+     * @return PartnerUsers|null
+     */
+    public function getPartnerModel()
+    {
+        return $this->partnerModel;
     }
 
     public function getIdUser()

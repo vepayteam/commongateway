@@ -41,6 +41,8 @@ return [
         'token' => ''
     ],
 
+    'testCards' => require(__DIR__ . '/test_cards.php'),
+
     'services' => [
         'accounts' => [
             'url' => '',
@@ -54,5 +56,6 @@ return [
             'runaMode' => 'verify_docs'
         ],
     ],
+    'login_user_token_valid_time' => 60*60,
 	
 ];

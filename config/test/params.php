@@ -41,6 +41,8 @@ return [
         'token' => ''
     ],
 
+    'testCards' => require(__DIR__ . '/test_cards.php'),
+
     'services' => [
         'accounts' => [
             'url' => 'http://vpbc-102-test.192-168-110-2.nip.io/api',
@@ -54,5 +56,6 @@ return [
             'runaMode' => 'verify_docs'
         ],
     ],
+    'login_user_token_valid_time' => 60*60,
 	
 ];

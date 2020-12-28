@@ -5,11 +5,14 @@
         </div>
         <h3>Авторизация</h3>
         <form class="m-t" method="post" role="form" action="" id="loginform">
-            <div class="form-group">
+            <div class="form-group login">
                 <input type="text" maxlength="20" class="form-control" placeholder="Логин" name="login" required="">
             </div>
-            <div class="form-group">
+            <div class="form-group password">
                 <input type="password" maxlength="20" class="form-control" placeholder="Пароль" name="passw" required="">
+            </div>
+            <div class="form-group token" style="display: none;">
+                <input type="password" maxlength="32" class="form-control" placeholder="Токен" name="token">
             </div>
             <button type="submit" class="btn btn-primary block full-width m-b">Вход</button>
 

@@ -30,6 +30,7 @@ class CreatePayForm extends Model
     {
         return [
             [['CardNumber'], 'match', 'pattern' => '/^\d{16}|\d{18}$/', 'message' => 'Неверный номер карты'],
+            ['CardNumber', 'validateIsTestCard'],
             ['CardNumber', function ($attribute, $params) {
                 if ($this->CardNumber) {
                     if (preg_match('/^\d{16}|\d{18}$/', $this->CardNumber) && !Cards::CheckValidCard($this->CardNumber)) {
@@ -61,6 +62,13 @@ class CreatePayForm extends Model
             [['LinkPhone'], 'boolean'],
             [['CardNumber', 'CardHolder', 'CardExp', 'CardCVC', 'IdPay'], 'required', 'message' => 'Заполните данные карты']
         ];
+    }
+
+    public function validateIsTestCard()
+    {
+        if(Yii::$app->params['TESTMODE'] === 'Y' && !in_array($this->CardNumber, Yii::$app->params['testCards'])) {
+            $this->addError('CardNumber', 'На тестовом контуре допускается использовать только тестовые карты');
+        }
     }
 
     public function attributeLabels()

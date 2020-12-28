@@ -2,6 +2,7 @@
 
 namespace app\models\crypt;
 
+use app\models\partner\PartnerUsers;
 use app\models\payonline\Partner;
 use Yii;
 use yii\db\Exception;
@@ -18,6 +19,8 @@ class UserKeyLk implements IdentityInterface
     private $AutoLockDate = 0;
     private $fio = "";
     private $IdUser = 0;
+    /** @var null|PartnerUsers  */
+    private $partnerModel = null;
 
     private $id = "";
     private $authKey = "";
@@ -57,6 +60,7 @@ class UserKeyLk implements IdentityInterface
             $user->KeyChageAdmin = $keyUser->KeyChageAdmin;
             $user->DateChange = $keyUser->DateChange;
             $user->AutoLockDate = $keyUser->DateChange;
+            $user->partnerModel = $keyUser;
 
             return $user;
         }
@@ -355,6 +359,14 @@ class UserKeyLk implements IdentityInterface
             return $u->KeyChageAdmin;
         }
         return 0;
+    }
+
+    /**
+     * @return PartnerUsers|null
+     */
+    public function getPartnerModel()
+    {
+        return $this->partnerModel;
     }
 
     public function getIdUser()
