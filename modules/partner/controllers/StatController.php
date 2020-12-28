@@ -28,9 +28,11 @@ use app\models\Payschets;
 use app\models\queue\SendMailJob;
 use app\models\SendEmail;
 use app\models\TU;
+use app\modules\partner\models\PaySchetLogForm;
 use app\services\ident\forms\IdentStatisticForm;
 use app\services\ident\IdentService;
 use app\services\payment\models\PaySchet;
+use app\services\payment\PaymentService;
 use kartik\mpdf\Pdf;
 use Yii;
 use yii\base\DynamicModel;
@@ -286,6 +288,32 @@ class StatController extends Controller
             return ['status' => 0, 'message' => 'Не удалось получить выписку, возможно у вас нет доступа к этой информации.'];
         }
         return [''];
+    }
+
+    public function actionLog()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        if (Yii::$app->request->isAjax) {
+            $paySchetLogForm = new PaySchetLogForm();
+            $paySchetLogForm->load(Yii::$app->request->post(), '');
+
+            if(!$paySchetLogForm->validate()) {
+                return ['status' => 0, 'message' => $paySchetLogForm->GetError()];
+            }
+
+            /** @var PaymentService $paymentService */
+            $paymentService = Yii::$container->get('PaymentService');
+            $paySchetLogData = $paymentService->geyPaySchetLog($paySchetLogForm);
+
+            return [
+                'status' => 1,
+                'data' => $this->renderPartial("_log", ['data' => $paySchetLogData]),
+                'message' => '',
+            ];
+
+        }
+        return [''];
+
     }
 
     /**

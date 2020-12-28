@@ -83,6 +83,7 @@ use app\models\TU;
                 <td><?= $row['CardType'] ?></td>
                 <td><?= $row['CountryUser'] . " " . $row['CityUser'] ?></td>
                 <td>
+                    <input class='btn btn-white btn-xs' data-action="logpay" data-id='<?= $row['ID'] ?>' type='button' value='Лог'>
                     <?php if ($row['Status'] == 1 && TU::IsInPay($row['IsCustom'])): ?>
                         <input class='btn btn-white btn-xs' data-action="cancelpay" data-id='<?= $row['ID'] ?>' type='button' value='Отменить'>
                     <?php endif; ?>

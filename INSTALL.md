@@ -75,6 +75,8 @@
     yii widget/send-otch - в 7.00
     
     yii widget/parts-balance-send-to-partners - в 3.00
+    
+    yii widget/send-emails-late-updated-pay-schets - в 9.00
 
 5. В дальнейшем обновлять:
 

@@ -71,6 +71,7 @@ use Yii;
  * @property string|null $RCCode
  * @property Uslugatovar $uslugatovar
  * @property Partner $partner
+ * @property PaySchetLog[] $log
  *
  * @property string $Version3DS
  * @property int $IsNeed3DSVerif
@@ -214,6 +215,11 @@ class PaySchet extends \yii\db\ActiveRecord
     public function getBank()
     {
         return $this->hasOne(Bank::className(), ['ID' => 'Bank']);
+    }
+
+    public function getLog()
+    {
+        return $this->hasMany(PaySchetLog::className(), ['PaySchetId' => 'ID']);
     }
 
     public function save($runValidation = true, $attributeNames = null)
