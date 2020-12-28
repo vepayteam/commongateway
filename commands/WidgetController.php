@@ -434,6 +434,18 @@ class WidgetController extends Controller
     }
 
     /**
+     * Отправка счетов, с поздним обнорвлением статуса или сообщением
+     * (статус обновлен не текущим днем)
+     * 9:00
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\di\NotInstantiableException
+     */
+    public function actionSendEmailsLateUpdatedPaySchets()
+    {
+        $this->getPaymentService()->sendEmailsLateUpdatedPaySchets();
+    }
+
+    /**
      * @return PaymentService
      * @throws \yii\base\InvalidConfigException
      * @throws \yii\di\NotInstantiableException

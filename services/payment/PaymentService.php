@@ -6,9 +6,14 @@ namespace app\services\payment;
 
 use app\models\bank\BankCheck;
 use app\models\kfapi\KfRequest;
+use app\models\partner\stat\export\csv\ToCSV;
+use app\models\payonline\Partner;
+use app\models\SendEmail;
+use app\modules\partner\models\PaySchetLogForm;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\forms\SetPayOkForm;
 use app\services\payment\models\PaySchet;
+use app\services\payment\models\PaySchetLog;
 use app\services\payment\payment_strategies\CreateFormEcomStrategy;
 use app\services\payment\payment_strategies\CreateFormJkhStrategy;
 use app\services\payment\payment_strategies\IPaymentStrategy;
@@ -96,5 +101,64 @@ class PaymentService
             ], '`ID` = :ID', [':ID' => $paySchet->IdOrder])
             ->execute();
         return true;
+    }
+
+    /**
+     * @param PaySchetLogForm $paySchetLogForm
+     * @return PaySchetLog[]
+     */
+    public function geyPaySchetLog(PaySchetLogForm $paySchetLogForm)
+    {
+        $paySchet = $paySchetLogForm->getPaySchet();
+        $result = $paySchet->getLog()->orderBy('DateCreate DESC')->all();
+        return $result;
+    }
+
+    /**
+     *
+     */
+    public function sendEmailsLateUpdatedPaySchets()
+    {
+        $startToday = Carbon::now()->startOfDay();
+        $q = PaySchetLog::find()->with('paySchet')->where([
+            ['>', 'pay_schet_log.DateCreate', $startToday->addDays(-1)->timestamp],
+            ['<', 'pay_schet_log.DateCreate', $startToday->timestamp],
+            ['<', 'pay_schet.DateCreate', $startToday->addDays(-1)->timestamp],
+        ]);
+
+        $partnerIds = $q->select('IdOrg')->groupBy('IdOrg')->all();
+        foreach ($partnerIds as $partnerId) {
+            $partner = Partner::findOne(['ID' => $partnerId]);
+            $data = $q->select('pay_schet.ExtId, pay_schet_log.*')
+                ->andWhere(['pay_schet.IdOrd' => $partnerId])
+                ->asArray()
+                ->all();
+            $this->generateAndSendEmailsByPartner($partner, $data);
+        }
+    }
+
+    /**
+     * @param Partner $partner
+     * @param array $data
+     */
+    private function generateAndSendEmailsByPartner(Partner $partner, array $data)
+    {
+        $today = Carbon::now()->startOfDay();
+
+        $path = Yii::getAlias('@runtime/acts');
+        $filename = sprintf('%d_%d_%d_%d.%s', $partner->ID, $today->day, $today->month, $today->year, 'csv');
+        $toCSV = new ToCSV($data, $path, $filename);
+        $toCSV->export();
+
+        $sendEmail = new SendEmail();
+        $sendEmail->sendReestr(
+            $partner->Email,
+            'Отчет: платежи с поздним обновлением за ' . $today->day . '.' . $today->month,
+            '',
+            [$toCSV->fullpath()]);
+
+        if (file_exists($toCSV->fullpath())){
+            unlink($toCSV->fullpath());
+        }
     }
 }
