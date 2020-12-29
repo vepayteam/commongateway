@@ -176,7 +176,7 @@ class PayController extends Controller
     {
         $mfo = new MfoReq();
         $mfo->LoadData(Yii::$app->request->getRawBody());
-        Yii::warning("mfo/pay/auto Authorization mfo=$mfo->mfo", 'mfo_pay_auto');
+        Yii::warning("mfo/pay/auto Authorization mfo=$mfo->mfo", 'mfo');
         $autoPayForm = new AutoPayForm();
         $autoPayForm->partner = $mfo->getPartner();
         $autoPayForm->load($mfo->Req(), '');
@@ -184,7 +184,7 @@ class PayController extends Controller
             Yii::warning("mfo/pay/auto: ошибка валидации формы");
             return ['status' => 0, 'message' => $autoPayForm->getError()];
         }
-        Yii::warning("mfo/pay/auto AutoPayForm extid=$autoPayForm->extid amount=$autoPayForm->amount", 'mfo_pay_auto');
+        Yii::warning("mfo/pay/auto AutoPayForm extid=$autoPayForm->extid amount=$autoPayForm->amount", 'mfo');
         // рубли в копейки
         $autoPayForm->amount *= 100;
 

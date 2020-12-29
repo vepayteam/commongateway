@@ -147,14 +147,14 @@ class MerchantController extends Controller
         if (!$usl) {
             return ['status' => 0, 'message' => 'Услуга не найдена'];
         }
-        $merchantPayId = $kf->IdPartner . " sum=".$kfPay->amount . " extid=".$kfPay->extid;
-        Yii::warning("/merchant/pay id=$merchantPayId", 'mfo');
+        $id = $kf->IdPartner . " sum=".$kfPay->amount . " extid=".$kfPay->extid;
+        Yii::warning("/merchant/pay id=$id", 'mfo');
         $user = null;
         if ($kf->GetReq('regcard',0)) {
             $reguser = new Reguser();
             $user = $reguser->findUser('0', $kf->IdPartner . '-' . time(), md5($kf->IdPartner . '-' . time()), $kf->IdPartner, false);
         }
-        Yii::warning("/merchant/pay CreatePay id=$merchantPayId", 'merchant_pay');
+        Yii::warning("/merchant/pay CreatePay id=$id", 'merchant_pay');
         $pay = new CreatePay($user);
         $mutex = new FileMutex();
         if (!empty($kfPay->extid)) {
@@ -171,7 +171,7 @@ class MerchantController extends Controller
                 }
             }
         }
-        Yii::warning("merchant/pay payToMfo id=$merchantPayId", 'merchant_pay');
+        Yii::warning("merchant/pay payToMfo id=$id", 'merchant_pay');
         $params = $pay->payToMfo($user, [$kfPay->descript], $kfPay, $usl, 2, $kf->IdPartner, 0);
         if (!empty($kfPay->extid)) {
             $mutex->release('getPaySchetExt' . $kfPay->extid);
