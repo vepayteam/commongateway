@@ -217,6 +217,43 @@
                 return false;
             });
 
+            $('#statlistresult').on('click', '[data-action="logpay"]', function(e) {
+                e.preventDefault();
+                let id = $(this).attr('data-id');
+                $.ajax({
+                    data: 'paySchetId=' + id,
+                    method: 'post',
+                    url: '/partner/stat/log',
+                    success: function (answer) {
+                        if (answer.status === 1) {
+                            $('.pdf-modal .modal-body').html(answer.data);
+                            $('.pdf-modal .modal-footer').hide();
+                            $('.pdf-modal .modal-header h3').html('Лог изменений');
+                            $('.pdf-modal').modal('show');
+                        } else {
+                            $('#statlistform').closest('.ibox-content').toggleClass('sk-loading');
+                            swal({
+                                title: "Ошибка",
+                                text: answer.message,
+                                type: "error"
+                            }, function () {
+                                $('#statlistform').closest('.ibox-content').toggleClass('sk-loading');
+                            });
+                        }
+                    },
+                    error: function (error) {
+                        $('#statlistform').closest('.ibox-content').toggleClass('sk-loading');
+                        swal({
+                            title: "Ошибка",
+                            text: "Ошибка на сервере. Пожалуйста обратитесь в тех. поддержку.",
+                            type: "error"
+                        }, function () {
+                            $('#statlistform').closest('.ibox-content').toggleClass('sk-loading');
+                        });
+                    },
+                });
+            });
+
             $('#statlistresult').on('click', '[data-action="update-status-pay"]', function() {
                 let idpay = $(this).attr('data-id');
                 swal({
@@ -287,6 +324,7 @@
                     success: function (answer) {
                         if (answer.status === 1) {
                             $('.pdf-modal .modal-body').html(answer.data);
+                            $('.pdf-modal .modal-footer').show();
                             $('.pdf-modal .modal-footer input:first-child').attr('data-id', id);
                             $('.pdf-modal .modal-footer input:last-child').attr('data-id', id);
                             $('.pdf-modal .modal-header h3').html('Операция «' + answer.message + '»');

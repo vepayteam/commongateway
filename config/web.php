@@ -169,7 +169,7 @@ $config = [
             'db' => 'db', // DB connection component or its config
             'tableName' => '{{%queue}}', // Table name
             'channel' => 'default', // Queue channel key
-            'mutex' => \yii\mutex\MysqlMutex::class, // Mutex used to sync queries
+            'mutex' => \yii\mutex\FileMutex::class,
             'as log' => \yii\queue\LogBehavior::class,
         ],
     ],
