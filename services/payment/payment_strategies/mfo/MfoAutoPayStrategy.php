@@ -38,22 +38,22 @@ class MfoAutoPayStrategy
      */
     public function exec()
     {
-        Yii::warning('Get  Uslugatovar', 'mfo_pay_auto_strategy');
         /** @var Uslugatovar $uslugatovar */
         $uslugatovar = $this->getUslugatovar();
-
+        Yii::warning("Get  Uslugatovar ID=$uslugatovar->ID", 'mfo_pay_auto_strategy');
         if(!$uslugatovar) {
             throw new GateException('Услуга не найдена');
         }
 
-        Yii::warning('Create BankAdapterBuilder', 'mfo_pay_auto_strategy');
+        Yii::warning('Create BankAdapterBuilder autoPay=' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid, 'mfo_pay_auto_strategy');
         $bankAdapterBuilder = new BankAdapterBuilder();
         $bankAdapterBuilder->build($this->autoPayForm->partner, $uslugatovar);
 
         $mutexKey = 'autoPay' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid;
         $mutex = new FileMutex();
 
-        Yii::warning('getReplyRequest', 'mfo_pay_auto_strategy');
+        Yii::warning('getReplyRequest autoPay=' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid, 'mfo_pay_auto_strategy');
+
         $replyPaySchet = $this->getReplyRequest($bankAdapterBuilder);
         if($replyPaySchet && $replyPaySchet->SummPay == $this->autoPayForm->amount) {
             Yii::warning('getReplyRequest, the payment which is', 'mfo_pay_auto_strategy');
@@ -79,17 +79,17 @@ class MfoAutoPayStrategy
         
         if(!$cardnum) {
             $mutex->release($mutexKey);
-            Yii::error('Empty card mfo_pay_auto', 'mfo_pay_auto_strategy');
+            Yii::error('Empty card mfo_pay_auto autoPay=' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid, 'mfo_pay_auto_strategy');
             throw new CreatePayException('empty card');
         }
         $this->autoPayForm->getCard()->CardNumber = $cardnum;
 
-        Yii::warning('createPaySchet', 'mfo_pay_auto_strategy');
+        Yii::warning('createPaySchet autoPay=' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid, 'mfo_pay_auto_strategy');
         $paySchet = $this->createPaySchet($bankAdapterBuilder, $card);
         $this->autoPayForm->paySchet = $paySchet;
 
         try {
-            Yii::warning('bankAdapterBuilder recurrentPay', 'mfo_pay_auto_strategy');
+            Yii::warning('bankAdapterBuilder recurrentPay autoPay=' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid, 'mfo_pay_auto_strategy');
             $createRecurrentPayResponse = $bankAdapterBuilder->getBankAdapter()->recurrentPay($this->autoPayForm);
         } catch (GateException $e) {
             $paySchet->Status = PaySchet::STATUS_ERROR;
@@ -97,14 +97,14 @@ class MfoAutoPayStrategy
         }
 
         if($createRecurrentPayResponse->status == BaseResponse::STATUS_DONE) {
-            Yii::warning('Set ExtBillNumber', 'mfo_pay_auto_strategy');
+            Yii::warning('Set ExtBillNumber autoPay=' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid, 'mfo_pay_auto_strategy');
             $paySchet->Status = PaySchet::STATUS_WAITING;
             $paySchet->ExtBillNumber = $createRecurrentPayResponse->transac;
         } else {
             $paySchet->Status = PaySchet::STATUS_ERROR;
             $paySchet->ErrorInfo = $createRecurrentPayResponse->message;
         }
-        Yii::warning('Save paySchet', 'mfo_pay_auto_strategy');
+        Yii::warning('Save paySchet autoPay=' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid, 'mfo_pay_auto_strategy');
         $paySchet->save(false);
         $mutex->release($mutexKey);
         return $paySchet;
