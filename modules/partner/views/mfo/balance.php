@@ -117,7 +117,11 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                             </div>
                             <div class="col-sm-12">
                                 <label>
-                                    <?=number_format($balances['localin'],2, '.',' ')?> руб.
+                                    <?php if (!empty($Partner->SchetTcbNominal)): ?>
+                                        ТКБ: <?= number_format($balances['tcbnomin'] ?? 0, 2, '.', ' ') ?> руб.
+                                    <?php else: ?>
+                                        ТКБ: <?= number_format($balances['tcbtrans'] ?? 0, 2, '.', ' ') ?> руб
+                                    <?php endif; ?>
                                 </label>
                                 <?php if ($IsAdmin) : ?>
                                     <div>&nbsp;Возн.: <label><?=number_format($balances['comisin'],2, '.',' ')?> руб.</label></div>
