@@ -154,7 +154,7 @@ class MerchantController extends Controller
             $reguser = new Reguser();
             $user = $reguser->findUser('0', $kf->IdPartner . '-' . time(), md5($kf->IdPartner . '-' . time()), $kf->IdPartner, false);
         }
-        Yii::warning("/merchant/pay CreatePay id=$id", 'merchant_pay');
+        Yii::warning("/merchant/pay CreatePay id=$id", 'merchant');
         $pay = new CreatePay($user);
         $mutex = new FileMutex();
         if (!empty($kfPay->extid)) {
@@ -171,7 +171,7 @@ class MerchantController extends Controller
                 }
             }
         }
-        Yii::warning("merchant/pay payToMfo id=$id", 'merchant_pay');
+        Yii::warning("merchant/pay payToMfo id=$id", 'merchant');
         $params = $pay->payToMfo($user, [$kfPay->descript], $kfPay, $usl, 2, $kf->IdPartner, 0);
         if (!empty($kfPay->extid)) {
             $mutex->release('getPaySchetExt' . $kfPay->extid);
