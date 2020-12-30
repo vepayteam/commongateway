@@ -3,6 +3,7 @@
 
 namespace app\services\cards;
 
+use Yii;
 use yii\base\Behavior;
 use app\models\kfapi\KfCard;
 use app\models\mfo\MfoReq;

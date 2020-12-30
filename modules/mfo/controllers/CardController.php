@@ -2,24 +2,17 @@
 
 namespace app\modules\mfo\controllers;
 
+use Yii;
+use yii\web\BadRequestHttpException;
+use yii\web\Controller;
+use yii\web\Response;
 use app\models\api\CorsTrait;
-use app\models\api\Reguser;
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\kfapi\KfCard;
-use app\models\kfapi\KfPay;
-use app\models\mfo\MfoReq;
-use app\models\payonline\CreatePay;
-use Yii;
-use yii\base\Exception;
-use yii\mutex\FileMutex;
-use yii\web\BadRequestHttpException;
-use yii\web\Controller;
-use yii\web\ForbiddenHttpException;
-use yii\web\MethodNotAllowedHttpException;
-use yii\web\Response;
 use app\services\auth\HttpHeaderAuthService;
 use app\services\cards\KfCardService;
+use app\services\card\RegCardService;
 
 
 class CardController extends Controller
@@ -66,31 +59,20 @@ class CardController extends Controller
     }
 
     /**
-     * Информация по карте по ID
-     *
      * @return array
-     * @throws BadRequestHttpException
-     * @throws ForbiddenHttpException
-     * @throws \yii\db\Exception
-     * @throws \yii\web\UnauthorizedHttpException
      */
     public function actionInfo()
     {
-
-        $type = $this->mfo->GetReq('type');
-
-        $Card = null;
-        $kfCard = new KfCard();
-        $kfCard->scenario = KfCard::SCENARIO_INFO;
-        $kfCard->load($this->mfo->Req(), '');
-        if ($kfCard->validate()) {
-            $Card = $kfCard->FindKard($this->mfo->mfo, $type);
+        $kfCard = $this->getKfCard($this->mfo, KfCard::SCENARIO_INFO, "card/reg");
+        if ($kfCard->hasErrors()) {
+            return ['status' => 0, 'message' => $kfCard->GetError()];
         }
+        $type = $this->mfo->GetReq('type');
+        $Card = $kfCard->FindKard($this->mfo->mfo, $type);
         if (!$Card) {
             Yii::warning("card/info: нет такой карты", 'mfo');
             return ['status' => 0, 'message' => 'Нет такой карты'];
         }
-
         //информация и карте
         if ($Card && $type == 0) {
             return [
@@ -119,103 +101,34 @@ class CardController extends Controller
     }
 
     /**
-     * Зарегистрировать карту
-     *
      * @return array
-     * @throws BadRequestHttpException
-     * @throws \yii\db\Exception
-     * @throws \yii\web\UnauthorizedHttpException
-     * @throws ForbiddenHttpException
+     * @throws \yii\base\Exception
      */
     public function actionReg()
     {
-        $type = $this->getReq('type');
         $kfCard = $this->getKfCard($this->mfo, KfCard::SCENARIO_REG, "card/reg");
         if ($kfCard->hasErrors()) {
             return ['status' => 0, 'message' => $kfCard->GetError()];
         }
-        $mutex = new FileMutex();
-        if (!empty($kfCard->extid)) {
-            //проверка на повторный запрос
-            if (!$mutex->acquire('getPaySchetExt' . $kfCard->extid, 30)) {
-                throw new Exception('getPaySchetExt: error lock!');
-            }
-            $pay = new CreatePay();
-            $paramsExist = $pay->getPaySchetExt($kfCard->extid, 1, $this->mfo->mfo);
-            if ($paramsExist) {
-                return ['status' => 1, 'message' => '', 'id' => (int)$paramsExist['IdPay'], 'url' => $kfCard->GetRegForm($paramsExist['IdPay'])];
-            }
-        }
-
-        //зарегистрировать карту
-        $reguser = new Reguser();
-        $user = $reguser->findUser('0', $this->mfo->mfo.'-'.time().random_int(100,999), md5($this->mfo->mfo.'-'.time()), $this->mfo->mfo, false);
-        $data['user'] = $user;
-        if (!empty($user->Email)) {
-            $data['email'] = $user->Email;
-        }
-
-        Yii::warning('/card/reg mfo='. $this->mfo->mfo . " type=".$type, 'mfo');
-
-        if ($type == 0) {
-            //карта для автоплатежа
-            $pay = new CreatePay($user);
-            $data = $pay->payActivateCard(0, $kfCard,3, TCBank::$bank, $this->mfo->mfo); //Provparams
-            if (!empty($kfCard->extid)) {
-                $mutex->release('getPaySchetExt' . $kfCard->extid);
-            }
-            //PCI DSS
-            return [
-                'status' => 1,
-                'message' => '',
-                'id' => $data['IdPay'],
-                'url' => $kfCard->GetRegForm($data['IdPay'])
-            ];
-
-        } elseif ($type == 1) {
-            //карта для выплат
-            $pay = new CreatePay($user);
-            $data = $pay->payActivateCard(0, $kfCard,3,0, $this->mfo->mfo); //Provparams
-            if (!empty($kfCard->extid)) {
-                $mutex->release('getPaySchetExt' . $kfCard->extid);
-            }
-
-            if (isset($data['IdPay'])) {
-                return [
-                    'status' => 1,
-                    'message' => '',
-                    'id' => $data['IdPay'],
-                    'url' => $this->mfo->getLinkOutCard($data['IdPay'])
-                ];
-            }
+        $reg = new RegCardService();
+        $result = $reg->exec($this->mfo, $kfCard);
+        if (isset($result['status'])) {
+            return ['status' => $result['status'], 'message' => $result['message'], 'id' => $result['pay_schet_id'], 'url' => $kfCard->GetRegForm($result['pay_schet_id'])];
         }
         return ['status' => 0, 'message' => 'Ошибка запроса'];
     }
 
     /**
-     * Информация по карте по платежу
-     *
      * @return array
-     * @throws BadRequestHttpException
      * @throws \yii\db\Exception
-     * @throws \yii\web\UnauthorizedHttpException
-     * @throws ForbiddenHttpException
      */
     public function actionGet()
     {
-        $this->mfo = new MfoReq();
-        $this->mfo->LoadData(Yii::$app->request->getRawBody());
-
-        $type = $this->mfo->GetReq('type', 0);
-
-        $kfCard = new KfCard();
-        $kfCard->scenario = KfCard::SCENARIO_GET;
-        $kfCard->load($this->mfo->Req(), '');
-        if (!$kfCard->validate()) {
-            Yii::warning('/card/get mfo='. $this->mfo->mfo . " " . $kfCard->GetError(), 'mfo');
+        $kfCard = $this->getKfCard($this->mfo, KfCard::SCENARIO_GET, "card/reg");
+        if ($kfCard->hasErrors()) {
             return ['status' => 0, 'message' => $kfCard->GetError()];
         }
-
+        $type = $this->getReq('type');
         Yii::warning('/card/get mfo='. $this->mfo->mfo . " IdPay=". $kfCard->id . " type=".$type, 'mfo');
 
         if ($type == 0) {
@@ -233,7 +146,6 @@ class CardController extends Controller
         }
 
         $Card = $kfCard->FindKardByPay($this->mfo->mfo, $type);
-
         //информация по карте
         if ($Card && $type == 0) {
             return [
@@ -264,26 +176,17 @@ class CardController extends Controller
 
     /**
      * @return array
-     * @throws BadRequestHttpException
-     * @throws ForbiddenHttpException
-     * @throws \yii\db\Exception
-     * @throws \yii\web\UnauthorizedHttpException
      */
     public function actionDel()
     {
-        $this->mfo = new MfoReq();
-        $this->mfo->LoadData(Yii::$app->request->getRawBody());
         $Card = null;
-        $kfCard = new KfCard();
-        $kfCard->scenario = KfCard::SCENARIO_INFO;
-        $kfCard->load($this->mfo->Req(), '');
-        if ($kfCard->validate()) {
+        $kfCard = $this->getKfCard($this->mfo, KfCard::SCENARIO_INFO, "card/reg");
+        if (!$kfCard->hasErrors()) {
             $Card = $kfCard->FindKard($this->mfo->mfo, 0);
             if (!$Card) {
                 $Card = $kfCard->FindKard($this->mfo->mfo, 1);
             }
         }
-
         //удалить карту
         if ($Card) {
             $Card->IsDeleted = 1;
