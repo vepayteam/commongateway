@@ -118,9 +118,9 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                             <div class="col-sm-12">
                                 <label>
                                     <?php if (!empty($Partner->SchetTcbNominal)): ?>
-                                        ТКБ: <?= number_format($balances['tcbnomin'] ?? 0, 2, '.', ' ') ?> руб.
+                                        <div>&nbsp;ТКБ: <label><?=number_format($balances['tcbnomin'] ?? 0,2, '.',' ')?> руб.</label></div>
                                     <?php else: ?>
-                                        ТКБ: <?= number_format($balances['tcbtrans'] ?? 0, 2, '.', ' ') ?> руб
+                                        <div>&nbsp;ТКБ: <label><?=number_format($balances['tcbtrans'] ?? 0,2, '.',' ')?> руб.</label></div>
                                     <?php endif; ?>
                                 </label>
                                 <?php if ($IsAdmin) : ?>
@@ -142,7 +142,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                             </div>
                             <div class="col-sm-12">
                                 <label>
-                                    <?=number_format($balances['localout'],2, '.',' ')?> руб.
+                                    <div>&nbsp;ТКБ: <label><?=number_format($balances['tcb'] ?? 0,2, '.',' ')?> руб.</label></div>
                                 </label>
                                 <?php if ($IsAdmin) : ?>
                                     <div>&nbsp;Возн.: <label><?=number_format($balances['comisout'],2, '.',' ')?> руб.</label></div>
