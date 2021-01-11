@@ -72,7 +72,8 @@ class CheckpayCron
 
             if ($query) {
                 while ($value = $query->read()) {
-                    if (!empty($value['ExtBillNumber'])) {
+                    // TODO: проверить необходимость наличия ExtBillNumber
+                    if (!empty($value['ExtBillNumber']) || in_array($value['IsCustom'], TU::OutMfo())) {
 
                         $merchBank = BankMerchant::Get($value['Bank']);
                         $mesg = $merchBank->confirmPay($value['ID'], 0, true);
