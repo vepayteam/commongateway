@@ -12,6 +12,7 @@ use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\MerchantPayForm;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
+use Yii;
 
 class MerchantPayCreateStrategy
 {
