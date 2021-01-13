@@ -30,7 +30,7 @@ class RegCardService
      * @return array
      * @throws Exception
      */
-    public function exec(MfoReq $mfo, KfCard $kfCard): array
+    public function reg(MfoReq $mfo, KfCard $kfCard): array
     {
         $this->fileMutex($mfo, $kfCard);
         $this->getUser($mfo);
@@ -43,7 +43,7 @@ class RegCardService
      * @param KfCard $kfCard
      * @throws Exception
      */
-    private function fileMutex(MfoReq $mfo, KfCard $kfCard): void
+    public function fileMutex(MfoReq $mfo, KfCard $kfCard): void
     {
         $this->result['mutex'] = new FileMutex();
         if (!empty($kfCard->extid)) {
@@ -53,8 +53,11 @@ class RegCardService
             }
             $paySchetRepository = new PaySchetRepository();
             $paySchet = $paySchetRepository->getPaySchetExt($kfCard->extid, 1, $mfo->mfo);
-            if ($paySchet) {
+            $type = $mfo->GetReq('type');
+            if ($type == 0 && $paySchet) {
                 $this->result = ['status' => 1, 'message' => '', 'pay_schet_id' => $paySchet->ID, 'url' => $kfCard->GetRegForm($paySchet->ID)];
+            } elseif($type == 1 && $paySchet) {
+                $this->result = ['status' => 1, 'message' => '', 'pay_schet_id' => $paySchet->ID, 'url' => $mfo->getLinkOutCard($paySchet->ID)];
             }
         }
     }
@@ -106,7 +109,7 @@ class RegCardService
      * @param MfoReq $mfo
      * @param KfCard $kfCard
      */
-    private function forPayments(MfoReq $mfo, KfCard $kfCard): void
+    public function forPayments(MfoReq $mfo, KfCard $kfCard): void
     {
         $paySchetRepository = new PaySchetRepository();
         $data = $paySchetRepository->payActivateCard(0, $kfCard, 3, 0, $mfo->mfo, $this->result['user']);
@@ -114,7 +117,7 @@ class RegCardService
             $this->result['mutex']->release('getPaySchetExt' . $kfCard->extid);
         }
         if (isset($data['IdPay'])) {
-            $this->result = ['status' => 1, 'message' => '', 'pay_schet_id' => $data['IdPay'], 'url' => $kfCard->GetRegForm($data['IdPay'])];
+            $this->result = ['status' => 1, 'message' => '', 'pay_schet_id' => $data['IdPay'], 'url' => $mfo->getLinkOutCard($data['IdPay'])];
         }
     }
 

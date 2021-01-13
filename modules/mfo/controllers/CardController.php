@@ -110,10 +110,10 @@ class CardController extends Controller
         if ($kfCard->hasErrors()) {
             return ['status' => 0, 'message' => $kfCard->GetError()];
         }
-        $reg = new RegCardService();
-        $result = $reg->exec($this->mfo, $kfCard);
+        $regCardService = new RegCardService();
+        $result = $regCardService->reg($this->mfo, $kfCard);
         if (isset($result['status'])) {
-            return ['status' => $result['status'], 'message' => $result['message'], 'id' => $result['pay_schet_id'], 'url' => $kfCard->GetRegForm($result['pay_schet_id'])];
+            return ['status' => $result['status'], 'message' => $result['message'], 'id' => $result['pay_schet_id'], 'url' => $result['url']];
         }
         return ['status' => 0, 'message' => 'Ошибка запроса'];
     }
