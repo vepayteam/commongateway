@@ -120,7 +120,7 @@ $config = [
             'traceLevel' => YII_DEBUG ? 3 : 0,
             'targets' => [
                 [
-                    'class' => 'yii\log\FileTarget',
+                    'class' => 'app\services\logs\targets\SecurityFileTatget',
                     'levels' => ['error', 'warning'],
                     'maskVars' => [
                         '_SERVER.HTTP_AUTHORIZATION',
@@ -136,30 +136,6 @@ $config = [
                     'maxFileSize' => 1024 * 50,
                     'maxLogFiles' => 20,
                     'rotateByCopy' => false,
-                    'except' => [
-                        'yii\db\Exception',
-                    ]
-                ],
-                [
-                    'class' => 'app\services\logs\targets\DbFileTarget',
-                    'levels' => ['error', 'warning'],
-                    'maskVars' => [
-                        '_SERVER.HTTP_AUTHORIZATION',
-                        '_SERVER.PHP_AUTH_USER',
-                        '_SERVER.PHP_AUTH_PW',
-                        '_POST.cardnum',
-                        '_POST.Provparams',
-                        '_POST.PayForm.CardNumber',
-                        '_POST.PayForm.CardCVC',
-                        '_POST.InsertKey',
-                        '_POST.ChangeKeys'
-                    ],
-                    'maxFileSize' => 1024 * 50,
-                    'maxLogFiles' => 20,
-                    'rotateByCopy' => false,
-                    'categories' => [
-                        'yii\db\Exception',
-                    ]
                 ],
             ],
         ],
