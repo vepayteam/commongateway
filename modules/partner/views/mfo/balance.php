@@ -40,10 +40,10 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                 </div>
                             </div>
                             <?php if (!empty($Partner->SchetTcbNominal)): ?>
-                            <div class="col-sm-3 col-sm-offset-1">
-                                <label>Остаток на начало:</label>
-                                <div id="vypostbeg">-</div>
-                            </div>
+                                <div class="col-sm-3 col-sm-offset-1">
+                                    <label>Остаток на начало:</label>
+                                    <div id="vypostbeg">-</div>
+                                </div>
                             <?php endif; ?>
                         </div>
                         <div class="form-group">
@@ -64,10 +64,10 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                 </select>
                             </div>
                             <?php if (!empty($Partner->SchetTcbNominal)): ?>
-                            <div class="col-sm-3 col-sm-offset-1">
-                                <label>Остаток на конец:</label>
-                                <div id="vypostend">-</div>
-                            </div>
+                                <div class="col-sm-3 col-sm-offset-1">
+                                    <label>Остаток на конец:</label>
+                                    <div id="vypostend">-</div>
+                                </div>
                             <?php endif; ?>
                         </div>
 
@@ -117,11 +117,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                             </div>
                             <div class="col-sm-12">
                                 <label>
-                                    <?php if (!empty($Partner->SchetTcbNominal)): ?>
-                                        <div>&nbsp;ТКБ: <label><?=number_format($balances['tcbnomin'] ?? 0,2, '.',' ')?> руб.</label></div>
-                                    <?php else: ?>
-                                        <div>&nbsp;ТКБ: <label><?=number_format($balances['tcbtrans'] ?? 0,2, '.',' ')?> руб.</label></div>
-                                    <?php endif; ?>
+                                    <?=number_format($balances['localin'],2, '.',' ')?> руб.
                                 </label>
                                 <?php if ($IsAdmin) : ?>
                                     <div>&nbsp;Возн.: <label><?=number_format($balances['comisin'],2, '.',' ')?> руб.</label></div>
@@ -142,7 +138,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                             </div>
                             <div class="col-sm-12">
                                 <label>
-                                    <div>&nbsp;ТКБ: <label><?=number_format($balances['tcb'] ?? 0,2, '.',' ')?> руб.</label></div>
+                                    <?=number_format($balances['localout'],2, '.',' ')?> руб.
                                 </label>
                                 <?php if ($IsAdmin) : ?>
                                     <div>&nbsp;Возн.: <label><?=number_format($balances['comisout'],2, '.',' ')?> руб.</label></div>
