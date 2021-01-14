@@ -120,7 +120,7 @@ $config = [
             'traceLevel' => YII_DEBUG ? 3 : 0,
             'targets' => [
                 [
-                    'class' => 'app\services\logs\targets\SecurityFileTatget',
+                    'class' => 'app\services\logs\targets\SecurityFileTarget',
                     'levels' => ['error', 'warning'],
                     'maskVars' => [
                         '_SERVER.HTTP_AUTHORIZATION',

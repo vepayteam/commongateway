@@ -8,7 +8,7 @@ use Carbon\Carbon;
 use Yii;
 use yii\log\FileTarget;
 
-class SecurityFileTatget extends FileTarget
+class SecurityFileTarget extends FileTarget
 {
     public function export()
     {
