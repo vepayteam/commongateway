@@ -19,6 +19,7 @@ use app\models\telegram\Telegram;
 use app\services\notifications\NotificationsService;
 use app\services\payment\models\PaySchet;
 use app\services\payment\PaymentService;
+use Carbon\Carbon;
 use Yii;
 use yii\console\Controller;
 use app\models\payonline\OrderNotif;
@@ -443,6 +444,14 @@ class WidgetController extends Controller
     public function actionSendEmailsLateUpdatedPaySchets()
     {
         $this->getPaymentService()->sendEmailsLateUpdatedPaySchets();
+    }
+
+    public function actionRefreshErrorRegistrationCard($startDate, $finishDate, $limit = 0)
+    {
+        $startDate = Carbon::createFromFormat('Y-m-d', $startDate);
+        $finishDate = Carbon::createFromFormat('Y-m-d', $finishDate);
+
+        $this->getPaymentService()->refreshNotRefundRegistrationCard($startDate, $finishDate, $limit);
     }
 
     /**

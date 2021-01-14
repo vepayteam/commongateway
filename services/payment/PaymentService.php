@@ -8,6 +8,7 @@ use app\models\bank\BankCheck;
 use app\models\kfapi\KfRequest;
 use app\models\partner\stat\export\csv\ToCSV;
 use app\models\payonline\Partner;
+use app\models\payonline\Uslugatovar;
 use app\models\SendEmail;
 use app\modules\partner\models\PaySchetLogForm;
 use app\services\partners\models\PartnerOption;
@@ -175,6 +176,34 @@ class PaymentService
         }
         if (file_exists($toCSV->fullpath())){
             unlink($toCSV->fullpath());
+        }
+    }
+
+    public function refreshNotRefundRegistrationCard(Carbon $startDate, Carbon $finishDate, $limit = 0)
+    {
+        $perPage = 100;
+        $page = 0;
+
+        while(true) {
+            if($limit > 0 && $page * $perPage > $limit) {
+                break;
+            }
+
+            $q = $paySchets = PaySchet::find()
+                ->andWhere(['=', 'IdUsluga', Uslugatovar::TYPE_REG_CARD])
+                ->andWhere(['=', 'Status', PaySchet::STATUS_DONE])
+                ->andWhere(['>', 'DateCreate', $startDate->timestamp])
+                ->andWhere(['<', 'DateCreate', $finishDate->timestamp])
+                ->offset($page * $perPage);
+
+
+            if($limit - $page * $perPage < $perPage) {
+                $q->limit($limit - $page * $perPage);
+            } else {
+
+            }
+
+
         }
     }
 }
