@@ -52,11 +52,7 @@ $console = [
         'db' => require(__DIR__ . '/db.php'),
 
         'redis' => $params['components']['redis'],
-        'queue' => [
-            'class' => \yii\queue\redis\Queue::class,
-            'redis' => 'redis',
-            'channel' => 'queue',
-        ],
+        'queue' => $params['components']['queue'],
     ],
     'params' => $params,
     'container' => [
