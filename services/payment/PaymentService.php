@@ -4,27 +4,23 @@
 namespace app\services\payment;
 
 
-use app\models\bank\BankCheck;
 use app\models\kfapi\KfRequest;
 use app\models\partner\stat\export\csv\ToCSV;
-use app\models\payonline\Partner;
-use app\models\payonline\Uslugatovar;
 use app\models\SendEmail;
 use app\modules\partner\models\PaySchetLogForm;
 use app\services\partners\models\PartnerOption;
-use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\forms\SetPayOkForm;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\PaySchetLog;
 use app\services\payment\payment_strategies\CreateFormEcomStrategy;
 use app\services\payment\payment_strategies\CreateFormJkhStrategy;
 use app\services\payment\payment_strategies\IPaymentStrategy;
+use app\services\payment\jobs\RefreshStatusPayJob;
+use app\services\payment\jobs\RefundPayJob;
 use app\services\payment\traits\CardsTrait;
 use app\services\payment\traits\PayPartsTrait;
 use Carbon\Carbon;
 use Yii;
-use yii\db\Query;
-use yii\mutex\FileMutex;
 
 class PaymentService
 {
@@ -179,7 +175,7 @@ class PaymentService
         }
     }
 
-    public function refreshNotRefundRegistrationCard(Carbon $startDate, Carbon $finishDate, $limit = 0)
+    public function massRevert($where, $limit = 0)
     {
         $perPage = 100;
         $page = 0;
@@ -189,21 +185,63 @@ class PaymentService
                 break;
             }
 
-            $q = $paySchets = PaySchet::find()
-                ->andWhere(['=', 'IdUsluga', Uslugatovar::TYPE_REG_CARD])
-                ->andWhere(['=', 'Status', PaySchet::STATUS_DONE])
-                ->andWhere(['>', 'DateCreate', $startDate->timestamp])
-                ->andWhere(['<', 'DateCreate', $finishDate->timestamp])
-                ->offset($page * $perPage);
-
+            $q = $paySchets = PaySchet::find()->where($where)->offset($page * $perPage);
 
             if($limit - $page * $perPage < $perPage) {
                 $q->limit($limit - $page * $perPage);
             } else {
-
+                $q->limit($perPage);
             }
 
+            /** @var PaySchet[] $paySchets */
+            $paySchets = $q->all();
 
+            if(count($paySchets) == 0) {
+                break;
+            }
+
+            foreach($paySchets as $paySchet) {
+                Yii::$app->queue->push(new RefundPayJob([
+                    'paySchetId' => $paySchet->ID,
+                ]));
+                Yii::warning('PaymentService massRevert pushed: ID=' . $paySchet->ID);
+            }
+            $page++;
+        }
+    }
+
+    public function massRefreshStatus($where, $limit = 0)
+    {
+        $perPage = 100;
+        $page = 0;
+
+        while(true) {
+            if($limit > 0 && $page * $perPage > $limit) {
+                break;
+            }
+
+            $q = $paySchets = PaySchet::find()->where($where)->offset($page * $perPage);
+
+            if($limit > 0 && $limit - $page * $perPage < $perPage) {
+                $q->limit($limit - $page * $perPage);
+            } else {
+                $q->limit($perPage);
+            }
+
+            /** @var PaySchet[] $paySchets */
+            $paySchets = $q->all();
+
+            if(count($paySchets) == 0) {
+                break;
+            }
+
+            foreach($paySchets as $paySchet) {
+                Yii::$app->queue->push(new RefreshStatusPayJob([
+                    'paySchetId' => $paySchet->ID,
+                ]));
+                Yii::warning('PaymentService massRefreshStatus pushed: ID=' . $paySchet->ID);
+            }
+            $page++;
         }
     }
 }

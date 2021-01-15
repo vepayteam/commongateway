@@ -50,13 +50,12 @@ $console = [
             ],
         ],
         'db' => require(__DIR__ . '/db.php'),
+
+        'redis' => $params['components']['redis'],
         'queue' => [
-            'class' => \yii\queue\db\Queue::class,
-            'db' => 'db', // DB connection component or its config
-            'tableName' => '{{%queue}}', // Table name
-            'channel' => 'default', // Queue channel key
-            'mutex' => \yii\mutex\MysqlMutex::class, // Mutex used to sync queries
-            'as log' => \yii\queue\LogBehavior::class,
+            'class' => \yii\queue\redis\Queue::class,
+            'redis' => 'redis',
+            'channel' => 'queue',
         ],
     ],
     'params' => $params,

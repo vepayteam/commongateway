@@ -26,6 +26,7 @@ use app\models\payonline\OrderNotif;
 use app\models\planner\CheckpayCron;
 use app\models\planner\Notification;
 use yii\db\Transaction;
+use yii\helpers\Json;
 use yii\helpers\VarDumper;
 
 class WidgetController extends Controller
@@ -444,14 +445,6 @@ class WidgetController extends Controller
     public function actionSendEmailsLateUpdatedPaySchets()
     {
         $this->getPaymentService()->sendEmailsLateUpdatedPaySchets();
-    }
-
-    public function actionRefreshErrorRegistrationCard($startDate, $finishDate, $limit = 0)
-    {
-        $startDate = Carbon::createFromFormat('Y-m-d', $startDate);
-        $finishDate = Carbon::createFromFormat('Y-m-d', $finishDate);
-
-        $this->getPaymentService()->refreshNotRefundRegistrationCard($startDate, $finishDate, $limit);
     }
 
     /**

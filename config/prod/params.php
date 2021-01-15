@@ -43,6 +43,15 @@ return [
 
     'testCards' => require(__DIR__ . '/test_cards.php'),
 
+    'components' => [
+        'redis' => [
+            'class' => 'yii\redis\Connection',
+            'hostname' => 'localhost',
+            'port' => 6379,
+            'database' => 4,
+        ],
+    ],
+
     'services' => [
         'accounts' => [
             'url' => '',

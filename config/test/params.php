@@ -43,6 +43,16 @@ return [
 
     'testCards' => require(__DIR__ . '/test_cards.php'),
 
+    'components' => [
+        'redis' => [
+            'class' => 'yii\redis\Connection',
+            'hostname' => 'localhost',
+            'port' => 6379,
+            'database' => 4,
+            'retries' => 1,
+        ],
+    ],
+
     'services' => [
         'accounts' => [
             'url' => 'http://vpbc-102-test.192-168-110-2.nip.io/api',
