@@ -45,15 +45,16 @@ return [
 
     'components' => [
         'redis' => [
-            'class' => 'yii\base\BaseObject',
+            'class' => 'yii\redis\Connection',
+            'hostname' => '127.0.0.1',
+            'port' => 6379,
+            'database' => 3,
+            'retries' => 1,
         ],
         'queue' => [
-            'class' => \yii\queue\db\Queue::class,
-            'db' => 'db', // DB connection component or its config
-            'tableName' => '{{%queue}}', // Table name
-            'channel' => 'default', // Queue channel key
-            'mutex' => \yii\mutex\MysqlMutex::class, // Mutex used to sync queries
-            'as log' => \yii\queue\LogBehavior::class,
+            'class' => \yii\queue\redis\Queue::class,
+            'redis' => 'redis',
+            'channel' => 'queue',
         ],
     ],
 
