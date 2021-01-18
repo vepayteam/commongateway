@@ -53,6 +53,7 @@ return [
             'channel' => 'default', // Queue channel key
             'mutex' => \yii\mutex\MysqlMutex::class, // Mutex used to sync queries
             'as log' => \yii\queue\LogBehavior::class,
+            'attempts' => 3, // Максимальное кол-во попыток
         ],
     ],
 
