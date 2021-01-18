@@ -43,6 +43,21 @@ return [
 
     'testCards' => require(__DIR__ . '/test_cards.php'),
 
+    'components' => [
+        'redis' => [
+            'class' => 'yii\redis\Connection',
+            'hostname' => '127.0.0.1',
+            'port' => 6379,
+            'database' => 3,
+            'retries' => 1,
+        ],
+        'queue' => [
+            'class' => \yii\queue\redis\Queue::class,
+            'redis' => 'redis',
+            'channel' => 'queue',
+        ],
+    ],
+
     'services' => [
         'accounts' => [
             'url' => '',

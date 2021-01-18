@@ -6,6 +6,7 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
+    'Requests' => array($vendorDir . '/rmccue/requests/library'),
     'HTMLPurifier' => array($vendorDir . '/ezyang/htmlpurifier/library'),
     'Flow\\JSONPath\\Test' => array($vendorDir . '/flow/jsonpath/tests'),
     'Flow\\JSONPath' => array($vendorDir . '/flow/jsonpath/src'),

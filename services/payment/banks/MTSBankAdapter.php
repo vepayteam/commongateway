@@ -24,6 +24,7 @@ use app\services\payment\forms\mts\ConfirmPayRequest;
 use app\services\payment\forms\mts\CreatePayRequest;
 use app\services\payment\forms\mts\PayOrderRequest;
 use app\services\payment\forms\OkPayForm;
+use app\services\payment\forms\RefundPayForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use qfsx\yii2\curl\Curl;
@@ -917,5 +918,10 @@ class MTSBankAdapter implements IBankAdapter
     public function recurrentPay(AutoPayForm $autoPayForm)
     {
         throw new GateException('Метод недоступен');
+    }
+
+    public function refundPay(RefundPayForm $refundPayForm)
+    {
+        // TODO: Implement refundOrder() method.
     }
 }
