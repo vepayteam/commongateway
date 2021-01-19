@@ -108,7 +108,7 @@ class BalancePartner
             WHERE
                 p.ID = :ID
         ', [
-            ':INFO' => $info,
+            ':INFO' => mb_substr($info, 0, 250),
             ':SUMM' => $summ,
             ':TYPEOP' => $optype,
             ':ID' => $this->IdPartner,

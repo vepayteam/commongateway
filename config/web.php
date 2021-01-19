@@ -140,14 +140,9 @@ $config = [
             ],
         ],
         'db' => require(__DIR__ . '/db.php'),
-        'queue' => [
-            'class' => \yii\queue\db\Queue::class,
-            'db' => 'db', // DB connection component or its config
-            'tableName' => '{{%queue}}', // Table name
-            'channel' => 'default', // Queue channel key
-            'mutex' => \yii\mutex\FileMutex::class,
-            'as log' => \yii\queue\LogBehavior::class,
-        ],
+
+        'redis' => $params['components']['redis'],
+        'queue' => $params['components']['queue'],
     ],
     'params' => $params,
     'container' => [

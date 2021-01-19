@@ -15,6 +15,7 @@ use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\OkPayForm;
+use app\services\payment\forms\RefundPayForm;
 use app\services\payment\helpers\ADGroupBankHelper;
 use app\services\payment\models\adb\ClientCardModel;
 use app\services\payment\models\adb\OrderDataModel;
@@ -143,5 +144,10 @@ class ADGroupBankAdapter implements IBankAdapter
         curl_close($curl);
 
         $a = 0;
+    }
+
+    public function refundPay(RefundPayForm $refundPayForm)
+    {
+        // TODO: Implement refundOrder() method.
     }
 }

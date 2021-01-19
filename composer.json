@@ -36,6 +36,8 @@
         "nesbot/carbon": "^2.40",
         "2amigos/qrcode-library" : "*",
         "php-amqplib/php-amqplib": "^2.11",
+        "rmccue/requests": "^1.7",
+        "yiisoft/yii2-redis": "~2.0.0"
     },
     "require-dev": {
         "yiisoft/yii2-debug": "~2.1.0",
