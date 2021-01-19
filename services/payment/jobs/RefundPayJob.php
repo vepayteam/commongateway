@@ -1,7 +1,7 @@
 <?php
 
 
-namespace app\services\jobs\jobs;
+namespace app\services\payment\jobs;
 
 
 use app\services\payment\banks\BankAdapterBuilder;
