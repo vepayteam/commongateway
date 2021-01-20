@@ -11,6 +11,8 @@ use yii\web\User;
 class UserLk implements IdentityInterface
 {
     const ROLE_ADMIN = "admin";
+    const CACHE_ERROR_LOGIN_COLLECTION_NAME = 'UserLk__ErrorLogin';
+    const CACHE_ERROR_LOGIN_DURATION = 900;
 
     private $isAdmin = false;
     private $roleUser = 0;
@@ -388,6 +390,13 @@ class UserLk implements IdentityInterface
      */
     public static function IsNotLoginLock($login)
     {
+        $cacheKey = self::CACHE_ERROR_LOGIN_COLLECTION_NAME . $login . '_' . Yii::$app->request->remoteIP;
+        $cache = Yii::$app->cache->getOrSet($cacheKey, function() use ($login) {
+           return [
+               'quantity' => 0,
+           ];
+        }, self::CACHE_ERROR_LOGIN_DURATION);
+
         $notSesLock = (
             !isset(Yii::$app->session['errAtempt']) ||
             (isset(Yii::$app->session['errAtempt']) && Yii::$app->session['errAtempt'] < 10) ||
