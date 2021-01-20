@@ -14,18 +14,16 @@ class SecurityFileTarget extends FileTarget
     {
         $dbParams = require(Yii::getAlias('@app/config/db.php'));
         foreach ($this->messages as $message) {
-            if($message[0] instanceof \yii\db\Exception) {
-                /** @var \Exception $exception */
-                $exception = $message[0];
+            /** @var \Exception $exception */
+            $exception = $message[0];
 
-                $log = sprintf('%s [%s][-][-][error][%s] %s'."\n",
-                    Carbon::now(),
-                    Yii::$app->request->remoteIP,
-                    $message[2],
-                    $this->maskByDbAccess($exception->__toString(), $dbParams)
-                );
-                file_put_contents($this->logFile, $log, FILE_APPEND | LOCK_EX);
-            }
+            $log = sprintf('%s [%s][-][-][error][%s] %s'."\n",
+                Carbon::now(),
+                Yii::$app->request->remoteIP,
+                $message[2],
+                $this->maskByDbAccess($exception->__toString(), $dbParams)
+            );
+            file_put_contents($this->logFile, $log, FILE_APPEND | LOCK_EX);
         }
     }
 
