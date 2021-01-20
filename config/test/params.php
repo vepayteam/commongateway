@@ -57,6 +57,14 @@ return [
             'channel' => 'queue',
             'attempts' => 3, // Максимальное кол-во попыток
         ],
+        'cache' => [
+            'class' => 'yii\redis\Cache',
+            'redis' => [
+                'hostname' => '127.0.0.1',
+                'port' => 6379,
+                'database' => 4,
+            ],
+        ],
     ],
 
     'services' => [
