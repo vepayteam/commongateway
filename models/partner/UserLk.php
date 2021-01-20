@@ -339,14 +339,13 @@ class UserLk implements IdentityInterface
             return ;
         }
 
-        $cacheKey = self::CACHE_ERROR_LOGIN_COLLECTION_NAME . $login . '_' . Yii::$app->request->remoteIP;
-        $cache = Yii::$app->cache->getOrSet($cacheKey, function() use ($login) {
+        $cache = Yii::$app->cache->getOrSet(self::getCacheErrorLoginKey($login), function() use ($login) {
             return [
                 'quantity' => 0,
             ];
         }, self::CACHE_ERROR_LOGIN_DURATION);
         $cache['quantity']++;
-        Yii::$app->cache->set($cacheKey, $cache, self::CACHE_ERROR_LOGIN_DURATION);
+        Yii::$app->cache->set(self::getCacheErrorLoginKey($login), $cache, self::CACHE_ERROR_LOGIN_DURATION);
     }
 
     /**
@@ -381,14 +380,22 @@ class UserLk implements IdentityInterface
      */
     public static function IsNotLoginLock($login)
     {
-        $cacheKey = self::CACHE_ERROR_LOGIN_COLLECTION_NAME . $login . '_' . Yii::$app->request->remoteIP;
-        $cache = Yii::$app->cache->getOrSet($cacheKey, function() use ($login) {
+        $cache = Yii::$app->cache->getOrSet(self::getCacheErrorLoginKey($login), function() use ($login) {
            return [
                'quantity' => 0,
            ];
         }, self::CACHE_ERROR_LOGIN_DURATION);
 
         return $cache['quantity'] < self::CACHE_ERROR_LOGIN_QUANTITY;
+    }
+
+    /**
+     * @param $login
+     * @return string
+     */
+    private static function getCacheErrorLoginKey($login)
+    {
+        return self::CACHE_ERROR_LOGIN_COLLECTION_NAME . $login . '_' . Yii::$app->request->remoteIP;
     }
 
 }
