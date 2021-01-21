@@ -18,6 +18,7 @@ use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
 use app\services\payment\banks\traits\TKBank3DSTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
+use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\forms\AutoPayForm;
@@ -550,6 +551,14 @@ class TKBankAdapter implements IBankAdapter
         try {
             switch ($curl->responseCode) {
                 case 200:
+                    $responce = json_decode($curl->response,true);
+                    if(json_last_error() == JSON_ERROR_NONE && is_array($responce)) {
+                        if(isset($responce['errorinfo']['errorcode']) && isset($responce['errorinfo']['errormessage']) && $responce['errorinfo']['errorcode'] === 1) {
+                            $ans['error'] = 'MerchantRequestAlreadyExistsException';
+                            $ans['errorcode'] = $responce['errorinfo']['errorcode'];
+                            $ans['errormessage'] = $responce['errorinfo']['errormessage'];
+                        }
+                    }
                 case 202:
                     $ans['xml'] = $jsonReq ? Json::decode($curl->response) : $curl->response;
                     break;
@@ -1523,6 +1532,10 @@ class TKBankAdapter implements IBankAdapter
 
         // TODO: response as object
         $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+
+        if(isset($ans['error']) && $ans['error'] === 'MerchantRequestAlreadyExistsException') {
+            throw new MerchantRequestAlreadyExistsException('Ошибка запроса, попробуйте повторить позднее');
+        }
 
         $payResponse = new CreatePayResponse();
         if (isset($ans['xml']) && !empty($ans['xml'])) {

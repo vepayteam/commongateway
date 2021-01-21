@@ -26,6 +26,7 @@ use app\services\payment\exceptions\Check3DSv2DuplicatedException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
+use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\OkPayForm;
@@ -187,6 +188,8 @@ class PayController extends Controller
                 'message' => $e->getMessage(),
                 'url' => Yii::$app->params['domain'] . '/pay/orderok?id=' . $form->IdPay,
             ];
+        } catch (MerchantRequestAlreadyExistsException $e) {
+            return ['status' => 0, 'message' => $e->getMessage()];
         } catch (BankAdapterResponseException $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
         } catch (Check3DSv2Exception $e) {
