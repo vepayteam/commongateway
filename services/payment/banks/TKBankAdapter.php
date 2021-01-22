@@ -207,18 +207,19 @@ class TKBankAdapter implements IBankAdapter
         if ($params['Status'] == 1) {
 
             $queryData = [
-                'OrderID' => $params['ID']
+                'ExtId' => $params['ID'],
+                'description' => 'Отмена заказа',
             ];
 
             if ($params['DateCreate'] < mktime(0, 0, 0, date('n'), date('d'), date('Y'))) {
                 //возврат - отмена на следующий день после оплаты
-                $action = '/api/tcbpay/gate/RefundOrder';
+                $action = '/api/v1/card/unregistered/debit/refund';
 
-                $queryData['Amount'] = $params['SummFull'];
+                $queryData['amount'] = $params['SummFull'];
 
             } else {
                 //отмена в день оплаты
-                $action = '/api/tcbpay/gate/reverseorder';
+                $action = '/api/v1/card/unregistered/debit/reverse';
             }
 
             $queryData = Json::encode($queryData);
@@ -1783,12 +1784,12 @@ class TKBankAdapter implements IBankAdapter
         }
 
         $refundPayRequest = new RefundPayRequest();
-        $refundPayRequest->OrderID = $paySchet->ID;
+        $refundPayRequest->ExtId = $paySchet->ID;
 
-        $action = '/api/tcbpay/gate/reverseorder';
+        $action = '/api/v1/card/unregistered/debit/reverse';
         if($paySchet->DateCreate < Carbon::now()->startOfDay()->timestamp) {
-            $refundPayRequest->Amount = $paySchet->getSummFull();
-            $action = '/api/tcbpay/gate/RefundOrder';
+            $refundPayRequest->amount = $paySchet->getSummFull();
+            $action = '/api/v1/card/unregistered/debit/refund';
         }
 
         $ans = $this->curlXmlReq(Json::encode($refundPayRequest->getAttributes()), $this->bankUrl . $action);
