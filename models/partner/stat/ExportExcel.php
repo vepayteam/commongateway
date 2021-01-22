@@ -53,9 +53,17 @@ class ExportExcel
             }
 
             //Сохранение в файл
-            $tmpfile = implode(DIRECTORY_SEPARATOR, [
+            $tmpdir = implode(DIRECTORY_SEPARATOR, [
                 Yii::getAlias('@runtime'),
                 'tmp',
+            ]);
+
+            if(!file_exists($tmpdir)) {
+                mkdir($tmpdir, 0777, true);
+            }
+
+            $tmpfile = implode(DIRECTORY_SEPARATOR, [
+                $tmpdir,
                 Yii::$app->security->generateRandomString() . '.xlsx',
             ]);
             $writer = IOFactory::createWriter($objPHPExcel, 'Xlsx');
