@@ -80,7 +80,13 @@ class PayShetStat extends Model
         $query
             ->select([
                 'ps.ID',
+                'ps.IdOrg',
                 'ps.Extid',
+                'ps.RRN',
+                'ps.CardNum',
+                'ps.CardHolder',
+                'ps.BankName',
+                'ps.IdKard',//
                 'qp.NameUsluga',
                 'ps.SummPay',
                 'ps.ComissSumm',

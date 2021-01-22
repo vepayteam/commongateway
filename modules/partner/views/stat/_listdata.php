@@ -41,6 +41,12 @@ use app\models\TU;
         <th>Ошибка</th>
         <th>Тип карты</th>
         <th>Геолокация</th>
+        <th>ID мерчанта</th>
+        <th>Маска карты</th>
+        <th>Держатель карты</th>
+        <th>RRN</th>
+        <th>Хэш от номера карты</th>
+        <th>Наименование банка-эквайера</th>
         <th>Действия</th>
     </tr>
     </thead>
@@ -82,6 +88,12 @@ use app\models\TU;
                 </td>
                 <td><?= $row['CardType'] ?></td>
                 <td><?= $row['CountryUser'] . " " . $row['CityUser'] ?></td>
+                <td><?= $row['IdOrg'] ?></td>
+                <td><?= $row['CardNum'] ?></td>
+                <td><?= $row['CardHolder'] ?></td>
+                <td><?= $row['RRN'] ?></td>
+                <td><?= $row['IdKard'] ?></td>
+                <td><?= $row['BankName'] ?></td>
                 <td>
                     <input class='btn btn-white btn-xs' data-action="logpay" data-id='<?= $row['ID'] ?>' type='button' value='Лог'>
                     <?php if ($row['Status'] == 1 && TU::IsInPay($row['IsCustom'])): ?>
