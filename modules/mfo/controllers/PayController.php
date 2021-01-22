@@ -21,6 +21,7 @@ use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\MfoLkPayForm;
+use app\services\payment\models\PaySchet;
 use app\services\payment\payment_strategies\CreateFormMfoAftPartsStrategy;
 use app\services\payment\payment_strategies\CreateFormMfoEcomPartsStrategy;
 use app\services\payment\payment_strategies\IMfoStrategy;
@@ -338,6 +339,10 @@ class PayController extends Controller
         $payschets = new Payschets();
         $params = $payschets->getSchetData($IdPay,null, $mfo->mfo);
         if ($params) {
+            if($params['Status'] == PaySchet::STATUS_NOT_EXEC) {
+                return ['status' => 0, 'message' => 'В обработке' , 'rc' => ''];
+            }
+
             $merchBank = BankMerchant::Create($params);
             $ret = $merchBank->confirmPay($IdPay, $mfo->mfo);
             if ($ret && isset($ret['status']) && $ret['IdPay'] != 0) {
