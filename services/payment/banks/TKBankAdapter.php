@@ -16,26 +16,31 @@ use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\traits\TKBank3DSTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
+use app\services\payment\exceptions\RefundPayException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\OkPayForm;
+use app\services\payment\forms\RefundPayForm;
 use app\services\payment\forms\tkb\CheckStatusPayRequest;
 use app\services\payment\forms\tkb\Confirm3DSv2Request;
 use app\services\payment\forms\tkb\CreatePayRequest;
 use app\services\payment\forms\tkb\CreateRecurrentPayRequest;
 use app\services\payment\forms\tkb\DonePay3DSv2Request;
 use app\services\payment\forms\tkb\DonePayRequest;
+use app\services\payment\forms\tkb\RefundPayRequest;
 use app\services\payment\interfaces\Cache3DSv2Interface;
 use app\services\payment\interfaces\Issuer3DSVersionInterface;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
+use Carbon\Carbon;
 use qfsx\yii2\curl\Curl;
 use SimpleXMLElement;
 use Yii;
@@ -1778,5 +1783,38 @@ class TKBankAdapter implements IBankAdapter
         $createRecurrentPayResponse->status = BaseResponse::STATUS_ERROR;
         $createRecurrentPayResponse->message = '';
         return $createRecurrentPayResponse;
+    }
+
+
+    public function refundPay(RefundPayForm $refundPayForm)
+    {
+        $refundPayResponse = new RefundPayResponse();
+
+        $paySchet = $refundPayForm->paySchet;
+        if($paySchet->Status != PaySchet::STATUS_DONE) {
+            throw new RefundPayException('Невозможно отменить незавершенный платеж');
+        }
+
+        $refundPayRequest = new RefundPayRequest();
+        $refundPayRequest->OrderID = $paySchet->ID;
+
+        $action = '/api/tcbpay/gate/reverseorder';
+        if($paySchet->DateCreate < Carbon::now()->startOfDay()->timestamp) {
+            $refundPayRequest->Amount = $paySchet->getSummFull();
+            $action = '/api/tcbpay/gate/RefundOrder';
+        }
+
+        $ans = $this->curlXmlReq(Json::encode($refundPayRequest->getAttributes()), $this->bankUrl . $action);
+        Yii::warning("reversOrder: " . $this->logArr($ans), 'merchant');
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            $status = isset($ans['xml']['errorinfo']['errorcode']) ? $ans['xml']['errorinfo']['errorcode'] : 1;
+            $message = isset($ans['xml']['errorinfo']['errormessage']) ? $ans['xml']['errorinfo']['errormessage'] : 'Ошибка запроса';
+
+            $refundPayResponse->state = $status == 0;
+            $refundPayResponse->status = $status;
+            $refundPayResponse->message = $message;
+
+            return $refundPayResponse;
+        }
     }
 }

@@ -7,12 +7,17 @@ namespace app\services\payment\forms;
 use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\payonline\User;
+use app\models\traits\ValidateFormTrait;
 use app\services\payment\models\PaySchet;
+use Serializable;
 use yii\base\Model;
 use yii\db\Query;
+use yii\helpers\Json;
 
-class AutoPayForm extends Model
+class AutoPayForm extends Model implements Serializable
 {
+    use ValidateFormTrait;
+
     /** @var Cards */
     protected $_card;
     /** @var Partner */
@@ -55,13 +60,6 @@ class AutoPayForm extends Model
         }
     }
 
-    public function getError()
-    {
-        $err = $this->firstErrors;
-        $err = array_pop($err);
-        return $err;
-    }
-
     /**
      * @param Partner $partner
      * @param int $type
@@ -88,5 +86,62 @@ class AutoPayForm extends Model
         }
 
         return $this->_card;
+    }
+
+    /**
+     * @return string
+     */
+    public function getMutexKey()
+    {
+        return 'autoPay' . $this->partner->ID . $this->extid;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function serialize()
+    {
+        $arr = [
+            'amount' => $this->amount,
+            'extid' => $this->extid,
+            'document_id' => $this->document_id,
+            'fullname' => $this->fullname,
+            'postbackurl' => $this->postbackurl,
+            'descript' => $this->descript,
+            'card' => $this->card,
+            'partnerId' => $this->partner ? $this->partner->ID : null,
+            'paySchetId' => $this->paySchet ? $this->paySchet->ID : null,
+            'userId' => $this->user ? $this->user->ID : null,
+        ];
+
+        return Json::encode($arr);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function unserialize($serialized)
+    {
+        $arr = Json::decode($serialized, true);
+
+        $this->amount = $arr['amount'];
+        $this->extid = $arr['extid'];
+        $this->document_id = $arr['document_id'];
+        $this->fullname = $arr['fullname'];
+        $this->postbackurl = $arr['postbackurl'];
+        $this->descript = $arr['descript'];
+        $this->card = $arr['card'];
+
+        if(!is_null($arr['partnerId'])) {
+            $this->partner = Partner::findOne(['ID' => $arr['partnerId']]);
+        }
+
+        if(!is_null($arr['paySchetId'])) {
+            $this->paySchet = PaySchet::findOne(['ID' => $arr['paySchetId']]);
+        }
+
+        if(!is_null($arr['userId'])) {
+            $this->user = User::findOne(['ID' => $arr['userId']]);
+        }
     }
 }

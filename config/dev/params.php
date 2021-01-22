@@ -42,6 +42,29 @@ return [
 
     'testCards' => require(__DIR__ . '/test_cards.php'),
 
+    'components' => [
+        'redis' => [
+            'class' => 'yii\base\BaseObject',
+        ],
+        'queue' => [
+            'class' => \yii\queue\db\Queue::class,
+            'db' => 'db', // DB connection component or its config
+            'tableName' => '{{%queue}}', // Table name
+            'channel' => 'default', // Queue channel key
+            'mutex' => \yii\mutex\MysqlMutex::class, // Mutex used to sync queries
+            'as log' => \yii\queue\LogBehavior::class,
+            'attempts' => 3, // Максимальное кол-во попыток
+        ],
+        'cache' => [
+            'class' => 'yii\redis\Cache',
+            'redis' => [
+                'hostname' => '127.0.0.1',
+                'port' => 6379,
+                'database' => 4,
+            ],
+        ],
+    ],
+
     'services' => [
         'accounts' => [
             'url' => 'http://vpbc-102-test.192-168-110-2.nip.io/api',

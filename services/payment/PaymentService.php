@@ -4,26 +4,23 @@
 namespace app\services\payment;
 
 
-use app\models\bank\BankCheck;
 use app\models\kfapi\KfRequest;
 use app\models\partner\stat\export\csv\ToCSV;
-use app\models\payonline\Partner;
 use app\models\SendEmail;
 use app\modules\partner\models\PaySchetLogForm;
 use app\services\partners\models\PartnerOption;
-use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\forms\SetPayOkForm;
+use app\services\payment\jobs\RefundPayJob;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\PaySchetLog;
 use app\services\payment\payment_strategies\CreateFormEcomStrategy;
 use app\services\payment\payment_strategies\CreateFormJkhStrategy;
 use app\services\payment\payment_strategies\IPaymentStrategy;
+use app\services\payment\jobs\RefreshStatusPayJob;
 use app\services\payment\traits\CardsTrait;
 use app\services\payment\traits\PayPartsTrait;
 use Carbon\Carbon;
 use Yii;
-use yii\db\Query;
-use yii\mutex\FileMutex;
 
 class PaymentService
 {
@@ -175,6 +172,75 @@ class PaymentService
         }
         if (file_exists($toCSV->fullpath())){
             unlink($toCSV->fullpath());
+        }
+    }
+
+    /**
+     * @param $where
+     * @param int $limit
+     */
+    public function massRevert($where, $limit = 0)
+    {
+        $generator = $this->generatorPaySchetsForWhere($where, $limit);
+
+        foreach ($generator as $paySchet) {
+            Yii::$app->queue->push(new RefundPayJob([
+                'paySchetId' => $paySchet->ID,
+            ]));
+            Yii::warning('PaymentService massRevert pushed: ID=' . $paySchet->ID);
+        }
+    }
+
+    /**
+     * @param $where
+     * @param int $limit
+     */
+    public function massRefreshStatus($where, $limit = 0)
+    {
+        $generator = $this->generatorPaySchetsForWhere($where, $limit);
+
+        foreach ($generator as $paySchet) {
+            Yii::$app->queue->push(new RefreshStatusPayJob([
+                'paySchetId' => $paySchet->ID,
+            ]));
+            Yii::warning('PaymentService massRefreshStatus pushed: ID=' . $paySchet->ID);
+        }
+    }
+
+    /**
+     * @param $where
+     * @param $limit
+     * @return \Generator
+     */
+    private function generatorPaySchetsForWhere($where, $limit)
+    {
+        $perPage = 100;
+        $page = 0;
+
+        while(true) {
+            if($limit > 0 && $page * $perPage > $limit) {
+                break;
+            }
+
+            $q = $paySchets = PaySchet::find()->where($where)->offset($page * $perPage);
+
+            if($limit > 0 && $limit - $page * $perPage < $perPage) {
+                $q->limit($limit - $page * $perPage);
+            } else {
+                $q->limit($perPage);
+            }
+
+            /** @var PaySchet[] $paySchets */
+            $paySchets = $q->all();
+
+            if(count($paySchets) == 0) {
+                break;
+            }
+
+            foreach($paySchets as $paySchet) {
+                yield $paySchet;
+            }
+            $page++;
         }
     }
 }

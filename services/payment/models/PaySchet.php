@@ -86,12 +86,14 @@ class PaySchet extends \yii\db\ActiveRecord
     const STATUS_DONE = 1;
     const STATUS_ERROR = 2;
     const STATUS_CANCEL = 3;
+    const STATUS_NOT_EXEC = 4;
 
     const STATUSES = [
         self::STATUS_WAITING,
         self::STATUS_DONE,
         self::STATUS_ERROR,
         self::STATUS_CANCEL,
+        self::STATUS_NOT_EXEC,
     ];
 
     const CHECK_3DS_CACHE_PREFIX = 'pay_schet__check-3ds-response';

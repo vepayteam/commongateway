@@ -43,6 +43,30 @@ return [
 
     'testCards' => require(__DIR__ . '/test_cards.php'),
 
+    'components' => [
+        'redis' => [
+            'class' => 'yii\redis\Connection',
+            'hostname' => '127.0.0.1',
+            'port' => 6379,
+            'database' => 3,
+            'retries' => 1,
+        ],
+        'queue' => [
+            'class' => \yii\queue\redis\Queue::class,
+            'redis' => 'redis',
+            'channel' => 'queue',
+            'attempts' => 3, // Максимальное кол-во попыток
+        ],
+        'cache' => [
+            'class' => 'yii\redis\Cache',
+            'redis' => [
+                'hostname' => '127.0.0.1',
+                'port' => 6379,
+                'database' => 4,
+            ],
+        ],
+    ],
+
     'services' => [
         'accounts' => [
             'url' => 'http://vpbc-102-test.192-168-110-2.nip.io/api',
