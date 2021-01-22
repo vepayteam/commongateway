@@ -4,6 +4,7 @@
 namespace app\services\payment\jobs;
 
 
+use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\models\PaySchet;
@@ -30,6 +31,17 @@ class RefundPayJob extends BaseObject implements \yii\queue\JobInterface
         $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar);
 
         $refundPayResponse = $bankAdapterBuilder->getBankAdapter()->refundPay($refundPayForm);
+
+        if($refundPayResponse->status == BaseResponse::STATUS_DONE) {
+            $paySchet->Status = PaySchet::STATUS_CANCEL;
+            $paySchet->ErrorInfo = 'Платеж отменен';
+            if($paySchet->save(false)) {
+                Yii::warning('RefundPayJob refund: ID='.$this->paySchetId);
+            } else {
+                Yii::error('RefundPayJob error save: ID='.$this->paySchetId);
+            }
+        }
+
         Yii::warning(
             sprintf(
                 'RefundPayJob result: ID=%s, result=%s',

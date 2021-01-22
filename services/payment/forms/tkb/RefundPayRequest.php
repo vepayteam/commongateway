@@ -8,14 +8,16 @@ use yii\base\Model;
 
 class RefundPayRequest extends Model
 {
-    public $OrderID;
-    public $Amount;
+    public $ExtId;
+    public $amount;
+    public $description = 'Отмена заказа';
+
 
     public function rules()
     {
         return [
-            ['OrderID', 'required'],
-            [['OrderID', 'Amount'], 'number'],
+            ['ExtId', 'required'],
+            [['ExtId', 'amount'], 'number'],
         ];
     }
 
