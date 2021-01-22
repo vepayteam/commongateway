@@ -133,7 +133,7 @@ class PaymentService
                 ])
                 ->one();
 
-            $data = PaySchetLog::queryLateUpdatedPaySchets((int)$deltaPartnerOption->Value)
+            $data = PaySchetLog::queryLateUpdatedPaySchets($partnerOption->PartnerId, (int)$deltaPartnerOption->Value)
                 ->select('pay_schet.ExtId, pay_schet_log.PaySchetId, FROM_UNIXTIME(pay_schet_log.DateCreate) AS DateCreate, pay_schet_log.Status, pay_schet_log.ErrorInfo')
                 ->asArray()
                 ->all();
