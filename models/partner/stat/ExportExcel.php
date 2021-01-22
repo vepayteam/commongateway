@@ -55,7 +55,6 @@ class ExportExcel
             //Сохранение в файл
             $tmpfile = implode(DIRECTORY_SEPARATOR, [
                 Yii::getAlias('@runtime'),
-                'runtime',
                 'tmp',
                 Yii::$app->security->generateRandomString() . '.xlsx',
             ]);
