@@ -87,9 +87,7 @@ $config = [
                 //['class' => 'yii\rest\UrlRule', 'controller' => ''],
             ],
         ],
-        'cache' => [
-            'class' => 'yii\caching\FileCache',
-        ],
+
         'user' => [
             'class' => 'yii\web\User',
             'identityClass' => 'app\models\partner\UserLk',
@@ -159,6 +157,7 @@ $config = [
         ],
         'db' => require(__DIR__ . '/db.php'),
 
+        'cache' => $params['components']['cache'],
         'redis' => $params['components']['redis'],
         'queue' => $params['components']['queue'],
     ],

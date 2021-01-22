@@ -11,6 +11,9 @@ use yii\web\User;
 class UserLk implements IdentityInterface
 {
     const ROLE_ADMIN = "admin";
+    const CACHE_ERROR_LOGIN_COLLECTION_NAME = 'UserLk__ErrorLogin';
+    const CACHE_ERROR_LOGIN_DURATION = 900;
+    const CACHE_ERROR_LOGIN_QUANTITY = 5;
 
     private $isAdmin = false;
     private $roleUser = 0;
@@ -332,28 +335,17 @@ class UserLk implements IdentityInterface
      */
     public static function IncCntLogin($login)
     {
-        if (!isset(Yii::$app->session['errAtempt'])) {
-            Yii::$app->session['errAtempt'] = 0;
+        if(empty($login)) {
+            return ;
         }
-        Yii::$app->session['errAtempt'] += 1;
-        Yii::$app->session['errTime'] = time();
 
-        self::logAuth($login, 2);
-
-        if (!empty($login)) {
-
-            $user = PartnerUsers::findOne(['Login' => $login]);
-            if ($user) {
-                if ($user->ErrorLoginCnt > 10 - 1 && $user->DateErrorLogin > time() - 900) {
-                    $user->AutoLockDate = time();
-                } else {
-                    $user->AutoLockDate = 0;
-                }
-                $user->ErrorLoginCnt++;
-                $user->DateErrorLogin = time();
-                $user->save(false);
-            }
-        }
+        $cache = Yii::$app->cache->getOrSet(self::getCacheErrorLoginKey($login), function() use ($login) {
+            return [
+                'quantity' => 0,
+            ];
+        }, self::CACHE_ERROR_LOGIN_DURATION);
+        $cache['quantity']++;
+        Yii::$app->cache->set(self::getCacheErrorLoginKey($login), $cache, self::CACHE_ERROR_LOGIN_DURATION);
     }
 
     /**
@@ -388,18 +380,22 @@ class UserLk implements IdentityInterface
      */
     public static function IsNotLoginLock($login)
     {
-        $notSesLock = (
-            !isset(Yii::$app->session['errAtempt']) ||
-            (isset(Yii::$app->session['errAtempt']) && Yii::$app->session['errAtempt'] < 10) ||
-            (isset(Yii::$app->session['errTime']) && Yii::$app->session['errTime'] < time() - 900)
-        );
+        $cache = Yii::$app->cache->getOrSet(self::getCacheErrorLoginKey($login), function() use ($login) {
+           return [
+               'quantity' => 0,
+           ];
+        }, self::CACHE_ERROR_LOGIN_DURATION);
 
-        if ($notSesLock && $login) {
-            $user = PartnerUsers::findOne(['Login' => $login]);
-            return $user ? $user->AutoLockDate < time() - 900 : false;
-        }
+        return $cache['quantity'] < self::CACHE_ERROR_LOGIN_QUANTITY;
+    }
 
-        return false;
+    /**
+     * @param $login
+     * @return string
+     */
+    private static function getCacheErrorLoginKey($login)
+    {
+        return self::CACHE_ERROR_LOGIN_COLLECTION_NAME . $login . '_' . Yii::$app->request->remoteIP;
     }
 
 }
