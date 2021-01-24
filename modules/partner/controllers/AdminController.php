@@ -709,21 +709,16 @@ class AdminController extends Controller
     {
         if(Yii::$app->request->isPost) {
             $post = Yii::$app->request->post();
-            $cmd = sprintf('%s %s %s "%s" "%s" "%s"',
-                Yii::$app->params['php_cli_path'],
-                Yii::getAlias('@app/yii'),
-                $post['name'],
-                $post['param1'],
-                $post['param2'],
-                $post['param3']
-            );
-            try {
-                $return = shell_exec($cmd);
-                echo $return;
-            } catch (\Exception $e) {
-                echo 'Ошибка выполнения: ' . $cmd;
-            }
+            $oldApp = \Yii::$app;
+            $config = require(Yii::getAlias('@app/config/console.php'));
+            new \yii\console\Application($config);
 
+            try {
+                \Yii::$app->runAction($post['name'], [$post['param1'], $post['param2'], $post['param3']]);
+            } catch (\Exception $e) {
+                echo 'Ошибка выполнения';
+            }
+            \Yii::$app = $oldApp;
         } else {
             return $this->render('exec');
         }
