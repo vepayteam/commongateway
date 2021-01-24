@@ -39,6 +39,7 @@ use yii\web\Controller;
 use yii\web\HttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
+use yii\data\ArrayDataProvider;
 use app\services\files\FileService;
 
 class AdminController extends Controller
@@ -807,5 +808,26 @@ class AdminController extends Controller
         $partner[$balanceField] = (int)$sum;
         $partner->save(false);
         echo sprintf('%s: old=%d new=%d' . PHP_EOL, $table, $old, $sum);
+    }
+
+    /**
+     * @return string
+     */
+    public function actionQueueInfo(){
+        $prefix = Yii::$app->queue->channel;
+        $dataProvider = new ArrayDataProvider([
+            'allModels' => [
+                ['status' => 'waiting', 'count' => Yii::$app->queue->redis->llen("$prefix.waiting")],
+                ['status' => 'delayed', 'count' => Yii::$app->queue->redis->zcount("$prefix.delayed", '-inf', '+inf')],
+                ['status' => 'reserved', 'count' => Yii::$app->queue->redis->zcount("$prefix.reserved", '-inf', '+inf')],
+                ['status' => 'total', 'count' => Yii::$app->queue->redis->get("$prefix.message_id")]
+            ],
+            'sort' => [
+                'attributes' => ['status', 'count']
+            ]
+
+
+        ]);
+        return $this->render('queueinfo',['dataProvider' =>$dataProvider]);
     }
 }
