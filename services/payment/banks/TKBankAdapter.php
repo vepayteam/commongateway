@@ -339,6 +339,27 @@ class TKBankAdapter implements IBankAdapter
         return ['tisket' => $tisket, 'recurrent' => $isRecurrent, 'url' => $userUrl];
     }
 
+    public function reRequestingStatus( PaySchet $paySchet)
+    {
+        $payschets = new Payschets();
+        $params = $payschets->getSchetData($paySchet->ID, null);
+        $status = $this->checkStatusOrder($params, false);
+        if (isset($status['xml']) && isset($status['state'])) {
+            switch ($status['state']) {
+                case 0:
+                    return $status['xml']['orderinfo']['statedescription'];
+                case 1:
+                    return $status['xml']['errorinfo']['errormessage'];
+                case 2:
+                    return $status['xml']['orderinfo']['statedescription'];
+                default:
+                    throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
+            }
+        } else {
+            throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
+        }
+    }
+
     /**
      * Проверка статуса заказа
      * @param array $params [ID, IsCustom]
@@ -556,14 +577,7 @@ class TKBankAdapter implements IBankAdapter
         try {
             switch ($curl->responseCode) {
                 case 200:
-                    $responce = json_decode($curl->response,true);
-                    if(json_last_error() == JSON_ERROR_NONE && is_array($responce)) {
-                        if(isset($responce['errorinfo']['errorcode']) && isset($responce['errorinfo']['errormessage']) && $responce['errorinfo']['errorcode'] === 1) {
-                            $ans['error'] = 'MerchantRequestAlreadyExistsException';
-                            $ans['errorcode'] = $responce['errorinfo']['errorcode'];
-                            $ans['errormessage'] = $responce['errorinfo']['errormessage'];
-                        }
-                    }
+
                 case 202:
                     $ans['xml'] = $jsonReq ? Json::decode($curl->response) : $curl->response;
                     break;
@@ -1537,8 +1551,7 @@ class TKBankAdapter implements IBankAdapter
 
         // TODO: response as object
         $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
-
-        if(isset($ans['error']) && $ans['error'] === 'MerchantRequestAlreadyExistsException') {
+        if (isset($ans['xml']['errorinfo']['errorcode']) && $ans['xml']['errorinfo']['errorcode'] === 1) {
             throw new MerchantRequestAlreadyExistsException('Ошибка запроса, попробуйте повторить позднее');
         }
 
