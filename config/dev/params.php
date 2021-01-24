@@ -74,7 +74,5 @@ return [
         ],
     ],
     'login_user_token_valid_time' => 60*60,
-
-    'php_cli_path' => 'php',
 	
 ];
