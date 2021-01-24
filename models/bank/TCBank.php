@@ -265,18 +265,19 @@ class TCBank implements IBank
         if ($params['Status'] == 1) {
 
             $queryData = [
-                'OrderID' => $params['ID']
+                'ExtId' => $params['ID'],
+                'description' => 'Отмена заказа',
             ];
 
             if ($params['DateCreate'] < mktime(0, 0, 0, date('n'), date('d'), date('Y'))) {
                 //возврат - отмена на следующий день после оплаты
-                $action = '/api/tcbpay/gate/RefundOrder';
+                $action = '/api/v1/card/unregistered/debit/refund';
 
-                $queryData['Amount'] = $params['SummFull'];
+                $queryData['amount'] = $params['SummFull'];
 
             } else {
                 //отмена в день оплаты
-                $action = '/api/tcbpay/gate/reverseorder';
+                $action = '/api/v1/card/unregistered/debit/reverse';
             }
 
             $queryData = Json::encode($queryData);
@@ -505,6 +506,9 @@ class TCBank implements IBank
                 //отказ в оплате
                 $status = 2;
             } elseif ($result['orderinfo']['state'] == '5') {
+                //Возврат
+                $status = 3;
+            } elseif ($result['orderinfo']['state'] == '8') {
                 //Возврат
                 $status = 3;
             } else {
