@@ -4,7 +4,7 @@
 namespace app\services\payment\exceptions;
 
 
-class ReRequestingStatus extends \Exception
+class reRequestingStatusOkException extends \Exception
 {
 
 }

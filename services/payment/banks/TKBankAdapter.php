@@ -40,6 +40,8 @@ use app\services\payment\interfaces\Cache3DSv2Interface;
 use app\services\payment\interfaces\Issuer3DSVersionInterface;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
+use app\services\payment\exceptions\reRequestingStatusException;
+use app\services\payment\exceptions\reRequestingStatusOkException;
 use Carbon\Carbon;
 use qfsx\yii2\curl\Curl;
 use SimpleXMLElement;
@@ -345,16 +347,22 @@ class TKBankAdapter implements IBankAdapter
         $payschets = new Payschets();
         $params = $payschets->getSchetData($paySchet->ID, null);
         $status = $this->checkStatusOrder($params, false);
+        if (!isset($status['xml']) && isset($status['state'])) {
+            switch ($status['state']) {
+                case 0:
+                    throw new reRequestingStatusOkException();
+            }
+        }
         if (isset($status['xml']) && isset($status['state'])) {
             switch ($status['state']) {
                 case 0:
-                    return $status['xml']['orderinfo']['statedescription'];
+                    throw new reRequestingStatusOkException($status['xml']['orderinfo']['statedescription']);
                 case 1:
-                    return $status['xml']['errorinfo']['errormessage'];
+                    throw new reRequestingStatusOkException($status['xml']['errorinfo']['errormessage']);
                 case 2:
-                    return $status['xml']['orderinfo']['statedescription'];
+                    throw new reRequestingStatusOkException($status['xml']['orderinfo']['statedescription']);
                 default:
-                    throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
+                    throw new reRequestingStatusOkException();
             }
         } else {
             throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
@@ -1551,6 +1559,7 @@ class TKBankAdapter implements IBankAdapter
         $queryData = Json::encode($createPayRequest->getAttributes());
 
         // TODO: response as object
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
         $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
         if (isset($ans['xml']['errorinfo']['errorcode']) && $ans['xml']['errorinfo']['errorcode'] === 1) {
             throw new MerchantRequestAlreadyExistsException('Ошибка запроса, попробуйте повторить позднее');

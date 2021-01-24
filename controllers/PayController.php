@@ -23,7 +23,8 @@ use app\models\TU;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2DuplicatedException;
-use app\services\payment\exceptions\ReRequestingStatus;
+use app\services\payment\exceptions\reRequestingStatusOkException;
+use app\services\payment\exceptions\reRequestingStatusException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
@@ -181,8 +182,14 @@ class PayController extends Controller
             return ['status' => 0, 'message' => $e->getMessage()];
         } catch (GateException $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
-        } catch (reRequestingStatus $e) {
+        } catch (reRequestingStatusException $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
+        } catch (reRequestingStatusOkException $e) {
+            return [
+                'status' => 2,
+                'message' => $e->getMessage(),
+                'url' => Yii::$app->params['domain'] . '/pay/orderok?id=' . $form->IdPay,
+            ];
         } catch (Check3DSv2DuplicatedException $e) {
             //отменить счет
             return [
