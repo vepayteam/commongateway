@@ -705,6 +705,45 @@ class AdminController extends Controller
         $this->syncBalanceInternal($partner, BalancePartner::OUT);
     }
 
+    public function actionExec()
+    {
+        if(Yii::$app->request->isPost) {
+            $post = Yii::$app->request->post();
+            $oldApp = \Yii::$app;
+            $config = require(Yii::getAlias('@app/config/console.php'));
+            new \yii\console\Application($config);
+
+            try {
+                \Yii::$app->runAction($post['name'], [$post['param1'], $post['param2'], $post['param3']]);
+            } catch (\Exception $e) {
+                echo 'Ошибка выполнения';
+            }
+            \Yii::$app = $oldApp;
+        } else {
+            return $this->render('exec');
+        }
+    }
+
+    public function actionExecRedis()
+    {
+        if(Yii::$app->request->isPost) {
+            $post = Yii::$app->request->post();
+            try {
+                $redis = Yii::$app->redis;
+                $params = explode("\n", $post['params']);
+                $result = $redis->executeCommand($post['name'], array_map('trim', $params));
+                echo '<pre>';
+                print_r($result);die;
+            } catch (\Exception $e) {
+                echo 'Ошибка выполнения';
+            }
+
+        } else {
+            return $this->render('exec_redis');
+        }
+    }
+
+
     /**
      * @param Partner $partner
      * @param int $type - тип баланса

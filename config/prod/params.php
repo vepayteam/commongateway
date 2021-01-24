@@ -80,5 +80,4 @@ return [
         ],
     ],
     'login_user_token_valid_time' => 60*60,
-	
 ];

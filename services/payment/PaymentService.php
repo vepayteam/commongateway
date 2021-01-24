@@ -200,6 +200,7 @@ class PaymentService
         $generator = $this->generatorPaySchetsForWhere($where, $limit);
 
         foreach ($generator as $paySchet) {
+            Yii::warning('massRefreshStatus add ID=' . $paySchet->ID, 'RefreshStatusPayJob');
             Yii::$app->queue->push(new RefreshStatusPayJob([
                 'paySchetId' => $paySchet->ID,
             ]));
