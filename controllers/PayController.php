@@ -157,7 +157,9 @@ class PayController extends Controller
      * Форма оплаты своя (PCI DSS)
      * @return array|Response
      * @throws NotFoundHttpException
-     * @throws \yii\db\Exception
+     * @throws \app\services\payment\exceptions\MerchantRequestAlreadyExistsException
+     * @throws reRequestingStatusException
+     * @throws reRequestingStatusOkException
      */
     public function actionCreatepay()
     {

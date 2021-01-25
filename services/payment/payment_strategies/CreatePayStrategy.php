@@ -50,6 +50,7 @@ class CreatePayStrategy
      * @throws GateException
      * @throws BankAdapterResponseException
      * @throws Check3DSv2Exception
+     * @throws MerchantRequestAlreadyExistsException
      */
     public function exec()
     {

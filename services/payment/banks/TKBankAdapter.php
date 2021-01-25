@@ -342,27 +342,49 @@ class TKBankAdapter implements IBankAdapter
         return ['tisket' => $tisket, 'recurrent' => $isRecurrent, 'url' => $userUrl];
     }
 
-    public function reRequestingStatus( PaySchet $paySchet)
+    /**
+     * @param PaySchet $paySchet
+     * @throws BankAdapterResponseException
+     * @throws reRequestingStatusException
+     * @throws reRequestingStatusOkException
+     */
+    public function reRequestingStatus( PaySchet $paySchet):void
     {
-        $payschets = new Payschets();
-        $params = $payschets->getSchetData($paySchet->ID, null);
-        $status = $this->checkStatusOrder($params, false);
-        if (!isset($status['xml']) && isset($status['state'])) {
-            switch ($status['state']) {
-                case 0:
-                    throw new reRequestingStatusOkException();
-            }
-        }
-        if (isset($status['xml']) && isset($status['state'])) {
-            switch ($status['state']) {
-                case 0:
-                    throw new reRequestingStatusOkException($status['xml']['orderinfo']['statedescription']);
-                case 1:
-                    throw new reRequestingStatusOkException($status['xml']['errorinfo']['errormessage']);
-                case 2:
-                    throw new reRequestingStatusOkException($status['xml']['orderinfo']['statedescription']);
-                default:
-                    throw new reRequestingStatusOkException();
+        $action = '/api/tcbpay/gate/getorderstate';
+
+        $checkStatusPayRequest = new CheckStatusPayRequest();
+
+        $queryData = Json::encode($checkStatusPayRequest->getAttributes());
+        $response = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+
+        Yii::warning("checkStatusOrder: " . $this->logArr($response), 'merchant');
+        if (isset($response['xml']) && !empty($response['xml'])) {
+            $xml = $this->parseAns($response['xml']);
+            if ($xml && isset($xml['errorinfo']['errorcode']) && $xml['errorinfo']['errorcode'] == 1) {
+                throw new reRequestingStatusOkException('В обработке');
+            } else {
+                $status = $this->convertState($xml);
+
+                if(!in_array($status, BaseResponse::STATUSES)) {
+                    throw new BankAdapterResponseException('Ошибка преобразования статусов');
+                }
+                if(isset($xml['orderinfo']['statedescription'])) {
+                    $msg = $xml['orderinfo']['statedescription'];
+                } else {
+                    $msg = '';
+                }
+                switch ($status) {
+                    case BaseResponse::STATUS_CREATED:
+                        throw new reRequestingStatusException($msg);
+                    case BaseResponse::STATUS_DONE:
+                        throw new reRequestingStatusOkException($msg);
+                    case BaseResponse::STATUS_ERROR :
+                        throw new reRequestingStatusOkException($msg);
+                    case BaseResponse::STATUS_CANCEL :
+                        throw new reRequestingStatusOkException($msg);
+                    default:
+                        throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
+                }
             }
         } else {
             throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
@@ -1532,6 +1554,13 @@ class TKBankAdapter implements IBankAdapter
         return $payResponse;
     }
 
+    /**
+     * @param $createPayForm
+     * @param $check3DSVersionResponse
+     * @return CreatePayResponse
+     * @throws BankAdapterResponseException
+     * @throws MerchantRequestAlreadyExistsException
+     */
     protected function createPay3DSv1($createPayForm, $check3DSVersionResponse)
     {
         $action = '/api/tcbpay/gate/registerorderfromunregisteredcardwof';
@@ -1560,9 +1589,11 @@ class TKBankAdapter implements IBankAdapter
 
         // TODO: response as object
         $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
-        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
-        if (isset($ans['xml']['errorinfo']['errorcode']) && $ans['xml']['errorinfo']['errorcode'] === 1) {
-            throw new MerchantRequestAlreadyExistsException('Ошибка запроса, попробуйте повторить позднее');
+        if (isset($ans['xml']['errorinfo']['errorcode']) && $ans['xml']['errorinfo']['errorcode'] === 1 && $ans['xml']['ordernumber'] == 0) {
+            //Не уверен что это правильно, если банк введёт локализацию, то работать не будет.
+            if (strpos($ans['xml']['errorinfo']['errormessage'], 'уже существует') !== false){
+                throw new MerchantRequestAlreadyExistsException('Ошибка запроса, попробуйте повторить позднее');
+            }
         }
 
         $payResponse = new CreatePayResponse();
