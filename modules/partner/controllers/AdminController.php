@@ -39,6 +39,7 @@ use yii\web\Controller;
 use yii\web\HttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
+use yii\data\ArrayDataProvider;
 use app\services\files\FileService;
 
 class AdminController extends Controller
@@ -705,6 +706,45 @@ class AdminController extends Controller
         $this->syncBalanceInternal($partner, BalancePartner::OUT);
     }
 
+    public function actionExec()
+    {
+        if(Yii::$app->request->isPost) {
+            $post = Yii::$app->request->post();
+            $oldApp = \Yii::$app;
+            $config = require(Yii::getAlias('@app/config/console.php'));
+            new \yii\console\Application($config);
+
+            try {
+                \Yii::$app->runAction($post['name'], [$post['param1'], $post['param2'], $post['param3']]);
+            } catch (\Exception $e) {
+                echo 'Ошибка выполнения';
+            }
+            \Yii::$app = $oldApp;
+        } else {
+            return $this->render('exec');
+        }
+    }
+
+    public function actionExecRedis()
+    {
+        if(Yii::$app->request->isPost) {
+            $post = Yii::$app->request->post();
+            try {
+                $redis = Yii::$app->redis;
+                $params = explode("\n", $post['params']);
+                $result = $redis->executeCommand($post['name'], array_map('trim', $params));
+                echo '<pre>';
+                print_r($result);die;
+            } catch (\Exception $e) {
+                echo 'Ошибка выполнения';
+            }
+
+        } else {
+            return $this->render('exec_redis');
+        }
+    }
+
+
     /**
      * @param Partner $partner
      * @param int $type - тип баланса
@@ -768,5 +808,26 @@ class AdminController extends Controller
         $partner[$balanceField] = (int)$sum;
         $partner->save(false);
         echo sprintf('%s: old=%d new=%d' . PHP_EOL, $table, $old, $sum);
+    }
+
+    /**
+     * @return string
+     */
+    public function actionQueueInfo(){
+        $prefix = Yii::$app->queue->channel;
+        $dataProvider = new ArrayDataProvider([
+            'allModels' => [
+                ['status' => 'waiting', 'count' => Yii::$app->queue->redis->llen("$prefix.waiting")],
+                ['status' => 'delayed', 'count' => Yii::$app->queue->redis->zcount("$prefix.delayed", '-inf', '+inf')],
+                ['status' => 'reserved', 'count' => Yii::$app->queue->redis->zcount("$prefix.reserved", '-inf', '+inf')],
+                ['status' => 'total', 'count' => Yii::$app->queue->redis->get("$prefix.message_id")]
+            ],
+            'sort' => [
+                'attributes' => ['status', 'count']
+            ]
+
+
+        ]);
+        return $this->render('queueinfo',['dataProvider' =>$dataProvider]);
     }
 }

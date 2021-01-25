@@ -3,6 +3,7 @@
 
 namespace app\services\payment\payment_strategies\mfo;
 
+use app\services\payment\jobs\RecurrentPayJob;
 use Yii;
 use app\models\crypt\CardToken;
 use app\models\payonline\Cards;
@@ -14,7 +15,7 @@ use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
-use yii\base\Exception;
+use yii\helpers\Json;
 use yii\mutex\FileMutex;
 
 class MfoAutoPayStrategy
@@ -49,7 +50,7 @@ class MfoAutoPayStrategy
         $bankAdapterBuilder = new BankAdapterBuilder();
         $bankAdapterBuilder->build($this->autoPayForm->partner, $uslugatovar);
 
-        $mutexKey = 'autoPay' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid;
+        $mutexKey = $this->autoPayForm->getMutexKey();
         $mutex = new FileMutex();
 
         Yii::warning('getReplyRequest autoPay=' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid, 'mfo');
@@ -76,7 +77,7 @@ class MfoAutoPayStrategy
             $CardToken = new CardToken();
             $cardnum = $CardToken->GetCardByToken($card->IdPan);
         }
-        
+
         if(!$cardnum) {
             $mutex->release($mutexKey);
             Yii::error('Empty card mfo_pay_auto autoPay=' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid, 'mfo');
@@ -88,23 +89,15 @@ class MfoAutoPayStrategy
         $paySchet = $this->createPaySchet($bankAdapterBuilder, $card);
         $this->autoPayForm->paySchet = $paySchet;
 
-        try {
-            Yii::warning('bankAdapterBuilder recurrentPay autoPay=' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid, 'mfo');
-            $createRecurrentPayResponse = $bankAdapterBuilder->getBankAdapter()->recurrentPay($this->autoPayForm);
-        } catch (GateException $e) {
-            $paySchet->Status = PaySchet::STATUS_ERROR;
-            $paySchet->ErrorInfo = $e->getMessage();
-        }
+        $jobData = [
+            'partnerId' => $this->autoPayForm->partner->ID,
+            'uslugatovarId' => $uslugatovar->ID,
+            'paySchetId' => $paySchet->ID,
+            'autoPayFormSerialized' => $this->autoPayForm->serialize(),
+        ];
 
-        if($createRecurrentPayResponse->status == BaseResponse::STATUS_DONE) {
-            Yii::warning('Set ExtBillNumber autoPay=' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid, 'mfo');
-            $paySchet->Status = PaySchet::STATUS_WAITING;
-            $paySchet->ExtBillNumber = $createRecurrentPayResponse->transac;
-        } else {
-            $paySchet->Status = PaySchet::STATUS_ERROR;
-            $paySchet->ErrorInfo = $createRecurrentPayResponse->message;
-        }
-        Yii::warning('Save paySchet autoPay=' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid, 'mfo');
+        Yii::$app->queue->push(new RecurrentPayJob($jobData));
+        Yii::warning('RecurrentPayJob add data=' . Json::encode($jobData), 'mfo');
         $paySchet->save(false);
         $mutex->release($mutexKey);
         return $paySchet;
@@ -157,7 +150,7 @@ class MfoAutoPayStrategy
 
         $paySchet = new PaySchet();
 
-        $paySchet->Status = PaySchet::STATUS_WAITING;
+        $paySchet->Status = PaySchet::STATUS_NOT_EXEC;
         $paySchet->IdKard = $card->ID;
         $paySchet->CardNum = Cards::MaskCard($card->CardNumber);
         $paySchet->CardType = Cards::GetCardBrand(Cards::GetTypeCard($card->CardNumber));

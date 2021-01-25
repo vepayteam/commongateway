@@ -4,6 +4,7 @@ namespace app\models\partner\stat;
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use Yii;
 
 class ExportExcel
 {
@@ -52,7 +53,19 @@ class ExportExcel
             }
 
             //Сохранение в файл
-            $tmpfile = \Yii::$app->getBasePath()."\\runtime\\tmp".random_int(10000,100000).".xlsx";
+            $tmpdir = implode(DIRECTORY_SEPARATOR, [
+                Yii::getAlias('@runtime'),
+                'tmp',
+            ]);
+
+            if(!file_exists($tmpdir)) {
+                mkdir($tmpdir, 0777, true);
+            }
+
+            $tmpfile = implode(DIRECTORY_SEPARATOR, [
+                $tmpdir,
+                Yii::$app->security->generateRandomString() . '.xlsx',
+            ]);
             $writer = IOFactory::createWriter($objPHPExcel, 'Xlsx');
             $writer->save($tmpfile);
 

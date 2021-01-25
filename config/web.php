@@ -87,9 +87,7 @@ $config = [
                 //['class' => 'yii\rest\UrlRule', 'controller' => ''],
             ],
         ],
-        'cache' => [
-            'class' => 'yii\caching\FileCache',
-        ],
+
         'user' => [
             'class' => 'yii\web\User',
             'identityClass' => 'app\models\partner\UserLk',
@@ -120,8 +118,26 @@ $config = [
             'traceLevel' => YII_DEBUG ? 3 : 0,
             'targets' => [
                 [
+                    'class' => 'yii\log\FileTarget',
+                    'levels' => ['warning'],
+                    'maskVars' => [
+                        '_SERVER.HTTP_AUTHORIZATION',
+                        '_SERVER.PHP_AUTH_USER',
+                        '_SERVER.PHP_AUTH_PW',
+                        '_POST.cardnum',
+                        '_POST.Provparams',
+                        '_POST.PayForm.CardNumber',
+                        '_POST.PayForm.CardCVC',
+                        '_POST.InsertKey',
+                        '_POST.ChangeKeys'
+                    ],
+                    'maxFileSize' => 1024 * 50,
+                    'maxLogFiles' => 20,
+                    'rotateByCopy' => false,
+                ],
+                [
                     'class' => 'app\services\logs\targets\SecurityFileTarget',
-                    'levels' => ['error', 'warning'],
+                    'levels' => ['error'],
                     'maskVars' => [
                         '_SERVER.HTTP_AUTHORIZATION',
                         '_SERVER.PHP_AUTH_USER',
@@ -141,6 +157,7 @@ $config = [
         ],
         'db' => require(__DIR__ . '/db.php'),
 
+        'cache' => $params['components']['cache'],
         'redis' => $params['components']['redis'],
         'queue' => $params['components']['queue'],
     ],
