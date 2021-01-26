@@ -289,7 +289,9 @@ class TCBank implements IBank
                     $st = isset($ans['xml']['OrderId']) && isset($ans['xml']['ExtId']) ? 1 : 0;
 
                 } else {
-                    $st = isset($ans['xml']['OrderId']) && isset($ans['xml']['ExtId']) ? 1 : 0;
+                    $st = isset($ans['xml']['amount'])
+                        && $ans['xml']['amount'] == $params['SummFull']
+                        && isset($ans['xml']['ExtId']) ? 1 : 0;
                 }
                 $msg = $st ? 'Платеж отменен' : 'Ошибка запроса';
                 return ['state' => $st, 'Status' => $st, 'message' => $msg];
