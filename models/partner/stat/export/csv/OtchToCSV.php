@@ -41,7 +41,13 @@ class OtchToCSV extends ToCSV
             'Дата создания',
             'Статус',
             'Дата оплаты',
-            'Номер транзакции'
+            'Номер транзакции',
+            'ID мерчанта',
+            'Маска карты',
+            'Держатель карты',
+            'RRN',
+            'Хэш от номера карты',
+            'Наименование банка-эквайера',
         ];
     }
 
@@ -63,7 +69,13 @@ class OtchToCSV extends ToCSV
                     date("d.m.Y H:i:s", $data['DateCreate']),
                     $st[$data['Status']],
                     $data['DateOplat'] > 0 ? date("d.m.Y H:i:s", $data['DateOplat']) : '',
-                    $data['ExtBillNumber']
+                    $data['ExtBillNumber'],
+                    $data['IdOrg'],
+                    $data['CardNum'],
+                    $data['CardHolder'],
+                    $data['RRN'],
+                    $data['IdKard'],
+                    $data['BankName'],
                 ];
             }
         }

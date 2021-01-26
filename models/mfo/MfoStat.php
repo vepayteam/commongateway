@@ -12,6 +12,25 @@ use Yii;
 
 class MfoStat
 {
+    /** Ширина колонок в таблице */
+    const SIZES_ADMIN = [15, 20, 20, 25, 15, 15, 10, 10, 10, 10, 10, 18, 12, 18, 12, 20, 20, 20, 20, 20, 20];
+    /** Ширина колонок в таблице */
+    const SIZES_USER = [15, 20, 20, 25, 15, 15, 10, 10, 10, 18, 12, 18, 12, 20, 20, 20, 20, 20, 20];
+
+    const ITOGS_ADMIN = [6 => 1, 7 => 1, 8 => 1, 9 => 1, 10 => 1];
+    const ITOGS_USER = [6 => 1, 7 => 1, 8 => 1];
+
+    const HEAD_ADMIN = [
+        'ID Vepay', 'ExtID', 'Услуга', 'Реквизиты', 'Договор', 'ФИО', 'Сумма', 'Комиссия', 'К оплате',
+        'Комис. банка', 'Возн. Vepay', 'Дата создания', 'Статус', 'Дата оплаты', 'Номер транзакции',
+        'ID мерчанта', 'Маска карты', 'Держатель карты', 'RRN', 'Хэш от номера карты', 'Наименование банка-эквайера',
+    ];
+    const HEAD_USER = [
+        'ID Vepay', 'ExtID', 'Услуга', 'Реквизиты', 'Договор', 'ФИО', 'Сумма', 'Комиссия', 'К оплате',
+        'Дата создания', 'Статус', 'Дата оплаты', 'Номер операции',
+        'ID мерчанта', 'Маска карты', 'Держатель карты', 'RRN', 'Хэш от номера карты', 'Наименование банка-эквайера',
+    ];
+
     public function ExportOpList($post)
     {
         $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
@@ -39,14 +58,20 @@ class MfoStat
                     date("d.m.Y H:i:s", $row['DateCreate']),
                     $st[$row['Status']],
                     $row['DateOplat'] > 0 ? date("d.m.Y H:i:s", $row['DateOplat']) : '',
-                    $row['ExtBillNumber']
+                    $row['ExtBillNumber'],
+                    $row['IdOrg'],
+                    $row['CardNum'],
+                    $row['CardHolder'],
+                    $row['RRN'],
+                    $row['IdKard'],
+                    $row['BankName'],
+
                 ];
             }
 
-            $head = ['ID Vepay', 'ExtID', 'Услуга', 'Реквизиты', 'Договор', 'ФИО', 'Сумма', 'Комиссия', 'К оплате', 'Комис. банка', 'Возн. Vepay', 'Дата создания', 'Статус', 'Дата оплаты', 'Номер транзакции'];
-
-            $sizes = [15, 20, 20, 25, 15, 15, 10, 10, 10, 10, 10, 18, 12, 18, 12];
-            $itogs = [6 => 1, 7 => 1, 8 => 1, 9 => 1, 10 => 1];
+            $head = self::HEAD_ADMIN;
+            $sizes = self::SIZES_ADMIN;
+            $itogs = self::ITOGS_ADMIN;
 
         } else {
             foreach ($list['data'] as $row) {
@@ -63,14 +88,18 @@ class MfoStat
                     date("d.m.Y H:i:s", $row['DateCreate']),
                     $st[$row['Status']],
                     $row['DateOplat'] > 0 ? date("d.m.Y H:i:s", $row['DateOplat']) : '',
-                    $row['ExtBillNumber']
+                    $row['IdOrg'],
+                    $row['CardNum'],
+                    $row['CardHolder'],
+                    $row['RRN'],
+                    $row['IdKard'],
+                    $row['BankName'],
                 ];
             }
 
-            $head = ['ID Vepay', 'ExtID', 'Услуга', 'Реквизиты', 'Договор', 'ФИО', 'Сумма', 'Комиссия', 'К оплате', 'Дата создания', 'Статус', 'Дата оплаты', 'Номер операции'];
-
-            $sizes = [15, 20, 20, 25, 15, 15, 10, 10, 10, 18, 12, 18, 12];
-            $itogs = [6 => 1, 7 => 1, 8 => 1];
+            $head = self::HEAD_USER;
+            $sizes = self::SIZES_USER;
+            $itogs = self::ITOGS_USER;
         }
 
         $ExportExcel = new ExportExcel();
