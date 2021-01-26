@@ -227,9 +227,9 @@ class TKBankAdapter implements IBankAdapter
             $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
             Yii::warning("reversOrder: " . $this->logArr($ans), 'merchant');
             if (isset($ans['xml']) && !empty($ans['xml'])) {
-                $st = isset($ans['xml']['errorinfo']['errorcode']) ? $ans['xml']['errorinfo']['errorcode'] : 1;
-                $msg = isset($ans['xml']['errorinfo']['errormessage']) ? $ans['xml']['errorinfo']['errormessage'] : 'Ошибка запроса';
-                return ['state' => $st == 0, 'Status' => $st, 'message' => $msg];
+                $st = isset($ans['xml']['OrderId']) && isset($ans['xml']['ExtId']) ? 1 : 0;
+                $msg = $st ? 'Платеж отменен' : 'Ошибка запроса';
+                return ['state' => $st, 'Status' => $st, 'message' => $msg];
             }
             /*if (isset($ans['xml']) && !empty($ans['xml'])) {
                 //дополнительно проверить статус после отмены
