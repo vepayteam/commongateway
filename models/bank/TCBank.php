@@ -269,15 +269,15 @@ class TCBank implements IBank
                 'description' => 'Отмена заказа',
             ];
 
-            if ($params['DateCreate'] < mktime(0, 0, 0, date('n'), date('d'), date('Y'))) {
+            $paymentOnToday  = $params['DateCreate'] >= mktime(0, 0, 0, date('n'), date('d'), date('Y'));
+            if ($paymentOnToday) {
+                //отмена в день оплаты
+                $action = '/api/v1/card/unregistered/debit/reverse';
+            } else {
                 //возврат - отмена на следующий день после оплаты
                 $action = '/api/v1/card/unregistered/debit/refund';
 
                 $queryData['amount'] = $params['SummFull'];
-
-            } else {
-                //отмена в день оплаты
-                $action = '/api/v1/card/unregistered/debit/reverse';
             }
 
             $queryData = Json::encode($queryData);
@@ -285,9 +285,17 @@ class TCBank implements IBank
             $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
             Yii::warning("reversOrder: " . $this->logArr($ans), 'merchant');
             if (isset($ans['xml']) && !empty($ans['xml'])) {
-                $st = isset($ans['xml']['errorinfo']['errorcode']) ? $ans['xml']['errorinfo']['errorcode'] : 1;
-                $msg = isset($ans['xml']['errorinfo']['errormessage']) ? $ans['xml']['errorinfo']['errormessage'] : 'Ошибка запроса';
-                return ['state' => $st == 0, 'Status' => $st, 'message' => $msg];
+                if($paymentOnToday) {
+                    $st = isset($ans['xml']['OrderId']) && isset($ans['xml']['ExtId']) ? 1 : 0;
+
+                } else {
+                    $st = isset($ans['xml']['amount'])
+                        && $ans['xml']['amount'] == $params['SummFull']
+                        && isset($ans['xml']['ExtId']) ? 1 : 0;
+                }
+                $msg = $st ? 'Платеж отменен' : 'Ошибка запроса';
+                return ['state' => $st, 'Status' => $st, 'message' => $msg];
+
             }
             /*if (isset($ans['xml']) && !empty($ans['xml'])) {
                 //дополнительно проверить статус после отмены

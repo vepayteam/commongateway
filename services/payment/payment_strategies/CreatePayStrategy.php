@@ -8,6 +8,7 @@ use app\models\crypt\CardToken;
 use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
+use app\models\Payschets;
 use app\models\TU;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
@@ -16,6 +17,7 @@ use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
+use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PayCard;
@@ -48,6 +50,7 @@ class CreatePayStrategy
      * @throws GateException
      * @throws BankAdapterResponseException
      * @throws Check3DSv2Exception
+     * @throws MerchantRequestAlreadyExistsException
      */
     public function exec()
     {
@@ -78,9 +81,11 @@ class CreatePayStrategy
 
         $bankAdapterBuilder = new BankAdapterBuilder();
         $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar);
-
-        $this->createPayResponse = $bankAdapterBuilder->getBankAdapter()->createPay($this->createPayForm);
-
+        try {
+            $this->createPayResponse = $bankAdapterBuilder->getBankAdapter()->createPay($this->createPayForm);
+        } catch (MerchantRequestAlreadyExistsException $e) {
+            $bankAdapterBuilder->getBankAdapter()->reRequestingStatus($paySchet);
+        }
         if(in_array($this->createPayResponse->status, [BaseResponse::STATUS_CANCEL, BaseResponse::STATUS_ERROR])) {
             $this->paymentService->cancelPay($paySchet, $this->createPayResponse->message);
             return $paySchet;

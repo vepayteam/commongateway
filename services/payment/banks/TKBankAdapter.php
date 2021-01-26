@@ -19,6 +19,7 @@ use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\traits\TKBank3DSTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
+use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\RefundPayException;
@@ -39,6 +40,8 @@ use app\services\payment\interfaces\Cache3DSv2Interface;
 use app\services\payment\interfaces\Issuer3DSVersionInterface;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
+use app\services\payment\exceptions\reRequestingStatusException;
+use app\services\payment\exceptions\reRequestingStatusOkException;
 use Carbon\Carbon;
 use qfsx\yii2\curl\Curl;
 use SimpleXMLElement;
@@ -211,15 +214,15 @@ class TKBankAdapter implements IBankAdapter
                 'description' => 'Отмена заказа',
             ];
 
-            if ($params['DateCreate'] < mktime(0, 0, 0, date('n'), date('d'), date('Y'))) {
+            $paymentOnToday  = $params['DateCreate'] >= mktime(0, 0, 0, date('n'), date('d'), date('Y'));
+            if ($paymentOnToday) {
+                //отмена в день оплаты
+                $action = '/api/v1/card/unregistered/debit/reverse';
+            } else {
                 //возврат - отмена на следующий день после оплаты
                 $action = '/api/v1/card/unregistered/debit/refund';
 
                 $queryData['amount'] = $params['SummFull'];
-
-            } else {
-                //отмена в день оплаты
-                $action = '/api/v1/card/unregistered/debit/reverse';
             }
 
             $queryData = Json::encode($queryData);
@@ -227,9 +230,17 @@ class TKBankAdapter implements IBankAdapter
             $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
             Yii::warning("reversOrder: " . $this->logArr($ans), 'merchant');
             if (isset($ans['xml']) && !empty($ans['xml'])) {
-                $st = isset($ans['xml']['errorinfo']['errorcode']) ? $ans['xml']['errorinfo']['errorcode'] : 1;
-                $msg = isset($ans['xml']['errorinfo']['errormessage']) ? $ans['xml']['errorinfo']['errormessage'] : 'Ошибка запроса';
-                return ['state' => $st == 0, 'Status' => $st, 'message' => $msg];
+                if($paymentOnToday) {
+                    $st = isset($ans['xml']['OrderId']) && isset($ans['xml']['ExtId']) ? 1 : 0;
+
+                } else {
+                    $st = isset($ans['xml']['amount'])
+                        && $ans['xml']['amount'] == $params['SummFull']
+                        && isset($ans['xml']['ExtId']) ? 1 : 0;
+                }
+                $msg = $st ? 'Платеж отменен' : 'Ошибка запроса';
+                return ['state' => $st, 'Status' => $st, 'message' => $msg];
+
             }
             /*if (isset($ans['xml']) && !empty($ans['xml'])) {
                 //дополнительно проверить статус после отмены
@@ -337,6 +348,55 @@ class TKBankAdapter implements IBankAdapter
         }
 
         return ['tisket' => $tisket, 'recurrent' => $isRecurrent, 'url' => $userUrl];
+    }
+
+    /**
+     * @param PaySchet $paySchet
+     * @throws BankAdapterResponseException
+     * @throws reRequestingStatusException
+     * @throws reRequestingStatusOkException
+     */
+    public function reRequestingStatus( PaySchet $paySchet):void
+    {
+        $action = '/api/tcbpay/gate/getorderstate';
+
+        $checkStatusPayRequest = new CheckStatusPayRequest();
+
+        $queryData = Json::encode($checkStatusPayRequest->getAttributes());
+        $response = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+
+        Yii::warning("checkStatusOrder: " . $this->logArr($response), 'merchant');
+        if (isset($response['xml']) && !empty($response['xml'])) {
+            $xml = $this->parseAns($response['xml']);
+            if ($xml && isset($xml['errorinfo']['errorcode']) && $xml['errorinfo']['errorcode'] == 1) {
+                throw new reRequestingStatusOkException('В обработке');
+            } else {
+                $status = $this->convertState($xml);
+
+                if(!in_array($status, BaseResponse::STATUSES)) {
+                    throw new BankAdapterResponseException('Ошибка преобразования статусов');
+                }
+                if(isset($xml['orderinfo']['statedescription'])) {
+                    $msg = $xml['orderinfo']['statedescription'];
+                } else {
+                    $msg = '';
+                }
+                switch ($status) {
+                    case BaseResponse::STATUS_CREATED:
+                        throw new reRequestingStatusException($msg);
+                    case BaseResponse::STATUS_DONE:
+                        throw new reRequestingStatusOkException($msg);
+                    case BaseResponse::STATUS_ERROR :
+                        throw new reRequestingStatusOkException($msg);
+                    case BaseResponse::STATUS_CANCEL :
+                        throw new reRequestingStatusOkException($msg);
+                    default:
+                        throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
+                }
+            }
+        } else {
+            throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
+        }
     }
 
     /**
@@ -559,6 +619,7 @@ class TKBankAdapter implements IBankAdapter
         try {
             switch ($curl->responseCode) {
                 case 200:
+
                 case 202:
                     $ans['xml'] = $jsonReq ? Json::decode($curl->response) : $curl->response;
                     break;
@@ -1504,6 +1565,13 @@ class TKBankAdapter implements IBankAdapter
         return $payResponse;
     }
 
+    /**
+     * @param $createPayForm
+     * @param $check3DSVersionResponse
+     * @return CreatePayResponse
+     * @throws BankAdapterResponseException
+     * @throws MerchantRequestAlreadyExistsException
+     */
     protected function createPay3DSv1($createPayForm, $check3DSVersionResponse)
     {
         $action = '/api/tcbpay/gate/registerorderfromunregisteredcardwof';
@@ -1532,6 +1600,12 @@ class TKBankAdapter implements IBankAdapter
 
         // TODO: response as object
         $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+        if (isset($ans['xml']['errorinfo']['errorcode']) && $ans['xml']['errorinfo']['errorcode'] === 1 && $ans['xml']['ordernumber'] == 0) {
+            //Не уверен что это правильно, если банк введёт локализацию, то работать не будет.
+            if (strpos($ans['xml']['errorinfo']['errormessage'], 'уже существует') !== false){
+                throw new MerchantRequestAlreadyExistsException('Ошибка запроса, попробуйте повторить позднее');
+            }
+        }
 
         $payResponse = new CreatePayResponse();
         if (isset($ans['xml']) && !empty($ans['xml'])) {
