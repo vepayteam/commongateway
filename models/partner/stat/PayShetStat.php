@@ -117,7 +117,13 @@ class PayShetStat extends Model
                 'ps.sms_accept',
                 'ps.Dogovor',
                 'ps.FIO',
-                'ps.RCCode'
+                'ps.RCCode',
+                'ps.IdOrg',
+                'ps.RRN',
+                'ps.CardNum',
+                'ps.CardHolder',
+                'ps.BankName',
+                'ps.IdKard',//IdCard->cards->IdPan->pan_token->encryptedPan
             ])
             ->from('`pay_schet` AS ps')
             ->leftJoin('`banks` AS b', 'ps.Bank = b.ID')
