@@ -25,6 +25,8 @@ class KfCard extends CardBase
     public $successurl = '';
     public $failurl = '';
     public $cancelurl = '';
+    public $postbackurl = '';
+    public $postbackurl_v2 = '';
 
     /* @var null|User */
     public $user = null;
@@ -34,8 +36,8 @@ class KfCard extends CardBase
         return [
             [['card', 'id', 'type'], 'integer'],
             [['extid'], 'string', 'max' => 40, 'on' => [self::SCENARIO_REG]],
-            [['successurl', 'failurl', 'cancelurl'], 'url', 'on' => [self::SCENARIO_REG]],
-            [['successurl', 'failurl', 'cancelurl'], 'string', 'max' => 300, 'on' => [self::SCENARIO_REG]],
+            [['successurl', 'failurl', 'cancelurl', 'postbackurl', 'postbackurl_v2'], 'url', 'on' => [self::SCENARIO_REG]],
+            [['successurl', 'failurl', 'cancelurl', 'postbackurl', 'postbackurl_v2'], 'string', 'max' => 300, 'on' => [self::SCENARIO_REG]],
             [['timeout'], 'integer', 'min' => 10, 'max' => 59, 'on' => [self::SCENARIO_REG]],
             [['card'], 'required', 'on' => self::SCENARIO_INFO],
             [['id'], 'required', 'on' => self::SCENARIO_GET],
