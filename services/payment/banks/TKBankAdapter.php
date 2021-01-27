@@ -455,10 +455,13 @@ class TKBankAdapter implements IBankAdapter
     private function convertState($result)
     {
         if ((in_array($this->type, [0, 3]) || ($this->type == 2 && $this->IsAft)) && !$this->IsCard) {
+            Yii::warning('TKBankAdapter convertState on convertStatePay', 'merchant');
             return $this->convertStatePay($result);
         } elseif (in_array($this->type, [0, 3]) && $this->IsCard) {
+            Yii::warning('TKBankAdapter convertState on convertStateCard', 'merchant');
             return $this->convertStateCard($result);
         } elseif (in_array($this->type, [1, 2])) {
+            Yii::warning('TKBankAdapter convertState on convertStateOut', 'merchant');
             return $this->convertStateOut($result);
         }
 
@@ -499,6 +502,7 @@ class TKBankAdapter implements IBankAdapter
      */
     private function convertStatePay($result)
     {
+        Yii::warning('TKBankAdapter convertStatePay start: ' . Json::encode($result), 'merchant');
         $status = 0;
         if (isset($result['orderinfo'])) {
             if (($result['orderinfo']['state'] == '3') && $result['Status'] == '0') {
@@ -518,6 +522,8 @@ class TKBankAdapter implements IBankAdapter
                 $status = 0;
             }
         }
+
+        Yii::warning('TKBankAdapter convertStatePay finishStatus: ' . $status, 'merchant');
         return $status;
     }
 
@@ -1789,14 +1795,15 @@ class TKBankAdapter implements IBankAdapter
         Yii::warning("checkStatusOrder: " . $this->logArr($response), 'merchant');
         if (isset($response['xml']) && !empty($response['xml'])) {
             $xml = $this->parseAns($response['xml']);
+            Yii::warning("checkStatusOrder afterParseAns: " . Json::encode($xml), 'merchant');
             if ($xml && isset($xml['errorinfo']['errorcode']) && $xml['errorinfo']['errorcode'] == 1) {
-
+                Yii::warning("checkStatusPay isCreated", 'merchant');
                 $checkStatusPayResponse->status = BaseResponse::STATUS_CREATED;
                 $checkStatusPayResponse->message = 'В обработке';
                 $checkStatusPayResponse->xml = ['orderinfo' => ['statedescription' => 'В обработке']];
             } else {
                 $status = $this->convertState($xml);
-
+                Yii::warning("checkStatusPay afterConvertStatus: " . $status, 'merchant');
                 if(!in_array($status, BaseResponse::STATUSES)) {
                     throw new BankAdapterResponseException('Ошибка преобразования статусов');
                 }

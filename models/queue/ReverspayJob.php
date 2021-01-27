@@ -42,10 +42,13 @@ class ReverspayJob extends BaseObject implements \yii\queue\JobInterface
                     } else {
                         $TcbGate = new TcbGate($ps['IDPartner'], $gate);
                     }
+
+                    Yii::warning('ReverspayJob execute $gate: ' . $gate, 'merchant');
                     $Merchant = new TCBank($TcbGate);
                     $res = $Merchant->reversOrder($this->idpay);
 
                 } elseif ($ps['Bank'] == 0 && empty($ps['UrlFormPay'])) {
+                    Yii::warning('ReverspayJob execute isReversCardRegType1', 'merchant');
                     //отмена для карт на выдачу (без платежа)
                     $res['state'] = 0;//1;
 
@@ -61,7 +64,7 @@ class ReverspayJob extends BaseObject implements \yii\queue\JobInterface
                 }
             }
         } catch (Exception $e) {
-            Yii::warning("ReverspayJob " . $this->idpay . " eerror: ".$e->getMessage(), "rsbcron");
+            Yii::warning("ReverspayJob " . $this->idpay . " error: ".$e->getMessage(), "rsbcron");
         }
     }
 }
