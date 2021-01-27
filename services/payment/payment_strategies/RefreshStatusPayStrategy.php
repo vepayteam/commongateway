@@ -24,6 +24,7 @@ use app\services\payment\PaymentService;
 use Yii;
 use yii\db\Exception;
 use yii\db\Query;
+use yii\helpers\Json;
 use yii\mutex\FileMutex;
 
 class RefreshStatusPayStrategy extends OkPayStrategy
@@ -43,6 +44,7 @@ class RefreshStatusPayStrategy extends OkPayStrategy
         /** @var CheckStatusPayResponse $checkStatusPayResponse */
         $checkStatusPayResponse = $bankAdapterBuilder->getBankAdapter()->checkStatusPay($this->okPayForm);
         if($paySchet->Status == $checkStatusPayResponse->status) {
+            Yii::warning("RefreshStatusPayStrategy isNotChange");
             return $paySchet;
         }
 
@@ -51,6 +53,7 @@ class RefreshStatusPayStrategy extends OkPayStrategy
             $this->linkCard($paySchet, $checkStatusPayResponse);
         }
 
+        Yii::warning("RefreshStatusPayStrategy beforeConfirmPay: " . Json::encode($checkStatusPayResponse->getAttributes()));
         $this->confirmPay($paySchet, $checkStatusPayResponse);
 
         $paySchet->Status = $checkStatusPayResponse->status;
