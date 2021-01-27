@@ -361,6 +361,7 @@ class TKBankAdapter implements IBankAdapter
         $action = '/api/tcbpay/gate/getorderstate';
 
         $checkStatusPayRequest = new CheckStatusPayRequest();
+        $checkStatusPayRequest->OrderID = $paySchet->ID;
 
         $queryData = Json::encode($checkStatusPayRequest->getAttributes());
         $response = $this->curlXmlReq($queryData, $this->bankUrl . $action);
