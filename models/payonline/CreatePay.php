@@ -123,6 +123,12 @@ class CreatePay
             if (!empty($kfCard->cancelurl)) {
                 $this->setReturnUrlFail($idpay, $kfCard->cancelurl);
             }
+            if (!empty($kfCard->postbackurl)) {
+                $this->setReturnUrlPostback($idpay, $kfCard->postbackurl);
+            }
+            if (!empty($kfCard->postbackurl_v2)) {
+                $this->setReturnUrlPostbackV2($idpay, $kfCard->postbackurl_v2);
+            }
 
             $ret = ['IdPay' => $idpay, 'Sum' => $sum];
         }
@@ -471,6 +477,10 @@ class CreatePay
             $this->setReturnUrlPostback($IdPay, $KfPay->postbackurl);
         }
 
+        if (!empty($KfPay->postbackurl_v2)) {
+            $this->setReturnUrlPostbackV2($IdPay, $KfPay->postbackurl_v2);
+        }
+
         return ['IdPay' => $IdPay, 'summ' => $this->Provparams->summ + $this->Provparams->calcComiss(), 'TimeElapsed' => round($KfPay->timeout), 'checkurl' => $this->Provparams->Usluga->UrlCheckReq];
     }
 
@@ -729,6 +739,14 @@ class CreatePay
     {
         Yii::$app->db->createCommand()->update('pay_schet', [
             'PostbackUrl' => $UrlReturnPostback
+        ], ['ID' => $IdPay])->execute();
+
+    }
+
+    private function setReturnUrlPostbackV2($IdPay, $UrlReturnPostbackV2)
+    {
+        Yii::$app->db->createCommand()->update('pay_schet', [
+            'PostbackUrl_v2' => $UrlReturnPostbackV2
         ], ['ID' => $IdPay])->execute();
 
     }
