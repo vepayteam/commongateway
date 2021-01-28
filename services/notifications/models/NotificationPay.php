@@ -27,14 +27,6 @@ class NotificationPay extends \yii\db\ActiveRecord
     const CRON_HTTP_REQUEST_TYPE = 2;
     const QUEUE_HTTP_REQUEST_TYPE = 20;
 
-    function __set($property, $value) {
-        if($property == 'url') {
-            $this->Email = $value;
-        } else {
-            parent::__set($property, $value);
-        }
-    }
-
     /**
      * {@inheritdoc}
      */
@@ -84,5 +76,10 @@ class NotificationPay extends \yii\db\ActiveRecord
     public function getUrl()
     {
         return $this->Email;
+    }
+
+    public function setUrl($value)
+    {
+        $this->Email = $value;
     }
 }
