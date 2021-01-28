@@ -5,6 +5,7 @@ namespace app\services\payment\models;
 use app\models\payonline\Partner;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
+use app\services\notifications\models\NotificationPay;
 use app\services\payment\exceptions\GateException;
 use Yii;
 
@@ -222,6 +223,11 @@ class PaySchet extends \yii\db\ActiveRecord
     public function getLog()
     {
         return $this->hasMany(PaySchetLog::className(), ['PaySchetId' => 'ID']);
+    }
+
+    public function getNotifications()
+    {
+        return $this->hasMany(NotificationPay::className(), ['IdPay' => 'ID']);
     }
 
     public function save($runValidation = true, $attributeNames = null)
