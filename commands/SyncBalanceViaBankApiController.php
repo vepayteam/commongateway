@@ -14,8 +14,7 @@ use app\services\payment\banks\TKBankAdapter;
  */
 class SyncBalanceViaBankApiController extends Controller
 {
-    /**
-     */
+    
     public function actionIndex(): void
     {
         $partner_ids = [
