@@ -34,26 +34,35 @@ class CallbackSendJob extends BaseObject implements \yii\queue\JobInterface
             'timeout'  => 120,
         ]);
 
+        $query = [
+            'extid' => $notificationPay->paySchet->Extid,
+            'id' => $notificationPay->paySchet->ID,
+            'sum' => $this->formatSummPay(),
+            'status' => $notificationPay->paySchet->Status,
+            'key' => $this->buildKey(),
+        ];
+        
         $response = $client->request('GET', $notificationPay->url, [
-            'query' => [
-                'extid' => $notificationPay->paySchet->Extid,
-                'id' => $notificationPay->paySchet->ID,
-                'sum' => $this->formatSummPay(),
-                'status' => $notificationPay->paySchet->Status,
-                'key' => $this->buildKey(),
-            ],
+            'query' => $query,
         ]);
 
+        $notificationPay->url = $notificationPay->url . '?' . $this->getQueryStr($query);
         $notificationPay->DateSend = time();
         $notificationPay->HttpAns = (string)$response->getBody();
         $notificationPay->save(false);
     }
 
+    /**
+     * @return string
+     */
     private function formatSummPay()
     {
         return sprintf("%02.2f", $this->notificationPay->paySchet->SummPay / 100.0);
     }
 
+    /**
+     * @return string
+     */
     private function buildKey()
     {
         return md5(
@@ -63,5 +72,19 @@ class CallbackSendJob extends BaseObject implements \yii\queue\JobInterface
             . $this->notificationPay->paySchet->Status
             . $this->notificationPay->paySchet->uslugatovar->KeyInform
         );
+    }
+
+    /**
+     * @param array $query
+     * @return string
+     */
+    private function getQueryStr($query)
+    {
+        $resultArr = [];
+        foreach ($query as $k => $value) {
+            $resultArr[] = urlencode($k) . '=' . urlencode($value);
+        }
+
+        return implode('&', $resultArr);
     }
 }
