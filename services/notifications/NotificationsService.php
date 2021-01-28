@@ -4,6 +4,8 @@
 namespace app\services\notifications;
 
 
+use app\services\notifications\jobs\CallbackSendJob;
+use app\services\notifications\models\NotificationPay;
 use app\services\payment\models\PaySchet;
 use Yii;
 
@@ -56,17 +58,20 @@ class NotificationsService
                 ])
                 ->execute();
         }
+
         //по http успешные и нет
         if (!empty($paySchet->uslugatovar->UrlInform)) {
-            Yii::$app->db->createCommand()
-                ->insert('notification_pay', [
-                    'IdPay' => $paySchet->ID,
-                    'Email' => $paySchet->uslugatovar->UrlInform,
-                    'TypeNotif' => 2,
-                    'DateCreate' => time(),
-                    'DateSend' => 0
-                ])
-                ->execute();
+            $notificationPay = new NotificationPay();
+            $notificationPay->IdPay = $paySchet->ID;
+            $notificationPay->url = $paySchet->uslugatovar->UrlInform;
+            $notificationPay->TypeNotif = NotificationPay::QUEUE_HTTP_REQUEST_TYPE;
+            $notificationPay->DateCreate = time();
+            $notificationPay->DateSend = 0;
+            $notificationPay->save();
+
+            Yii::$app->queue->push(new CallbackSendJob([
+                'notificationPayId' => $notificationPay->ID,
+            ]));
         }
 
         return true;
