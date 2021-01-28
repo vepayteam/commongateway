@@ -249,11 +249,10 @@ class MerchantController extends Controller
                 $kfCard = new KfCard();
                 $kfCard->scenario = KfCard::SCENARIO_GET;
                 $kfCard->load($kf->req, '');
-                if ($kfCard->validate()) {
-                    $cardUser = $kfCard->FindKardByPay($kf->IdPartner, 0);
-                    if ($cardUser) {
-                        $card = ['num' => $cardUser->NameCard, 'exp' => $cardUser->SrokKard, 'id' => $cardUser->ID];
-                    }
+                if ($kfCard->validate() && $cardUser = $kfCard->FindKardByPay($kf->IdPartner, 0)) {
+                    $card = ['num' => $cardUser->NameCard, 'exp' => $cardUser->SrokKard, 'id' => $cardUser->ID];
+                } else {
+                    return ['status' => 0, 'message' => 'Карта не найдена'];
                 }
             }
             $state = ['status' => (int)$ret['status'], 'message' => (string)$ret['message'], 'rc' => isset($ret['rc']) ?(string)$ret['rc'] : '', 'info' => $ret['info'], 'card' => $card];
