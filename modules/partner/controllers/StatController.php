@@ -31,6 +31,7 @@ use app\models\TU;
 use app\modules\partner\models\PaySchetLogForm;
 use app\services\ident\forms\IdentStatisticForm;
 use app\services\ident\IdentService;
+use app\services\payment\jobs\RefundPayJob;
 use app\services\payment\models\PaySchet;
 use app\services\payment\PaymentService;
 use kartik\mpdf\Pdf;
@@ -175,22 +176,22 @@ class StatController extends Controller
     {
         if (Yii::$app->request->isAjax) {
             Yii::$app->response->format = Response::FORMAT_JSON;
-            $payschets = new Payschets();
-
             $org = UserLk::IsAdmin(Yii::$app->user) ? 0 : UserLk::getPartnerId(Yii::$app->user);
 
-            $ps = $payschets->getSchetData(Yii::$app->request->post('id'), '', $org);
-            if ($ps && $ps['Status'] == 1) {
-                $merchBank = BankMerchant::Create($ps);
-                $res = $merchBank->reversOrder($ps['ID']);
-                if ($res['state'] == 1) {
-                    $payschets->SetReversPay($ps['ID']);
-                    return ['status' => 1, 'message' => 'Операция отменена'];
-                } else {
-                    return ['status' => 0, 'message' => $res['message']];
-                }
+            $where = [
+                'ID' => Yii::$app->request->post('id', 0),
+            ];
+
+            if($org) {
+                $where['IdOrg'] = $org;
             }
-            return ['status' => 0, 'message' => 'Ошибка запроса отмены'];
+            if(PaySchet::find()->where($where)->exists()) {
+                Yii::$app->queue->push(new RefundPayJob([
+                    'paySchetId' => Yii::$app->request->post('id', 0),
+                ]));
+            }
+
+            return ['status' => 1, 'message' => 'Ожидается отменена'];
         } else {
             return $this->redirect('/partner');
         }
