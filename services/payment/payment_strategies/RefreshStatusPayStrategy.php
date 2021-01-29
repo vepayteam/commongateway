@@ -96,8 +96,8 @@ class RefreshStatusPayStrategy extends OkPayStrategy
             'id' => $paySchet->ID,
             'amount' => $paySchet->SummPay,
             'extid' => $paySchet->Extid,
-            'card_num' => $paySchet->CardNum,
-            'card_holder' => $paySchet->CardHolder,
+            'fullname' => $paySchet->FIO,
+            'document_id' => $paySchet->Dogovor,
         ];
         $this->sendRequest($paySchet->PostbackUrl_v2, $data);
     }
