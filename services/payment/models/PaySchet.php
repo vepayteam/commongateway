@@ -88,6 +88,7 @@ class PaySchet extends \yii\db\ActiveRecord
     const STATUS_ERROR = 2;
     const STATUS_CANCEL = 3;
     const STATUS_NOT_EXEC = 4;
+    const STATUS_WAITING_CHECK_STATUS = 5;
 
     const STATUSES = [
         self::STATUS_WAITING,
