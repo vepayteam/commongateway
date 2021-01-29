@@ -13,5 +13,15 @@
     },
     "require-dev": {
         "phpunit/phpunit": "^9.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Vepay\\Gateway\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Vepay\\Gateway\\Tests\\": "tests/"
+        }
     }
 }
