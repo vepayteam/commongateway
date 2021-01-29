@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit;
+namespace Vepay\Gateway\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 
