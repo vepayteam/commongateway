@@ -12,6 +12,10 @@ use app\models\kfapi\KfPay;
 use app\models\kfapi\KfRequest;
 use app\models\payonline\CreatePay;
 use app\models\Payschets;
+use app\services\payment\exceptions\CreatePayException;
+use app\services\payment\exceptions\GateException;
+use app\services\payment\forms\AutoPayForm;
+use app\services\payment\payment_strategies\mfo\MfoAutoPayStrategy;
 use Yii;
 use yii\base\Exception;
 use yii\mutex\FileMutex;
@@ -210,99 +214,27 @@ class RecarringController extends Controller
         $kf = new KfRequest();
         $kf->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody(), 0);
 
-        $kfPay = new KfPay();
-        $kfPay->scenario = KfPay::SCENARIO_AUTO;
-        $kfPay->load($kf->req, '');
-        if (!$kfPay->validate()) {
-            return ['status' => 0, 'message' => $kfPay->GetError()];
+        $autoPayForm = new AutoPayForm();
+        $autoPayForm->partner = $kf->partner;
+        $autoPayForm->load($kf->req, '');
+        if(!$autoPayForm->validate()) {
+            Yii::warning("mfo/pay/auto: ошибка валидации формы");
+            return ['status' => 0, 'message' => $autoPayForm->getError()];
+        }
+        Yii::warning("mfo/pay/auto AutoPayForm extid=$autoPayForm->extid amount=$autoPayForm->amount", 'mfo');
+        // рубли в копейки
+        $autoPayForm->amount *= 100;
+
+        $mfoAutoPayStrategy = new MfoAutoPayStrategy($autoPayForm);
+        try {
+            $paySchet = $mfoAutoPayStrategy->exec();
+        } catch (CreatePayException $e) {
+            return ['status' => 2, 'message' => $e->getMessage()];
+        } catch (GateException $e) {
+            return ['status' => 2, 'message' => $e->getMessage()];
         }
 
-        $TcbGate = new TcbGate($kf->IdPartner, TCBank::$AUTOPAYGATE);
-        $usl = $kfPay->GetUslugAuto($kf->IdPartner);
-        if (!$usl || !$TcbGate->IsGate()) {
-            return ['status' => 0, 'message' => 'Услуга не найдена'];
-        }
-
-        $kfCard = new KfCard();
-        $kfCard->card = $kfPay->card;
-        $card = $kfCard->FindKard($kf->IdPartner, 0);
-        $user = $kfCard->user;
-        if (!$card || !$user) {
-            return ['status' => 0, 'message' => 'Карта не найдена'];
-        }
-
-        $pay = new CreatePay();
-        $mutex = new FileMutex();
-        if (!empty($kfPay->extid)) {
-            //проверка на повторный запрос
-            if (!$mutex->acquire('getPaySchetExt' . $kfPay->extid, 30)) {
-                throw new Exception('getPaySchetExt: error lock!');
-            }
-            $paramsExist = $pay->getPaySchetExt($kfPay->extid, $usl, $kf->IdPartner);
-            if ($paramsExist) {
-                if ($kfPay->amount == $paramsExist['sumin']) {
-                    return ['status' => 1, 'id' => (int)$paramsExist['IdPay'], 'message' => ''];
-                } else {
-                    return ['status' => 0, 'message' => 'Нарушение уникальности запроса'];
-                }
-            }
-        }
-
-        //деление на 7 шлюзов (3 запроса по одной карте в сутки)
-        $TcbGate->AutoPayIdGate = $kfPay->GetAutopayGate();
-        if (!$TcbGate->AutoPayIdGate) {
-            Yii::warning("recarring/auto: нет больше шлюзов");
-            return ['status' => 0];
-        }
-
-        if ($card && $card->IdPan > 0) {
-            $CardToken = new CardToken();
-            $cardnum = $CardToken->GetCardByToken($card->IdPan);
-        }
-        if (empty($cardnum)) {
-            Yii::warning("recurrent/pay: empty card", 'mfo');
-            return ['status' => 0, 'message' => 'empty card'];
-        }
-
-        $kfPay->timeout = 15;
-        $params = $pay->payToMfo($user, [$kfPay->extid, $kfPay->card, $TcbGate->AutoPayIdGate], $kfPay, $usl, TCBank::$bank, $kf->IdPartner, $TcbGate->AutoPayIdGate);
-        if (!empty($kfPay->extid)) {
-            $mutex->release('getPaySchetExt' . $kfPay->extid);
-        }
-        //$params['CardFrom'] = $card->ExtCardIDP;
-        $params['card']['number'] = $cardnum;
-        $params['card']['holder'] = $card->CardHolder;
-        $params['card']['year'] =  $card->getYear();
-        $params['card']['month'] = $card->getMonth();
-
-        $payschets = new Payschets();
-        $pay->setKardToPaySchet($params['IdPay'], $card->ID);
-
-        //данные карты
-        $payschets->SetCardPay($params['IdPay'], [
-            'number' => $card->CardNumber,
-            'holder' => $card->CardHolder,
-            'year' => $card->getYear(),
-            'month' => $card->getMonth()
-        ]);
-
-        $tcBank = new TCBank($TcbGate);
-        //$ret = $tcBank->createAutoPay($params);
-        $ret = $tcBank->createRecurrentPay($params);
-
-        if ($ret['status'] == 1) {
-            //сохранение номера транзакции
-            $payschets->SetBankTransact([
-                'idpay' => $params['IdPay'],
-                'trx_id' => $ret['transac'],
-                'url' => ''
-            ]);
-
-        } else {
-            $pay->CancelReq($params['IdPay'],'Платеж не проведен');
-        }
-
-        return ['status' => 1, 'id' => (int)$params['IdPay']];
+        return ['status' => 1, 'message' => '', 'id' => $paySchet->ID];
     }
 
     /**
