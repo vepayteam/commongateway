@@ -91,11 +91,21 @@ class PaySchet extends \yii\db\ActiveRecord
     const STATUS_WAITING_CHECK_STATUS = 5;
 
     const STATUSES = [
-        self::STATUS_WAITING,
-        self::STATUS_DONE,
-        self::STATUS_ERROR,
-        self::STATUS_CANCEL,
-        self::STATUS_NOT_EXEC,
+        self::STATUS_WAITING => 'В обработке',
+        self::STATUS_DONE => 'Оплачен',
+        self::STATUS_ERROR => 'Отмена',
+        self::STATUS_CANCEL => 'Возврат',
+        self::STATUS_NOT_EXEC => 'Ожидается обработка',
+        self::STATUS_WAITING_CHECK_STATUS => 'Ожидается запрос статуса',
+    ];
+
+    const STATUS_CLASSES = [
+        self::STATUS_WAITING => 'info',
+        self::STATUS_DONE => 'success',
+        self::STATUS_ERROR => 'danger',
+        self::STATUS_CANCEL => 'warning',
+        self::STATUS_NOT_EXEC => 'default',
+        self::STATUS_WAITING_CHECK_STATUS => 'default',
     ];
 
     const CHECK_3DS_CACHE_PREFIX = 'pay_schet__check-3ds-response';
