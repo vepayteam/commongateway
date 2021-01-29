@@ -99,13 +99,13 @@ class PaySchet extends \yii\db\ActiveRecord
         self::STATUS_WAITING_CHECK_STATUS => 'Ожидается запрос статуса',
     ];
 
-    const STATUS_CLASSES = [
-        self::STATUS_WAITING => 'info',
-        self::STATUS_DONE => 'success',
-        self::STATUS_ERROR => 'danger',
-        self::STATUS_CANCEL => 'warning',
-        self::STATUS_NOT_EXEC => 'default',
-        self::STATUS_WAITING_CHECK_STATUS => 'default',
+    const STATUS_COLORS = [
+        self::STATUS_WAITING => 'blue',
+        self::STATUS_DONE => 'green',
+        self::STATUS_ERROR => 'red',
+        self::STATUS_CANCEL => '#FF3E00',
+        self::STATUS_NOT_EXEC => 'blue',
+        self::STATUS_WAITING_CHECK_STATUS => 'blue',
     ];
 
     const CHECK_3DS_CACHE_PREFIX = 'pay_schet__check-3ds-response';
