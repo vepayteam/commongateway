@@ -150,7 +150,7 @@ class OkPayStrategy
         if ($mutex->acquire('confirmPay' . $paySchet->ID)) {
             // TODO: вернуть транзакции
             //только в обработке платеж завершать
-            if($paySchet->Status != PaySchet::STATUS_WAITING) {
+            if(!in_array($paySchet->Status, [PaySchet::STATUS_WAITING, PaySchet::STATUS_WAITING_CHECK_STATUS])) {
                 return true;
             }
 

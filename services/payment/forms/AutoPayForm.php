@@ -36,6 +36,7 @@ class AutoPayForm extends Model implements Serializable
     public $card = 0;
     public $timeout = 30;
     public $postbackurl = '';
+    public $postbackurl_v2 = '';
 
     public function rules()
     {
@@ -45,8 +46,8 @@ class AutoPayForm extends Model implements Serializable
             [['extid'], 'string', 'max' => 40],
             [['document_id'], 'string', 'max' => 40],
             [['fullname'], 'string', 'max' => 80],
-            [['postbackurl'], 'url'],
-            [['postbackurl'], 'string', 'max' => 300],
+            [['postbackurl', 'postbackurl_v2'], 'url'],
+            [['postbackurl', 'postbackurl_v2'], 'string', 'max' => 300],
             [['descript'], 'string', 'max' => 200],
             [['card'], 'integer'],
             [['card'], 'validateCard'],
