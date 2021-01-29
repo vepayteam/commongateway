@@ -12,7 +12,11 @@ class ConfigTest extends TestCase
     public function testConfigs(): void
     {
         $config = Config::getInstance();
+        $configs = ['config1' => 'value1', 'config2' => 'value2'];
+        $config->configPay = $configs;
+
         $this->assertSame($config, Config::getInstance());
+        $this->assertSame($config->configPay, $configs);
     }
 
     public function testLogger(): void
