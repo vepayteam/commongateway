@@ -15,6 +15,8 @@
 use app\models\payonline\Uslugatovar;
 use app\models\payonline\User;
 use app\models\TU;
+use app\services\payment\models\PaySchet;
+
 ?>
 
 <table class="table table-striped tabledata" style="font-size: 0.9em">
@@ -54,6 +56,7 @@ use app\models\TU;
 <?php
     if (count($data) > 0) :
         $stClr = [0 => "blue", 1 => "green", 2 => "red", 3 => "#FF3E00"];
+
         $st = [0 => "В обработке", 1 => "Оплачен", 2 => "Отмена", 3 => "Возврат"];
         foreach ($data as $row) :
 ?>
@@ -78,8 +81,11 @@ use app\models\TU;
                     <?= $row['DateOplat'] > 0 ? date('d.m.Y H:i:s', $row['DateOplat']) : "нет" ?>
                 </td>
                 <td><?= $row['ExtBillNumber'] ?></td>
-                <td><span class="label label-primary" style="background-color: <?=$stClr[$row['Status']]?>">
-                        <?= (!$row['sms_accept'] && $row['Status'] == 0) ? 'Создан' : $st[$row['Status']]?></span></td>
+                <td>
+                    <span class="label label-<?=PaySchet::STATUS_CLASSES[$row['Status']]?> >">
+                        <?= (!$row['sms_accept'] && $row['Status'] == 0) ? 'Создан' : PaySchet::STATUSES[$row['Status']] ?>
+                    </span>
+                </td>
                 <td>
                     <div><?= $row['ErrorInfo'] ?></div>
                     <?php if ($row['Status'] == 2 && !empty($row['RCCode'])) : ?>
