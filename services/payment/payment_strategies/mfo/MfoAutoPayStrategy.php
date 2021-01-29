@@ -174,6 +174,7 @@ class MfoAutoPayStrategy
         $paySchet->sms_accept = 1;
 
         $paySchet->PostbackUrl = $this->autoPayForm->postbackurl;
+        $paySchet->PostbackUrl_v2 = $this->autoPayForm->postbackurl_v2;
 
         $paySchet->FIO = $this->autoPayForm->fullname;
         $paySchet->Dogovor = $this->autoPayForm->document_id;
