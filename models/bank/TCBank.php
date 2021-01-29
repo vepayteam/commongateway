@@ -490,6 +490,9 @@ class TCBank implements IBank
             } elseif ($result['orderinfo']['state'] == '5' && !$this->IsCard) {
                 //Возврат
                 $status = 3;
+            } elseif ($result['orderinfo']['state'] == '8') {
+                //Возврат
+                $status = 3;
             } else {
                 //Обрабатывается
                 $status = 0;
