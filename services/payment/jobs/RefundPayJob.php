@@ -40,6 +40,8 @@ class RefundPayJob extends BaseObject implements \yii\queue\JobInterface
             } else {
                 Yii::error('RefundPayJob error save: ID='.$this->paySchetId);
             }
+        } else {
+
         }
 
         Yii::warning(
