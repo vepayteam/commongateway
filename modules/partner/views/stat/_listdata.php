@@ -82,7 +82,7 @@ use app\services\payment\models\PaySchet;
                 </td>
                 <td><?= $row['ExtBillNumber'] ?></td>
                 <td>
-                    <span class="label label-<?=PaySchet::STATUS_CLASSES[$row['Status']]?> >">
+                    <span class="label label-primary" style="background-color: <?=PaySchet::STATUS_COLORS[$row['Status']]?>">
                         <?= (!$row['sms_accept'] && $row['Status'] == 0) ? 'Создан' : PaySchet::STATUSES[$row['Status']] ?>
                     </span>
                 </td>
