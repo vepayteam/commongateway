@@ -12,7 +12,7 @@ namespace Vepay\Gateway;
 class Config
 {
     private static ?Config $instance = null;
-    private array $configs;
+    private array $configs = [];
 
     private function __construct() { }
     private function __clone() { }
