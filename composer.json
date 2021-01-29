@@ -1,0 +1,17 @@
+{
+    "name": "vepay/gratapay",
+    "type": "library",
+    "description": "PHP library gateway for payment system GrataPay",
+    "license": "MIT",
+    "homepage": "https://gratapay.com/",
+    "authors": [
+        {"name": "Dzmitry Kuzmin", "email": "d4.kuzmin@itransition.com"},
+        {"name": "Yauhen Kuzob", "email": "e.kuzob@itransition.com"}
+    ],
+    "require": {
+        "php": "^7.4"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.0"
+    }
+}
