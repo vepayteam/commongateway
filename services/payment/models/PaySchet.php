@@ -303,4 +303,12 @@ class PaySchet extends \yii\db\ActiveRecord
         $this->ErrorInfo = $message;
         $this->save(false);
     }
+
+    /**
+     * @return string
+     */
+    public function getFormatSummPay()
+    {
+        return sprintf("%02.2f", $this->SummPay / 100.0);
+    }
 }

@@ -82,4 +82,57 @@ class NotificationPay extends \yii\db\ActiveRecord
     {
         $this->Email = $value;
     }
+
+    /**
+     * @return array
+     */
+    public function getQuery()
+    {
+        return [
+            'extid' => $this->paySchet->Extid,
+            'id' => $this->paySchet->ID,
+            'sum' => $this->paySchet->getFormatSummPay(),
+            'status' => $this->paySchet->Status,
+            'key' => $this->buildKey(),
+        ];
+    }
+
+    /**
+     * @param NotificationPay $notificationPay
+     * @return string
+     */
+    public function getNotificationUrl()
+    {
+        return $this->paySchet->uslugatovar->UrlInform . '?' . $this->getQueryStr();
+    }
+
+    /**
+     * @param NotificationPay $notificationPay
+     * @return string
+     */
+    public function buildKey()
+    {
+        return md5(
+            $this->paySchet->Extid
+            . $this->paySchet->ID
+            . $this->paySchet->getFormatSummPay()
+            . $this->paySchet->Status
+            . $this->paySchet->uslugatovar->KeyInform
+        );
+    }
+
+    /**
+     * @param array $query
+     * @return string
+     */
+    private function getQueryStr()
+    {
+        $query = $this->getQuery();
+        $resultArr = [];
+        foreach ($query as $k => $value) {
+            $resultArr[] = urlencode($k) . '=' . urlencode($value);
+        }
+
+        return implode('&', $resultArr);
+    }
 }
