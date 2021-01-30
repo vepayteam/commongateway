@@ -63,7 +63,7 @@ class NotificationsService
         if (!empty($paySchet->uslugatovar->UrlInform)) {
             $notificationPay = new NotificationPay();
             $notificationPay->IdPay = $paySchet->ID;
-            $notificationPay->url = $paySchet->uslugatovar->UrlInform;
+            $notificationPay->url = $notificationPay->getNotificationUrl();
             $notificationPay->TypeNotif = NotificationPay::QUEUE_HTTP_REQUEST_TYPE;
             $notificationPay->DateCreate = time();
             $notificationPay->DateSend = 0;
@@ -73,7 +73,6 @@ class NotificationsService
                 'notificationPayId' => $notificationPay->ID,
             ]));
         }
-
         return true;
     }
 }
