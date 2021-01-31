@@ -3,6 +3,7 @@
 namespace app\models\partner\callback;
 
 use app\models\partner\UserLk;
+use app\services\notifications\models\NotificationPay;
 use Yii;
 use yii\base\Model;
 use yii\db\Query;
@@ -60,7 +61,10 @@ class CallbackList extends Model
                 ':DATEFROM' => $datefrom,
                 ':DATETO' => $dateto
             ])
-            ->andWhere(['TypeNotif' => [2, 20]]);
+            ->andWhere(['TypeNotif' => [
+                NotificationPay::CRON_HTTP_REQUEST_TYPE,
+                NotificationPay::QUEUE_HTTP_REQUEST_TYPE,
+            ]]);
 
         if ($idpartner > 0) {
             $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $idpartner]);
