@@ -103,7 +103,14 @@ class NotificationPay extends \yii\db\ActiveRecord
      */
     public function getNotificationUrl()
     {
-        return $this->paySchet->uslugatovar->UrlInform . '?' . $this->getQueryStr();
+        $urlInformArr = explode('?', $this->paySchet->uslugatovar->UrlInform);
+
+        $delimiter = '?';
+        if(count($urlInformArr) == 2) {
+            return $this->paySchet->uslugatovar->UrlInform . '&' . $this->getQueryStr();
+        }
+
+        return $this->paySchet->uslugatovar->UrlInform . $delimiter . $this->getQueryStr();
     }
 
     /**

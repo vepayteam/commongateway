@@ -38,7 +38,9 @@ class CallbackSendJob extends BaseObject implements \yii\queue\JobInterface
             'query' => $notificationPay->getQuery(),
         ]);
 
-        $notificationPay->url = $notificationPay->getNotificationUrl();;
+        $notificationPay->HttpCode = $response->getStatusCode();
+        $notificationPay->DateLastReq = time();
+        $notificationPay->url = $notificationPay->getNotificationUrl();
         $notificationPay->DateSend = time();
         $notificationPay->HttpAns = (string)$response->getBody();
         $notificationPay->save(false);
