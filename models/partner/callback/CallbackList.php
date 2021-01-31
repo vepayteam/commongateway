@@ -60,7 +60,7 @@ class CallbackList extends Model
                 ':DATEFROM' => $datefrom,
                 ':DATETO' => $dateto
             ])
-            ->andWhere(['TypeNotif' => 2]);
+            ->andWhere(['TypeNotif' => [2, 20]]);
 
         if ($idpartner > 0) {
             $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $idpartner]);
