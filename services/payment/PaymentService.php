@@ -134,7 +134,17 @@ class PaymentService
                 ->one();
 
             $data = PaySchetLog::queryLateUpdatedPaySchets($partnerOption->PartnerId, (int)$deltaPartnerOption->Value)
-                ->select('pay_schet.ExtId, pay_schet_log.PaySchetId, FROM_UNIXTIME(pay_schet_log.DateCreate) AS DateCreate, pay_schet_log.Status, pay_schet_log.ErrorInfo')
+                ->select(
+                    'pay_schet.ExtId, '
+                    . ' pay_schet_log.PaySchetId,'
+                    . ' FROM_UNIXTIME(pay_schet.DateCreate) AS DateCreate,'
+                    . ' FROM_UNIXTIME(pay_schet.DateOplat) AS DateOplat,'
+                    . ' partner.UrLico,'// Наименование мерчанта
+                    . ' uslugatovar.NameUsluga,'// Услуга
+                    . ' pay_schet_log.Status')
+                ->leftJoin('partner', 'pay_schet.IdOrg = partner.ID')
+                ->leftJoin('uslugatovar', 'pay_schet.IdUsluga = uslugatovar.ID')
+                ->andWhere('pay_schet.Status = ' . PaySchet::STATUS_DONE)
                 ->asArray()
                 ->all();
 
