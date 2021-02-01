@@ -22,6 +22,7 @@ class CallbackSendJob extends BaseObject implements \yii\queue\JobInterface
 
     /**
      * @inheritDoc
+     * @throws \Exception
      */
     public function execute($queue)
     {
@@ -50,6 +51,7 @@ class CallbackSendJob extends BaseObject implements \yii\queue\JobInterface
                 $notificationPay->IdPay,
                 $e->getMessage())
             );
+            throw $e;
         }
 
         $notificationPay->DateLastReq = time();
