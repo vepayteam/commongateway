@@ -37,9 +37,7 @@ class CallbackSendJob extends BaseObject implements \yii\queue\JobInterface
         ]);
 
         try {
-            $response = $client->request('GET', $notificationPay->getNotificationUrl(), [
-                'query' => $notificationPay->getQuery(),
-            ]);
+            $response = $client->request('GET', $notificationPay->getNotificationUrl());
             $notificationPay->HttpCode = $response->getStatusCode();
             $notificationPay->HttpAns = (string)$response->getBody();
         } catch (GuzzleException $e) {
