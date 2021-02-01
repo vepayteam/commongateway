@@ -9,23 +9,25 @@ abstract class AbstractClientConfigurator
 {
     private static array $configuredClients = [];
 
-    abstract public function getGatewayName(): string;
+    abstract public static function getGatewayName(): string;
 
     /**
      * @return ClientInterface
      * @throws Exception
      */
-    public function get(): ClientInterface
+    public static function get(): ClientInterface
     {
-        if (!Config::getInstance()->{$this->getGatewayName()}) {
-            throw new Exception("Config do not found by name '{$this->getGatewayName()}'.");
+        $gatewayName = static::getGatewayName();
+        if (!Config::getInstance()->$gatewayName) {
+            throw new Exception('Config do not found by name ' . $gatewayName);
         }
 
-        if (!isset(self::$configuredClients[$this->getGatewayName()])) {
-            self::$configuredClients[$this->getGatewayName()] = new NativeClient();
-            self::$configuredClients[$this->getGatewayName()]->configure($this->getGatewayName());
+        if (!isset(self::$configuredClients[$gatewayName])) {
+            self::$configuredClients[$gatewayName] =
+                (new NativeClient)
+                    ->configure();
         }
 
-        return self::$configuredClients[$this->getGatewayName()];
+        return self::$configuredClients[$gatewayName];
     }
 }

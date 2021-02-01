@@ -6,7 +6,7 @@ use Vepay\Gateway\Client\AbstractClientConfigurator;
 
 class MockClientConfigurator extends AbstractClientConfigurator
 {
-    public function getGatewayName(): string
+    public static function getGatewayName(): string
     {
         return 'testPaymentSystem';
     }

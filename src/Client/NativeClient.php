@@ -10,7 +10,7 @@ class NativeClient implements ClientInterface
 {
     protected Client $client;
 
-    public function configure(string $nameConfig): ClientInterface
+    public function configure(): ClientInterface
     {
         // TODO: To config object client.
         return $this;
