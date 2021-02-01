@@ -19,9 +19,8 @@ class ClientConfiguratorTest extends TestCase
 
     public function testGetConfig(): void
     {
-        $configurator = new MockClientConfigurator();
-        Config::getInstance()->{$configurator->getGatewayName()} = ['config1' => 'value1', 'config2' => 'value2'];
+        Config::getInstance()->{MockClientConfigurator::getGatewayName()} = ['config1' => 'value1', 'config2' => 'value2'];
 
-        $this->assertInstanceOf(ClientInterface::class, $configurator->get());
+        $this->assertInstanceOf(ClientInterface::class, MockClientConfigurator::get());
     }
 }
