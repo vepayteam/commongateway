@@ -512,6 +512,9 @@ class TKBankAdapter implements IBankAdapter
             if (($result['orderinfo']['state'] == '3') && $result['Status'] == '0') {
                 //Исполнен
                 $status = 1;
+            } elseif ($result['orderinfo']['state'] == '0') {
+                //Исполнен
+                $status = 1;
             } elseif ($result['orderinfo']['state'] == '6') {
                 //отказ в оплате
                 $status = 2;
@@ -543,6 +546,9 @@ class TKBankAdapter implements IBankAdapter
             if (($result['orderinfo']['state'] == '5') && $result['Status'] == '0') {
                 //Исполнен
                 $status = 1;
+            } elseif ($result['orderinfo']['state'] == '0') {
+                //Исполнен
+                $status = 1;
             } elseif ($result['orderinfo']['state'] == '6') {
                 //отказ в оплате
                 $status = 2;
@@ -564,6 +570,9 @@ class TKBankAdapter implements IBankAdapter
         $status = 0;
         if (isset($result['orderinfo'])) {
             if (($result['orderinfo']['state'] == '0') && $result['Status'] == '0') {
+                //Исполнен
+                $status = 1;
+            } elseif ($result['orderinfo']['state'] == '0') {
                 //Исполнен
                 $status = 1;
             } elseif ($result['orderinfo']['state'] == '6') {
