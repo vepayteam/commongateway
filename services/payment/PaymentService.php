@@ -133,10 +133,23 @@ class PaymentService
                 ])
                 ->one();
 
+            $header = [['Ext ID', 'Vepay ID', 'Дата Создания', 'Дата Оплаты', 'Наименование мерчанта', 'Услуга']];
             $data = PaySchetLog::queryLateUpdatedPaySchets($partnerOption->PartnerId, (int)$deltaPartnerOption->Value)
-                ->select('pay_schet.ExtId, pay_schet_log.PaySchetId, FROM_UNIXTIME(pay_schet_log.DateCreate) AS DateCreate, pay_schet_log.Status, pay_schet_log.ErrorInfo')
+                ->select(
+                    'pay_schet.ExtId, '
+                    . ' pay_schet_log.PaySchetId,'
+                    . ' FROM_UNIXTIME(pay_schet.DateCreate) AS DateCreate,'
+                    . ' FROM_UNIXTIME(pay_schet.DateOplat) AS DateOplat,'
+                    . ' partner.UrLico,'// Наименование мерчанта
+                    . ' uslugatovar.NameUsluga,' // Услуга
+                )
+                ->leftJoin('partner', 'pay_schet.IdOrg = partner.ID')
+                ->leftJoin('uslugatovar', 'pay_schet.IdUsluga = uslugatovar.ID')
+                ->andWhere('pay_schet.Status = ' . PaySchet::STATUS_DONE)
+                ->groupBy('pay_schet.ID')
                 ->asArray()
                 ->all();
+            $data = array_merge($header, $data);
 
             try {
                 $this->generateAndSendEmailsByPartner($partnerOption, $data);
