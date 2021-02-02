@@ -3,7 +3,7 @@
 namespace Vepay\Gateway\Resource;
 
 use Vepay\Gateway\Client\Response\ResponseInterface;
-use Vepay\Gateway\Mock\Response\MockResponseInterface;
+use Vepay\Gateway\Tests\Mock\Response\MockResponseInterface;
 
 trait MockBehavior
 {
