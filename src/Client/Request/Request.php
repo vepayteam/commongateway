@@ -4,11 +4,11 @@ namespace Vepay\Gateway\Client\Request;
 
 class Request implements RequestInterface
 {
-    public string $endpoint;
-    public string $method;
-    public array $headers;
-    public array $parameters;
-    public array $middlewares;
+    protected string $endpoint;
+    protected string $method;
+    protected array $headers;
+    protected array $parameters;
+    protected array $middlewares;
 
     public function setEndpoint(string $endpoint): RequestInterface
     {
