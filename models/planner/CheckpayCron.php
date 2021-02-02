@@ -49,7 +49,8 @@ class CheckpayCron
             // TODO: переписать запрос под orm
             $query = $connection->createCommand('
                 SELECT
-                    m.ID
+                    m.ID,
+                    m.ExtBillNumber
                 FROM
                     pay_schet AS m
                     LEFT JOIN uslugatovar AS us ON us.ID = m.IdUsluga
@@ -70,6 +71,10 @@ class CheckpayCron
 
             if ($query) {
                 while ($value = $query->read()) {
+                    if(empty($value['ExtBillNumber'])) {
+                        continue;
+                    }
+
                     $paySchet = PaySchet::findOne(['ID' => $value['ID']]);
                     $paySchet->Status = PaySchet::STATUS_WAITING_CHECK_STATUS;
                     $paySchet->save(false);
