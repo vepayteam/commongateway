@@ -1,6 +1,6 @@
 <?php
 
-namespace Vepay\Gateway\Mock\Response;
+namespace Vepay\Gateway\Tests\Mock\Response;
 
 use Vepay\Gateway\Client\Response\ResponseInterface;
 
