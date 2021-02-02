@@ -1,4 +1,4 @@
-# commongateway
+# Common Gateway
 
 Config, Logger, Resource, Client, Requests, Responses
 
