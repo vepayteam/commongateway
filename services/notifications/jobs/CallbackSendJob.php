@@ -37,10 +37,15 @@ class CallbackSendJob extends BaseObject implements \yii\queue\JobInterface
         ]);
 
         try {
+            Yii::warning(
+                'CallbackSendJob send: '.$notificationPay->getNotificationUrl(),
+                'merchant'
+            );
             $response = $client->request('GET', $notificationPay->getNotificationUrl());
             $notificationPay->HttpCode = $response->getStatusCode();
             $notificationPay->HttpAns = (string)$response->getBody();
         } catch (GuzzleException $e) {
+            Yii::warning('CallbackSendJob GuzzleException code='.$e->getCode().'; body='.$e->getResponse()->getBody());
             $notificationPay->HttpCode = (int)$e->getCode();
             $notificationPay->HttpAns = (string)$e->getResponse()->getBody();
         } catch (\Exception $e) {
