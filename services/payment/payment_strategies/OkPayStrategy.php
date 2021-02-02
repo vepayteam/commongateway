@@ -208,7 +208,7 @@ class OkPayStrategy
                 return true;
             } elseif ($checkStatusPayResponse->status != BaseResponse::STATUS_CREATED) {
                 Yii::warning('OkPayStrategy confirmPay isStatusDone');
-                $this->paymentService->cancelPay($paySchet);
+                $this->paymentService->cancelPay($paySchet, $checkStatusPayResponse->message);
 
                 /** @var NotificationsService $notificationService */
                 $notificationsService = $this->getNotificationsService();
