@@ -9,4 +9,6 @@ interface ResponseInterface
     public function getMessage(): ?string;
 
     public function getContent(): string;
+
+    public function setContent(string $content): ResponseInterface;
 }
