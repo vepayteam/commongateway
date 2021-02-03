@@ -10,4 +10,9 @@ class MockClientConfigurator extends AbstractClientConfigurator
     {
         return 'testPaymentSystem';
     }
+
+    public static function getOptions(): array
+    {
+        return ['base_uri' => 'https://www.example.com'];
+    }
 }
