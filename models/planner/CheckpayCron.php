@@ -46,6 +46,8 @@ class CheckpayCron
         $connection = Yii::$app->db;
 
         try {
+            $startQuery = microtime(true);
+
             // TODO: переписать запрос под orm
             $query = $connection->createCommand('
                 SELECT
@@ -69,6 +71,7 @@ class CheckpayCron
             ])
                 ->query();
 
+            Yii::warning('CheckpayCron checkStatePay queryTime: ' . (microtime(true) - $startQuery));
             if ($query) {
                 while ($value = $query->read()) {
                     if(empty($value['ExtBillNumber'])) {
