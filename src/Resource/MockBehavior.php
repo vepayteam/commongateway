@@ -14,12 +14,15 @@ trait MockBehavior
         $this->operationMapping[$operationName] = $response;
     }
 
-    public function __call($name, $arguments): ResponseInterface
+    public function __call($method, $arguments): ResponseInterface
     {
-        if (isset($this->operationMapping[$name])) {
-            return $this->operationMapping[$name];
+        if (isset($this->operationMapping[$method])) {
+            return $this->operationMapping[$method];
         }
 
-        return $this->$name($arguments);
+        return call_user_func_array([
+            $this,
+            $method,
+        ], $arguments);
     }
 }
