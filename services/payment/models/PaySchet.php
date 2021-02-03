@@ -73,6 +73,7 @@ use Yii;
  * @property Uslugatovar $uslugatovar
  * @property Partner $partner
  * @property PaySchetLog[] $log
+ * @property User $user
  *
  * @property string $Version3DS
  * @property int $IsNeed3DSVerif

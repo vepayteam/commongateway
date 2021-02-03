@@ -237,23 +237,9 @@ class PaymentService
                 continue;
             }
 
-            $autoPayForm = new AutoPayForm();
-            $autoPayForm->partner = $paySchet->partner;
-            $autoPayForm->paySchet = $paySchet;
-            $autoPayForm->amount = $paySchet->getSummFull();
-            $autoPayForm->document_id = $paySchet->Dogovor;
-            $autoPayForm->fullname = $paySchet->FIO;
-            $autoPayForm->extid = $paySchet->Extid;
-            $autoPayForm->card = $paySchet->IdKard;
-            $autoPayForm->postbackurl = $paySchet->PostbackUrl;
-            $autoPayForm->postbackurl_v2 = $paySchet->PostbackUrl_v2;
-
             Yii::warning('PaymentService massRepeatExecRecurrent add ID=' . $paySchet->ID);
             Yii::$app->queue->push(new RecurrentPayJob([
-                'partnerId' => $paySchet->IdOrg,
-                'uslugatovarId' => $paySchet->IdUsluga,
                 'paySchetId' => $paySchet->ID,
-                'autoPayFormSerialized' => $autoPayForm->serialize(),
             ]));
             Yii::warning('PaymentService massRepeatExecRecurrent pushed: ID=' . $paySchet->ID);
 

@@ -90,10 +90,7 @@ class MfoAutoPayStrategy
         $this->autoPayForm->paySchet = $paySchet;
 
         $jobData = [
-            'partnerId' => $this->autoPayForm->partner->ID,
-            'uslugatovarId' => $uslugatovar->ID,
             'paySchetId' => $paySchet->ID,
-            'autoPayFormSerialized' => $this->autoPayForm->serialize(),
         ];
 
         Yii::$app->queue->push(new RecurrentPayJob($jobData));
