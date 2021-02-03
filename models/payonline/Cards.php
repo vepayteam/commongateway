@@ -23,6 +23,7 @@ use Yii;
  * @property integer $IdPan
  * @property integer $IdBank
  * @property integer $IsDeleted
+ * @property User $user
  */
 class Cards extends \yii\db\ActiveRecord
 {
@@ -96,6 +97,11 @@ class Cards extends \yii\db\ActiveRecord
             ->execute();
         }
         return parent::beforeSave($insert);
+    }
+
+    public function getUser()
+    {
+        return $this->hasOne(User::className(), ['ID' => 'IdUser']);
     }
 
     public function allowUpdFields()
