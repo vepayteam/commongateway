@@ -51,7 +51,7 @@ class RecurrentPayJob extends BaseObject implements \yii\queue\JobInterface
         }
 
         try {
-            Yii::warning('RecurrentPayJob autoPay=' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid, 'mfo');
+            Yii::warning('RecurrentPayJob autoPay=' . $this->paySchet->ID . $this->autoPayForm->extid, 'mfo');
             $createRecurrentPayResponse = $this->bankAdapterBuilder->getBankAdapter()->recurrentPay($this->autoPayForm);
         } catch (GateException $e) {
             $this->paySchet->Status = PaySchet::STATUS_ERROR;
@@ -61,14 +61,19 @@ class RecurrentPayJob extends BaseObject implements \yii\queue\JobInterface
             throw $e;
         }
 
+        $this->paySchet->Status = PaySchet::STATUS_WAITING_CHECK_STATUS;
+        $this->paySchet->ErrorInfo = 'Ожидается обновление статуса';
         if($createRecurrentPayResponse->status == BaseResponse::STATUS_DONE) {
-            Yii::warning('RecurrentPayJob Set ExtBillNumber autoPay=' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid, 'mfo');
-            $this->paySchet->Status = PaySchet::STATUS_WAITING;
+            Yii::warning('RecurrentPayJob Set ExtBillNumber autoPay=' . $this->paySchet->ID . $this->autoPayForm->extid, 'mfo');
             $this->paySchet->ExtBillNumber = $createRecurrentPayResponse->transac;
         } else {
-            $this->paySchet->Status = PaySchet::STATUS_ERROR;
-            $this->paySchet->ErrorInfo = $createRecurrentPayResponse->message;
+            Yii::warning('RecurrentPayJob errorResponse autoPay=' . $this->paySchet->ID . $this->autoPayForm->extid, 'mfo');
+
         }
+
+        Yii::$app->queue->push(new RefreshStatusPayJob([
+            'paySchetId' => $this->paySchet->ID,
+        ]));
 
         $this->paySchet->save(false);
         $mutex->release($mutexKey);
