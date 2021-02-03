@@ -104,9 +104,4 @@ class Request implements RequestInterface
     {
         return $this->options;
     }
-
-    public function getRequiredParameters(): array
-    {
-        return [];
-    }
 }

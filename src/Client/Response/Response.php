@@ -4,7 +4,12 @@ namespace Vepay\Gateway\Client\Response;
 
 class Response implements ResponseInterface
 {
-    protected string $raw;
+    protected array $raw;
+
+    public function __construct(array $raw)
+    {
+        $this->raw = $raw;
+    }
 
     public function getStatus(): ?string
     {
@@ -16,15 +21,8 @@ class Response implements ResponseInterface
         return null;
     }
 
-    public function getContent(): string
+    public function getContent(): array
     {
         return $this->raw;
-    }
-
-    public function setContent(string $content): ResponseInterface
-    {
-        $this->raw = $content;
-
-        return $this;
     }
 }
