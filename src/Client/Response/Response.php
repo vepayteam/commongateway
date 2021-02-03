@@ -20,4 +20,11 @@ class Response implements ResponseInterface
     {
         return $this->raw;
     }
+
+    public function setContent(string $content): ResponseInterface
+    {
+        $this->raw = $content;
+
+        return $this;
+    }
 }
