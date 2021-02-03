@@ -2,7 +2,7 @@
 
 namespace Vepay\Gateway\Client\Request;
 
-use Closure;
+use Vepay\Gateway\Client\Middleware\MiddlewareInterface;
 
 class Request implements RequestInterface
 {
@@ -81,9 +81,9 @@ class Request implements RequestInterface
         return $this;
     }
 
-    public function addMiddleware(string $name, Closure $closure): RequestInterface
+    public function addMiddleware(MiddlewareInterface $middleware): RequestInterface
     {
-        $this->middlewares[$name] = $closure;
+        $this->middlewares[] = $middleware;
 
         return $this;
     }

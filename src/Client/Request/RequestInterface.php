@@ -2,7 +2,7 @@
 
 namespace Vepay\Gateway\Client\Request;
 
-use Closure;
+use Vepay\Gateway\Client\Middleware\MiddlewareInterface;
 
 interface RequestInterface
 {
@@ -28,7 +28,7 @@ interface RequestInterface
 
     public function setMiddlewares(array $middlewares): RequestInterface;
 
-    public function addMiddleware(string $name, Closure $closure): RequestInterface;
+    public function addMiddleware(MiddlewareInterface $middleware): RequestInterface;
 
     public function getMiddlewares(): array;
 }
