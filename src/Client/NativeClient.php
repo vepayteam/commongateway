@@ -6,6 +6,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\HandlerStack;
 use Vepay\Gateway\Client\Request\RequestInterface;
+use Vepay\Gateway\Client\Response\Response;
 use Vepay\Gateway\Client\Response\ResponseInterface;
 
 class NativeClient implements ClientInterface
@@ -24,6 +25,20 @@ class NativeClient implements ClientInterface
 
     public function send(RequestInterface $request): ResponseInterface
     {
+        $stack = $this->client->getConfig('handler');
+
+        foreach ($request->getMiddlewares() as $middleware) {
+            $stack->push($middleware, $middleware->getName());
+        }
+
+        $this->client->request(
+            $request->getMethod(),
+            $request->getEndpoint(),
+            array_merge($request->getPreparedParameters(), $request->getPreparedOptions())
+        );
+
+        // TODO edit Response
+        return new Response([]);
         // TODO: Implement send() method.
     }
 }

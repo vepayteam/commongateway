@@ -26,6 +26,8 @@ interface RequestInterface
 
     public function getParameters(): array;
 
+    public function getPreparedParameters(): array;
+
     public function setMiddlewares(array $middlewares): RequestInterface;
 
     public function addMiddleware(MiddlewareInterface $middleware): RequestInterface;
@@ -33,4 +35,6 @@ interface RequestInterface
     public function getMiddlewares(): array;
 
     public function getOptions(): array;
+
+    public function getPreparedOptions(): array;
 }
