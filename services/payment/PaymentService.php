@@ -9,10 +9,13 @@ use app\models\partner\stat\export\csv\ToCSV;
 use app\models\SendEmail;
 use app\modules\partner\models\PaySchetLogForm;
 use app\services\partners\models\PartnerOption;
+use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\SetPayOkForm;
+use app\services\payment\jobs\RecurrentPayJob;
 use app\services\payment\jobs\RefundPayJob;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\PaySchetLog;
+use app\services\payment\models\UslugatovarType;
 use app\services\payment\payment_strategies\CreateFormEcomStrategy;
 use app\services\payment\payment_strategies\CreateFormJkhStrategy;
 use app\services\payment\payment_strategies\IPaymentStrategy;
@@ -213,11 +216,50 @@ class PaymentService
         $generator = $this->generatorPaySchetsForWhere($where, $limit);
 
         foreach ($generator as $paySchet) {
-            Yii::warning('massRefreshStatus add ID=' . $paySchet->ID, 'RefreshStatusPayJob');
+            Yii::warning('massRefreshStatus add ID=' . $paySchet->ID);
             Yii::$app->queue->push(new RefreshStatusPayJob([
                 'paySchetId' => $paySchet->ID,
             ]));
             Yii::warning('PaymentService massRefreshStatus pushed: ID=' . $paySchet->ID);
+        }
+    }
+
+    /**
+     * @param $where
+     * @param int $limit
+     */
+    public function massRepeatExecRecurrent($where, $limit = 0)
+    {
+        $generator = $this->generatorPaySchetsForWhere($where, $limit);
+        /** @var PaySchet $paySchet */
+        foreach ($generator as $paySchet) {
+            if(!in_array($paySchet->uslugatovar->IsCustom, UslugatovarType::getRecurrent())) {
+                continue;
+            }
+
+            $autoPayForm = new AutoPayForm();
+            $autoPayForm->partner = $paySchet->partner;
+            $autoPayForm->paySchet = $paySchet;
+            $autoPayForm->amount = $paySchet->getSummFull();
+            $autoPayForm->document_id = $paySchet->Dogovor;
+            $autoPayForm->fullname = $paySchet->FIO;
+            $autoPayForm->extid = $paySchet->Extid;
+            $autoPayForm->card = $paySchet->IdKard;
+            $autoPayForm->postbackurl = $paySchet->PostbackUrl;
+            $autoPayForm->postbackurl_v2 = $paySchet->PostbackUrl_v2;
+
+            Yii::warning('PaymentService massRepeatExecRecurrent add ID=' . $paySchet->ID);
+            Yii::$app->queue->push(new RecurrentPayJob([
+                'partnerId' => $paySchet->IdOrg,
+                'uslugatovarId' => $paySchet->IdUsluga,
+                'paySchetId' => $paySchet->ID,
+                'autoPayFormSerialized' => $autoPayForm->serialize(),
+            ]));
+            Yii::warning('PaymentService massRepeatExecRecurrent pushed: ID=' . $paySchet->ID);
+
+            $paySchet->Status = PaySchet::STATUS_NOT_EXEC;
+            $paySchet->ErrorInfo = 'Ожидается обработка';
+            $paySchet->save(false);
         }
     }
 

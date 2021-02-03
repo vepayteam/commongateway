@@ -13,16 +13,23 @@ class PaymentsController extends Controller
 {
     public function actionMassRevert($where, $limit = 0)
     {
-        Yii::warning('revertNotRefundErrorRegistrationCard start: ' . Json::encode(func_get_args()));
+        Yii::warning('actionMassRevert start: ' . Json::encode(func_get_args()));
 
         $this->getPaymentService()->massRevert($where, $limit);
     }
 
     public function actionMassRefreshStatus($where, $limit = 0)
     {
-        Yii::warning('revertNotRefundErrorRegistrationCard start: ' . Json::encode(func_get_args()));
+        Yii::warning('actionMassRefreshStatus start: ' . Json::encode(func_get_args()));
 
         $this->getPaymentService()->massRefreshStatus($where, $limit);
+    }
+
+    public function actionMassRepeatExecRecurrent($where, $limit = 0)
+    {
+        Yii::warning('actionMassRefreshStatus start: ' . Json::encode(func_get_args()));
+
+        $this->getPaymentService()->massRepeatExecRecurrent($where, $limit);
     }
 
     /**
