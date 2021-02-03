@@ -79,7 +79,6 @@ class RecurrentPayJob extends BaseObject implements \yii\queue\JobInterface
 
         $autoPayForm->paySchet = $paySchet;
         $autoPayForm->partner = $paySchet->partner;
-        $autoPayForm->user = $paySchet->user;
 
         $card = $autoPayForm->getCard();
         $cardnum = null;

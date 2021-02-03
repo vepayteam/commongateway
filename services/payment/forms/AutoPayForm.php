@@ -69,20 +69,11 @@ class AutoPayForm extends Model implements Serializable
     public function getCard()
     {
         if(!$this->_card) {
-            $query = (new Query())
-                ->select(['c.`ID` AS IdCard', 'u.`ID` AS IdUser'])
-                ->from('cards AS c')
-                ->leftJoin('user AS u', 'c.`IdUser`=u.`ID`')
-                ->where([
-                    'u.ExtOrg' => $this->partner->ID,
-                    'c.IsDeleted' => 0,
-                    'c.TypeCard' => 0,
-                    'c.ID' => $this->card
-                ]);
-            $res = $query->one();
-            if ($res && $res['IdCard'] && $res['IdUser']) {
-                $this->user = User::findOne(['ID' => $res['IdUser']]);
-                $this->_card = Cards::findOne(['ID' => $res['IdCard'], 'TypeCard' => 0, 'IsDeleted' => 0]);
+            $card = Cards::findOne(['ID' => $this->card]);
+
+            if($card && $card->user && $card->user->ExtOrg == $this->partner->ID) {
+                $this->user = $card->user;
+                $this->_card = $card;
             }
         }
 
