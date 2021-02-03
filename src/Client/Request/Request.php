@@ -81,6 +81,20 @@ class Request implements RequestInterface
         return $this->parameters;
     }
 
+    public function getPreparedParameters(): array
+    {
+        switch (strtoupper($this->getMethod()))
+        {
+            case 'PUT':
+            case 'POST':
+                return ['json' => $this->getParameters()];
+
+            case 'GET':
+            default:
+                return [];
+        }
+    }
+
     public function setMiddlewares(array $middlewares): RequestInterface
     {
         $this->middlewares = $middlewares;
@@ -103,5 +117,10 @@ class Request implements RequestInterface
     public function getOptions(): array
     {
         return $this->options;
+    }
+
+    public function getPreparedOptions(): array
+    {
+        return ['_options' => $this->getOptions()];
     }
 }
