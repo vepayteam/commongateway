@@ -64,6 +64,19 @@ class UslugatovarType extends \yii\db\ActiveRecord
     }
 
     /**
+     * @return int[]
+     */
+    public static function getRecurrent()
+    {
+        return [
+            self::AVTOPLATECOM,
+            self::AVTOPLATATF,
+            self::AVTOPLATECOMPARTS,
+            self::AVTOPLATATFPARTS,
+        ];
+    }
+
+    /**
      * {@inheritdoc}
      */
     public static function tableName()

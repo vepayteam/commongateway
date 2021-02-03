@@ -55,6 +55,8 @@ return [
             'class' => \yii\queue\redis\Queue::class,
             'redis' => 'redis',
             'channel' => 'queue',
+            'ttr' => 10 * 60,
+            'attempts' => 10,
         ],
         'cache' => [
             'class' => 'yii\redis\Cache',
