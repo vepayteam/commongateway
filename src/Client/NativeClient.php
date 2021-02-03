@@ -31,14 +31,15 @@ class NativeClient implements ClientInterface
             $stack->push($middleware, $middleware->getName());
         }
 
-        $this->client->request(
+        $response = $this->client->request(
             $request->getMethod(),
             $request->getEndpoint(),
             array_merge($request->getPreparedParameters(), $request->getPreparedOptions())
         );
 
-        // TODO edit Response
-        return new Response([]);
-        // TODO: Implement send() method.
+        // TODO: clear middlewares
+        // TODO: add request validators
+
+        return new Response($response);
     }
 }
