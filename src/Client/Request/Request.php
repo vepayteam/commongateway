@@ -88,8 +88,8 @@ class Request implements RequestInterface
             case 'PUT':
             case 'POST':
                 return ['json' => $this->getParameters()];
-
             case 'GET':
+                return ['query' => $this->getParameters()];
             default:
                 return [];
         }

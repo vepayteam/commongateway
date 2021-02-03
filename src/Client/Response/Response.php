@@ -2,13 +2,15 @@
 
 namespace Vepay\Gateway\Client\Response;
 
+use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
+
 class Response implements ResponseInterface
 {
-    protected array $raw;
+    protected PsrResponseInterface $response;
 
-    public function __construct(array $raw)
+    public function __construct(PsrResponseInterface $response)
     {
-        $this->raw = $raw;
+        $this->response = $response;
     }
 
     public function getStatus(): ?string
@@ -21,8 +23,8 @@ class Response implements ResponseInterface
         return null;
     }
 
-    public function getContent(): array
+    public function getContent(): string
     {
-        return $this->raw;
+        return $this->response->getBody()->getContents();
     }
 }

@@ -8,5 +8,5 @@ interface ResponseInterface
 
     public function getMessage(): ?string;
 
-    public function getContent(): array;
+    public function getContent(): string;
 }
