@@ -33,4 +33,6 @@ interface RequestInterface
     public function getMiddlewares(): array;
 
     public function getOptions(): array;
+
+    public function getRequiredParameters(): array;
 }
