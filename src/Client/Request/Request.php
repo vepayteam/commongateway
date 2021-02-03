@@ -11,6 +11,13 @@ class Request implements RequestInterface
     protected array $headers = [];
     protected array $parameters = [];
     protected array $middlewares = [];
+    protected array $options = [];
+
+    public function __construct(array $parameters, array $options = [])
+    {
+        $this->parameters = $parameters;
+        $this->options = $options;
+    }
 
     public function setEndpoint(string $endpoint): RequestInterface
     {
@@ -91,5 +98,10 @@ class Request implements RequestInterface
     public function getMiddlewares(): array
     {
         return $this->middlewares;
+    }
+
+    public function getOptions(): array
+    {
+        return $this->options;
     }
 }

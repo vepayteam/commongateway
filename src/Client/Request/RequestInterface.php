@@ -31,4 +31,6 @@ interface RequestInterface
     public function addMiddleware(MiddlewareInterface $middleware): RequestInterface;
 
     public function getMiddlewares(): array;
+
+    public function getOptions(): array;
 }
