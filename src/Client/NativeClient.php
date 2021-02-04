@@ -25,11 +25,7 @@ class NativeClient implements ClientInterface
 
     public function send(RequestInterface $request): ResponseInterface
     {
-        $stack = $this->client->getConfig('handler');
-
-        foreach ($request->getMiddlewares() as $middleware) {
-            $stack->push($middleware, $middleware->getName());
-        }
+        $this->beforeSend($request);
 
         $response = $this->client->request(
             $request->getMethod(),
@@ -37,9 +33,30 @@ class NativeClient implements ClientInterface
             array_merge($request->getPreparedParameters(), $request->getPreparedOptions())
         );
 
-        // TODO: clear middlewares
+        $this->afterSend($request);
+
         // TODO: add request validators
 
         return new Response($response);
+    }
+
+    private function beforeSend(RequestInterface $request): void
+    {
+        /** @var HandlerStack $stack */
+        $stack = $this->client->getConfig('handler');
+
+        foreach ($request->getMiddlewares() as $middleware) {
+            $stack->push($middleware, $middleware->getName());
+        }
+    }
+
+    private function afterSend(RequestInterface $request): void
+    {
+        /** @var HandlerStack $stack */
+        $stack = $this->client->getConfig('handler');
+
+        foreach ($request->getMiddlewares() as $middleware) {
+            $stack->remove($middleware);
+        }
     }
 }
