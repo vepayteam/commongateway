@@ -813,7 +813,8 @@ class AdminController extends Controller
     /**
      * @return string
      */
-    public function actionQueueInfo(){
+    public function actionQueueInfo()
+    {
         $prefix = Yii::$app->queue->channel;
         $waiting = Yii::$app->queue->redis->llen("$prefix.waiting");
         $delayed = Yii::$app->queue->redis->zcount("$prefix.delayed", '-inf', '+inf');
@@ -831,9 +832,32 @@ class AdminController extends Controller
             'sort' => [
                 'attributes' => ['status', 'count']
             ]
-
-
         ]);
         return $this->render('queueinfo',['dataProvider' =>$dataProvider]);
+    }
+
+    /**
+     * @return string
+     */
+    public function actionGetQueueWaitingMessages()
+    {
+        $prefix = Yii::$app->queue->channel;
+        $messages =  Yii::$app->queue->redis->hgetall("$prefix.messages");
+        $i = 0;
+        $allModels = [];
+        while (isset($messages[$i]) && isset($messages[$i + 1])) {
+            $allModels[] = ['key' => $messages[$i], 'value' => $messages[$i +1]];
+            $i = $i + 2;
+        }
+        $dataProvider = new ArrayDataProvider([
+            'allModels' => $allModels,
+            'pagination' => [
+                'pageSize' => 20,
+            ],
+            'sort' => [
+                'attributes' => ['status', 'count']
+            ]
+        ]);
+        return $this->render('queuewaitingmessages',['dataProvider' =>$dataProvider]);
     }
 }
