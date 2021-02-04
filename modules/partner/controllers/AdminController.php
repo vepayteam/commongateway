@@ -860,4 +860,29 @@ class AdminController extends Controller
         ]);
         return $this->render('queuewaitingmessages',['dataProvider' =>$dataProvider]);
     }
+
+    /**
+     * @return string
+     */
+    public function actionGetQueueReservedMessages()
+    {
+        $prefix = Yii::$app->queue->channel;
+        $messages =  Yii::$app->queue->redis->hgetall("$prefix.reserved");
+        $i = 0;
+        $allModels = [];
+        while (isset($messages[$i]) && isset($messages[$i + 1])) {
+            $allModels[] = ['key' => $messages[$i], 'value' => $messages[$i +1]];
+            $i = $i + 2;
+        }
+        $dataProvider = new ArrayDataProvider([
+            'allModels' => $allModels,
+            'pagination' => [
+                'pageSize' => 20,
+            ],
+            'sort' => [
+                'attributes' => ['status', 'count']
+            ]
+        ]);
+        return $this->render('queuereservedmessages',['dataProvider' =>$dataProvider]);
+    }
 }
