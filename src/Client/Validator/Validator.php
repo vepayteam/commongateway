@@ -34,7 +34,7 @@ class Validator
     {
         foreach ($this->rules as $parameter => $rule) {
             if ($rule === static::REQUIRED && empty($parameters[$parameter])) {
-                throw new ValidationException("Required parameter '{$parameter}' is not defined.");
+                throw new ValidationException("Required parameter '{$parameter}' is not defined.", 422);
             }
         }
 
