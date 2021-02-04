@@ -6,6 +6,9 @@ use Exception;
 
 class Validator
 {
+    public const REQUIRED = 'required';
+    public const OPTIONAL = 'optional';
+
     protected array $rules = [];
 
     /**
@@ -28,7 +31,7 @@ class Validator
     public function validate(array $parameters): array
     {
         foreach ($this->rules as $parameter => $rule) {
-            if ($rule === 'required' && empty($parameters[$parameter])) {
+            if ($rule === static::REQUIRED && empty($parameters[$parameter])) {
                 throw new Exception("Required parameter '{$parameter}' is not defined.");
             }
         }
