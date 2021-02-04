@@ -3,6 +3,7 @@
 namespace Vepay\Gateway\Client\Request;
 
 use Vepay\Gateway\Client\Middleware\MiddlewareInterface;
+use Vepay\Gateway\Client\Validator\Validator;
 
 interface RequestInterface
 {
@@ -28,6 +29,8 @@ interface RequestInterface
 
     public function getPreparedParameters(): array;
 
+    public function getParametersValidator(): Validator;
+
     public function setMiddlewares(array $middlewares): RequestInterface;
 
     public function addMiddleware(MiddlewareInterface $middleware): RequestInterface;
@@ -37,4 +40,6 @@ interface RequestInterface
     public function getOptions(): array;
 
     public function getPreparedOptions(): array;
+
+    public function getOptionsValidator(): Validator;
 }
