@@ -70,7 +70,7 @@ class NotificationsService
             $notificationPay->DateSend = 0;
             $notificationPay->save();
 
-            Yii::$app->queue->priority(JobPriorityInterface::CALLBACK_SEND_JOB_PRIORITY)->push(new CallbackSendJob([
+            Yii::$app->queue->push(new CallbackSendJob([
                 'notificationPayId' => $notificationPay->ID,
             ]));
         }
