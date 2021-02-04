@@ -2,15 +2,12 @@
 
 namespace Vepay\Gateway\Client\Request;
 
-use Vepay\Gateway\Client\Middleware\MiddlewareInterface;
-
 abstract class Request implements RequestInterface
 {
     protected string $endpoint = '';
     protected string $method = '';
     protected array $headers = [];
     protected array $parameters = [];
-    protected array $middlewares = [];
     protected array $options = [];
 
     public function __construct(array $parameters, array $options = [])
@@ -99,23 +96,9 @@ abstract class Request implements RequestInterface
         }
     }
 
-    public function setMiddlewares(array $middlewares): RequestInterface
-    {
-        $this->middlewares = $middlewares;
-
-        return $this;
-    }
-
-    public function addMiddleware(MiddlewareInterface $middleware): RequestInterface
-    {
-        $this->middlewares[] = $middleware;
-
-        return $this;
-    }
-
     public function getMiddlewares(): array
     {
-        return $this->middlewares;
+        return [];
     }
 
     /**
