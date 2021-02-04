@@ -2,7 +2,6 @@
 
 namespace Vepay\Gateway\Client\Request;
 
-use Vepay\Gateway\Client\Middleware\MiddlewareInterface;
 use Vepay\Gateway\Client\Validator\Validator;
 
 interface RequestInterface
@@ -20,6 +19,8 @@ interface RequestInterface
     public function addHeader(string $header, string $value): RequestInterface;
 
     public function getHeaders(): array;
+
+    public function getPreparedHeaders(): array;
 
     public function setParameters(array $parameters): RequestInterface;
 
