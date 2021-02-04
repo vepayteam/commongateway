@@ -25,6 +25,7 @@ use app\models\partner\stat\StatGraph;
 use app\models\partner\UserLk;
 use app\models\payonline\Partner;
 use app\models\Payschets;
+use app\models\queue\JobPriorityInterface;
 use app\models\queue\SendMailJob;
 use app\models\SendEmail;
 use app\models\TU;
@@ -186,7 +187,7 @@ class StatController extends Controller
                 $where['IdOrg'] = $org;
             }
             if(PaySchet::find()->where($where)->exists()) {
-                Yii::$app->queue->push(new RefundPayJob([
+                Yii::$app->queue->priority(JobPriorityInterface::REFUND_PAY_JOB_PRIORITY)->push(new RefundPayJob([
                     'paySchetId' => Yii::$app->request->post('id', 0),
                 ]));
             }

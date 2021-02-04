@@ -6,6 +6,7 @@ use app\models\mfo\MfoBalance;
 use app\models\partner\callback\CallbackList;
 use app\models\partner\PartUserAccess;
 use app\models\partner\UserLk;
+use app\models\queue\JobPriorityInterface;
 use app\services\notifications\jobs\CallbackSendJob;
 use app\services\notifications\models\NotificationPay;
 use Yii;
@@ -128,7 +129,7 @@ class CallbackController extends Controller
                 $notificationPay->HttpAns = null;
                 $notificationPay->save(false);
 
-                \Yii::$app->queue->push(new CallbackSendJob([
+                \Yii::$app->queue->priority(JobPriorityInterface::CALLBACK_SEND_JOB_PRIORITY)->push(new CallbackSendJob([
                     'notificationPayId' => $notificationPayId,
                 ]));
                 return ['status' => 1, 'message' => 'Запрос колбэка возвращен в очередь'];

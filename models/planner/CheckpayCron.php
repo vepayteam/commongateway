@@ -7,6 +7,7 @@ use app\models\bank\TCBank;
 use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 //use app\models\protocol\OnlineProv;
+use app\models\queue\JobPriorityInterface;
 use app\models\TU;
 use app\services\payment\jobs\RefreshStatusPayJob;
 use app\services\payment\models\PaySchet;
@@ -83,7 +84,7 @@ class CheckpayCron
                     $paySchet->save(false);
 
                     Yii::warning('CheckpayCron checkStatePay pushed: ID=' . $value['ID']);
-                    Yii::$app->queue->push(new RefreshStatusPayJob([
+                    Yii::$app->queue->priority(JobPriorityInterface::REFRESH_STATUS_PAY_JOB_PRIORITY)->push(new RefreshStatusPayJob([
                         'paySchetId' => $value['ID'],
                     ]));
                 }
