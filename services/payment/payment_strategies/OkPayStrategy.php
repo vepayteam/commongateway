@@ -9,6 +9,7 @@ use app\models\bank\BankCheck;
 use app\models\payonline\Cards;
 use app\models\payonline\Uslugatovar;
 use app\models\queue\DraftPrintJob;
+use app\models\queue\JobPriorityInterface;
 use app\models\queue\ReverspayJob;
 use app\models\TU;
 use app\services\balance\BalanceService;
@@ -171,7 +172,7 @@ class OkPayStrategy
 
                 //чек пробить
                 if (TU::IsInAll($paySchet->uslugatovar->IsCustom)) {
-                    Yii::$app->queue->push(new DraftPrintJob([
+                    Yii::$app->queue->priority(JobPriorityInterface::DRAFT_PRINT_JOB_PRIORITY)->push(new DraftPrintJob([
                         'idpay' => $paySchet->ID,
                         'tovar' => $paySchet->uslugatovar->NameUsluga
                             . (!empty($paySchet->Dogovor) ? ", Договор: " . $paySchet->Dogovor : ''),
@@ -191,7 +192,7 @@ class OkPayStrategy
                 // если регистрация карты, делаем возврат
                 // иначе изменяем баланс
                 if($paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD) {
-                    Yii::$app->queue->delay(60)->push(new ReverspayJob([
+                    Yii::$app->queue->priority(JobPriorityInterface::REFUND_PAY_JOB_PRIORITY)->push(new ReverspayJob([
                         'idpay' => $paySchet->ID,
                     ]));
                 } else {

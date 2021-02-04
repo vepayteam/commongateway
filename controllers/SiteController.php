@@ -7,6 +7,7 @@ use app\models\bank\TCBank;
 use app\models\kfapi\KfCard;
 use app\models\payonline\CreatePay;
 use app\models\payonline\Partner;
+use app\models\queue\JobPriorityInterface;
 use app\models\queue\SendMailJob;
 use app\models\site\CheckPay;
 use app\models\site\ContactForm;
@@ -91,7 +92,7 @@ class SiteController extends Controller
             $subject = "Регистрация с системе Vepay";
             $content = $this->renderPartial('@app/mail/checkmail', ['PartnerReg' => $PartnerReg]);
 
-            Yii::$app->queue->push(new SendMailJob([
+            Yii::$app->queue->priority(JobPriorityInterface::SEND_MAIL_JOB_PRIORITY)->push(new SendMailJob([
                 'email' => $PartnerReg->Email,
                 'subject' => $subject,
                 'content' => $content
@@ -182,7 +183,7 @@ class SiteController extends Controller
                 }
             }*/
 
-            Yii::$app->queue->push(new SendMailJob([
+            Yii::$app->queue->priority(JobPriorityInterface::SEND_MAIL_JOB_PRIORITY)->push(new SendMailJob([
                 'email' => 'info@vepay.online',
                 'subject' => "Зарегистрирован контрагент",
                 'content' => "Зарегистрирован контрагент " . $partner->Name

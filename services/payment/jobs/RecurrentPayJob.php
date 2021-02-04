@@ -7,6 +7,7 @@ namespace app\services\payment\jobs;
 use app\models\crypt\CardToken;
 use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
+use app\models\queue\JobPriorityInterface;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\CreatePayException;
@@ -32,7 +33,7 @@ class RecurrentPayJob extends BaseObject implements \yii\queue\JobInterface
         $bankAdapter = $this->buildAdapter($paySchet);
 
         try {
-            Yii::warning('RecurrentPayJob autoPay=' . $paySchet->ID . $autoPayForm->extid, 'mfo');
+            Yii::warning('RecurrentPayJob autoPay=' . $paySchet->ID . ' ' . $autoPayForm->extid, 'mfo');
             $createRecurrentPayResponse = $bankAdapter->recurrentPay($autoPayForm);
         } catch (GateException $e) {
             $paySchet->Status = PaySchet::STATUS_ERROR;
@@ -52,7 +53,7 @@ class RecurrentPayJob extends BaseObject implements \yii\queue\JobInterface
             Yii::warning('RecurrentPayJob errorResponse autoPay=' . $paySchet->ID . $autoPayForm->extid, 'mfo');
         }
 
-        Yii::$app->queue->push(new RefreshStatusPayJob([
+        Yii::$app->queue->priority(JobPriorityInterface::REFRESH_STATUS_PAY_JOB_PRIORITY)->push(new RefreshStatusPayJob([
             'paySchetId' => $paySchet->ID,
         ]));
 

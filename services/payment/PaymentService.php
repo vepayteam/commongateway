@@ -6,6 +6,7 @@ namespace app\services\payment;
 
 use app\models\kfapi\KfRequest;
 use app\models\partner\stat\export\csv\ToCSV;
+use app\models\queue\JobPriorityInterface;
 use app\models\SendEmail;
 use app\modules\partner\models\PaySchetLogForm;
 use app\services\partners\models\PartnerOption;
@@ -200,7 +201,7 @@ class PaymentService
         $generator = $this->generatorPaySchetsForWhere($where, $limit);
 
         foreach ($generator as $paySchet) {
-            Yii::$app->queue->push(new RefundPayJob([
+            Yii::$app->queue->priority(JobPriorityInterface::REFUND_PAY_JOB_PRIORITY)->push(new RefundPayJob([
                 'paySchetId' => $paySchet->ID,
             ]));
             Yii::warning('PaymentService massRevert pushed: ID=' . $paySchet->ID);
@@ -217,7 +218,7 @@ class PaymentService
 
         foreach ($generator as $paySchet) {
             Yii::warning('massRefreshStatus add ID=' . $paySchet->ID);
-            Yii::$app->queue->push(new RefreshStatusPayJob([
+            Yii::$app->queue->priority(JobPriorityInterface::REFRESH_STATUS_PAY_JOB_PRIORITY)->push(new RefreshStatusPayJob([
                 'paySchetId' => $paySchet->ID,
             ]));
             Yii::warning('PaymentService massRefreshStatus pushed: ID=' . $paySchet->ID);
@@ -238,7 +239,7 @@ class PaymentService
             }
 
             Yii::warning('PaymentService massRepeatExecRecurrent add ID=' . $paySchet->ID);
-            Yii::$app->queue->push(new RecurrentPayJob([
+            Yii::$app->queue->priority(JobPriorityInterface::RECURRENT_PAY_JOB_PRIORITY)->push(new RecurrentPayJob([
                 'paySchetId' => $paySchet->ID,
             ]));
             Yii::warning('PaymentService massRepeatExecRecurrent pushed: ID=' . $paySchet->ID);

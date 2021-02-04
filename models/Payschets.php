@@ -14,6 +14,7 @@ use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
 use app\models\queue\DraftPrintJob;
 use app\models\queue\ExportpayJob;
+use app\models\queue\JobPriorityInterface;
 use app\models\queue\ReverspayJob;
 use app\services\payment\models\PaySchet;
 use Yii;
@@ -452,7 +453,7 @@ class Payschets
     {
         if (TU::IsInAll($query['IsCustom'])) {
             //чек пробить
-            Yii::$app->queue->push(new DraftPrintJob([
+            Yii::$app->queue->priority(JobPriorityInterface::DRAFT_PRINT_JOB_PRIORITY)->push(new DraftPrintJob([
                 'idpay' => $params['idpay'],
                 'tovar' => $query['tovar'],
                 'tovarOFD' => $query['tovarOFD'],
@@ -563,7 +564,7 @@ class Payschets
      */
     private function reversPay($idpay)
     {
-        Yii::$app->queue->delay(60)->push(new ReverspayJob([
+        Yii::$app->queue->priority(JobPriorityInterface::REFUND_PAY_JOB_PRIORITY)->push(new ReverspayJob([
             'idpay' => $idpay
         ]));
     }
