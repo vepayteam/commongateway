@@ -453,7 +453,7 @@ class Payschets
     {
         if (TU::IsInAll($query['IsCustom'])) {
             //чек пробить
-            Yii::$app->queue->priority(JobPriorityInterface::DRAFT_PRINT_JOB_PRIORITY)->push(new DraftPrintJob([
+            Yii::$app->queue->push(new DraftPrintJob([
                 'idpay' => $params['idpay'],
                 'tovar' => $query['tovar'],
                 'tovarOFD' => $query['tovarOFD'],
@@ -564,7 +564,7 @@ class Payschets
      */
     private function reversPay($idpay)
     {
-        Yii::$app->queue->priority(JobPriorityInterface::REFUND_PAY_JOB_PRIORITY)->push(new ReverspayJob([
+        Yii::$app->queue->push(new ReverspayJob([
             'idpay' => $idpay
         ]));
     }

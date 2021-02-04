@@ -174,7 +174,7 @@ class MfoBalance
             ($dateTo > $dates['DateUpdateTo'] && $dates['DateUpdateTo'] < time() - 60 * 15)
         ) {
             //обновить выписку (через очередь)
-            $IdJob = Yii::$app->queue->priority(JobPriorityInterface::RECEIVE_STATEMENTS_JOB_PRIORITY)->push(new ReceiveStatementsJob([
+            $IdJob = Yii::$app->queue->push(new ReceiveStatementsJob([
                 'IdPartner' => $this->Partner->ID,
                 'TypeAcc' => $TypeAcc,
                 'datefrom' => $dateFrom,

@@ -84,7 +84,7 @@ class CheckpayCron
                     $paySchet->save(false);
 
                     Yii::warning('CheckpayCron checkStatePay pushed: ID=' . $value['ID']);
-                    Yii::$app->queue->priority(JobPriorityInterface::REFRESH_STATUS_PAY_JOB_PRIORITY)->push(new RefreshStatusPayJob([
+                    Yii::$app->queue->push(new RefreshStatusPayJob([
                         'paySchetId' => $value['ID'],
                     ]));
                 }
