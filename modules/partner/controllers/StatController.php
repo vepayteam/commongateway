@@ -187,7 +187,7 @@ class StatController extends Controller
                 $where['IdOrg'] = $org;
             }
             if(PaySchet::find()->where($where)->exists()) {
-                Yii::$app->queue->priority(JobPriorityInterface::REFUND_PAY_JOB_PRIORITY)->push(new RefundPayJob([
+                Yii::$app->queue->push(new RefundPayJob([
                     'paySchetId' => Yii::$app->request->post('id', 0),
                 ]));
             }

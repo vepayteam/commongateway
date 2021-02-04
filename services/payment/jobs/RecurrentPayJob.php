@@ -53,7 +53,7 @@ class RecurrentPayJob extends BaseObject implements \yii\queue\JobInterface
             Yii::warning('RecurrentPayJob errorResponse autoPay=' . $paySchet->ID . $autoPayForm->extid, 'mfo');
         }
 
-        Yii::$app->queue->priority(JobPriorityInterface::REFRESH_STATUS_PAY_JOB_PRIORITY)->push(new RefreshStatusPayJob([
+        Yii::$app->queue->push(new RefreshStatusPayJob([
             'paySchetId' => $paySchet->ID,
         ]));
 

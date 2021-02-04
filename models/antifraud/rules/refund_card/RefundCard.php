@@ -101,7 +101,7 @@ class RefundCard implements IRule
     {
         if (!empty($email)) {
             $content = 'Заблокирована выплата на карту. Id транзакции = ' . $this->trans_info->transaction_id();
-            Yii::$app->queue->priority(JobPriorityInterface::SEND_MAIL_JOB_PRIORITY)->push(new SendMailJob([
+            Yii::$app->queue->push(new SendMailJob([
                 'email' => $email,
                 'subject' => 'Заблокирована выплата на карту',
                 'content' => $content

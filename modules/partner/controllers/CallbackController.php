@@ -129,7 +129,7 @@ class CallbackController extends Controller
                 $notificationPay->HttpAns = null;
                 $notificationPay->save(false);
 
-                \Yii::$app->queue->priority(JobPriorityInterface::CALLBACK_SEND_JOB_PRIORITY)->push(new CallbackSendJob([
+                \Yii::$app->queue->push(new CallbackSendJob([
                     'notificationPayId' => $notificationPayId,
                 ]));
                 return ['status' => 1, 'message' => 'Запрос колбэка возвращен в очередь'];

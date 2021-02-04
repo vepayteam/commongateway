@@ -94,7 +94,7 @@ class MfoAutoPayStrategy
             'paySchetId' => $paySchet->ID,
         ];
 
-        Yii::$app->queue->priority(JobPriorityInterface::RECURRENT_PAY_JOB_PRIORITY)->push(new RecurrentPayJob($jobData));
+        Yii::$app->queue->push(new RecurrentPayJob($jobData));
         Yii::warning('RecurrentPayJob add data=' . Json::encode($jobData), 'mfo');
         $paySchet->save(false);
         $mutex->release($mutexKey);
