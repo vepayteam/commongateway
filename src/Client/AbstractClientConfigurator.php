@@ -3,8 +3,11 @@
 namespace Vepay\Gateway\Client;
 
 use Exception;
-use Vepay\Gateway\Config;
 
+/**
+ * Class AbstractClientConfigurator
+ * @package Vepay\Gateway\Client
+ */
 abstract class AbstractClientConfigurator
 {
     private static array $configuredClients = [];
@@ -20,9 +23,6 @@ abstract class AbstractClientConfigurator
     public static function get(): ClientInterface
     {
         $gatewayName = static::getGatewayName();
-//        if (!Config::getInstance()->$gatewayName) {
-//            throw new Exception('Config do not found by name ' . $gatewayName);
-//        }
 
         if (!isset(self::$configuredClients[$gatewayName])) {
             self::$configuredClients[$gatewayName] =

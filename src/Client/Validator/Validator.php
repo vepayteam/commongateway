@@ -4,6 +4,10 @@ namespace Vepay\Gateway\Client\Validator;
 
 use Exception;
 
+/**
+ * Class Validator
+ * @package Vepay\Gateway\Client\Validator
+ */
 class Validator
 {
     public const REQUIRED = 'required';
