@@ -35,8 +35,6 @@ class NativeClient implements ClientInterface
 
         $this->afterSend($request);
 
-        // TODO: add request validators
-
         return new Response($response);
     }
 
