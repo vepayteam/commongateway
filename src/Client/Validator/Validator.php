@@ -2,8 +2,6 @@
 
 namespace Vepay\Gateway\Client\Validator;
 
-use Exception;
-
 /**
  * Class Validator
  * @package Vepay\Gateway\Client\Validator
@@ -30,13 +28,13 @@ class Validator
     /**
      * @param array $parameters
      * @return array
-     * @throws Exception
+     * @throws ValidationException
      */
     public function validate(array $parameters): array
     {
         foreach ($this->rules as $parameter => $rule) {
             if ($rule === static::REQUIRED && empty($parameters[$parameter])) {
-                throw new Exception("Required parameter '{$parameter}' is not defined.");
+                throw new ValidationException("Required parameter '{$parameter}' is not defined.");
             }
         }
 
