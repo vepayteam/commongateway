@@ -4,7 +4,7 @@ namespace Vepay\Gateway\Client\Request;
 
 use Vepay\Gateway\Client\Middleware\MiddlewareInterface;
 
-class Request implements RequestInterface
+abstract class Request implements RequestInterface
 {
     protected string $endpoint = '';
     protected string $method = '';
@@ -76,9 +76,13 @@ class Request implements RequestInterface
         return $this;
     }
 
+    /**
+     * @return array
+     * @throws \Exception
+     */
     public function getParameters(): array
     {
-        return $this->parameters;
+        return $this->getParametersValidator()->validate($this->parameters);
     }
 
     public function getPreparedParameters(): array
@@ -114,13 +118,19 @@ class Request implements RequestInterface
         return $this->middlewares;
     }
 
+    /**
+     * @return array
+     * @throws \Exception
+     */
     public function getOptions(): array
     {
-        return $this->options;
+        return $this->getOptionsValidator()->validate($this->options);
     }
 
     public function getPreparedOptions(): array
     {
         return ['_options' => $this->getOptions()];
     }
+
+
 }
