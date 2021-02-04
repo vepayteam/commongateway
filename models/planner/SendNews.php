@@ -4,6 +4,7 @@
 namespace app\models\planner;
 
 use app\models\payonline\Partner;
+use app\models\queue\JobPriorityInterface;
 use app\models\queue\SendMailJob;
 use Yii;
 use yii\db\Query;
@@ -24,7 +25,7 @@ class SendNews
             foreach ($result as $row) {
                 foreach ($partners as $partner) {
                     if (!empty($partner->EmailNotif)) {
-                        Yii::$app->queue->push(new SendMailJob([
+                        Yii::$app->queue->priority(JobPriorityInterface::SEND_MAIL_JOB_PRIORITY)->push(new SendMailJob([
                             'email' => $partner->EmailNotif,
                             'subject' => $row['Head'],
                             'content' => date('d.m.Y H:i', $row['DateAdd'])."<br>".str_replace("\r\n", "<br>", $row['Body'])

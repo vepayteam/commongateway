@@ -11,6 +11,7 @@ use app\models\antifraud\rules\interfaces\ISqlRule;
 use app\models\antifraud\support_objects\RefundInfo;
 use app\models\antifraud\support_objects\TransInfo;
 use app\models\antifraud\tables\AFSettings;
+use app\models\queue\JobPriorityInterface;
 use app\models\queue\SendMailJob;
 use app\models\SendEmail;
 use Faker\Provider\DateTime;
@@ -100,7 +101,7 @@ class RefundCard implements IRule
     {
         if (!empty($email)) {
             $content = 'Заблокирована выплата на карту. Id транзакции = ' . $this->trans_info->transaction_id();
-            Yii::$app->queue->push(new SendMailJob([
+            Yii::$app->queue->priority(JobPriorityInterface::SEND_MAIL_JOB_PRIORITY)->push(new SendMailJob([
                 'email' => $email,
                 'subject' => 'Заблокирована выплата на карту',
                 'content' => $content

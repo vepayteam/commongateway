@@ -3,6 +3,7 @@
 
 namespace app\services\payment\payment_strategies\mfo;
 
+use app\models\queue\JobPriorityInterface;
 use app\services\payment\jobs\RecurrentPayJob;
 use Yii;
 use app\models\crypt\CardToken;
@@ -93,7 +94,7 @@ class MfoAutoPayStrategy
             'paySchetId' => $paySchet->ID,
         ];
 
-        Yii::$app->queue->push(new RecurrentPayJob($jobData));
+        Yii::$app->queue->priority(JobPriorityInterface::RECURRENT_PAY_JOB_PRIORITY)->push(new RecurrentPayJob($jobData));
         Yii::warning('RecurrentPayJob add data=' . Json::encode($jobData), 'mfo');
         $paySchet->save(false);
         $mutex->release($mutexKey);
