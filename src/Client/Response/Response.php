@@ -15,12 +15,7 @@ class Response implements ResponseInterface
 
     public function getStatus(): ?string
     {
-        return null;
-    }
-
-    public function getMessage(): ?string
-    {
-        return null;
+        return $this->response->getStatusCode();
     }
 
     public function getContent(): string

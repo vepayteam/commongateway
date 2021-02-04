@@ -8,6 +8,7 @@ use GuzzleHttp\HandlerStack;
 use Vepay\Gateway\Client\Request\RequestInterface;
 use Vepay\Gateway\Client\Response\Response;
 use Vepay\Gateway\Client\Response\ResponseInterface;
+use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
 
 class NativeClient implements ClientInterface
 {
@@ -35,7 +36,7 @@ class NativeClient implements ClientInterface
 
         $this->afterSend($request);
 
-        return new Response($response);
+        return $this->getAssociatedResponse($request, $response);
     }
 
     private function beforeSend(RequestInterface $request): void
@@ -56,5 +57,15 @@ class NativeClient implements ClientInterface
         foreach ($request->getMiddlewares() as $middleware) {
             $stack->remove($middleware);
         }
+    }
+
+    private function getAssociatedResponse(RequestInterface $request, PsrResponseInterface $response): ResponseInterface
+    {
+        $responseClass = str_replace('Request', 'Response', get_class($request));
+        if (class_exists($responseClass)) {
+            return new $responseClass($response);
+        }
+
+        return new Response($response);
     }
 }
