@@ -72,6 +72,9 @@ class PayShetStat extends Model
      */
     public function getList($IsAdmin, $page = 0, $nolimit = 0)
     {
+        $before = microtime(true);
+        try {
+
         $CNTPAGE = 100;
 
         $IdPart = $IsAdmin ? $this->IdPart : UserLk::getPartnerId(Yii::$app->user);
@@ -183,6 +186,13 @@ class PayShetStat extends Model
             $row['VoznagSumm'] = $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
 
             $ret[] = $row;
+        }
+        $after = microtime(true);
+        $delta = $after - $before;
+        Yii::warning('Profiling delta ' . self::class . __METHOD__ . ': ' . $delta);
+        }
+        catch (\Exception | \Throwable $e) {
+            Yii::warning("getList Error: " . $e->getMessage() . ' file: ' . $e->getFile(). ' line: ' . $e->getLine());
         }
         return ['data' => $ret, 'cnt' => $cnt, 'cntpage' => $CNTPAGE, 'sumpay' => $sumPay, 'sumcomis' => $sumComis, 'bankcomis' => $bankcomis, 'voznagps' => $voznagps];
     }
