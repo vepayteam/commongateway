@@ -4,9 +4,13 @@ namespace app\models\planner;
 
 use app\models\bank\BankMerchant;
 use app\models\bank\TCBank;
+use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 //use app\models\protocol\OnlineProv;
+use app\models\queue\JobPriorityInterface;
 use app\models\TU;
+use app\services\payment\jobs\RefreshStatusPayJob;
+use app\services\payment\models\PaySchet;
 use Yii;
 
 
@@ -43,15 +47,13 @@ class CheckpayCron
         $connection = Yii::$app->db;
 
         try {
+            $startQuery = microtime(true);
 
+            // TODO: переписать запрос под orm
             $query = $connection->createCommand('
                 SELECT
                     m.ID,
-                    m.ExtBillNumber,
-                    m.Status,
-                    m.DateLastUpdate,
-                    m.Bank,
-                    us.IsCustom
+                    m.ExtBillNumber
                 FROM
                     pay_schet AS m
                     LEFT JOIN uslugatovar AS us ON us.ID = m.IdUsluga
@@ -70,17 +72,21 @@ class CheckpayCron
             ])
                 ->query();
 
+            Yii::warning('CheckpayCron checkStatePay queryTime: ' . (microtime(true) - $startQuery));
             if ($query) {
                 while ($value = $query->read()) {
-                    // TODO: проверить необходимость наличия ExtBillNumber
-                    if (!empty($value['ExtBillNumber']) || in_array($value['IsCustom'], TU::OutMfo())) {
-
-                        $merchBank = BankMerchant::Get($value['Bank']);
-                        $mesg = $merchBank->confirmPay($value['ID'], 0, true);
-
-                        echo "check " . $value['ID'] . " - " . $value['ExtBillNumber'] . " - " . $mesg['message'] . "\n";
-                        Yii::warning("check " . $value['ID'] . " - " . $value['ExtBillNumber'] . " - " . $mesg['message'] . "\r\n", 'rsbcron');
+                    if(empty($value['ExtBillNumber'])) {
+                        continue;
                     }
+
+                    $paySchet = PaySchet::findOne(['ID' => $value['ID']]);
+                    $paySchet->Status = PaySchet::STATUS_WAITING_CHECK_STATUS;
+                    $paySchet->save(false);
+
+                    Yii::warning('CheckpayCron checkStatePay pushed: ID=' . $value['ID']);
+                    Yii::$app->queue->push(new RefreshStatusPayJob([
+                        'paySchetId' => $value['ID'],
+                    ]));
                 }
             }
         } catch (\Exception $e) {

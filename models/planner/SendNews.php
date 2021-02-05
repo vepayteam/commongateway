@@ -4,6 +4,7 @@
 namespace app\models\planner;
 
 use app\models\payonline\Partner;
+use app\models\queue\JobPriorityInterface;
 use app\models\queue\SendMailJob;
 use Yii;
 use yii\db\Query;

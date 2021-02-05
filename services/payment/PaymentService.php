@@ -6,13 +6,17 @@ namespace app\services\payment;
 
 use app\models\kfapi\KfRequest;
 use app\models\partner\stat\export\csv\ToCSV;
+use app\models\queue\JobPriorityInterface;
 use app\models\SendEmail;
 use app\modules\partner\models\PaySchetLogForm;
 use app\services\partners\models\PartnerOption;
+use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\SetPayOkForm;
+use app\services\payment\jobs\RecurrentPayJob;
 use app\services\payment\jobs\RefundPayJob;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\PaySchetLog;
+use app\services\payment\models\UslugatovarType;
 use app\services\payment\payment_strategies\CreateFormEcomStrategy;
 use app\services\payment\payment_strategies\CreateFormJkhStrategy;
 use app\services\payment\payment_strategies\IPaymentStrategy;
@@ -133,10 +137,23 @@ class PaymentService
                 ])
                 ->one();
 
+            $header = [['Ext ID', 'Vepay ID', 'Дата Создания', 'Дата Оплаты', 'Наименование мерчанта', 'Услуга']];
             $data = PaySchetLog::queryLateUpdatedPaySchets($partnerOption->PartnerId, (int)$deltaPartnerOption->Value)
-                ->select('pay_schet.ExtId, pay_schet_log.PaySchetId, FROM_UNIXTIME(pay_schet_log.DateCreate) AS DateCreate, pay_schet_log.Status, pay_schet_log.ErrorInfo')
+                ->select(
+                    'pay_schet.ExtId, '
+                    . ' pay_schet_log.PaySchetId,'
+                    . ' FROM_UNIXTIME(pay_schet.DateCreate) AS DateCreate,'
+                    . ' FROM_UNIXTIME(pay_schet.DateOplat) AS DateOplat,'
+                    . ' partner.UrLico,'// Наименование мерчанта
+                    . ' uslugatovar.NameUsluga,' // Услуга
+                )
+                ->leftJoin('partner', 'pay_schet.IdOrg = partner.ID')
+                ->leftJoin('uslugatovar', 'pay_schet.IdUsluga = uslugatovar.ID')
+                ->andWhere('pay_schet.Status = ' . PaySchet::STATUS_DONE)
+                ->groupBy('pay_schet.ID')
                 ->asArray()
                 ->all();
+            $data = array_merge($header, $data);
 
             try {
                 $this->generateAndSendEmailsByPartner($partnerOption, $data);
@@ -200,11 +217,36 @@ class PaymentService
         $generator = $this->generatorPaySchetsForWhere($where, $limit);
 
         foreach ($generator as $paySchet) {
-            Yii::warning('massRefreshStatus add ID=' . $paySchet->ID, 'RefreshStatusPayJob');
+            Yii::warning('massRefreshStatus add ID=' . $paySchet->ID);
             Yii::$app->queue->push(new RefreshStatusPayJob([
                 'paySchetId' => $paySchet->ID,
             ]));
             Yii::warning('PaymentService massRefreshStatus pushed: ID=' . $paySchet->ID);
+        }
+    }
+
+    /**
+     * @param $where
+     * @param int $limit
+     */
+    public function massRepeatExecRecurrent($where, $limit = 0)
+    {
+        $generator = $this->generatorPaySchetsForWhere($where, $limit);
+        /** @var PaySchet $paySchet */
+        foreach ($generator as $paySchet) {
+            if(!in_array($paySchet->uslugatovar->IsCustom, UslugatovarType::getRecurrent())) {
+                continue;
+            }
+
+            Yii::warning('PaymentService massRepeatExecRecurrent add ID=' . $paySchet->ID);
+            Yii::$app->queue->push(new RecurrentPayJob([
+                'paySchetId' => $paySchet->ID,
+            ]));
+            Yii::warning('PaymentService massRepeatExecRecurrent pushed: ID=' . $paySchet->ID);
+
+            $paySchet->Status = PaySchet::STATUS_NOT_EXEC;
+            $paySchet->ErrorInfo = 'Ожидается обработка';
+            $paySchet->save(false);
         }
     }
 

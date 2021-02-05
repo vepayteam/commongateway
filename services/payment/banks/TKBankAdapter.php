@@ -455,16 +455,7 @@ class TKBankAdapter implements IBankAdapter
      */
     private function convertState($result)
     {
-        if ((in_array($this->type, [0, 3]) || ($this->type == 2 && $this->IsAft)) && !$this->IsCard) {
-            return $this->convertStatePay($result);
-        } elseif (in_array($this->type, [0, 3]) && $this->IsCard) {
-            return $this->convertStateCard($result);
-        } elseif (in_array($this->type, [1, 2])) {
-            return $this->convertStateOut($result);
-        }
-
-        return $this->convertStateCommon($result);
-
+        return $this->convertStatePay($result);
     }
 
     /**
@@ -485,32 +476,6 @@ class TKBankAdapter implements IBankAdapter
             } elseif ($result['orderinfo']['state'] == '5' && !$this->IsCard) {
                 //Возврат
                 $status = 3;
-            } else {
-                //Обрабатывается
-                $status = 0;
-            }
-        }
-        return $status;
-    }
-
-    /**
-     * Статус в наш - 1 - оплачен 2,3 - не оплачен
-     * @param array $result
-     * @return int
-     */
-    private function convertStatePay($result)
-    {
-        $status = 0;
-        if (isset($result['orderinfo'])) {
-            if (($result['orderinfo']['state'] == '3') && $result['Status'] == '0') {
-                //Исполнен
-                $status = 1;
-            } elseif ($result['orderinfo']['state'] == '6') {
-                //отказ в оплате
-                $status = 2;
-            } elseif ($result['orderinfo']['state'] == '5') {
-                //Возврат
-                $status = 3;
             } elseif ($result['orderinfo']['state'] == '8') {
                 //Возврат
                 $status = 3;
@@ -527,11 +492,49 @@ class TKBankAdapter implements IBankAdapter
      * @param array $result
      * @return int
      */
+    private function convertStatePay($result)
+    {
+        Yii::warning('TKBankAdapter convertStatePay start: ' . Json::encode($result), 'merchant');
+        $status = 0;
+        if (isset($result['orderinfo'])) {
+            switch ((int)$result['orderinfo']['state']) {
+                case 1:
+                    $status = BaseResponse::STATUS_CREATED;
+                    break;
+                case 3:
+                case 0:
+                case 2:
+                    $status = BaseResponse::STATUS_DONE;
+                    break;
+                case 6:
+                    $status = BaseResponse::STATUS_ERROR;
+                    break;
+                case 5:
+                case 8:
+                    $status = BaseResponse::STATUS_CANCEL;
+                    break;
+                default:
+                    $status = BaseResponse::STATUS_CREATED;
+            }
+        }
+
+        Yii::warning('TKBankAdapter convertStatePay finishStatus: ' . $status, 'merchant');
+        return $status;
+    }
+
+    /**
+     * Статус в наш - 1 - оплачен 2,3 - не оплачен
+     * @param array $result
+     * @return int
+     */
     private function convertStateCard($result)
     {
         $status = 0;
         if (isset($result['orderinfo'])) {
             if (($result['orderinfo']['state'] == '5') && $result['Status'] == '0') {
+                //Исполнен
+                $status = 1;
+            } elseif ($result['orderinfo']['state'] == '0') {
                 //Исполнен
                 $status = 1;
             } elseif ($result['orderinfo']['state'] == '6') {
@@ -555,6 +558,9 @@ class TKBankAdapter implements IBankAdapter
         $status = 0;
         if (isset($result['orderinfo'])) {
             if (($result['orderinfo']['state'] == '0') && $result['Status'] == '0') {
+                //Исполнен
+                $status = 1;
+            } elseif ($result['orderinfo']['state'] == '0') {
                 //Исполнен
                 $status = 1;
             } elseif ($result['orderinfo']['state'] == '6') {
@@ -603,10 +609,12 @@ class TKBankAdapter implements IBankAdapter
                     ->setOption(CURLOPT_SSLKEY, $this->UserKey)
                     ->setOption(CURLOPT_SSLCERT, $this->UserCert);
             }
-
+            Yii::warning("req startReq: login = " . $this->gate->Login . " url = " . $url . "\r\n" . Cards::MaskCardLog($post), 'merchant');
             $curl->post($url);
+            Yii::warning("req finishReq: login = " . $this->gate->Login . " url = " . $url . "\r\n" . Cards::MaskCardLog($post), 'merchant');
 
         } catch (\Exception $e) {
+            Yii::warning("req curlerror: login = " . $this->gate->Login . " url = " . $url . "\r\n" . Cards::MaskCardLog($post), 'merchant');
             Yii::warning("curlerror: " . $curl->responseCode . ":" . Cards::MaskCardLog($curl->response), 'merchant');
             $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
             return $ans;
@@ -1790,14 +1798,15 @@ class TKBankAdapter implements IBankAdapter
         Yii::warning("checkStatusOrder: " . $this->logArr($response), 'merchant');
         if (isset($response['xml']) && !empty($response['xml'])) {
             $xml = $this->parseAns($response['xml']);
-            if ($xml && isset($xml['errorinfo']['errorcode']) && $xml['errorinfo']['errorcode'] == 1) {
-
-                $checkStatusPayResponse->status = BaseResponse::STATUS_CREATED;
-                $checkStatusPayResponse->message = 'В обработке';
-                $checkStatusPayResponse->xml = ['orderinfo' => ['statedescription' => 'В обработке']];
+            Yii::warning("checkStatusOrder afterParseAns: " . Json::encode($xml), 'merchant');
+            if ($xml && isset($xml['errorinfo']['errorcode']) && (int)$xml['errorinfo']['errorcode'] > 0) {
+                Yii::warning("checkStatusPay isCreated IdPay=" . $okPayForm->IdPay, 'merchant');
+                $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
+                $checkStatusPayResponse->message = $xml['errorinfo']['errormessage'];
+                $checkStatusPayResponse->xml = $xml;
             } else {
                 $status = $this->convertState($xml);
-
+                Yii::warning("checkStatusPay afterConvertStatus IdPay=" . $okPayForm->IdPay . " : " . $status, 'merchant');
                 if(!in_array($status, BaseResponse::STATUSES)) {
                     throw new BankAdapterResponseException('Ошибка преобразования статусов');
                 }

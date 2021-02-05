@@ -7,6 +7,7 @@ namespace app\services\payment\jobs;
 use app\models\crypt\CardToken;
 use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
+use app\models\queue\JobPriorityInterface;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\CreatePayException;
@@ -20,78 +21,69 @@ use yii\queue\Queue;
 
 class RecurrentPayJob extends BaseObject implements \yii\queue\JobInterface
 {
-    public $partnerId;
-    public $uslugatovarId;
     public $paySchetId;
-    public $autoPayFormSerialized;
-
-    /** @var Partner */
-    private $partner;
-    /** @var Uslugatovar */
-    private $uslugatovar;
-    /** @var PaySchet */
-    private $paySchet;
-    /** @var AutoPayForm */
-    private $autoPayForm;
-    /** @var BankAdapterBuilder */
-    private $bankAdapterBuilder;
 
     /**
      * @inheritDoc
      */
     public function execute($queue)
     {
-        $this->load();
-
-        $mutexKey = $this->autoPayForm->getMutexKey();
-        $mutex = new FileMutex();
-        if (!$mutex->acquire($mutexKey, 30)) {
-            Yii::error('getPaySchetExt: error lock!', 'mfo');
-            throw new CreatePayException('getPaySchetExt: error lock!');
-        }
+        $paySchet = PaySchet::findOne(['ID' => $this->paySchetId]);
+        $autoPayForm = $this->buildForm($paySchet);
+        $bankAdapter = $this->buildAdapter($paySchet);
 
         try {
-            Yii::warning('RecurrentPayJob autoPay=' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid, 'mfo');
-            $createRecurrentPayResponse = $this->bankAdapterBuilder->getBankAdapter()->recurrentPay($this->autoPayForm);
+            Yii::warning('RecurrentPayJob autoPay=' . $paySchet->ID . ' ' . $autoPayForm->extid, 'mfo');
+            $createRecurrentPayResponse = $bankAdapter->recurrentPay($autoPayForm);
         } catch (GateException $e) {
-            $this->paySchet->Status = PaySchet::STATUS_ERROR;
-            $this->paySchet->ErrorInfo = $e->getMessage();
+            $paySchet->Status = PaySchet::STATUS_ERROR;
+            $paySchet->ErrorInfo = $e->getMessage();
+            $paySchet->save(false);
+            return $paySchet;
         } catch (\Exception $e) {
-            $mutex->release($mutexKey);
             throw $e;
         }
 
+        $paySchet->Status = PaySchet::STATUS_WAITING_CHECK_STATUS;
+        $paySchet->ErrorInfo = 'Ожидается обновление статуса';
         if($createRecurrentPayResponse->status == BaseResponse::STATUS_DONE) {
-            Yii::warning('RecurrentPayJob Set ExtBillNumber autoPay=' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid, 'mfo');
-            $this->paySchet->Status = PaySchet::STATUS_WAITING;
-            $this->paySchet->ExtBillNumber = $createRecurrentPayResponse->transac;
+            Yii::warning('RecurrentPayJob Set ExtBillNumber autoPay=' . $paySchet->ID . $autoPayForm->extid, 'mfo');
+            $paySchet->ExtBillNumber = $createRecurrentPayResponse->transac;
         } else {
-            $this->paySchet->Status = PaySchet::STATUS_ERROR;
-            $this->paySchet->ErrorInfo = $createRecurrentPayResponse->message;
+            Yii::warning('RecurrentPayJob errorResponse autoPay=' . $paySchet->ID . $autoPayForm->extid, 'mfo');
         }
 
-        $this->paySchet->save(false);
-        $mutex->release($mutexKey);
+        Yii::$app->queue->push(new RefreshStatusPayJob([
+            'paySchetId' => $paySchet->ID,
+        ]));
+
+        $paySchet->save(false);
+        return $paySchet;
     }
 
     /**
-     * @throws GateException
+     * @param PaySchet $paySchet
+     * @return AutoPayForm
+     * @throws CreatePayException
      */
-    public function load()
+    public function buildForm(PaySchet $paySchet)
     {
-        $this->partner = Partner::findOne(['ID' => $this->partnerId]);
-        $this->uslugatovar = Uslugatovar::findOne(['ID' => $this->uslugatovarId]);
-        $this->paySchet = PaySchet::findOne(['ID' => $this->paySchetId]);
+        $autoPayForm = new AutoPayForm();
+        $autoPayForm->amount = $paySchet->SummPay;
+        $autoPayForm->document_id = $paySchet->Dogovor;
+        $autoPayForm->fullname = $paySchet->FIO;
+        $autoPayForm->extid = $paySchet->Extid;
+        $autoPayForm->descript = '';
+        $autoPayForm->card = $paySchet->IdKard;
+        $autoPayForm->postbackurl = $paySchet->PostbackUrl;
+        $autoPayForm->postbackurl_v2 = $paySchet->PostbackUrl_v2;
 
-        $this->autoPayForm = new AutoPayForm();
-        $this->autoPayForm->unserialize($this->autoPayFormSerialized);
+        $autoPayForm->paySchet = $paySchet;
+        $autoPayForm->partner = $paySchet->partner;
 
-        $this->bankAdapterBuilder = new BankAdapterBuilder();
-        $this->bankAdapterBuilder->build($this->partner, $this->uslugatovar);
-
-        $card = $this->autoPayForm->getCard();
+        $card = $autoPayForm->getCard();
         $cardnum = null;
-        if ($this->autoPayForm->getCard()->IdPan > 0) {
+        if ($autoPayForm->getCard()->IdPan > 0) {
             Yii::warning('New CardToken: error lock!', 'mfo');
             $CardToken = new CardToken();
             $cardnum = $CardToken->GetCardByToken($card->IdPan);
@@ -100,6 +92,19 @@ class RecurrentPayJob extends BaseObject implements \yii\queue\JobInterface
         if(!$cardnum) {
             throw new CreatePayException('empty card');
         }
-        $this->autoPayForm->getCard()->CardNumber = $cardnum;
+        $autoPayForm->getCard()->CardNumber = $cardnum;
+        return $autoPayForm;
+    }
+
+    /**
+     * @param PaySchet $paySchet
+     * @return \app\services\payment\banks\IBankAdapter
+     * @throws GateException
+     */
+    public function buildAdapter(PaySchet $paySchet)
+    {
+        $bankAdapterBuilder = new BankAdapterBuilder();
+        $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar);
+        return $bankAdapterBuilder->getBankAdapter();
     }
 }

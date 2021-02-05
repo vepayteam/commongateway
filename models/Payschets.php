@@ -14,6 +14,7 @@ use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
 use app\models\queue\DraftPrintJob;
 use app\models\queue\ExportpayJob;
+use app\models\queue\JobPriorityInterface;
 use app\models\queue\ReverspayJob;
 use app\services\payment\models\PaySchet;
 use Yii;
@@ -563,7 +564,7 @@ class Payschets
      */
     private function reversPay($idpay)
     {
-        Yii::$app->queue->delay(60)->push(new ReverspayJob([
+        Yii::$app->queue->push(new ReverspayJob([
             'idpay' => $idpay
         ]));
     }

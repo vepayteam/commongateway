@@ -72,6 +72,9 @@ class PayShetStat extends Model
      */
     public function getList($IsAdmin, $page = 0, $nolimit = 0)
     {
+        $before = microtime(true);
+        try {
+
         $CNTPAGE = 100;
 
         $IdPart = $IsAdmin ? $this->IdPart : UserLk::getPartnerId(Yii::$app->user);
@@ -184,7 +187,164 @@ class PayShetStat extends Model
 
             $ret[] = $row;
         }
+        $after = microtime(true);
+        $delta = $after - $before;
+        Yii::warning('Profiling delta ' . self::class . __METHOD__ . ': ' . $delta);
+        } catch (\Exception $e) {
+            Yii::warning("getList Error: " . $e->getMessage() . ' file: ' . $e->getFile(). ' line: ' . $e->getLine());
+        } catch (\Throwable $e) {
+            Yii::warning("getList Error: " . $e->getMessage() . ' file: ' . $e->getFile(). ' line: ' . $e->getLine());
+        } finally {
+            Yii::warning("getList Error FINALLY ");
+        }
         return ['data' => $ret, 'cnt' => $cnt, 'cntpage' => $CNTPAGE, 'sumpay' => $sumPay, 'sumcomis' => $sumComis, 'bankcomis' => $bankcomis, 'voznagps' => $voznagps];
+    }
+
+    /**
+     * Список платежей
+     *
+     * @param int $IsAdmin
+     * @param int $page
+     * @param int $nolimit
+     *
+     * @return array
+     */
+    public function getList2($IsAdmin, $page = 0, $nolimit = 0)
+    {
+        $CNTPAGE = 100;
+
+        $IdPart = $IsAdmin ? $this->IdPart : UserLk::getPartnerId(Yii::$app->user);
+        $select = [
+            'COUNT(ps.ID) as c',
+            'SUM(ps.SummPay) AS SummPay',
+            'SUM(ps.ComissSumm) AS ComissSumm',
+            //'SUM(ps.ComissSumm - ps.BankComis + ps.MerchVozn) AS VoznagPS',
+            'SUM(ps.BankComis) AS BankComis',
+            'SUM(ps.MerchVozn) AS MerchVozn',
+        ];
+        $query = $this->buildQuery($select, $IdPart);
+
+        $cnt = $sumPay = $sumComis = $voznagps = $bankcomis = 0;
+        $res = $query->cache(10)->one();
+
+        $sumPay = $res['SummPay'];
+        $sumComis = $res['ComissSumm'];
+        $summBankComis = $res['BankComis'];
+        $summMerchVozn = $res['MerchVozn'];
+        $voznagps = $sumComis - $summBankComis + $summMerchVozn;
+
+        $bankcomis = $res['BankComis'];
+        $cnt = $res['c'];
+
+        $select = [
+            'ps.ID',
+            'ps.IdOrg',
+            'ps.Extid',
+            'ps.RRN',
+            'ps.CardNum',
+            'ps.CardHolder',
+            'ps.BankName',
+            'ps.IdKard',//
+            'qp.NameUsluga',
+            'ps.SummPay',
+            'ps.ComissSumm',
+            'ps.MerchVozn',
+            'ps.BankComis',
+            'ps.DateCreate',
+            'ps.DateOplat',
+            'ps.PayType',
+            'ps.ExtBillNumber',
+            'ps.Status',
+            'ps.Period',
+            'u.`UserDeviceType`',
+            'ps.IdKard',
+            'ps.CardType',
+            'ps.QrParams',
+            'ps.IdShablon',
+            'ps.IdQrProv',
+            'ps.IdAgent',
+            'qp.IsCustom',
+            'ps.ErrorInfo',
+            'ps.BankName',
+            'ps.CountryUser',
+            'ps.CityUser',
+            'qp.ProvVoznagPC',
+            'qp.ProvVoznagMin',
+            'qp.ProvComisPC',
+            'qp.ProvComisMin',
+            'ps.sms_accept',
+            'ps.Dogovor',
+            'ps.FIO',
+            'ps.RCCode',
+            'ps.IdOrg',
+            'ps.RRN',
+            'ps.CardNum',
+            'ps.CardHolder',
+            'ps.BankName',
+            'ps.IdKard',//IdCard->cards->IdPan->pan_token->encryptedPan
+        ];
+        $query = $this->buildQuery($select, $IdPart);
+
+        if (!$nolimit) {
+            if ($page > 0) {
+                $query->offset($CNTPAGE * $page);
+            }
+            $query->orderBy('ID DESC')->limit($CNTPAGE);
+        }
+
+        $ret = [];
+        foreach ($query->each() as $row) {
+            $row['VoznagSumm'] = $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
+
+            $ret[] = $row;
+        }
+        return ['data' => $ret, 'cnt' => $cnt, 'cntpage' => $CNTPAGE, 'sumpay' => $sumPay, 'sumcomis' => $sumComis, 'bankcomis' => $bankcomis, 'voznagps' => $voznagps];
+    }
+
+    /**
+     * @param $select
+     * @param $IdPart
+     * @return Query
+     */
+    private function buildQuery($select, $IdPart)
+    {
+        $query = new Query();
+        $query
+            ->select($select)
+            ->from('pay_schet AS ps FORCE INDEX(DateCreate_idx)')
+            ->leftJoin('banks AS b', 'ps.Bank = b.ID')
+            ->leftJoin('uslugatovar AS qp', 'ps.IdUsluga = qp.ID')
+            ->leftJoin('user AS u', 'u.ID = ps.IdUser')
+            ->where('ps.DateCreate BETWEEN :DATEFROM AND :DATETO', [
+                ':DATEFROM' => strtotime($this->datefrom . ":00"),
+                ':DATETO' => strtotime($this->dateto . ":59")
+            ]);
+
+        if ($IdPart > 0) {
+            $query->andWhere('qp.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);
+        }
+        if (count($this->status) > 0) {
+            $query->andWhere(['in', 'ps.Status', $this->status]);
+        }
+        if (count($this->usluga) > 0) {
+            $query->andWhere(['in', 'ps.IdUsluga', $this->usluga]);
+        }
+        if (count($this->TypeUslug) > 0) {
+            $query->andWhere(['in', 'qp.IsCustom', $this->TypeUslug]);
+        }
+        if ($this->id > 0) {
+            $query->andWhere('ps.ID = :ID', [':ID' => $this->id]);
+        }
+        if (!empty($this->Extid)) {
+            $query->andWhere('ps.Extid = :EXTID', [':EXTID' => $this->Extid]);
+        }
+        if ($this->summpay > 0) {
+            $query->andWhere('ps.SummPay = :SUMPAY', [':SUMPAY' => round($this->summpay * 100.0)]);
+        }
+        if (count($this->params) > 0) {
+            if (!empty($this->params[0])) $query->andWhere(['like', 'ps.Dogovor', $this->params[0]]);
+        }
+        return $query;
     }
 
     public function GetError()

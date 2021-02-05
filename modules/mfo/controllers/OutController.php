@@ -19,6 +19,7 @@ use app\models\payonline\CreatePay;
 use app\models\payonline\Partner;
 use app\models\Payschets;
 use app\models\TU;
+use app\services\payment\models\PaySchet;
 use Yii;
 use yii\base\Exception;
 use yii\mutex\FileMutex;
@@ -393,15 +394,24 @@ class OutController extends Controller
         $mfo->LoadData(Yii::$app->request->getRawBody());
 
         $IdPay = $mfo->GetReq('id');
-
-        $tcBank = new TCBank();
-        $ret = $tcBank->confirmPay($IdPay, $mfo->mfo);
-        if ($ret && isset($ret['status'])) {
-            $state = ['status' => (int)$ret['status'], 'message' => (string)$ret['message'], 'rc' => isset($ret['rc']) ?(string)$ret['rc'] : ''];
+        $paySchet = PaySchet::findOne(['ID' => $IdPay]);
+        if(!$paySchet) {
+            return ['status' => 0, 'message' => 'Счет не найден'];
         } else {
-            $state = ['status' => 0, 'message' => 'Счет не найден'];
-        }
-        return $state;
-    }
+            $status = (int)$paySchet->Status;
+            $message = $paySchet->ErrorInfo;
 
+            // Если платеж ожидает проверку статуса в очереди, пользователю возвращаем статус 0, чтобы соотв документации
+            if($status == PaySchet::STATUS_WAITING_CHECK_STATUS) {
+                $status = PaySchet::STATUS_WAITING;
+                $message = 'Ожидается обновление статуса';
+            }
+
+            return [
+                'status' => $status,
+                'message' => $message,
+                'rc' => $paySchet->RCCode,
+            ];
+        }
+    }
 }

@@ -5,6 +5,7 @@ namespace app\services\payment\models;
 use app\models\payonline\Partner;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
+use app\services\notifications\models\NotificationPay;
 use app\services\payment\exceptions\GateException;
 use Yii;
 
@@ -72,6 +73,7 @@ use Yii;
  * @property Uslugatovar $uslugatovar
  * @property Partner $partner
  * @property PaySchetLog[] $log
+ * @property User $user
  *
  * @property string $Version3DS
  * @property int $IsNeed3DSVerif
@@ -87,13 +89,24 @@ class PaySchet extends \yii\db\ActiveRecord
     const STATUS_ERROR = 2;
     const STATUS_CANCEL = 3;
     const STATUS_NOT_EXEC = 4;
+    const STATUS_WAITING_CHECK_STATUS = 5;
 
     const STATUSES = [
-        self::STATUS_WAITING,
-        self::STATUS_DONE,
-        self::STATUS_ERROR,
-        self::STATUS_CANCEL,
-        self::STATUS_NOT_EXEC,
+        self::STATUS_WAITING => 'В обработке',
+        self::STATUS_DONE => 'Оплачен',
+        self::STATUS_ERROR => 'Отмена',
+        self::STATUS_CANCEL => 'Возврат',
+        self::STATUS_NOT_EXEC => 'Ожидается обработка',
+        self::STATUS_WAITING_CHECK_STATUS => 'Ожидается запрос статуса',
+    ];
+
+    const STATUS_COLORS = [
+        self::STATUS_WAITING => 'blue',
+        self::STATUS_DONE => 'green',
+        self::STATUS_ERROR => 'red',
+        self::STATUS_CANCEL => '#FF3E00',
+        self::STATUS_NOT_EXEC => 'blue',
+        self::STATUS_WAITING_CHECK_STATUS => 'blue',
     ];
 
     const CHECK_3DS_CACHE_PREFIX = 'pay_schet__check-3ds-response';
@@ -224,6 +237,11 @@ class PaySchet extends \yii\db\ActiveRecord
         return $this->hasMany(PaySchetLog::className(), ['PaySchetId' => 'ID']);
     }
 
+    public function getNotifications()
+    {
+        return $this->hasMany(NotificationPay::className(), ['IdPay' => 'ID']);
+    }
+
     public function save($runValidation = true, $attributeNames = null)
     {
         $this->DateLastUpdate = time();
@@ -285,5 +303,13 @@ class PaySchet extends \yii\db\ActiveRecord
         $this->Status = 2;
         $this->ErrorInfo = $message;
         $this->save(false);
+    }
+
+    /**
+     * @return string
+     */
+    public function getFormatSummPay()
+    {
+        return sprintf("%02.2f", $this->SummPay / 100.0);
     }
 }

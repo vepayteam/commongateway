@@ -813,21 +813,51 @@ class AdminController extends Controller
     /**
      * @return string
      */
-    public function actionQueueInfo(){
+    public function actionQueueInfo()
+    {
         $prefix = Yii::$app->queue->channel;
+        $waiting = Yii::$app->queue->redis->llen("$prefix.waiting");
+        $delayed = Yii::$app->queue->redis->zcount("$prefix.delayed", '-inf', '+inf');
+        $reserved = Yii::$app->queue->redis->zcount("$prefix.reserved", '-inf', '+inf');
+        $total =  Yii::$app->queue->redis->get("$prefix.message_id");
+        $done = $total - $waiting - $delayed - $reserved;
         $dataProvider = new ArrayDataProvider([
             'allModels' => [
-                ['status' => 'waiting', 'count' => Yii::$app->queue->redis->llen("$prefix.waiting")],
-                ['status' => 'delayed', 'count' => Yii::$app->queue->redis->zcount("$prefix.delayed", '-inf', '+inf')],
-                ['status' => 'reserved', 'count' => Yii::$app->queue->redis->zcount("$prefix.reserved", '-inf', '+inf')],
-                ['status' => 'total', 'count' => Yii::$app->queue->redis->get("$prefix.message_id")]
+                ['status' => 'waiting', 'count' => $waiting],
+                ['status' => 'delayed', 'count' => $delayed],
+                ['status' => 'reserved', 'count' => $reserved],
+                ['status' => 'done', 'count' => $done],
+                ['status' => 'total', 'count' => $total]
             ],
             'sort' => [
                 'attributes' => ['status', 'count']
             ]
-
-
         ]);
         return $this->render('queueinfo',['dataProvider' =>$dataProvider]);
+    }
+
+    /**
+     * @return string
+     */
+    public function actionGetQueueWaitingMessages()
+    {
+        $prefix = Yii::$app->queue->channel;
+        $messages =  Yii::$app->queue->redis->hgetall("$prefix.messages");
+        $i = 0;
+        $allModels = [];
+        while (isset($messages[$i]) && isset($messages[$i + 1])) {
+            $allModels[] = ['key' => $messages[$i], 'value' => $messages[$i +1]];
+            $i = $i + 2;
+        }
+        $dataProvider = new ArrayDataProvider([
+            'allModels' => $allModels,
+            'pagination' => [
+                'pageSize' => 20,
+            ],
+            'sort' => [
+                'attributes' => ['status', 'count']
+            ]
+        ]);
+        return $this->render('queuewaitingmessages',['dataProvider' =>$dataProvider]);
     }
 }

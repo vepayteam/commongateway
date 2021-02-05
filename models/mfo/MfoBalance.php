@@ -8,6 +8,7 @@ use app\models\bank\TcbGate;
 use app\models\partner\admin\VoznagStat;
 use app\models\partner\stat\ExportExcel;
 use app\models\payonline\Partner;
+use app\models\queue\JobPriorityInterface;
 use app\models\queue\ReceiveStatementsJob;
 use app\models\TU;
 use Yii;

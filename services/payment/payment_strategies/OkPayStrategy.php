@@ -9,6 +9,7 @@ use app\models\bank\BankCheck;
 use app\models\payonline\Cards;
 use app\models\payonline\Uslugatovar;
 use app\models\queue\DraftPrintJob;
+use app\models\queue\JobPriorityInterface;
 use app\models\queue\ReverspayJob;
 use app\models\TU;
 use app\services\balance\BalanceService;
@@ -148,103 +149,80 @@ class OkPayStrategy
         $res = false;
         $mutex = new FileMutex();
         if ($mutex->acquire('confirmPay' . $paySchet->ID)) {
-            try {
-                $transaction = Yii::$app->db->beginTransaction();
-                $transactionOk = true;
+            // TODO: вернуть транзакции
+            //только в обработке платеж завершать
+            if(!in_array($paySchet->Status, [PaySchet::STATUS_WAITING, PaySchet::STATUS_WAITING_CHECK_STATUS])) {
+                return true;
+            }
 
-                //только в обработке платеж завершать
-                if($paySchet->Status != PaySchet::STATUS_WAITING) {
-                    $transaction->rollBack();
-                    return true;
+            if ($checkStatusPayResponse->status == BaseResponse::STATUS_DONE) {
+                //завершение оплаты и печать чека
+
+                Yii::warning('OkPayStrategy confirmPay isStatusDone');
+                //ок
+                $setOkPayform = new SetPayOkForm();
+                $setOkPayform->paySchet = $paySchet;
+                $setOkPayform->loadByCheckStatusPayResponse($checkStatusPayResponse);
+
+                $this->paymentService->setPayOK($setOkPayform);
+
+                if($paySchet->IdOrder > 0) {
+                    $this->paymentService->setOrderOk($paySchet);
                 }
 
-                if ($checkStatusPayResponse->status == BaseResponse::STATUS_DONE) {
-                    //завершение оплаты и печать чека
+                //чек пробить
+                if (TU::IsInAll($paySchet->uslugatovar->IsCustom)) {
+                    Yii::$app->queue->push(new DraftPrintJob([
+                        'idpay' => $paySchet->ID,
+                        'tovar' => $paySchet->uslugatovar->NameUsluga
+                            . (!empty($paySchet->Dogovor) ? ", Договор: " . $paySchet->Dogovor : ''),
+                        'tovarOFD' => $paySchet->uslugatovar->NameUsluga,
+                        'summDraft' => $paySchet->SummPay + $paySchet->ComissSumm,
+                        'summComis' => $paySchet->ComissSumm,
+                        'email' => $paySchet->UserEmail,
+                        'checkExist' => Yii::$app->request->isConsoleRequest ? true : false
+                    ]));
+                }
 
-                    //ок
-                    $setOkPayform = new SetPayOkForm();
-                    $setOkPayform->paySchet = $paySchet;
-                    $transactionOk &= $setOkPayform->loadByCheckStatusPayResponse($checkStatusPayResponse);
+                //оповещения на почту и колбэком
+                /** @var NotificationsService $notificationsService */
+                $notificationsService = Yii::$container->get('NotificationsService');
+                $notificationsService->addNotificationByPaySchet($paySchet);
 
-                    $transactionOk &= $this->paymentService->setPayOK($setOkPayform);
-
-                    if($paySchet->IdOrder > 0) {
-                        $transactionOk &= $this->paymentService->setOrderOk($paySchet);
-                    }
-
-                    //чек пробить
-                    if (TU::IsInAll($paySchet->uslugatovar->IsCustom)) {
-                        Yii::$app->queue->push(new DraftPrintJob([
-                            'idpay' => $paySchet->ID,
-                            'tovar' => $paySchet->uslugatovar->NameUsluga
-                                . (!empty($paySchet->Dogovor) ? ", Договор: " . $paySchet->Dogovor : ''),
-                            'tovarOFD' => $paySchet->uslugatovar->NameUsluga,
-                            'summDraft' => $paySchet->SummPay + $paySchet->ComissSumm,
-                            'summComis' => $paySchet->ComissSumm,
-                            'email' => $paySchet->UserEmail,
-                            'checkExist' => Yii::$app->request->isConsoleRequest ? true : false
-                        ]));
-                    }
-
-                    //оповещения на почту и колбэком
-                    /** @var NotificationsService $notificationsService */
-                    $notificationsService = Yii::$container->get('NotificationsService');
-                    $transactionOk &= $notificationsService->addNotificationByPaySchet($paySchet);
-
-                    // если регистрация карты, делаем возврат
-                    // иначе изменяем баланс
-                    if($paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD) {
-                        Yii::$app->queue->delay(60)->push(new ReverspayJob([
-                            'idpay' => $paySchet->ID,
-                        ]));
-                    } else {
-                        /** @var BalanceService $balanceService */
-                        $balanceService = Yii::$container->get('BalanceService');
-                        $transactionOk &= $balanceService->changeBalance($paySchet);
-                    }
-
-                    $BankCheck = new BankCheck();
-                    $BankCheck->UpdateLastCheck($paySchet->Bank);
-
-                    if(!$transaction->isActive || !$transactionOk) {
-                        $transaction->rollBack();
-                        throw new Exception('Ошибка транзакции');
-                    }
-
-                    $transaction->commit();
-
-                    $antifraud = new AntiFraud($paySchet->ID);
-                    $antifraud->update_status_transaction(1);
-                    return true;
-
-
-                } elseif ($checkStatusPayResponse->status != BaseResponse::STATUS_CREATED) {
-                    $this->paymentService->cancelPay($paySchet);
-
-                    /** @var NotificationsService $notificationService */
-                    $notificationsService = $this->getNotificationsService();
-                    $transactionOk &= $notificationsService->addNotificationByPaySchet($paySchet);
-
-                    if(!$transaction->isActive || !$transactionOk) {
-                        $transaction->rollBack();
-                        throw new Exception('Ошибка транзакции');
-                    }
-
-                    $transaction->commit();
-                    $antifraud = new AntiFraud($paySchet->ID);
-                    $antifraud->update_status_transaction(1);
-
-                    return false;
+                // если регистрация карты, делаем возврат
+                // иначе изменяем баланс
+                if($paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD) {
+                    Yii::$app->queue->push(new ReverspayJob([
+                        'idpay' => $paySchet->ID,
+                    ]));
+                } else {
+                    /** @var BalanceService $balanceService */
+                    $balanceService = Yii::$container->get('BalanceService');
+                    $balanceService->changeBalance($paySchet);
                 }
 
                 $BankCheck = new BankCheck();
-                $BankCheck->UpdateLastWork($paySchet->Bank);
-            } catch (\Throwable $e) {
-                // в случае возникновения ошибки при выполнении одного из запросов выбрасывается исключение
-                $transaction->rollback();
-                Yii::error($e->getMessage(), 'rsbcron');
-                throw new \Exception($e->getMessage(), $e->getCode(), $e);
+                $BankCheck->UpdateLastCheck($paySchet->Bank);
+
+                $antifraud = new AntiFraud($paySchet->ID);
+                $antifraud->update_status_transaction(1);
+                return true;
+            } elseif ($checkStatusPayResponse->status != BaseResponse::STATUS_CREATED) {
+                Yii::warning('OkPayStrategy confirmPay isStatusDone');
+                $this->paymentService->cancelPay($paySchet, $checkStatusPayResponse->message);
+
+                /** @var NotificationsService $notificationService */
+                $notificationsService = $this->getNotificationsService();
+                $notificationsService->addNotificationByPaySchet($paySchet);
+
+                $antifraud = new AntiFraud($paySchet->ID);
+                $antifraud->update_status_transaction(1);
+
+                return false;
             }
+
+            $BankCheck = new BankCheck();
+            $BankCheck->UpdateLastWork($paySchet->Bank);
             $mutex->release('confirmPay' . $paySchet->ID);
         }
 

@@ -87,16 +87,8 @@ class WidgetController extends Controller
     {
         $notification = new Notification();
         $notification->execute();
-        if ($notification->needReversOrderIds()){ //если массив пустой то пропускаем этап возврата средств.
-            $withdraw =  new WithdrawTCBankIterable(
-                $notification->needReversOrderIds(),
-                new Payschets()
-            );
-            $withdraw->start();
-        }
         $ordernotif = new OrderNotif();
         $ordernotif->SendEmails();
-
     }
 
     public function actionNotificationBlock($idPartner, $startId, $finishId)
@@ -188,10 +180,6 @@ class WidgetController extends Controller
                         ], '`ID` = :ID', [':ID' => $value['IdNotif']])
                         ->execute();
                     if ($res || $value['SendCount'] > 30) {
-                        //завершить обработку
-                        if ($value['TypeNotif'] == 2 && $notification->httpCode == 200 && $value['DateOplat'] > strtotime('today')) {
-                            $notification->addToRefundArray($notification->httpAns, $value);
-                        }
                         $connection->createCommand()
                             ->update('notification_pay', [
                                 'DateSend' => time()

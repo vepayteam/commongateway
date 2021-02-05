@@ -55,7 +55,7 @@ return [
             'class' => \yii\queue\redis\Queue::class,
             'redis' => 'redis',
             'channel' => 'queue',
-            'attempts' => 3, // Максимальное кол-во попыток
+            'attempts' => 10,
         ],
         'cache' => [
             'class' => 'yii\redis\Cache',

@@ -11,6 +11,7 @@ use app\models\antifraud\rules\interfaces\ISqlRule;
 use app\models\antifraud\support_objects\RefundInfo;
 use app\models\antifraud\support_objects\TransInfo;
 use app\models\antifraud\tables\AFSettings;
+use app\models\queue\JobPriorityInterface;
 use app\models\queue\SendMailJob;
 use app\models\SendEmail;
 use Faker\Provider\DateTime;

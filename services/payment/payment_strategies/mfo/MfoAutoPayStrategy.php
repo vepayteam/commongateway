@@ -3,6 +3,7 @@
 
 namespace app\services\payment\payment_strategies\mfo;
 
+use app\models\queue\JobPriorityInterface;
 use app\services\payment\jobs\RecurrentPayJob;
 use Yii;
 use app\models\crypt\CardToken;
@@ -90,10 +91,7 @@ class MfoAutoPayStrategy
         $this->autoPayForm->paySchet = $paySchet;
 
         $jobData = [
-            'partnerId' => $this->autoPayForm->partner->ID,
-            'uslugatovarId' => $uslugatovar->ID,
             'paySchetId' => $paySchet->ID,
-            'autoPayFormSerialized' => $this->autoPayForm->serialize(),
         ];
 
         Yii::$app->queue->push(new RecurrentPayJob($jobData));
@@ -174,6 +172,7 @@ class MfoAutoPayStrategy
         $paySchet->sms_accept = 1;
 
         $paySchet->PostbackUrl = $this->autoPayForm->postbackurl;
+        $paySchet->PostbackUrl_v2 = $this->autoPayForm->postbackurl_v2;
 
         $paySchet->FIO = $this->autoPayForm->fullname;
         $paySchet->Dogovor = $this->autoPayForm->document_id;

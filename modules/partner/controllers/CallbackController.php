@@ -6,6 +6,9 @@ use app\models\mfo\MfoBalance;
 use app\models\partner\callback\CallbackList;
 use app\models\partner\PartUserAccess;
 use app\models\partner\UserLk;
+use app\models\queue\JobPriorityInterface;
+use app\services\notifications\jobs\CallbackSendJob;
+use app\services\notifications\models\NotificationPay;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
@@ -114,13 +117,25 @@ class CallbackController extends Controller
             Yii::$app->response->format = Response::FORMAT_JSON;
 
             $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+            $notificationPayId = Yii::$app->request->post('id', null);
+            $notificationPay = NotificationPay::findOne(['ID' => $notificationPayId]);
 
-            $CallbackList = new CallbackList();
-            return $CallbackList->RepeatNotif(Yii::$app->request->post('id'), $IsAdmin);
+            if(!$notificationPay || !$IsAdmin && $notificationPay->paySchet->IdOrg != Yii::$app->user->id) {
+                return ['status' => 0, 'message' => 'Ошибка запроса повтора операции'];
+            } else {
+                $notificationPay->HttpCode = 0;
+                $notificationPay->DateLastReq = 0;
+                $notificationPay->DateSend = 0;
+                $notificationPay->HttpAns = null;
+                $notificationPay->save(false);
 
+                \Yii::$app->queue->push(new CallbackSendJob([
+                    'notificationPayId' => $notificationPayId,
+                ]));
+                return ['status' => 1, 'message' => 'Запрос колбэка возвращен в очередь'];
+            }
         } else {
             return $this->redirect('/partner');
         }
     }
-
 }
