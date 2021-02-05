@@ -815,6 +815,7 @@ class AdminController extends Controller
      */
     public function actionQueueInfo()
     {
+        $this->layout = 'queue';
         $prefix = Yii::$app->queue->channel;
         $waiting = Yii::$app->queue->redis->llen("$prefix.waiting");
         $delayed = Yii::$app->queue->redis->zcount("$prefix.delayed", '-inf', '+inf');
@@ -839,8 +840,9 @@ class AdminController extends Controller
     /**
      * @return string
      */
-    public function actionGetQueueWaitingMessages()
+    public function actionGetQueueAllMessages()
     {
+        $this->layout = 'queue';
         $prefix = Yii::$app->queue->channel;
         $messages =  Yii::$app->queue->redis->hgetall("$prefix.messages");
         $i = 0;
@@ -848,6 +850,33 @@ class AdminController extends Controller
         while (isset($messages[$i]) && isset($messages[$i + 1])) {
             $allModels[] = ['key' => $messages[$i], 'value' => $messages[$i +1]];
             $i = $i + 2;
+        }
+        $dataProvider = new ArrayDataProvider([
+            'allModels' => $allModels,
+            'pagination' => [
+                'pageSize' => 20,
+            ],
+            'sort' => [
+                'attributes' => ['status', 'count']
+            ]
+        ]);
+        return $this->render('queueallmessages',['dataProvider' =>$dataProvider]);
+    }
+
+    /**
+     * @return string
+     */
+    public function actionGetQueueWaitingMessages()
+    {
+        $this->layout = 'queue';
+        $prefix = Yii::$app->queue->channel;
+        $waitingRange =  Yii::$app->queue->redis->lrange("$prefix.waiting",  0, -1);
+        $messages =  Yii::$app->queue->redis->hmget("$prefix.messages",  ... $waitingRange);
+        $i = 0;
+        $allModels = [];
+        while (isset($waitingRange[$i])) {
+            $allModels[] = ['key' => $waitingRange[$i], 'value' => $messages[$i]];
+            $i++;
         }
         $dataProvider = new ArrayDataProvider([
             'allModels' => $allModels,
@@ -866,13 +895,15 @@ class AdminController extends Controller
      */
     public function actionGetQueueReservedMessages()
     {
+        $this->layout = 'queue';
         $prefix = Yii::$app->queue->channel;
-        $messages =  Yii::$app->queue->redis->hgetall("$prefix.reserved");
+        $reservedRange =  Yii::$app->queue->redis->zrange("$prefix.reserved",  0, -1);
+        $messages =  Yii::$app->queue->redis->hmget("$prefix.messages",  ... $reservedRange);
         $i = 0;
         $allModels = [];
-        while (isset($messages[$i]) && isset($messages[$i + 1])) {
-            $allModels[] = ['key' => $messages[$i], 'value' => $messages[$i +1]];
-            $i = $i + 2;
+        while (isset($reservedRange[$i])) {
+            $allModels[] = ['key' => $reservedRange[$i], 'value' => $messages[$i]];
+            $i++;
         }
         $dataProvider = new ArrayDataProvider([
             'allModels' => $allModels,
