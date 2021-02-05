@@ -34,49 +34,49 @@ class CallbackSendJob extends BaseObject implements \yii\queue\JobInterface
             Yii::warning('CallbackSendJob execute UrlInformEmpty: ' . Json::encode(['notificationPay' => $this->notificationPayId]));
         }
 
-        $client = new Client([
-            'timeout'  => 120,
-        ]);
+        $curl = curl_init();
+        Yii::warning('CallbackSendJob sendEnd: ' . $this->notificationPayId);
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => $notificationPay->getNotificationUrl(),
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 120,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "GET",
+            CURLOPT_HTTPHEADER => array(
+                "Content-Type: application/json"
+            ),
+        ));
 
         try {
-            Yii::warning(
-                'CallbackSendJob send: '.$notificationPay->getNotificationUrl(),
-                'merchant'
-            );
-            $response = $client->request('GET', $notificationPay->getNotificationUrl());
-            Yii::warning('CallbackSendJob sendEnd: ' . $this->notificationPayId);
-            $notificationPay->HttpCode = $response->getStatusCode();
-            $notificationPay->HttpAns = (string)$response->getBody();
+            $response = curl_exec($curl);
             Yii::warning(sprintf(
-                'CallbackSendJob response: %s ;  %s ; %s',
-                $this->notificationPayId,
-                $response->getStatusCode(),
-                (string)$response->getBody())
+                    'CallbackSendJob response: %s ;  %s',
+                    $this->notificationPayId,
+                    $response
+                )
             );
-        } catch (GuzzleException $e) {
-            Yii::warning(
-                'CallbackSendJob GuzzleException id='
-                . $this->notificationPayId
-                . '; code='.$e->getCode()
-                . '; body='.$e->getResponse()->getBody()
-            );
-            $notificationPay->HttpCode = (int)$e->getCode();
-            $notificationPay->HttpAns = (string)$e->getResponse()->getBody();
+
         } catch (\Exception $e) {
             Yii::error(sprintf(
-                'CallbackSendJob execute error id=%s : %s',
-                $notificationPay->IdPay,
-                $e->getMessage())
+                    'CallbackSendJob execute error id=%s : %s',
+                    $notificationPay->IdPay,
+                    $e->getMessage())
             );
-            throw $e;
         }
 
         Yii::warning(sprintf('CallbackSendJob afterTry: %s', $this->notificationPayId));
+        $info = curl_getinfo($curl);
+        $notificationPay->HttpCode = $info['http_code'];
+        $notificationPay->HttpAns = $response;
+
         $notificationPay->DateLastReq = time();
         $notificationPay->url = $notificationPay->getNotificationUrl();
         $notificationPay->DateSend = time();
         $saveResult = $notificationPay->save(false);
-
         Yii::warning(sprintf('CallbackSendJob save: %s ; %s', $this->notificationPayId, $saveResult));
+        curl_close($curl);
     }
 }
