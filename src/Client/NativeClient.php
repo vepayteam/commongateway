@@ -78,7 +78,7 @@ class NativeClient implements ClientInterface
         $stack = $this->client->getConfig('handler');
 
         foreach ($request->getMiddlewares() as $middleware) {
-            $stack->remove($middleware);
+            $stack->remove($middleware->getName());
         }
     }
 
