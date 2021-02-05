@@ -2,6 +2,9 @@
 
 namespace Vepay\Gateway;
 
+use TypeError;
+use Vepay\Gateway\Logger\LoggerInterface;
+
 /**
  * Singleton class
  *
@@ -50,10 +53,14 @@ class Config
     }
 
     /**
-     * @param LoggerInterface $logger
+     * @param string $logger
      */
-    private function setLogger(LoggerInterface $logger)
+    private function setLogger(string $logger)
     {
+        if (!in_array(LoggerInterface::class, class_implements($logger))) {
+            throw new TypeError('The logger class must implement the ' . LoggerInterface::class . ' interface');
+        }
+
         $this->configs['logger'] = $logger;
     }
 }

@@ -30,10 +30,17 @@ class Response implements ResponseInterface
     }
 
     /**
-     * @return string
+     * @return array
      */
-    public function getContent(): string
+    public function getContent(): array
     {
-        return $this->response->getBody()->getContents();
+        return json_decode($this->response->getBody(), true);
+    }
+
+    public function setContent(string $content): ResponseInterface
+    {
+        $this->raw = $content;
+
+        return $this;
     }
 }

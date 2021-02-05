@@ -6,5 +6,5 @@ interface ResponseInterface
 {
     public function getStatus(): ?string;
 
-    public function getContent(): string;
+    public function getContent(): array;
 }

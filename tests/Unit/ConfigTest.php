@@ -24,6 +24,6 @@ class ConfigTest extends TestCase
         $this->expectException(TypeError::class);
 
         $config = Config::getInstance();
-        $config->logger = new stdClass();
+        $config->logger = stdClass::class;
     }
 }
