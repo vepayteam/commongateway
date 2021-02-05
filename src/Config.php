@@ -2,6 +2,8 @@
 
 namespace Vepay\Gateway;
 
+use Vepay\Gateway\Logger\LoggerInterface;
+
 /**
  * Singleton class
  *
