@@ -12,7 +12,6 @@ interface HandlerInterface
      * @param string $level
      * @param string $category
      * @param $message
-     * @return mixed
      */
-    public function handle(string $level, string $category, $message);
+    public function handle(string $level, string $category, $message): void;
 }

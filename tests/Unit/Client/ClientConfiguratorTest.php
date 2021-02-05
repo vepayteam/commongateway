@@ -9,14 +9,6 @@ use Vepay\Gateway\Config;
 
 class ClientConfiguratorTest extends TestCase
 {
-    public function testDoNotFoundConfig(): void
-    {
-        $this->expectException(Exception::class);
-
-        $configurator = new MockClientConfigurator();
-        $configurator->get();
-    }
-
     public function testGetConfig(): void
     {
         Config::getInstance()->{MockClientConfigurator::getGatewayName()} = ['config1' => 'value1', 'config2' => 'value2'];

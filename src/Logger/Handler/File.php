@@ -11,7 +11,7 @@ class File implements HandlerInterface
     /**
      * @var string
      */
-    protected $logFile;
+    protected string $logFile;
 
     /**
      * File constructor.
@@ -26,8 +26,10 @@ class File implements HandlerInterface
      * @param string $level
      * @param string $category
      * @param $message
+     * @return mixed|void
+     * @throws \Exception
      */
-    public function handle(string $level, string $category, $message)
+    public function handle(string $level, string $category, $message): void
     {
         $logLine = $this->formatLogLine($level, $category, $message);
         $result = @file_put_contents($this->logFile, $logLine, FILE_APPEND);
@@ -44,7 +46,7 @@ class File implements HandlerInterface
      * @return string
      * @throws \Exception
      */
-    protected function formatLogLine(string $level, string $category, $message)
+    protected function formatLogLine(string $level, string $category, $message): string
     {
         $time = microtime(true);
         $timeFormatted = sprintf("%06d", ($time - floor($time)) * 1000000);
