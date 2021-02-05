@@ -2,6 +2,7 @@
 
 namespace Vepay\Gateway\Client;
 
+use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\HandlerStack;
@@ -41,17 +42,22 @@ class NativeClient implements ClientInterface
     {
         $this->beforeSend($request);
 
-        $response = $this->client->request(
-            $request->getMethod(),
-            $request->getEndpoint(),
-            array_merge(
-                $request->getPreparedParameters(),
-                $request->getPreparedOptions(),
-                $request->getPreparedHeaders()
-            )
-        );
-
-        $this->afterSend($request);
+        try {
+            $response = $this->client->request(
+                $request->getMethod(),
+                $request->getEndpoint(),
+                array_merge(
+                    $request->getPreparedParameters(),
+                    $request->getPreparedOptions(),
+                    $request->getPreparedHeaders()
+                )
+            );
+        } catch (Exception $e) {
+            throw $e;
+        }
+        finally {
+            $this->afterSend($request);
+        }
 
         return $this->getAssociatedResponse($request, $response);
     }
