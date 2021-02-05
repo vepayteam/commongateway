@@ -111,7 +111,7 @@ class StatController extends Controller
             $page = Yii::$app->request->get('page', 0);
             $payShetList = new PayShetStat();
             if ($payShetList->load($data, '') && $payShetList->validate()) {
-                $list = $payShetList->getList($IsAdmin, $page);
+                $list = $payShetList->getList2($IsAdmin, $page);
                 return [
                     'status' => 1, 'data' => $this->renderPartial('_listdata', [
                         'reqdata' => $data,
