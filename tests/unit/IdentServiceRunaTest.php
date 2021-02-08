@@ -19,44 +19,45 @@ class IdentServiceRunaTest extends \Codeception\Test\Unit
     }
 
     // tests
-//    public function testInitForm()
-//    {
-//        $data = json_decode(file_get_contents(__DIR__  . '/../_data/unit/IdentServiceRunaTest.json'), true);
-//
-//        $dataPrefixes = [
-//            'base_inn',
-//            'base_snils',
-//            'base_inn_and_snils',
-//        ];
-//
-//        foreach ($dataPrefixes as $dataPrefix) {
-//            $initForm = new RunaIdentInitForm();
-//            $initForm->load($data[$dataPrefix], '');
-//            $this->assertTrue($initForm->validate());
-//        }
-//
-//        $dataPrefixes = [
-//            'error_passport_series_length' => 'passport_series',
-//            'error_passport_number_length' => 'passport_number',
-//            'error_inn_length' => 'inn',
-//            'error_inn_regex' => 'inn',
-//            'error_snils_length' => 'snils',
-//            'error_empty_name' => 'name',
-//            'error_empty_surname' => 'surname',
-//            'error_empty_patronymic' => 'patronymic',
-//            'error_empty_inn_and_snils' => 'inn',
-//        ];
-//
-//        foreach ($dataPrefixes as $dataPrefix => $field) {
-//            $initForm = new RunaIdentInitForm();
-//            $initForm->load($data['base_snils'], '');
-//            $this->assertFalse($initForm->validate());
-//            $this->assertTrue(count($initForm->getErrors($field)) > 0);
-//        }
-//    }
-//
-//    public function testInit()
-//    {
+    public function testInitForm()
+    {
+        $data = json_decode(file_get_contents(__DIR__  . '/../_data/unit/IdentServiceRunaTest.json'), true);
+
+        $dataPrefixes = [
+            'base_inn',
+            'base_snils',
+            'base_inn_and_snils',
+        ];
+
+        foreach ($dataPrefixes as $dataPrefix) {
+            $initForm = new RunaIdentInitForm();
+            $initForm->load($data[$dataPrefix], '');
+            $this->assertTrue($initForm->validate());
+        }
+
+        $dataPrefixes = [
+            'error_passport_series_length' => 'passport_series',
+            'error_passport_number_length' => 'passport_number',
+            'error_inn_length' => 'inn',
+            'error_inn_regex' => 'inn',
+            'error_snils_length' => 'snils',
+            'error_empty_name' => 'name',
+            'error_empty_surname' => 'surname',
+            'error_empty_patronymic' => 'patronymic',
+            'error_empty_inn_and_snils' => 'inn',
+        ];
+
+        foreach ($dataPrefixes as $dataPrefix => $field) {
+            $initForm = new RunaIdentInitForm();
+            $initForm->load($data[$dataPrefix], '');
+            $this->assertFalse($initForm->validate());
+            $this->assertTrue(count($initForm->getErrors($field)) > 0);
+        }
+    }
+
+    public function testInit()
+    {
+//Возможно устаревшая логика, в конфиге нет таких параметров.
 //        $data = json_decode(file_get_contents(__DIR__  . '/../_data/unit/IdentServiceRunaTest.json'), true);
 //
 //        $dataPrefixes = [
@@ -81,10 +82,11 @@ class IdentServiceRunaTest extends \Codeception\Test\Unit
 //            $this->assertTrue(get_class($runaIdentInitResponse) == 'RunaIdentInitResponse');
 //            $this->assertTrue($runaIdentInitResponse->validate());
 //        }
-//    }
-//
-//    public function testState()
-//    {
+    }
+
+    public function testState()
+    {
+//В таблице нет поля статус, таблица пуста, видимо устаревшая логика.
 //        $idents = IdentRuna::find()
 //            ->where(['Status' => 0])
 //            ->orderBy('Id DESC')
@@ -99,5 +101,5 @@ class IdentServiceRunaTest extends \Codeception\Test\Unit
 //
 //        $this->assertTrue(get_class($runaIdentStateResponse) == 'RunaIdentStateResponse');
 //        $this->assertTrue(in_array($runaIdentStateResponse->details['code'], ['0', '1', '2']));
-//    }
+    }
 }
