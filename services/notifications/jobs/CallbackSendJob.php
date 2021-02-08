@@ -51,11 +51,18 @@ class CallbackSendJob extends BaseObject implements \yii\queue\JobInterface
         ));
 
         try {
+            $startTimeExec = microtime(true);
             $response = curl_exec($curl);
             Yii::warning(sprintf(
                     'CallbackSendJob response: %s ;  %s',
                     $this->notificationPayId,
                     $response
+                )
+            );
+            Yii::warning(sprintf(
+                    'CallbackSendJob timeExec: %s ;  %s',
+                    $this->notificationPayId,
+                    microtime(true) - $startTimeExec
                 )
             );
 
