@@ -67,6 +67,16 @@ class CallbackSendJob extends BaseObject implements \yii\queue\JobInterface
             );
         }
 
+        $curlError = curl_error($curl);
+        if($curlError) {
+            Yii::error(sprintf(
+                    'CallbackSendJob curlError: %s ;  %s',
+                    $this->notificationPayId,
+                    $curlError
+                )
+            );
+        }
+
         Yii::warning(sprintf('CallbackSendJob afterTry: %s', $this->notificationPayId));
         $info = curl_getinfo($curl);
         $notificationPay->HttpCode = $info['http_code'];
