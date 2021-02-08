@@ -1827,20 +1827,15 @@ class TKBankAdapter implements IBankAdapter
      */
     public function recurrentPay(AutoPayForm $autoPayForm)
     {
-        $action = '/api/v1/card/unregistered/debit/wof/no3ds';
+        $action = '/api/tcbpay/gate/registerdirectorderfromregisteredcard';
 
         $createRecurrentPayRequest = new CreateRecurrentPayRequest();
-        $createRecurrentPayRequest->ExtId = $autoPayForm->paySchet->ID;
+        $createRecurrentPayRequest->OrderId = $autoPayForm->paySchet->ID;
         $createRecurrentPayRequest->Amount = $autoPayForm->paySchet->getSummFull();
         $createRecurrentPayRequest->Description = 'Оплата по счету ' . $autoPayForm->paySchet->ID;
 
         $card = $autoPayForm->getCard();
-        $createRecurrentPayRequest->CardInfo = [
-            'CardNumber' => $card->CardNumber,
-            'CardHolder' => $card->CardHolder,
-            'ExpirationYear' => (int)("20" . $card->getYear()),
-            'ExpirationMonth' => (int)($card->getMonth()),
-        ];
+        $createRecurrentPayRequest->CardRefID = $card->ExtCardIDP;
 
         $queryData = Json::encode($createRecurrentPayRequest->getAttributes());
         $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
