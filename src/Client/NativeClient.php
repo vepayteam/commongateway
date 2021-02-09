@@ -28,8 +28,9 @@ class NativeClient implements ClientInterface
     public function configure(array $options): ClientInterface
     {
         $handler = new CurlHandler();
+        $logMiddleware =  new LogMiddleware;
         $stack = HandlerStack::create($handler);
-        $stack->push(new LogMiddleware);
+        $stack->push($logMiddleware, $logMiddleware->getName());
 
         $options['handler'] = $stack;
 
@@ -59,6 +60,8 @@ class NativeClient implements ClientInterface
             );
         } catch (Exception $exception) {
             Config::getInstance()->logger->error($exception->getCode() . ': ' . $exception->getMessage(), __CLASS__);
+
+            throw $exception;
         }
         finally {
             $this->afterSend($request);

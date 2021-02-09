@@ -17,24 +17,44 @@ class LogMiddleware implements MiddlewareInterface
     public function __invoke(callable $handler): Closure
     {
         $logger = Config::getInstance()->logger;
-        $formatter = new MessageFormatter('{req_body} - {res_body}');
+        $formatter = new MessageFormatter('{code} - {url} - {method} - {req_body} - {res_body}');
 
-        return static function (callable $handler) use ($logger, $formatter): callable {
-            return static function (RequestInterface $request, array $options = []) use ($handler, $logger, $formatter) {
-                return $handler($request, $options)->then(
-                    static function ($response) use ($logger, $request, $formatter): ResponseInterface {
-                        $message = $formatter->format($request, $response);
-                        $logger->info($message, __CLASS__);
-                        return $response;
-                    },
-                    static function ($reason) use ($logger, $request, $formatter): PromiseInterface {
-                        $response = $reason instanceof RequestException ? $reason->getResponse() : null;
+        return static function (RequestInterface $request, array $options = []) use ($handler, $logger, $formatter) {
+            return $handler($request, $options)->then(
+                static function ($response) use ($logger, $request, $formatter): ResponseInterface {
+                    $body = $response->getBody();
+                    if ($body->isSeekable()) {
+                        $previousPosition = $body->tell();
+                    }
+
+                    $message = $formatter->format($request, $response);
+                    $logger->info($message, __CLASS__);
+
+                    if ($body->isSeekable()) {
+                        $body->seek($previousPosition);
+                    }
+                    return $response;
+                },
+                static function ($reason) use ($logger, $request, $formatter): PromiseInterface {
+                    if ($reason instanceof RequestException) {
+                        $response = $reason->getResponse();
+
+                        $body = $response->getBody();
+                        if ($body->isSeekable()) {
+                            $previousPosition = $body->tell();
+                        }
+
                         $message = $formatter->format($request, $response, P\Create::exceptionFor($reason));
                         $logger->error($message, __CLASS__);
-                        return P\Create::rejectionFor($reason);
+
+                        if ($body->isSeekable()) {
+                            $body->seek($previousPosition);
+                        }
+
                     }
-                );
-            };
+                    return P\Create::rejectionFor($reason);
+                }
+            );
         };
     }
 
