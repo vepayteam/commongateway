@@ -17,7 +17,7 @@ class LogMiddleware implements MiddlewareInterface
     public function __invoke(callable $handler): Closure
     {
         $logger = Config::getInstance()->logger;
-        $formatter = new MessageFormatter('{code} - {url} - {method} - {req_body} - {res_body}');
+        $formatter = new MessageFormatter('{method} : {url} : {code} : {req_body} - {res_body}');
 
         return static function (RequestInterface $request, array $options = []) use ($handler, $logger, $formatter) {
             return $handler($request, $options)->then(
