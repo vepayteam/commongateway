@@ -12,7 +12,7 @@ interface LoggerInterface
      * @param $message
      * @param $category
      */
-    public static function debug($message, $category): void;
+    public static function trace($message, $category): void;
 
     /**
      * @param $message
