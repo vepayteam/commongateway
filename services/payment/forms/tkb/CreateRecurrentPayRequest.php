@@ -8,10 +8,8 @@ use yii\base\Model;
 
 class CreateRecurrentPayRequest extends Model
 {
-    public $ExtId;
+    public $OrderId;
+    public $CardRefID;
     public $Amount;
     public $Description;
-    public $CardInfo;
-
-
 }
