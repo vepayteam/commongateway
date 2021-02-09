@@ -11,18 +11,13 @@ use Vepay\Gateway\Logger\Handler\HandlerInterface;
  */
 class Logger implements LoggerInterface
 {
-    const DEBUG_LOG_LEVEL = 'debug';
-    const ERROR_LOG_LEVEL = 'error';
-    const WARNING_LOG_LEVEL = 'warning';
-    const INFO_LOG_LEVEL = 'info';
-
     /**
      * @param $message
      * @param $category
      */
-    public static function debug($message, $category = 'application'): void
+    public static function trace($message, $category = 'application'): void
     {
-        static::log(static::DEBUG_LOG_LEVEL, $category, $message);
+        static::log(static::TRACE_LOG_LEVEL, $category, $message);
     }
 
     /**

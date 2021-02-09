@@ -8,6 +8,11 @@ namespace Vepay\Gateway\Logger;
  */
 interface LoggerInterface
 {
+    const TRACE_LOG_LEVEL = 'trace';
+    const ERROR_LOG_LEVEL = 'error';
+    const WARNING_LOG_LEVEL = 'warning';
+    const INFO_LOG_LEVEL = 'info';
+
     /**
      * @param $message
      * @param $category
