@@ -2,6 +2,7 @@
 
 namespace Vepay\Gateway\Client;
 
+use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\HandlerStack;
@@ -9,6 +10,8 @@ use Vepay\Gateway\Client\Request\RequestInterface;
 use Vepay\Gateway\Client\Response\Response;
 use Vepay\Gateway\Client\Response\ResponseInterface;
 use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
+use Vepay\Gateway\Config;
+use Vepay\Gateway\Logger\Guzzle\LogMiddleware;
 
 /**
  * Class NativeClient
@@ -25,7 +28,10 @@ class NativeClient implements ClientInterface
     public function configure(array $options): ClientInterface
     {
         $handler = new CurlHandler();
-        $options['handler'] = HandlerStack::create($handler);
+        $stack = HandlerStack::create($handler);
+        $stack->push(new LogMiddleware);
+
+        $options['handler'] = $stack;
 
         $this->client = new Client($options);
 
@@ -51,7 +57,10 @@ class NativeClient implements ClientInterface
                     $request->getPreparedHeaders()
                 )
             );
-        } finally {
+        } catch (Exception $exception) {
+            Config::getInstance()->logger->error($exception->getCode() . ': ' . $exception->getMessage(), __CLASS__);
+        }
+        finally {
             $this->afterSend($request);
         }
 

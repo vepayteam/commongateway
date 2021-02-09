@@ -4,7 +4,7 @@ namespace Vepay\Gateway\Logger;
 
 use Vepay\Gateway\Config;
 
-class LoggerAdaptor
+class LoggerAdapter
 {
     private string $logger;
 

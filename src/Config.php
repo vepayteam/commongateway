@@ -3,7 +3,7 @@
 namespace Vepay\Gateway;
 
 use TypeError;
-use Vepay\Gateway\Logger\LoggerAdaptor;
+use Vepay\Gateway\Logger\LoggerAdapter;
 use Vepay\Gateway\Logger\LoggerInterface;
 
 /**
@@ -66,6 +66,6 @@ class Config
             throw new TypeError('The logger class must implement the ' . LoggerInterface::class . ' interface');
         }
 
-        $this->configs['logger'] = new LoggerAdaptor($logger);
+        $this->configs['logger'] = new LoggerAdapter($logger);
     }
 }
