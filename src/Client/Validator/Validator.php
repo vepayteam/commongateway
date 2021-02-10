@@ -2,6 +2,8 @@
 
 namespace Vepay\Gateway\Client\Validator;
 
+use Vepay\Gateway\Config;
+
 /**
  * Class Validator
  * @package Vepay\Gateway\Client\Validator
@@ -33,8 +35,12 @@ class Validator
     public function validate(array $parameters): array
     {
         foreach ($this->rules as $parameter => $rule) {
-            if ($rule === static::REQUIRED && empty($parameters[$parameter])) {
-                throw new ValidationException("Required parameter '{$parameter}' is not defined.", 422);
+            if (empty($parameters[$parameter])) {
+                if ($rule === static::REQUIRED) {
+                    throw new ValidationException("Required parameter '{$parameter}' is not defined.",422);
+                } else {
+                    Config::getInstance()->logger->warning("Optional field '{$parameter}' is empty.", __CLASS__);
+                }
             }
         }
 
