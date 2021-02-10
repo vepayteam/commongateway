@@ -39,7 +39,10 @@ return [
                 'domain' => 'localhost',
             ],
             */
-        ],        
+        ],
+        'cache' => $params['components']['cache'],
+        'redis' => $params['components']['redis'],
+        'queue' => $params['components']['queue'],
     ],
     'params' => $params,
     'container' => [
