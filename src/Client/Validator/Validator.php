@@ -34,16 +34,31 @@ class Validator
      */
     public function validate(array $parameters): array
     {
-        foreach ($this->rules as $parameter => $rule) {
-            if (empty($parameters[$parameter])) {
+        $validParameters = [];
+
+        foreach ($this->rules as $fieldName => $rule) {
+            if (strpos($fieldName, '*') > 0) {
+                $validParameters += array_filter(
+                    $parameters,
+                    function ($parameter) use ($fieldName) {
+                        return strpos($parameter, rtrim($fieldName, '*')) === 0;
+                    },
+                    ARRAY_FILTER_USE_KEY
+                );
+
+                continue;
+            }
+
+            if (empty($parameters[$fieldName])) {
                 if ($rule === static::REQUIRED) {
-                    throw new ValidationException("Required parameter '{$parameter}' is not defined.",422);
+                    throw new ValidationException("Required parameter '{$fieldName}' is not defined.",422);
                 } else {
-                    Config::getInstance()->logger->warning("Optional field '{$parameter}' is empty.", __CLASS__);
+                    Config::getInstance()->logger->warning("Optional field '{$fieldName}' is empty.", __CLASS__);
                 }
             }
+            $validParameters[$fieldName] = $parameters[$fieldName];
         }
 
-        return array_intersect_key($parameters, $this->rules);
+        return array_intersect_key($parameters, $validParameters);
     }
 }
