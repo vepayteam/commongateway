@@ -870,8 +870,11 @@ class AdminController extends Controller
     {
         $this->layout = 'queue';
         $prefix = Yii::$app->queue->channel;
+        $messages = [];
         $waitingRange =  Yii::$app->queue->redis->lrange("$prefix.waiting",  0, -1);
-        $messages =  Yii::$app->queue->redis->hmget("$prefix.messages",  ... $waitingRange);
+        if(is_array($waitingRange) && count($waitingRange) > 0) {
+            $messages =  Yii::$app->queue->redis->hmget("$prefix.messages",  ... $waitingRange);
+        }
         $i = 0;
         $allModels = [];
         while (isset($waitingRange[$i])) {
@@ -897,8 +900,11 @@ class AdminController extends Controller
     {
         $this->layout = 'queue';
         $prefix = Yii::$app->queue->channel;
+        $messages = [];
         $reservedRange =  Yii::$app->queue->redis->zrange("$prefix.reserved",  0, -1);
-        $messages =  Yii::$app->queue->redis->hmget("$prefix.messages",  ... $reservedRange);
+        if(is_array($reservedRange) && count($reservedRange) > 0) {
+            $messages =  Yii::$app->queue->redis->hmget("$prefix.messages",  ... $reservedRange);
+        }
         $i = 0;
         $allModels = [];
         while (isset($reservedRange[$i])) {
