@@ -106,7 +106,7 @@ class PayForm extends Model
     public function GetWidgetRetUrl($id)
     {
         if (Yii::$app->params['DEVMODE'] == 'Y') {
-            return 'http://127.0.0.1:806/widget/orderdone?id='.$id;
+            return 'http://'.$_SERVER['SERVER_NAME'].'/widget/orderdone?id='.$id;
         } elseif (Yii::$app->params['TESTMODE'] == 'Y') {
             return 'https://'.$_SERVER['SERVER_NAME'].'/widget/orderdone?id='.$id;
         } else {
