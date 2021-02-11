@@ -16,10 +16,10 @@ class PartnerMfoControllerCest
         $I->see('Баланс по разбивке (Платформа)');
     }
 
-    public function tryToPartsBalanceProcessingTest(FunctionalTester $I)
-    {
-
-    }
+//    public function tryToPartsBalanceProcessingTest(FunctionalTester $I)
+//    {
+//
+//    }
 
     public function tryToPartsBalancePartnerTest(FunctionalTester $I)
     {
@@ -28,15 +28,15 @@ class PartnerMfoControllerCest
         $I->see('Баланс по разбивке (Партнер)');
     }
 
-    public function tryToPartsBalancePartnerProcessingTest(FunctionalTester $I)
-    {
-
-    }
-
-    public function tryToBalanceorderTest(FunctionalTester $I)
-    {
-
-    }
+//    public function tryToPartsBalancePartnerProcessingTest(FunctionalTester $I)
+//    {
+//
+//    }
+//
+//    public function tryToBalanceorderTest(FunctionalTester $I)
+//    {
+//
+//    }
 
     public function tryToExportvypTest(FunctionalTester $I)
     {

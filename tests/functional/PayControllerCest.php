@@ -45,9 +45,8 @@ class PayControllerCest
 
     public function tryToOrderokTest(FunctionalTester $I)
     {
-//        TODO-test Долго работает
-//        $I->amOnRoute('pay/orderok', ['id' => 0]);
-//        $I->see(' Not Found:');
+        $I->amOnRoute('pay/orderok', ['id' => 0]);
+        $I->see(' Not Found:');
     }
 
     public function tryToOrderPrintTest(FunctionalTester $I)
@@ -61,25 +60,5 @@ class PayControllerCest
         $I->amOnRoute('pay/order-invoice', ['id' => 0]);
         $I->see(' Not Found:');
     }
-
-//    public function tryToApplepayvalidateTest(FunctionalTester $I)
-//    {
-//
-//    }
-
-//    public function tryToApplepaycreateTest(FunctionalTester $I)
-//    {
-//
-//    }
-
-//    public function tryToGooglepaycreateTest(FunctionalTester $I)
-//    {
-//
-//    }
-
-//    public function tryToSamsungpaycreateTest(FunctionalTester $I)
-//    {
-//
-//    }
 
 }
