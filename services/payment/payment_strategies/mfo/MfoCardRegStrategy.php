@@ -5,6 +5,7 @@ namespace app\services\payment\payment_strategies\mfo;
 
 
 use app\models\api\Reguser;
+use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\CreatePayException;
@@ -36,12 +37,12 @@ class MfoCardRegStrategy
             return $duplicatePaySchet;
         }
 
-        $this->createUser();
+        $user = $this->createUser();
         $uslugatovar = Uslugatovar::findOne(['ID' => Uslugatovar::REG_CARD_ID]);
         $bankAdapterBuilder = new BankAdapterBuilder();
         $bankAdapterBuilder->build($this->cardRegByPayForm->partner, $uslugatovar);
 
-        return $this->createPaySchet($bankAdapterBuilder);
+        return $this->createPaySchet($user, $bankAdapterBuilder);
     }
 
     /**
@@ -95,12 +96,13 @@ class MfoCardRegStrategy
      * @return PaySchet
      * @throws CreatePayException
      */
-    public function createPaySchet(BankAdapterBuilder $bankAdapterBuilder)
+    public function createPaySchet(User $user, BankAdapterBuilder $bankAdapterBuilder)
     {
         $summPay = random_int(100, 1000);
 
         $paySchet = new PaySchet();
 
+        $paySchet->IdUser = $user->ID;
         $paySchet->Bank = $this->cardRegByPayForm->type == CardRegForm::CARD_REG_TYPE_BY_OUT ? 0 : $bankAdapterBuilder->getBankAdapter()->getBankId();
         $paySchet->IdUsluga = $bankAdapterBuilder->getUslugatovar()->ID;
         $paySchet->IdOrg = $this->cardRegByPayForm->partner->ID;
