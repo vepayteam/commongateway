@@ -215,6 +215,27 @@ use yii\bootstrap\Html;
 
 </section>
 </div>
+
+<div class="modal fade" id="3ds-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Подтверждение операции</h4>
+            </div>
+            <div class="modal-body">
+                <iframe id="3ds-modal__form-iframe" src="" frameborder="0">
+
+                </iframe>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <noscript><div><img src="https://mc.yandex.ru/watch/66552382" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <?php
 $this->registerJs('payform.init();');

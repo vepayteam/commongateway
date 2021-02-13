@@ -13,6 +13,7 @@ use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
+use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
 use app\services\payment\exceptions\RefundPayException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CheckStatusPayForm;
@@ -68,6 +69,7 @@ interface IBankAdapter
      * @throws BankAdapterResponseException
      * @throws Check3DSv2Exception
      * @throws CreatePayException
+     * @throws MerchantRequestAlreadyExistsException
      * @return CreatePayResponse
      */
     public function createPay(CreatePayForm $createPayForm);

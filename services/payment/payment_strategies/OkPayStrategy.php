@@ -71,7 +71,7 @@ class OkPayStrategy
 
             $paySchet->Status = $checkStatusPayResponse->status;
             $paySchet->ErrorInfo = $checkStatusPayResponse->message;
-            $paySchet->RRN = $checkStatusPayResponse->xml['orderadditionalinfo']['rrn'] ?? '';
+            $paySchet->RRN = $checkStatusPayResponse->rrn;
             $paySchet->RCCode = $checkStatusPayResponse->xml['orderadditionalinfo']['rc'] ?? '';
             $paySchet->save(false);
         } elseif ($paySchet->sms_accept == 1) {

@@ -13,7 +13,11 @@ use app\models\TU;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\BankAdapterBuilder;
+use app\services\payment\banks\RSBankAdapter;
+use app\services\payment\banks\RSBankEcommAdapter;
+use app\services\payment\banks\TKBankAdapter;
 use app\services\payment\exceptions\BankAdapterResponseException;
+use app\services\payment\exceptions\Check3DSv2DuplicatedException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
@@ -29,6 +33,8 @@ use yii\db\Exception;
 
 class CreatePayStrategy
 {
+    const RSB_ECOMM_MAX_SUMM = 185000;
+
     /** @var CreatePayForm */
     protected $createPayForm;
 
@@ -61,23 +67,9 @@ class CreatePayStrategy
         }
         $this->setCardPay($paySchet);
 
-        // для погашений, карты маэстро только по еком надо
-        if (
-            $paySchet->uslugatovar->IsCustom == UslugatovarType::POGASHATF
-            && Cards::GetTypeCard($this->createPayForm->CardNumber) == Cards::BRANDS['MAESTRO']
-        ) {
-            /** @var PartnerBankGate $partnerBankGate */
-            $partnerBankGate = PartnerBankGate::find()->where([
-                'PartnerId' => $paySchet->partner->ID,
-                'TU' => UslugatovarType::POGASHECOM,
-            ])->orderBy('Priority DESC')->one();
-
-            if(!$partnerBankGate) {
-                throw new GateException('Нет шлюза');
-            }
-
-            $paySchet->changeGate($partnerBankGate);
-        }
+        $this->checkAndChangeAdapterIfTkbAndMaestroCard($paySchet);
+        $this->checkAndChangeAdapterIfRsbNeedAft($paySchet);
+        $this->checkAndChangeAdapterIfRsbEcomm($paySchet);
 
         $bankAdapterBuilder = new BankAdapterBuilder();
         $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar);
@@ -119,6 +111,62 @@ class CreatePayStrategy
         }
 
         return $paySchet;
+    }
+
+    protected function checkAndChangeAdapterIfTkbAndMaestroCard(PaySchet $paySchet)
+    {
+        // для погашений, карты маэстро только по еком надо
+        if (
+            $paySchet->Bank == TKBankAdapter::$bank
+            && $paySchet->uslugatovar->IsCustom == UslugatovarType::POGASHATF
+            && Cards::GetTypeCard($this->createPayForm->CardNumber) == Cards::BRANDS['MAESTRO']
+        ) {
+            /** @var PartnerBankGate $partnerBankGate */
+            $partnerBankGate = PartnerBankGate::find()->where([
+                'BankId' => TKBankAdapter::$bank,
+                'PartnerId' => $paySchet->partner->ID,
+                'TU' => UslugatovarType::POGASHECOM,
+            ])->orderBy('Priority DESC')->one();
+
+            if(!$partnerBankGate) {
+                throw new GateException('Нет шлюза');
+            }
+
+            $paySchet->changeGate($partnerBankGate);
+        }
+    }
+
+    protected function checkAndChangeAdapterIfRsbNeedAft(PaySchet $paySchet)
+    {
+        if($paySchet->Bank == RSBankAdapter::$bank && $paySchet->getSummFull() > self::RSB_ECOMM_MAX_SUMM) {
+            /** @var PartnerBankGate $partnerBankGate */
+            $partnerBankGate = PartnerBankGate::find()->where([
+                'BankId' => RSBankAdapter::$bank,
+                'PartnerId' => $paySchet->partner->ID,
+                'TU' => UslugatovarType::POGASHATF,
+            ])->orderBy('Priority DESC')->one();
+            if(!$partnerBankGate) {
+                throw new GateException('Нет шлюза');
+            }
+
+            $paySchet->changeGate($partnerBankGate);
+        }
+    }
+
+    protected function checkAndChangeAdapterIfRsbEcomm(PaySchet $paySchet)
+    {
+        if($paySchet->Bank == RSBankAdapter::$bank && $paySchet->getSummFull() < self::RSB_ECOMM_MAX_SUMM) {
+            /** @var PartnerBankGate $partnerBankGate */
+            $partnerBankGate = PartnerBankGate::find()->where([
+                'BankId' => RSBankAdapter::$bank,
+                'PartnerId' => $paySchet->partner->ID,
+                'TU' => UslugatovarType::POGASHECOM,
+            ])->orderBy('Priority DESC')->one();
+            if(!$partnerBankGate) {
+                throw new GateException('Нет шлюза');
+            }
+            $paySchet->changeGate($partnerBankGate);
+        }
     }
 
 
