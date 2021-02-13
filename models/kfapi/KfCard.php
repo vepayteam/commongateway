@@ -21,12 +21,6 @@ class KfCard extends CardBase
     public $type;
 
     public $extid = '';
-    public $timeout = 15;
-    public $successurl = '';
-    public $failurl = '';
-    public $cancelurl = '';
-    public $postbackurl = '';
-    public $postbackurl_v2 = '';
 
     /* @var null|User */
     public $user = null;

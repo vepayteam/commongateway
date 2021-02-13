@@ -6,6 +6,7 @@ use app\models\payonline\Partner;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
 use app\services\notifications\models\NotificationPay;
+use app\services\payment\banks\Banks;
 use app\services\payment\exceptions\GateException;
 use Yii;
 
@@ -292,7 +293,20 @@ class PaySchet extends \yii\db\ActiveRecord
      */
     public function getOrderdoneUrl()
     {
-        return Yii::$app->params['domain'] . '/pay/orderdone/' . $this->ID;
+        return Yii::$app->params['domain'] . '/pay/form/' . $this->ID;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFromUrl()
+    {
+        if($this->Bank == Banks::REG_CARD_BY_OUT_ID) {
+            return Yii::$app->params['domain'] . '/mfo/default/outrcard' . $this->ID;
+        } else {
+            return Yii::$app->params['domain'] . '/pay/form/' . $this->ID;
+        }
+
     }
 
     /**

@@ -6,6 +6,7 @@ namespace app\services\payment\banks;
 
 class Banks
 {
+    const REG_CARD_BY_OUT_ID = 0;
     const TKB_ID = 2;
     const MTS_ID = 3;
 
