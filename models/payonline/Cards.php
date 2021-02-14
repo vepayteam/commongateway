@@ -2,6 +2,7 @@
 
 namespace app\models\payonline;
 
+use app\services\payment\models\Bank;
 use Yii;
 
 /**
@@ -24,6 +25,7 @@ use Yii;
  * @property integer $IdBank
  * @property integer $IsDeleted
  * @property User $user
+ * @property Bank $bank
  */
 class Cards extends \yii\db\ActiveRecord
 {
@@ -101,7 +103,12 @@ class Cards extends \yii\db\ActiveRecord
 
     public function getUser()
     {
-        return $this->hasOne(User::className(), ['ID' => 'IdUser']);
+        return $this->hasOne(User::class, ['ID' => 'IdUser']);
+    }
+
+    public function getBank()
+    {
+        return $this->hasOne(Bank::class, ['ID' => 'IdBank']);
     }
 
     public function allowUpdFields()

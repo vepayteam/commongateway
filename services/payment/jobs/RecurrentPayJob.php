@@ -44,6 +44,7 @@ class RecurrentPayJob extends BaseObject implements \yii\queue\JobInterface
             throw $e;
         }
 
+        $paySchet->RRN = $createRecurrentPayResponse->rrn;
         $paySchet->Status = PaySchet::STATUS_WAITING_CHECK_STATUS;
         $paySchet->ErrorInfo = 'Ожидается обновление статуса';
         if($createRecurrentPayResponse->status == BaseResponse::STATUS_DONE) {
@@ -104,7 +105,7 @@ class RecurrentPayJob extends BaseObject implements \yii\queue\JobInterface
     public function buildAdapter(PaySchet $paySchet)
     {
         $bankAdapterBuilder = new BankAdapterBuilder();
-        $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar);
+        $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank);
         return $bankAdapterBuilder->getBankAdapter();
     }
 }

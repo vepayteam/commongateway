@@ -23,12 +23,18 @@ use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\RefundPayForm;
+use app\services\payment\forms\rsb_aft\CreatePayAftRequest;
+use app\services\payment\forms\rsb_aft\CreatePayByRegCardRequest;
 use app\services\payment\forms\rsb_aft\CreatePayRequest;
 use app\services\payment\forms\rsb_aft\CheckStatusPayRequest;
+use app\services\payment\forms\rsb_aft\RecurrentPayRequest;
+use app\services\payment\forms\rsb_aft\RefundPayRequest;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
+use Carbon\Carbon;
 use Yii;
+use yii\base\Security;
 use yii\helpers\Json;
 
 class RSBankAdapter implements IBankAdapter
@@ -107,24 +113,11 @@ class RSBankAdapter implements IBankAdapter
         $uri = '/ecomm2/MerchantHandler';
 
         $paySchet = $createPayForm->getPaySchet();
-        $createPayRequest = new CreatePayRequest();
-        $createPayRequest->mrch_transaction_id = $paySchet->ID;
-        $createPayRequest->amount = $paySchet->getSummFull();
-        $createPayRequest->client_ip_addr = Yii::$app->request->remoteIP;
-        $createPayRequest->cardname = $createPayForm->CardHolder;
-        $createPayRequest->pan = $createPayForm->CardNumber;
-        $createPayRequest->expiry = $createPayForm->CardYear . $createPayForm->CardMonth;
-        $createPayRequest->cvc2 = $createPayForm->CardCVC;
+        $createPayRequest = $this->buildCreatePayRequest($paySchet, $createPayForm);
 
         $createPayResponse = new CreatePayResponse();
         try {
             $data = $createPayRequest->getAttributes();
-
-            // если операция через ecomm, код сценария не передаем
-            if($this->gate->TU == UslugatovarType::POGASHECOM) {
-                unset($data['ecomm_payment_scenario']);
-            }
-
             $ans = $this->sendRequest($uri, $data);
             if(array_key_exists('error', $ans)) {
                 $createPayResponse->status = BaseResponse::STATUS_ERROR;
@@ -135,12 +128,43 @@ class RSBankAdapter implements IBankAdapter
                 $createPayResponse->transac = $ans['TRANSACTION_ID'];
                 $createPayResponse->url = $this->bankUrl3DS . '?trans_id=' . urlencode($ans['TRANSACTION_ID']);
             }
-        } catch (RSbankAdapterExeception $e) {
+        } catch (BankAdapterResponseException $e) {
             $createPayResponse->status = BaseResponse::STATUS_ERROR;
             $createPayResponse->message = 'Ошибка запроса';
         }
 
         return $createPayResponse;
+    }
+
+    /**
+     * @param PaySchet $paySchet
+     * @param CreatePayForm $createPayForm
+     * @return CreatePayByRegCardRequest|CreatePayRequest
+     */
+    protected function buildCreatePayRequest(PaySchet $paySchet, CreatePayForm $createPayForm)
+    {
+        /** @var CreatePayRequest $createPayRequest */
+        $createPayRequest = new CreatePayRequest();
+        if($paySchet->uslugatovar->ID == Uslugatovar::REG_CARD_ID) {
+            $createPayRequest = new CreatePayByRegCardRequest();
+            $security = new Security();
+            $createPayRequest->biller_client_id = $security->generateRandomString();
+
+            $expiry = Carbon::now()->addYears(3);
+            $createPayRequest->perspayee_expiry = sprintf('%02d', $expiry->month)
+                . substr((string)$expiry->year, -2);
+        } elseif ($this->gate->TU == UslugatovarType::POGASHATF) {
+            $createPayRequest = new CreatePayAftRequest();
+        }
+
+        $createPayRequest->mrch_transaction_id = $paySchet->ID;
+        $createPayRequest->amount = $paySchet->getSummFull();
+        $createPayRequest->client_ip_addr = Yii::$app->request->remoteIP;
+        $createPayRequest->cardname = $createPayForm->CardHolder;
+        $createPayRequest->pan = $createPayForm->CardNumber;
+        $createPayRequest->expiry = $createPayForm->CardYear . $createPayForm->CardMonth;
+        $createPayRequest->cvc2 = $createPayForm->CardCVC;
+        return $createPayRequest;
     }
 
     /**
@@ -201,29 +225,39 @@ class RSBankAdapter implements IBankAdapter
         $paySchet = $okPayForm->getPaySchet();
         $checkStatusPayRequest = new CheckStatusPayRequest();
         $checkStatusPayRequest->trans_id = $paySchet->ExtBillNumber;
-        $checkStatusPayRequest->client_ip_addr = Yii::$app->request->remoteIP;
-
-        $ans = $this->sendRequest($uri, $checkStatusPayRequest->getAttributes());
+        $checkStatusPayRequest->client_ip_addr = (Yii::$app instanceof \yii\web\Application) ? Yii::$app->request->remoteIP : '127.0.0.1';
 
         $checkStatusPayResponse = new CheckStatusPayResponse();
-        switch ($ans['RESULT']) {
-            case 'CREATED':
-            case 'PENDING':
-                $checkStatusPayResponse->status = BaseResponse::STATUS_CREATED;
-                break;
-            case 'OK':
-                $checkStatusPayResponse->status = BaseResponse::STATUS_DONE;
-                break;
-            case 'REVERSED':
-            case 'AUTOREVERSED':
-                $checkStatusPayResponse->status = BaseResponse::STATUS_CANCEL;
-                break;
-            default:
-                $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
-                break;
+        try {
+            $ans = $this->sendRequest($uri, $checkStatusPayRequest->getAttributes());
+            $checkStatusPayResponse->message = $ans['RESULT'];
+            $checkStatusPayResponse->status = $this->getStatusResponse($ans['RESULT']);
+            $this->checkStatusPayResponseFiller($checkStatusPayResponse, $ans);
+            $checkStatusPayResponse->rrn = $ans['RRN'];
+        } catch (BankAdapterResponseException $e) {
+            $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
+            $checkStatusPayResponse->message = 'Ошибка запроса';
         }
-        $checkStatusPayResponse->rrn = $ans['RRN'];
+
         return $checkStatusPayResponse;
+    }
+
+    /**
+     * @param CheckStatusPayResponse $checkStatusPayResponse
+     * @param array $data
+     */
+    protected function checkStatusPayResponseFiller(CheckStatusPayResponse $checkStatusPayResponse, array $data)
+    {
+        if(array_key_exists('CARD_NUMBER', $data)) {
+            $checkStatusPayResponse->cardNumber = $data['CARD_NUMBER'];
+        }
+        if(array_key_exists('RECC_PMNT_ID', $data)) {
+            $checkStatusPayResponse->cardRefId = $data['RECC_PMNT_ID'];
+        }
+        if(array_key_exists('RECC_PMNT_EXPIRY', $data)) {
+            $checkStatusPayResponse->expMonth = substr($data['RECC_PMNT_EXPIRY'], 0, 2);
+            $checkStatusPayResponse->expYear = '20' . substr($data['RECC_PMNT_EXPIRY'], -2);
+        }
     }
 
     /**
@@ -232,7 +266,27 @@ class RSBankAdapter implements IBankAdapter
     public function recurrentPay(AutoPayForm $autoPayForm)
     {
         $uri = '/ecomm2/MerchantHandler';
+        $paySchet = $autoPayForm->paySchet;
 
+        $recurrentPayRequest = new RecurrentPayRequest();
+        $recurrentPayRequest->amount = $paySchet->getSummFull();
+        $recurrentPayRequest->client_ip_addr = (Yii::$app instanceof \yii\web\Application) ? Yii::$app->request->remoteIP : '127.0.0.1' ;
+        $recurrentPayRequest->description = 'Оплата счета №' . $paySchet->ID;
+        $recurrentPayRequest->biller_client_id = $autoPayForm->getCard()->ExtCardIDP;
+        $recurrentPayRequest->mrch_transaction_id = $paySchet->ID;
+
+        $createRecurrentPayResponse = new CreateRecurrentPayResponse;
+        try {
+            $ans = $this->sendRequest($uri, $recurrentPayRequest->getAttributes());
+            $createRecurrentPayResponse->message = $ans['RESULT'];
+            $createRecurrentPayResponse->status = $this->getStatusResponse($ans['RESULT']);
+            $createRecurrentPayResponse->transac = isset($ans['TRANSACTION_ID']) ? $ans['TRANSACTION_ID'] : '';
+            $createRecurrentPayResponse->rrn = isset($ans['RRN']) ? $ans['RRN'] : '';
+        } catch (BankAdapterResponseException $e) {
+            $createRecurrentPayResponse->status = BaseResponse::STATUS_ERROR;
+            $createRecurrentPayResponse->message = 'Ошибка запроса';
+        }
+        return $createRecurrentPayResponse;
     }
 
     /**
@@ -240,14 +294,33 @@ class RSBankAdapter implements IBankAdapter
      */
     public function refundPay(RefundPayForm $refundPayForm)
     {
-        // TODO: Implement refundPay() method.
+        $uri = '/ecomm2/MerchantHandler';
+        $paySchet = $refundPayForm->paySchet;
+        $refundPayRequest = new RefundPayRequest();
+        $refundPayRequest->trans_id = $paySchet->ExtBillNumber;
+
+        if($paySchet->DateCreate < Carbon::now()->startOfDay()->timestamp) {
+            $refundPayRequest->command = 'k';
+        }
+
+        $refundPayResponse = new RefundPayResponse();
+        try {
+            $ans = $this->sendRequest($uri, $refundPayRequest->getAttributes());
+            $refundPayResponse->message = $ans['RESULT'];
+            $refundPayResponse->status = $this->getStatusResponse($ans['RESULT']);
+        } catch (RSbankAdapterExeception $e) {
+            $refundPayResponse->message = $e->getMessage();
+            $refundPayResponse->status = BaseResponse::STATUS_ERROR;
+        }
+
+        return $refundPayResponse;
     }
 
     /**
      * @param string $uri
      * @param array $data
      * @return array|string
-     * @throws RSbankAdapterExeception
+     * @throws BankAdapterResponseException
      */
     protected function sendRequest(string $uri, array $data)
     {
@@ -258,7 +331,7 @@ class RSBankAdapter implements IBankAdapter
             CURLOPT_URL => $url,
             CURLOPT_HEADER => false,
             CURLOPT_POST => true,
-            CURLOPT_USERAGENT => Yii::$app->request->userAgent,
+            CURLOPT_USERAGENT => (Yii::$app instanceof \yii\web\Application) ? Yii::$app->request->userAgent : '',
             CURLOPT_SSL_VERIFYHOST => 0,
             CURLOPT_SSLCERT => Yii::getAlias('@app/config/rsb/' . $this->gate->Login . '.pem'),
             CURLOPT_SSLKEY => Yii::getAlias('@app/config/rsb/' . $this->gate->Login . '.key'),
@@ -274,9 +347,10 @@ class RSBankAdapter implements IBankAdapter
         $info = curl_getinfo($curl);
 
         if(empty($curlError) && $info['http_code'] == 200) {
-            return $this->parseResponse($response);
+            $response = $this->parseResponse($response);
+            return $response;
         } else {
-            throw new RSbankAdapterExeception('Ошибка запроса: ' . $curlError);
+            throw new BankAdapterResponseException('Ошибка запроса: ' . $curlError);
         }
     }
 
@@ -289,10 +363,25 @@ class RSBankAdapter implements IBankAdapter
         $return = [];
 
         foreach (explode("\n", $response) as $row) {
-
             $rowData = explode(': ', $row);
             $return[$rowData[0]] = $rowData[1];
         }
         return $return;
+    }
+
+    protected function getStatusResponse(string $result)
+    {
+        switch ($result) {
+            case 'CREATED':
+            case 'PENDING':
+                return BaseResponse::STATUS_CREATED;
+            case 'OK':
+                return BaseResponse::STATUS_DONE;
+            case 'REVERSED':
+            case 'AUTOREVERSED':
+            return BaseResponse::STATUS_CANCEL;
+            default:
+                return BaseResponse::STATUS_ERROR;
+        }
     }
 }

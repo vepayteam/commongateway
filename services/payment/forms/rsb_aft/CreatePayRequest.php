@@ -18,7 +18,6 @@ class CreatePayRequest extends Model
     public $pan;
     public $expiry;
     public $cvc2;
-    public $ecomm_payment_scenario = 3298;
     public $server_version = '2.0';
 
     public function rules()
@@ -26,9 +25,9 @@ class CreatePayRequest extends Model
         return [
             [[
                 'command', 'mrch_transaction_id', 'amount', 'currency', 'client_ip_addr',
-                'cardname', 'pan', 'expiry', 'cvc2', 'ecomm_payment_scenarion'
+                'cardname', 'pan', 'expiry', 'cvc2'
             ], 'required'],
-            [['amount', 'currency', 'cvc2', 'ecomm_payment_scenarion'], 'number']
+            [['amount', 'currency', 'cvc2'], 'number']
         ];
     }
 

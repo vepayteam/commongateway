@@ -67,9 +67,11 @@ class CreatePayStrategy
         }
         $this->setCardPay($paySchet);
 
-        $this->checkAndChangeAdapterIfTkbAndMaestroCard($paySchet);
-        $this->checkAndChangeAdapterIfRsbNeedAft($paySchet);
-        $this->checkAndChangeAdapterIfRsbEcomm($paySchet);
+        if($paySchet->IdUsluga != Uslugatovar::REG_CARD_ID) {
+            $this->checkAndChangeGateIfTkbAndMaestroCard($paySchet);
+            $this->checkAndChangeGateIfRsbNeedAft($paySchet);
+            $this->checkAndChangeGateIfRsbEcomm($paySchet);
+        }
 
         $bankAdapterBuilder = new BankAdapterBuilder();
         $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar);
@@ -83,37 +85,15 @@ class CreatePayStrategy
             return $paySchet;
         }
 
-        $paySchet->sms_accept = 1;
-        $paySchet->UserClickPay = 1;
-        $paySchet->UrlFormPay = '/pay/form/' . $paySchet->ID;
-        $paySchet->ExtBillNumber = $this->createPayResponse->transac;
-        $paySchet->UserEmail = $this->createPayForm->Email;
-        $paySchet->CountSendOK = 0;
-
-        $paySchet->Version3DS = $this->createPayResponse->vesion3DS;
-        $paySchet->IsNeed3DSVerif = ($this->createPayResponse->isNeed3DSVerif ? 1 : 0);
-        $paySchet->AuthValue3DS = $this->createPayResponse->authValue;
-        $paySchet->DsTransId = $this->createPayResponse->dsTransId;
-        $paySchet->Eci = $this->createPayResponse->eci;
-        $paySchet->CardRefId3DS = $this->createPayResponse->cardRefId;
-
-        $paySchet->save(false);
-
+        $this->updatePaySchet($paySchet);
         if($bankAdapterBuilder->getUslugatovar()->ID == Uslugatovar::TYPE_REG_CARD) {
-            $payCard = new PayCard();
-            $payCard->number = $this->createPayForm->CardNumber;
-            $payCard->holder = $this->createPayForm->CardHolder;
-            $payCard->expYear = $this->createPayForm->CardYear;
-            $payCard->expMonth = $this->createPayForm->CardMonth;
-            $payCard->cvv = $this->createPayForm->CardCVC;
-
-            $this->paymentService->tokenizeCard($paySchet, $payCard);
+            $this->updatePaySchetWithRegCard($paySchet);
         }
 
         return $paySchet;
     }
 
-    protected function checkAndChangeAdapterIfTkbAndMaestroCard(PaySchet $paySchet)
+    protected function checkAndChangeGateIfTkbAndMaestroCard(PaySchet $paySchet)
     {
         // для погашений, карты маэстро только по еком надо
         if (
@@ -136,7 +116,7 @@ class CreatePayStrategy
         }
     }
 
-    protected function checkAndChangeAdapterIfRsbNeedAft(PaySchet $paySchet)
+    protected function checkAndChangeGateIfRsbNeedAft(PaySchet $paySchet)
     {
         if($paySchet->Bank == RSBankAdapter::$bank && $paySchet->getSummFull() > self::RSB_ECOMM_MAX_SUMM) {
             /** @var PartnerBankGate $partnerBankGate */
@@ -153,7 +133,7 @@ class CreatePayStrategy
         }
     }
 
-    protected function checkAndChangeAdapterIfRsbEcomm(PaySchet $paySchet)
+    protected function checkAndChangeGateIfRsbEcomm(PaySchet $paySchet)
     {
         if($paySchet->Bank == RSBankAdapter::$bank && $paySchet->getSummFull() < self::RSB_ECOMM_MAX_SUMM) {
             /** @var PartnerBankGate $partnerBankGate */
@@ -167,6 +147,44 @@ class CreatePayStrategy
             }
             $paySchet->changeGate($partnerBankGate);
         }
+    }
+
+    /**
+     * @param PaySchet $paySchet
+     */
+    protected function updatePaySchet(PaySchet $paySchet)
+    {
+        $paySchet->sms_accept = 1;
+        $paySchet->UserClickPay = 1;
+        $paySchet->UrlFormPay = '/pay/form/' . $paySchet->ID;
+        $paySchet->ExtBillNumber = $this->createPayResponse->transac;
+        $paySchet->UserEmail = $this->createPayForm->Email;
+        $paySchet->CountSendOK = 0;
+
+        $paySchet->Version3DS = $this->createPayResponse->vesion3DS;
+        $paySchet->IsNeed3DSVerif = ($this->createPayResponse->isNeed3DSVerif ? 1 : 0);
+        $paySchet->AuthValue3DS = $this->createPayResponse->authValue;
+        $paySchet->DsTransId = $this->createPayResponse->dsTransId;
+        $paySchet->Eci = $this->createPayResponse->eci;
+        $paySchet->CardRefId3DS = $this->createPayResponse->cardRefId;
+
+        $paySchet->save(false);
+    }
+
+    /**
+     * @param PaySchet $paySchet
+     * @throws Exception
+     */
+    protected function updatePaySchetWithRegCard(PaySchet $paySchet)
+    {
+        $payCard = new PayCard();
+        $payCard->number = $this->createPayForm->CardNumber;
+        $payCard->holder = $this->createPayForm->CardHolder;
+        $payCard->expYear = $this->createPayForm->CardYear;
+        $payCard->expMonth = $this->createPayForm->CardMonth;
+        $payCard->cvv = $this->createPayForm->CardCVC;
+
+        $this->paymentService->tokenizeCard($paySchet, $payCard);
     }
 
 
