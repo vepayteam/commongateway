@@ -17,7 +17,7 @@ class PaySchetQuery extends ActiveQuery
      */
     public function needCheckStatusByRsbcron()
     {
-        $searchStartTimestamp = Carbon::now()->addDays(-7)->timestamp;
+        $searchStartTimestamp = Carbon::now()->addDays(-14)->timestamp;
         return $this
             ->innerJoin(
                 Uslugatovar::tableName(),
