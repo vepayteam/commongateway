@@ -49,7 +49,7 @@ class Validator
                 continue;
             }
 
-            if (empty($parameters[$fieldName])) {
+            if (!isset($parameters[$fieldName])) {
                 if ($rule === static::REQUIRED) {
                     throw new ValidationException("Required parameter '{$fieldName}' is not defined.",422);
                 } else {
