@@ -8,6 +8,7 @@ use app\models\payonline\Uslugatovar;
 use app\services\notifications\models\NotificationPay;
 use app\services\payment\banks\Banks;
 use app\services\payment\exceptions\GateException;
+use app\services\payment\models\active_query\PaySchetQuery;
 use Yii;
 
 /**
@@ -118,6 +119,11 @@ class PaySchet extends \yii\db\ActiveRecord
     public static function tableName()
     {
         return 'pay_schet';
+    }
+
+    public static function find()
+    {
+        return new PaySchetQuery(get_called_class());
     }
 
     /**
