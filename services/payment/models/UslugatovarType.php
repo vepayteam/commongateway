@@ -36,6 +36,16 @@ class UslugatovarType extends \yii\db\ActiveRecord
     const AVTOPLATECOMPARTS = 116; //автоплатеж еком с разбивкой
     const VYVODPAYSPARTS = 119; //перечисление по разбивке
 
+    const OUT_TYPES = [
+        self::TOSCHET,
+        self::TOCARD,
+    ];
+
+    const AUTO_TYPES = [
+        self::AVTOPLATECOM,
+        self::AVTOPLATATF,
+    ];
+
     public static function getAll()
     {
         return [
