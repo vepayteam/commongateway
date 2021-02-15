@@ -243,7 +243,6 @@ class PayShetStat extends Model
             'ps.RRN',
             'ps.CardNum',
             'ps.CardHolder',
-            'ps.BankName',
             'ps.IdKard',//
             'qp.NameUsluga',
             'ps.SummPay',
@@ -257,7 +256,6 @@ class PayShetStat extends Model
             'ps.Status',
             'ps.Period',
             'u.`UserDeviceType`',
-            'ps.IdKard',
             'ps.CardType',
             'ps.QrParams',
             'ps.IdShablon',
@@ -265,7 +263,6 @@ class PayShetStat extends Model
             'ps.IdAgent',
             'qp.IsCustom',
             'ps.ErrorInfo',
-            'ps.BankName',
             'ps.CountryUser',
             'ps.CityUser',
             'qp.ProvVoznagPC',
@@ -276,12 +273,7 @@ class PayShetStat extends Model
             'ps.Dogovor',
             'ps.FIO',
             'ps.RCCode',
-            'ps.IdOrg',
-            'ps.RRN',
-            'ps.CardNum',
-            'ps.CardHolder',
-            'ps.BankName',
-            'ps.IdKard',//IdCard->cards->IdPan->pan_token->encryptedPan
+            'b.Name as BankName',
         ];
         $query = $this->buildQuery($select, $IdPart);
 

@@ -4,6 +4,7 @@
 namespace app\models\partner\stat\export\csv;
 
 
+use app\models\partner\UserLk;
 use app\models\TU;
 use Yii;
 use yii\helpers\VarDumper;
@@ -13,6 +14,7 @@ use yii\helpers\VarDumper;
  */
 class OtchToCSV extends ToCSV
 {
+
     private $payment;
     private $repayment;
 
@@ -29,54 +31,81 @@ class OtchToCSV extends ToCSV
 
     private function header(): array
     {
-        return [
-            'ID Vepay',
-            'ExtID',
-            'Услуга',
-            'Реквизиты',
-            'Договор',
-            'ФИО',
-            'Сумма',
-            'Комиссия',
-            'Дата создания',
-            'Статус',
-            'Дата оплаты',
-            'Номер транзакции',
-            'ID мерчанта',
-            'Маска карты',
-            'Держатель карты',
-            'RRN',
-            'Хэш от номера карты',
-            'Наименование банка-эквайера',
-        ];
+        $isAdmin = UserLk::IsAdmin(Yii::$app->user);
+        $header_admin = $isAdmin ? [
+            'Комис. банка',
+            'Возн. Vepay',
+        ] : [];
+
+        return array_merge(
+            [
+                'ID Vepay',
+                'ExtID',
+                'Услуга',
+                'Реквизиты',
+                'Договор',
+                'ФИО',
+                'Сумма',
+                'Комиссия',
+                'К оплате',
+            ],
+            $header_admin,
+            [
+                'Дата создания',
+                'Статус',
+                'Ошибка',
+                'Дата оплаты',
+                'Номер транзакции',
+                'ID мерчанта',
+                'Маска карты',
+                'Держатель карты',
+                'RRN',
+                'Хэш от номера карты',
+                'Наименование банка-эквайера',
+                ]
+        );
     }
 
     private function preparationData(array $list): array
     {
+        $isAdmin = UserLk::IsAdmin(Yii::$app->user);
         $ret = [];
         $st = [0 => "Создан", 1 => "Оплачен", 2 => "Отмена", 3 => "Возврат"];
         foreach ($list['data'] as $data) {
-            if($this->checkData($data)){
-                $ret[] = [
-                    $data['ID'],
-                    $data['Extid'],
-                    str_replace('"', "", $data['NameUsluga']),
-                    $data['QrParams'],
-                    $data['Dogovor'],
-                    $data['FIO'],
-                    number_format($data['SummPay'] / 100.0, 2, ',', ''),
-                    number_format($data['ComissSumm'] / 100.0, 2, ',', ''),
-                    date("d.m.Y H:i:s", $data['DateCreate']),
-                    $st[$data['Status']],
-                    $data['DateOplat'] > 0 ? date("d.m.Y H:i:s", $data['DateOplat']) : '',
-                    $data['ExtBillNumber'],
-                    $data['IdOrg'],
-                    $data['CardNum'],
-                    $data['CardHolder'],
-                    $data['RRN'],
-                    $data['IdKard'],
-                    $data['BankName'],
-                ];
+            if($this->checkData($data)) {
+                $ret_admin = $isAdmin ? [
+                    number_format($data['BankComis'] / 100.0, 2, '.', ''),
+                    number_format($data['VoznagSumm'] / 100.0, 2, '.', ''),
+                ] : [];
+                $ret[] = array_merge(
+                    [
+                        $data['ID'],
+                        $data['Extid'],
+                        str_replace('"', "", $data['NameUsluga']),
+                        $data['QrParams'],
+                        $data['Dogovor'],
+                        $data['FIO'],
+                        number_format($data['SummPay'] / 100.0, 2, '.', ''),
+                        number_format($data['ComissSumm'] / 100.0, 2, '.', ''),
+                        number_format(($data['SummPay'] + $data['ComissSumm']) / 100.0, 2, '.', ''),
+                    ],
+                    $ret_admin,
+                    [
+                        date("d.m.Y H:i:s", $data['DateCreate']),
+                        $st[$data['Status']],
+                        $data['ErrorInfo'],
+                        $data['DateOplat'] > 0 ? date("d.m.Y H:i:s", $data['DateOplat']) : '',
+                        $data['ExtBillNumber'],
+                        $data['IdOrg'],
+                        $data['CardNum'],
+                        $data['CardHolder'],
+                        $data['RRN'],
+                        $data['IdKard'],
+                        $data['BankName'],
+                    ]
+
+                );
+
             }
         }
         array_push($ret, $this->totalString($ret));
