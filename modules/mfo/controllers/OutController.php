@@ -19,7 +19,9 @@ use app\models\payonline\CreatePay;
 use app\models\payonline\Partner;
 use app\models\Payschets;
 use app\models\TU;
+use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\models\PaySchet;
+use app\services\payment\payment_strategies\mfo\MfoOutCardStrategy;
 use Yii;
 use yii\base\Exception;
 use yii\mutex\FileMutex;
@@ -80,6 +82,20 @@ class OutController extends Controller
         $mfo = new MfoReq();
         $mfo->LoadData(Yii::$app->request->getRawBody());
         Yii::warning("mfo/out/paycard Authorization mfo=$mfo->mfo", 'mfo_out_paycard');
+
+        $outCardPayForm = new OutCardPayForm();
+        $outCardPayForm->partner = $mfo->getPartner();
+        $outCardPayForm->load($mfo->Req(), '');
+        if (!$outCardPayForm->validate()) {
+            Yii::warning("out/paycard: " . $outCardPayForm->GetError(), 'mfo');
+            return ['status' => 0, 'message' => $outCardPayForm->GetError()];
+        }
+
+        $mfoOutCardStrategy = new MfoOutCardStrategy($outCardPayForm);
+        $paySchet = $mfoOutCardStrategy->exec();
+
+
+
         $Card = null;
         $kfCard = new KfCard();
         $kfCard->scenario = KfCard::SCENARIO_INFO;

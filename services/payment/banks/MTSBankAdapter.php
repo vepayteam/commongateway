@@ -14,6 +14,8 @@ use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
+use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CheckStatusPayForm;
@@ -23,10 +25,14 @@ use app\services\payment\forms\mts\CheckStatusPayRequest;
 use app\services\payment\forms\mts\ConfirmPayRequest;
 use app\services\payment\forms\mts\CreatePayRequest;
 use app\services\payment\forms\mts\PayOrderRequest;
+use app\services\payment\forms\mts\RefundPayRequest;
+use app\services\payment\forms\mts\ReversePayRequest;
 use app\services\payment\forms\OkPayForm;
+use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
+use Carbon\Carbon;
 use qfsx\yii2\curl\Curl;
 use SoapClient;
 use SoapHeader;
@@ -923,5 +929,13 @@ class MTSBankAdapter implements IBankAdapter
     public function refundPay(RefundPayForm $refundPayForm)
     {
         // TODO: Implement refundOrder() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function outCardPay(OutCardPayForm $outCardPayForm)
+    {
+        throw new GateException('Метод недоступен');
     }
 }

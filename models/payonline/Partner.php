@@ -10,6 +10,7 @@ use app\models\TU;
 use app\services\partners\models\PartnerOption;
 use app\services\partners\models\PartnerOptions;
 use app\services\payment\models\PartnerBankGate;
+use app\services\payment\models\PaySchet;
 use Yii;
 use yii\web\UploadedFile;
 
@@ -387,7 +388,7 @@ class Partner extends \yii\db\ActiveRecord
      */
     public function getPartner_bank_rekviz()
     {
-        return $this->hasMany(PartnerBankRekviz::className(), ['IdPartner' => 'ID']);
+        return $this->hasMany(PartnerBankRekviz::class, ['IdPartner' => 'ID']);
     }
 
     /**
@@ -395,7 +396,15 @@ class Partner extends \yii\db\ActiveRecord
      */
     public function getPartnerDogovor()
     {
-        return $this->hasMany(PartnerDogovor::className(), ['IdPartner' => 'ID']);
+        return $this->hasMany(PartnerDogovor::class, ['IdPartner' => 'ID']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getPaySchets()
+    {
+        return $this->hasMany(PaySchet::class, ['IdOrg' => 'ID']);
     }
 
     public function CreateUslug()
