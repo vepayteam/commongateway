@@ -22,12 +22,12 @@ class MfoStat
 
     const HEAD_ADMIN = [
         'ID Vepay', 'ExtID', 'Услуга', 'Реквизиты', 'Договор', 'ФИО', 'Сумма', 'Комиссия', 'К оплате',
-        'Комис. банка', 'Возн. Vepay', 'Дата создания', 'Статус', 'Дата оплаты', 'Номер транзакции',
+        'Комис. банка', 'Возн. Vepay', 'Дата создания', 'Статус', 'Ошибка', 'Дата оплаты', 'Номер транзакции',
         'ID мерчанта', 'Маска карты', 'Держатель карты', 'RRN', 'Хэш от номера карты', 'Наименование банка-эквайера',
     ];
     const HEAD_USER = [
         'ID Vepay', 'ExtID', 'Услуга', 'Реквизиты', 'Договор', 'ФИО', 'Сумма', 'Комиссия', 'К оплате',
-        'Дата создания', 'Статус', 'Дата оплаты', 'Номер операции',
+        'Дата создания', 'Статус', 'Ошибка', 'Дата оплаты', 'Номер операции',
         'ID мерчанта', 'Маска карты', 'Держатель карты', 'RRN', 'Хэш от номера карты', 'Наименование банка-эквайера',
     ];
 
@@ -36,7 +36,7 @@ class MfoStat
         $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
         $payShetList = new PayShetStat();
         $payShetList->load($post, '');
-        $list = $payShetList->getList($IsAdmin, 0, 1);
+        $list = $payShetList->getList2($IsAdmin, 0, 1);
 
         $st = [0 => "Создан", 1 => "Оплачен", 2 => "Отмена", 3 => "Возврат"];
         $data = [];
@@ -57,6 +57,7 @@ class MfoStat
                     $row['VoznagSumm'] / 100.0,
                     date("d.m.Y H:i:s", $row['DateCreate']),
                     $st[$row['Status']],
+                    $row['ErrorInfo'],
                     $row['DateOplat'] > 0 ? date("d.m.Y H:i:s", $row['DateOplat']) : '',
                     $row['ExtBillNumber'],
                     $row['IdOrg'],
@@ -87,6 +88,7 @@ class MfoStat
                     ($row['SummPay'] + $row['ComissSumm']) / 100.0,
                     date("d.m.Y H:i:s", $row['DateCreate']),
                     $st[$row['Status']],
+                    $row['ErrorInfo'],
                     $row['DateOplat'] > 0 ? date("d.m.Y H:i:s", $row['DateOplat']) : '',
                     $row['IdOrg'],
                     $row['CardNum'],

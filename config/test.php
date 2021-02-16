@@ -74,5 +74,6 @@ return [
         'lk' => [
             'class' => 'app\modules\lk\Module',
         ],
-    ],	
+    ],
+
 ];

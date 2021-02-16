@@ -10,6 +10,10 @@ use app\models\kfapi\KfCard;
 use app\models\kfapi\KfPay;
 use app\models\mfo\MfoReq;
 use app\models\payonline\CreatePay;
+use app\services\payment\exceptions\CreatePayException;
+use app\services\payment\exceptions\GateException;
+use app\services\payment\forms\CardRegForm;
+use app\services\payment\payment_strategies\mfo\MfoCardRegStrategy;
 use Yii;
 use yii\base\Exception;
 use yii\mutex\FileMutex;
@@ -125,72 +129,37 @@ class CardController extends Controller
         $mfo = new MfoReq();
         $mfo->LoadData(Yii::$app->request->getRawBody());
 
-        $type = $mfo->GetReq('type');
+        $cardRegForm = new CardRegForm();
+        $cardRegForm->partner = $mfo->getPartner();
+        $cardRegForm->load(Yii::$app->request->post(), '');
 
-        $kfCard = new KfCard();
-        $kfCard->scenario = KfCard::SCENARIO_REG;
-        $kfCard->load($mfo->Req(),'');
-        if (!$kfCard->validate()) {
-            Yii::warning("card/reg: " . $kfCard->GetError());
-            return ['status' => 0, 'message' => $kfCard->GetError()];
+        if(!$cardRegForm->validate()) {
+            return ['status' => 0, 'message' => $cardRegForm->GetError()];
         }
 
         $mutex = new FileMutex();
-        if (!empty($kfCard->extid)) {
-            //проверка на повторный запрос
-            if (!$mutex->acquire('getPaySchetExt' . $kfCard->extid, 30)) {
-                throw new Exception('getPaySchetExt: error lock!');
-            }
-            $pay = new CreatePay();
-            $paramsExist = $pay->getPaySchetExt($kfCard->extid, 1, $mfo->mfo);
-            if ($paramsExist) {
-                return ['status' => 1, 'message' => '', 'id' => (int)$paramsExist['IdPay'], 'url' => $kfCard->GetRegForm($paramsExist['IdPay'])];
-            }
+        if(!empty($cardRegForm->extid)) {
+            $mutex->acquire($cardRegForm->getMutexKey(), CardRegForm::MUTEX_TIMEOUT);
         }
 
-        //зарегистрировать карту
-        $reguser = new Reguser();
-        $user = $reguser->findUser('0', $mfo->mfo.'-'.time().random_int(100,999), md5($mfo->mfo.'-'.time()), $mfo->mfo, false);
-        $data['user'] = $user;
-        if (!empty($user->Email)) {
-            $data['email'] = $user->Email;
-        }
+        $mfoCardRegStrategy = new MfoCardRegStrategy($cardRegForm);
 
-        Yii::warning('/card/reg mfo='. $mfo->mfo . " type=".$type, 'mfo');
-
-        if ($type == 0) {
-            //карта для автоплатежа
-            $pay = new CreatePay($user);
-            $data = $pay->payActivateCard(0, $kfCard,3, TCBank::$bank, $mfo->mfo); //Provparams
-            if (!empty($kfCard->extid)) {
-                $mutex->release('getPaySchetExt' . $kfCard->extid);
-            }
-            //PCI DSS
+        try {
+            $paySchet = $mfoCardRegStrategy->exec();
+            $mutex->release($cardRegForm->getMutexKey());
             return [
                 'status' => 1,
                 'message' => '',
-                'id' => $data['IdPay'],
-                'url' => $kfCard->GetRegForm($data['IdPay'])
+                'id' => $paySchet->ID,
+                'url' => $paySchet->getFromUrl(),
             ];
-
-        } elseif ($type == 1) {
-            //карта для выплат
-            $pay = new CreatePay($user);
-            $data = $pay->payActivateCard(0, $kfCard,3,0, $mfo->mfo); //Provparams
-            if (!empty($kfCard->extid)) {
-                $mutex->release('getPaySchetExt' . $kfCard->extid);
-            }
-
-            if (isset($data['IdPay'])) {
-                return [
-                    'status' => 1,
-                    'message' => '',
-                    'id' => $data['IdPay'],
-                    'url' => $mfo->getLinkOutCard($data['IdPay'])
-                ];
-            }
+        } catch (CreatePayException $e) {
+            $mutex->release($cardRegForm->getMutexKey());
+            return ['status' => 0, 'message' => 'Ошибка запроса'];
+        } catch (GateException $e) {
+            $mutex->release($cardRegForm->getMutexKey());
+            return ['status' => 0, 'message' => 'Ошибка запроса'];
         }
-        return ['status' => 0, 'message' => 'Ошибка запроса'];
     }
 
     /**

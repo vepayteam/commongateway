@@ -41,6 +41,7 @@ return [
     ],
 
     'testCards' => require(__DIR__ . '/test_cards.php'),
+    'testParams' => require(__DIR__ . '/test_params.php'),
 
     'components' => [
         'redis' => [
