@@ -46,17 +46,17 @@ class NativeClient implements ClientInterface
      */
     public function send(RequestInterface $request): ResponseInterface
     {
+        $parameters = $request->getPreparedParameters();
+        $options = $request->getPreparedOptions();
+        $headers = $request->getPreparedHeaders();
+
         $this->beforeSend($request);
 
         try {
             $response = $this->client->request(
                 $request->getMethod(),
                 $request->getEndpoint(),
-                array_merge(
-                    $request->getPreparedParameters(),
-                    $request->getPreparedOptions(),
-                    $request->getPreparedHeaders()
-                )
+                array_merge($parameters, $options, $headers)
             );
         } catch (Exception $exception) {
             Config::getInstance()->logger->error($exception->getCode() . ': ' . $exception->getMessage(), __CLASS__);
