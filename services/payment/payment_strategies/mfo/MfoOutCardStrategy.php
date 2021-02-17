@@ -7,13 +7,17 @@ namespace app\services\payment\payment_strategies\mfo;
 use app\models\crypt\CardToken;
 use app\models\payonline\Cards;
 use app\models\payonline\Uslugatovar;
+use app\services\payment\banks\bank_adapter_responses\BaseResponse;
+use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\CardTokenException;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\OutCardPayForm;
+use app\services\payment\models\PayCard;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
+use app\services\payment\PaymentService;
 use Yii;
 use yii\base\Exception;
 use yii\mutex\FileMutex;
@@ -22,6 +26,8 @@ class MfoOutCardStrategy
 {
     /** @var OutCardPayForm */
     private $outCardPayForm;
+    /** @var PaymentService */
+    protected $paymentService;
 
     /**
      * @param OutCardPayForm $outCardPayForm
@@ -31,10 +37,15 @@ class MfoOutCardStrategy
         $this->outCardPayForm = $outCardPayForm;
     }
 
-
+    /**
+     * @return PaySchet
+     * @throws CardTokenException
+     * @throws CreatePayException
+     * @throws Exception
+     * @throws GateException
+     */
     public function exec()
     {
-
         $mutex = new FileMutex();
         if (!$mutex->acquire($this->outCardPayForm->getMutexKey(), 30)) {
             throw new Exception('MfoOutCardStrategy: error lock!');
@@ -46,10 +57,25 @@ class MfoOutCardStrategy
             throw new CreatePayException('Нарушение уникальности запроса');
         }
 
+        $uslugatovar = $this->getUslugatovar();
+        if(!$uslugatovar) {
+            throw new GateException('Услуга не найдена');
+        }
+        $bankAdapterBuilder = new BankAdapterBuilder();
+        $bankAdapterBuilder->build($this->outCardPayForm->partner, $uslugatovar);
+
+        if(!$this->outCardPayForm->cardnum) {
+            throw new CardTokenException('Ошибка при получение номера карты');
+        }
+
         $card = $this->outCardPayForm->getCardOut();
+        $token = null;
+        $paySchet = null;
         if($card) {
-            $CardToken = new CardToken();
-            $this->outCardPayForm->cardnum = $CardToken->GetCardByToken($card->IdPan);
+            $cardToken = new CardToken();
+            $this->outCardPayForm->cardnum = $cardToken->GetCardByToken($card->IdPan);
+            $token = $card->IdPan;
+            $paySchet = $this->createPaySchet($bankAdapterBuilder, $token, $card);
         } else {
             $cartToken = new CardToken();
             if (($token = $cartToken->CheckExistToken($this->outCardPayForm->cardnum, 0)) == 0) {
@@ -58,21 +84,22 @@ class MfoOutCardStrategy
             if ($token === 0) {
                 throw new CardTokenException('Ошибка при формирование токена');
             }
+            $paySchet = $this->createPaySchet($bankAdapterBuilder, $token);
         }
-
-        if(!$this->outCardPayForm->cardnum) {
-            throw new CardTokenException('Ошибка при получение номера карты');
-        }
-
-        $uslugatovar = $this->getUslugatovar();
-        if(!$uslugatovar) {
-            throw new GateException('Услуга не найдена');
-        }
-        $bankAdapterBuilder = new BankAdapterBuilder();
-        $bankAdapterBuilder->build($this->outCardPayForm->partner, $uslugatovar);
-
-        $paySchet = $this->createPaySchet();
+        $this->outCardPayForm->paySchet = $paySchet;
         $outCardPayResponse = $bankAdapterBuilder->getBankAdapter()->outCardPay($this->outCardPayForm);
+
+        if($outCardPayResponse->status == BaseResponse::STATUS_DONE) {
+            $paySchet->ExtBillNumber = $outCardPayResponse->trans;
+            $paySchet->save(false);
+        } else {
+            $paySchet->Status = PaySchet::STATUS_ERROR;
+            $paySchet->ErrorInfo = $outCardPayResponse->message;
+            $paySchet->save(false);
+            throw new CreatePayException($outCardPayResponse->message);
+        }
+
+        return $paySchet;
     }
 
     /**
@@ -96,9 +123,8 @@ class MfoOutCardStrategy
         return Uslugatovar::find()
             ->where([
                 'IsCustom' => UslugatovarType::TOCARD,
-                'Enable' => 1,
+                'IsDeleted' => 0,
             ])
-            ->orderBy('Priority DESC')
             ->one();
     }
 
@@ -108,26 +134,23 @@ class MfoOutCardStrategy
      * @return PaySchet
      * @throws CreatePayException
      */
-    private function createPaySchet(BankAdapterBuilder $bankAdapterBuilder, Cards $card)
+    private function createPaySchet(BankAdapterBuilder $bankAdapterBuilder, $token, Cards $card = null)
     {
-        $cartToken = new CardToken();
-        $token = $cartToken->CheckExistToken($card->CardNumber,$card->getMonth() . $card->getYear());
-        if ($token == 0) {
-            $token = $cartToken->CreateToken(
-                $card->CardNumber,
-                $card->getMonth() . $card->getYear(), $card->CardHolder
-            );
-        }
-
         $paySchet = new PaySchet();
 
+        if($card) {
+            $paySchet->IdKard = $card->ID;
+            $paySchet->CardNum = Cards::MaskCard($this->outCardPayForm->cardnum);
+            $paySchet->CardType = Cards::GetCardBrand(Cards::GetTypeCard($this->outCardPayForm->cardnum));
+            $paySchet->CardHolder = mb_substr($card->CardHolder, 0, 99);
+            $paySchet->CardExp = $card->getMonth() . $card->getYear();
+        } else {
+            $paySchet->CardNum = Cards::MaskCard($this->outCardPayForm->cardnum);
+        }
+
         $paySchet->Status = PaySchet::STATUS_WAITING;
-        $paySchet->IdKard = $card->ID;
-        $paySchet->CardNum = Cards::MaskCard($card->CardNumber);
-        $paySchet->CardType = Cards::GetCardBrand(Cards::GetTypeCard($card->CardNumber));
-        $paySchet->CardHolder = mb_substr($card->CardHolder, 0, 99);
-        $paySchet->CardExp = $card->getMonth() . $card->getYear();
-        $paySchet->IdShablon = $token;
+
+        $paySchet->IdShablon = 0;
 
         $paySchet->Bank = $bankAdapterBuilder->getBankAdapter()->getBankId();
         $paySchet->IdUsluga = $bankAdapterBuilder->getUslugatovar()->ID;

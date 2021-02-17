@@ -19,6 +19,9 @@ use app\models\payonline\CreatePay;
 use app\models\payonline\Partner;
 use app\models\Payschets;
 use app\models\TU;
+use app\services\payment\exceptions\CardTokenException;
+use app\services\payment\exceptions\CreatePayException;
+use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\models\PaySchet;
 use app\services\payment\payment_strategies\mfo\MfoOutCardStrategy;
@@ -90,144 +93,23 @@ class OutController extends Controller
             Yii::warning("out/paycard: " . $outCardPayForm->GetError(), 'mfo');
             return ['status' => 0, 'message' => $outCardPayForm->GetError()];
         }
+        // рубли в коп
+        $outCardPayForm->amount *= 100;
 
         $mfoOutCardStrategy = new MfoOutCardStrategy($outCardPayForm);
-        $paySchet = $mfoOutCardStrategy->exec();
 
-
-
-        $Card = null;
-        $kfCard = new KfCard();
-        $kfCard->scenario = KfCard::SCENARIO_INFO;
-        $kfCard->load($mfo->Req(), '');
-        if ($kfCard->validate()) {
-            $Card = $kfCard->FindKard($mfo->mfo);
-            Yii::warning("mfo/out/paycard Validate KfCard mfo=$mfo->mfo kfCard=$Card->ID", 'mfo_out_paycard');
+        try {
+            $paySchet = $mfoOutCardStrategy->exec();
+            return ['status' => 1, 'id' => $paySchet->ID, 'message' => ''];
+        } catch (CardTokenException $e) {
+            return ['status' => 0, 'message' => $e->getMessage()];
+        } catch (CreatePayException $e) {
+            return ['status' => 0, 'message' => $e->getMessage()];
+        } catch (GateException $e) {
+            return ['status' => 0, 'message' => $e->getMessage()];
+        } catch (Exception $e) {
+            return ['status' => 0, 'message' => $e->getMessage()];
         }
-        $kfOut = new KfOut();
-        $kfOut->scenario = $Card ? KfOut::SCENARIO_CARDID : KfOut::SCENARIO_CARD;
-        $kfOut->load($mfo->Req(), '');
-        Yii::warning('Validate KfOut mfo/out/paycard', 'mfo_out_paycard');
-        if (!$kfOut->validate()) {
-            Yii::warning("out/paycard: " . $kfOut->GetError(), 'mfo');
-            return ['status' => 0, 'message' => $kfOut->GetError()];
-        }
-        if ($Card && $Card->IdPan > 0) {
-            $CardToken = new CardToken();
-            $kfOut->cardnum = $CardToken->GetCardByToken($Card->IdPan);
-        }
-        if (empty($kfOut->cardnum)) {
-            Yii::warning("out/paycard: empty card", 'mfo');
-            return ['status' => 0, 'message' => 'empty card'];
-        }
-
-        Yii::warning('out/paycard mfo=' . $mfo->mfo . " sum=" . $kfOut->amount . " extid=" . $kfOut->extid, 'mfo');
-
-        $bank = BankMerchant::GetWorkBankOut();
-
-        $typeUsl = TU::$TOCARD;
-        Yii::warning('mfo/out/paycard Fet bank gate mfo=' . $mfo->mfo . " sum=" . $kfOut->amount . " extid=" . $kfOut->extid, 'mfo_out_paycard');
-        $bankGate = BankMerchant::Gate($mfo->mfo, $bank, $typeUsl);
-        $usl = $kfOut->GetUslug($mfo->mfo);
-        if (!$usl || !$bankGate || !$bankGate->IsGate()) {
-            return ['status' => 0, 'message' => 'Нет шлюза'];
-        }
-
-        $pay = new CreatePay();
-        Yii::warning('mfo/out/paycard CreatePay mfo=' . $mfo->mfo . " sum=" . $kfOut->amount . " extid=" . $kfOut->extid, 'mfo_out_paycard');
-        $mutex = new FileMutex();
-        if (!empty($kfOut->extid)) {
-            //проверка на повторный запрос
-            if (!$mutex->acquire('getPaySchetExt' . $kfOut->extid, 30)) {
-                throw new Exception('getPaySchetExt: error lock!');
-            }
-            $params = $pay->getPaySchetExt($kfOut->extid, $usl, $mfo->mfo);
-            if ($params) {
-                if ($kfOut->amount == $params['sumin']) {
-                    return ['status' => 1, 'id' => (int)$params['IdPay'], 'message' => ''];
-                } else {
-                    Yii::warning("out/paycard: Нарушение уникальности запроса", 'mfo');
-                    return ['status' => 0, 'id' => 0, 'message' => 'Нарушение уникальности запроса'];
-                }
-            }
-        }
-
-        Yii::warning('/out/paycard mfo=' . $mfo->mfo . " sum=" . $kfOut->amount . " extid=" . $kfOut->extid, 'mfo');
-
-        if ($Card) {
-            $token = $Card->IdPan;
-        } else {
-            //сформировать токен карты, если оплата без регистрации карты
-            Yii::warning('mfo/out/paycard CardToken mfo=' . $mfo->mfo . " sum=" . $kfOut->amount . " extid=" . $kfOut->extid, 'mfo_out_paycard');
-            $cartToken = new CardToken();
-            if (($token = $cartToken->CheckExistToken($kfOut->cardnum, 0)) == 0) {
-                $token = $cartToken->CreateToken($kfOut->cardnum, 0, '');
-            }
-            if ($token === 0) {
-                Yii::warning("out/paycard: Ошибка формирования платежа", 'mfo');
-                return ['status' => 0, 'message' => 'Ошибка формирования платежа'];
-            }
-        }
-
-        Yii::warning('mfo/out/paycard payToCard ', 'mfo_out_paycard');
-        //записывает в базу информацию о транзакции.
-        $params = $pay->payToCard($kfCard->user, [Cards::MaskCard($kfOut->cardnum), $token, $kfOut->document_id, $kfOut->fullname], $kfOut, $usl, TCBank::$bank, $mfo->mfo);
-        if (!empty($kfOut->extid)) {
-            $mutex->release('getPaySchetExt' . $kfOut->extid);
-        }
-        $params['CardNum'] = $kfOut->cardnum;
-
-        $payschets = new Payschets();
-        Yii::warning('mfo/out/paycard SetCardPay mfo=' . $mfo->mfo . " sum=" . $kfOut->amount . " extid=" . $kfOut->extid, 'mfo_out_paycard');
-        //данные карты
-        $payschets->SetCardPay($params['IdPay'], [
-            'number' => $kfOut->cardnum,
-            'holder' => '',
-            'month' => 0,
-            'year' => 0
-        ]);
-
-        Yii::warning('mfo/out/paycard AntiFraudRefund mfo=' . $mfo->mfo . " sum=" . $kfOut->amount . " extid=" . $kfOut->extid, 'mfo_out_paycard');
-        //антифрод должен рабоатть после записи в базу.
-        $anti_fraud = new AntiFraudRefund($params['IdPay'], $mfo->mfo, Cards::MaskCard($kfOut->cardnum));
-        if (!$anti_fraud->validate()) {
-            $pay->CancelReq($params['IdPay'],'Повторный платеж');
-            Yii::warning("out/paycard: Повторный платеж", 'mfo');
-            return ['status' => 0, 'message' => 'Повторный платеж'];
-        }
-
-        /*if (Yii::$app->params['TESTMODE'] == 'Y') {
-            //заглушка - тест выплаты на карту
-            $test = new MfoTestError();
-            if (!$test->TestCancelCards($kfOut->cardnum, $params['IdPay'])) {
-                $test->ConfirmOut($kfOut->cardnum, $params['IdPay']);
-            }
-            return ['status' => 1, 'id' => $params['IdPay']];
-        }*/
-
-        Yii::warning('mfo/out/paycard Find Partner mfo=' . $mfo->mfo . " sum=" . $kfOut->amount . " extid=" . $kfOut->extid, 'mfo_out_paycard');
-        $partner = Partner::findOne(['ID' => $mfo->mfo]);
-        $bankClass = Banks::getBankClassByTransferToCard($partner);
-        $payschets->ChangeBank($params['IdPay'], $bankClass::$bank);
-
-        Yii::warning('mfo/out/paycard Get BankMerchant mfo=' . $mfo->mfo . " sum=" . $kfOut->amount . " extid=" . $kfOut->extid, 'mfo_out_paycard');
-        $merchBank = BankMerchant::Get($bankClass::$bank, $bankGate);
-        $ret = $merchBank->transferToCard($params);
-        if ($ret && $ret['status'] == 1) {
-            //сохранение номера транзакции
-            Yii::warning('mfo/out/paycard SetBankTransact mfo=' . $mfo->mfo . " sum=" . $kfOut->amount . " extid=" . $kfOut->extid, 'mfo_out_paycard');
-            $payschets->SetBankTransact([
-                'idpay' => $params['IdPay'],
-                'trx_id' => $ret['transac'],
-                'url' => ''
-            ]);
-
-        } else {
-            Yii::error('mfo/out/paycard CancelReq mfo=' . $mfo->mfo . " sum=" . $kfOut->amount . " extid=" . $kfOut->extid, 'mfo_out_paycard');
-            $pay->CancelReq($params['IdPay'],'Платеж не проведен');
-        }
-
-        return ['status' => 1, 'id' => (int)$params['IdPay'], 'message' => ''];
     }
 
     /**

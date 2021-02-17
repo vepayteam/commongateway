@@ -1899,5 +1899,31 @@ class TKBankAdapter implements IBankAdapter
         $action = '/api/tcbpay/gate/registerordertounregisteredcard';
 
         $outCardPayRequest = new OutCardPayRequest();
+        $outCardPayRequest->OrderId = $outCardPayForm->paySchet->ID;
+        $outCardPayRequest->Amount = $outCardPayForm->paySchet->getSummFull();
+        $outCardPayRequest->CardInfo = [
+            'CardNumber' => $outCardPayForm->cardnum,
+        ];
+
+        $ans = $this->curlXmlReq(Json::encode($outCardPayRequest->getAttributes()), $this->bankUrl . $action);
+
+        $outCardPayResponse = new OutCardPayResponse();
+
+        if(isset($ans['xml'])) {
+            if(isset($ans['xml']['errorinfo']['errorcode']) && $ans['xml']['errorinfo']['errorcode'] == 0) {
+                $outCardPayResponse->status = BaseResponse::STATUS_DONE;
+                $outCardPayResponse->trans = $ans['xml']['ordernumber'];
+                $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'];
+            } else {
+                $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
+                $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'];
+            }
+        } else {
+            $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
+            $outCardPayResponse->message = 'Ошибка запроса';
+        }
+
+        return $outCardPayResponse;
+        $a = 0;
     }
 }

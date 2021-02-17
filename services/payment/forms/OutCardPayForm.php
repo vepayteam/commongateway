@@ -7,6 +7,7 @@ namespace app\services\payment\forms;
 use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\traits\ValidateFormTrait;
+use app\services\payment\models\PaySchet;
 use yii\base\Model;
 
 class OutCardPayForm extends Model
@@ -15,6 +16,8 @@ class OutCardPayForm extends Model
 
     /** @var Partner */
     public $partner;
+    /** @var PaySchet */
+    public $paySchet;
     /** @var Cards */
     private $_card;
 
@@ -59,6 +62,11 @@ class OutCardPayForm extends Model
                 ->one();
         }
         return $this->_card;
+    }
+
+    public function setCardOut()
+    {
+
     }
 
     /**
