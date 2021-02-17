@@ -1924,6 +1924,5 @@ class TKBankAdapter implements IBankAdapter
         }
 
         return $outCardPayResponse;
-        $a = 0;
     }
 }
