@@ -64,11 +64,6 @@ class OutCardPayForm extends Model
         return $this->_card;
     }
 
-    public function setCardOut()
-    {
-
-    }
-
     /**
      * @return string
      */
