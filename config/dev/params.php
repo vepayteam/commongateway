@@ -75,5 +75,6 @@ return [
         ],
     ],
     'login_user_token_valid_time' => 60*60,
+    'support_email' => 'support@vepay.online',
 	
 ];
