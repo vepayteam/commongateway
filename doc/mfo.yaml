@@ -160,6 +160,52 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /pay/lk-parts:
+    post:
+      tags:
+        - Pay
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PayLkParts"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusIdUrl"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /pay/auto-parts:
+    post:
+      tags:
+        - Pay
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PayAutoParts"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusId"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /pay/auto:
     post:
       tags:
@@ -553,6 +599,15 @@ components:
       name: X-Token
       description: Токен, формируется по алгоритму sha1(sha1(ключ) + sha1(тело запроса))
   schemas:
+    Part:
+      type: object
+      properties:
+        merchant_id:
+          type: number
+          description: Идентификатор партнера (поставщика услуг)
+        amount:
+          type: number
+          description: Идентификатор документа
     CardInfo:
       type: object
       properties:
@@ -616,6 +671,14 @@ components:
           type: string
           format: url
           description: Адрес для Url для возврата после отказа от оплаты
+        postbackurl:
+          type: string
+          format: url
+          description: Адрес Url для обратного вызова
+        postbackurl_v2:
+          type: string
+          format: url
+          description: Дополнительный адрес Url для обратного вызова
     CardRegAns:
       type: object
       properties:
@@ -658,6 +721,9 @@ components:
         amount:
           type: number
           description: Cумма платежа, руб
+        type:
+          type: number
+          description: Тип шлюза
         document_id:
           type: string
           maxLength: 40
@@ -687,6 +753,76 @@ components:
           type: string
           format: url
           description: Адрес для Url для возврата после отказа от оплаты
+    PayLkParts:
+      type: object
+      properties:
+        type:
+          type: number
+          description: Тип шлюза
+        extid:
+          type: string
+          description: Внешний идентификатор запроса
+        descript:
+          type: number
+          description: Описание платежа
+        successurl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после заверщения платежа (успех)
+        cancelurl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после отказа от оплаты
+        postbackurl:
+          type: string
+          format: url
+          description: Адрес Url для обратного вызова
+        failurl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после заверщения платежа (ошибка)
+        timeout:
+          type: integer
+          minimum: 10
+          maximum: 59
+          description: Тайм-аут ожидания оплаты, от 10 до 59 минут
+        fullname:
+          type: string
+          maxLength: 80
+          description: ФИО клиента
+        document_id:
+          type: string
+          maxLength: 40
+          description: Номер договора
+        parts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Part"
+    PayAutoParts:
+      type: object
+      properties:
+        card:
+          type: integer
+          description: Идентификатор карты
+        extid:
+          type: string
+          description: Внешний идентификатор запроса
+        postbackurl:
+          type: string
+          format: url
+          description: Адрес Url для обратного вызова
+        fullname:
+          type: string
+          maxLength: 80
+          description: ФИО клиента
+        document_id:
+          type: string
+          maxLength: 40
+          description: Номер договора
+        parts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Part"
     PayAuto:
       type: object
       properties:
@@ -696,6 +832,14 @@ components:
         amount:
           type: number
           description: Cумма платежа
+        fullname:
+          type: string
+          maxLength: 80
+          description: ФИО клиента
+        document_id:
+          type: string
+          maxLength: 40
+          description: Номер договора
         extid:
           type: string
           maxLength: 40

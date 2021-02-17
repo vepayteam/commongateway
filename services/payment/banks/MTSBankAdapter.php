@@ -926,9 +926,46 @@ class MTSBankAdapter implements IBankAdapter
         throw new GateException('Метод недоступен');
     }
 
+    /**
+     * @param RefundPayForm $refundPayForm
+     * @return RefundPayResponse
+     */
     public function refundPay(RefundPayForm $refundPayForm)
     {
-        // TODO: Implement refundOrder() method.
+        $paySchet = $refundPayForm->paySchet;
+
+        $refundPayResponse = new RefundPayResponse();
+        if($paySchet->Status !== PaySchet::STATUS_DONE) {
+            $refundPayResponse->status = BaseResponse::STATUS_ERROR;
+            return $refundPayResponse;
+        }
+
+        $action = '/rest/reverse.do';
+        /** @var ReversePayRequest $requestForm */
+        $requestForm = new ReversePayRequest();
+        if($paySchet->DateCreate < Carbon::now()->startOfDay()->timestamp) {
+            $action = '/rest/refund.do';
+            $requestForm = new RefundPayRequest();
+            $requestForm->amount = $paySchet->getSummFull();
+        }
+
+        $requestForm->userName = $this->gate->Login;
+        $requestForm->password = $this->gate->Password;
+        $requestForm->orderId = $paySchet->ExtBillNumber;
+
+        $ans = $this->curlXmlReq($requestForm->getAttributes(), $this->bankUrl.$action);
+        $refundPayResponse = new RefundPayResponse();
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            if (!isset($ans['xml']['errorCode']) || $ans['xml']['errorCode'] == 0) {
+                $refundPayResponse->status = BaseResponse::STATUS_DONE;
+            } else {
+                $error = $ans['xml']['errorCode'];
+                $message = $ans['xml']['errorMessage'];
+                $refundPayResponse->status = BaseResponse::STATUS_ERROR;
+                $refundPayResponse->message = $error . " : " . $message;
+            }
+        }
+        return $refundPayResponse;
     }
 
     /**
