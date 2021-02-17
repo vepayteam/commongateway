@@ -4,6 +4,7 @@
 namespace app\services\payment\forms;
 
 
+use app\models\crypt\CardToken;
 use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\traits\ValidateFormTrait;
@@ -45,7 +46,7 @@ class OutCardPayForm extends Model
             $this->addError('card', 'Ид карты или номер карты обязательны к заполнению');
         }
 
-        if($this->card > 0 && !empty($this->getCardOut())) {
+        if($this->card > 0 && empty($this->getCardOut())) {
             $this->addError('card', 'empty card');
         }
     }
@@ -56,10 +57,12 @@ class OutCardPayForm extends Model
     public function getCardOut()
     {
         if(!$this->_card) {
-            $this->_card = Cards::find()
+            $q = Cards::find()
                 ->withPartner($this->partner)
-                ->andWhere(['=', Cards::tableName() . '.ID', $this->card])
-                ->one();
+                ->andWhere(['=', Cards::tableName() . '.ID', $this->card]);
+            $this->_card = $q->one();
+            $CardToken = new CardToken();
+            $this->cardnum = $CardToken->GetCardByToken($this->_card->IdPan);
         }
         return $this->_card;
     }
