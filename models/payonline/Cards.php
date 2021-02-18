@@ -2,6 +2,7 @@
 
 namespace app\models\payonline;
 
+use app\models\payonline\active_query\CardActiveQuery;
 use app\services\payment\models\Bank;
 use Yii;
 
@@ -47,6 +48,14 @@ class Cards extends \yii\db\ActiveRecord
     public static function tableName()
     {
         return 'cards';
+    }
+
+    /**
+     * @return CardActiveQuery|\yii\db\ActiveQuery
+     */
+    public static function find()
+    {
+        return new CardActiveQuery(get_called_class());
     }
 
     /**

@@ -11,6 +11,8 @@ use app\models\queue\JobPriorityInterface;
 use app\models\TU;
 use app\services\payment\jobs\RefreshStatusPayJob;
 use app\services\payment\models\PaySchet;
+use app\services\payment\models\UslugatovarType;
+use Carbon\Carbon;
 use Yii;
 
 
@@ -47,45 +49,29 @@ class CheckpayCron
         $connection = Yii::$app->db;
 
         try {
+            $isCheckedTimeExecQuery = false;
             $startQuery = microtime(true);
 
-            // TODO: переписать запрос под orm
-            $query = $connection->createCommand('
-                SELECT
-                    m.ID,
-                    m.ExtBillNumber
-                FROM
-                    pay_schet AS m
-                    LEFT JOIN uslugatovar AS us ON us.ID = m.IdUsluga
-                WHERE
-                    m.Status = 0 AND 
-                    m.sms_accept = 1
-                    AND (
-                        (us.IsCustom NOT IN (11,13,12,16) AND m.DateLastUpdate < UNIX_TIMESTAMP() - m.TimeElapsed) 
-                        OR (us.IsCustom IN (11,13,12,16) AND m.DateLastUpdate < :NOTIMEOUT)
-                    )
-                    AND m.DateLastUpdate > :TIMEOUTOFF                     
-            ', [
-                //":TIMEOUT" => time() - $this->timeOutMin * 60,
-                ":NOTIMEOUT" => time() - 60,
-                ":TIMEOUTOFF" => time() - 3600 * 24 * 30,
-            ])
-                ->query();
 
-            Yii::warning('CheckpayCron checkStatePay queryTime: ' . (microtime(true) - $startQuery));
-            if ($query) {
-                while ($value = $query->read()) {
-                    if(empty($value['ExtBillNumber'])) {
-                        continue;
-                    }
+            $query = PaySchet::find()
+                ->needCheckStatusByRsbcron()
+                ->select([
+                    PaySchet::tableName() . '.ID',
+                    PaySchet::tableName() . '.Status',
+                    PaySchet::tableName() . '.ExtBillNumber',
+                ]);
 
-                    $paySchet = PaySchet::findOne(['ID' => $value['ID']]);
-                    $paySchet->Status = PaySchet::STATUS_WAITING_CHECK_STATUS;
+            foreach ($query->batch() as $paySchets) {
+                if(!$isCheckedTimeExecQuery) {
+                    Yii::warning('CheckpayCron checkStatePay queryTime: ' . (microtime(true) - $startQuery));
+                    $isCheckedTimeExecQuery = true;
+                }
+
+                foreach ($paySchets as $paySchet) {
                     $paySchet->save(false);
-
-                    Yii::warning('CheckpayCron checkStatePay pushed: ID=' . $value['ID']);
+                    Yii::warning('CheckpayCron checkStatePay pushed: ID=' . $paySchet->ID);
                     Yii::$app->queue->push(new RefreshStatusPayJob([
-                        'paySchetId' => $value['ID'],
+                        'paySchetId' =>  $paySchet->ID,
                     ]));
                 }
             }
