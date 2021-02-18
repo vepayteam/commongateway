@@ -14,7 +14,7 @@ class OkPayForm extends Model
     /** @var PaySchet */
     protected $paySchet;
 
-    public function roles()
+    public function rules()
     {
         return [
             ['IdPay', 'required'],
