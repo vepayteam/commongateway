@@ -8,6 +8,9 @@ use yii\base\Model;
 
 class PayCard extends Model
 {
+    const CARD_TYPE_REGISTER = 0;
+    const CARD_TYPE_NOT_REGISTER = 1;
+
     public $bankId;
     public $type;
     public $number;
