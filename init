@@ -22,6 +22,7 @@ if (isset($params['env']) && !empty($params['env'])) {
         copy($root . "/config/test/index.php", $root . "/web/index.php");
         copy($root . "/config/test/params.php", $root . "/config/params.php");
         copy($root . "/config/test/db.php", $root . "/config/db.php");
+        copy($root . "/config/test/test_params.php", $root . "/config/test_params.php");
     } elseif ($mode == "prod") {
         echo "init: prod\n";
         copy($root . "/config/prod/index.php", $root . "/web/index.php");
@@ -36,6 +37,7 @@ if (isset($params['env']) && !empty($params['env'])) {
         copy($root . "/config/dev/index.php", $root . "/web/index.php");
         copy($root . "/config/dev/params.php", $root . "/config/params.php");
         copy($root . "/config/dev/db.php", $root . "/config/db.php");
+        copy($root . "/config/dev/test_params.php", $root . "/config/test_params.php");
     }
 } else {
     echo "Run: ./init --env=prod\n";
