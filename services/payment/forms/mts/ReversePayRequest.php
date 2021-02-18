@@ -6,7 +6,7 @@ namespace app\services\payment\forms\mts;
 
 use yii\base\Model;
 
-class CheckStatusPayRequest extends BaseRequest
+class ReversePayRequest extends BaseRequest
 {
     public $orderId;
 }

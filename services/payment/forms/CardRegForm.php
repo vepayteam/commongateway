@@ -48,7 +48,7 @@ class CardRegForm extends Model
 
     public function validateType()
     {
-        if(!in_array($this->type, self::CARD_REG_TYPES)) {
+        if($this->type !== self::CARD_REG_TYPE_BY_PAY && $this->type !== self::CARD_REG_TYPE_BY_OUT) {
             $this->addError('type', 'Тип регистрации не корректный');
         }
     }

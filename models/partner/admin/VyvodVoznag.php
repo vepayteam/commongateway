@@ -266,7 +266,7 @@ class VyvodVoznag extends Model
     private function SendMail($bal, $sumPays, $NamePoluchat, $RaschShetPolushat, $datefrom, $dateto,  $idpay, $transac)
     {
         $balAfter = (float)$bal - (float)$sumPays;
-        $emailTo = ['ekolobov@vepay.online'];
+        $emailTo = [Yii::$app->params['support_email']];
 
         $mail = new SendEmail();
         $mail->send($emailTo, 'robot@vepay.online', 'Вывод комиссии с МФО',

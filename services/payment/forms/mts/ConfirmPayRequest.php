@@ -6,10 +6,8 @@ namespace app\services\payment\forms\mts;
 
 use yii\base\Model;
 
-class ConfirmPayRequest extends Model
+class ConfirmPayRequest extends BaseRequest
 {
-    public $userName;
-    public $password;
     public $mdOrder;
     public $paRes;
 }
