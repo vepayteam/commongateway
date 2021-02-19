@@ -9,15 +9,15 @@ class MfoOutControllerCest
     public function tryToPaycardTest(FunctionalTester $I)
     {
         $I->haveHttpHeader('X-Mfo', 117);
-        $I->haveHttpHeader('X-Token', 117);
+        $I->haveHttpHeader('X-Token', '4db602f436fda086d9b946267dcf0959197779cb');
         $I->amOnRoute('mfo/out/paycard');
-        $I->see('{"status":0,"message":"Cardnum cannot be blank."}');
+        $I->see('{"status":0,"message":"Ид карты или номер карты обязательны к заполнению"}');
     }
 
     public function tryToPayaccTest(FunctionalTester $I)
     {
         $I->haveHttpHeader('X-Mfo', 117);
-        $I->haveHttpHeader('X-Token', 117);
+        $I->haveHttpHeader('X-Token', '4db602f436fda086d9b946267dcf0959197779cb');
         $I->amOnRoute('mfo/out/payacc');
         $I->see('{"status":0,"message":"Fio cannot be blank."}');
     }
@@ -25,7 +25,7 @@ class MfoOutControllerCest
     public function tryToPayulTest(FunctionalTester $I)
     {
         $I->haveHttpHeader('X-Mfo', 117);
-        $I->haveHttpHeader('X-Token', 117);
+        $I->haveHttpHeader('X-Token', '4db602f436fda086d9b946267dcf0959197779cb');
         $I->amOnRoute('mfo/out/payul');
         $I->see('{"status":0,"message":"Name cannot be blank."}');
     }
@@ -33,7 +33,7 @@ class MfoOutControllerCest
     public function tryToStateTest(FunctionalTester $I)
     {
         $I->haveHttpHeader('X-Mfo', 117);
-        $I->haveHttpHeader('X-Token', 117);
+        $I->haveHttpHeader('X-Token', '4db602f436fda086d9b946267dcf0959197779cb');
         $I->amOnRoute('mfo/out/state');
         $I->see('{"status":0,"message":"Счет не найден"}');
     }

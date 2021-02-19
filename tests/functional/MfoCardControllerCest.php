@@ -9,7 +9,7 @@ class MfoCardControllerCest
     public function tryToInfoTest(FunctionalTester $I)
     {
         $I->haveHttpHeader('X-Mfo', 117);
-        $I->haveHttpHeader('X-Token', 117);
+        $I->haveHttpHeader('X-Token', '4db602f436fda086d9b946267dcf0959197779cb');
         $I->amOnRoute('mfo/card/info');
         $I->see('{"status":0,"message":"Нет такой карты"}');
     }
@@ -17,7 +17,7 @@ class MfoCardControllerCest
     public function tryToRegTest(FunctionalTester $I)
     {
         $I->haveHttpHeader('X-Mfo', 117);
-        $I->haveHttpHeader('X-Token', 117);
+        $I->haveHttpHeader('X-Token', '4db602f436fda086d9b946267dcf0959197779cb');
         $I->amOnRoute('mfo/card/info');
         $I->see('{"status":0,"message":"Нет такой карты"}');
     }
@@ -25,7 +25,7 @@ class MfoCardControllerCest
     public function tryToGetTest(FunctionalTester $I)
     {
         $I->haveHttpHeader('X-Mfo', 117);
-        $I->haveHttpHeader('X-Token', 117);
+        $I->haveHttpHeader('X-Token', '4db602f436fda086d9b946267dcf0959197779cb');
         $I->amOnRoute('mfo/card/info');
         $I->see('{"status":0,"message":"Нет такой карты"}');
     }
@@ -33,7 +33,7 @@ class MfoCardControllerCest
     public function tryToDelTest(FunctionalTester $I)
     {
         $I->haveHttpHeader('X-Mfo', 117);
-        $I->haveHttpHeader('X-Token', 117);
+        $I->haveHttpHeader('X-Token', '4db602f436fda086d9b946267dcf0959197779cb');
         $I->amOnRoute('mfo/card/info');
         $I->see('{"status":0,"message":"Нет такой карты"}');
     }
