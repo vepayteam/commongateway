@@ -61,8 +61,10 @@ class OutCardPayForm extends Model
                 ->withPartner($this->partner)
                 ->andWhere(['=', Cards::tableName() . '.ID', $this->card]);
             $this->_card = $q->one();
-            $CardToken = new CardToken();
-            $this->cardnum = $CardToken->GetCardByToken($this->_card->IdPan);
+            if($this->_card) {
+                $CardToken = new CardToken();
+                $this->cardnum = $CardToken->GetCardByToken($this->_card->IdPan);
+            }
         }
         return $this->_card;
     }

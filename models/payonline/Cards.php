@@ -3,6 +3,7 @@
 namespace app\models\payonline;
 
 use app\models\payonline\active_query\CardActiveQuery;
+use app\services\cards\models\PanToken;
 use Yii;
 
 /**
