@@ -36,7 +36,7 @@ class ModelsMfoMfoReqTest extends \Codeception\Test\Unit
         if (Yii::$app->params['DEVMODE'] == 'Y') {
             $this->assertEquals(true, $checkMfoToken->invoke($mfoReq, '[]', 117, '4db602f436fda086d9b946267dcf0959197779cb'));
         } elseif (Yii::$app->params['TESTMODE'] == 'Y') {
-            $this->assertEquals(false, $checkMfoToken->invoke($mfoReq, '[]', 117, '4db602f436fda086d9b946267dcf0959197779cb'));
+            $this->assertEquals(true, $checkMfoToken->invoke($mfoReq, '[]', 117, '4db602f436fda086d9b946267dcf0959197779cb'));
         }
     }
 
