@@ -131,7 +131,7 @@ class CardController extends Controller
 
         $cardRegForm = new CardRegForm();
         $cardRegForm->partner = $mfo->getPartner();
-        $cardRegForm->load(Yii::$app->request->post(), '');
+        $cardRegForm->load($mfo->Req(), '');
 
         if(!$cardRegForm->validate()) {
             return ['status' => 0, 'message' => $cardRegForm->GetError()];

@@ -14,6 +14,8 @@ use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
+use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CheckStatusPayForm;
@@ -23,10 +25,14 @@ use app\services\payment\forms\mts\CheckStatusPayRequest;
 use app\services\payment\forms\mts\ConfirmPayRequest;
 use app\services\payment\forms\mts\CreatePayRequest;
 use app\services\payment\forms\mts\PayOrderRequest;
+use app\services\payment\forms\mts\RefundPayRequest;
+use app\services\payment\forms\mts\ReversePayRequest;
 use app\services\payment\forms\OkPayForm;
+use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
+use Carbon\Carbon;
 use qfsx\yii2\curl\Curl;
 use SoapClient;
 use SoapHeader;
@@ -920,8 +926,53 @@ class MTSBankAdapter implements IBankAdapter
         throw new GateException('Метод недоступен');
     }
 
+    /**
+     * @param RefundPayForm $refundPayForm
+     * @return RefundPayResponse
+     */
     public function refundPay(RefundPayForm $refundPayForm)
     {
-        // TODO: Implement refundOrder() method.
+        $paySchet = $refundPayForm->paySchet;
+
+        $refundPayResponse = new RefundPayResponse();
+        if($paySchet->Status !== PaySchet::STATUS_DONE) {
+            $refundPayResponse->status = BaseResponse::STATUS_ERROR;
+            return $refundPayResponse;
+        }
+
+        $action = '/rest/reverse.do';
+        /** @var ReversePayRequest $requestForm */
+        $requestForm = new ReversePayRequest();
+        if($paySchet->DateCreate < Carbon::now()->startOfDay()->timestamp) {
+            $action = '/rest/refund.do';
+            $requestForm = new RefundPayRequest();
+            $requestForm->amount = $paySchet->getSummFull();
+        }
+
+        $requestForm->userName = $this->gate->Login;
+        $requestForm->password = $this->gate->Password;
+        $requestForm->orderId = $paySchet->ExtBillNumber;
+
+        $ans = $this->curlXmlReq($requestForm->getAttributes(), $this->bankUrl.$action);
+        $refundPayResponse = new RefundPayResponse();
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            if (!isset($ans['xml']['errorCode']) || $ans['xml']['errorCode'] == 0) {
+                $refundPayResponse->status = BaseResponse::STATUS_DONE;
+            } else {
+                $error = $ans['xml']['errorCode'];
+                $message = $ans['xml']['errorMessage'];
+                $refundPayResponse->status = BaseResponse::STATUS_ERROR;
+                $refundPayResponse->message = $error . " : " . $message;
+            }
+        }
+        return $refundPayResponse;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function outCardPay(OutCardPayForm $outCardPayForm)
+    {
+        throw new GateException('Метод недоступен');
     }
 }

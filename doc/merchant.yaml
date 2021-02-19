@@ -66,6 +66,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /merchant/pay-parts:
+    post:
+      tags:
+        - Pay
+      summary: Расщепление платежей
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PayParts"
+        description: ID платежа
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusIdUrl"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /recarring/pay:
     post:
       tags:
@@ -86,6 +111,56 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StatusId"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /recarring/reg:
+    post:
+      tags:
+        - Pay
+      summary: Регистрация карты
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecarringReg"
+        description: Параметры платежа
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusId"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /recarring/get:
+    post:
+      tags:
+        - Pay
+      summary: Получение идентификатора карты
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecarringGet"
+        description: Параметры платежа
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusCard"
         default:
           description: Error (40X,500)
           content:
@@ -151,6 +226,60 @@ components:
       name: X-Token
       description: Токен, формируется по алгоритму sha1(sha1(ключ) + sha1(тело запроса))
   schemas:
+    Part:
+      type: object
+      properties:
+        merchant_id:
+          type: number
+          description: Идентификатор партнера (поставщика услуг)
+        amount:
+          type: number
+          description: Идентификатор документа
+    PayParts:
+      type: object
+      properties:
+        type:
+          type: number
+          description: Тип шлюза
+        extid:
+          type: string
+          description: Внешний идентификатор запроса
+        descript:
+          type: number
+          description: Описание платежа
+        successurl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после заверщения платежа (успех)
+        cancelurl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после отказа от оплаты
+        postbackurl:
+          type: string
+          format: url
+          description: Адрес Url для обратного вызова
+        failurl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после заверщения платежа (ошибка)
+        timeout:
+          type: integer
+          minimum: 10
+          maximum: 60
+          description: Тайм-аут ожидания оплаты, от 10 до 60 минут
+        fullname:
+          type: string
+          maxLength: 80
+          description: ФИО клиента
+        document_id:
+          type: string
+          maxLength: 40
+          description: Номер договора
+        parts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Part"
     PayIn:
       type: object
       properties:
@@ -186,6 +315,48 @@ components:
         regcard:
           type: integer
           description: (опционально) 1 – регистрация карты после платежа
+        postbackurl:
+          type: string
+          format: url
+          description: Адрес Url для обратного вызова
+        postbackurl_v2:
+          type: string
+          format: url
+          description: Дополнительный адрес Url для обратного вызова
+    RecarringReg:
+      type: object
+      properties:
+        type:
+          type: integer
+          description: (опционально) Тип шлюза - 0 – ECOM,1 – ЖКХ
+        extid:
+          type: string
+          description: Внешний идентификатор запроса
+        timeout:
+          type: integer
+          minimum: 10
+          maximum: 60
+          description: Тайм-аут ожидания оплаты, от 10 до 60 минут
+        successurl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после заверщения платежа (успех)
+        failurl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после заверщения платежа (ошибка)
+        cancelurl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после отказа от оплаты
+    RecarringGet:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: integer
+          description: type=0 - карта для автоплатежа; type=1 - карта для пополнения
     IdState:
       type: object
       properties:
@@ -205,6 +376,30 @@ components:
           type: string
           maxLength: 40
           description: Внешний идентификатор запроса
+        fullname:
+          type: string
+          maxLength: 80
+          description: ФИО клиента
+        document_id:
+          type: string
+          maxLength: 40
+          description: Номер договора
+        postbackurl:
+          type: string
+          format: url
+          description: Адрес Url для обратного вызова
+        postbackurl_v2:
+          type: string
+          format: url
+          description: Дополнительный адрес Url для обратного вызова
+    StatusCard:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Статус (0 - в обработке, 1 - успешно, 2 - ошибка, 3 - отменен)
+        card:
+          $ref: "#/components/schemas/CardInfo"
     StatusResult:
       type: object
       properties:

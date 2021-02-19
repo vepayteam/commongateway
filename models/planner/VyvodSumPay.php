@@ -360,7 +360,7 @@ class VyvodSumPay
     private function SendMail($bal, $sumPays, $NamePoluchat, $RaschShetPolushat, $date, $idpay, $transac)
     {
         $balAfter = (float)$bal - (float)$sumPays;
-        $emailTo = ['ekolobov@vepay.online'];
+        $emailTo = [Yii::$app->params['support_email']];
 
         $mail = new SendEmail();
         $mail->send($emailTo, 'robot@vepay.online','Перечисление средств МФО',

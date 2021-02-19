@@ -8,6 +8,7 @@ use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\adg\CreatePayRequest;
 use app\services\payment\forms\AutoPayForm;
@@ -15,6 +16,7 @@ use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\OkPayForm;
+use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\helpers\ADGroupBankHelper;
 use app\services\payment\models\adb\ClientCardModel;
@@ -149,5 +151,13 @@ class ADGroupBankAdapter implements IBankAdapter
     public function refundPay(RefundPayForm $refundPayForm)
     {
         // TODO: Implement refundOrder() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function outCardPay(OutCardPayForm $outCardPayForm)
+    {
+        throw new GateException('Метод недоступен');
     }
 }

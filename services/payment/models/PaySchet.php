@@ -308,7 +308,7 @@ class PaySchet extends \yii\db\ActiveRecord
     public function getFromUrl()
     {
         if($this->Bank == Banks::REG_CARD_BY_OUT_ID) {
-            return Yii::$app->params['domain'] . '/mfo/default/outrcard' . $this->ID;
+            return Yii::$app->params['domain'] . '/mfo/default/outcard/' . $this->ID;
         } else {
             return Yii::$app->params['domain'] . '/pay/form/' . $this->ID;
         }
