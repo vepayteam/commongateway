@@ -29,6 +29,6 @@ class WidgetControllerCest
     {
         Yii::$app->session->set('IdWidgetPay', 1);
         $I->amOnRoute('widget/orderok', ['id' => 1]);
-        $I->see('Платеж');
+        $I->see('Платёж прошёл успешно Средства поступили на счёт продавца, теперь вы можете вернуться в магазин Оплата прошла успешно. Вернуться в магазин');
     }
 }
