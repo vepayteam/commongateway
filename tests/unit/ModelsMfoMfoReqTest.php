@@ -23,7 +23,7 @@ class ModelsMfoMfoReqTest extends \Codeception\Test\Unit
     {
         $mfoReq = new MfoReq();
         Yii::$app->request->headers->set('X-Mfo', 117);
-        Yii::$app->request->headers->set('X-Token', 117);
+        Yii::$app->request->headers->set('X-Token', '4db602f436fda086d9b946267dcf0959197779cb');
         $this->assertEquals(null, $mfoReq->LoadData('[]'));
     }
 
@@ -34,9 +34,9 @@ class ModelsMfoMfoReqTest extends \Codeception\Test\Unit
         $checkMfoToken = $mfoReqReflectionClass->getMethod('checkMfoToken');
         $checkMfoToken->setAccessible(true);
         if (Yii::$app->params['DEVMODE'] == 'Y') {
-            $this->assertEquals(true, $checkMfoToken->invoke($mfoReq, '[]', 118, 118));
+            $this->assertEquals(true, $checkMfoToken->invoke($mfoReq, '[]', 117, '4db602f436fda086d9b946267dcf0959197779cb'));
         } elseif (Yii::$app->params['TESTMODE'] == 'Y') {
-            $this->assertEquals(false, $checkMfoToken->invoke($mfoReq, '[]', 118, 118));
+            $this->assertEquals(false, $checkMfoToken->invoke($mfoReq, '[]', 117, '4db602f436fda086d9b946267dcf0959197779cb'));
         }
     }
 
