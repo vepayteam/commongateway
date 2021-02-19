@@ -56,7 +56,6 @@ class PartnerMfoControllerCest
     public function tryToPartsBalanceTest(FunctionalTester $I)
     {
         $I->amOnRoute('partner/mfo/parts-balance');
-        $I->see('Пользователь: Администратор');
         $I->see('Баланс по разбивке (Платформа)');
     }
 
@@ -68,7 +67,6 @@ class PartnerMfoControllerCest
     public function tryToPartsBalancePartnerTest(FunctionalTester $I)
     {
         $I->amOnRoute('partner/mfo/parts-balance-partner');
-        $I->see('Пользователь: Администратор');
         $I->see('Баланс по разбивке (Партнер)');
     }
 

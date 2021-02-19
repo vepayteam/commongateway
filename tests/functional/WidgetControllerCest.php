@@ -29,6 +29,6 @@ class WidgetControllerCest
     {
         Yii::$app->session->set('IdWidgetPay', 1);
         $I->amOnRoute('widget/orderok', ['id' => 1]);
-        $I->see('Платеж находится в обработке');
+        $I->see('Платеж');
     }
 }
