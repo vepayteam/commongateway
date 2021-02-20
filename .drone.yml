@@ -74,17 +74,22 @@ steps:
   - mysql -h mariadb -P 3306 -D vepay -u root -pvepay < dump.sql
   - rm dump.sql
 
-- name: unit-functional-pr-testing
+- name: prepare-test-env
   pull: always
-  image: registry.vepay.cf/${DRONE_REPO,,}:${DRONE_BUILD_NUMBER}
+  image: registry.vepay.cf/apache-php
   commands:
-  - cd $$APACHE_DOCUMENT_ROOT
+  - php init --env=test
   - sed -ri -e 's!host=localhost!host=mariadb!g' config/db.php
   - sed -ri -e "s!'password' => ''!'password' => 'vepay'!g" config/db.php
   - sed -ri -e 's!127.0.0.1!redis!g' config/params.php
-  - ./yii migrate/up --interactive=0
-  - ./vendor/bin/codecept run unit
-  - ./vendor/bin/codecept run functional
+  - php yii migrate/up --interactive=0
+
+- name: unit-functional-pr-testing
+  pull: always
+  image: registry.vepay.cf/apache-php
+  commands:
+  - php vendor/bin/codecept run unit
+  - php vendor/bin/codecept run functional
 
 services:
 - name: mariadb
@@ -110,6 +115,87 @@ trigger:
   - develop
   event:
   - pull_request
+
+---
+kind: pipeline
+type: kubernetes
+name: build-deploy-development-push
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: docker-tag-295b3c44309601b1d345bccaaede9d84
+  pull: always
+  image: registry.vepay.cf/ci-tools
+  commands:
+  - echo -n "`replace-slash ${DRONE_BUILD_NUMBER}`" > .tags
+  - echo -n ",`replace-slash ${DRONE_BRANCH}`" >> .tags
+
+- name: docker-image-build
+  image: plugins/docker
+  settings:
+    build_args:
+    - ENVIRONMENT=test
+    password:
+      from_secret: DOCKER_PASSWORD
+    registry: registry.vepay.cf
+    repo: registry.vepay.cf/${DRONE_REPO,,}
+    username:
+      from_secret: DOCKER_USERNAME
+
+- name: notify-docker-image-url-eca48fa70abdf632ae75cf9e811aacef
+  pull: always
+  image: registry.vepay.cf/ci-tools
+  commands:
+  - export BUILD_STATUS=$$(cat /run/drone/env | grep DRONE_STAGE_STATUS | cut -d '=' -f 2 | tr -d \")
+  - gitea-status -t "docker-image/url" -m "registry.vepay.cf/${DRONE_REPO,,}:`replace-slash ${DRONE_BRANCH}`" -s "success" -u "${DRONE_BUILD_LINK}"
+  environment:
+    GITEA_TOKEN:
+      from_secret: GITEA_TOKEN
+  when:
+    status:
+    - success
+
+- name: fetch-test-data
+  pull: always
+  image: registry.vepay.cf/${DRONE_REPO,,}:test-data
+  commands:
+  - cp /data/dump.sql .
+
+- name: import-test-data
+  pull: if-not-exists
+  image: mariadb:10.4
+  commands:
+  - mysql -h mariadb -P 3306 -D vepay -u root -pvepay < dump.sql
+  - rm dump.sql
+
+- name: prepare-test-env
+  pull: always
+  image: registry.vepay.cf/apache-php
+  commands:
+  - php init --env=test
+  - sed -ri -e 's!host=localhost!host=mariadb!g' config/db.php
+  - sed -ri -e "s!'password' => ''!'password' => 'vepay'!g" config/db.php
+  - sed -ri -e 's!127.0.0.1!redis!g' config/params.php
+  - php yii migrate/up --interactive=0
+
+- name: unit-functional-pr-testing
+  pull: always
+  image: registry.vepay.cf/apache-php
+  commands:
+  - php vendor/bin/codecept run unit
+  - php vendor/bin/codecept run functional
+
+image_pull_secrets:
+- dockerconfig
+
+trigger:
+  branch:
+  - develop
+  event:
+  - push
 
 ---
 kind: secret
@@ -153,6 +239,6 @@ get:
 
 ---
 kind: signature
-hmac: 1fb631f08d3ab5ab7388f3d894360d9e8137c0cddc18c56af12cd0662daacd46
+hmac: 5d3462c67ae9483c74413310bfc0579ba7e444f330d8cab406249978f9f0514f
 
 ...
