@@ -1,3 +1,47 @@
+#FROM registry.vepay.cf/apache-php as vendor
+#
+#ARG COMPOSER_VERSION=1.10.16
+#ENV COMPOSER_VERSION=${COMPOSER_VERSION}
+#
+#COPY composer.json composer.lock ${APACHE_DOCUMENT_ROOT}/
+#
+#RUN set -ex \
+#    && apt-get update \
+#    && apt-get install -yq git unzip \
+#    && curl -sS https://getcomposer.org/installer -o /tmp/composer-setup.php \
+#    && php /tmp/composer-setup.php --install-dir=/usr/bin --filename=composer --version=${COMPOSER_VERSION} \
+#    && /usr/bin/composer global require "fxp/composer-asset-plugin:^1.4.6" \
+#    && composer --working-dir="${APACHE_DOCUMENT_ROOT}/" --ansi --no-interaction --no-cache update \
+#    && composer --working-dir="${APACHE_DOCUMENT_ROOT}/" --ansi --no-interaction --no-cache install
+#
+#FROM registry.vepay.cf/apache-php as assets
+#
+#COPY --from=vendor ${APACHE_DOCUMENT_ROOT}/vendor ${APACHE_DOCUMENT_ROOT}/vendor
+#COPY config ${APACHE_DOCUMENT_ROOT}/config
+#COPY assets ${APACHE_DOCUMENT_ROOT}/assets
+#COPY web/insasset ${APACHE_DOCUMENT_ROOT}/web/insasset
+#COPY web/aassets ${APACHE_DOCUMENT_ROOT}/web/aassets
+#COPY web/swagger ${APACHE_DOCUMENT_ROOT}/web/swagger
+#COPY web/payasset ${APACHE_DOCUMENT_ROOT}/web/payasset
+#COPY init yii assets.php ${APACHE_DOCUMENT_ROOT}/
+#COPY web/index.php ${APACHE_DOCUMENT_ROOT}/web/
+#
+#RUN set -ex \
+#    && apt-get update \
+#    && apt-get install -yq \
+#                        git \
+#                        nodejs \
+#                        npm \
+#                        unzip \
+#    \
+#    && cd ${APACHE_DOCUMENT_ROOT} \
+#    && npm install uglify-es clean-css-cli -g \
+#    && php init --env=prod \
+#    && mkdir -p web/assets \
+#    && php yii asset assets.php config/assets-prod.php \
+#    && chown -R ${RUN_USER}:${RUN_GROUP} web/
+#### @TODO Intermidate containers enable when VF comes out
+
 FROM registry.vepay.cf/apache-php
 
 LABEL maintainer="Vadims I <vivolgin@vepay.online>"
@@ -6,31 +50,18 @@ ARG ENVIRONMENT=dev
 
 ENV ENVIRONMENT ${ENVIRONMENT}
 
-COPY . ${APACHE_DOCUMENT_ROOT}/
+COPY --chown=${RUN_USER}:${RUN_GROUP} . ${APACHE_DOCUMENT_ROOT}/
 
 RUN set -ex \
-    # @TODO when kube comes into VF
-    # && rm -rf ${APACHE_DOCUMENT_ROOT}/vendor \
-    # && composer --working-dir="${APACHE_DOCUMENT_ROOT}/" --ansi --no-interaction --no-cache install \
-    # \
-    && chmod +x ${APACHE_DOCUMENT_ROOT}/yii \
-    && chmod +x ${APACHE_DOCUMENT_ROOT}/init \
-    && ${APACHE_DOCUMENT_ROOT}/init --env=${ENVIRONMENT} \
-    && ${APACHE_DOCUMENT_ROOT}/yii cache/flush-all --interactive 0 \
+    && cd ${APACHE_DOCUMENT_ROOT} \
+    && php init --env=${ENVIRONMENT} \
+    && php yii cache/flush-all --interactive 0 \
     \
-    && sed -ri -e 's!host=localhost!host=0.0.0.0!g' config/db.php \
-    && sed -ri -e "s!'password' => ''!'password' => 'vepay'!g" config/db.php \
+    && mkdir -p key/ && echo -n '1234567890' > key/key.txt \
     \
-    && mkdir -p ${APACHE_DOCUMENT_ROOT}/key/ \
-    && echo -n '1234567890' > ${APACHE_DOCUMENT_ROOT}/key/key.txt \
-    \
-    && mkdir -p ${APACHE_DOCUMENT_ROOT}/web/assets \
-    && mkdir -p ${APACHE_DOCUMENT_ROOT}/web/shopdata \
-    && mkdir -p ${APACHE_DOCUMENT_ROOT}/runtime/logs/console \
-    && chmod -R g-w ${APACHE_DOCUMENT_ROOT} \
-    && chmod -R g+w ${APACHE_DOCUMENT_ROOT}/runtime \
-    && chmod -R g+w ${APACHE_DOCUMENT_ROOT}/web/assets \
-    && chmod -R g+w ${APACHE_DOCUMENT_ROOT}/web/shopdata \
-    && /docker-entrypoint.d/cleanup.bash
+    && mkdir -p web/shopdata \
+    && mkdir -p runtime/logs/console \
+    && chmod -R g+w runtime \
+    && chmod -R g+w web/shopdata
 
 USER ${RUN_USER}:${RUN_GROUP}

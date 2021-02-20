@@ -66,14 +66,15 @@ class OkPayStrategy
             if($this->isNeedLinkCard($paySchet, $checkStatusPayResponse)) {
                 $this->linkCard($paySchet, $checkStatusPayResponse);
             }
-
             $this->confirmPay($paySchet, $checkStatusPayResponse);
 
             $paySchet->Status = $checkStatusPayResponse->status;
             $paySchet->ErrorInfo = $checkStatusPayResponse->message;
-            $paySchet->RRN = $checkStatusPayResponse->xml['orderadditionalinfo']['rrn'] ?? '';
+            $paySchet->RRN = $checkStatusPayResponse->rrn;
             $paySchet->RCCode = $checkStatusPayResponse->xml['orderadditionalinfo']['rc'] ?? '';
             $paySchet->save(false);
+
+            $this->getNotificationsService()->sendPostbacks($paySchet);
         } elseif ($paySchet->sms_accept == 1) {
             $q = new Query();
             $count = $q->from('notification_pay')
@@ -107,7 +108,7 @@ class OkPayStrategy
                     && in_array($paySchet->uslugatovar->IsCustom, [TU::$JKH, TU::$ECOM])
                 )
             )
-            && isset($checkStatusPayResponse->xml['orderadditionalinfo']['cardrefid']);
+            && isset($checkStatusPayResponse->cardRefId);
     }
 
     /**
@@ -121,16 +122,16 @@ class OkPayStrategy
         $number = str_replace(
             " ",
             "",
-            $checkStatusPayResponse->xml['orderadditionalinfo']['cardnumber']
+            $checkStatusPayResponse->cardNumber
         );
-        $payCard->bankId =  $checkStatusPayResponse->xml['orderadditionalinfo']['cardrefid'];
+        $payCard->bankId =  $checkStatusPayResponse->cardRefId;
         $payCard->number = $number;
-        $payCard->expYear = substr($checkStatusPayResponse->xml['orderadditionalinfo']['cardexpyear'], 2, 2);
-        $payCard->expMonth = $checkStatusPayResponse->xml['orderadditionalinfo']['cardexpmonth'];
+        $payCard->expYear = substr($checkStatusPayResponse->expYear, 2, 2);
+        $payCard->expMonth = $checkStatusPayResponse->expMonth;
         $payCard->type = Cards::GetTypeCard($number);
 
-        if(isset($checkStatusPayResponse->xml['orderadditionalinfo']['cardholder'])) {
-            $payCard->holder = $checkStatusPayResponse->xml['orderadditionalinfo']['cardholder'];
+        if(!empty($checkStatusPayResponse->cardHolder)) {
+            $payCard->holder = $checkStatusPayResponse->cardHolder;
         } else {
             $payCard->holder = '';
         }
