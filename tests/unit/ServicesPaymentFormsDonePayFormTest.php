@@ -21,12 +21,10 @@ class ServicesPaymentFormsDonePayFormTest extends \Codeception\Test\Unit
     public function testValidate()
     {
         $form = new DonePayForm();
-        $form->IdPay = null;
         $form->md = 0;
         $form->paRes = 0;
         $this->assertFalse($form->validate());
         $errors = $form->getErrors();
-        $this->assertEquals('Id Pay cannot be blank.', $errors['IdPay'][0]);
         $this->assertEquals('Md must be a string.', $errors['md'][0]);
         $this->assertEquals('Pa Res must be a string.', $errors['paRes'][0]);
         $form->IdPay = 1;
