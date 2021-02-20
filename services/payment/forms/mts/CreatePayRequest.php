@@ -6,10 +6,8 @@ namespace app\services\payment\forms\mts;
 
 use yii\base\Model;
 
-class CreatePayRequest extends Model
+class CreatePayRequest extends BaseRequest
 {
-    public $userName;
-    public $password;
     public $orderNumber;
     public $amount;
     public $description;

@@ -33,7 +33,6 @@ class MfoCardRegStrategy
     {
         $duplicatePaySchet = $this->getDuplicateRequest();
         if(!empty($duplicatePaySchet)) {
-
             return $duplicatePaySchet;
         }
 

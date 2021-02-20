@@ -5,6 +5,7 @@ namespace app\services\payment\payment_strategies\mfo;
 
 use app\models\queue\JobPriorityInterface;
 use app\services\payment\jobs\RecurrentPayJob;
+use app\services\payment\models\Bank;
 use Yii;
 use app\models\crypt\CardToken;
 use app\models\payonline\Cards;
@@ -47,12 +48,25 @@ class MfoAutoPayStrategy
             throw new GateException('Услуга не найдена');
         }
 
-        Yii::warning('Create BankAdapterBuilder autoPay=' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid, 'mfo');
-        $bankAdapterBuilder = new BankAdapterBuilder();
-        $bankAdapterBuilder->build($this->autoPayForm->partner, $uslugatovar);
-
         $mutexKey = $this->autoPayForm->getMutexKey();
         $mutex = new FileMutex();
+
+        $card = $this->autoPayForm->getCard();
+        $cardnum = null;
+        if ($this->autoPayForm->getCard()->IdPan > 0) {
+            $CardToken = new CardToken();
+            $cardnum = $CardToken->GetCardByToken($card->IdPan);
+        }
+
+        if(!$cardnum) {
+            $mutex->release($mutexKey);
+            Yii::error('Empty card mfo_pay_auto autoPay=' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid, 'mfo');
+            throw new CreatePayException('empty card');
+        }
+
+        Yii::warning('Create BankAdapterBuilder autoPay=' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid, 'mfo');
+        $bankAdapterBuilder = new BankAdapterBuilder();
+        $bankAdapterBuilder->buildByBank($this->autoPayForm->partner, $uslugatovar, $card->bank);
 
         Yii::warning('getReplyRequest autoPay=' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid, 'mfo');
 
@@ -71,19 +85,7 @@ class MfoAutoPayStrategy
             throw new CreatePayException('getPaySchetExt: error lock!');
         }
 
-        $card = $this->autoPayForm->getCard();
-        $cardnum = null;
-        if ($this->autoPayForm->getCard()->IdPan > 0) {
-            Yii::warning('New CardToken: error lock!', 'mfo');
-            $CardToken = new CardToken();
-            $cardnum = $CardToken->GetCardByToken($card->IdPan);
-        }
 
-        if(!$cardnum) {
-            $mutex->release($mutexKey);
-            Yii::error('Empty card mfo_pay_auto autoPay=' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid, 'mfo');
-            throw new CreatePayException('empty card');
-        }
         $this->autoPayForm->getCard()->CardNumber = $cardnum;
 
         Yii::warning('createPaySchet autoPay=' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid, 'mfo');
