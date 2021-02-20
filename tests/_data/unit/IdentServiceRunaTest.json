@@ -5,7 +5,8 @@
     "name": "Иван",
     "surname": "Иванов",
     "patronymic": "Иванович",
-    "inn": "123456789012"
+    "inn": "123456789012",
+    "cid_origin": 0
   },
 
   "base_snils": {
@@ -14,7 +15,8 @@
     "name": "Иван",
     "surname": "Иванов",
     "patronymic": "Иванович",
-    "snils": "000-010-123 98"
+    "snils": "000-010-123 98",
+    "cid_origin": 0
   },
 
   "base_inn_and_snils": {
@@ -23,7 +25,8 @@
     "name": "Иван",
     "surname": "Иванов",
     "patronymic": "Иванович",
-    "snils": "000-010-123 98"
+    "snils": "000-010-123 98",
+    "cid_origin": 0
   },
 
   "error_passport_series_length": {
@@ -94,7 +97,7 @@
     "passport_number": "11",
     "name": "Иван",
     "surname": "Иванов",
-    "patronymic": "Иванович",
+    "patronymic": 1,
     "snils": "000-010-123 98"
   },
 
@@ -103,7 +106,8 @@
     "passport_number": "11",
     "name": "Иван",
     "surname": "Иванов",
-    "patronymic": "Иванович"
+    "patronymic": "Иванович",
+    "inn": "1234567890"
   }
 }
 

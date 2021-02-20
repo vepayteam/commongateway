@@ -49,55 +49,9 @@ class IdentServiceRunaTest extends \Codeception\Test\Unit
 
         foreach ($dataPrefixes as $dataPrefix => $field) {
             $initForm = new RunaIdentInitForm();
-            $initForm->load($data['base_snils'], '');
+            $initForm->load($data[$dataPrefix], '');
             $this->assertFalse($initForm->validate());
             $this->assertTrue(count($initForm->getErrors($field)) > 0);
         }
-    }
-
-    public function testInit()
-    {
-        $data = json_decode(file_get_contents(__DIR__  . '/../_data/unit/IdentServiceRunaTest.json'), true);
-
-        $dataPrefixes = [
-            'base_inn',
-            'base_snils',
-            'base_inn_and_snils',
-        ];
-
-        foreach ($dataPrefixes as $dataPrefix) {
-            $initForm = new RunaIdentInitForm();
-            $initForm->load($data[$dataPrefix], '');
-
-            /** @var \app\services\ident\IdentService $identService */
-            $identService = Yii::$container->get('IdentService');
-
-            /** @var \app\services\ident\responses\RunaIdentInitResponse $runaIdentInitResponse */
-            $runaIdentInitResponse = $identService->runaInit($initForm);
-            $identRunaMock = $this->make(IdentRuna::class, [
-                'save' => \Codeception\Stub\Expected::once(),
-            ]);
-
-            $this->assertTrue(get_class($runaIdentInitResponse) == 'RunaIdentInitResponse');
-            $this->assertTrue($runaIdentInitResponse->validate());
-        }
-    }
-
-    public function testState()
-    {
-        $idents = IdentRuna::find()
-            ->where(['Status' => 0])
-            ->orderBy('Id DESC')
-            ->limit(10)
-            ->all();
-
-        /** @var \app\services\ident\IdentService $identService */
-        $identService = Yii::$container->get('IdentService');
-
-        $identRuna = IdentRuna::find()->where(['Status' => 0])->orderBy('Id DESC')->one();
-        $runaIdentStateResponse = $identService->getRunaState($identRuna);
-
-        $this->assertTrue(get_class($runaIdentStateResponse) == 'RunaIdentStateResponse');
-        $this->assertTrue(in_array($runaIdentStateResponse->details['code'], ['0', '1', '2']));
     }
 }
