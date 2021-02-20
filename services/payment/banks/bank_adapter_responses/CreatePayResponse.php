@@ -10,6 +10,8 @@ use yii\base\Model;
 
 class CreatePayResponse extends BaseResponse
 {
+    public $isNeed3DSRedirect = true;
+
     public $vesion3DS = Issuer3DSVersionInterface::V_1;
     public $isNeed3DSVerif = true;
     public $authValue;

@@ -13,14 +13,22 @@ class DonePayForm extends Model
     public $md;
     public $paRes;
     public $cres;
+    public $trans;
 
     public function rules()
     {
         return [
-            ['IdPay', 'required'],
+            ['IdPay', 'validateIdPay'],
             ['IdPay', 'number'],
             [['md', 'paRes'], 'string'],
         ];
+    }
+
+    public function validateIdPay()
+    {
+        if(empty($this->IdPay) && empty($this->trans)) {
+            $this->addError('IdPay', 'Ид счета или транзацкции обязательны');
+        }
     }
 
     /**
