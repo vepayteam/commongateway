@@ -88,8 +88,8 @@ steps:
   pull: always
   image: registry.vepay.cf/apache-php
   commands:
-  - php vendor/bin/codecept run unit
-  - php vendor/bin/codecept run functional
+  - vendor/bin/codecept run unit
+  - vendor/bin/codecept run functional
 
 services:
 - name: mariadb
@@ -185,8 +185,24 @@ steps:
   pull: always
   image: registry.vepay.cf/apache-php
   commands:
-  - php vendor/bin/codecept run unit
-  - php vendor/bin/codecept run functional
+  - vendor/bin/codecept run unit
+  - vendor/bin/codecept run functional
+
+services:
+- name: mariadb
+  image: mariadb:10.4
+  environment:
+    MYSQL_DATABASE: vepay
+    MYSQL_PASSWORD: vepay
+    MYSQL_ROOT_PASSWORD: vepay
+    MYSQL_USER: vepay
+  ports:
+  - 3306
+
+- name: redis
+  image: redis:6
+  ports:
+  - 6379
 
 image_pull_secrets:
 - dockerconfig
@@ -239,6 +255,6 @@ get:
 
 ---
 kind: signature
-hmac: 5d3462c67ae9483c74413310bfc0579ba7e444f330d8cab406249978f9f0514f
+hmac: fdcaa14b3f49684584fc699e4791a124338eb6ea29cfa445b89539ed35748feb
 
 ...

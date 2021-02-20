@@ -73,6 +73,8 @@ class OkPayStrategy
             $paySchet->RRN = $checkStatusPayResponse->rrn;
             $paySchet->RCCode = $checkStatusPayResponse->xml['orderadditionalinfo']['rc'] ?? '';
             $paySchet->save(false);
+
+            $this->getNotificationsService()->sendPostbacks($paySchet);
         } elseif ($paySchet->sms_accept == 1) {
             $q = new Query();
             $count = $q->from('notification_pay')
