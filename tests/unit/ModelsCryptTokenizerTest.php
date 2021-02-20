@@ -37,7 +37,13 @@ class ModelsCryptTokenizerTest extends \Codeception\Test\Unit
     public function testTestKek()
     {
         $tokenizer = new Tokenizer();
-        $this->assertEquals(['kek1' => 1, 'kek2' => 1, 'kek3' => 1, 'crypt' => 0, 'count' => '1300', 'countwork' => '1300'], $tokenizer->TestKek());
+        $result = $tokenizer->TestKek();
+        $this->tester->assertTrue(isset($result['kek1']));
+        $this->tester->assertTrue(isset($result['kek2']));
+        $this->tester->assertTrue(isset($result['kek3']));
+        $this->tester->assertTrue(isset($result['crypt']));
+        $this->tester->assertTrue(is_numeric($result['count']));
+        $this->tester->assertTrue(is_numeric($result['countwork']));
     }
 
     public function testCheckExistToken()
