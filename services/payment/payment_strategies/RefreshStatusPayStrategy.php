@@ -39,7 +39,7 @@ class RefreshStatusPayStrategy extends OkPayStrategy
         $paySchet = $this->okPayForm->getPaySchet();
 
         $bankAdapterBuilder = new BankAdapterBuilder();
-        $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar);
+        $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank);
 
         /** @var CheckStatusPayResponse $checkStatusPayResponse */
         $checkStatusPayResponse = $bankAdapterBuilder->getBankAdapter()->checkStatusPay($this->okPayForm);

@@ -260,18 +260,25 @@ class PayController extends Controller
      * @throws Exception
      * @throws NotFoundHttpException
      */
-    public function actionOrderdone($id)
+    public function actionOrderdone($id = null)
     {
         $donePayForm = new DonePayForm();
         $donePayForm->IdPay = $id;
+        $donePayForm->trans = Yii::$app->request->post('trans_id', null);
+
+        // Для тестирования, добавляем возможность передать ид транзакции GET параметром
+        if(!empty($trans = Yii::$app->request->get('trans_id', null))) {
+            $donePayForm->trans = $trans;
+        }
+
         $donePayForm->md = Yii::$app->request->post('MD', null);
         $donePayForm->paRes = Yii::$app->request->post('PaRes', null);
         $donePayForm->cres = Yii::$app->request->post('cres', null);
 
         Yii::warning('Orderdone ' . $id . 'POST: ' . json_encode(Yii::$app->request->post()));
 
-        if(!$donePayForm->paySchetExist()) {
-            throw new NotFoundHttpException();
+        if(!$donePayForm->validate()) {
+            throw new BadRequestHttpException();
         }
 
         Yii::warning("PayForm done id=".$id);

@@ -27,6 +27,8 @@ class Banks
                 return new MTSBankAdapter();
             case self::ADGB_ID:
                 return new ADGroupBankAdapter();
+            case RSBankAdapter::$bank:
+                return new RSBankAdapter();
             default:
                 throw new \Exception('Ошибка выбора банка');
         }

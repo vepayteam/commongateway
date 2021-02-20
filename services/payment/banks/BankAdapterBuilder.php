@@ -7,6 +7,7 @@ namespace app\services\payment\banks;
 use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
 use app\services\payment\exceptions\GateException;
+use app\services\payment\models\Bank;
 use app\services\payment\models\PartnerBankGate;
 
 class BankAdapterBuilder
@@ -34,6 +35,39 @@ class BankAdapterBuilder
         $this->partnerBankGate = $partner
             ->getBankGates()
             ->where([
+                'TU' => $uslugatovar->IsCustom,
+                'Enable' => 1
+            ])->orderBy('Priority DESC')->one();
+
+        if (!$this->partnerBankGate) {
+            throw new GateException('Нет шлюза');
+        }
+
+        try {
+            $this->bankAdapter = Banks::getBankAdapter($this->partnerBankGate->BankId);
+        } catch (\Exception $e) {
+            throw new GateException($e->getMessage());
+        }
+
+        $this->bankAdapter->setGate($this->partnerBankGate);
+        return $this;
+    }
+
+    /**
+     * @param Partner $partner
+     * @param Uslugatovar $uslugatovar
+     * @param Bank $bank
+     * @return $this
+     * @throws GateException
+     */
+    public function buildByBank(Partner $partner, Uslugatovar $uslugatovar, Bank $bank)
+    {
+        $this->partner = $partner;
+        $this->uslugatovar = $uslugatovar;
+        $this->partnerBankGate = $partner
+            ->getBankGates()
+            ->where([
+                'BankId' => $bank->ID,
                 'TU' => $uslugatovar->IsCustom,
                 'Enable' => 1
             ])->orderBy('Priority DESC')->one();
