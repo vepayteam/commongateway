@@ -10,6 +10,7 @@ use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
@@ -22,6 +23,7 @@ use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\OkPayForm;
+use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\forms\rsb_aft\CreatePayAftRequest;
 use app\services\payment\forms\rsb_aft\CreatePayByRegCardRequest;
@@ -383,5 +385,13 @@ class RSBankAdapter implements IBankAdapter
             default:
                 return BaseResponse::STATUS_ERROR;
         }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function outCardPay(OutCardPayForm $outCardPayForm)
+    {
+        throw new GateException('Метод недоступен');
     }
 }
