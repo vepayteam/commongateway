@@ -61,7 +61,6 @@ RUN set -ex \
     \
     && mkdir -p web/shopdata \
     && mkdir -p runtime/logs/console \
-    && chmod -R g-w . \
     && chmod -R g+w runtime \
     && chmod -R g+w web/shopdata
 
