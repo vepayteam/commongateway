@@ -1815,6 +1815,7 @@ class TKBankAdapter implements IBankAdapter
                 }
                 $checkStatusPayResponse->status = $status;
                 $checkStatusPayResponse->xml = $xml;
+                $checkStatusPayResponse->rrn = $xml['orderadditionalinfo']['rrn'] ?? '';
                 $checkStatusPayResponse->message = $checkStatusPayResponse->xml['orderinfo']['statedescription'];
             }
         } else {

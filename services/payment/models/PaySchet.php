@@ -76,6 +76,7 @@ use Yii;
  * @property Partner $partner
  * @property PaySchetLog[] $log
  * @property User $user
+ * @property Bank $bank
  *
  * @property string $Version3DS
  * @property int $IsNeed3DSVerif
@@ -221,32 +222,32 @@ class PaySchet extends \yii\db\ActiveRecord
 
     public function getUslugatovar()
     {
-        return $this->hasOne(Uslugatovar::className(), ['ID' => 'IdUsluga']);
+        return $this->hasOne(Uslugatovar::class, ['ID' => 'IdUsluga']);
     }
 
     public function getUser()
     {
-        return $this->hasOne(User::className(), ['ID' => 'IdUser']);
+        return $this->hasOne(User::class, ['ID' => 'IdUser']);
     }
 
     public function getPartner()
     {
-        return $this->hasOne(Partner::className(), ['ID' => 'IdOrg']);
+        return $this->hasOne(Partner::class, ['ID' => 'IdOrg']);
     }
 
     public function getBank()
     {
-        return $this->hasOne(Bank::className(), ['ID' => 'Bank']);
+        return $this->hasOne(Bank::class, ['ID' => 'Bank']);
     }
 
     public function getLog()
     {
-        return $this->hasMany(PaySchetLog::className(), ['PaySchetId' => 'ID']);
+        return $this->hasMany(PaySchetLog::class, ['PaySchetId' => 'ID']);
     }
 
     public function getNotifications()
     {
-        return $this->hasMany(NotificationPay::className(), ['IdPay' => 'ID']);
+        return $this->hasMany(NotificationPay::class, ['IdPay' => 'ID']);
     }
 
     public function save($runValidation = true, $attributeNames = null)
@@ -308,7 +309,7 @@ class PaySchet extends \yii\db\ActiveRecord
     public function getFromUrl()
     {
         if($this->Bank == Banks::REG_CARD_BY_OUT_ID) {
-            return Yii::$app->params['domain'] . '/mfo/default/outrcard/' . $this->ID;
+            return Yii::$app->params['domain'] . '/mfo/default/outcard/' . $this->ID;
         } else {
             return Yii::$app->params['domain'] . '/pay/form/' . $this->ID;
         }

@@ -29,9 +29,16 @@ class DonePayStrategy
 
     public function exec()
     {
-        $paySchet = $this->donePayForm->getPaySchet();
+        // для случаев, если пользователь возвращается к нам без ИД счета, но с транзакцией
+        if(!empty($this->donePayForm->trans)) {
+            $paySchet = PaySchet::find()
+                ->where(['ExtBillNumber' => $this->donePayForm->trans])
+                ->orderBy('ID DESC')->one();
+        } else {
+            $paySchet = $this->donePayForm->getPaySchet();
+        }
 
-        if($paySchet->Status == PaySchet::STATUS_WAITING) {
+        if($paySchet && $paySchet->Status == PaySchet::STATUS_WAITING) {
             $bankAdapterBuilder = new BankAdapterBuilder();
             $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar);
 
