@@ -32,6 +32,12 @@ if (isset($params['env']) && !empty($params['env'])) {
         if (!file_exists($root . "/config/db.php")) {
             copy($root . "/config/prod/db.php", $root . "/config/db.php");
         }
+    } elseif ($mode == "kube") {
+        echo "init: kubernetes\n";
+        copy($root . "/config/kube/index.php", $root . "/web/index.php");
+        copy($root . "/config/kube/params.php", $root . "/config/params.php");
+        copy($root . "/config/kube/db.php", $root . "/config/db.php");
+        copy($root . "/config/kube/test_params.php", $root . "/config/test_params.php");
     } else {
         echo "init: dev\n";
         copy($root . "/config/dev/index.php", $root . "/web/index.php");
