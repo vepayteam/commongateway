@@ -319,7 +319,7 @@ steps:
   - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+100000000))" -i
   - echo "=>>>" && cat values.yaml
 
-- name: helm-deployment-upgrade-45fed861e1060161ebf21250b0597f12
+- name: helm-deployment-upgrade-92ef42f80124f30279fb47f2cd4ffd68
   pull: if-not-exists
   image: registry.vepay.cf/drone-plugin-helm3:3.5.1-1
   settings:
@@ -334,7 +334,7 @@ steps:
       from_secret: KUBE_TOKEN
     mode: upgrade
     namespace: api-testing
-    release: ${DRONE_REPO_NAMESPACE,,}-${DRONE_REPO_NAME,,}-${DRONE_BRANCH}
+    release: ${DRONE_REPO_NAMESPACE,,}-${DRONE_REPO_NAME,,}-${DRONE_BRANCH}-test
     skip_tls_verify: true
     timeout: 20m
     update_dependencies: true
@@ -495,7 +495,7 @@ steps:
   - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+200000000))" -i
   - echo "=>>>" && cat values.yaml
 
-- name: helm-deployment-upgrade-88f631278222ffc1fe7e7f55bdf697d7
+- name: helm-deployment-upgrade-091eac7be9d381f18978b1c621dd6a86
   pull: if-not-exists
   image: registry.vepay.cf/drone-plugin-helm3:3.5.1-1
   settings:
@@ -510,7 +510,7 @@ steps:
       from_secret: KUBE_TOKEN
     mode: upgrade
     namespace: api-staging
-    release: staging
+    release: ${DRONE_REPO_NAMESPACE,,}-${DRONE_REPO_NAME,,}-staging
     skip_tls_verify: true
     timeout: 20m
     update_dependencies: true
@@ -620,6 +620,6 @@ get:
 
 ---
 kind: signature
-hmac: 40552f4399680279bb45e698ade894f8515e85a045f13c77a1cd3531cf3bbe41
+hmac: ad1f7d9f359c625817b2c3920111b2205c010e66c3be6049a1240c15bbf1d94a
 
 ...
