@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'domain' => $_ENV['TEST_URL'],
+    'domain' => getenv('TEST_URL', true),
     'adminEmail' => 'support@vepay.online',
     'robotEmail' => 'robot@vepay.online',
     'infoEmail' => 'support@vepay.online',
@@ -47,9 +47,9 @@ return [
     'components' => [
         'redis' => [
             'class' => 'yii\redis\Connection',
-            'hostname' => $_ENV['REDIS_HOST'],
-            'port' => $_ENV['REDIS_PORT'],
-            'database' => $_ENV['REDIS_DB_NUM_QUEUE'],
+            'hostname' => getenv('REDIS_HOST', true),
+            'port' => getenv('REDIS_PORT', true),
+            'database' => getenv('REDIS_DB_NUM_QUEUE', true),
             'retries' => 1,
         ],
         'queue' => [
@@ -61,9 +61,9 @@ return [
         'cache' => [
             'class' => 'yii\redis\Cache',
             'redis' => [
-                'hostname' => $_ENV['REDIS_HOST'],
-                'port' => $_ENV['REDIS_PORT'],
-                'database' => $_ENV['REDIS_DB_NUM_CACHE'],
+                'hostname' => getenv('REDIS_HOST', true),
+                'port' => getenv('REDIS_PORT', true),
+                'database' => getenv('REDIS_DB_NUM_CACHE', true),
             ],
         ],
     ],
