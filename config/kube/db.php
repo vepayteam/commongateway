@@ -2,9 +2,9 @@
 
 return [
     'class' => 'yii\db\Connection',
-    'dsn' => $_ENV['DATABASE_DSN'],
-    'username' => $_ENV['DATABASE_USER'],
-    'password' => $_ENV['DATABASE_USER_PASSWORD'],
+    'dsn' => getenv('DATABASE_DSN', true),
+    'username' => getenv('DATABASE_USER', true),
+    'password' => getenv('DATABASE_USER_PASSWORD', true),
     'charset' => 'utf8',
     'on afterOpen' => function($event) {
         $event->sender->createCommand("SET NAMES utf8;")->execute();
