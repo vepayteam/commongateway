@@ -15,12 +15,12 @@ steps:
   - commitsar -v -s
   failure: ignore
 
-- name: notify-conventional-commits-6746af5056b569a01aa419d76ca228e9
+- name: notify-conventional-commits-7ac2812fb6deba1062e461c7b277016c
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
   - export BUILD_STATUS=$$(cat /run/drone/env | grep DRONE_STAGE_STATUS | cut -d '=' -f 2 | tr -d \")
-  - gitea-status -t "conventional-commits" -m "-ignored-" -s "warning" -u "${DRONE_BUILD_LINK}"
+  - gitea-status -t "conventional-commits" -m "-ignored-" -s "warning" -u "https://www.conventionalcommits.org/en/v1.0.0/#why-use-conventional-commits"
   environment:
     GITEA_TOKEN:
       from_secret: GITEA_TOKEN
@@ -28,6 +28,39 @@ steps:
     status:
     - failure
     - success
+
+- name: prepare-test-env
+  pull: always
+  image: registry.vepay.cf/apache-php
+  commands:
+  - php init --env=kube
+  - php yii migrate/up --interactive=0
+  environment:
+    DATABASE_DSN: mysql:host=mariadb;port=3306;dbname=vepay
+    DATABASE_USER: vepay
+    DATABASE_USER_PASSWORD: vepay
+    REDIS_DB_NUM_CACHE: 4
+    REDIS_DB_NUM_QUEUE: 3
+    REDIS_HOST: redis
+    REDIS_PORT: 6379
+    TEST_URL: https://test-env-${DRONE_REPO_NAME}.backend.vepay.cf/
+
+- name: unit-functional-pr-testing
+  pull: always
+  image: registry.vepay.cf/apache-php
+  commands:
+  - vendor/bin/codecept run unit
+  - vendor/bin/codecept run functional
+  - php yii cache/flush-all --interactive 0
+  environment:
+    DATABASE_DSN: mysql:host=mariadb;port=3306;dbname=vepay
+    DATABASE_USER: vepay
+    DATABASE_USER_PASSWORD: vepay
+    REDIS_DB_NUM_CACHE: 4
+    REDIS_DB_NUM_QUEUE: 3
+    REDIS_HOST: redis
+    REDIS_PORT: 6379
+    TEST_URL: https://test-env-${DRONE_REPO_NAME}.backend.vepay.cf/
 
 - name: docker-tag-7d9d8b7eed1620f6eefac4a9eca4190b
   pull: always
@@ -37,10 +70,12 @@ steps:
   - echo -n ",`replace-slash ${DRONE_SOURCE_BRANCH}`" >> .tags
 
 - name: docker-image-build
+  pull: always
   image: plugins/docker
   settings:
     build_args:
-    - ENVIRONMENT=test
+    - ENVIRONMENT=kube
+    compress: true
     password:
       from_secret: DOCKER_PASSWORD
     registry: registry.vepay.cf
@@ -61,43 +96,13 @@ steps:
     status:
     - success
 
-- name: fetch-test-data
-  pull: always
-  image: registry.vepay.cf/${DRONE_REPO,,}:test-data
-  commands:
-  - cp /data/dump.sql .
-
-- name: import-test-data
-  pull: if-not-exists
-  image: mariadb:10.4
-  commands:
-  - mysql -h mariadb -P 3306 -D vepay -u root -pvepay < dump.sql
-  - rm dump.sql
-
-- name: prepare-test-env
-  pull: always
-  image: registry.vepay.cf/apache-php
-  commands:
-  - php init --env=test
-  - sed -ri -e 's!host=localhost!host=mariadb!g' config/db.php
-  - sed -ri -e "s!'password' => ''!'password' => 'vepay'!g" config/db.php
-  - sed -ri -e 's!127.0.0.1!redis!g' config/params.php
-  - php yii migrate/up --interactive=0
-
-- name: unit-functional-pr-testing
-  pull: always
-  image: registry.vepay.cf/apache-php
-  commands:
-  - vendor/bin/codecept run unit
-  - vendor/bin/codecept run functional
-
 services:
 - name: mariadb
-  image: mariadb:10.4
+  image: registry.vepay.cf/${DRONE_REPO,,}:maria-test-data
   environment:
     MYSQL_DATABASE: vepay
     MYSQL_PASSWORD: vepay
-    MYSQL_ROOT_PASSWORD: vepay
+    MYSQL_RANDOM_ROOT_PASSWORD: yes
     MYSQL_USER: vepay
   ports:
   - 3306
@@ -126,6 +131,39 @@ platform:
   arch: amd64
 
 steps:
+- name: prepare-test-env
+  pull: always
+  image: registry.vepay.cf/apache-php
+  commands:
+  - php init --env=kube
+  - php yii migrate/up --interactive=0
+  environment:
+    DATABASE_DSN: mysql:host=mariadb;port=3306;dbname=vepay
+    DATABASE_USER: vepay
+    DATABASE_USER_PASSWORD: vepay
+    REDIS_DB_NUM_CACHE: 4
+    REDIS_DB_NUM_QUEUE: 3
+    REDIS_HOST: redis
+    REDIS_PORT: 6379
+    TEST_URL: https://test-env-${DRONE_REPO_NAME}.backend.vepay.cf/
+
+- name: unit-functional-pr-testing
+  pull: always
+  image: registry.vepay.cf/apache-php
+  commands:
+  - vendor/bin/codecept run unit
+  - vendor/bin/codecept run functional
+  - php yii cache/flush-all --interactive 0
+  environment:
+    DATABASE_DSN: mysql:host=mariadb;port=3306;dbname=vepay
+    DATABASE_USER: vepay
+    DATABASE_USER_PASSWORD: vepay
+    REDIS_DB_NUM_CACHE: 4
+    REDIS_DB_NUM_QUEUE: 3
+    REDIS_HOST: redis
+    REDIS_PORT: 6379
+    TEST_URL: https://test-env-${DRONE_REPO_NAME}.backend.vepay.cf/
+
 - name: docker-tag-295b3c44309601b1d345bccaaede9d84
   pull: always
   image: registry.vepay.cf/ci-tools
@@ -134,10 +172,12 @@ steps:
   - echo -n ",`replace-slash ${DRONE_BRANCH}`" >> .tags
 
 - name: docker-image-build
+  pull: always
   image: plugins/docker
   settings:
     build_args:
-    - ENVIRONMENT=test
+    - ENVIRONMENT=kube
+    compress: true
     password:
       from_secret: DOCKER_PASSWORD
     registry: registry.vepay.cf
@@ -158,43 +198,13 @@ steps:
     status:
     - success
 
-- name: fetch-test-data
-  pull: always
-  image: registry.vepay.cf/${DRONE_REPO,,}:test-data
-  commands:
-  - cp /data/dump.sql .
-
-- name: import-test-data
-  pull: if-not-exists
-  image: mariadb:10.4
-  commands:
-  - mysql -h mariadb -P 3306 -D vepay -u root -pvepay < dump.sql
-  - rm dump.sql
-
-- name: prepare-test-env
-  pull: always
-  image: registry.vepay.cf/apache-php
-  commands:
-  - php init --env=test
-  - sed -ri -e 's!host=localhost!host=mariadb!g' config/db.php
-  - sed -ri -e "s!'password' => ''!'password' => 'vepay'!g" config/db.php
-  - sed -ri -e 's!127.0.0.1!redis!g' config/params.php
-  - php yii migrate/up --interactive=0
-
-- name: unit-functional-pr-testing
-  pull: always
-  image: registry.vepay.cf/apache-php
-  commands:
-  - vendor/bin/codecept run unit
-  - vendor/bin/codecept run functional
-
 services:
 - name: mariadb
-  image: mariadb:10.4
+  image: registry.vepay.cf/${DRONE_REPO,,}:maria-test-data
   environment:
     MYSQL_DATABASE: vepay
     MYSQL_PASSWORD: vepay
-    MYSQL_ROOT_PASSWORD: vepay
+    MYSQL_RANDOM_ROOT_PASSWORD: yes
     MYSQL_USER: vepay
   ports:
   - 3306
@@ -255,6 +265,6 @@ get:
 
 ---
 kind: signature
-hmac: fdcaa14b3f49684584fc699e4791a124338eb6ea29cfa445b89539ed35748feb
+hmac: 6b7321a03f4871f08001d39301060d6ead9a09bfad874bd42730a5aaa6b082b0
 
 ...

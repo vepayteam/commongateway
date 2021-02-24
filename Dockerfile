@@ -46,7 +46,7 @@ FROM registry.vepay.cf/apache-php
 
 LABEL maintainer="Vadims I <vivolgin@vepay.online>"
 
-ARG ENVIRONMENT=dev
+ARG ENVIRONMENT=kube
 
 ENV ENVIRONMENT ${ENVIRONMENT}
 
@@ -55,7 +55,6 @@ COPY --chown=${RUN_USER}:${RUN_GROUP} . ${APACHE_DOCUMENT_ROOT}/
 RUN set -ex \
     && cd ${APACHE_DOCUMENT_ROOT} \
     && php init --env=${ENVIRONMENT} \
-    && php yii cache/flush-all --interactive 0 \
     \
     && mkdir -p key/ && echo -n '1234567890' > key/key.txt \
     \
