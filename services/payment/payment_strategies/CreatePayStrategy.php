@@ -4,12 +4,15 @@
 namespace app\services\payment\payment_strategies;
 
 
+use app\models\api\Reguser;
 use app\models\crypt\CardToken;
 use app\models\payonline\Cards;
 use app\models\payonline\Partner;
+use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\TU;
+use app\services\cards\models\PanToken;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\BankAdapterBuilder;
@@ -196,6 +199,9 @@ class CreatePayStrategy
             $this->createPayForm->CardMonth.$this->createPayForm->CardYear
         );
 
+        $user = User::findOne(['ID' => $paySchet->IdUser]);
+        $card = $this->createUnregisterCard($token, $user);
+
         if ($token == 0) {
             $token = $cartToken->CreateToken(
                 $this->createPayForm->CardNumber,
@@ -204,6 +210,7 @@ class CreatePayStrategy
             );
         }
 
+        $paySchet->IdKard = $card->ID;
         $paySchet->CardNum = Cards::MaskCard($this->createPayForm->CardNumber);
         $paySchet->CardType = Cards::GetCardBrand(Cards::GetTypeCard($this->createPayForm->CardNumber));
         $paySchet->CardHolder = mb_substr($this->createPayForm->CardHolder, 0, 99);
@@ -213,6 +220,51 @@ class CreatePayStrategy
         if(!$paySchet->save()) {
             throw new CreatePayException('Ошибка валидации данных счета');
         }
+    }
+
+
+    /**
+     * @return \app\models\payonline\User|bool|false
+     * @throws \Exception
+     */
+    private function createUser(PaySchet $paySchet)
+    {
+        $reguser = new Reguser();
+        $user = $reguser->findUser(
+            '0',
+            $paySchet->IdOrg . '-' . time() . random_int(100, 999),
+            md5($paySchet->ID . '-' . time()),
+            $paySchet->IdOrg, false
+        );
+        return $user;
+    }
+
+    /**
+     * @param $token
+     * @return Cards
+     */
+    private function createUnregisterCard($token, User $user)
+    {
+        $panToken = PanToken::findOne(['ID' => $token]);
+
+        $cardNumber = $panToken->FirstSixDigits . '******' . $panToken->LastFourDigits;
+        $card = new Cards();
+        $card->IdUser = $user->ID;
+        $card->NameCard = $cardNumber;
+        $card->CardNumber = $cardNumber;
+        $card->ExtCardIDP = 0;
+        $card->CardType = 0;
+        $card->SrokKard = $this->createPayForm->CardMonth . $this->createPayForm->CardYear;
+        $card->Status = 0;
+        $card->DateAdd = time();
+        $card->Default = 0;
+        $card->TypeCard = 0;
+        $card->IdPan = $panToken->ID;
+        $card->IdBank = 0;
+        $card->IsDeleted = 0;
+        $card->save(false);
+
+        return $card;
     }
 
     /**
