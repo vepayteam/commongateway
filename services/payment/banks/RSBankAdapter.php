@@ -29,8 +29,11 @@ use app\services\payment\forms\rsb_aft\CreatePayAftRequest;
 use app\services\payment\forms\rsb_aft\CreatePayByRegCardRequest;
 use app\services\payment\forms\rsb_aft\CreatePayRequest;
 use app\services\payment\forms\rsb_aft\CheckStatusPayRequest;
+use app\services\payment\forms\rsb_aft\OutCardPayCheckRequest;
+use app\services\payment\forms\rsb_aft\OutCardPayRequest;
 use app\services\payment\forms\rsb_aft\RecurrentPayRequest;
 use app\services\payment\forms\rsb_aft\RefundPayRequest;
+use app\services\payment\forms\rsb_aft\XmlRequest;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
@@ -392,6 +395,17 @@ class RSBankAdapter implements IBankAdapter
      */
     public function outCardPay(OutCardPayForm $outCardPayForm)
     {
-        throw new GateException('Метод недоступен');
+        $outCardPayCheckRequest = new OutCardPayCheckRequest();
+
+        $outCardPayCheckRequest->card = $outCardPayForm->card;
+        $outCardPayCheckRequest->tr_date = Carbon::now()->format('YmdH24is');
+        $outCardPayCheckRequest->amount = $outCardPayForm->amount;
+
+    }
+
+    private function sendXmlRequest(XmlRequest $request)
+    {
+
+
     }
 }
