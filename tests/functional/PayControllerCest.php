@@ -40,7 +40,7 @@ class PayControllerCest
     public function tryToOrderdoneTest(FunctionalTester $I)
     {
         $I->amOnRoute('pay/orderdone', ['id' => 0]);
-        $I->see(' Not Found:');
+        $I->see(' Bad Request:');
     }
 
     public function tryToOrderokTest(FunctionalTester $I)

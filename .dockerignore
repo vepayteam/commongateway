@@ -15,3 +15,12 @@ migrations/*.zip
 Dockerfile
 .tags
 .drone.yml
+
+tests/_output/*
+tests/_support/_generated
+
+config/db.php
+config/params.php
+config/test_params.php
+config/kassaclients/*
+config/applepayclients/*

@@ -1816,7 +1816,12 @@ class TKBankAdapter implements IBankAdapter
                 $checkStatusPayResponse->status = $status;
                 $checkStatusPayResponse->xml = $xml;
                 $checkStatusPayResponse->rrn = $xml['orderadditionalinfo']['rrn'] ?? '';
-                $checkStatusPayResponse->message = $checkStatusPayResponse->xml['orderinfo']['statedescription'];
+                $checkStatusPayResponse->cardRefId = $xml['orderadditionalinfo']['data']['cardrefid'] ?? '';
+                $checkStatusPayResponse->message = $xml['orderinfo']['statedescription'] ?? '';
+                $checkStatusPayResponse->expYear = $xml['orderadditionalinfo']['cardexpyear'] ?? '';
+                $checkStatusPayResponse->expMonth = $xml['orderadditionalinfo']['cardexpmonth'] ?? '';
+                $checkStatusPayResponse->cardHolder = $xml['orderadditionalinfo']['cardholder'] ?? '';
+                $checkStatusPayResponse->cardNumber = $xml['orderadditionalinfo']['cardnumber'] ?? '';
             }
         } else {
             throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
