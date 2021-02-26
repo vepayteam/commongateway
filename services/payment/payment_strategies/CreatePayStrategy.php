@@ -89,10 +89,6 @@ class CreatePayStrategy
         }
 
         $this->updatePaySchet($paySchet);
-        if($bankAdapterBuilder->getUslugatovar()->ID == Uslugatovar::TYPE_REG_CARD) {
-            $this->updatePaySchetWithRegCard($paySchet);
-        }
-
         return $paySchet;
     }
 
@@ -200,8 +196,6 @@ class CreatePayStrategy
         );
 
         $user = User::findOne(['ID' => $paySchet->IdUser]);
-        $card = $this->createUnregisterCard($token, $user);
-
         if ($token == 0) {
             $token = $cartToken->CreateToken(
                 $this->createPayForm->CardNumber,
@@ -210,6 +204,7 @@ class CreatePayStrategy
             );
         }
 
+        $card = $this->createUnregisterCard($token, $user);
         $paySchet->IdKard = $card->ID;
         $paySchet->CardNum = Cards::MaskCard($this->createPayForm->CardNumber);
         $paySchet->CardType = Cards::GetCardBrand(Cards::GetTypeCard($this->createPayForm->CardNumber));
