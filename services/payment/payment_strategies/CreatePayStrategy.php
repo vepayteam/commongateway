@@ -195,7 +195,14 @@ class CreatePayStrategy
             $this->createPayForm->CardMonth.$this->createPayForm->CardYear
         );
 
-        $user = User::findOne(['ID' => $paySchet->IdUser]);
+        if($paySchet->IdUser) {
+            $user = User::findOne(['ID' => $paySchet->IdUser]);
+        } else {
+            $reguser = new Reguser();
+            $user = $reguser->findUser('0', $paySchet->IdOrg . '-' . time(), md5($paySchet->IdOrg . '-' . time()), $paySchet->IdOrg, false);
+            $paySchet->IdUser = $user->ID;
+        }
+
         if ($token == 0) {
             $token = $cartToken->CreateToken(
                 $this->createPayForm->CardNumber,
@@ -215,23 +222,6 @@ class CreatePayStrategy
         if(!$paySchet->save()) {
             throw new CreatePayException('Ошибка валидации данных счета');
         }
-    }
-
-
-    /**
-     * @return \app\models\payonline\User|bool|false
-     * @throws \Exception
-     */
-    private function createUser(PaySchet $paySchet)
-    {
-        $reguser = new Reguser();
-        $user = $reguser->findUser(
-            '0',
-            $paySchet->IdOrg . '-' . time() . random_int(100, 999),
-            md5($paySchet->ID . '-' . time()),
-            $paySchet->IdOrg, false
-        );
-        return $user;
     }
 
     /**
