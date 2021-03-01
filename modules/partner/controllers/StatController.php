@@ -130,24 +130,15 @@ class StatController extends Controller
         if ($format === 'csv') {
             $data = $diffExport->exportCsv();
 
-            Yii::$app->response->format = Response::FORMAT_RAW;
-            Yii::$app->response->setDownloadHeaders(
-                "export.csv",
-                "text/csv"
-            );
-
-            return $data;
-
+            return Yii::$app->response->sendContentAsFile($data, 'export.csv', [
+                'mimeType' => 'text/csv'
+            ]);
         } else if ($format === 'xlsx') {
             $data = $diffExport->exportXlsx();
 
-            Yii::$app->response->format = Response::FORMAT_RAW;
-            Yii::$app->response->setDownloadHeaders(
-                "export.xlsx",
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            );
-
-            return $data;
+            return Yii::$app->response->sendContentAsFile($data, 'export.xlsx', [
+                'mimeType' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            ]);
         }
 
         throw new BadRequestHttpException();
