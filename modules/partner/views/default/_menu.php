@@ -76,16 +76,17 @@ $act = PartUserAccess::getSelRazdel(\Yii::$app->controller->action);
                 </li>
             <?php endif; ?>
             <?php if ($IsAdmin || (count($razdels) == 0 || isset($razdels[0]))) : ?>
-                <li class="<?= !empty($act[0]) || !empty($act[18]) ? 'active' : '' ?>">
-                    <a href="" aria-expanded="<?= !empty($act[0]) || !empty($act[18]) ? 'true' : 'false' ?>">
+                <li class="<?= !empty($act[0]) || !empty($act[18]) || !empty($act[24]) ? 'active' : '' ?>">
+                    <a href="" aria-expanded="<?= !empty($act[0]) || !empty($act[18]) || !empty($act[24]) ? 'true' : 'false' ?>">
                         <i class="fa fa-list"></i>
                         <span class="nav-label"> Операции</span>
                         <span class="fa arrow"></span>
                     </a>
-                    <ul class="nav nav-second-level collapse <?= !empty($act[0]) || !empty($act[18]) ? 'in' : '' ?>"
+                    <ul class="nav nav-second-level collapse <?= !empty($act[0]) || !empty($act[18]) || !empty($act[24]) ? 'in' : '' ?>"
                         aria-expanded="true" style="">
                         <li class="<?= $act[0] ?>"><a href="/partner/stat/list">Список операций</a></li>
                         <li class="<?= $act[18] ?>"><a href="/partner/payment-orders/list">Платежные поручения</a></li>
+                        <li class="<?= $act[24] ?>"><a href="/partner/stat/diff">Сверка операций с Банком</a></li>
                     </ul>
                 </li>
             <?php endif; ?>
