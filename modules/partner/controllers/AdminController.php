@@ -453,7 +453,7 @@ class AdminController extends Controller
         if ($id > 0) {
             $sum = Yii::$app->request->get('sum', 0);
             $model = DynamicModel::validateData(['sum' => $sum], [
-                [['sum'], 'double']
+                [['sum'], 'integer']
             ]);
 
             if ($model->hasErrors()) {
@@ -471,7 +471,7 @@ class AdminController extends Controller
         if ($id > 0) {
             $sum = Yii::$app->request->get('sum', 0);
             $model = DynamicModel::validateData(['sum' => $sum], [
-                [['sum'], 'double']
+                [['sum'], 'integer']
             ]);
 
             if ($model->hasErrors()) {
