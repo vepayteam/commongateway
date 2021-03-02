@@ -28,6 +28,7 @@ use Yii;
  * @property integer $IsDeleted
  * @property User $user
  * @property Bank $bank
+ * @property PanToken $panToken
  */
 class Cards extends \yii\db\ActiveRecord
 {
@@ -119,6 +120,11 @@ class Cards extends \yii\db\ActiveRecord
     public function getBank()
     {
         return $this->hasOne(Bank::class, ['ID' => 'IdBank']);
+    }
+
+    public function getPanToken()
+    {
+        return $this->hasOne(PanToken::class, ['ID' => 'IdPan']);
     }
 
     public function allowUpdFields()
