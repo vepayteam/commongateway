@@ -27,6 +27,7 @@ use app\models\sms\api\SingleMainSms;
 use app\models\sms\tables\AccessSms;
 use toriphes\console\Runner;
 use Yii;
+use yii\base\DynamicModel;
 use yii\db\Exception;
 use yii\db\Expression;
 use yii\db\Query;
@@ -450,8 +451,17 @@ class AdminController extends Controller
     public function actionTestaddbalance($id)
     {
         if ($id > 0) {
+            $sum = Yii::$app->request->get('sum', 0);
+            $model = DynamicModel::validateData(['sum' => $sum], [
+                [['sum'], 'double']
+            ]);
+
+            if ($model->hasErrors()) {
+                return $this->asJson($model->errors);
+            }
+
             $b = new BalancePartner(Yii::$app->request->get('type'), $id);
-            $b->Inc(Yii::$app->request->get('sum', 0), Yii::$app->request->get('info', ''), 0, 0, 0);
+            $b->Inc($sum, Yii::$app->request->get('info', ''), 0, 0, 0);
         }
         return $id;
     }
@@ -459,8 +469,17 @@ class AdminController extends Controller
     public function actionTestdecbalance($id)
     {
         if ($id > 0) {
+            $sum = Yii::$app->request->get('sum', 0);
+            $model = DynamicModel::validateData(['sum' => $sum], [
+                [['sum'], 'double']
+            ]);
+
+            if ($model->hasErrors()) {
+                return $this->asJson($model->errors);
+            }
+
             $b = new BalancePartner(Yii::$app->request->get('type'), $id);
-            $b->Dec(Yii::$app->request->get('sum', 0), Yii::$app->request->get('info', ''), 0, 0, 0);
+            $b->Dec($sum, Yii::$app->request->get('info', ''), 0, 0, 0);
         }
         return $id;
     }
