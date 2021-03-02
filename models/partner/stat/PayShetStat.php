@@ -313,7 +313,7 @@ class PayShetStat extends Model
             ]);
 
         if ($IdPart > 0) {
-            $query->andWhere('qp.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);
+            $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
         if (count($this->status) > 0) {
             $query->andWhere(['in', 'ps.Status', $this->status]);
