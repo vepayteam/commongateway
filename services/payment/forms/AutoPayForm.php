@@ -57,7 +57,7 @@ class AutoPayForm extends Model implements Serializable
     public function validateCard()
     {
         $card = $this->getCard();
-        if(!$this->getCard()) {
+        if(!$card) {
             $this->addError('card', 'Нет такой карты');
         }
 
