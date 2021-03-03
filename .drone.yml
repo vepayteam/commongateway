@@ -1,0 +1,165 @@
+---
+kind: pipeline
+type: kubernetes
+name: test-development-push-pull-request
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: check-for-conventional-commits
+  pull: if-not-exists
+  image: aevea/commitsar:0.15.0
+  commands:
+  - commitsar -v -s
+  failure: ignore
+
+- name: notify-conventional-commits-7ac2812fb6deba1062e461c7b277016c
+  pull: always
+  image: registry.vepay.cf/ci-tools
+  commands:
+  - export BUILD_STATUS=$$(cat /run/drone/env | grep DRONE_STAGE_STATUS | cut -d '=' -f 2 | tr -d \")
+  - gitea-status -t "conventional-commits" -m "-ignored-" -s "warning" -u "https://www.conventionalcommits.org/en/v1.0.0/#why-use-conventional-commits"
+  environment:
+    GITEA_TOKEN:
+      from_secret: GITEA_TOKEN
+  when:
+    status:
+    - failure
+    - success
+
+- name: prepare-test-env
+  pull: always
+  image: registry.vepay.cf/apache-php
+  commands:
+  - apt-get update
+  - apt-get --no-install-recommends install -yq git unzip
+  - curl -s $$COMPOSER_INSTALLER_URL | php -- --install-dir=/tmp --filename=composer --version=$$COMPOSER_VERSION
+  - /tmp/composer install
+  environment:
+    COMPOSER_INSTALLER_URL: https://raw.githubusercontent.com/composer/getcomposer.org/76a7060ccb93902cd7576b67264ad91c8a2700e2/web/installer
+    COMPOSER_VERSION: 1.10.16
+    DEBIAN_FRONTEND: noninteractive
+
+- name: unit-functional-testing
+  pull: always
+  image: registry.vepay.cf/apache-php
+  commands:
+  - ./vendor/bin/phpunit
+
+image_pull_secrets:
+- dockerconfig
+
+trigger:
+  branch:
+  - develop
+  event:
+  - push
+  - pull_request
+
+---
+kind: pipeline
+type: kubernetes
+name: test-staging-push
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: prepare-test-env
+  pull: always
+  image: registry.vepay.cf/apache-php
+  commands:
+  - apt-get update
+  - apt-get --no-install-recommends install -yq git unzip
+  - curl -s $$COMPOSER_INSTALLER_URL | php -- --install-dir=/tmp --filename=composer --version=$$COMPOSER_VERSION
+  - /tmp/composer install
+  environment:
+    COMPOSER_INSTALLER_URL: https://raw.githubusercontent.com/composer/getcomposer.org/76a7060ccb93902cd7576b67264ad91c8a2700e2/web/installer
+    COMPOSER_VERSION: 1.10.16
+    DEBIAN_FRONTEND: noninteractive
+
+- name: unit-functional-testing
+  pull: always
+  image: registry.vepay.cf/apache-php
+  commands:
+  - ./vendor/bin/phpunit
+
+image_pull_secrets:
+- dockerconfig
+
+trigger:
+  branch:
+  - master
+  event:
+  - push
+
+---
+kind: pipeline
+type: kubernetes
+name: promote-release
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: assert-version-provided
+  pull: always
+  image: registry.vepay.cf/ci-tools
+  commands:
+  - test -z "$$VERSION" && exit 1
+  - echo $$VERSION > .version
+  - git-chglog --next-tag $$VERSION -o CHANGELOG.md
+  environment:
+    NO_COLOR: true
+    NO_EMOJI: true
+
+- name: composer-release-archive
+  pull: always
+  image: registry.vepay.cf/apache-php
+  commands:
+  - apt-get update
+  - apt-get --no-install-recommends install -yq git unzip
+  - curl -s $$COMPOSER_INSTALLER_URL | php -- --install-dir=/tmp --filename=composer --version=$$COMPOSER_VERSION
+  - /tmp/composer archive --dir=dist -f zip -n --file=${DRONE_REPO_NAME,,} ${DRONE_REPO_NAME,,} $$VERSION
+  environment:
+    COMPOSER_INSTALLER_URL: https://raw.githubusercontent.com/composer/getcomposer.org/76a7060ccb93902cd7576b67264ad91c8a2700e2/web/installer
+    COMPOSER_VERSION: 1.10.16
+    DEBIAN_FRONTEND: noninteractive
+
+- name: gitea-release
+  pull: always
+  image: plugins/gitea-release
+  settings:
+    api_key:
+      from_secret: GITEA_TOKEN
+    base_url: https://git.vepay.cf
+    files: dist/*.zip
+    note: CHANGELOG.md
+    title: .version
+
+image_pull_secrets:
+- dockerconfig
+
+trigger:
+  event:
+  - promote
+  target:
+  - release
+
+---
+kind: secret
+name: GITEA_TOKEN
+
+get:
+  path: gitea
+  name: token
+
+---
+kind: signature
+hmac: f099a9a145053bdce9487b2249f19a8b1def6081c98f5f4c526dc2b12546d560
+
+...
