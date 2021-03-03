@@ -169,7 +169,8 @@ class MfoOutCardStrategy
     {
         return Uslugatovar::find()
             ->where([
-                'IsCustom' => UslugatovarType::TOCARD,
+                'IDPartner' => $this->outCardPayForm->partner->ID,
+                'IsCustom'  => UslugatovarType::TOCARD,
                 'IsDeleted' => 0,
             ])
             ->one();
