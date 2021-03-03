@@ -6,7 +6,8 @@ use Vepay\Gateway\Config;
 
 class LoggerAdapter
 {
-    private string $logger;
+    /** @var string  */
+    private $logger;
 
     /**
      * LoggerDecarator constructor.

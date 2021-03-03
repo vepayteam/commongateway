@@ -11,7 +11,8 @@ use Vepay\Gateway\Tests\Mock\Response\MockResponseInterface;
  */
 trait MockBehavior
 {
-    protected array $operationMapping = [];
+    /** @var array  */
+    protected $operationMapping = [];
 
     /**
      * @param string $operationName
