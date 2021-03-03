@@ -57,7 +57,7 @@ class Validator
                     Config::getInstance()->logger->warning("Optional field '{$fieldName}' is empty.", __CLASS__);
                 }
             }
-            $validParameters[$fieldName] = array_key_exists($fieldName, $parameters) ? $parameters[$fieldName] : null;
+            $validParameters[$fieldName] = $parameters[$fieldName] ?? null;
         }
 
         return array_intersect_key($parameters, $validParameters);
