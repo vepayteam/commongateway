@@ -2,6 +2,11 @@
 
 Config, Logger, Resource, Client, Requests, Responses
 
-# PHPUnits
+### Packages
+The are Packages and versions in file - composer.json
 
-exexute: vendor/bin/phpunit
+### Vendors
+execute: composer install
+
+### PHPUnits
+execute: vendor/bin/phpunit
