@@ -38,3 +38,4 @@ key/key.txt
 .vagrant
 Vagrantfile
 *.log
+.version

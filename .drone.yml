@@ -551,7 +551,8 @@ steps:
   pull: always
   image: alpine
   commands:
-  - test -z '${VERSION}' && exit 1
+  - test -z "$$VERSION" && exit 1
+  - echo $$VERSION > .version
 
 - name: build-changelog
   pull: if-not-exists
@@ -567,7 +568,7 @@ steps:
       from_secret: GITEA_TOKEN
     base_url: https://git.vepay.cf
     note: CHANGELOG.md
-    title: ${VERSION}
+    title: .version
 
 image_pull_secrets:
 - dockerconfig
@@ -620,6 +621,6 @@ get:
 
 ---
 kind: signature
-hmac: ad1f7d9f359c625817b2c3920111b2205c010e66c3be6049a1240c15bbf1d94a
+hmac: d279d1f466f23fa26926e7048e74f2a37e61ddb645fa3fa559e4480fdabbebcb
 
 ...
