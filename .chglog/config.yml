@@ -2,7 +2,7 @@ style: none
 template: CHANGELOG.tpl.md
 info:
   title: CHANGELOG
-  repository_url: https://git.vepay.cf/backend/cauri
+  repository_url: https://git.vepay.cf/backend/commongateway
 options:
   commits:
     # filters:
