@@ -10,7 +10,8 @@ use Exception;
  */
 abstract class AbstractClientConfigurator
 {
-    private static array $configuredClients = [];
+    /** @var array  */
+    private static $configuredClients = [];
 
     abstract public static function getGatewayName(): string;
 

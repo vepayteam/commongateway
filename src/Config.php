@@ -14,8 +14,10 @@ use Vepay\Gateway\Logger\LoggerInterface;
  */
 class Config
 {
-    private static ?Config $instance = null;
-    private array $configs = [];
+    /** @var Config|null  */
+    private static $instance = null;
+    /** @var array  */
+    private $configs = [];
 
     private function __construct()
     {

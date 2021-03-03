@@ -10,7 +10,8 @@ use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
  */
 class Response implements ResponseInterface
 {
-    protected PsrResponseInterface $response;
+    /** @var PsrResponseInterface  */
+    protected $response;
 
     /**
      * Response constructor.
