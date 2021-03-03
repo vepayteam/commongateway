@@ -8,10 +8,8 @@ namespace Vepay\Gateway\Logger\Handler;
  */
 class File implements HandlerInterface
 {
-    /**
-     * @var string
-     */
-    protected string $logFile;
+    /** @var string */
+    protected $logFile;
 
     /**
      * File constructor.

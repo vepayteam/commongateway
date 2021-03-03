@@ -13,7 +13,8 @@ class Validator
     public const REQUIRED = 'required';
     public const OPTIONAL = 'optional';
 
-    protected array $rules = [];
+    /** @var array  */
+    protected $rules = [];
 
     /**
      * @param string $name

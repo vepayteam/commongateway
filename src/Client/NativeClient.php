@@ -19,7 +19,8 @@ use Vepay\Gateway\Logger\Guzzle\LogMiddleware;
  */
 class NativeClient implements ClientInterface
 {
-    protected Client $client;
+    /** @var Client  */
+    protected $client;
 
     /**
      * @param array $options

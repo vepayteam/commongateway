@@ -8,11 +8,16 @@ namespace Vepay\Gateway\Client\Request;
  */
 abstract class Request implements RequestInterface
 {
-    protected string $endpoint = '';
-    protected string $method = '';
-    protected array $headers = [];
-    protected array $parameters = [];
-    protected array $options = [];
+    /** @var string  */
+    protected $endpoint = '';
+    /** @var string  */
+    protected $method = '';
+    /** @var array  */
+    protected $headers = [];
+    /** @var array  */
+    protected $parameters = [];
+    /** @var array  */
+    protected $options = [];
 
     /**
      * Request constructor.
