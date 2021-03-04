@@ -102,4 +102,12 @@ class BankAdapterBuilder
         return $this->uslugatovar;
     }
 
+    /**
+     * @return PartnerBankGate
+     */
+    public function getPartnerBankGate(): PartnerBankGate
+    {
+        return $this->partnerBankGate;
+    }
+
 }
