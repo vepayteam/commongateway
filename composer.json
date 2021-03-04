@@ -37,7 +37,9 @@
         "2amigos/qrcode-library" : "*",
         "php-amqplib/php-amqplib": "^2.11",
         "rmccue/requests": "^1.7",
-        "yiisoft/yii2-redis": "~2.0.0"
+        "yiisoft/yii2-redis": "~2.0.0",
+        "vepay/cauri": "^1.0",
+        "vepay/commongateway": "^1.0"
     },
     "require-dev": {
         "yiisoft/yii2-debug": "~2.1.0",
@@ -91,6 +93,30 @@
         {
             "type": "composer",
             "url": "https://asset-packagist.org"
+        },
+        {
+            "type":"package",
+            "package": {
+                "name": "vepay/cauri",
+                "version": "1.0.0",
+                "source": {
+                    "url": "https://git.vepay.cf/backend/cauri.git",
+                    "type": "git",
+                    "reference": "1.0.0"
+                }
+            }
+        },
+        {
+            "type":"package",
+            "package": {
+                "name": "vepay/commongateway",
+                "version": "1.0.0",
+                "source": {
+                    "url": "https://git.vepay.cf/backend/commongateway.git",
+                    "type": "git",
+                    "reference": "1.0.0"
+                }
+            }
         }
     ]
 }
