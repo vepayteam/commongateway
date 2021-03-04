@@ -36,6 +36,8 @@ steps:
   - apt-get update
   - apt-get --no-install-recommends install -yq git unzip
   - curl -s $$COMPOSER_INSTALLER_URL | php -- --install-dir=/tmp --filename=composer --version=$$COMPOSER_VERSION
+  - /tmp/composer validate --strict
+  - /tmp/composer check-platform-reqs
   - /tmp/composer install
   environment:
     COMPOSER_INSTALLER_URL: https://raw.githubusercontent.com/composer/getcomposer.org/76a7060ccb93902cd7576b67264ad91c8a2700e2/web/installer
@@ -75,6 +77,8 @@ steps:
   - apt-get update
   - apt-get --no-install-recommends install -yq git unzip
   - curl -s $$COMPOSER_INSTALLER_URL | php -- --install-dir=/tmp --filename=composer --version=$$COMPOSER_VERSION
+  - /tmp/composer validate --strict
+  - /tmp/composer check-platform-reqs
   - /tmp/composer install
   environment:
     COMPOSER_INSTALLER_URL: https://raw.githubusercontent.com/composer/getcomposer.org/76a7060ccb93902cd7576b67264ad91c8a2700e2/web/installer
@@ -124,7 +128,7 @@ steps:
   - apt-get update
   - apt-get --no-install-recommends install -yq git unzip
   - curl -s $$COMPOSER_INSTALLER_URL | php -- --install-dir=/tmp --filename=composer --version=$$COMPOSER_VERSION
-  - /tmp/composer archive --dir=dist -f zip -n --file=${DRONE_REPO_NAME,,} ${DRONE_REPO_NAME,,} $$VERSION
+  - /tmp/composer archive --dir=dist -f zip -n --file=${DRONE_REPO_NAME,,}
   environment:
     COMPOSER_INSTALLER_URL: https://raw.githubusercontent.com/composer/getcomposer.org/76a7060ccb93902cd7576b67264ad91c8a2700e2/web/installer
     COMPOSER_VERSION: 1.10.16
@@ -160,6 +164,6 @@ get:
 
 ---
 kind: signature
-hmac: f099a9a145053bdce9487b2249f19a8b1def6081c98f5f4c526dc2b12546d560
+hmac: 0265180bb381944759864a1e721a1c3880de46fae0ce098db9b1efaeb98d583f
 
 ...
