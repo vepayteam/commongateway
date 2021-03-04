@@ -29,6 +29,8 @@ use app\models\queue\JobPriorityInterface;
 use app\models\queue\SendMailJob;
 use app\models\SendEmail;
 use app\models\TU;
+use app\modules\partner\models\DiffData;
+use app\modules\partner\models\DiffExport;
 use app\modules\partner\models\PaySchetLogForm;
 use app\services\ident\forms\IdentStatisticForm;
 use app\services\ident\IdentService;
@@ -44,8 +46,10 @@ use yii\helpers\Url;
 use yii\helpers\VarDumper;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
+use yii\web\MethodNotAllowedHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
+use yii\web\UploadedFile;
 
 class StatController extends Controller
 {
@@ -85,6 +89,59 @@ class StatController extends Controller
                 ],
             ],
         ];
+    }
+
+    public function actionDiff()
+    {
+        return $this->render('diff');
+    }
+
+    public function actionDiffdata()
+    {
+        if (Yii::$app->request->isPost) {
+            $registryFile = UploadedFile::getInstanceByName('registryFile');
+
+            $diffData = new DiffData();
+            $diffData->read($registryFile->tempName);
+
+            [$badStatus, $notFound] = $diffData->execute();
+
+            return $this->asJson([
+                'status' => 1,
+                'data' => $this->renderPartial('_diffdata', [
+                    'badStatus' => $badStatus,
+                    'notFound' => $notFound,
+                ]),
+            ]);
+        }
+
+        throw new MethodNotAllowedHttpException();
+    }
+
+    public function actionDiffexport()
+    {
+        $badStatus = json_decode(Yii::$app->request->post('badStatus'), true);
+        $notFound = json_decode(Yii::$app->request->post('notFound'), true);
+        $format = Yii::$app->request->post('format');
+
+        $diffExport = new DiffExport($badStatus, $notFound);
+        $diffExport->prepareData();
+
+        if ($format === 'csv') {
+            $data = $diffExport->exportCsv();
+
+            return Yii::$app->response->sendContentAsFile($data, 'export.csv', [
+                'mimeType' => 'text/csv'
+            ]);
+        } else if ($format === 'xlsx') {
+            $data = $diffExport->exportXlsx();
+
+            return Yii::$app->response->sendContentAsFile($data, 'export.xlsx', [
+                'mimeType' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            ]);
+        }
+
+        throw new BadRequestHttpException();
     }
 
     /**

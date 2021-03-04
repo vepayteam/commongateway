@@ -313,6 +313,41 @@
             });
         },
 
+        diffdatareq: function () {
+            $.ajax({
+                type: 'POST',
+                enctype: 'multipart/form-data',
+                url: '/partner/stat/diffdata',
+                // data: $('#diffdataform').serialize(),
+                data: new FormData($('#diffdataform')[0]),
+                processData: false,
+                contentType: false,
+                beforeSend: function () {
+                    $('#diffdataform').closest('.ibox-content').toggleClass('sk-loading');
+                },
+                success: function (data) {
+                    $('#diffdataform').closest('.ibox-content').toggleClass('sk-loading');
+                    if (data.status === 1) {
+                        $('#diffdataresult').html(data.data)
+                    } else {
+                        $('#diffdataresult').html("<p class='text-center'>" + data.message + "</p>")
+                    }
+                },
+                error: function () {
+                    $('#diffdataform').closest('.ibox-content').toggleClass('sk-loading');
+                    $('#diffdataresult').html("<p class='text-center'>Ошибка</p>");
+                }
+            })
+        },
+
+        diffdata: function () {
+            $('#diffdataform').on('submit', function (e) {
+                e.preventDefault();
+
+                lk.diffdatareq();
+            })
+        },
+
         excerpt: function () {
             $(document).on('click', '.excerpt', function (e) {
                 e.preventDefault();
