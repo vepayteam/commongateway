@@ -146,6 +146,11 @@ class ComposerStaticInita57ff6ced5f8f56ae58d5b096b8905e4
         array (
             'Webmozart\\Assert\\' => 17,
         ),
+        'V' => 
+        array (
+            'Vepay\\Gateway\\' => 14,
+            'Vepay\\Cauri\\' => 12,
+        ),
         'S' => 
         array (
             'Symfony\\Polyfill\\Php80\\' => 23,
@@ -347,6 +352,14 @@ class ComposerStaticInita57ff6ced5f8f56ae58d5b096b8905e4
         'Webmozart\\Assert\\' => 
         array (
             0 => __DIR__ . '/..' . '/webmozart/assert/src',
+        ),
+        'Vepay\\Gateway\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/vepay/commongateway/src',
+        ),
+        'Vepay\\Cauri\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/vepay/cauri/src',
         ),
         'Symfony\\Polyfill\\Php80\\' => 
         array (
