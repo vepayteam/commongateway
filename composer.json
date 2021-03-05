@@ -1,7 +1,12 @@
 {
     "name": "yiisoft/yii2-app-basic",
     "description": "Yii 2 Basic Project Template",
-    "keywords": ["yii2", "framework", "basic", "project template"],
+    "keywords": [
+        "yii2",
+        "framework",
+        "basic",
+        "project template"
+    ],
     "homepage": "http://www.yiiframework.com/",
     "type": "project",
     "license": "BSD-3-Clause",
@@ -30,14 +35,16 @@
         "yiisoft/yii2-queue": "~2.1.0 || ~2.2.0",
         "qfsx/yii2-curl": "dev-master",
         "phpoffice/phpspreadsheet": "*",
-        "geoip2/geoip2" : "~2.0",
+        "geoip2/geoip2": "~2.0",
         "kartik-v/yii2-mpdf": "dev-master",
         "toriphes/yii2-console-runner": "*",
         "nesbot/carbon": "^2.40",
-        "2amigos/qrcode-library" : "*",
+        "2amigos/qrcode-library": "*",
         "php-amqplib/php-amqplib": "^2.11",
         "rmccue/requests": "^1.7",
-        "yiisoft/yii2-redis": "~2.0.0"
+        "yiisoft/yii2-redis": "~2.0.0",
+        "vepay/cauri": "1.0.0",
+        "vepay/commongateway": "1.0.0"
     },
     "require-dev": {
         "yiisoft/yii2-debug": "~2.1.0",
@@ -91,6 +98,36 @@
         {
             "type": "composer",
             "url": "https://asset-packagist.org"
+        },
+        {
+            "type":"package",
+            "package": {
+                "name": "vepay/cauri",
+                "version": "1.0.0",
+                "source": {
+                    "url": "https://git.vepay.cf/backend/cauri.git",
+                    "type": "git",
+                    "reference": "1.0.0"
+                }
+            }
+        },
+        {
+            "type":"package",
+            "package": {
+                "name": "vepay/commongateway",
+                "version": "1.0.0",
+                "source": {
+                    "url": "https://git.vepay.cf/backend/commongateway.git",
+                    "type": "git",
+                    "reference": "1.0.0"
+                }
+            }
         }
-    ]
+    ],
+    "autoload": {
+        "psr-4": {
+            "Vepay\\Cauri\\": "vendor/vepay/cauri/src",
+            "Vepay\\Gateway\\": "vendor/vepay/commongateway/src"
+        }
+    }
 }
