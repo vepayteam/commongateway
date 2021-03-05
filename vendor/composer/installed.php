@@ -6,7 +6,7 @@
     'aliases' => 
     array (
     ),
-    'reference' => 'dfc4eefbb4b0172058d6876168f8f6660ffbf681',
+    'reference' => '00532708673e38664a2de8b34f88e11908b2c62d',
     'name' => 'yiisoft/yii2-app-basic',
   ),
   'versions' => 
@@ -1061,12 +1061,12 @@
     ),
     'vepay/cauri' => 
     array (
-      'pretty_version' => '1.0.0',
-      'version' => '1.0.0.0',
+      'pretty_version' => '1.0.1',
+      'version' => '1.0.1.0',
       'aliases' => 
       array (
       ),
-      'reference' => '1.0.0',
+      'reference' => '70c60372f441394309d04936e4331a81c3e71167',
     ),
     'vepay/commongateway' => 
     array (
@@ -1109,7 +1109,7 @@
       'aliases' => 
       array (
       ),
-      'reference' => 'dfc4eefbb4b0172058d6876168f8f6660ffbf681',
+      'reference' => '00532708673e38664a2de8b34f88e11908b2c62d',
     ),
     'yiisoft/yii2-bootstrap' => 
     array (

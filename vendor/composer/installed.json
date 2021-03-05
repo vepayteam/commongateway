@@ -7058,15 +7058,49 @@
         },
         {
             "name": "vepay/cauri",
-            "version": "1.0.0",
-            "version_normalized": "1.0.0.0",
+            "version": "1.0.1",
+            "version_normalized": "1.0.1.0",
             "source": {
                 "type": "git",
                 "url": "https://git.vepay.cf/backend/cauri.git",
-                "reference": "1.0.0"
+                "reference": "70c60372f441394309d04936e4331a81c3e71167"
             },
+            "require": {
+                "php": "^7.2",
+                "vepay/commongateway": "^1.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^8.0"
+            },
+            "time": "2021-03-05T15:10:38+00:00",
             "type": "library",
             "installation-source": "source",
+            "autoload": {
+                "psr-4": {
+                    "Vepay\\Cauri\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Vepay\\Cauri\\Tests\\": "tests/",
+                    "Vepay\\Gateway\\Tests\\": "vendor/vepay/commongateway/tests/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Dzmitry Kuzmin",
+                    "email": "d4.kuzmin@itransition.com"
+                },
+                {
+                    "name": "Yauhen Kuzob",
+                    "email": "e.kuzob@itransition.com"
+                }
+            ],
+            "description": "PHP library gateway for payment system Cauri",
+            "homepage": "https://cauri.com/",
             "install-path": "../vepay/cauri"
         },
         {
