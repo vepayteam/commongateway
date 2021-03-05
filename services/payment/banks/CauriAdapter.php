@@ -159,8 +159,6 @@ class CauriAdapter implements IBankAdapter
      */
     public function outCardPay(OutCardPayForm $outCardPayForm)
     {
-
-
         $outCardPayRequest = new OutCardPayRequest();
         $outCardPayRequest->amount = $outCardPayForm->amount / 100;
         $outCardPayRequest->description = 'Выдача на карту №' . $outCardPayForm->paySchet->ID;
@@ -168,7 +166,6 @@ class CauriAdapter implements IBankAdapter
         $outCardPayRequest->account = $outCardPayForm->cardnum;
         $outCardPayRequest->beneficiaryFirstName = $outCardPayForm->getFirstName();
         $outCardPayRequest->beneficiaryLastName = $outCardPayForm->getLastName();
-
 
         $payout = new Payout();
         $response = $payout->__call('create', [
