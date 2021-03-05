@@ -34,9 +34,9 @@ class OutCardPayForm extends Model
     public function rules()
     {
         return [
-            [['amount', 'extid'], 'required'],
+            [['amount'], 'required'],
             [['cardnum'], 'match', 'pattern' => '/^\d{16}|\d{18}$/'],
-            [['fullname', 'document_id'], 'safe'],
+            [['fullname', 'document_id', 'extid'], 'safe'],
             ['card', 'validateCard'],
         ];
     }
