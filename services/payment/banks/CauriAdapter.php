@@ -4,10 +4,13 @@
 namespace app\services\payment\banks;
 
 
+use app\services\logs\loggers\CauriLogger;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
+use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
+use app\services\payment\forms\cauri\CheckStatusPayRequest;
 use app\services\payment\forms\cauri\OutCardPayRequest;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
@@ -17,6 +20,7 @@ use app\services\payment\forms\RefundPayForm;
 use app\services\payment\models\PartnerBankGate;
 use Vepay\Cauri\Client\Request\PayoutCreateRequest;
 use Vepay\Cauri\Resource\Payout;
+use Vepay\Cauri\Resource\Transaction;
 use Vepay\Gateway\Config;
 use Vepay\Gateway\Logger\Logger;
 
@@ -38,7 +42,7 @@ class CauriAdapter implements IBankAdapter
         $this->gate = $partnerBankGate;
 
         $config = Config::getInstance();
-        $config->logger = Logger::class;
+        $config->logger = CauriLogger::class;
     }
 
     /**
@@ -135,7 +139,35 @@ class CauriAdapter implements IBankAdapter
      */
     public function checkStatusPay(OkPayForm $okPayForm)
     {
-        throw new GateException('Метод недоступен');
+        $checkStatusPayRequest = new CheckStatusPayRequest();
+        $checkStatusPayRequest->id = $okPayForm->getPaySchet()->ExtBillNumber;
+
+        $transaction = new Transaction();
+
+        $checkStatusPayResponse = new CheckStatusPayResponse();
+
+        try {
+            $response = $transaction->__call('status', [
+                $checkStatusPayRequest->getAttributes(), [
+                    'public_key' => $this->gate->Login,
+                    'private_key' => $this->gate->Token,
+                ]
+            ]);
+            $content = $response->getContent();
+            if(!isset($content['status'])) {
+                $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
+                $checkStatusPayResponse->message = 'Ошибка преобразования статуса';
+                return $checkStatusPayResponse;
+            }
+            $checkStatusPayResponse->status = $this->convertStatus($content['status']);
+            $checkStatusPayResponse->message = $content['status'];
+            return $checkStatusPayResponse;
+
+        } catch (\Exception $e) {
+            $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
+            $checkStatusPayResponse->message = $e->getMessage();
+            return $checkStatusPayResponse;
+        }
     }
 
     /**
@@ -187,5 +219,22 @@ class CauriAdapter implements IBankAdapter
         }
 
         return $outCardPayResponse;
+    }
+
+    protected function convertStatus(string $status)
+    {
+        switch ($status) {
+
+            case 'opened':
+            case 'charged_back':
+                return BaseResponse::STATUS_CREATED;
+            case 'completed':
+                return BaseResponse::STATUS_DONE;
+            case 'refunded':
+                return BaseResponse::STATUS_CANCEL;
+            default:
+                return BaseResponse::STATUS_ERROR;
+
+        }
     }
 }
