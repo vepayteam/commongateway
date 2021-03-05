@@ -36,6 +36,7 @@ class OutCardPayForm extends Model
         return [
             [['amount', 'extid'], 'required'],
             [['cardnum'], 'match', 'pattern' => '/^\d{16}|\d{18}$/'],
+            [['fullname', 'document_id'], 'safe'],
             ['card', 'validateCard'],
         ];
     }
@@ -75,6 +76,22 @@ class OutCardPayForm extends Model
     public function getMutexKey()
     {
         return 'OutCardPay_' . $this->partner->ID . '_' . $this->extid;
+    }
+
+    public function getFirstName()
+    {
+        if(empty($this->fullname) || explode(' ', $this->fullname) < 2) {
+            return 'БЕЗИМЕНИ';
+        }
+        return explode(' ', $this->fullname)[1];
+    }
+
+    public function getLastName()
+    {
+        if(empty($this->fullname) || explode(' ', $this->fullname) < 2) {
+            return 'БЕЗИМЕНИ';
+        }
+        return explode(' ', $this->fullname)[0];
     }
 
 }
