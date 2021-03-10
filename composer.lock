@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b4306b17059e0e7d3521eddf9364954a",
+    "content-hash": "01a3419c56be9947807d955fe84916a5",
     "packages": [
         {
             "name": "2amigos/qrcode-library",
