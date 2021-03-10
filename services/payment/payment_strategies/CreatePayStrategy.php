@@ -71,12 +71,13 @@ class CreatePayStrategy
 
         $bankAdapterBuilder = new BankAdapterBuilder();
         $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar);
-        $this->setCardPay($paySchet, $bankAdapterBuilder->getPartnerBankGate());
-
         if($paySchet->IdUsluga != Uslugatovar::REG_CARD_ID) {
             $this->checkAndChangeGateIfRsbNeedAft($paySchet);
             $this->checkAndChangeGateIfRsbEcomm($paySchet);
         }
+
+        $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar);
+        $this->setCardPay($paySchet, $bankAdapterBuilder->getPartnerBankGate());
 
         try {
             $this->createPayResponse = $bankAdapterBuilder->getBankAdapter()->createPay($this->createPayForm);
