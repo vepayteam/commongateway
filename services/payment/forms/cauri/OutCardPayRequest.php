@@ -17,6 +17,17 @@ class OutCardPayRequest extends Model
     public $beneficiaryFirstName;
     public $beneficiaryLastName;
 
+    public $birthDate;
+    public $countryOfCitizenship;
+    public $countryOfResidence;
+    public $documentType;
+    public $documentIssuer;
+    public $documentIssuedAt;
+    public $documentValidUntil;
+    public $birthPlace;
+    public $documentSeries;
+    public $documentNumber;
+    public $phone;
 
 
 }
