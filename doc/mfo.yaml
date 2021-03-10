@@ -870,6 +870,44 @@ components:
           type: string
           maxLength: 80
           description: ФИО клиента
+
+        birthDate:
+          type: string
+          description: Дата рождения, dd.mm.yyyy
+        countryOfCitizenship:
+          type: string
+          default: 'RU'
+          description: Гражданство, код страны
+        countryOfResidence:
+          type: string
+          default: 'RU'
+          description: Страна проживания, код страны
+        birthPlace:
+          type: string
+          description: Место рождения
+        documentType:
+          type: string
+          default: 'PASSPORT'
+          description: Документ, тип
+        documentIssuer:
+          type: string
+          description: Документ, кем выдан документ
+        documentIssuedAt:
+          type: string
+          description: Документ, дата выдачи, dd.mm.yyyy
+        documentValidUntil:
+          type: string
+          description: Документ, действителен до, dd.mm.yyyy
+        documentSeries:
+          type: string
+          description: Документ, серия
+        documentNumber:
+          type: string
+          description: Документ, номер
+        phone:
+          type: string
+          description: Номер телефона
+
     OutU:
       type: object
       properties:
