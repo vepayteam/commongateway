@@ -46,6 +46,7 @@ class MfoOutCardStrategy
      * @throws CreatePayException
      * @throws Exception
      * @throws GateException
+     * @throws \Vepay\Gateway\Client\Validator\ValidationException
      */
     public function exec()
     {

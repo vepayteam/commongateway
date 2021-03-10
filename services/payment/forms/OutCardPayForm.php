@@ -31,12 +31,43 @@ class OutCardPayForm extends Model
     public $card = 0;
     public $cardnum;
 
+    public $birthDate;
+    public $countryOfCitizenship;
+    public $countryOfResidence;
+    public $documentType;
+    public $documentIssuer;
+    public $documentIssuedAt;
+    public $documentValidUntil;
+    public $birthPlace;
+    public $documentSeries;
+    public $documentNumber;
+    public $phone;
+
     public function rules()
     {
         return [
             [['amount'], 'required'],
             [['cardnum'], 'match', 'pattern' => '/^\d{16}|\d{18}$/'],
-            [['fullname', 'document_id', 'extid'], 'safe'],
+            ['birthDate', 'match', 'pattern' => '/^[0-3][0-9]\.[0-1][0-9]\.[1-2][0-9]{3}$/i'],
+            ['countryOfCitizenship', 'default', 'value' => 'RU'],
+            ['countryOfResidence', 'default', 'value' => 'RU'],
+
+            ['documentType', 'default', 'value' => 'PASSPORT'],
+            ['documentIssuedAt', 'match', 'pattern' => '/^[0-3][0-9]\.[0-1][0-9]\.[1-2][0-9]{3}$/i'],
+            ['documentValidUntil', 'match', 'pattern' => '/^[0-3][0-9]\.[0-1][0-9]\.[1-2][0-9]{3}$/i'],
+
+
+            [[
+                'fullname',
+                'document_id',
+                'extid',
+
+                'birthPlace',
+                'documentIssuer',
+                'documentSeries',
+                'documentNumber',
+                'phone',
+            ], 'safe'],
             ['card', 'validateCard'],
         ];
     }

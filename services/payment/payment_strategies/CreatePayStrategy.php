@@ -74,7 +74,6 @@ class CreatePayStrategy
         $this->setCardPay($paySchet, $bankAdapterBuilder->getPartnerBankGate());
 
         if($paySchet->IdUsluga != Uslugatovar::REG_CARD_ID) {
-            $this->checkAndChangeGateIfTkbAndMaestroCard($paySchet);
             $this->checkAndChangeGateIfRsbNeedAft($paySchet);
             $this->checkAndChangeGateIfRsbEcomm($paySchet);
         }
@@ -91,29 +90,6 @@ class CreatePayStrategy
 
         $this->updatePaySchet($paySchet, $bankAdapterBuilder->getPartnerBankGate());
         return $paySchet;
-    }
-
-    protected function checkAndChangeGateIfTkbAndMaestroCard(PaySchet $paySchet)
-    {
-        // для погашений, карты маэстро только по еком надо
-        if (
-            $paySchet->Bank == TKBankAdapter::$bank
-            && $paySchet->uslugatovar->IsCustom == UslugatovarType::POGASHATF
-            && Cards::GetTypeCard($this->createPayForm->CardNumber) == Cards::BRANDS['MAESTRO']
-        ) {
-            /** @var PartnerBankGate $partnerBankGate */
-            $partnerBankGate = PartnerBankGate::find()->where([
-                'BankId' => TKBankAdapter::$bank,
-                'PartnerId' => $paySchet->partner->ID,
-                'TU' => UslugatovarType::POGASHECOM,
-            ])->orderBy('Priority DESC')->one();
-
-            if(!$partnerBankGate) {
-                throw new GateException('Нет шлюза');
-            }
-
-            $paySchet->changeGate($partnerBankGate);
-        }
     }
 
     protected function checkAndChangeGateIfRsbNeedAft(PaySchet $paySchet)

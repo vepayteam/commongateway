@@ -21,6 +21,7 @@ use app\services\payment\models\PartnerBankGate;
 use Vepay\Cauri\Client\Request\PayoutCreateRequest;
 use Vepay\Cauri\Resource\Payout;
 use Vepay\Cauri\Resource\Transaction;
+use Vepay\Gateway\Client\Validator\ValidationException;
 use Vepay\Gateway\Config;
 use Vepay\Gateway\Logger\Logger;
 
@@ -198,6 +199,18 @@ class CauriAdapter implements IBankAdapter
         $outCardPayRequest->account = $outCardPayForm->cardnum;
         $outCardPayRequest->beneficiaryFirstName = $outCardPayForm->getFirstName();
         $outCardPayRequest->beneficiaryLastName = $outCardPayForm->getLastName();
+
+        $outCardPayRequest->birthDate = $outCardPayForm->birthDate;
+        $outCardPayRequest->countryOfCitizenship = $outCardPayForm->countryOfCitizenship;
+        $outCardPayRequest->countryOfResidence = $outCardPayForm->countryOfResidence;
+        $outCardPayRequest->documentType = $outCardPayForm->documentType;
+        $outCardPayRequest->documentIssuedAt = $outCardPayForm->documentIssuedAt;
+        $outCardPayRequest->documentValidUntil = $outCardPayForm->documentValidUntil;
+        $outCardPayRequest->birthPlace = $outCardPayForm->birthPlace;
+        $outCardPayRequest->documentIssuer = $outCardPayForm->documentIssuer;
+        $outCardPayRequest->documentSeries = $outCardPayForm->documentSeries;
+        $outCardPayRequest->documentNumber = $outCardPayForm->documentNumber;
+        $outCardPayRequest->phone = $outCardPayForm->phone;
 
         $payout = new Payout();
         $response = $payout->__call('create', [
