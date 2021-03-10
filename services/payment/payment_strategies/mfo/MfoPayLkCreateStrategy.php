@@ -34,6 +34,9 @@ class MfoPayLkCreateStrategy extends MerchantPayCreateStrategy
             return true;
         }
 
+        if($this->payForm->amount < self::AFT_MIN_SUMM) {
+            return false;
+        }
         if ($this->payForm->partner->getBankGates()->where([
             'TU' => UslugatovarType::POGASHATF,
             'Enable' => 1,
@@ -41,6 +44,6 @@ class MfoPayLkCreateStrategy extends MerchantPayCreateStrategy
             return true;
         }
 
-        return $this->payForm->amount > self::AFT_MIN_SUMM;
+        return false;
     }
 }
