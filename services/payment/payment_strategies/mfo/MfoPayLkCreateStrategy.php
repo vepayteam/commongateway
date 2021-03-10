@@ -9,7 +9,7 @@ use app\services\payment\payment_strategies\merchant\MerchantPayCreateStrategy;
 
 class MfoPayLkCreateStrategy extends MerchantPayCreateStrategy
 {
-    const AFT_MIN_SUMM = 1200;
+    const AFT_MIN_SUMM = 120000;
 
     /**
      * @return array|\yii\db\ActiveRecord|null
