@@ -487,7 +487,7 @@ class AdminController extends Controller
     public function actionTestmail()
     {
         $mail = new SendEmail();
-        echo "Test email: " . $mail->sendReestr("support@teleport.run", "Test email vepay", "Test email vepay");
+        echo "Test email: " . $mail->sendReestr("support@vepay.online", "Test email vepay", "Test email vepay");
     }
 
     public function actionTestmainsms()
