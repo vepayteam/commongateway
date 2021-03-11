@@ -33,7 +33,7 @@ class LoggerAdapter
     public function trace($message, $category = 'application'): void
     {
         if (in_array($this->getLogLevel(), [LoggerInterface::TRACE_LOG_LEVEL])) {
-            $this->logger::trace($category, $message);
+            $this->logger::trace($message, $category);
         }
     }
 
@@ -49,7 +49,7 @@ class LoggerAdapter
                 LoggerInterface::INFO_LOG_LEVEL
             ])
         ) {
-            $this->logger::info($category, $message);
+            $this->logger::info($message, $category);
         }
     }
 
@@ -66,7 +66,7 @@ class LoggerAdapter
                 LoggerInterface::WARNING_LOG_LEVEL
             ])
         ) {
-            $this->logger::warning($category, $message);
+            $this->logger::warning($message, $category);
         }
     }
 
@@ -76,6 +76,6 @@ class LoggerAdapter
      */
     public function error($message, $category = 'application'): void
     {
-        $this->logger::error($category, $message);
+        $this->logger::error($message, $category);
     }
 }
