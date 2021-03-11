@@ -24,6 +24,7 @@ use Vepay\Cauri\Resource\Transaction;
 use Vepay\Gateway\Client\Validator\ValidationException;
 use Vepay\Gateway\Config;
 use Vepay\Gateway\Logger\Logger;
+use Vepay\Gateway\Logger\LoggerInterface;
 
 class CauriAdapter implements IBankAdapter
 {
@@ -44,6 +45,7 @@ class CauriAdapter implements IBankAdapter
 
         $config = Config::getInstance();
         $config->logger = CauriLogger::class;
+        $config->logLevel = LoggerInterface::TRACE_LOG_LEVEL;
     }
 
     /**
