@@ -887,10 +887,12 @@ components:
           description: Место рождения
         documentType:
           type: string
-          default: 'PASSPORT'
+          default: 'passport'
+          enum: ['passport', 'id']
           description: Документ, тип
         documentIssuer:
           type: string
+          maxLength: 80
           description: Документ, кем выдан документ
         documentIssuedAt:
           type: string

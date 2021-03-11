@@ -15,7 +15,7 @@ class CauriLogger implements LoggerInterface
      */
     public static function trace($message, $category): void
     {
-        Yii::warning($message, 'cauri');
+        Yii::warning($message . ' :: ' . $category, 'cauri');
     }
 
     /**
@@ -23,7 +23,7 @@ class CauriLogger implements LoggerInterface
      */
     public static function info($message, $category): void
     {
-        Yii::warning($message, 'cauri');
+        Yii::warning($message . ' :: ' . $category, 'cauri');
     }
 
     /**
@@ -31,7 +31,7 @@ class CauriLogger implements LoggerInterface
      */
     public static function warning($message, $category): void
     {
-        Yii::warning($message, 'cauri');
+        Yii::warning($message . ' :: ' . $category, 'cauri');
     }
 
     /**
@@ -39,6 +39,6 @@ class CauriLogger implements LoggerInterface
      */
     public static function error($message, $category): void
     {
-        Yii::error($message, 'cauri');
+        Yii::error($message . ' :: ' . $category, 'cauri');
     }
 }

@@ -195,33 +195,12 @@ class SiteController extends Controller
         throw new NotFoundHttpException();
     }
 
-
-    //старое
-
-    /**
-     * @return string
-     */
-    public function actionOfert()
-    {
-        return $this->render('oferta', [
-            'config' => Yii::$app->params['info']
-        ]);
-    }
     /**
      * @return string
      */
     public function actionOferta()
     {
         return $this->renderPartial('ofert');
-    }
-    /**
-     * @return string
-     */
-    public function actionPolit()
-    {
-        return $this->render('polit', [
-            'config' => Yii::$app->params['info'],
-        ]);
     }
 
     /**
@@ -244,21 +223,6 @@ class SiteController extends Controller
         } else {
             return $this->redirect(['index']);
         }
-
-    }
-
-    /**
-     * Displays contact page.
-     *
-     * @return string
-     */
-    public function actionContact()
-    {
-        $model = new ContactForm();
-        return $this->render('contact', [
-            'config' => Yii::$app->params['info'],
-            'model' => $model
-        ]);
 
     }
 
