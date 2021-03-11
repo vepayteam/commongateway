@@ -30,35 +30,6 @@ class CreatePay
     }
 
     /**
-     * Создание платежа по http-форме
-     * @param array $formData
-     * @param int $agent
-     * @param int $TypeWidget
-     * @param int $Bank
-     * @return array|null
-     * @throws \yii\db\Exception
-     */
-    public function newPay($formData, $agent = 0, $TypeWidget = 0, $Bank = 0)
-    {
-        $ret = null;
-
-        $this->loadData($formData);
-
-        if ($this->Provparams->Usluga && $this->checkParams()) {
-            if ($this->checkOnline()) {
-                $idpay = isset($formData['idpay']) ? intval($formData['idpay']) : 0;
-                if ($idpay) {
-                    $this->updatePayschet($idpay);
-                } else {
-                    $idpay = $this->addPayschet($agent, 0, $TypeWidget, $Bank);
-                }
-                $ret = ['IdPay' => $idpay];
-            }
-        }
-        return $ret;
-    }
-
-    /**
      * Создание платежа по Provparams
      * @param Provparams $Provparams
      * @param int $agent
@@ -328,34 +299,6 @@ class CreatePay
     public function getProvparams()
     {
         return $this->Provparams;
-    }
-
-    /**
-     * Проверка реквизитов перед оплатой онлайн
-     * @return bool
-     */
-    protected function checkOnline()
-    {
-        if (($this->Provparams->Usluga->TypeExport == 0 || $this->Provparams->Usluga->TypeExport == 2) &&
-            $this->Provparams->Usluga->IsCustom == 0) {
-            $ntime = time() - 3;
-            $data = [
-                'SvcNum' => $this->Provparams->Usluga->ProfitIdProvider,
-                'Summ' => $this->Provparams->summ,
-                'Comiss' => $this->Provparams->calcComiss(),
-                'ParamsPay' => implode("|", $this->Provparams->param),
-                'DatePay' => $ntime,
-                'ExtId' => "2000" . $ntime . str_pad(mt_rand(1, 100), 3, \STR_PAD_LEFT)
-            ];
-
-            /*$onlineConn = new OnlineProv();
-            if (!$onlineConn->checkPay($data, $this->Provparams->Usluga->TypeReestr)) {
-                $this->error['mesg'] = "Ошибка проверки реквизитов: " . $onlineConn->resultMesg;
-                return false;
-            }*/
-        }
-
-        return true;
     }
 
     /**

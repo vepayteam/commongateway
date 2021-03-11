@@ -47,9 +47,7 @@ use yii\caching\TagDependency;
  * @property string $ProvVoznagMin [double unsigned]
  * @property string $ProvComisPC [double unsigned]  prov komis %
  * @property string $ProvComisMin [double unsigned]
- * @property bool $TypeExport [tinyint(1) unsigned]  tip eksporta plateja: 0 - v teleport 1 - po banky po reestram 2 - online
  * @property int $ProfitIdProvider [int(10) unsigned]  id systemgorod.providers
- * @property int $TypeReestr [int(1) unsigned]  tip reestra: 0 - teleport 1 - sber full 2 - sber gv 3 - sber hv 4 - kes 5 - ds kirov 6 - fkr43 7 - gaz 8 - sber new
  * @property string $EmailReestr [varchar(100)]  email dlia reestra
  * @property string KodPoluchat
  * @property string ReestrNameFormat
