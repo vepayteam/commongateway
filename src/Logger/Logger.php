@@ -49,13 +49,13 @@ class Logger implements LoggerInterface
 
     /**
      * @param string $level
-     * @param string $categoty
+     * @param string $category
      * @param $message
      */
-    protected static function log(string $level, string $categoty, $message)
+    protected static function log(string $level, string $category, $message)
     {
         $handler = static::getHandler();
-        $handler->handle($level, $categoty, $message);
+        $handler->handle($level, $category, $message);
     }
 
     /**
