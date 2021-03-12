@@ -242,48 +242,6 @@ class Uslugatovar extends \yii\db\ActiveRecord
         return $this->hasOne(UslugatovarType::className(), ['Id' => 'IsCustom']);
     }
 
-    /**
-     * Комиссия с клиента
-     * @param int $summ
-     * @return int
-     */
-    public function calcComiss($summ)
-    {
-        $comis = round($summ * $this->PcComission / 100.0);
-        if ($comis < $this->MinsumComiss * 100.0) {
-            $comis = round($this->MinsumComiss * 100.0);
-        }
-        return $comis;
-    }
-
-    /**
-     * Комиссия c мерчанта (вознаграждеие)
-     * @param int $sum
-     * @return int
-     */
-    public function calcComissOrg($sum)
-    {
-        $comis = round($sum * $this->ProvVoznagPC / 100.0);
-        if ($comis < $this->ProvVoznagMin * 100.0) {
-            $comis = $this->ProvVoznagMin * 100.0;
-        }
-        return $comis;
-    }
-
-    /**
-     * Комиссия банка (в коп)
-     * @param int $sum сумма платеж+комиссия
-     * @return int
-     */
-    public function calcBankComis($sum)
-    {
-        $comis = round($sum * $this->ProvComisPC / 100.0, 0);
-        if ($comis < $this->ProvComisMin * 100.0) {
-            $comis = $this->ProvComisMin * 100.0;
-        }
-        return $comis;
-    }
-
     public function save($runValidation = true, $attributeNames = null)
     {
         if($this->ID) {
@@ -291,6 +249,4 @@ class Uslugatovar extends \yii\db\ActiveRecord
         }
         return parent::save($runValidation, $attributeNames);
     }
-
-
 }
