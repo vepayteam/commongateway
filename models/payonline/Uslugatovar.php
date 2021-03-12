@@ -75,9 +75,9 @@ class Uslugatovar extends \yii\db\ActiveRecord
     const REG_CARD_ID = 1;
 
     public static $TypePay_str = [0 => 'Банковская карта', 1 => 'Банковская карта'];
-    public static $TypeExport_str = [0 => 'в Телепорт', 1 => 'в Банк по реестру', 2 => 'online'];
+    public static $TypeExport_str = [0 => 'в Vepay', 1 => 'в Банк по реестру', 2 => 'online'];
     public static $TypeReestr_str = [
-        0 => 'Телепорт',
+        0 => 'Vepay',
     ];
 
     // TODO: use TU
@@ -188,7 +188,7 @@ class Uslugatovar extends \yii\db\ActiveRecord
             'ProvComisPC' => 'Комиссия банка %',
             'ProvComisMin' => 'Комиссия банка не менее, руб.',
             'TypeExport' => 'Тип экспорта',
-            'ProfitIdProvider' => 'Провайдер Телепорт',
+            'ProfitIdProvider' => 'Провайдер Vepay',
             'TypeReestr' => 'Формат реестра',
             'EmailReestr' => 'Email для реестров',
             'IdBankRekviz' => 'Реквизиты банка',
@@ -201,7 +201,7 @@ class Uslugatovar extends \yii\db\ActiveRecord
             'MaskInfo' => 'Маска ввода для запроса',
             'RegexInfo' => 'Регулярное выражение для запроса',
             'KodPoluchat' => 'Код получателя в реестре',
-            'ReestrNameFormat' => 'Формаn наименования реестра'
+            'ReestrNameFormat' => 'Формат наименования реестра'
         ];
     }
 
