@@ -1,12 +1,10 @@
 <?php
 
-
 namespace app\services\payment\payment_strategies\mfo;
 
-
-use app\models\api\Reguser;
 use app\models\crypt\CardToken;
 use app\models\payonline\Cards;
+use app\models\api\Reguser;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
 use app\services\cards\models\PanToken;
@@ -201,15 +199,12 @@ class MfoOutCardStrategy
         $paySchet->IdOrg = $this->outCardPayForm->partner->ID;
         $paySchet->Extid = $this->outCardPayForm->extid;
         $paySchet->SummPay = $this->outCardPayForm->amount;
-        $paySchet->ComissSumm = $bankAdapterBuilder->getUslugatovar()->calcComiss($paySchet->SummPay);
-        $paySchet->MerchVozn = $bankAdapterBuilder->getUslugatovar()->calcComissOrg($paySchet->SummPay);
-        $paySchet->BankComis = $bankAdapterBuilder->getUslugatovar()->calcBankComis($paySchet->SummPay);
+
         $paySchet->DateCreate = time();
         $paySchet->DateLastUpdate = time();
         $paySchet->UserUrlInform = $bankAdapterBuilder->getUslugatovar()->UrlInform;
         $paySchet->IsAutoPay = 0;
         $paySchet->sms_accept = 1;
-
 
         $paySchet->FIO = $this->outCardPayForm->fullname;
         $paySchet->Dogovor = $this->outCardPayForm->document_id;
