@@ -71,6 +71,10 @@ class Tokenizer
             $row = null;
         }
 
+        if(empty($row['EncryptedPAN'])) {
+            throw new \Exception('Карта просрочена');
+        }
+
         if ($row) {
             return $this->Decrypt($row['EncryptedPAN'], $row['CryptoKeyId']);
         }
