@@ -41,10 +41,22 @@ class ServicesPaymentFormsAutoPayFormTest extends \Codeception\Test\Unit
         $form->fullname = 'test';
         $form->postbackurl = 'https://test.com';
         $form->descript = 'test';
-        $autoPayFormReflectionClass = new ReflectionClass(AutoPayForm::class);
-        $_card = $autoPayFormReflectionClass->getProperty('_card');
-        $_card->setAccessible(true);
-        $_card->setValue($form, new app\models\payonline\Cards());
+
+        $partnerId = Yii::$app->params['testParams']['mfoPartnerId'];
+        $form->partner = \app\models\payonline\Partner::findOne(['ID' => $partnerId]);
+
+        $q = new \yii\db\Query();
+        $cardId = $q->select('c.ID')
+            ->from('cards AS c')
+            ->innerJoin('user AS u', 'u.ID = c.IdUser')
+            ->innerJoin('pan_token AS pt', 'pt.ID = c.IdPan')
+            ->where(['u.ExtOrg' => $partnerId])
+            ->andWhere('LENGTH(pt.EncryptedPan) > 0')
+            ->orderBy('c.ID DESC')
+            ->scalar();
+
+        $form->card = $cardId;
+
         $this->assertTrue($form->validate());
     }
 
