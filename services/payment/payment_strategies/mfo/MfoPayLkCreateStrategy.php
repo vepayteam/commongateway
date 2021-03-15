@@ -9,7 +9,7 @@ use app\services\payment\payment_strategies\merchant\MerchantPayCreateStrategy;
 
 class MfoPayLkCreateStrategy extends MerchantPayCreateStrategy
 {
-    const AFT_MIN_SUMM = 1200;
+    const AFT_MIN_SUMM = 120000;
 
     /**
      * @return array|\yii\db\ActiveRecord|null
@@ -34,6 +34,9 @@ class MfoPayLkCreateStrategy extends MerchantPayCreateStrategy
             return true;
         }
 
+        if($this->payForm->amount < self::AFT_MIN_SUMM) {
+            return false;
+        }
         if ($this->payForm->partner->getBankGates()->where([
             'TU' => UslugatovarType::POGASHATF,
             'Enable' => 1,
@@ -41,6 +44,6 @@ class MfoPayLkCreateStrategy extends MerchantPayCreateStrategy
             return true;
         }
 
-        return $this->payForm->amount > self::AFT_MIN_SUMM;
+        return false;
     }
 }

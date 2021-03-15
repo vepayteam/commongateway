@@ -8,6 +8,9 @@ use app\models\geolocation\GeoInfo;
 use app\models\kfapi\KfCard;
 use app\models\kfapi\KfOut;
 use app\models\kfapi\KfPay;
+use app\services\payment\exceptions\CreatePayException;
+use app\services\payment\exceptions\UpdatePayException;
+use app\services\payment\models\PaySchet;
 use GeoIp2\Record\MaxMind;
 use Yii;
 use yii\base\Exception;
@@ -30,35 +33,6 @@ class CreatePay
     }
 
     /**
-     * Создание платежа по http-форме
-     * @param array $formData
-     * @param int $agent
-     * @param int $TypeWidget
-     * @param int $Bank
-     * @return array|null
-     * @throws \yii\db\Exception
-     */
-    public function newPay($formData, $agent = 0, $TypeWidget = 0, $Bank = 0)
-    {
-        $ret = null;
-
-        $this->loadData($formData);
-
-        if ($this->Provparams->Usluga && $this->checkParams()) {
-            if ($this->checkOnline()) {
-                $idpay = isset($formData['idpay']) ? intval($formData['idpay']) : 0;
-                if ($idpay) {
-                    $this->updatePayschet($idpay);
-                } else {
-                    $idpay = $this->addPayschet($agent, 0, $TypeWidget, $Bank);
-                }
-                $ret = ['IdPay' => $idpay];
-            }
-        }
-        return $ret;
-    }
-
-    /**
      * Создание платежа по Provparams
      * @param Provparams $Provparams
      * @param int $agent
@@ -76,9 +50,9 @@ class CreatePay
 
         $this->Provparams = $Provparams;
 
-        $idpay = $this->addPayschet($agent,0, $TypeWidget, $Bank, $IdOrg, $Extid, $AutoPayIdGate);
-        if ($idpay) {
-            $ret = ['IdPay' => $idpay];
+        $paySchet = $this->addPayschet($agent,0, $TypeWidget, $Bank, $IdOrg, $Extid, $AutoPayIdGate);
+        if ($paySchet) {
+            $ret = ['IdPay' => $paySchet->ID];
         }
 
         return $ret;
@@ -113,7 +87,8 @@ class CreatePay
         ]);
 
         if ($this->Provparams->Usluga) {
-            $idpay = $this->addPayschet(0, $idCardActivate, $TypwWidget, $bank, $org, $kfCard->extid,0,$kfCard->timeout * 60);
+            $paySchet = $this->addPayschet(0, $idCardActivate, $TypwWidget, $bank, $org, $kfCard->extid,0,$kfCard->timeout * 60);
+            $idpay = $paySchet->ID;
             if (!empty($kfCard->successurl)) {
                 $this->setReturnUrl($idpay, $kfCard->successurl);
             }
@@ -241,51 +216,51 @@ class CreatePay
      * @param int $timeout
      * @param string $dogovor
      * @param string $fio
-     * @return bool
+     * @return PaySchet
      * @throws \yii\db\Exception
      */
     protected function addPayschet($agent = 0, $idCardActivate = 0, $TypeWidget = 0, $Bank = 0, $IdOrg = 0, $Extid = '', $AutoPayIdGate = 0, $timeout = 86400, $dogovor = '', $fio = '')
     {
         // !!! изменен default переменной $timeout, старое значение 900
 
-        // добавляем в таблицу pay_schet
-        Yii::$app->db->createCommand()
-            ->insert('pay_schet', [
-                'IdUsluga' => $this->Provparams->Usluga->ID,
-                'IdQrProv' => intval($this->Provparams->Usluga->ProfitIdProvider),
-                'QrParams' => implode("|", $this->Provparams->param),
-                'IdUser' => $this->user ? $this->user->ID : 0,
-                'SummPay' => $this->Provparams->summ,
-                'UserClickPay' => 0,
-                'DateCreate' => time(),
-                'IdKard' => $idCardActivate,
-                'Status' => 0,
-                'DateOplat' => 0,
-                'DateLastUpdate' => time(),
-                'PayType' => 0,
-                'TimeElapsed' => $timeout,
-                'ExtKeyAcces' => 0,
-                'CountSendOK' => 0,
-                'Period' => 0,
-                'ComissSumm' => $this->Provparams->calcComiss(),
-                'MerchVozn' => $this->Provparams->calcMerchVozn(),
-                'BankComis' => $this->Provparams->calcBankComis(),
-                'Schetcheks' => '',
-                'IdAgent' => $agent,
-                'IsAutoPay' => $AutoPayIdGate > 0 ? 1 : 0,
-                'AutoPayIdGate' => $AutoPayIdGate,
-                'TypeWidget' => $TypeWidget,
-                'Bank' => $Bank,
-                'IdOrg' => $IdOrg,
-                'Extid' => $Extid,
-                'sms_accept'=> ($this->smsNeed === 1 ? 0 : 1),
-                'Dogovor' => $dogovor,
-                'FIO' => $fio,
-            ])
-            ->execute();
+        $paySchet = new PaySchet();
+
+        $paySchet->IdUsluga       = $this->Provparams->Usluga->ID;
+        $paySchet->IdQrProv       = (int) $this->Provparams->Usluga->ProfitIdProvider;
+        $paySchet->QrParams       = implode("|", $this->Provparams->param);
+        $paySchet->IdUser         = $this->user->ID ?? 0;
+        $paySchet->SummPay        = $this->Provparams->summ;
+        $paySchet->UserClickPay   = 0;
+        $paySchet->DateCreate     = time();
+        $paySchet->IdKard         = $idCardActivate;
+        $paySchet->Status         = 0;
+        $paySchet->DateOplat      = 0;
+        $paySchet->DateLastUpdate = time();
+        $paySchet->PayType        = 0;
+        $paySchet->TimeElapsed    = $timeout;
+        $paySchet->ExtKeyAcces    = 0;
+        $paySchet->CountSendOK    = 0;
+        $paySchet->Period         = 0;
+
+        $paySchet->Schetcheks     = '';
+        $paySchet->IdAgent        = $agent;
+        $paySchet->IsAutoPay      = $AutoPayIdGate > 0 ? 1 : 0;
+        $paySchet->AutoPayIdGate  = $AutoPayIdGate;
+        $paySchet->TypeWidget     = $TypeWidget;
+        $paySchet->Bank           = $Bank;
+        $paySchet->IdOrg          = $IdOrg;
+        $paySchet->Extid          = $Extid;
+        $paySchet->sms_accept     = ($this->smsNeed === 1 ? 0 : 1);
+        $paySchet->Dogovor        = $dogovor;
+        $paySchet->FIO            = $fio;
+
+        if(!$paySchet->save()) {
+            throw new CreatePayException('Не удалось создать счет');
+        }
+
         Yii::warning("addPayschet IdKard=$idCardActivate Bank=$Bank, IdOrg=$IdOrg Extid=$Extid", 'payschet');
-        $IdPay = Yii::$app->db->getLastInsertID();
-        return $IdPay;
+
+        return $paySchet;
     }
 
     /**
@@ -296,21 +271,21 @@ class CreatePay
      */
     protected function updatePayschet($idpay)
     {
-        // добавляем в таблицу pay_schet
-        Yii::$app->db->createCommand()
-            ->update('pay_schet', [
-                'IdUsluga' => $this->Provparams->Usluga->ID,
-                'IdQrProv' => $this->Provparams->Usluga->ProfitIdProvider,
-                'QrParams' => implode("|", $this->Provparams->param),
-                'IdUser' => $this->user ? $this->user->ID : 0,
-                'SummPay' => $this->Provparams->summ,
-                'DateLastUpdate' => time(),
-                'ComissSumm' => $this->Provparams->calcComiss(),
-            ], 'ID = :IDPS AND Status = 0', [':IDPS' => $idpay])
-            ->execute();
+        $paySchet = PaySchet::findOne(['id' => $idpay, 'Status' => 0]);
 
-        $IdPay = Yii::$app->db->getLastInsertID();
-        return $IdPay;
+        $paySchet->IdUsluga = $this->Provparams->Usluga->ID;
+        $paySchet->IdQrProv = $this->Provparams->Usluga->ProfitIdProvider;
+        $paySchet->QrParams = implode("|", $this->Provparams->param);
+        $paySchet->IdUser = $this->user ? $this->user->ID : 0;
+        $paySchet->SummPay = $this->Provparams->summ;
+        $paySchet->DateLastUpdate = time();
+        $paySchet->ComissSumm = $this->Provparams->Usluga->ID;
+
+        if(!$paySchet->save()) {
+            throw new UpdatePayException('Не удалось обновить счет');
+        }
+
+        return $idpay;
     }
 
     /**
@@ -328,34 +303,6 @@ class CreatePay
     public function getProvparams()
     {
         return $this->Provparams;
-    }
-
-    /**
-     * Проверка реквизитов перед оплатой онлайн
-     * @return bool
-     */
-    protected function checkOnline()
-    {
-        if (($this->Provparams->Usluga->TypeExport == 0 || $this->Provparams->Usluga->TypeExport == 2) &&
-            $this->Provparams->Usluga->IsCustom == 0) {
-            $ntime = time() - 3;
-            $data = [
-                'SvcNum' => $this->Provparams->Usluga->ProfitIdProvider,
-                'Summ' => $this->Provparams->summ,
-                'Comiss' => $this->Provparams->calcComiss(),
-                'ParamsPay' => implode("|", $this->Provparams->param),
-                'DatePay' => $ntime,
-                'ExtId' => "2000" . $ntime . str_pad(mt_rand(1, 100), 3, \STR_PAD_LEFT)
-            ];
-
-            /*$onlineConn = new OnlineProv();
-            if (!$onlineConn->checkPay($data, $this->Provparams->Usluga->TypeReestr)) {
-                $this->error['mesg'] = "Ошибка проверки реквизитов: " . $onlineConn->resultMesg;
-                return false;
-            }*/
-        }
-
-        return true;
     }
 
     /**
@@ -426,9 +373,10 @@ class CreatePay
 
         $this->user = $user;
 
-        $IdPay = $this->addPayschet(0,0,3, $bank, $IdOrg, $kfOut->extid,0,900, $kfOut->document_id, $kfOut->fullname);
+        $paySchet = $this->addPayschet(0,0,3, $bank, $IdOrg, $kfOut->extid,0,900, $kfOut->document_id, $kfOut->fullname);
+        $IdPay = $paySchet->ID;
 
-        return ['IdPay' => $IdPay, 'summ' => $this->Provparams->summ + $this->Provparams->calcComiss()];
+        return ['IdPay' => $IdPay, 'summ' => $paySchet->getSummFull()];
     }
 
     /**
@@ -454,7 +402,8 @@ class CreatePay
 
         $this->user = $user;
 
-        $IdPay = $this->addPayschet(0, 0, 3, $bank, $IdOrg, $KfPay->extid, $AutoPayIdGate,$KfPay->timeout * 60, $KfPay->document_id, $KfPay->fullname);
+        $paySchet = $this->addPayschet(0, 0, 3, $bank, $IdOrg, $KfPay->extid, $AutoPayIdGate,$KfPay->timeout * 60, $KfPay->document_id, $KfPay->fullname);
+        $IdPay = $paySchet->ID;
         if (!empty($KfPay->successurl)) {
             $this->setReturnUrl($IdPay, $KfPay->successurl);
         } elseif (!empty($this->Provparams->Usluga->UrlReturn)) {
@@ -481,7 +430,7 @@ class CreatePay
             $this->setReturnUrlPostbackV2($IdPay, $KfPay->postbackurl_v2);
         }
 
-        return ['IdPay' => $IdPay, 'summ' => $this->Provparams->summ + $this->Provparams->calcComiss(), 'TimeElapsed' => round($KfPay->timeout), 'checkurl' => $this->Provparams->Usluga->UrlCheckReq];
+        return ['IdPay' => $IdPay, 'summ' => $paySchet->getSummFull(), 'TimeElapsed' => round($KfPay->timeout), 'checkurl' => $this->Provparams->Usluga->UrlCheckReq];
     }
 
     /**

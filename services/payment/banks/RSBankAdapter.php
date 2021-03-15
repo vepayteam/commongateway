@@ -49,10 +49,10 @@ class RSBankAdapter implements IBankAdapter
     protected $bankUrl;
     protected $bankUrl3DS;
 
-    const BANK_URL = 'https://testsecurepay.rsb.ru:9443';
+    const BANK_URL = 'https://securepay.rsb.ru:9443';
     const BANK_URL_TEST = 'https://testsecurepay.rsb.ru:9443';
 
-    const BANK_URL_3DS = 'https://testsecurepay.rsb.ru/ecomm2/ClientHandler';
+    const BANK_URL_3DS = 'https://securepay.rsb.ru/ecomm2/ClientHandler';
     const BANK_URL_3DS_TEST = 'https://testsecurepay.rsb.ru/ecomm2/ClientHandler';
 
 

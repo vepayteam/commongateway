@@ -3,7 +3,6 @@
 
 namespace app\services\payment\payment_strategies\mfo;
 
-
 use app\models\api\Reguser;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
@@ -108,9 +107,7 @@ class MfoCardRegStrategy
         $paySchet->Extid = $this->cardRegByPayForm->extid;
         $paySchet->QrParams = '';
         $paySchet->SummPay = $summPay;
-        $paySchet->ComissSumm = $bankAdapterBuilder->getUslugatovar()->calcComiss($summPay);
-        $paySchet->MerchVozn = $bankAdapterBuilder->getUslugatovar()->calcComissOrg($summPay);
-        $paySchet->BankComis = $bankAdapterBuilder->getUslugatovar()->calcBankComis($summPay);
+
         $paySchet->DateCreate = time();
         $paySchet->DateLastUpdate = time();
         $paySchet->IsAutoPay = 0;

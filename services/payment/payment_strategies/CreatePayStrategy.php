@@ -68,16 +68,17 @@ class CreatePayStrategy
         if($paySchet->isOld()) {
             throw new CreatePayException('Время для оплаты истекло');
         }
-        $this->setCardPay($paySchet);
 
+        $bankAdapterBuilder = new BankAdapterBuilder();
+        $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar);
         if($paySchet->IdUsluga != Uslugatovar::REG_CARD_ID) {
-            $this->checkAndChangeGateIfTkbAndMaestroCard($paySchet);
             $this->checkAndChangeGateIfRsbNeedAft($paySchet);
             $this->checkAndChangeGateIfRsbEcomm($paySchet);
         }
 
-        $bankAdapterBuilder = new BankAdapterBuilder();
         $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar);
+        $this->setCardPay($paySchet, $bankAdapterBuilder->getPartnerBankGate());
+
         try {
             $this->createPayResponse = $bankAdapterBuilder->getBankAdapter()->createPay($this->createPayForm);
         } catch (MerchantRequestAlreadyExistsException $e) {
@@ -88,31 +89,8 @@ class CreatePayStrategy
             return $paySchet;
         }
 
-        $this->updatePaySchet($paySchet);
+        $this->updatePaySchet($paySchet, $bankAdapterBuilder->getPartnerBankGate());
         return $paySchet;
-    }
-
-    protected function checkAndChangeGateIfTkbAndMaestroCard(PaySchet $paySchet)
-    {
-        // для погашений, карты маэстро только по еком надо
-        if (
-            $paySchet->Bank == TKBankAdapter::$bank
-            && $paySchet->uslugatovar->IsCustom == UslugatovarType::POGASHATF
-            && Cards::GetTypeCard($this->createPayForm->CardNumber) == Cards::BRANDS['MAESTRO']
-        ) {
-            /** @var PartnerBankGate $partnerBankGate */
-            $partnerBankGate = PartnerBankGate::find()->where([
-                'BankId' => TKBankAdapter::$bank,
-                'PartnerId' => $paySchet->partner->ID,
-                'TU' => UslugatovarType::POGASHECOM,
-            ])->orderBy('Priority DESC')->one();
-
-            if(!$partnerBankGate) {
-                throw new GateException('Нет шлюза');
-            }
-
-            $paySchet->changeGate($partnerBankGate);
-        }
     }
 
     protected function checkAndChangeGateIfRsbNeedAft(PaySchet $paySchet)
@@ -151,8 +129,10 @@ class CreatePayStrategy
     /**
      * @param PaySchet $paySchet
      */
-    protected function updatePaySchet(PaySchet $paySchet)
+    protected function updatePaySchet(PaySchet $paySchet, PartnerBankGate $partnerBankGate)
     {
+        $paySchet->Bank = $partnerBankGate->BankId;
+
         $paySchet->sms_accept = 1;
         $paySchet->UserClickPay = 1;
         $paySchet->UrlFormPay = '/pay/form/' . $paySchet->ID;
@@ -187,7 +167,7 @@ class CreatePayStrategy
     }
 
 
-    protected function setCardPay(PaySchet $paySchet)
+    protected function setCardPay(PaySchet $paySchet, PartnerBankGate $partnerBankGate)
     {
         $cartToken = new CardToken();
         $token = $cartToken->CheckExistToken(
@@ -211,7 +191,7 @@ class CreatePayStrategy
             );
         }
 
-        $card = $this->createUnregisterCard($token, $user);
+        $card = $this->createUnregisterCard($token, $user, $partnerBankGate);
         $paySchet->IdKard = $card->ID;
         $paySchet->CardNum = Cards::MaskCard($this->createPayForm->CardNumber);
         $paySchet->CardType = Cards::GetCardBrand(Cards::GetTypeCard($this->createPayForm->CardNumber));
@@ -228,7 +208,7 @@ class CreatePayStrategy
      * @param $token
      * @return Cards
      */
-    private function createUnregisterCard($token, User $user)
+    private function createUnregisterCard($token, User $user, PartnerBankGate $partnerBankGate)
     {
         $panToken = PanToken::findOne(['ID' => $token]);
 
@@ -245,7 +225,7 @@ class CreatePayStrategy
         $card->Default = 0;
         $card->TypeCard = 0;
         $card->IdPan = $panToken->ID;
-        $card->IdBank = 0;
+        $card->IdBank = $partnerBankGate->BankId;
         $card->IsDeleted = 0;
         $card->save(false);
 

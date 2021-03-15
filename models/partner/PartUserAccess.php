@@ -71,6 +71,7 @@ class PartUserAccess extends \yii\db\ActiveRecord
         'stat/recurrentremove' => 16,
         'stat/recurrentmiddle' => 17,
         'stat/recurrentcard' => 23,
+        'stat/diff' => 24,
         'uslug/index' => 2,
         'uslug/point-edit' => 2,
         'uslug/point-add' => 2,

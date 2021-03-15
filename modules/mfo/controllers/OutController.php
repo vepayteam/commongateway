@@ -25,6 +25,7 @@ use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\models\PaySchet;
 use app\services\payment\payment_strategies\mfo\MfoOutCardStrategy;
+use Vepay\Gateway\Client\Validator\ValidationException;
 use Yii;
 use yii\base\Exception;
 use yii\mutex\FileMutex;
@@ -108,6 +109,8 @@ class OutController extends Controller
         } catch (GateException $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
         } catch (Exception $e) {
+            return ['status' => 0, 'message' => $e->getMessage()];
+        } catch (ValidationException $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
         }
     }

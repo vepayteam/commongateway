@@ -31,11 +31,44 @@ class OutCardPayForm extends Model
     public $card = 0;
     public $cardnum;
 
+    public $birthDate;
+    public $countryOfCitizenship;
+    public $countryOfResidence;
+    public $documentType;
+    public $documentIssuer;
+    public $documentIssuedAt;
+    public $documentValidUntil;
+    public $birthPlace;
+    public $documentSeries;
+    public $documentNumber;
+    public $phone;
+
     public function rules()
     {
         return [
             [['amount'], 'required'],
             [['cardnum'], 'match', 'pattern' => '/^\d{16}|\d{18}$/'],
+            ['birthDate', 'match', 'pattern' => '/^[0-3][0-9]\.[0-1][0-9]\.[1-2][0-9]{3}$/i'],
+            ['countryOfCitizenship', 'default', 'value' => 'RU'],
+            ['countryOfResidence', 'default', 'value' => 'RU'],
+
+            ['documentType', 'default', 'value' => 'passport'],
+            ['documentType', 'in', 'range' => ['passport', 'id']],
+            ['documentIssuedAt', 'match', 'pattern' => '/^[0-3][0-9]\.[0-1][0-9]\.[1-2][0-9]{3}$/i'],
+            ['documentValidUntil', 'match', 'pattern' => '/^[0-3][0-9]\.[0-1][0-9]\.[1-2][0-9]{3}$/i'],
+
+
+            [[
+                'fullname',
+                'document_id',
+                'extid',
+
+                'birthPlace',
+                'documentIssuer',
+                'documentSeries',
+                'documentNumber',
+                'phone',
+            ], 'safe'],
             ['card', 'validateCard'],
         ];
     }
@@ -75,6 +108,22 @@ class OutCardPayForm extends Model
     public function getMutexKey()
     {
         return 'OutCardPay_' . $this->partner->ID . '_' . $this->extid;
+    }
+
+    public function getFirstName()
+    {
+        if(empty($this->fullname) || explode(' ', $this->fullname) < 2) {
+            return 'БЕЗИМЕНИ';
+        }
+        return explode(' ', $this->fullname)[1];
+    }
+
+    public function getLastName()
+    {
+        if(empty($this->fullname) || explode(' ', $this->fullname) < 2) {
+            return 'БЕЗИМЕНИ';
+        }
+        return explode(' ', $this->fullname)[0];
     }
 
 }

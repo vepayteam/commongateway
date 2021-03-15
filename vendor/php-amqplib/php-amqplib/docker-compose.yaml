@@ -1,0 +1,38 @@
+version: '3'
+services:
+  php:
+    build: ./docker/php
+    volumes:
+      - .:/src
+    working_dir: /src
+    environment:
+      - TEST_RABBITMQ_HOST=rabbitmq
+      - TOXIPROXY_HOST=proxy
+      - TOXIPROXY_AMQP_PORT=5673
+    depends_on:
+      - rabbitmq
+      - proxy
+    entrypoint: ['tail', '-f', '/dev/null']
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5671:5671"
+      - "5672:5672"
+      - "15671:15671"
+    volumes:
+        - .:/src
+    environment:
+        - RABBITMQ_SSL_CACERTFILE=/src/tests/certs/ca_certificate.pem
+        - RABBITMQ_SSL_CERTFILE=/src/tests/certs/server_certificate.pem
+        - RABBITMQ_SSL_KEYFILE=/src/tests/certs/server_key.pem
+        - RABBITMQ_SSL_VERIFY=verify_peer
+        - RABBITMQ_SSL_FAIL_IF_NO_PEER_CERT=0
+
+  proxy:
+    image: shopify/toxiproxy
+    ports:
+      - "8474:8474"
+      - "5673:5673"
+    depends_on:
+      - rabbitmq

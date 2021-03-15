@@ -79,6 +79,7 @@ class MerchantPayCreateStrategy
 
     /**
      * @param BankAdapterBuilder $bankAdapterBuilder
+     *
      * @return PaySchet
      * @throws CreatePayException
      */
@@ -91,9 +92,6 @@ class MerchantPayCreateStrategy
         $paySchet->Extid = $this->payForm->extid;
         $paySchet->QrParams = $this->payForm->descript;
         $paySchet->SummPay = $this->payForm->amount;
-        $paySchet->ComissSumm = $bankAdapterBuilder->getUslugatovar()->calcComiss($paySchet->SummPay);
-        $paySchet->MerchVozn = $bankAdapterBuilder->getUslugatovar()->calcComissOrg($paySchet->SummPay);
-        $paySchet->BankComis = $bankAdapterBuilder->getUslugatovar()->calcBankComis($paySchet->SummPay);
         $paySchet->DateCreate = time();
         $paySchet->DateLastUpdate = time();
         $paySchet->IsAutoPay = 0;
@@ -109,7 +107,7 @@ class MerchantPayCreateStrategy
         $paySchet->FIO = $this->payForm->fullname;
         $paySchet->Dogovor = $this->payForm->document_id;
 
-        if(!$paySchet->save()) {
+        if (!$paySchet->save()) {
             throw new CreatePayException('Не удалось создать счет');
         }
 
