@@ -87,6 +87,8 @@ use Yii;
  */
 class PaySchet extends \yii\db\ActiveRecord
 {
+    public $CntPays;
+
     const STATUS_WAITING = 0;
     const STATUS_DONE = 1;
     const STATUS_ERROR = 2;
