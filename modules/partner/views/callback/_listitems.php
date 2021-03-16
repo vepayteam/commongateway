@@ -33,6 +33,34 @@
             </tr>
         <?php endforeach; ?>
     </tbody>
+<tfoot>
+<?php if ($payLoad['totalCount'] > $payLoad['pageLimit']) : ?>
+    <?php $maxPage = ceil($payLoad['totalCount'] / $payLoad['pageLimit']); ?>
+    <tr>
+        <td colspan="15" class="footable-visible">
+            <ul class="pagination">
+                <li class="footable-page-arrow <?= 1 == $payLoad['page'] ? 'disabled' : '' ?>">
+                    <a data-page="first" <?= $payLoad['page'] > 1 ? 'onclick="lk.notiflist(0);"' : '' ?>>«</a>
+                </li>
+                <li class="footable-page-arrow <?= 1 == $payLoad['page'] ? 'disabled' : '' ?>">
+                    <a data-page="prev" <?= $payLoad['page'] > 1 ? 'onclick="lk.notiflist(' . ($payLoad['page'] - 1 > 0 ? $payLoad['page'] - 1 : 0) . ');"' : '' ?>>‹</a>
+                </li>
+                <?php for ($i = 1; $i < $maxPage; $i++) : ?>
+                    <li class="footable-page <?= $i == $payLoad['page'] ? 'active' : '' ?>">
+                        <a data-page="<?= $i ?>" <?= $payLoad['page'] != $i ? 'onclick="lk.notiflist(' . $i . ');"' : '' ?>><?= ($i ) ?></a>
+                    </li>
+                <?php endfor; ?>
+                <li class="footable-page-arrow <?= $maxPage - 1 == $payLoad['page'] ? 'disabled' : '' ?>">
+                    <a data-page="next" <?= $maxPage - 1 != $payLoad['page'] ? 'onclick="lk.notiflist(' . ($payLoad['page'] ) . ');"' : '' ?>>›</a>
+                </li>
+                <li class="footable-page-arrow <?= $maxPage - 1 == $payLoad['page'] ? 'disabled' : '' ?>">
+                    <a data-page="last" <?= $maxPage - 1 != $payLoad['page'] ? 'onclick="lk.notiflist(' . ($maxPage - 1) . ');"' : '' ?>>»</a>
+                </li>
+            </ul>
+        </td>
+    </tr>
+<?php endif; ?>
+</tfoot>
 <?php else : ?>
     <tr><td colspan='12' style='text-align:center;'>Операции не найдены</td></tr>
 <?php endif; ?>

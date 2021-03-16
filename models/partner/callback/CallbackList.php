@@ -3,6 +3,7 @@
 namespace app\models\partner\callback;
 
 use app\models\partner\UserLk;
+use app\modules\partner\controllers\structures\PaginationPayLoad;
 use app\services\notifications\models\NotificationPay;
 use Yii;
 use yii\base\Model;
@@ -28,14 +29,22 @@ class CallbackList extends Model
     {
         return [
             'datefrom' => 'Период',
-            'dateto' => 'Период',
+            'dateto'   => 'Период',
         ];
     }
 
-    public function GetList($IsAdmin)
+    /**
+     * @param      $IsAdmin
+     * @param int  $page
+     * @param bool $noLimit
+     *
+     * @return array
+     */
+    public function GetList($IsAdmin, int $page = 0, bool $noLimit = false)
     {
+        $pageLimit = 100;
 
-        $idpartner = $IsAdmin ?  $this->partner : UserLk::getPartnerId(Yii::$app->user);
+        $idpartner = $IsAdmin ? $this->partner : UserLk::getPartnerId(Yii::$app->user);
 
         $datefrom = strtotime($this->datefrom . " 00:00:00");
         $dateto = strtotime($this->dateto . " 23:59:59");
@@ -44,32 +53,47 @@ class CallbackList extends Model
         }
 
         $query = new Query();
+
         $query
-            ->select([
-                'n.ID',
-                'n.IdPay',
-                'n.DateCreate',
-                'n.Email',
-                'n.DateSend',
-                'n.HttpCode',
-                'n.HttpAns',
-                'n.FullReq'
-            ])
             ->from('`notification_pay` AS n')
             ->leftJoin('`pay_schet` AS ps', 'n.IdPay = ps.ID')
             ->where('n.DateCreate BETWEEN :DATEFROM AND :DATETO', [
                 ':DATEFROM' => $datefrom,
-                ':DATETO' => $dateto
+                ':DATETO'   => $dateto,
             ])
-            ->andWhere(['TypeNotif' => [
-                NotificationPay::CRON_HTTP_REQUEST_TYPE,
-                NotificationPay::QUEUE_HTTP_REQUEST_TYPE,
-            ]]);
+            ->andWhere([
+                'TypeNotif' => [
+                    NotificationPay::CRON_HTTP_REQUEST_TYPE,
+                    NotificationPay::QUEUE_HTTP_REQUEST_TYPE,
+                ],
+            ]);
 
-        if ($idpartner > 0) {
+        if ( $idpartner > 0 ) {
             $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $idpartner]);
         }
-        $query->orderBy(['ID' => SORT_DESC]);
+
+        $totalCountResult = (clone $query)->select(['COUNT(*) as cnt'])->all();
+        $totalCount = (int) reset($totalCountResult)['cnt'];
+
+        $query->select([
+            'n.ID',
+            'n.IdPay',
+            'n.DateCreate',
+            'n.Email',
+            'n.DateSend',
+            'n.HttpCode',
+            'n.HttpAns',
+            'n.FullReq',
+        ]);
+
+        if ( $noLimit === false ) {
+            if ( $page > 0 ) {
+                $query->offset($pageLimit * ($page - 1));
+            }
+            $query->orderBy(['ID' => SORT_DESC])->limit($pageLimit);
+        } else {
+            $query->orderBy(['ID' => SORT_DESC]);
+        }
 
         if ($this->notifstate == 1) {
             //В очереди
@@ -79,13 +103,21 @@ class CallbackList extends Model
             $query->andWhere('n.DateSend > 0');
         }
 
-        return $query->all();
+        return [
+            'data'    => $query->all(),
+            'payLoad' => new PaginationPayLoad([
+                'totalCount' => $totalCount,
+                'page'       => $page,
+                'pageLimit'  => $pageLimit,
+            ]),
+        ];
     }
 
     public function GetError()
     {
         $err = $this->firstErrors;
         $err = array_pop($err);
+
         return $err;
     }
 

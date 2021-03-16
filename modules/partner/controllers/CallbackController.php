@@ -96,11 +96,13 @@ class CallbackController extends Controller
             Yii::$app->response->format = Response::FORMAT_JSON;
 
             $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+            $page = (int) Yii::$app->request->get('page', 1);
 
             $CallbackList = new CallbackList();
             if ($CallbackList->load(Yii::$app->request->post(), '') && $CallbackList->validate()) {
-                $data = $CallbackList->GetList($IsAdmin);
-                return ['status' => 1, 'data' => $this->renderPartial('_listitems', ['data' => $data, 'IsAdmin' => $IsAdmin])];
+                $data = $CallbackList->GetList($IsAdmin, $page);
+
+                return ['status' => 1, 'data' => $this->renderPartial('_listitems', ['data' => $data['data'], 'payLoad' => $data['payLoad']->toArray(), 'IsAdmin' => $IsAdmin])];
             } else {
                 return ['status' => 0, 'message' => $CallbackList->GetError()];
             }
