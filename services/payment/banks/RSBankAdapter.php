@@ -41,6 +41,8 @@ use yii\helpers\Json;
 
 class RSBankAdapter implements IBankAdapter
 {
+    const AFT_MIN_SUMM = 160000;
+
     public static $bank = 7;
 
     /** @var PartnerBankGate */
