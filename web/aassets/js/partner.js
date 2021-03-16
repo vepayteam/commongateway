@@ -1244,9 +1244,10 @@
                 if (linklink) {
                     linklink.abort();
                 }
+                var path_url = (window.location.pathname === '/partner/admin/comisotchet-new') ? '/partner/admin/comisotchetdata-new':'/partner/admin/comisotchetdata';
                 linklink = $.ajax({
                     type: "POST",
-                    url: '/partner/admin/comisotchetdata',
+                    url: path_url,
                     data: $('#comisotchetform').serialize(),
                     beforeSend: function () {
                         $('#comisotchetresult').closest('.ibox-content').toggleClass('sk-loading');
