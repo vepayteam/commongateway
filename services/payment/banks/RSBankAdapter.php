@@ -235,7 +235,7 @@ class RSBankAdapter implements IBankAdapter
             $checkStatusPayResponse->message = $ans['RESULT'];
             $checkStatusPayResponse->status = $this->getStatusResponse($ans['RESULT']);
             $this->checkStatusPayResponseFiller($checkStatusPayResponse, $ans);
-            $checkStatusPayResponse->rrn = $ans['RRN'];
+            $checkStatusPayResponse->rrn = (array_key_exists('RRN', $ans) ? $ans['RRN'] : '');
         } catch (BankAdapterResponseException $e) {
             $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
             $checkStatusPayResponse->message = 'Ошибка запроса';
