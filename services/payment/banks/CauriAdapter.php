@@ -28,6 +28,7 @@ use Vepay\Gateway\Logger\LoggerInterface;
 
 class CauriAdapter implements IBankAdapter
 {
+    const AFT_MIN_SUMM = 120000;
     const IS_CONFIG_OUT_CARD_PARAMS_CACHE_PREFIX = 'Cauri_IsConfigOutCardParams';
 
     public static $bank = 8;
