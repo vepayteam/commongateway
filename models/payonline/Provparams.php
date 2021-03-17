@@ -2,6 +2,7 @@
 
 namespace app\models\payonline;
 
+use app\services\payment\models\PaySchet;
 use yii\base\Model;
 
 /**
@@ -114,25 +115,7 @@ class Provparams extends Model
      */
     public function calcComiss()
     {
-        return $this->Usluga->calcComiss($this->summ);
-    }
-
-    /**
-     * Вознаграждение системы (в коп)
-     * @return int
-     */
-    public function calcMerchVozn()
-    {
-        return $this->Usluga->calcComissOrg($this->summ);
-    }
-
-    /**
-     * Комиссия банка (в коп)
-     * @return int
-     */
-    public function calcBankComis()
-    {
-        return $this->Usluga->calcBankComis($this->summ + $this->calcComiss());
+        return PaySchet::calcClientFeeStatic($this->summ, $this->Usluga->PcComission, $this->Usluga->MinsumComiss);
     }
 
     public function getParamByType($type)

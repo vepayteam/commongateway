@@ -87,6 +87,8 @@ use Yii;
  */
 class PaySchet extends \yii\db\ActiveRecord
 {
+    public $CntPays;
+
     const STATUS_WAITING = 0;
     const STATUS_DONE = 1;
     const STATUS_ERROR = 2;
@@ -225,6 +227,68 @@ class PaySchet extends \yii\db\ActiveRecord
         return $this->hasOne(Uslugatovar::class, ['ID' => 'IdUsluga']);
     }
 
+    /**
+     * Комиссия с клиента (для расчёта не из контекста модели)
+     *
+     * @param int   $sumPay
+     * @param float $clientFeeCoefficient
+     * @param float $minFee
+     *
+     * @return int
+     */
+    public static function calcClientFeeStatic(int $sumPay, float $clientFeeCoefficient, float $minFee): int
+    {
+        $clientFee = round($sumPay * $clientFeeCoefficient / 100.0, 0);
+
+        if ( $clientFee < $minFee * 100.0 ) {
+            $clientFee = round($minFee * 100.0);
+        }
+
+        return $clientFee;
+    }
+
+    /**
+     * Комиссия с клиента
+     *
+     * @return int
+     */
+    public function calcClientFee(): int
+    {
+        return self::calcClientFeeStatic($this->SummPay, $this->uslugatovar->PcComission, $this->uslugatovar->MinsumComiss);
+    }
+
+    /**
+     * Комиссия c мерчанта (вознаграждеие)
+     *
+     * @return int
+     */
+    public function calcReward(): int
+    {
+        $reward = round($this->getSummFull() * $this->uslugatovar->ProvVoznagPC / 100.0, 0);
+
+        if ($reward < $this->uslugatovar->ProvVoznagMin * 100.0) {
+            $reward = $this->uslugatovar->ProvVoznagMin * 100.0;
+        }
+
+        return $reward;
+    }
+
+    /**
+     * Комиссия банка (в коп)
+     *
+     * @return int
+     */
+    public function calcBankFee(): int
+    {
+        $bankFee = round($this->getSummFull() * $this->uslugatovar->ProvComisPC / 100, 0);
+
+        if ($bankFee < $this->uslugatovar->ProvComisMin * 100.0) {
+            $bankFee = $this->uslugatovar->ProvComisMin * 100.0;
+        }
+
+        return $bankFee;
+    }
+
     public function getUser()
     {
         return $this->hasOne(User::class, ['ID' => 'IdUser']);
@@ -253,7 +317,14 @@ class PaySchet extends \yii\db\ActiveRecord
     public function save($runValidation = true, $attributeNames = null)
     {
         $this->DateLastUpdate = time();
-        return parent::save($runValidation, $attributeNames);
+
+        if ((int)($this->oldAttributes['SummPay'] ?? 0) !== (int)$this->SummPay) {
+            $this->ComissSumm = $this->calcClientFee();
+            $this->BankComis = $this->calcBankFee();
+            $this->MerchVozn = $this->calcReward();
+        }
+
+        return (parent::save($runValidation, $attributeNames));
     }
 
     /**

@@ -75,9 +75,9 @@ class Uslugatovar extends \yii\db\ActiveRecord
     const REG_CARD_ID = 1;
 
     public static $TypePay_str = [0 => 'Банковская карта', 1 => 'Банковская карта'];
-    public static $TypeExport_str = [0 => 'в Телепорт', 1 => 'в Банк по реестру', 2 => 'online'];
+    public static $TypeExport_str = [0 => 'в Vepay', 1 => 'в Банк по реестру', 2 => 'online'];
     public static $TypeReestr_str = [
-        0 => 'Телепорт',
+        0 => 'Vepay',
     ];
 
     // TODO: use TU
@@ -188,7 +188,7 @@ class Uslugatovar extends \yii\db\ActiveRecord
             'ProvComisPC' => 'Комиссия банка %',
             'ProvComisMin' => 'Комиссия банка не менее, руб.',
             'TypeExport' => 'Тип экспорта',
-            'ProfitIdProvider' => 'Провайдер Телепорт',
+            'ProfitIdProvider' => 'Провайдер Vepay',
             'TypeReestr' => 'Формат реестра',
             'EmailReestr' => 'Email для реестров',
             'IdBankRekviz' => 'Реквизиты банка',
@@ -201,7 +201,7 @@ class Uslugatovar extends \yii\db\ActiveRecord
             'MaskInfo' => 'Маска ввода для запроса',
             'RegexInfo' => 'Регулярное выражение для запроса',
             'KodPoluchat' => 'Код получателя в реестре',
-            'ReestrNameFormat' => 'Формаn наименования реестра'
+            'ReestrNameFormat' => 'Формат наименования реестра'
         ];
     }
 
@@ -242,48 +242,6 @@ class Uslugatovar extends \yii\db\ActiveRecord
         return $this->hasOne(UslugatovarType::className(), ['Id' => 'IsCustom']);
     }
 
-    /**
-     * Комиссия с клиента
-     * @param int $summ
-     * @return int
-     */
-    public function calcComiss($summ)
-    {
-        $comis = round($summ * $this->PcComission / 100.0);
-        if ($comis < $this->MinsumComiss * 100.0) {
-            $comis = round($this->MinsumComiss * 100.0);
-        }
-        return $comis;
-    }
-
-    /**
-     * Комиссия c мерчанта (вознаграждеие)
-     * @param int $sum
-     * @return int
-     */
-    public function calcComissOrg($sum)
-    {
-        $comis = round($sum * $this->ProvVoznagPC / 100.0);
-        if ($comis < $this->ProvVoznagMin * 100.0) {
-            $comis = $this->ProvVoznagMin * 100.0;
-        }
-        return $comis;
-    }
-
-    /**
-     * Комиссия банка (в коп)
-     * @param int $sum сумма платеж+комиссия
-     * @return int
-     */
-    public function calcBankComis($sum)
-    {
-        $comis = round($sum * $this->ProvComisPC / 100.0, 0);
-        if ($comis < $this->ProvComisMin * 100.0) {
-            $comis = $this->ProvComisMin * 100.0;
-        }
-        return $comis;
-    }
-
     public function save($runValidation = true, $attributeNames = null)
     {
         if($this->ID) {
@@ -291,6 +249,4 @@ class Uslugatovar extends \yii\db\ActiveRecord
         }
         return parent::save($runValidation, $attributeNames);
     }
-
-
 }

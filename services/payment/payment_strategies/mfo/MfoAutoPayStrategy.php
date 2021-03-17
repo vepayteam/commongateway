@@ -164,9 +164,7 @@ class MfoAutoPayStrategy
         $paySchet->Extid = $this->autoPayForm->extid;
         $paySchet->QrParams = $this->autoPayForm->descript;
         $paySchet->SummPay = $this->autoPayForm->amount;
-        $paySchet->ComissSumm = $bankAdapterBuilder->getUslugatovar()->calcComiss($paySchet->SummPay);
-        $paySchet->MerchVozn = $bankAdapterBuilder->getUslugatovar()->calcComissOrg($paySchet->SummPay);
-        $paySchet->BankComis = $bankAdapterBuilder->getUslugatovar()->calcBankComis($paySchet->SummPay);
+
         $paySchet->DateCreate = time();
         $paySchet->DateLastUpdate = time();
         $paySchet->UserUrlInform = $bankAdapterBuilder->getUslugatovar()->UrlInform;

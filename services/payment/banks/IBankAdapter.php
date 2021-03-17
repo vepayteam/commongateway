@@ -148,4 +148,9 @@ interface IBankAdapter
      */
     public function outCardPay(OutCardPayForm $outCardPayForm);
 
+    /**
+     * @return int
+     */
+    public function getAftMinSum();
+
 }

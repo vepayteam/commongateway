@@ -55,6 +55,8 @@ class TKBankAdapter implements IBankAdapter
 {
     use TKBank3DSTrait;
 
+    const AFT_MIN_SUMM = 120000;
+
     public const BIC = '044525388';
     const BANK_URL = 'https://pay.tkbbank.ru';
     const BANK_URL_TEST = 'https://paytest.online.tkbbank.ru';
@@ -1930,5 +1932,10 @@ class TKBankAdapter implements IBankAdapter
         }
 
         return $outCardPayResponse;
+    }
+
+    public function getAftMinSum()
+    {
+        return self::AFT_MIN_SUMM;
     }
 }

@@ -91,9 +91,6 @@ class MerchantPayCreateStrategy
         $paySchet->Extid = $this->payForm->extid;
         $paySchet->QrParams = $this->payForm->descript;
         $paySchet->SummPay = $this->payForm->amount;
-        $paySchet->ComissSumm = $bankAdapterBuilder->getUslugatovar()->calcComiss($paySchet->SummPay);
-        $paySchet->MerchVozn = $bankAdapterBuilder->getUslugatovar()->calcComissOrg($paySchet->SummPay);
-        $paySchet->BankComis = $bankAdapterBuilder->getUslugatovar()->calcBankComis($paySchet->SummPay);
         $paySchet->DateCreate = time();
         $paySchet->DateLastUpdate = time();
         $paySchet->IsAutoPay = 0;

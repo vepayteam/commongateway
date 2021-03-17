@@ -44,6 +44,9 @@ use yii\web\View; ?>
                                 <button class="btn btn-sm btn-primary" type="submit">Сформировать</button>
                             </div>
                         </div>
+
+                        <input type="hidden" name="callback-page" value="1">
+
                     </form>
 
                     <div class="sk-spinner sk-spinner-wave">

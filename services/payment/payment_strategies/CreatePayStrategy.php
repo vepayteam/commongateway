@@ -7,18 +7,13 @@ namespace app\services\payment\payment_strategies;
 use app\models\api\Reguser;
 use app\models\crypt\CardToken;
 use app\models\payonline\Cards;
-use app\models\payonline\Partner;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
-use app\models\Payschets;
-use app\models\TU;
 use app\services\cards\models\PanToken;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\BankAdapterBuilder;
-use app\services\payment\banks\RSBankAdapter;
-use app\services\payment\banks\RSBankEcommAdapter;
-use app\services\payment\banks\TKBankAdapter;
+use app\services\payment\banks\BRSAdapter;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2DuplicatedException;
 use app\services\payment\exceptions\Check3DSv2Exception;
@@ -36,7 +31,7 @@ use yii\db\Exception;
 
 class CreatePayStrategy
 {
-    const RSB_ECOMM_MAX_SUMM = 185000;
+    const BRS_ECOMM_MAX_SUMM = 185000;
 
     /** @var CreatePayForm */
     protected $createPayForm;
@@ -71,12 +66,6 @@ class CreatePayStrategy
 
         $bankAdapterBuilder = new BankAdapterBuilder();
         $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar);
-        if($paySchet->IdUsluga != Uslugatovar::REG_CARD_ID) {
-            $this->checkAndChangeGateIfRsbNeedAft($paySchet);
-            $this->checkAndChangeGateIfRsbEcomm($paySchet);
-        }
-
-        $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar);
         $this->setCardPay($paySchet, $bankAdapterBuilder->getPartnerBankGate());
 
         try {
@@ -91,39 +80,6 @@ class CreatePayStrategy
 
         $this->updatePaySchet($paySchet, $bankAdapterBuilder->getPartnerBankGate());
         return $paySchet;
-    }
-
-    protected function checkAndChangeGateIfRsbNeedAft(PaySchet $paySchet)
-    {
-        if($paySchet->Bank == RSBankAdapter::$bank && $paySchet->getSummFull() > self::RSB_ECOMM_MAX_SUMM) {
-            /** @var PartnerBankGate $partnerBankGate */
-            $partnerBankGate = PartnerBankGate::find()->where([
-                'BankId' => RSBankAdapter::$bank,
-                'PartnerId' => $paySchet->partner->ID,
-                'TU' => UslugatovarType::POGASHATF,
-            ])->orderBy('Priority DESC')->one();
-            if(!$partnerBankGate) {
-                throw new GateException('Нет шлюза');
-            }
-
-            $paySchet->changeGate($partnerBankGate);
-        }
-    }
-
-    protected function checkAndChangeGateIfRsbEcomm(PaySchet $paySchet)
-    {
-        if($paySchet->Bank == RSBankAdapter::$bank && $paySchet->getSummFull() < self::RSB_ECOMM_MAX_SUMM) {
-            /** @var PartnerBankGate $partnerBankGate */
-            $partnerBankGate = PartnerBankGate::find()->where([
-                'BankId' => RSBankAdapter::$bank,
-                'PartnerId' => $paySchet->partner->ID,
-                'TU' => UslugatovarType::POGASHECOM,
-            ])->orderBy('Priority DESC')->one();
-            if(!$partnerBankGate) {
-                throw new GateException('Нет шлюза');
-            }
-            $paySchet->changeGate($partnerBankGate);
-        }
     }
 
     /**

@@ -29,6 +29,7 @@ use yii\base\Model;
 
 class ADGroupBankAdapter implements IBankAdapter
 {
+    const AFT_MIN_SUMM = 120000;
     public static $bank = 5;
     protected $bankUrl = 'https://qpg.adgroup.finance';
 
@@ -159,5 +160,10 @@ class ADGroupBankAdapter implements IBankAdapter
     public function outCardPay(OutCardPayForm $outCardPayForm)
     {
         throw new GateException('Метод недоступен');
+    }
+
+    public function getAftMinSum()
+    {
+        return self::AFT_MIN_SUMM;
     }
 }

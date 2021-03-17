@@ -14,8 +14,14 @@ class DiffData
     {
         $readerType = IOFactory::identify($filename);
         $reader = IOFactory::createReader($readerType);
-        $spreadsheet = $reader->load($filename);
+        $reader->setReadDataOnly(true);
+        $reader->setReadFilter(new DiffReadFilter());
 
+        if ($readerType === 'Csv') {
+            $reader->setDelimiter(';');
+        }
+
+        $spreadsheet = $reader->load($filename);
         $rows = $spreadsheet->getActiveSheet()->toArray();
 
         $this->registry = [];
@@ -58,7 +64,7 @@ class DiffData
             }
 
             $paySchet = $map[$record['ExtBillNumber']];
-            if (PaySchet::STATUSES[$paySchet->Status] !== PaySchet::STATUS_DONE || $record['Status'] !== 'Успешно') {
+            if (intval($paySchet['Status']) !== PaySchet::STATUS_DONE || $record['Status'] !== 'Успешно') {
                 $badStatus[] = [
                     'record' => $record,
                     'paySchet' => $paySchet,

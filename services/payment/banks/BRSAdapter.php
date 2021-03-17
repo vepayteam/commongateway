@@ -17,7 +17,7 @@ use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\RefundPayException;
-use app\services\payment\exceptions\RSbankAdapterExeception;
+use app\services\payment\exceptions\BRSAdapterExeception;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
@@ -25,12 +25,12 @@ use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\RefundPayForm;
-use app\services\payment\forms\rsb_aft\CreatePayAftRequest;
-use app\services\payment\forms\rsb_aft\CreatePayByRegCardRequest;
-use app\services\payment\forms\rsb_aft\CreatePayRequest;
-use app\services\payment\forms\rsb_aft\CheckStatusPayRequest;
-use app\services\payment\forms\rsb_aft\RecurrentPayRequest;
-use app\services\payment\forms\rsb_aft\RefundPayRequest;
+use app\services\payment\forms\brs\CreatePayAftRequest;
+use app\services\payment\forms\brs\CreatePayByRegCardRequest;
+use app\services\payment\forms\brs\CreatePayRequest;
+use app\services\payment\forms\brs\CheckStatusPayRequest;
+use app\services\payment\forms\brs\RecurrentPayRequest;
+use app\services\payment\forms\brs\RefundPayRequest;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
@@ -39,8 +39,10 @@ use Yii;
 use yii\base\Security;
 use yii\helpers\Json;
 
-class RSBankAdapter implements IBankAdapter
+class BRSAdapter implements IBankAdapter
 {
+    const AFT_MIN_SUMM = 180000;
+
     public static $bank = 7;
 
     /** @var PartnerBankGate */
@@ -235,7 +237,7 @@ class RSBankAdapter implements IBankAdapter
             $checkStatusPayResponse->message = $ans['RESULT'];
             $checkStatusPayResponse->status = $this->getStatusResponse($ans['RESULT']);
             $this->checkStatusPayResponseFiller($checkStatusPayResponse, $ans);
-            $checkStatusPayResponse->rrn = $ans['RRN'];
+            $checkStatusPayResponse->rrn = (array_key_exists('RRN', $ans) ? $ans['RRN'] : '');
         } catch (BankAdapterResponseException $e) {
             $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
             $checkStatusPayResponse->message = 'Ошибка запроса';
@@ -310,7 +312,7 @@ class RSBankAdapter implements IBankAdapter
             $ans = $this->sendRequest($uri, $refundPayRequest->getAttributes());
             $refundPayResponse->message = $ans['RESULT'];
             $refundPayResponse->status = $this->getStatusResponse($ans['RESULT']);
-        } catch (RSbankAdapterExeception $e) {
+        } catch (BRSAdapterExeception $e) {
             $refundPayResponse->message = $e->getMessage();
             $refundPayResponse->status = BaseResponse::STATUS_ERROR;
         }
@@ -393,5 +395,10 @@ class RSBankAdapter implements IBankAdapter
     public function outCardPay(OutCardPayForm $outCardPayForm)
     {
         throw new GateException('Метод недоступен');
+    }
+
+    public function getAftMinSum()
+    {
+        return self::AFT_MIN_SUMM;
     }
 }

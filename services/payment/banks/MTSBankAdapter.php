@@ -41,6 +41,7 @@ use yii\helpers\Json;
 
 class MTSBankAdapter implements IBankAdapter
 {
+    const AFT_MIN_SUMM = 120000;
     public static $bank = 3;
 
     /** @var PartnerBankGate */
@@ -974,5 +975,10 @@ class MTSBankAdapter implements IBankAdapter
     public function outCardPay(OutCardPayForm $outCardPayForm)
     {
         throw new GateException('Метод недоступен');
+    }
+
+    public function getAftMinSum()
+    {
+        return self::AFT_MIN_SUMM;
     }
 }
