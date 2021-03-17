@@ -976,4 +976,9 @@ class MTSBankAdapter implements IBankAdapter
     {
         throw new GateException('Метод недоступен');
     }
+
+    public function getAftMinSum()
+    {
+        return self::AFT_MIN_SUMM;
+    }
 }

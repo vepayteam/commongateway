@@ -71,12 +71,6 @@ class CreatePayStrategy
 
         $bankAdapterBuilder = new BankAdapterBuilder();
         $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar);
-        if($paySchet->IdUsluga != Uslugatovar::REG_CARD_ID) {
-            $this->checkAndChangeGateIfRsbNeedAft($paySchet);
-            $this->checkAndChangeGateIfRsbEcomm($paySchet);
-        }
-
-        $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar);
         $this->setCardPay($paySchet, $bankAdapterBuilder->getPartnerBankGate());
 
         try {
@@ -91,39 +85,6 @@ class CreatePayStrategy
 
         $this->updatePaySchet($paySchet, $bankAdapterBuilder->getPartnerBankGate());
         return $paySchet;
-    }
-
-    protected function checkAndChangeGateIfRsbNeedAft(PaySchet $paySchet)
-    {
-        if($paySchet->Bank == RSBankAdapter::$bank && $paySchet->getSummFull() > self::RSB_ECOMM_MAX_SUMM) {
-            /** @var PartnerBankGate $partnerBankGate */
-            $partnerBankGate = PartnerBankGate::find()->where([
-                'BankId' => RSBankAdapter::$bank,
-                'PartnerId' => $paySchet->partner->ID,
-                'TU' => UslugatovarType::POGASHATF,
-            ])->orderBy('Priority DESC')->one();
-            if(!$partnerBankGate) {
-                throw new GateException('Нет шлюза');
-            }
-
-            $paySchet->changeGate($partnerBankGate);
-        }
-    }
-
-    protected function checkAndChangeGateIfRsbEcomm(PaySchet $paySchet)
-    {
-        if($paySchet->Bank == RSBankAdapter::$bank && $paySchet->getSummFull() < self::RSB_ECOMM_MAX_SUMM) {
-            /** @var PartnerBankGate $partnerBankGate */
-            $partnerBankGate = PartnerBankGate::find()->where([
-                'BankId' => RSBankAdapter::$bank,
-                'PartnerId' => $paySchet->partner->ID,
-                'TU' => UslugatovarType::POGASHECOM,
-            ])->orderBy('Priority DESC')->one();
-            if(!$partnerBankGate) {
-                throw new GateException('Нет шлюза');
-            }
-            $paySchet->changeGate($partnerBankGate);
-        }
     }
 
     /**

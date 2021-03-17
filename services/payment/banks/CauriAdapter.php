@@ -253,4 +253,9 @@ class CauriAdapter implements IBankAdapter
 
         }
     }
+
+    public function getAftMinSum()
+    {
+        return self::AFT_MIN_SUMM;
+    }
 }

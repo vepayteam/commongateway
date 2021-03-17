@@ -69,6 +69,6 @@ class MfoPayLkCreateStrategy extends MerchantPayCreateStrategy
         }
 
         $bankAdapter = Banks::getBankAdapter($gate->BankId);
-        return $bankAdapter::AFT_MIN_SUMM;
+        return $bankAdapter->getAftMinSum();
     }
 }

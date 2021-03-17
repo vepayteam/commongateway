@@ -1933,4 +1933,9 @@ class TKBankAdapter implements IBankAdapter
 
         return $outCardPayResponse;
     }
+
+    public function getAftMinSum()
+    {
+        return self::AFT_MIN_SUMM;
+    }
 }

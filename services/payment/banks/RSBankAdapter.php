@@ -41,7 +41,7 @@ use yii\helpers\Json;
 
 class RSBankAdapter implements IBankAdapter
 {
-    const AFT_MIN_SUMM = 160000;
+    const AFT_MIN_SUMM = 180000;
 
     public static $bank = 7;
 
@@ -395,5 +395,10 @@ class RSBankAdapter implements IBankAdapter
     public function outCardPay(OutCardPayForm $outCardPayForm)
     {
         throw new GateException('Метод недоступен');
+    }
+
+    public function getAftMinSum()
+    {
+        return self::AFT_MIN_SUMM;
     }
 }
