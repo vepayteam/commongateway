@@ -1,7 +1,7 @@
 <?php
 
 
-namespace app\services\payment\forms\rsb_aft;
+namespace app\services\payment\forms\brs;
 
 
 class CreatePayAftRequest extends CreatePayRequest
