@@ -15,6 +15,7 @@ use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\BRSAdapter;
 use app\services\payment\exceptions\BankAdapterResponseException;
+use app\services\payment\exceptions\Check3DSv2DuplicatedException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
@@ -65,12 +66,6 @@ class CreatePayStrategy
 
         $bankAdapterBuilder = new BankAdapterBuilder();
         $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar);
-        if($paySchet->IdUsluga != Uslugatovar::REG_CARD_ID) {
-            $this->checkAndChangeGateIfBRSNeedAft($paySchet);
-            $this->checkAndChangeGateIfBRSEcomm($paySchet);
-        }
-
-        $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar);
         $this->setCardPay($paySchet, $bankAdapterBuilder->getPartnerBankGate());
 
         try {
@@ -85,39 +80,6 @@ class CreatePayStrategy
 
         $this->updatePaySchet($paySchet, $bankAdapterBuilder->getPartnerBankGate());
         return $paySchet;
-    }
-
-    protected function checkAndChangeGateIfBRSNeedAft(PaySchet $paySchet)
-    {
-        if($paySchet->Bank == BRSAdapter::$bank && $paySchet->getSummFull() > self::BRS_ECOMM_MAX_SUMM) {
-            /** @var PartnerBankGate $partnerBankGate */
-            $partnerBankGate = PartnerBankGate::find()->where([
-                'BankId' => BRSAdapter::$bank,
-                'PartnerId' => $paySchet->partner->ID,
-                'TU' => UslugatovarType::POGASHATF,
-            ])->orderBy('Priority DESC')->one();
-            if(!$partnerBankGate) {
-                throw new GateException('Нет шлюза');
-            }
-
-            $paySchet->changeGate($partnerBankGate);
-        }
-    }
-
-    protected function checkAndChangeGateIfBRSEcomm(PaySchet $paySchet)
-    {
-        if($paySchet->Bank == BRSAdapter::$bank && $paySchet->getSummFull() < self::BRS_ECOMM_MAX_SUMM) {
-            /** @var PartnerBankGate $partnerBankGate */
-            $partnerBankGate = PartnerBankGate::find()->where([
-                'BankId' => BRSAdapter::$bank,
-                'PartnerId' => $paySchet->partner->ID,
-                'TU' => UslugatovarType::POGASHECOM,
-            ])->orderBy('Priority DESC')->one();
-            if(!$partnerBankGate) {
-                throw new GateException('Нет шлюза');
-            }
-            $paySchet->changeGate($partnerBankGate);
-        }
     }
 
     /**

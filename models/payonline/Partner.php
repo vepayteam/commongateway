@@ -4,6 +4,10 @@ namespace app\models\payonline;
 
 use app\models\mfo\DistributionReports;
 use app\models\mfo\MfoSettings;
+use app\models\mfo\VyvodReestr;
+use app\models\mfo\VyvodSystem;
+use app\models\partner\admin\structures\VyvodSystemFilterParams;
+use app\models\partner\admin\VoznagStatNew;
 use app\models\partner\UserLk;
 use app\models\sms\tables\AccessSms;
 use app\models\TU;
@@ -679,5 +683,101 @@ class Partner extends \yii\db\ActiveRecord
     public function getBankGates()
     {
         return $this->hasMany(PartnerBankGate::class, ['PartnerId' => 'ID']);
+    }
+
+    public function getVyvodSystem()
+    {
+        return $this->hasMany(VyvodSystem::class, ['IdPartner' => 'ID']);
+    }
+
+    public function getVyvodReestr()
+    {
+        return $this->hasMany(VyvodReestr::class, ['IdPartner' => 'ID']);
+    }
+
+    /**
+     * @param VyvodSystemFilterParams $params
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getSummVyveden(VyvodSystemFilterParams $params)
+    {
+        $query = $this->getVyvodSystem()
+                      ->select(['SUM(`Summ`)'])
+                      ->where([
+                          'or',
+                          ['and', ['>=', 'DateFrom', $params->getDateFrom()], ['<=', 'DateTo', $params->getDateTo()]],
+                          ['between', 'DateFrom', $params->getDateFrom(), $params->getDateTo()],
+                          ['between', 'DateTo', $params->getDateFrom(), $params->getDateTo()],
+                      ])
+                      ->andWhere(['TypeVyvod' => $params->getTypeVyvyod()]);
+
+        return (($params->getFilterByStateOp() === true)
+            ? $query->andWhere(['SatateOp' => [VoznagStatNew::OPERATION_STATE_IN_PROGRESS, VoznagStatNew::OPERATION_STATE_READY]])->cache(60 * 60)
+            : $query->cache(60 * 60));
+    }
+
+    /**
+     * @param VyvodSystemFilterParams $params
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getDataVyveden(VyvodSystemFilterParams $params)
+    {
+        $whereParams = [
+            'and',
+            ['<=', 'DateTo', $params->getDateTo()],
+            ['TypeVyvod' => $params->getTypeVyvyod()],
+        ];
+
+        if ($params->getFilterByStateOp() === true) {
+            $whereParams[] = ['SatateOp' => [VoznagStatNew::OPERATION_STATE_IN_PROGRESS, VoznagStatNew::OPERATION_STATE_READY]];
+        }
+
+        $query = $this->getVyvodSystem()->select(['DateTo'])->where($whereParams)->orderBy(['DateTo' => SORT_DESC]);
+
+        return $query->cache(60 * 60);
+    }
+
+    /**
+     * @param VyvodSystemFilterParams $params
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getSummPerechisl(VyvodSystemFilterParams $params)
+    {
+        $query = $this->getVyvodReestr()
+                      ->select(['SUM(`SumOp`)'])
+                      ->where([
+                          'or',
+                          ['and', ['>=', 'DateFrom', $params->getDateFrom()], ['<=', 'DateTo', $params->getDateTo()]],
+                          ['between', 'DateFrom', $params->getDateFrom(), $params->getDateTo()],
+                          ['between', 'DateTo', $params->getDateFrom(), $params->getDateTo()],
+                      ]);
+
+        return (($params->getFilterByStateOp() === true)
+            ? $query->andWhere(['StateOp' => [VoznagStatNew::OPERATION_STATE_IN_PROGRESS, VoznagStatNew::OPERATION_STATE_READY]])->cache(60 * 60)
+            : $query->cache(60 * 60));
+    }
+
+    /**
+     * @param VyvodSystemFilterParams $params
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getDataPerechisl(VyvodSystemFilterParams $params)
+    {
+        $whereParams = [
+            'and',
+            ['<=', 'DateTo', $params->getDateTo()],
+        ];
+
+        if ($params->getFilterByStateOp() === true) {
+            $whereParams[] = ['StateOp' => [VoznagStatNew::OPERATION_STATE_IN_PROGRESS, VoznagStatNew::OPERATION_STATE_READY]];
+        }
+
+        $query = $this->getVyvodReestr()->select(['DateTo'])->where($whereParams)->orderBy(['DateTo' => SORT_DESC]);
+
+        return $query->cache(60 * 60);
     }
 }

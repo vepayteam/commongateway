@@ -10,6 +10,11 @@ use yii\db\Query;
 
 class VyvodList extends Model
 {
+    /** @var int perevod na vydachu (на выплату) */
+    const TYPE_USLUG_NA_VYDACHU = 0;
+    /** @var int perechislene na schet (на р/с) */
+    const TYPE_USLUG_NA_R_S_SCHET = 1;
+
     public $datefrom;
     public $dateto;
     public $IdPart;

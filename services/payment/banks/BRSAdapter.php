@@ -41,6 +41,8 @@ use yii\helpers\Json;
 
 class BRSAdapter implements IBankAdapter
 {
+    const AFT_MIN_SUMM = 180000;
+
     public static $bank = 7;
 
     /** @var PartnerBankGate */
@@ -235,7 +237,7 @@ class BRSAdapter implements IBankAdapter
             $checkStatusPayResponse->message = $ans['RESULT'];
             $checkStatusPayResponse->status = $this->getStatusResponse($ans['RESULT']);
             $this->checkStatusPayResponseFiller($checkStatusPayResponse, $ans);
-            $checkStatusPayResponse->rrn = $ans['RRN'];
+            $checkStatusPayResponse->rrn = (array_key_exists('RRN', $ans) ? $ans['RRN'] : '');
         } catch (BankAdapterResponseException $e) {
             $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
             $checkStatusPayResponse->message = 'Ошибка запроса';
@@ -393,5 +395,10 @@ class BRSAdapter implements IBankAdapter
     public function outCardPay(OutCardPayForm $outCardPayForm)
     {
         throw new GateException('Метод недоступен');
+    }
+
+    public function getAftMinSum()
+    {
+        return self::AFT_MIN_SUMM;
     }
 }
