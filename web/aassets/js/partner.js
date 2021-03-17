@@ -538,8 +538,6 @@
                 lk.statgraphload();
                 return false;
             });
-
-            lk.statgraphload();
         },
 
         statgraphload: function () {
@@ -590,8 +588,6 @@
                 lk.statgraphdraftload();
                 return false;
             });
-
-            lk.statgraphdraftload();
         },
 
         statgraphdraftload: function () {
@@ -640,8 +636,6 @@
                 lk.statgraphkonversload();
                 return false;
             });
-
-            lk.statgraphkonversload();
         },
 
         statgraphkonversSetPaging: function(data, form) {
@@ -723,7 +717,6 @@
                 lk.statgraphplatelshikload();
                 return false;
             });
-            lk.statgraphplatelshikload();
         },
 
         statgraphplatelshikload: function () {
@@ -789,7 +782,6 @@
                 $('#recurrentpaytabs li.active').find('a').trigger('click');
                 return false;
             });
-            lk.recurrentcardformload();
 
             $('#recurrentpaytabs a').on('click', function () {
                 let id = $(this).attr('href');
