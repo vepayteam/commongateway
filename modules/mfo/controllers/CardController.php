@@ -188,12 +188,6 @@ class CardController extends Controller
 
         Yii::warning('/card/get mfo='. $mfo->mfo . " IdPay=". $kfCard->id . " type=".$type, 'mfo');
 
-        if ($type == 0) {
-            $TcbGate = new TcbGate($mfo->mfo, TCBank::$ECOMGATE);
-            $tcBank = new TCBank($TcbGate);
-            $tcBank->confirmPay($kfCard->id);
-        }
-
         $statePay = $kfCard->GetPayState();
         if ($statePay == 2) {
             return [

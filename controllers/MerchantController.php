@@ -252,7 +252,7 @@ class MerchantController extends Controller
                 if ($kfCard->validate()) {
                     $cardUser = $kfCard->FindKardByPay($kf->IdPartner, 0);
                     if ($cardUser) {
-                        $card = ['num' => $cardUser->NameCard, 'exp' => $cardUser->SrokKard, 'id' => $cardUser->ID];
+                        $card = ['num' => $cardUser->NameCard, 'exp' => (string)$cardUser->SrokKard, 'id' => $cardUser->ID];
                     }
                 }
             }

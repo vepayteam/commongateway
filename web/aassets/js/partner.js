@@ -313,6 +313,41 @@
             });
         },
 
+        diffdatareq: function () {
+            $.ajax({
+                type: 'POST',
+                enctype: 'multipart/form-data',
+                url: '/partner/stat/diffdata',
+                // data: $('#diffdataform').serialize(),
+                data: new FormData($('#diffdataform')[0]),
+                processData: false,
+                contentType: false,
+                beforeSend: function () {
+                    $('#diffdataform').closest('.ibox-content').toggleClass('sk-loading');
+                },
+                success: function (data) {
+                    $('#diffdataform').closest('.ibox-content').toggleClass('sk-loading');
+                    if (data.status === 1) {
+                        $('#diffdataresult').html(data.data)
+                    } else {
+                        $('#diffdataresult').html("<p class='text-center'>" + data.message + "</p>")
+                    }
+                },
+                error: function () {
+                    $('#diffdataform').closest('.ibox-content').toggleClass('sk-loading');
+                    $('#diffdataresult').html("<p class='text-center'>Ошибка</p>");
+                }
+            })
+        },
+
+        diffdata: function () {
+            $('#diffdataform').on('submit', function (e) {
+                e.preventDefault();
+
+                lk.diffdatareq();
+            })
+        },
+
         excerpt: function () {
             $(document).on('click', '.excerpt', function (e) {
                 e.preventDefault();
@@ -1109,9 +1144,35 @@
             });
         },
 
-        notiflist: function () {
+        notiflist: function (page) {
             $('[name="datefrom"],[name="dateto"]').datetimepicker({
                 format: 'DD.MM.YYYY'
+            });
+
+            page = page || $('#notiflistform').find('[name="callback-page"]').val();
+
+            if (linklink) {
+                linklink.abort();
+            }
+            linklink = $.ajax({
+                type: "POST",
+                url: '/partner/callback/listitems?page='+page,
+                data: $('#notiflistform').serialize(),
+                beforeSend: function () {
+                    $('#notiflistform').closest('.ibox-content').toggleClass('sk-loading');
+                },
+                success: function (data) {
+                    $('#notiflistform').closest('.ibox-content').toggleClass('sk-loading');
+                    if (data.status == 1) {
+                        $('#notiflistresult').html(data.data);
+                    } else {
+                        $('#notiflistresult').html("<p class='text-center'>" + data.message + "</p>");
+                    }
+                },
+                error: function () {
+                    $('#notiflistform').closest('.ibox-content').toggleClass('sk-loading');
+                    $('#notiflistresult').html("<p class='text-center'>Ошибка</p>");
+                }
             });
 
             $('#notiflistform').on('submit', function () {
@@ -1120,7 +1181,7 @@
                 }
                 linklink = $.ajax({
                     type: "POST",
-                    url: '/partner/callback/listitems',
+                    url: '/partner/callback/listitems?page='+page,
                     data: $('#notiflistform').serialize(),
                     beforeSend: function () {
                         $('#notiflistform').closest('.ibox-content').toggleClass('sk-loading');
@@ -1183,9 +1244,10 @@
                 if (linklink) {
                     linklink.abort();
                 }
+                var path_url = (window.location.pathname === '/partner/admin/comisotchet-new') ? '/partner/admin/comisotchetdata-new':'/partner/admin/comisotchetdata';
                 linklink = $.ajax({
                     type: "POST",
-                    url: '/partner/admin/comisotchetdata',
+                    url: path_url,
                     data: $('#comisotchetform').serialize(),
                     beforeSend: function () {
                         $('#comisotchetresult').closest('.ibox-content').toggleClass('sk-loading');

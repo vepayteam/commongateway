@@ -55,6 +55,8 @@ class TKBankAdapter implements IBankAdapter
 {
     use TKBank3DSTrait;
 
+    const AFT_MIN_SUMM = 120000;
+
     public const BIC = '044525388';
     const BANK_URL = 'https://pay.tkbbank.ru';
     const BANK_URL_TEST = 'https://paytest.online.tkbbank.ru';
@@ -1816,7 +1818,12 @@ class TKBankAdapter implements IBankAdapter
                 $checkStatusPayResponse->status = $status;
                 $checkStatusPayResponse->xml = $xml;
                 $checkStatusPayResponse->rrn = $xml['orderadditionalinfo']['rrn'] ?? '';
-                $checkStatusPayResponse->message = $checkStatusPayResponse->xml['orderinfo']['statedescription'];
+                $checkStatusPayResponse->cardRefId = $xml['orderadditionalinfo']['data']['cardrefid'] ?? '';
+                $checkStatusPayResponse->message = $xml['orderinfo']['statedescription'] ?? '';
+                $checkStatusPayResponse->expYear = $xml['orderadditionalinfo']['cardexpyear'] ?? '';
+                $checkStatusPayResponse->expMonth = $xml['orderadditionalinfo']['cardexpmonth'] ?? '';
+                $checkStatusPayResponse->cardHolder = $xml['orderadditionalinfo']['cardholder'] ?? '';
+                $checkStatusPayResponse->cardNumber = $xml['orderadditionalinfo']['cardnumber'] ?? '';
             }
         } else {
             throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
@@ -1925,5 +1932,10 @@ class TKBankAdapter implements IBankAdapter
         }
 
         return $outCardPayResponse;
+    }
+
+    public function getAftMinSum()
+    {
+        return self::AFT_MIN_SUMM;
     }
 }

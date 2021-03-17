@@ -25,6 +25,7 @@ use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
+use Vepay\Gateway\Client\Validator\ValidationException;
 
 // TODO: удалить лишние методы
 interface IBankAdapter
@@ -141,9 +142,15 @@ interface IBankAdapter
 
     /**
      * @param OutCardPayForm $outCardPayForm
+     * @throws ValidationException
      * @return OutCardPayResponse
      * @return mixed
      */
     public function outCardPay(OutCardPayForm $outCardPayForm);
+
+    /**
+     * @return int
+     */
+    public function getAftMinSum();
 
 }

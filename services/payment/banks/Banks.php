@@ -7,11 +7,6 @@ namespace app\services\payment\banks;
 class Banks
 {
     const REG_CARD_BY_OUT_ID = 0;
-    const TKB_ID = 2;
-    const MTS_ID = 3;
-
-    const ADGB_ID = 5;
-
 
     /**
      * @param $bankId
@@ -21,14 +16,16 @@ class Banks
     public static function getBankAdapter($bankId)
     {
         switch ($bankId) {
-            case self::TKB_ID:
+            case TKBankAdapter::$bank:
                 return new TKBankAdapter();
-            case self::MTS_ID:
+            case MTSBankAdapter::$bank:
                 return new MTSBankAdapter();
-            case self::ADGB_ID:
+            case ADGroupBankAdapter::$bank:
                 return new ADGroupBankAdapter();
-            case RSBankAdapter::$bank:
-                return new RSBankAdapter();
+            case BRSAdapter::$bank:
+                return new BRSAdapter();
+            case CauriAdapter::$bank:
+                return new CauriAdapter();
             default:
                 throw new \Exception('Ошибка выбора банка');
         }

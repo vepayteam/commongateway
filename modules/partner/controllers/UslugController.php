@@ -168,7 +168,6 @@ class UslugController extends Controller
                 $usl->TypeExport = 1;
                 $usl->PcComission = 0;
                 $usl->ProvVoznagPC = 2.9;
-                $usl->TypeExport = 1;
                 $usl->TypeReestr = 0;
                 $usl->EmailReestr = '';
                 $usl->IdBankRekviz = \Yii::$app->db

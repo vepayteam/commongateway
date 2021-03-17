@@ -14,6 +14,7 @@ use app\models\partner\admin\PerevodToPartner;
 use app\models\partner\admin\SystemVoznagList;
 use app\models\partner\admin\Uslugi;
 use app\models\partner\admin\VoznagStat;
+use app\models\partner\admin\VoznagStatNew;
 use app\models\partner\admin\VyvodList;
 use app\models\partner\admin\VyvodVoznag;
 use app\models\partner\stat\StatFilter;
@@ -25,8 +26,10 @@ use app\models\payonline\Uslugatovar;
 use app\models\SendEmail;
 use app\models\sms\api\SingleMainSms;
 use app\models\sms\tables\AccessSms;
+use app\services\payment\forms\VoznagStatForm;
 use toriphes\console\Runner;
 use Yii;
+use yii\base\DynamicModel;
 use yii\db\Exception;
 use yii\db\Expression;
 use yii\db\Query;
@@ -115,6 +118,23 @@ class AdminController extends Controller
     }
 
     /**
+     * Вывод вознаграждения NEW
+     * @return string
+     * @throws NotFoundHttpException
+     */
+    public function actionComisotchetNew()
+    {
+        if (UserLk::IsAdmin(Yii::$app->user)) {
+            $fltr = new StatFilter();
+            return $this->render('comisotchet', [
+                'partnerlist' => $fltr->getPartnersList(false, true)
+            ]);
+        } else {
+            throw new NotFoundHttpException();
+        }
+    }
+
+    /**
      * @return array
      * @throws NotFoundHttpException
      * @throws \yii\db\Exception
@@ -179,6 +199,76 @@ class AdminController extends Controller
 
             return ['status' => 0, 'message' => 'Ошибка запроса'];
 
+        } else {
+            throw new NotFoundHttpException();
+        }
+    }
+
+    /**
+     * NEW
+     * @return array
+     * @throws NotFoundHttpException
+     * @throws \yii\db\Exception
+     */
+    public function actionComisotchetdataNew()
+    {
+        if (Yii::$app->request->isAjax) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+            $post = Yii::$app->request->post();
+
+            $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+            switch (Yii::$app->request->post('TypeOtch')) {
+                case VoznagStatForm::TYPE_REPORT:
+                    $payShetList = new VoznagStatNew();
+                    //@todo DRY!!!
+                    if (!$payShetList->load($post, '') || !$payShetList->validate()) {
+                        return ['status' => 0, 'message' => 'Ошибка запроса'];
+                    }
+                    break;
+                case VoznagStatForm::TYPE_HISTORY_TRANSFER_CALC_ACCT:
+                    $payShetList = new VyvodList();
+                    if (!$payShetList->load($post, '') || !$payShetList->validate()) {
+                        return ['status' => 0, 'message' => 'Ошибка запроса'];
+                    }
+                    $data = $payShetList->GetList($IsAdmin, VyvodList::TYPE_USLUG_NA_R_S_SCHET);
+                    break;
+                case VoznagStatForm::TYPE_HISTORY_TRANSFER_OUT_ACCT:
+                    $payShetList = new VyvodList();
+                    if (!$payShetList->load($post, '') || !$payShetList->validate()) {
+                        return ['status' => 0, 'message' => 'Ошибка запроса'];
+                    }
+                    $data = $payShetList->GetList($IsAdmin, VyvodList::TYPE_USLUG_NA_VYDACHU);
+                    break;
+                case VoznagStatForm::TYPE_HISTORY_OUTPUT_REWARD:
+                    $payShetList = new SystemVoznagList();
+                    if (!$payShetList->load($post, '') || !$payShetList->validate()) {
+                        return ['status' => 0, 'message' => 'Ошибка запроса'];
+                    }
+                    $data = $payShetList->GetList($IsAdmin);
+                    break;
+                default:
+                    $payShetList = null;
+            }
+
+            if (Yii::$app->request->post('TypeOtch') == VoznagStatForm::TYPE_REPORT) {
+                $payShetList->TypeUslug = VoznagStatNew::TYPE_SERVICE_POGAS;
+                $dataIn = $payShetList->GetOtchMerchant($IsAdmin);
+                $payShetList->TypeUslug = VoznagStatNew::TYPE_SERVICE_VYDACHA;
+                $dataOut = $payShetList->GetOtchMerchant($IsAdmin);
+                $view = '_comisotchetdata';
+                $params = [
+                    'IsAdmin' => $IsAdmin,
+                    'dataIn' => $dataIn,
+                    'dataOut' => $dataOut,
+                ];
+            } else {
+                $view = '_comisotchetlist';
+                $params = [
+                    'IsAdmin' => $IsAdmin,
+                    'data' => $data,
+                ];
+            }
+            return ['status' => 1, 'data' => $this->renderPartial($view, $params)];
         } else {
             throw new NotFoundHttpException();
         }
@@ -450,8 +540,17 @@ class AdminController extends Controller
     public function actionTestaddbalance($id)
     {
         if ($id > 0) {
+            $sum = Yii::$app->request->get('sum', 0);
+            $model = DynamicModel::validateData(['sum' => $sum], [
+                [['sum'], 'integer', 'min' => 0, 'max' => 999999999999999]
+            ]);
+
+            if ($model->hasErrors()) {
+                return $this->asJson($model->errors);
+            }
+
             $b = new BalancePartner(Yii::$app->request->get('type'), $id);
-            $b->Inc(Yii::$app->request->get('sum', 0), Yii::$app->request->get('info', ''), 0, 0, 0);
+            $b->Inc($sum, Yii::$app->request->get('info', ''), 0, 0, 0);
         }
         return $id;
     }
@@ -459,8 +558,17 @@ class AdminController extends Controller
     public function actionTestdecbalance($id)
     {
         if ($id > 0) {
+            $sum = Yii::$app->request->get('sum', 0);
+            $model = DynamicModel::validateData(['sum' => $sum], [
+                [['sum'], 'integer', 'min' => 0, 'max' => 999999999999999]
+            ]);
+
+            if ($model->hasErrors()) {
+                return $this->asJson($model->errors);
+            }
+
             $b = new BalancePartner(Yii::$app->request->get('type'), $id);
-            $b->Dec(Yii::$app->request->get('sum', 0), Yii::$app->request->get('info', ''), 0, 0, 0);
+            $b->Dec($sum, Yii::$app->request->get('info', ''), 0, 0, 0);
         }
         return $id;
     }
@@ -468,7 +576,7 @@ class AdminController extends Controller
     public function actionTestmail()
     {
         $mail = new SendEmail();
-        echo "Test email: " . $mail->sendReestr("support@teleport.run", "Test email vepay", "Test email vepay");
+        echo "Test email: " . $mail->sendReestr("support@vepay.online", "Test email vepay", "Test email vepay");
     }
 
     public function actionTestmainsms()

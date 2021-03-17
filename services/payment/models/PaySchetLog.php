@@ -63,7 +63,8 @@ class PaySchetLog extends \yii\db\ActiveRecord
     {
         return self::find()
             ->innerJoin('pay_schet', 'pay_schet.ID = pay_schet_log.PaySchetId')
-            ->where('pay_schet_log.DateCreate - pay_schet.DateCreate > ' . $delta)
+            ->where('pay_schet_log.DateCreate > pay_schet.DateCreate')
+            ->andWhere('pay_schet_log.DateCreate - pay_schet.DateCreate > ' . $delta)
             ->andWhere(['=', 'pay_schet.IdOrg', $IdOrg])
             ->andWhere(['>', 'pay_schet_log.DateCreate', Carbon::now()->startOfDay()->addDays(-1)->timestamp])
             ->andWhere(['<', 'pay_schet_log.DateCreate', Carbon::now()->startOfDay()->timestamp]);
