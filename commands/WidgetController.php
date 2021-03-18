@@ -44,6 +44,9 @@ class WidgetController extends Controller
      */
     public function actionRsbcron()
     {
+        $startTime = microtime(true);
+        Yii::warning('rsbcron Start', 'rsbcron');
+
         $paycron = new CheckpayCron();
         $paycron->execute();
 
@@ -59,12 +62,8 @@ class WidgetController extends Controller
             $this->actionReceiveTelegram();
         }
 
-        /*if (date('G') == 0) {
-            //ocm комиссия 1.5%
-            Yii::$app->db->createCommand()->update('uslugatovar', [
-                'MinsumComiss' => 0
-            ],'IDPartner = 8 AND IsCustom IN (10,14)')->execute();
-        }*/
+        Yii::warning('rsbcron TimeExec: ' . (microtime(true) - $startTime), 'rsbcron');
+        Yii::warning('rsbcron Finish', 'rsbcron');
     }
 
     /**

@@ -22,8 +22,8 @@ class Banks
                 return new MTSBankAdapter();
             case ADGroupBankAdapter::$bank:
                 return new ADGroupBankAdapter();
-            case RSBankAdapter::$bank:
-                return new RSBankAdapter();
+            case BRSAdapter::$bank:
+                return new BRSAdapter();
             case CauriAdapter::$bank:
                 return new CauriAdapter();
             default:

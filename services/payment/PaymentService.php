@@ -138,20 +138,29 @@ class PaymentService
                 ->one();
 
             $header = [['Ext ID', 'Vepay ID', 'Дата Создания', 'Дата Оплаты', 'Наименование мерчанта', 'Услуга']];
-            $data = PaySchetLog::queryLateUpdatedPaySchets($partnerOption->PartnerId, (int)$deltaPartnerOption->Value)
-                ->select(
-                    'pay_schet.ExtId, '
-                    . ' pay_schet_log.PaySchetId,'
-                    . ' FROM_UNIXTIME(pay_schet.DateCreate) AS DateCreate,'
-                    . ' FROM_UNIXTIME(pay_schet.DateOplat) AS DateOplat,'
-                    . ' partner.UrLico,'// Наименование мерчанта
-                    . ' uslugatovar.NameUsluga,' // Услуга
-                )
-                ->leftJoin('partner', 'pay_schet.IdOrg = partner.ID')
-                ->leftJoin('uslugatovar', 'pay_schet.IdUsluga = uslugatovar.ID')
-                ->andWhere('pay_schet.Status = ' . PaySchet::STATUS_DONE)
+            $data = (new \yii\db\Query)
+                ->select(['*'])
+                ->from([
+                    'pay_schet' => '('
+                        . PaySchetLog
+                        ::queryLateUpdatedPaySchets($partnerOption->PartnerId, (int)$deltaPartnerOption->Value)
+                        ->select(
+                             'pay_schet.ID, '
+                             . 'pay_schet.ExtId, '
+                             . ' pay_schet_log.PaySchetId,'
+                             . ' FROM_UNIXTIME(pay_schet.DateCreate) AS DateCreate,'
+                             . ' FROM_UNIXTIME(pay_schet.DateOplat) AS DateOplat,'
+                             . ' partner.UrLico,'// Наименование мерчанта
+                             . ' uslugatovar.NameUsluga,' // Услуга
+                        )
+                        ->leftJoin('partner', 'pay_schet.IdOrg = partner.ID')
+                        ->leftJoin('uslugatovar', 'pay_schet.IdUsluga = uslugatovar.ID')
+                        ->andWhere('pay_schet.Status = ' . PaySchet::STATUS_DONE)
+                        ->createCommand()
+                        ->getRawSql()
+                        . ')'
+                ])
                 ->groupBy('pay_schet.ID')
-                ->asArray()
                 ->all();
             $data = array_merge($header, $data);
 

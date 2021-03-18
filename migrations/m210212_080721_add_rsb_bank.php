@@ -13,7 +13,7 @@ class m210212_080721_add_rsb_bank extends Migration
     public function safeUp()
     {
         $bank = new \app\services\payment\models\Bank();
-        $bank->ID = \app\services\payment\banks\RSBankAdapter::$bank;
+        $bank->ID = \app\services\payment\banks\BRSAdapter::$bank;
         $bank->Name = 'RSB';
         $bank->save(false);
     }
@@ -23,7 +23,7 @@ class m210212_080721_add_rsb_bank extends Migration
      */
     public function safeDown()
     {
-        \app\services\payment\models\Bank::deleteAll(['ID' => \app\services\payment\banks\RSBankAdapter::$bank]);
+        \app\services\payment\models\Bank::deleteAll(['ID' => \app\services\payment\banks\BRSAdapter::$bank]);
         return true;
     }
 }

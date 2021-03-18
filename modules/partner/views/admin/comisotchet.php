@@ -7,6 +7,8 @@
 /* @var $IsAdmin bool */
 
 use yii\web\View;
+use app\services\payment\forms\VoznagStatForm;
+use yii\helpers\Html;
 
 $this->title = "вывод вознаграждения";
 
@@ -47,12 +49,9 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         <div class="form-group">
                             <label class="col-sm-2 control-label">Вид</label>
                             <div class="col-sm-4">
-                                <select class="form-control" name="TypeOtch">
-                                    <option value="0">Отчет</option>
-                                    <option value="1">История перечислений на р/с</option>
-                                    <option value="2">История перечислений на счет выдачи</option>
-                                    <option value="3">История вывода вознаграждения</option>
-                                </select>
+                                <?= Html::dropDownList(
+                                    'TypeOtch', '', VoznagStatForm::getDropDownTypes(), ['class' => 'form-control']
+                                ); ?>
                             </div>
                         </div>
                         <div class="form-group">

@@ -42,7 +42,7 @@ class BalanceService
             $BalanceIn->Dec($paySchet->SummPay, 'Платеж ' . $paySchet->ID, 3, $paySchet->ID, 0);
             $BalanceOut = new BalancePartner(BalancePartner::OUT, $paySchet->IdOrg);
 
-            $comis = $paySchet->uslugatovar->calcComissOrg($paySchet->SummPay);
+            $comis = $paySchet->calcReward();
             if ($comis) {
                 $BalanceOut->Dec($comis, 'Комиссия ' . $paySchet->ID, 5, $paySchet->ID, 0);
             }
@@ -52,7 +52,7 @@ class BalanceService
             $BalanceIn = new BalancePartner(BalancePartner::IN, $paySchet->IdOrg);
             $BalanceIn->Inc($paySchet->SummPay, 'Платеж ' . $paySchet->ID, 2, $paySchet->ID, 0);
 
-            $comis = $paySchet->uslugatovar->calcComissOrg($paySchet->SummPay);
+            $comis = $paySchet->calcReward();
 
             if ($comis && !empty($paySchet->CardNum)) {
                 $BalanceOut = new BalancePartner(BalancePartner::OUT, $paySchet->IdOrg);
@@ -74,7 +74,7 @@ class BalanceService
             $BalanceOut = new BalancePartner(BalancePartner::OUT, $paySchet->IdOrg);
             $BalanceOut->Dec($paySchet->SummPay, 'Платеж ' . $paySchet->ID, 3, $paySchet->ID, 0);
 
-            $comis = $paySchet->uslugatovar->calcComissOrg($paySchet->SummPay);
+            $comis = $paySchet->calcReward();
             if ($comis) {
                 $BalanceOut->Dec($comis, 'Комиссия ' . $paySchet->ID, 5, $paySchet->ID, 0);
             }
@@ -93,7 +93,7 @@ class BalanceService
                 $BalanceIn = new BalancePartner(BalancePartner::IN, $paySchet->uslugatovar->ExtReestrIDUsluga);
                 $BalanceIn->Dec($paySchet->SummPay, 'Списание на перевод средств ' . $paySchet->ID, 1, $paySchet->ID, 0);
 
-                $comis = $paySchet->uslugatovar->calcComissOrg($paySchet->SummPay);
+                $comis = $paySchet->calcReward();
                 if ($comis) {
                     $BalanceIn->Dec($comis, 'Комиссия ' . $paySchet->ID, 5, $paySchet->ID, 0);
                 }
@@ -102,7 +102,7 @@ class BalanceService
             //погашение
             $BalanceIn = new BalancePartner(BalancePartner::IN, $paySchet->IdOrg);
             $BalanceIn->Inc($paySchet->SummPay, 'Платеж ' . $paySchet->ID, 2, $paySchet->ID, 0);
-            $comis = $paySchet->uslugatovar->calcComissOrg($paySchet->SummPay);
+            $comis = $paySchet->calcReward();
             if ($comis) {
                 $BalanceIn->Dec($comis, 'Комиссия ' . $paySchet->ID, 5, $paySchet->ID, 0);
             }
