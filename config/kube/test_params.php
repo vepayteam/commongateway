@@ -2,9 +2,6 @@
 
 return [
 
-    'mfoPartnerId' => 117,
+    'mfoPartnerId' => 116,
     'mfoCardId' => 3867,
-
-
-
 ];
