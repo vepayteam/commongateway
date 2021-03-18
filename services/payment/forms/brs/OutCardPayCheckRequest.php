@@ -11,9 +11,9 @@ class OutCardPayCheckRequest extends Model
     public $target = 'moneytransfer';
     public $operation = 'check';
     public $transfer_type = 'cash2card';
-    public $channel = 'term';
+    public $channel = 'B2C';
     public $card;
     public $tr_date;
-    public $ccy = 'RUB';
+    public $ccy = '643';
     public $amount;
 }

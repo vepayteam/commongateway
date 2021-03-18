@@ -44,7 +44,7 @@ use yii\helpers\Json;
 class BRSAdapter implements IBankAdapter
 {
     const AFT_MIN_SUMM = 180000;
-    const KEYS_PATH = '@app/config/rsb/';
+    const KEYS_PATH = '@app/config/brs/';
 
     public static $bank = 7;
 
@@ -405,7 +405,7 @@ class BRSAdapter implements IBankAdapter
         $outCardPayCheckRequest = new OutCardPayCheckRequest();
 
         $outCardPayCheckRequest->card = $outCardPayForm->cardnum;
-        $outCardPayCheckRequest->tr_date = Carbon::now()->format('YmdH24is');
+        $outCardPayCheckRequest->tr_date = Carbon::now()->format('YmdHis');
         $outCardPayCheckRequest->amount = $outCardPayForm->amount;
 
         $xmlRequest = new XmlRequest($outCardPayCheckRequest, $this->gate);
