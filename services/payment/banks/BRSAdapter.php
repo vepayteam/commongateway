@@ -19,6 +19,8 @@ use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\RefundPayException;
 use app\services\payment\exceptions\BRSAdapterExeception;
 use app\services\payment\forms\AutoPayForm;
+use app\services\payment\forms\brs\OutCardPayCheckRequest;
+use app\services\payment\forms\brs\XmlRequest;
 use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
@@ -42,6 +44,7 @@ use yii\helpers\Json;
 class BRSAdapter implements IBankAdapter
 {
     const AFT_MIN_SUMM = 180000;
+    const KEYS_PATH = '@app/config/rsb/';
 
     public static $bank = 7;
 
@@ -51,13 +54,16 @@ class BRSAdapter implements IBankAdapter
     protected $bankUrl;
     protected $bankUrl3DS;
 
+    protected $bankUrlXml;
+
     const BANK_URL = 'https://securepay.rsb.ru:9443';
     const BANK_URL_TEST = 'https://testsecurepay.rsb.ru:9443';
 
     const BANK_URL_3DS = 'https://securepay.rsb.ru/ecomm2/ClientHandler';
     const BANK_URL_3DS_TEST = 'https://testsecurepay.rsb.ru/ecomm2/ClientHandler';
 
-
+    const BANK_URL_XML = 'https://194.67.29.216:8443';
+    const BANK_URL_XML_TEST = 'https://194.67.29.215:8443';
 
     /**
      * @inheritDoc
@@ -69,9 +75,11 @@ class BRSAdapter implements IBankAdapter
         if (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] == 'Y') {
             $this->bankUrl = self::BANK_URL_TEST;
             $this->bankUrl3DS = self::BANK_URL_3DS_TEST;
+            $this->bankUrlXml = self::BANK_URL_XML_TEST;
         } else {
             $this->bankUrl = self::BANK_URL;
             $this->bankUrl3DS = self::BANK_URL_3DS;
+            $this->bankUrlXml = self::BANK_URL_XML;
         }
     }
 
@@ -337,9 +345,9 @@ class BRSAdapter implements IBankAdapter
             CURLOPT_POST => true,
             CURLOPT_USERAGENT => (Yii::$app instanceof \yii\web\Application) ? Yii::$app->request->userAgent : '',
             CURLOPT_SSL_VERIFYHOST => 0,
-            CURLOPT_SSLCERT => Yii::getAlias('@app/config/rsb/' . $this->gate->Login . '.pem'),
-            CURLOPT_SSLKEY => Yii::getAlias('@app/config/rsb/' . $this->gate->Login . '.key'),
-            CURLOPT_CAINFO => Yii::getAlias('@app/config/rsb/chain-ecomm-ca-root-ca.crt'),
+            CURLOPT_SSLCERT => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.pem'),
+            CURLOPT_SSLKEY => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.key'),
+            CURLOPT_CAINFO => Yii::getAlias(self::KEYS_PATH . 'chain-ecomm-ca-root-ca.crt'),
             CURLOPT_POSTFIELDS => http_build_query($data),
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => 120,
@@ -396,15 +404,19 @@ class BRSAdapter implements IBankAdapter
     {
         $outCardPayCheckRequest = new OutCardPayCheckRequest();
 
-        $outCardPayCheckRequest->card = $outCardPayForm->card;
+        $outCardPayCheckRequest->card = $outCardPayForm->cardnum;
         $outCardPayCheckRequest->tr_date = Carbon::now()->format('YmdH24is');
         $outCardPayCheckRequest->amount = $outCardPayForm->amount;
 
+        $xmlRequest = new XmlRequest($outCardPayCheckRequest, $this->gate);
+        $this->sendXmlRequest($xmlRequest);
     }
 
     private function sendXmlRequest(XmlRequest $request)
     {
+        $xml = $request->buildXml();
 
+        $a = 0;
 
     }
 
