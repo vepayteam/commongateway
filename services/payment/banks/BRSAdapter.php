@@ -337,23 +337,26 @@ class BRSAdapter implements IBankAdapter
             CURLOPT_POST => true,
             CURLOPT_USERAGENT => (Yii::$app instanceof \yii\web\Application) ? Yii::$app->request->userAgent : '',
             CURLOPT_SSL_VERIFYHOST => 0,
-            CURLOPT_SSLCERT => Yii::getAlias('@app/config/rsb/' . $this->gate->Login . '.pem'),
-            CURLOPT_SSLKEY => Yii::getAlias('@app/config/rsb/' . $this->gate->Login . '.key'),
-            CURLOPT_CAINFO => Yii::getAlias('@app/config/rsb/chain-ecomm-ca-root-ca.crt'),
+            CURLOPT_SSLCERT => Yii::getAlias('@app/config/brs/' . $this->gate->Login . '.pem'),
+            CURLOPT_SSLKEY => Yii::getAlias('@app/config/brs/' . $this->gate->Login . '.key'),
+            CURLOPT_CAINFO => Yii::getAlias('@app/config/brs/chain-ecomm-ca-root-ca.crt'),
             CURLOPT_POSTFIELDS => http_build_query($data),
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => 120,
         ));
 
-        Yii::warning('RsBanAdapter req uri=' . $uri .' : ' . Json::encode($data));
+        Yii::warning('BRSAdapter req uri=' . $uri .' : ' . Json::encode($data));
         $response = curl_exec($curl);
         $curlError = curl_error($curl);
         $info = curl_getinfo($curl);
 
+
         if(empty($curlError) && $info['http_code'] == 200) {
             $response = $this->parseResponse($response);
+            Yii::warning('BRSAdapter ans uri=' . $uri .' : ' . Json::encode($response));
             return $response;
         } else {
+            Yii::error('BRSAdapter error uri=' . $uri .' status=' . $info['http_code']);
             throw new BankAdapterResponseException('Ошибка запроса: ' . $curlError);
         }
     }
