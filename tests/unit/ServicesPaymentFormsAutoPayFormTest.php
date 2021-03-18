@@ -45,6 +45,7 @@ class ServicesPaymentFormsAutoPayFormTest extends \Codeception\Test\Unit
         $partnerId = Yii::$app->params['testParams']['mfoPartnerId'];
         $form->partner = \app\models\payonline\Partner::findOne(['ID' => $partnerId]);
 
+        // TODO: добавить регистрацию карты в тест
         $q = new \yii\db\Query();
         $cardId = $q->select('c.ID')
             ->from('cards AS c')
