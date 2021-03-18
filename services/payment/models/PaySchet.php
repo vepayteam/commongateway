@@ -264,7 +264,7 @@ class PaySchet extends \yii\db\ActiveRecord
      */
     public function calcReward(): int
     {
-        $reward = round($this->getSummFull() * $this->uslugatovar->ProvVoznagPC / 100.0, 0);
+        $reward = round($this->SummPay * $this->uslugatovar->ProvVoznagPC / 100.0, 0);
 
         if ($reward < $this->uslugatovar->ProvVoznagMin * 100.0) {
             $reward = $this->uslugatovar->ProvVoznagMin * 100.0;
