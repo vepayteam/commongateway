@@ -6,8 +6,10 @@ namespace app\services\payment\forms\brs;
 
 use yii\base\Model;
 
-class OutCardPayCheckRequest extends Model
+class OutCardPayCheckRequest extends Model implements IXmlRequest
 {
+    use XmlRequestTrait;
+
     public $target = 'moneytransfer';
     public $operation = 'check';
     public $transfer_type = 'cash2card';
