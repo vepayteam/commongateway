@@ -39,7 +39,6 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                             <label class="col-sm-2 control-label">Мерчант</label>
                             <div class="col-sm-4">
                                 <select class="form-control" name="IdPart">
-<!--                                    <option value="-1">Все</option>-->
                                     <?php foreach ($partnerlist as $partn) : ?>
                                         <option value="<?=$partn->ID?>"><?=$partn->Name?></option>
                                     <?php endforeach; ?>
