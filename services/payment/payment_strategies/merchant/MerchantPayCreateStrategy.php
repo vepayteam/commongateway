@@ -79,6 +79,7 @@ class MerchantPayCreateStrategy
 
     /**
      * @param BankAdapterBuilder $bankAdapterBuilder
+     *
      * @return PaySchet
      * @throws CreatePayException
      */
@@ -106,7 +107,7 @@ class MerchantPayCreateStrategy
         $paySchet->FIO = $this->payForm->fullname;
         $paySchet->Dogovor = $this->payForm->document_id;
 
-        if(!$paySchet->save()) {
+        if (!$paySchet->save()) {
             throw new CreatePayException('Не удалось создать счет');
         }
 

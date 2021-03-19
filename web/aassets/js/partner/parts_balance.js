@@ -12,6 +12,7 @@ $(document).ready(function() {
         "colReorder": true,
         fixedHeader: true,
         orderCellsTop: true,
+        deferLoading: 0,
         "dom": 'lBCrtip',
         "lengthMenu": [[25, 100, 500, -1], [25, 100, 500, "All"]],
         "buttons": [

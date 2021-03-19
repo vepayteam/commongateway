@@ -41,7 +41,6 @@ use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
 use Carbon\Carbon;
-use Requests;
 use Yii;
 use yii\base\Security;
 use yii\helpers\Json;
@@ -397,15 +396,17 @@ class BRSAdapter implements IBankAdapter
             CURLOPT_TIMEOUT => 120,
         ));
 
-        Yii::warning('RsBanAdapter req uri=' . $uri .' : ' . Json::encode($data));
+        Yii::warning('BRSAdapter req uri=' . $uri .' : ' . Json::encode($data));
         $response = curl_exec($curl);
         $curlError = curl_error($curl);
         $info = curl_getinfo($curl);
 
         if(empty($curlError) && $info['http_code'] == 200) {
             $response = $this->parseResponse($response);
+            Yii::warning('BRSAdapter ans uri=' . $uri .' : ' . Json::encode($response));
             return $response;
         } else {
+            Yii::error('BRSAdapter error uri=' . $uri .' status=' . $info['http_code']);
             throw new BankAdapterResponseException('Ошибка запроса: ' . $curlError);
         }
     }
