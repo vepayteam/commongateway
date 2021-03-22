@@ -5,6 +5,7 @@ namespace app\services\payment\banks;
 
 
 use app\models\payonline\Uslugatovar;
+use app\models\TU;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
@@ -19,6 +20,11 @@ use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\RefundPayException;
 use app\services\payment\exceptions\BRSAdapterExeception;
 use app\services\payment\forms\AutoPayForm;
+use app\services\payment\forms\brs\CheckStatusPayOutCardRequest;
+use app\services\payment\forms\brs\IXmlRequest;
+use app\services\payment\forms\brs\OutCardPayCheckRequest;
+use app\services\payment\forms\brs\OutCardPayRequest;
+use app\services\payment\forms\brs\XmlRequest;
 use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
@@ -42,6 +48,7 @@ use yii\helpers\Json;
 class BRSAdapter implements IBankAdapter
 {
     const AFT_MIN_SUMM = 180000;
+    const KEYS_PATH = '@app/config/brs/';
 
     public static $bank = 7;
 
@@ -51,13 +58,16 @@ class BRSAdapter implements IBankAdapter
     protected $bankUrl;
     protected $bankUrl3DS;
 
+    protected $bankUrlXml;
+
     const BANK_URL = 'https://securepay.rsb.ru:9443';
     const BANK_URL_TEST = 'https://testsecurepay.rsb.ru:9443';
 
     const BANK_URL_3DS = 'https://securepay.rsb.ru/ecomm2/ClientHandler';
     const BANK_URL_3DS_TEST = 'https://testsecurepay.rsb.ru/ecomm2/ClientHandler';
 
-
+    const BANK_URL_XML = 'https://194.67.29.215:8443';
+    const BANK_URL_XML_TEST = 'https://194.67.29.216:8443';
 
     /**
      * @inheritDoc
@@ -69,9 +79,11 @@ class BRSAdapter implements IBankAdapter
         if (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] == 'Y') {
             $this->bankUrl = self::BANK_URL_TEST;
             $this->bankUrl3DS = self::BANK_URL_3DS_TEST;
+            $this->bankUrlXml = self::BANK_URL_XML_TEST;
         } else {
             $this->bankUrl = self::BANK_URL;
             $this->bankUrl3DS = self::BANK_URL_3DS;
+            $this->bankUrlXml = self::BANK_URL_XML;
         }
     }
 
@@ -224,6 +236,19 @@ class BRSAdapter implements IBankAdapter
      */
     public function checkStatusPay(OkPayForm $okPayForm)
     {
+        if($okPayForm->getPaySchet()->uslugatovar->IsCustom == TU::$TOCARD) {
+            return $this->checkStatusPayOutCard($okPayForm);
+        } else {
+            return $this->checkStatusPayBase($okPayForm);
+        }
+    }
+
+    /**
+     * @param OkPayForm $okPayForm
+     * @return CheckStatusPayResponse
+     */
+    protected function checkStatusPayBase(OkPayForm $okPayForm)
+    {
         $uri = '/ecomm2/MerchantHandler';
 
         $paySchet = $okPayForm->getPaySchet();
@@ -243,6 +268,32 @@ class BRSAdapter implements IBankAdapter
             $checkStatusPayResponse->message = 'Ошибка запроса';
         }
 
+        return $checkStatusPayResponse;
+    }
+
+    /**
+     * @param OkPayForm $okPayForm
+     * @return CheckStatusPayResponse
+     * @throws BankAdapterResponseException
+     */
+    protected function checkStatusPayOutCard(OkPayForm $okPayForm)
+    {
+        $paySchet = $okPayForm->getPaySchet();
+        $checkStatusPayOutCardRequest = new CheckStatusPayOutCardRequest();
+        $checkStatusPayOutCardRequest->paymentid = $paySchet->ExtBillNumber;
+
+        $ans = $this->sendXmlRequest($checkStatusPayOutCardRequest);
+        $checkStatusPayResponse = new CheckStatusPayResponse();
+        if(array_key_exists('error', $ans)) {
+            $error = $ans['error']['code'] . ': ' . $ans['error']['description'];
+            $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
+            $checkStatusPayResponse->message = $error;
+            return $checkStatusPayResponse;
+        }
+
+        $checkStatusPayResponse->status = $this->getStatusXmlResponse($ans['container']['status']);
+        $checkStatusPayResponse->message = $ans['container']['status'];
+        $checkStatusPayResponse->rrn = $ans['container']['rrn'] ?? '';
         return $checkStatusPayResponse;
     }
 
@@ -337,9 +388,9 @@ class BRSAdapter implements IBankAdapter
             CURLOPT_POST => true,
             CURLOPT_USERAGENT => (Yii::$app instanceof \yii\web\Application) ? Yii::$app->request->userAgent : '',
             CURLOPT_SSL_VERIFYHOST => 0,
-            CURLOPT_SSLCERT => Yii::getAlias('@app/config/brs/' . $this->gate->Login . '.pem'),
-            CURLOPT_SSLKEY => Yii::getAlias('@app/config/brs/' . $this->gate->Login . '.key'),
-            CURLOPT_CAINFO => Yii::getAlias('@app/config/brs/chain-ecomm-ca-root-ca.crt'),
+            CURLOPT_SSLCERT => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.pem'),
+            CURLOPT_SSLKEY => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.key'),
+            CURLOPT_CAINFO => Yii::getAlias(self::KEYS_PATH . 'chain-ecomm-ca-root-ca.crt'),
             CURLOPT_POSTFIELDS => http_build_query($data),
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => 120,
@@ -349,7 +400,6 @@ class BRSAdapter implements IBankAdapter
         $response = curl_exec($curl);
         $curlError = curl_error($curl);
         $info = curl_getinfo($curl);
-
 
         if(empty($curlError) && $info['http_code'] == 200) {
             $response = $this->parseResponse($response);
@@ -376,6 +426,10 @@ class BRSAdapter implements IBankAdapter
         return $return;
     }
 
+    /**
+     * @param string $result
+     * @return int
+     */
     protected function getStatusResponse(string $result)
     {
         switch ($result) {
@@ -393,13 +447,129 @@ class BRSAdapter implements IBankAdapter
     }
 
     /**
+     * @param string $result
+     * @return int
+     */
+    protected function getStatusXmlResponse(string $result)
+    {
+        switch ($result) {
+            case 'active ':
+                return BaseResponse::STATUS_CREATED;
+            case 'finished':
+                return BaseResponse::STATUS_DONE;
+            case 'cancelled':
+            case 'returned':
+                return BaseResponse::STATUS_CANCEL;
+            default:
+                return BaseResponse::STATUS_ERROR;
+        }
+    }
+
+    /**
      * @inheritDoc
      */
     public function outCardPay(OutCardPayForm $outCardPayForm)
     {
-        throw new GateException('Метод недоступен');
+        $outCardPayCheckRequest = new OutCardPayCheckRequest();
+
+        $outCardPayCheckRequest->card = $outCardPayForm->cardnum;
+        $outCardPayCheckRequest->tr_date = Carbon::now()->format('YmdHis');
+        $outCardPayCheckRequest->amount = $outCardPayForm->amount;
+        $ans = $this->sendXmlRequest($outCardPayCheckRequest);
+
+        $outCardPayResponse = new OutCardPayResponse();
+        if(array_key_exists('error', $ans)) {
+            $error = $ans['error']['code'] . ': ' . $ans['error']['description'];
+            $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
+            $outCardPayResponse->message = $error;
+            return $outCardPayResponse;
+        }
+        $outCardPayForm->paySchet->ExtBillNumber = $ans['container']['paymentid'];
+        $outCardPayForm->paySchet->save(false);
+
+        $outCardPayRequest = new OutCardPayRequest();
+        $outCardPayRequest->paymentid = $ans['container']['paymentid'];
+        $outCardPayRequest->transaction_id = $outCardPayForm->paySchet->ID;
+        $outCardPayRequest->amount = $outCardPayForm->amount;
+        $outCardPayRequest->tr_date = Carbon::now()->format('YmdHis');
+
+        $ans = $this->sendXmlRequest($outCardPayRequest);
+        if(array_key_exists('error', $ans)) {
+            $error = $ans['error']['code'] . ': ' . $ans['error']['description'];
+            $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
+            $outCardPayResponse->message = $error;
+            return $outCardPayResponse;
+        }
+        $outCardPayResponse->status = BaseResponse::STATUS_DONE;
+        $outCardPayResponse->message = '';
+        $outCardPayResponse->trans = $ans['container']['paymentid'];
+        return $outCardPayResponse;
     }
 
+    /**
+     * @param IXmlRequest $request
+     * @return mixed
+     * @throws BankAdapterResponseException
+     */
+    private function sendXmlRequest(IXmlRequest $request)
+    {
+        $xml = $request->buildXml($this->gate);
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => $this->bankUrlXml,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 120,
+            CURLOPT_SSL_VERIFYHOST => 0,
+            CURLOPT_SSL_VERIFYPEER => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_USERPWD => $this->gate->Token . ':' . $this->gate->Password,
+            CURLOPT_POSTFIELDS => $xml,
+            CURLOPT_HTTPHEADER => array(
+                'Content-Type: text/xml',
+                'Accept: text/xml',
+                'Accept-Encoding: *',
+                'Pragma: no-cache',
+                'User-Agent: Mozilla/4.0',
+                'Cache-Control: no-cache',
+                'Expect: 100-continue',
+                'Authorization: Basic R0g6SjhoZ15nbDJkUw=='
+            ),
+        ));
+
+        Yii::warning('BRSAdapter xmlReq uri=' . $xml);
+        $response = curl_exec($curl);
+        $curlError = curl_error($curl);
+        $info = curl_getinfo($curl);
+        curl_close($curl);
+
+        if(empty($curlError) && $info['http_code'] == 200) {
+            Yii::warning('BRSAdapter xmlAns uri=' . $response);
+            $response = $this->parseXmlResponse($response);
+            return $response;
+        } else {
+            throw new BankAdapterResponseException('Ошибка запроса: ' . $curlError);
+        }
+    }
+
+    /**
+     * @param string $xml
+     * @return mixed
+     */
+    public function parseXmlResponse(string $xml)
+    {
+        $dom = simplexml_load_string($xml, "SimpleXMLElement", 0, 'rsb_ns', 'true');
+        $response = json_decode(json_encode($dom), true);
+        return $response;
+    }
+
+    /**
+     * @return int
+     */
     public function getAftMinSum()
     {
         return self::AFT_MIN_SUMM;
