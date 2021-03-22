@@ -8,10 +8,11 @@ use app\models\crypt\CardToken;
 use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\traits\ValidateFormTrait;
+use app\services\payment\interfaces\AmountFormInterface;
 use app\services\payment\models\PaySchet;
 use yii\base\Model;
 
-class OutCardPayForm extends Model
+class OutCardPayForm extends Model implements AmountFormInterface
 {
     use ValidateFormTrait;
 
@@ -126,4 +127,11 @@ class OutCardPayForm extends Model
         return explode(' ', $this->fullname)[0];
     }
 
+    /**
+     * @inheritDoc
+     */
+    public function getAmount()
+    {
+        return $this->amount;
+    }
 }

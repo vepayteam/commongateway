@@ -3,14 +3,12 @@
 
 namespace app\services\payment\payment_strategies\mfo;
 
-use app\models\queue\JobPriorityInterface;
 use app\services\payment\jobs\RecurrentPayJob;
-use app\services\payment\models\Bank;
+use app\services\payment\PaymentService;
 use Yii;
 use app\models\crypt\CardToken;
 use app\models\payonline\Cards;
 use app\models\payonline\Uslugatovar;
-use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
@@ -46,6 +44,10 @@ class MfoAutoPayStrategy
         Yii::warning("Get  Uslugatovar ID=$uslugatovar->ID", 'mfo');
         if(!$uslugatovar) {
             throw new GateException('Услуга не найдена');
+        }
+        $validateErrors = $this->getPaymentService()->validatePaySchetWithUslugatovar($this->autoPayForm, $uslugatovar);
+        if(count($validateErrors) > 0) {
+            throw new GateException($validateErrors[0]);
         }
 
         $mutexKey = $this->autoPayForm->getMutexKey();
@@ -114,8 +116,6 @@ class MfoAutoPayStrategy
                 'IsCustom' => UslugatovarType::AVTOPLATECOM,
                 'IsDeleted' => 0,
             ])
-            ->andWhere(['<=', 'MinSumm', $this->autoPayForm->amount])
-            ->andWhere(['>=', 'MaxSumm', $this->autoPayForm->amount])
             ->one();
     }
 
@@ -184,5 +184,15 @@ class MfoAutoPayStrategy
         }
 
         return $paySchet;
+    }
+
+    /**
+     * @return PaymentService
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\di\NotInstantiableException
+     */
+    protected function getPaymentService()
+    {
+        return Yii::$container->get('PaymentService');
     }
 }
