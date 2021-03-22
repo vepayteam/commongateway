@@ -4,47 +4,38 @@
 namespace app\services\logs\targets;
 
 
-use Carbon\Carbon;
-use Yii;
 use yii\log\Target;
 
 class SecurityStdErrTarget extends Target
 {
+    private $cls;
+    private $stream;
+
+    public function __construct($config = [])
+    {
+        parent::__construct($config);
+        $this->cls = new SecurityTargetMixin;
+        $this->stream = fopen("php://stderr", "w");
+    }
+
+    function __destruct()
+    {
+        fclose($this->stream);
+        $this->stream = null;
+    }
+
+    public function dump($log)
+    {
+        fwrite($this->stream, $log);
+    }
+
     public function export()
     {
-        $dbParams = require(Yii::getAlias('@app/config/db.php'));
-        $stream = fopen("php://stderr", "w");
-
-        foreach ($this->messages as $message) {
-            /** @var \Exception|string $exception */
-            $exception = $message[0];
-
-            $log = '';
-            if($exception instanceof \Exception) {
-                $log = $exception->__toString();
-            } else {
-                $log = (string)$exception;
-            }
-
-            $log = sprintf('[%s][-][-][error][%s] %s'."\n",
-                Yii::$app->request->remoteIP,
-                $message[2],
-                $this->maskByDbAccess($log, $dbParams)
-            );
-            fwrite($stream, $log);
-        }
-
-        fclose($stream);
+        $this->cls->export();
     }
 
-    private function maskByDbAccess($str, $dbParams)
+    public function formatMessage($message)
     {
-        $str = str_replace($dbParams['username'], '***', $str);
-        $str = str_replace($dbParams['password'], '***', $str);
-        return $str;
-    }
-
-    public function formatMessage($message) {
         list($text, $level, $category, $_) = $message;
         parent::formatMessage([$text, $level, $category, '']);
     }

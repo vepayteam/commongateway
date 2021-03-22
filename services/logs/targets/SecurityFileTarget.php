@@ -4,41 +4,28 @@
 namespace app\services\logs\targets;
 
 
-use Carbon\Carbon;
-use Yii;
 use yii\log\FileTarget;
 
 class SecurityFileTarget extends FileTarget
 {
-    public function export()
+    private $cls;
+
+    public function __construct($config = [])
     {
-        $dbParams = require(Yii::getAlias('@app/config/db.php'));
-        foreach ($this->messages as $message) {
-            /** @var \Exception|string $exception */
-            $exception = $message[0];
+        parent::__construct($config);
+        $this->cls = new SecurityTargetMixin;
+    }
 
-            $log = '';
-            if($exception instanceof \Exception) {
-                $log = $exception->__toString();
-            } else {
-                $log = (string)$exception;
-            }
-
-            $log = sprintf('%s [%s][-][-][error][%s] %s'."\n",
-                Carbon::now(),
-                Yii::$app->request->remoteIP,
-                $message[2],
-                $this->maskByDbAccess($log, $dbParams)
-            );
-            file_put_contents($this->logFile, $log, FILE_APPEND | LOCK_EX);
+    public function __call($name, $params)
+    {
+        if (method_exists($this->cls, $name)) {
+            return $this->cls->$name($params);
         }
+        return parent::__call($name, $params);
     }
 
-    private function maskByDbAccess($str, $dbParams)
+    public function dump($log)
     {
-        $str = str_replace($dbParams['username'], '***', $str);
-        $str = str_replace($dbParams['password'], '***', $str);
-        return $str;
+        file_put_contents($this->logFile, $log, FILE_APPEND | LOCK_EX);
     }
-
 }
