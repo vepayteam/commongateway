@@ -7,11 +7,19 @@ use yii\log\Target;
 class ReqMaskStdOutTarget extends Target
 {
     private $cls;
+    private $stream;
 
     public function __construct($config = [])
     {
         parent::__construct($config);
         $this->cls = new ReqMaskTargetMixin;
+        $this->stream = fopen("php://stdout", "w");
+    }
+
+    function __destruct()
+    {
+        fclose($this->stream);
+        $this->stream = null;
     }
 
     public function __call($name, $params)
@@ -24,9 +32,7 @@ class ReqMaskStdOutTarget extends Target
 
     public function export()
     {
-        $stream = fopen("php://stdout", "w");
-        fwrite($stream, implode("\n", array_map([$this, 'formatMessage'], $this->messages)) . "\n");
-        fclose($stream);
+        fwrite($this->stream, implode("\n", array_map([$this, 'formatMessage'], $this->messages)) . "\n");
     }
 
     protected function getTime($timestamp)

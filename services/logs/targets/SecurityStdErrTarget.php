@@ -32,6 +32,14 @@ class SecurityStdErrTarget extends Target
         $this->stream = null;
     }
 
+    public function __call($name, $params)
+    {
+        if (method_exists($this->cls, $name)) {
+            return $this->cls->$name($params);
+        }
+        return parent::__call($name, $params);
+    }
+
     public function dump($log)
     {
         fwrite($this->stream, $log);

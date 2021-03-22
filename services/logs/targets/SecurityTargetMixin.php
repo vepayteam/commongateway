@@ -1,8 +1,6 @@
 <?php
 
-
 namespace app\services\logs\targets;
-
 
 use Carbon\Carbon;
 use Yii;
@@ -34,6 +32,11 @@ class SecurityTargetMixin
         }
     }
 
+    public function dump($log)
+    {
+        file_put_contents($this->logFile, $log, FILE_APPEND | LOCK_EX);
+    }
+
     public function formatMsg($format, $args): string
     {
         return sprintf($format, ...$args);
@@ -45,6 +48,4 @@ class SecurityTargetMixin
         $str = str_replace($dbParams['password'], '***', $str);
         return $str;
     }
-
-    public function dump($log) {}
 }
