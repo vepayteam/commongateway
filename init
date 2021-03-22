@@ -17,13 +17,7 @@ $root = str_replace('\\', '/', __DIR__);
 
 if (isset($params['env']) && !empty($params['env'])) {
     $mode = $params['env'];
-    if ($mode == "test") {
-        echo "init: test\n";
-        copy($root . "/config/test/index.php", $root . "/web/index.php");
-        copy($root . "/config/test/params.php", $root . "/config/params.php");
-        copy($root . "/config/test/db.php", $root . "/config/db.php");
-        copy($root . "/config/test/test_params.php", $root . "/config/test_params.php");
-    } elseif ($mode == "prod") {
+    if ($mode == "prod") {
         echo "init: prod\n";
         copy($root . "/config/prod/index.php", $root . "/web/index.php");
         if (!file_exists($root . "/config/params.php")) {
@@ -32,21 +26,23 @@ if (isset($params['env']) && !empty($params['env'])) {
         if (!file_exists($root . "/config/db.php")) {
             copy($root . "/config/prod/db.php", $root . "/config/db.php");
         }
-    } elseif ($mode == "kube") {
-        echo "init: kubernetes\n";
-        copy($root . "/config/kube/index.php", $root . "/web/index.php");
-        copy($root . "/config/kube/params.php", $root . "/config/params.php");
-        copy($root . "/config/kube/db.php", $root . "/config/db.php");
-        copy($root . "/config/kube/test_params.php", $root . "/config/test_params.php");
+        if (!file_exists($root . "/config/log.php")) {
+            copy($root . "/config/prod/log.php", $root . "/config/log.php");
+        }
     } else {
-        echo "init: dev\n";
-        copy($root . "/config/dev/index.php", $root . "/web/index.php");
-        copy($root . "/config/dev/params.php", $root . "/config/params.php");
-        copy($root . "/config/dev/db.php", $root . "/config/db.php");
-        copy($root . "/config/dev/test_params.php", $root . "/config/test_params.php");
+        $source_dir_path = $root . sprintf("/config/%s/", $mode);
+        if (!file_exists($source_dir_path)) {
+            throw new RuntimeException(sprintf("Directory must exists `%s`.", $source_dir_path));
+        }
+        echo sprintf("init: %s\n", $mode);
+        copy($source_dir_path . "index.php", $root . "/web/index.php");
+        copy($source_dir_path . "params.php", $root . "/config/params.php");
+        copy($source_dir_path . "db.php", $root . "/config/db.php");
+        copy($source_dir_path . "log.php", $root . "/config/log.php");
+        copy($source_dir_path . "test_params.php", $root . "/config/test_params.php");
     }
 } else {
-    echo "Run: ./init --env=prod\n";
+    echo "Run: ./init --env={dev,test,kube,prod}\n";
 }
 
 function getParams()
