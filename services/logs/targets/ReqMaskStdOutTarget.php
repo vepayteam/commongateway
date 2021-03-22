@@ -28,4 +28,9 @@ class ReqMaskStdOutTarget extends Target
         fwrite($stream, implode("\n", array_map([$this, 'formatMessage'], $this->messages)) . "\n");
         fclose($stream);
     }
+
+    protected function getTime($timestamp)
+    {
+        return '';
+    }
 }

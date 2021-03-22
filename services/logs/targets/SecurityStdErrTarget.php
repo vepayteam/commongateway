@@ -6,6 +6,14 @@ namespace app\services\logs\targets;
 
 use yii\log\Target;
 
+class SecurityTargetMixinFmt extends SecurityTargetMixin
+{
+    public function formatMsg($format, $args): string
+    {
+        return parent::formatMsg('[%s][-][-][error][%s] %s' . "\n", array_slice($args, 1));
+    }
+}
+
 class SecurityStdErrTarget extends Target
 {
     private $cls;
@@ -14,7 +22,7 @@ class SecurityStdErrTarget extends Target
     public function __construct($config = [])
     {
         parent::__construct($config);
-        $this->cls = new SecurityTargetMixin;
+        $this->cls = new SecurityTargetMixinFmt;
         $this->stream = fopen("php://stderr", "w");
     }
 
@@ -32,11 +40,5 @@ class SecurityStdErrTarget extends Target
     public function export()
     {
         $this->cls->export();
-    }
-
-    public function formatMessage($message)
-    {
-        list($text, $level, $category, $_) = $message;
-        parent::formatMessage([$text, $level, $category, '']);
     }
 }

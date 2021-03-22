@@ -34,7 +34,7 @@ class SecurityTargetMixin
         }
     }
 
-    private function formatMsg($format, $args): string
+    public function formatMsg($format, $args): string
     {
         return sprintf($format, ...$args);
     }
