@@ -26,8 +26,7 @@ class SecurityStdErrTarget extends Target
                 $log = (string)$exception;
             }
 
-            $log = sprintf('%s [%s][-][-][error][%s] %s'."\n",
-                Carbon::now(),
+            $log = sprintf('[%s][-][-][error][%s] %s'."\n",
                 Yii::$app->request->remoteIP,
                 $message[2],
                 $this->maskByDbAccess($log, $dbParams)
@@ -43,5 +42,10 @@ class SecurityStdErrTarget extends Target
         $str = str_replace($dbParams['username'], '***', $str);
         $str = str_replace($dbParams['password'], '***', $str);
         return $str;
+    }
+
+    public function formatMessage($message) {
+        list($text, $level, $category, $_) = $message;
+        parent::formatMessage([$text, $level, $category, '']);
     }
 }
