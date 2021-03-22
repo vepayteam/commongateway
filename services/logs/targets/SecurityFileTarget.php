@@ -1,8 +1,6 @@
 <?php
 
-
 namespace app\services\logs\targets;
-
 
 use yii\log\FileTarget;
 
