@@ -8,13 +8,14 @@ use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\payonline\User;
 use app\models\traits\ValidateFormTrait;
+use app\services\payment\interfaces\AmountFormInterface;
 use app\services\payment\models\PaySchet;
 use Serializable;
 use yii\base\Model;
 use yii\db\Query;
 use yii\helpers\Json;
 
-class AutoPayForm extends Model implements Serializable
+class AutoPayForm extends Model implements Serializable, AmountFormInterface
 {
     use ValidateFormTrait;
 
@@ -140,5 +141,13 @@ class AutoPayForm extends Model implements Serializable
         if(!is_null($arr['userId'])) {
             $this->user = User::findOne(['ID' => $arr['userId']]);
         }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getAmount()
+    {
+        return $this->amount;
     }
 }

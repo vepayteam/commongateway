@@ -23,12 +23,13 @@ use app\services\payment\payment_strategies\IPaymentStrategy;
 use app\services\payment\jobs\RefreshStatusPayJob;
 use app\services\payment\traits\CardsTrait;
 use app\services\payment\traits\PayPartsTrait;
+use app\services\payment\traits\ValidateTrait;
 use Carbon\Carbon;
 use Yii;
 
 class PaymentService
 {
-    use PayPartsTrait, CardsTrait;
+    use PayPartsTrait, CardsTrait, ValidateTrait;
 
     public function createPay(KfRequest $kfRequest)
     {
