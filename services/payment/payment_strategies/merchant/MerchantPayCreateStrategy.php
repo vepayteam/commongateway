@@ -12,7 +12,9 @@ use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\MerchantPayForm;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
+use app\services\payment\PaymentService;
 use Yii;
+use yii\base\DynamicModel;
 
 class MerchantPayCreateStrategy
 {
@@ -36,6 +38,12 @@ class MerchantPayCreateStrategy
         if(!$uslugatovar) {
             throw new GateException('Услуга не найдена');
         }
+
+        $validateErrors = $this->getPaymentService()->validatePaySchetWithUslugatovar($this->payForm, $uslugatovar);
+        if(count($validateErrors) > 0) {
+            throw new GateException($validateErrors[0]);
+        }
+
         Yii::warning('BankAdapterBuilder extid=' . $this->payForm->extid, 'merchant');
         $bankAdapterBuilder = new BankAdapterBuilder();
         $bankAdapterBuilder->build($this->payForm->partner, $uslugatovar);
@@ -112,6 +120,16 @@ class MerchantPayCreateStrategy
         }
 
         return $paySchet;
+    }
+
+    /**
+     * @return PaymentService
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\di\NotInstantiableException
+     */
+    protected function getPaymentService()
+    {
+        return Yii::$container->get('PaymentService');
     }
 
 }

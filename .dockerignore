@@ -21,6 +21,7 @@ tests/_output/*
 tests/_support/_generated
 
 config/db.php
+config/log.php
 config/params.php
 config/test_params.php
 config/kassaclients/*

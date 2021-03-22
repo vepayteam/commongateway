@@ -63,6 +63,11 @@ class MfoOutCardStrategy
         if(!$uslugatovar) {
             throw new GateException('Услуга не найдена');
         }
+        $validateErrors = $this->getPaymentService()->validatePaySchetWithUslugatovar($this->outCardPayForm, $uslugatovar);
+        if(count($validateErrors) > 0) {
+            throw new GateException($validateErrors[0]);
+        }
+
         $bankAdapterBuilder = new BankAdapterBuilder();
         $bankAdapterBuilder->build($this->outCardPayForm->partner, $uslugatovar);
 
@@ -214,6 +219,16 @@ class MfoOutCardStrategy
         }
 
         return $paySchet;
+    }
+
+    /**
+     * @return PaymentService
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\di\NotInstantiableException
+     */
+    protected function getPaymentService()
+    {
+        return Yii::$container->get('PaymentService');
     }
 
 }

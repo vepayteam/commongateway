@@ -4,7 +4,9 @@
 namespace app\services\payment\forms;
 
 
-class MerchantPayForm extends BaseForm
+use app\services\payment\interfaces\AmountFormInterface;
+
+class MerchantPayForm extends BaseForm implements AmountFormInterface
 {
     public $type;
     public $amount = 0;
@@ -39,4 +41,11 @@ class MerchantPayForm extends BaseForm
         ];
     }
 
+    /**
+     * @inheritDoc
+     */
+    public function getAmount()
+    {
+        return $this->amount;
+    }
 }
