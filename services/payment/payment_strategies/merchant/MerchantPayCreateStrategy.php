@@ -13,6 +13,7 @@ use app\services\payment\forms\MerchantPayForm;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
 use Yii;
+use yii\base\DynamicModel;
 
 class MerchantPayCreateStrategy
 {
@@ -63,6 +64,8 @@ class MerchantPayCreateStrategy
                 'IsCustom' => $this->payForm->type == 1 ? UslugatovarType::JKH : UslugatovarType::ECOM,
                 'IsDeleted' => 0,
             ])
+            ->andWhere(['<=', 'MinSumm', $this->payForm->amount])
+            ->andWhere(['>=', 'MaxSumm', $this->payForm->amount])
             ->one();
     }
 

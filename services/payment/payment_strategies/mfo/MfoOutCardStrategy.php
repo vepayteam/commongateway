@@ -172,6 +172,8 @@ class MfoOutCardStrategy
                 'IsCustom'  => UslugatovarType::TOCARD,
                 'IsDeleted' => 0,
             ])
+            ->andWhere(['<=', 'MinSumm', $this->outCardPayForm->amount])
+            ->andWhere(['>=', 'MaxSumm', $this->outCardPayForm->amount])
             ->one();
     }
 

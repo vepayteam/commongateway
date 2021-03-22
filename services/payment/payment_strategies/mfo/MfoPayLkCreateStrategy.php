@@ -24,6 +24,8 @@ class MfoPayLkCreateStrategy extends MerchantPayCreateStrategy
                 'IsCustom' => $this->isAftGate() ? UslugatovarType::POGASHATF : UslugatovarType::POGASHECOM,
                 'IsDeleted' => 0,
             ])
+            ->andWhere(['<=', 'MinSumm', $this->payForm->amount])
+            ->andWhere(['>=', 'MaxSumm', $this->payForm->amount])
             ->one();
     }
 

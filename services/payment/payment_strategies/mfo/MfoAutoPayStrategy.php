@@ -114,6 +114,8 @@ class MfoAutoPayStrategy
                 'IsCustom' => UslugatovarType::AVTOPLATECOM,
                 'IsDeleted' => 0,
             ])
+            ->andWhere(['<=', 'MinSumm', $this->autoPayForm->amount])
+            ->andWhere(['>=', 'MaxSumm', $this->autoPayForm->amount])
             ->one();
     }
 
