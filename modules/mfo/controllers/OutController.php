@@ -87,19 +87,18 @@ class OutController extends Controller
         $mfo->LoadData(Yii::$app->request->getRawBody());
         Yii::warning("mfo/out/paycard Authorization mfo=$mfo->mfo", 'mfo_out_paycard');
 
-        $outCardPayForm = new OutCardPayForm();
-        $outCardPayForm->partner = $mfo->getPartner();
-        $outCardPayForm->load($mfo->Req(), '');
-        if (!$outCardPayForm->validate()) {
-            Yii::warning("out/paycard: " . $outCardPayForm->GetError(), 'mfo');
-            return ['status' => 0, 'message' => $outCardPayForm->GetError()];
-        }
-        // рубли в коп
-        $outCardPayForm->amount *= 100;
-
-        $mfoOutCardStrategy = new MfoOutCardStrategy($outCardPayForm);
 
         try {
+            $outCardPayForm = new OutCardPayForm();
+            $outCardPayForm->partner = $mfo->getPartner();
+            $outCardPayForm->load($mfo->Req(), '');
+            if (!$outCardPayForm->validate()) {
+                Yii::warning("out/paycard: " . $outCardPayForm->GetError(), 'mfo');
+                return ['status' => 0, 'message' => $outCardPayForm->GetError()];
+            }
+            // рубли в коп
+            $outCardPayForm->amount *= 100;
+            $mfoOutCardStrategy = new MfoOutCardStrategy($outCardPayForm);
             $paySchet = $mfoOutCardStrategy->exec();
             return ['status' => 1, 'id' => $paySchet->ID, 'message' => ''];
         } catch (CardTokenException $e) {
@@ -108,7 +107,7 @@ class OutController extends Controller
             return ['status' => 0, 'message' => $e->getMessage()];
         } catch (GateException $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
         } catch (ValidationException $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
