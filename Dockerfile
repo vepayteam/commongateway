@@ -42,6 +42,24 @@
 #    && chown -R ${RUN_USER}:${RUN_GROUP} web/
 #### @TODO Intermidate containers enable when VF comes out
 
+FROM registry.vepay.cf/apache-php as developer
+
+ARG COMPOSER_VERSION=1.10.16
+ENV COMPOSER_VERSION=${COMPOSER_VERSION}
+
+RUN set -ex \
+    && apt-get update \
+    && apt-get install -yq \
+                        git \
+                        nodejs \
+                        npm \
+                        unzip \
+    \
+    && curl -sS https://getcomposer.org/installer -o /tmp/composer-setup.php \
+    && php /tmp/composer-setup.php --install-dir=/usr/bin --filename=composer --version=${COMPOSER_VERSION} \
+    && /usr/bin/composer global require "fxp/composer-asset-plugin:^1.4.6" \
+    && npm install uglify-es clean-css-cli -g
+
 FROM registry.vepay.cf/apache-php
 
 LABEL maintainer="Vadims I <vivolgin@vepay.online>"

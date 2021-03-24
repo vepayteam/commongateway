@@ -1,0 +1,54 @@
+version: "3.6"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: developer
+      args:
+        ENVIRONMENT: dev
+    image: api
+    volumes:
+      - ./:/www/
+    environment:
+      TZ: Europe/Moscow
+      DATABASE_DSN: "mysql:host=mariadb;port=3306;dbname=vepay"
+      DATABASE_USER: vepay
+      DATABASE_USER_PASSWORD: vepay
+      TEST_URL: "http://localhost:8000"
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB_NUM_QUEUE: 3
+      REDIS_DB_NUM_CACHE: 4
+    ports:
+      - 8000:8000/tcp
+      - 8443:8443/tcp
+    depends_on:
+      - mariadb
+      - redis
+
+  mariadb:
+    image: mariadb:10.4.18
+    volumes:
+      - mariadb_volume:/var/lib/mysql
+      - ./dump/:/docker-entrypoint-initdb.d/
+    ports:
+      - 3306
+    environment:
+      TZ: Europe/Moscow
+      MYSQL_DATABASE: vepay
+      MYSQL_USER: vepay
+      MYSQL_PASSWORD: vepay
+      MYSQL_RANDOM_ROOT_PASSWORD: "true"
+
+  redis:
+    image: redis:6
+    entrypoint: redis-server --appendonly yes
+    environment:
+      TZ: Europe/Moscow
+    ports:
+      - 6379
+
+volumes:
+  mariadb_volume: { }
