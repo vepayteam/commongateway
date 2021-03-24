@@ -1,11 +1,11 @@
 <?php
 
-namespace app\services\logs\targets;
+namespace app\services\logs\traits;
 
 use Carbon\Carbon;
 use Yii;
 
-class SecurityTargetMixin
+trait SecurityTargetTrait
 {
     public function export()
     {
@@ -30,16 +30,6 @@ class SecurityTargetMixin
                 ]
             ));
         }
-    }
-
-    public function dump($log)
-    {
-        file_put_contents($this->logFile, $log, FILE_APPEND | LOCK_EX);
-    }
-
-    public function formatMsg($format, $args): string
-    {
-        return sprintf($format, ...$args);
     }
 
     private function maskByDbAccess($str, $dbParams)

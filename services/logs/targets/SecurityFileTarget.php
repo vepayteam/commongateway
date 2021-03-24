@@ -2,23 +2,20 @@
 
 namespace app\services\logs\targets;
 
+use app\services\logs\traits\SecurityTargetTrait;
 use yii\log\FileTarget;
 
 class SecurityFileTarget extends FileTarget
 {
-    private $cls;
+    use SecurityTargetTrait;
 
-    public function __construct($config = [])
+    public function dump($log)
     {
-        parent::__construct($config);
-        $this->cls = new SecurityTargetMixin;
+        file_put_contents($this->logFile, $log, FILE_APPEND | LOCK_EX);
     }
 
-    public function __call($name, $params)
+    public function formatMsg($format, $args): string
     {
-        if (method_exists($this->cls, $name)) {
-            return $this->cls->$name($params);
-        }
-        return parent::__call($name, $params);
+        return sprintf($format, ...$args);
     }
 }

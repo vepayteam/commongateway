@@ -1,13 +1,13 @@
 <?php
 
-namespace app\services\logs\targets;
+namespace app\services\logs\traits;
 
 use yii\helpers\ArrayHelper;
 use yii\helpers\VarDumper;
 
-class ReqMaskTargetMixin
+trait ReqMaskTargetTrait
 {
-    protected function getContextMessage()
+    protected function getContextMessage(): string
     {
         $context = ArrayHelper::filter($GLOBALS, $this->logVars);
         foreach ($this->maskVars as $var) {
