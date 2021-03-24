@@ -17,6 +17,8 @@ Dockerfile
 .drone.yml
 .version
 
+dump/
+
 tests/_output/*
 tests/_support/_generated
 

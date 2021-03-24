@@ -2,9 +2,9 @@
 
 return [
     'class' => 'yii\db\Connection',
-    'dsn' => 'mysql:host=localhost;port=3306;dbname=vepay',
-    'username' => 'vepay',
-    'password' => '',
+    'dsn' => getenv('DATABASE_DSN', true),
+    'username' => getenv('DATABASE_USER', true),
+    'password' => getenv('DATABASE_USER_PASSWORD', true),
     'charset' => 'utf8',
 	
     // Schema cache options (for production environment)
