@@ -43,7 +43,7 @@ class RefreshStatusPayStrategy extends OkPayStrategy
 
         /** @var CheckStatusPayResponse $checkStatusPayResponse */
         $checkStatusPayResponse = $bankAdapterBuilder->getBankAdapter()->checkStatusPay($this->okPayForm);
-        if($paySchet->Status == $checkStatusPayResponse->status) {
+        if($paySchet->Status == $checkStatusPayResponse->status && $paySchet->ErrorInfo == $checkStatusPayResponse->message) {
             Yii::warning("RefreshStatusPayStrategy isNotChange");
             return $paySchet;
         }
