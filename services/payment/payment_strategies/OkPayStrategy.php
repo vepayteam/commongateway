@@ -136,8 +136,6 @@ class OkPayStrategy
 
         if(!empty($checkStatusPayResponse->cardHolder)) {
             $payCard->holder = $checkStatusPayResponse->cardHolder;
-        } else {
-            $payCard->holder = '';
         }
 
         return $this->paymentService->updateCardExtId($paySchet, $payCard);
