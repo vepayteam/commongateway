@@ -59,9 +59,9 @@ return [
         'cache' => [
             'class' => 'yii\redis\Cache',
             'redis' => [
-                'hostname' => '127.0.0.1',
-                'port' => 6379,
-                'database' => 4,
+                'hostname' => getenv('REDIS_HOST', true),
+                'port' => getenv('REDIS_PORT', true),
+                'database' => getenv('REDIS_DB_NUM_CACHE', true),
             ],
         ],
     ],
