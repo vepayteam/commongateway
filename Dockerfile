@@ -1,3 +1,26 @@
+FROM registry.vepay.cf/apache-php as base
+
+LABEL maintainer="Vadims I <vivolgin@vepay.online>"
+
+ARG ENVIRONMENT=kube
+
+ENV ENVIRONMENT ${ENVIRONMENT}
+
+COPY --chown=${RUN_USER}:${RUN_GROUP} . ${APACHE_DOCUMENT_ROOT}/
+
+RUN set -ex \
+    && cd ${APACHE_DOCUMENT_ROOT} \
+    && php init --env=${ENVIRONMENT} \
+    \
+    && mkdir -p key/ && echo -n '1234567890' > key/key.txt \
+    \
+    && mkdir -p web/shopdata \
+    && mkdir -p runtime/logs/console \
+    && chmod -R g+w runtime \
+    && chmod -R g+w web/shopdata
+
+USER ${RUN_USER}:${RUN_GROUP}
+
 #FROM registry.vepay.cf/apache-php as vendor
 #
 #ARG COMPOSER_VERSION=1.10.16
@@ -42,7 +65,7 @@
 #    && chown -R ${RUN_USER}:${RUN_GROUP} web/
 #### @TODO Intermidate containers enable when VF comes out
 
-FROM registry.vepay.cf/apache-php as developer
+FROM registry.vepay.cf/apache-php
 
 ARG COMPOSER_VERSION=1.10.16
 ENV COMPOSER_VERSION=${COMPOSER_VERSION}
@@ -60,25 +83,3 @@ RUN set -ex \
     && /usr/bin/composer global require "fxp/composer-asset-plugin:^1.4.6" \
     && npm install uglify-es clean-css-cli -g
 
-FROM registry.vepay.cf/apache-php
-
-LABEL maintainer="Vadims I <vivolgin@vepay.online>"
-
-ARG ENVIRONMENT=kube
-
-ENV ENVIRONMENT ${ENVIRONMENT}
-
-COPY --chown=${RUN_USER}:${RUN_GROUP} . ${APACHE_DOCUMENT_ROOT}/
-
-RUN set -ex \
-    && cd ${APACHE_DOCUMENT_ROOT} \
-    && php init --env=${ENVIRONMENT} \
-    \
-    && mkdir -p key/ && echo -n '1234567890' > key/key.txt \
-    \
-    && mkdir -p web/shopdata \
-    && mkdir -p runtime/logs/console \
-    && chmod -R g+w runtime \
-    && chmod -R g+w web/shopdata
-
-USER ${RUN_USER}:${RUN_GROUP}

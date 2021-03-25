@@ -5,7 +5,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: developer
       args:
         ENVIRONMENT: dev
     image: api

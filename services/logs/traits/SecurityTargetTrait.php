@@ -3,6 +3,7 @@
 namespace app\services\logs\traits;
 
 use Carbon\Carbon;
+use Exception;
 use Yii;
 
 trait SecurityTargetTrait
@@ -11,10 +12,10 @@ trait SecurityTargetTrait
     {
         $dbParams = require(Yii::getAlias('@app/config/db.php'));
         foreach ($this->messages as $message) {
-            /** @var \Exception|string $exception */
+            /** @var Exception|string $exception */
             $exception = $message[0];
 
-            if ($exception instanceof \Exception) {
+            if ($exception instanceof Exception) {
                 $log = $exception->__toString();
             } else {
                 $log = (string)$exception;
@@ -30,6 +31,11 @@ trait SecurityTargetTrait
                 ]
             ));
         }
+    }
+
+    public function formatMsg($format, $args): string
+    {
+        return sprintf($format, ...$args);
     }
 
     private function maskByDbAccess($str, $dbParams)

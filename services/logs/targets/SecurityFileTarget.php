@@ -13,9 +13,4 @@ class SecurityFileTarget extends FileTarget
     {
         file_put_contents($this->logFile, $log, FILE_APPEND | LOCK_EX);
     }
-
-    public function formatMsg($format, $args): string
-    {
-        return sprintf($format, ...$args);
-    }
 }
