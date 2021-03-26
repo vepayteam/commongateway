@@ -23,6 +23,7 @@ use app\services\payment\exceptions\CardTokenException;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\OutCardPayForm;
+use app\services\payment\forms\OutPayaccForm;
 use app\services\payment\models\PaySchet;
 use app\services\payment\payment_strategies\mfo\MfoOutCardStrategy;
 use Vepay\Gateway\Client\Validator\ValidationException;
@@ -127,6 +128,15 @@ class OutController extends Controller
     {
         $mfo = new MfoReq();
         $mfo->LoadData(Yii::$app->request->getRawBody());
+
+
+        $outPayaccForm = new OutPayaccForm();
+        $outPayaccForm->load($mfo->Req(), '');
+        if (!$outPayaccForm->validate()) {
+            Yii::warning("out/payacc: " . $outPayaccForm->GetError(), 'mfo');
+            return ['status' => 0, 'message' => $outPayaccForm->GetError()];
+        }
+
 
         $kfOut = new KfOut();
         $kfOut->scenario = KfOut::SCENARIO_FL;
