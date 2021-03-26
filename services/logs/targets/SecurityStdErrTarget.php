@@ -22,12 +22,7 @@ class SecurityStdErrTarget extends Target
         fclose($this->stream);
         $this->stream = null;
     }
-
-    public function formatMsg($_, $args): string
-    {
-        return sprintf('[%s][-][-][error][%s] %s' . "\n", ...array_slice($args, 1));
-    }
-
+    
     public function dump($log)
     {
         fwrite($this->stream, $log);
