@@ -14,6 +14,7 @@ use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\exceptions\GateException;
@@ -29,6 +30,7 @@ use app\services\payment\forms\mts\RefundPayRequest;
 use app\services\payment\forms\mts\ReversePayRequest;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
+use app\services\payment\forms\OutPayaccForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
@@ -980,5 +982,13 @@ class MTSBankAdapter implements IBankAdapter
     public function getAftMinSum()
     {
         return self::AFT_MIN_SUMM;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function transferToAccount(OutPayaccForm $outPayaccForm)
+    {
+        throw new GateException('Метод недоступен');
     }
 }

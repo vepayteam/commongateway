@@ -16,6 +16,7 @@ use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\traits\TKBank3DSTrait;
@@ -30,6 +31,7 @@ use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
+use app\services\payment\forms\OutPayaccForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\forms\tkb\CheckStatusPayRequest;
 use app\services\payment\forms\tkb\Confirm3DSv2Request;
@@ -37,6 +39,7 @@ use app\services\payment\forms\tkb\CreatePayRequest;
 use app\services\payment\forms\tkb\CreateRecurrentPayRequest;
 use app\services\payment\forms\tkb\DonePay3DSv2Request;
 use app\services\payment\forms\tkb\DonePayRequest;
+use app\services\payment\forms\tkb\TransferToAccountRequest;
 use app\services\payment\forms\tkb\OutCardPayRequest;
 use app\services\payment\forms\tkb\RefundPayRequest;
 use app\services\payment\interfaces\Cache3DSv2Interface;
@@ -755,44 +758,6 @@ class TKBankAdapter implements IBankAdapter
             $queryData['CardInfo'] = [
                 'CardNumber' => strval($data['CardNum']),
             ];
-        }
-
-        $queryData = Json::encode($queryData);
-
-        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
-
-        if (isset($ans['xml']) && !empty($ans['xml'])) {
-            $xml = $this->parseAns($ans['xml']);
-            if (isset($xml['Status']) && $xml['Status'] == '0') {
-                return ['status' => 1, 'transac' => $xml['ordernumber']];
-            }
-        }
-
-        return ['status' => 0, 'message' => ''];
-    }
-
-    /**
-     * перевод средств на счёт
-     * @param array $data
-     * @return array
-     */
-    public function transferToAccount(array $data)
-    {
-        $action = "/api/tcbpay/gate/registerordertoexternalaccount";
-
-        $queryData = [
-            'OrderID' => $data['IdPay'],
-            'Account' => strval($data['account']),
-            'Bik' => strval($data['bic']),
-            'Amount' => $data['summ'],
-            'Name' => $data['name'],
-            'Description' => $data['descript']
-        ];
-        if (isset($data['inn']) && !empty($data['inn'])) {
-            $queryData['Inn'] = $data['inn'];
-        }
-        if (isset($data['kpp']) && !empty($data['kpp'])) {
-            $queryData['Kpp'] = $data['kpp'];
         }
 
         $queryData = Json::encode($queryData);
@@ -1937,5 +1902,35 @@ class TKBankAdapter implements IBankAdapter
     public function getAftMinSum()
     {
         return self::AFT_MIN_SUMM;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function transferToAccount(OutPayaccForm $outPayaccForm)
+    {
+        $action = '/api/tcbpay/gate/registerordertoexternalaccount';
+        $outAccountPayRequest = new TransferToAccountRequest();
+        $outAccountPayRequest->OrderId = $outPayaccForm->paySchet->ID;
+        $outAccountPayRequest->Name = $outPayaccForm->fio;
+        $outAccountPayRequest->Bik = $outPayaccForm->bic;
+        $outAccountPayRequest->Account = $outPayaccForm->account;
+        $outAccountPayRequest->Amount = $outPayaccForm->amount;
+        $outAccountPayRequest->Description = $outPayaccForm->descript;
+
+        $outAccountPayRequest->Inn = $outPayaccForm->inn;
+        $outAccountPayRequest->Kpp = $outPayaccForm->kpp;
+
+        $ans = $this->curlXmlReq(Json::encode($outAccountPayRequest->getAttributes()), $this->bankUrl . $action);
+
+        $outAccountPayResponse = new TransferToAccountResponse();
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            $outAccountPayResponse->status = BaseResponse::STATUS_DONE;
+            $outAccountPayResponse->trans = $ans['xml']['ordernumber'];
+        } else {
+            $outAccountPayResponse->status = BaseResponse::STATUS_ERROR;
+        }
+
+        return $outAccountPayResponse;
     }
 }
