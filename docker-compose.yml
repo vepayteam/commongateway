@@ -1,6 +1,12 @@
 version: "3.6"
 
 services:
+  api_init:
+    image: alpine
+    entrypoint: /bin/sh -c "chown -Rhv 1000:1000 /www/runtime && chmod -v 755 /www/runtime"
+    restart: "no"
+    volumes:
+      - runtime:/www/runtime
   api:
     build:
       context: .
@@ -8,24 +14,29 @@ services:
       args:
         ENVIRONMENT: dev
     image: api
+    user: 1000:1000
     volumes:
       - ./:/www/
+      - runtime:/www/runtime
     environment:
       TZ: Europe/Moscow
       DATABASE_DSN: "mysql:host=mariadb;port=3306;dbname=vepay"
       DATABASE_USER: vepay
       DATABASE_USER_PASSWORD: vepay
-      TEST_URL: "http://localhost:8000"
+      TEST_URL: "http://localhost:806"
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_DB_NUM_QUEUE: 3
       REDIS_DB_NUM_CACHE: 4
     ports:
-      - 8000:8000/tcp
+      - 806:8000/tcp
       - 8443:8443/tcp
     depends_on:
+      - api_init
       - mariadb
       - redis
+    cap_drop:
+      - ALL
 
   mariadb:
     image: mariadb:10.4.18
@@ -51,3 +62,4 @@ services:
 
 volumes:
   mariadb_volume: { }
+  runtime: { }

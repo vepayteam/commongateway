@@ -1,0 +1,12 @@
+[submodule "vendor/psr/http-client"]
+	path = vendor/psr/http-client
+	url = https://github.com/php-fig/http-client.git
+[submodule "vendor/psr/http-factory"]
+	path = vendor/psr/http-factory
+	url = https://github.com/php-fig/http-factory.git
+[submodule "vendor/vepay/cauri"]
+	path = vendor/vepay/cauri
+	url = https://git.vepay.cf/backend/cauri.git
+[submodule "vendor/vepay/commongateway"]
+	path = vendor/vepay/commongateway
+	url = https://git.vepay.cf/backend/commongateway.git

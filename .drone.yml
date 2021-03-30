@@ -8,6 +8,12 @@ platform:
   arch: amd64
 
 steps:
+- name: submodules
+  pull: if-not-exists
+  image: alpine/git:v2.30.1
+  commands:
+  - git submodule update --recursive --init
+
 - name: check-for-conventional-commits
   pull: if-not-exists
   image: aevea/commitsar:0.15.0
@@ -207,6 +213,12 @@ platform:
   arch: amd64
 
 steps:
+- name: submodules
+  pull: if-not-exists
+  image: alpine/git:v2.30.1
+  commands:
+  - git submodule update --recursive --init
+
 - name: wait-for-services
   pull: always
   image: registry.vepay.cf/ci-tools
@@ -430,6 +442,12 @@ platform:
   arch: amd64
 
 steps:
+- name: submodules
+  pull: if-not-exists
+  image: alpine/git:v2.30.1
+  commands:
+  - git submodule update --recursive --init
+
 - name: docker-tag-124f9367ceef05be618224ab8eea34be
   pull: always
   image: registry.vepay.cf/ci-tools
@@ -616,6 +634,6 @@ get:
 
 ---
 kind: signature
-hmac: a3113f927741010a474e533d87ac3bc575c5ed45833150a885d974de13716086
+hmac: 0a2f1b2aa34569ec3820453bc8067931692bfe555fbf4622ffafd8a320e69f4b
 
 ...

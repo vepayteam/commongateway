@@ -12,7 +12,7 @@ RUN set -ex \
     && cd ${APACHE_DOCUMENT_ROOT} \
     && php init --env=${ENVIRONMENT} \
     \
-    && mkdir -p key/ && echo -n '1234567890' > key/key.txt \
+    && mkdir -p key/ && echo -n 'DontLoseThisPass2' > key/key.txt \
     \
     && mkdir -p web/shopdata \
     && mkdir -p runtime/logs/console \
