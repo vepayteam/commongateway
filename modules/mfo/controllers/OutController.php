@@ -130,20 +130,17 @@ class OutController extends Controller
         $mfo = new MfoReq();
         $mfo->LoadData(Yii::$app->request->getRawBody());
 
-
         $outPayaccForm = new OutPayaccForm();
+        $outPayaccForm->scenario = OutPayaccForm::SCENARIO_FL;
         $outPayaccForm->load($mfo->Req(), '');
 
-        // рубли в копейки
-        // TODO: in model validation
-        $outPayaccForm->amount *= 100;
         if (!$outPayaccForm->validate()) {
-            Yii::warning("out/payacc: " . $outPayaccForm->GetError(), 'mfo');
+            Yii::warning("out/payul: " . $outPayaccForm->GetError(), 'mfo');
             return ['status' => 0, 'message' => $outPayaccForm->GetError()];
         }
+        $outPayaccForm->partner = $mfo->getPartner();
 
         $mfoOutPayaccStrategy = new MfoOutPayaccStrategy($outPayaccForm);
-
         try {
             $paySchet = $mfoOutPayaccStrategy->exec();
         } catch (CreatePayException $e) {
@@ -165,77 +162,30 @@ class OutController extends Controller
      */
     public function actionPayul()
     {
+        // TODO: DRY
         $mfo = new MfoReq();
         $mfo->LoadData(Yii::$app->request->getRawBody());
 
-        $kfOut = new KfOut();
-        $kfOut->scenario = KfOut::SCENARIO_UL;
+        $outPayaccForm = new OutPayaccForm();
+        $outPayaccForm->scenario = OutPayaccForm::SCENARIO_UL;
+        $outPayaccForm->load($mfo->Req(), '');
 
-        $kfOut->load($mfo->Req(), '');
-        if (!$kfOut->validate()) {
-            Yii::warning("out/payacc: " . $kfOut->GetError(), 'mfo');
-            return ['status' => 0, 'message' => $kfOut->GetError()];
+        if (!$outPayaccForm->validate()) {
+            Yii::warning("out/payacc: " . $outPayaccForm->GetError(), 'mfo');
+            return ['status' => 0, 'message' => $outPayaccForm->GetError()];
+        }
+        $outPayaccForm->partner = $mfo->getPartner();
+
+        $mfoOutPayaccStrategy = new MfoOutPayaccStrategy($outPayaccForm);
+        try {
+            $paySchet = $mfoOutPayaccStrategy->exec();
+        } catch (CreatePayException $e) {
+            return ['status' => 0, 'message' => $e->getMessage()];
+        } catch (GateException $e) {
+            return ['status' => 0, 'message' => $e->getMessage()];
         }
 
-        $kfOut->descript = str_replace(" ", " ", $kfOut->descript); //0xA0 пробел на 0x20
-
-        $bank = BankMerchant::GetWorkBankOut();
-
-        $typeUsl = TU::$TOSCHET;
-        $bankGate = BankMerchant::Gate($mfo->mfo, $bank, $typeUsl);
-
-        $usl = $kfOut->GetUslug($mfo->mfo);
-        if (!$usl || !$bankGate || !$bankGate->IsGate()) {
-            return ['status' => 0, 'message' => 'Нет шлюза'];
-        }
-
-        $pay = new CreatePay();
-        $mutex = new FileMutex();
-        if (!empty($kfOut->extid)) {
-            //проверка на повторный запрос
-            if (!$mutex->acquire('getPaySchetExt' . $kfOut->extid, 30)) {
-                throw new Exception('getPaySchetExt: error lock!');
-            }
-            $params = $pay->getPaySchetExt($kfOut->extid, $usl, $mfo->mfo);
-            if ($params) {
-                if ($kfOut->amount == $params['sumin']) {
-                    return ['status' => 1, 'id' => (int)$params['IdPay'], 'message' => ''];
-                } else {
-                    Yii::warning("out/payul: Нарушение уникальности запроса", 'mfo');
-                    return ['status' => 0, 'id' => 0, 'message' => 'Нарушение уникальности запроса'];
-                }
-            }
-        }
-
-        Yii::warning('/out/payul mfo=' . $mfo->mfo . " sum=" . $kfOut->amount . " extid=" . $kfOut->extid, 'mfo');
-
-        $params = $pay->payToCard(null, [$kfOut->account, $kfOut->bic, $kfOut->name, $kfOut->inn, $kfOut->kpp, $kfOut->descript], $kfOut, $usl, TCBank::$bank, $mfo->mfo);
-        if (!empty($kfOut->extid)) {
-            $mutex->release('getPaySchetExt' . $kfOut->extid);
-        }
-        $params['name'] = $kfOut->name;
-        $params['inn'] = trim($kfOut->inn);
-        $params['kpp'] = $kfOut->kpp;
-        $params['bic'] = $kfOut->bic;
-        $params['account'] = $kfOut->account;
-        $params['descript'] = $kfOut->descript;
-
-        $merchBank = BankMerchant::Get($bank, $bankGate);
-        $ret = $merchBank->transferToAccount($params);
-        if ($ret && $ret['status'] == 1) {
-            //сохранение номера транзакции
-            $payschets = new Payschets();
-            $payschets->SetBankTransact([
-                'idpay' => $params['IdPay'],
-                'trx_id' => $ret['transac'],
-                'url' => ''
-            ]);
-
-        } else {
-            $pay->CancelReq($params['IdPay'],'Платеж не проведен');
-        }
-
-        return ['status' => 1, 'id' => (int)$params['IdPay'], 'message' => ''];
+        return ['status' => 1, 'id' => $paySchet->ID, 'message' => ''];
     }
 
     /**

@@ -63,7 +63,7 @@ class MfoOutPayaccStrategy
     protected function getReplyPaySchet()
     {
         $paySchet = PaySchet::findOne([
-            'ExtId' => $this->outPayaccForm->extid,
+            'Extid' => $this->outPayaccForm->extid,
         ]);
 
         if($paySchet && $paySchet->SummPay == $this->outPayaccForm->amount * 100)

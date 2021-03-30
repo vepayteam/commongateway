@@ -11,6 +11,9 @@ use yii\base\Model;
 
 class OutPayaccForm extends Model
 {
+    const SCENARIO_UL = 'ul';
+    const SCENARIO_FL = 'fl';
+
     use ErrorModelTrait;
 
     /** @var PaySchet */
@@ -20,6 +23,7 @@ class OutPayaccForm extends Model
     public $partner;
     public $extid;
     public $fio;
+    public $name;
     public $account;
     public $bic;
     public $descript;
@@ -33,16 +37,22 @@ class OutPayaccForm extends Model
     public function rules()
     {
         return [
-            [['fio', 'account', 'bic', 'descript', 'amount'], 'required'],
-            [['account'], 'match', 'pattern' => '/^\d{20}$/'],
-            [['bic'], 'match', 'pattern' => '/^\d{9}$/'],
-            [['descript'], 'string', 'max' => 210],
-            ['descript', 'filter', 'filter' => function ($value) {
-                return str_replace(" ", " ", $value);
+            [['account'], 'match', 'pattern' => '/^\d{20}$/', 'on' => [self::SCENARIO_FL, self::SCENARIO_UL]],
+            [['bic'], 'match', 'pattern' => '/^\d{9}$/', 'on' => [self::SCENARIO_FL, self::SCENARIO_UL]],
+            [['descript'], 'string', 'max' => 210, 'on' => [self::SCENARIO_FL, self::SCENARIO_UL]],
+            [['inn'], 'match', 'pattern' => '/^\d{10,13}$/', 'on' => [self::SCENARIO_UL]],
+            [['kpp'], 'string', 'max' => 9, 'on' => [self::SCENARIO_UL]],
+            [['name'], 'string', 'max' => 200, 'on' => [self::SCENARIO_UL]],
+            [['fio'], 'string', 'max' => 150, 'on' => self::SCENARIO_FL],
+            [['amount'], 'number', 'min' => 1, 'max' => 21000000, 'on' => [self::SCENARIO_UL, self::SCENARIO_FL]],
+            [['extid'], 'string', 'max' => 40],
+            [['name', 'inn', 'account', 'bic', 'descript', 'amount'], 'required', 'on' => [self::SCENARIO_UL]],
+            [['fio', 'account', 'bic', 'descript', 'amount'], 'required', 'on' => self::SCENARIO_FL],
+            [['sms'], 'integer', 'on' => [self::SCENARIO_UL, self::SCENARIO_FL]],
+
+            ['amount', 'filter', 'filter' => function ($value) {
+                return $value * 100;
             }],
-            [['fio', 'extid'], 'string', 'max' => 150],
-            [['amount'], 'number', 'min' => 1, 'max' => 21000000],
-            [['sms'], 'integer'],
         ];
     }
 
