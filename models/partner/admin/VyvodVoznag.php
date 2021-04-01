@@ -12,6 +12,12 @@ use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\SendEmail;
 use app\models\TU;
+use app\services\payment\exceptions\CreatePayException;
+use app\services\payment\exceptions\GateException;
+use app\services\payment\forms\OutPayaccForm;
+use app\services\payment\models\PaySchet;
+use app\services\payment\payment_strategies\mfo\MfoOutPayaccStrategy;
+use app\services\payment\payment_strategies\mfo\MfoVyvodVoznagStrategy;
 use yii\base\Model;
 use Yii;
 
@@ -153,60 +159,39 @@ class VyvodVoznag extends Model
             echo "VyvodVoznag: mfo=" . $this->partner . " idpay=" . $idpay . "\r\n";
         }
 
-        $TcbGate = new TcbGate($mfo->ID,($this->type == 1 || $mfo->IsCommonSchetVydacha) ? TCBank::$VYVODOCTGATE : TCBank::$VYVODGATE);
-        $bank = new TCBank($TcbGate);
-        $ret = $bank->transferToAccount([
-            'IdPay' => $idpay,
-            'account' => $this->recviz['account'],
-            'bic' => $this->recviz['bic'],
-            'summ' => $this->summ,
-            'name' => $this->recviz['name'],
-            'inn' => $this->recviz['inn'],
-            'descript' => $descript
-        ]);
+        $outPayaccForm = new OutPayaccForm();
+        $outPayaccForm->scenario = OutPayaccForm::SCENARIO_UL;
+        $outPayaccForm->account = $this->recviz['account'];
+        $outPayaccForm->bic = $this->recviz['bic'];
+        $outPayaccForm->amount = $this->summ;
+        $outPayaccForm->name = $this->recviz['name'];
+        $outPayaccForm->inn = $this->recviz['inn'];
+        $outPayaccForm->descript = $descript;
 
-        if ($ret && $ret['status'] == 1) {
-            //сохранение номера транзакции
-            $payschets = new Payschets();
-            $payschets->SetBankTransact([
-                'idpay' => $idpay,
-                'trx_id' => $ret['transac'],
-                'url' => ''
-            ]);
+        $mfoOutPayaccStrategy = new MfoVyvodVoznagStrategy($outPayaccForm);
+        try {
+            $paySchet = $mfoOutPayaccStrategy->exec();
+            if($paySchet->Status == PaySchet::STATUS_DONE) {
+                if ($this->isCron) {
+                    echo "VyvodVoznag: mfo=" . $this->partner . ", transac=" . $paySchet->ExtBillNumber . "\r\n";
+                    $this->SendMail($this->balance, $this->summ / 100.0,
+                        $mfo->Name, $this->recviz['account'],
+                        $this->datefrom, $this->dateto, $idpay, $paySchet->ExtBillNumber);
+                }
+                Yii::$app->db->createCommand()->update('vyvod_system', [
+                    'SatateOp' => 1
+                ],'`ID` = :ID', [':ID' => $id])->execute();
 
-            Yii::warning("VyvodVoznag: mfo=" . $this->partner . ", transac=" . $ret['transac'], "rsbcron");
-            if ($this->isCron) {
-                echo "VyvodVoznag: mfo=" . $this->partner . ", transac=" . $ret['transac'] . "\r\n";
+            } else {
+                Yii::$app->db->createCommand()->update('vyvod_system', [
+                    'SatateOp' => 2
+                ],'`ID` = :ID', [':ID' => $id])->execute();
             }
-
-            //статус не будем смотреть
-            $payschets->confirmPay([
-                'idpay' => $idpay,
-                'result_code' => 1,
-                'trx_id' => $ret['transac'],
-                'ApprovalCode' => '',
-                'RRN' => '',
-                'message' => ''
-            ]);
-
-            Yii::$app->db->createCommand()->update('vyvod_system', [
-                'SatateOp' => 1
-            ],'`ID` = :ID', [':ID' => $id])->execute();
-
-            if ($this->isCron) {
-                $this->SendMail($this->balance, $this->summ / 100.0,
-                    $mfo->Name, $this->recviz['account'],
-                    $this->datefrom, $this->dateto, $idpay, $ret['transac']);
-            }
-
-        } else {
-            //не вывелось
+        } catch (\Exception $e) {
             Yii::$app->db->createCommand()->update('vyvod_system', [
                 'SatateOp' => 2
             ],'`ID` = :ID', [':ID' => $id])->execute();
-
         }
-
         return 1;
     }
 

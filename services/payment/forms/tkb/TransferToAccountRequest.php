@@ -11,7 +11,7 @@ class TransferToAccountRequest extends Model
     public $OrderId;
     public $Name;
     public $Inn = '';
-    public $Kpp = '';
+    // public $Kpp = '';
     public $Bik;
     public $Account;
     public $Amount;

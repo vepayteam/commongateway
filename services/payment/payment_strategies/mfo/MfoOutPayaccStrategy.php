@@ -17,7 +17,7 @@ use app\services\payment\models\PaySchet;
 class MfoOutPayaccStrategy
 {
     /** @var OutPayaccForm */
-    private $outPayaccForm;
+    protected $outPayaccForm;
 
     /**
      * @param OutPayaccForm $outPayaccForm

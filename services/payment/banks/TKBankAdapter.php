@@ -42,6 +42,7 @@ use app\services\payment\forms\tkb\DonePayRequest;
 use app\services\payment\forms\tkb\TransferToAccountRequest;
 use app\services\payment\forms\tkb\OutCardPayRequest;
 use app\services\payment\forms\tkb\RefundPayRequest;
+use app\services\payment\forms\tkb\TransferToAccountUlRequest;
 use app\services\payment\interfaces\Cache3DSv2Interface;
 use app\services\payment\interfaces\Issuer3DSVersionInterface;
 use app\services\payment\models\PartnerBankGate;
@@ -1910,16 +1911,20 @@ class TKBankAdapter implements IBankAdapter
     public function transferToAccount(OutPayaccForm $outPayaccForm)
     {
         $action = '/api/tcbpay/gate/registerordertoexternalaccount';
-        $outAccountPayRequest = new TransferToAccountRequest();
-        $outAccountPayRequest->OrderId = $outPayaccForm->paySchet->ID;
+
+        if($outPayaccForm->scenario == OutPayaccForm::SCENARIO_UL) {
+            $outAccountPayRequest = new TransferToAccountUlRequest();
+            $outAccountPayRequest->Inn = $outPayaccForm->inn;
+        } else {
+            $outAccountPayRequest = new TransferToAccountRequest();
+        }
+
+        $outAccountPayRequest->OrderId = (string)$outPayaccForm->paySchet->ID;
         $outAccountPayRequest->Name = ($outPayaccForm->scenario == OutPayaccForm::SCENARIO_FL ? $outPayaccForm->fio : $outPayaccForm->name);
-        $outAccountPayRequest->Bik = $outPayaccForm->bic;
-        $outAccountPayRequest->Account = $outPayaccForm->account;
+        $outAccountPayRequest->Bik = strval($outPayaccForm->bic);
+        $outAccountPayRequest->Account = strval($outPayaccForm->account);
         $outAccountPayRequest->Amount = $outPayaccForm->amount;
         $outAccountPayRequest->Description = $outPayaccForm->descript;
-
-        $outAccountPayRequest->Inn = $outPayaccForm->inn;
-        $outAccountPayRequest->Kpp = $outPayaccForm->kpp;
 
         $ans = $this->curlXmlReq(Json::encode($outAccountPayRequest->getAttributes()), $this->bankUrl . $action);
 

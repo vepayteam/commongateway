@@ -11,6 +11,10 @@ use app\models\payonline\Provparams;
 use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\TU;
+use app\services\payment\exceptions\CreatePayException;
+use app\services\payment\exceptions\GateException;
+use app\services\payment\forms\OutPayaccForm;
+use app\services\payment\payment_strategies\mfo\MfoOutPayaccStrategy;
 use Yii;
 use yii\base\Model;
 
@@ -135,50 +139,31 @@ class PerevodToPartner extends Model
 
         $tr->commit();
 
-        $ret = $tkb->transferToAccount([
-            'IdPay' => $idpay,
-            'account' => $recviz['RS'],
-            'bic' => $recviz['BIK'],
-            'summ' => $sumPays,
-            'name' => $recviz['NamePoluchat'],
-            'inn' => $recviz['INNPolushat'],
-            'descript' => $descript
-        ]);
+        $outPayaccForm = new OutPayaccForm();
+        $outPayaccForm->scenario = OutPayaccForm::SCENARIO_UL;
+        $outPayaccForm->account = $recviz['RS'];
+        $outPayaccForm->bic = $recviz['BIK'];
+        $outPayaccForm->amount = $sumPays;
+        $outPayaccForm->name = $recviz['NamePoluchat'];
+        $outPayaccForm->inn = $recviz['INNPolushat'];
+        $outPayaccForm->descript = $descript;
 
-        if ($ret && $ret['status'] == 1) {
-            //сохранение номера транзакции
-            $payschets = new Payschets();
-            $payschets->SetBankTransact([
-                'idpay' => $idpay,
-                'trx_id' => $ret['transac'],
-                'url' => ''
-            ]);
-
-            //статус не будем смотреть
-            $payschets->confirmPay([
-                'idpay' => $idpay,
-                'result_code' => 1,
-                'trx_id' => $ret['transac'],
-                'ApprovalCode' => '',
-                'RRN' => '',
-                'message' => ''
-            ]);
-
-            Yii::$app->db->createCommand()->update('vyvod_reestr', [
-                'StateOp' => 1
-            ], '`ID` = :ID', [':ID' => $id])->execute();
-
-            return ['status' => 1, 'message' => 'Средства перечислены'];
-
-        } else {
-            //ошибка
-            $pay->CancelReq($idpay);
-            Yii::$app->db->createCommand()->update('vyvod_reestr', [
-                'StateOp' => 2
-            ], '`ID` = :ID', [':ID' => $id])->execute();
-
-            return ['status' => 0, 'message' => 'Ошибка отправки п/п в банк'];
+        if (!$outPayaccForm->validate()) {
+            Yii::warning("out/payacc: " . $outPayaccForm->GetError(), 'mfo');
+            return ['status' => 0, 'message' => $outPayaccForm->GetError()];
         }
+        $outPayaccForm->partner = $Partner;
+
+        $mfoOutPayaccStrategy = new MfoOutPayaccStrategy($outPayaccForm);
+        try {
+            $mfoOutPayaccStrategy->exec();
+        } catch (CreatePayException $e) {
+            return ['status' => 0, 'message' => $e->getMessage()];
+        } catch (GateException $e) {
+            return ['status' => 0, 'message' => $e->getMessage()];
+        }
+
+        return ['status' => 1, 'message' => 'Средства перечислены'];
     }
 
     /**

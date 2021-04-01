@@ -30,8 +30,8 @@ class OutPayaccForm extends Model
     public $amount;
     public $sms;
 
-    public $inn;
-    public $kpp;
+    public $inn = '';
+    public $kpp = '';
 
 
     public function rules()
