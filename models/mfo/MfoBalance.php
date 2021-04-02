@@ -11,11 +11,14 @@ use app\models\payonline\Partner;
 use app\models\queue\JobPriorityInterface;
 use app\models\queue\ReceiveStatementsJob;
 use app\models\TU;
+use app\services\payment\models\PartnerBankGate;
 use Yii;
 use yii\db\Query;
 
 class MfoBalance
 {
+    private const TCB_GATE_ID = 2;
+
     /** @var $Partner Partner */
     public $Partner;
 
@@ -51,6 +54,30 @@ class MfoBalance
     }
 
     /**
+     * Баланс МФО c ТКБ (новая временная реализация)
+     * @TODO: Временное решение получения баланса, без обращения к базе для получения баланса счёта.
+     *
+     * @return array
+     * @throws \yii\db\Exception
+     */
+    public function GetBalanceWithoutLocal(bool $isAdmin)
+    {
+        $ret = $this->GetTcbBalances($isAdmin);
+
+        $bal = Yii::$app->cache->getOrSet('mfo_bal_'.$this->Partner->ID, function() {
+
+            $comispogas = $this->GetComissPogas() / 100.0;
+            $comisvyd = $this->GetComissVyplat(false) / 100.0;
+
+            return ['comisin' => $comispogas, 'comisout' => $comisvyd];
+
+        }, 30);
+
+        return array_merge($ret, $bal);
+    }
+
+    /**
+     * @deprecated
      * Баланс МФО c ТКБ
      * @param bool $IsAdmin
      * @return array
@@ -104,47 +131,85 @@ class MfoBalance
      * @return mixed
      * @throws \yii\db\Exception
      */
-    private function GetTcbBalances()
+    private function GetTcbBalances(bool $isAdmin)
     {
-        $bal = Yii::$app->cache->get('mfo_balance_'.$this->Partner->ID);
-        if (!$bal) {
+        return Yii::$app->cache->getOrSet('mfo_balance_'.$this->Partner->ID, function() use ($isAdmin) {
 
             $ret = [];
+
             $mfo = new MfoReq();
             $mfo->mfo = $this->Partner->ID;
-            $TcbGate = new TcbGate($this->Partner->ID, TCBank::$AFTGATE);
-            $tcBank = new TCBank($TcbGate);
 
-            if (!empty($this->Partner->SchetTcbNominal)) {
-                $bal = $tcBank->getBalanceAcc(['account' => $this->Partner->SchetTcbNominal]);
-                if ($bal && $bal['status'] == 1) {
-                    $ret['tcbnomin'] = $bal['amount'];
+            $partnerBankGates = $this->Partner->getBankGates()->where(['=', 'BankId', self::TCB_GATE_ID])->andWhere(['=', 'Enable', 1])->all();
+
+            // @TODO: Так как в дальнейшем планируется переход с одного баланса на отображение баланса от многих банков, то пока сделал условие, что если у партнёра нет других банков, кроме ТКБ, то
+            // не получать баланс.
+            if (count($partnerBankGates) > 0) {
+
+                if ($isAdmin) {
+
+                    $todayPays = $this->TodayPays() / 100.0;
+
+                    $localIn = $this->Partner->BalanceIn / 100.0 - $todayPays;
+                    $localOut = $this->Partner->BalanceOut / 100.0;
+
+                    $comispogas = $this->GetComissPogas() / 100.0;
+                    $comisvyd = $this->GetComissVyplat(false) / 100.0;
+                    $comisvydtoday = $this->GetComissVyplat(true) / 100.0;
+                    $ret['comisin'] = $comispogas;
+                    $ret['comisout'] = $comisvyd;
+
+                    if (!empty($this->Partner->SchetTcbNominal)) {
+                        //номинальный счет - вся комиссия на счете выдачи, и сегдняшнюю комиссию по выдаче не учитываем
+                        $localOut += $comisvydtoday;
+                    } else {
+                        //транзитный выдача
+                        if (!$this->Partner->VoznagVyplatDirect) {
+                            //вознаграждение не выводится со счета - комиссию за выдачу не списываем в онлайне
+                            $localOut += $comisvyd;
+                        }
+                        if ( $this->Partner->IsCommonSchetVydacha) {
+                            //один счет - комиссия по выдаче со счета погашения, баланс погашения онлайн
+                            $localOut -= $comispogas;
+                            $localIn += $todayPays;
+                        }
+                    }
+                }
+
+                $TcbGate = new TcbGate($this->Partner->ID, TCBank::$AFTGATE);
+                $tcBank = new TCBank($TcbGate);
+
+                if (!empty($this->Partner->SchetTcbNominal)) {
+                    $bal = $tcBank->getBalanceAcc(['account' => $this->Partner->SchetTcbNominal]);
+                    if ($bal && $bal['status'] == 1) {
+                        $ret['localnomin'] = ($isAdmin ? $localIn : $bal['amount']);
+                        $ret['tcbnomin'] = $bal['amount'];
+                    }
+                }
+                if (!empty($this->Partner->SchetTcbTransit)) {
+                    $balTr = $tcBank->getBalanceAcc(['account' => $this->Partner->SchetTcbTransit]);
+                    if ($balTr && $balTr['status'] == 1) {
+                        $ret['localtrans'] = ($isAdmin ? $localIn : $balTr['amount']);
+                        $ret['tcbtrans'] = $balTr['amount'];
+                    }
+                }
+                if (!empty($this->Partner->SchetTcb)) {
+                    $bal = $tcBank->getBalanceAcc(['account' => $this->Partner->SchetTcb]);
+                    if ($bal && $bal['status'] == 1) {
+                        $ret['local'] = ($isAdmin ? $localOut : $bal['amount']);
+                        $ret['tcb'] = $bal['amount'];
+                    }
+                } else {
+                    $bal = $tcBank->getBalance();
+                    if ($bal && $bal['status'] == 1) {
+                        $ret['tcb'] = $bal['amount'];
+                    }
                 }
             }
-            if (!empty($this->Partner->SchetTcbTransit)) {
-                $balTr = $tcBank->getBalanceAcc(['account' => $this->Partner->SchetTcbTransit]);
-                if (!empty($this->Partner->SchetTcbTransit) && isset($balTr) && $balTr['status'] == 1) {
-                    $ret['tcbtrans'] = $balTr['amount'];
-                }
-            }
-            if (!empty($this->Partner->SchetTcb)) {
-                $bal = $tcBank->getBalanceAcc(['account' => $this->Partner->SchetTcb]);
-                if ($bal && $bal['status'] == 1) {
-                    $ret['tcb'] = $bal['amount'];
-                }
-            } else {
-                $bal = $tcBank->getBalance();
-                if ($bal && $bal['status'] == 1) {
-                    $ret['tcb'] = $bal['amount'];
-                }
-            }
 
-            Yii::$app->cache->set('mfo_balance_'.$this->Partner->ID, $ret, 60);
+            return $ret;
 
-        } else {
-            $ret = $bal;
-        }
-        return $ret;
+        }, 60);
     }
 
     /**

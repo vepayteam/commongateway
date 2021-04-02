@@ -91,7 +91,7 @@ class MfoController extends Controller
                 return $this->render('balance', [
                     'IsAdmin' => 1,
                     'Partner' => $partner,
-                    'balances' => $MfoBalance->GetBalance(true)
+                    'balances' => $MfoBalance->GetBalanceWithoutLocal(true)
                 ]);
             } else {
                 return $sel;
@@ -105,7 +105,7 @@ class MfoController extends Controller
             return $this->render('balance', [
                 'IsAdmin' => 0,
                 'Partner' => $partner,
-                'balances' => $MfoBalance->GetBalance(false)
+                'balances' => $MfoBalance->GetBalanceWithoutLocal(false)
             ]);
         }
     }
