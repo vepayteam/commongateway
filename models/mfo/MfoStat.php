@@ -38,7 +38,7 @@ class MfoStat
         $payShetList->load($post, '');
         $list = $payShetList->getList2($IsAdmin, 0, 1);
 
-        $st = [0 => "Создан", 1 => "Оплачен", 2 => "Отмена", 3 => "Возврат"];
+        $st = [0 => "Создан", 1 => "Оплачен", 2 => "Отмена", 3 => "Возврат", 4 => "Ожидается запрос статуса", 5 => "Ожидается обновление статуса"];
         $data = [];
 
         if ($IsAdmin) {
@@ -56,7 +56,7 @@ class MfoStat
                     $row['BankComis'] / 100.0,
                     $row['VoznagSumm'] / 100.0,
                     date("d.m.Y H:i:s", $row['DateCreate']),
-                    $st[$row['Status']],
+                    (array_key_exists($row['Status'], $st) ? $st[$row['Status']] : ''),
                     $row['ErrorInfo'],
                     $row['DateOplat'] > 0 ? date("d.m.Y H:i:s", $row['DateOplat']) : '',
                     $row['ExtBillNumber'],
