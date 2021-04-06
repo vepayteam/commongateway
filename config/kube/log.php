@@ -19,21 +19,29 @@ $maskVars = [
     '_SERVER.REDIRECT_DATABASE_USER',
     '_SERVER.REDIRECT_DATABASE_USER_PASSWORD',
     '_SERVER.DATABASE_USER',
-    '_SERVER.DATABASE_USER_PASSWORD'
+    '_SERVER.DATABASE_USER_PASSWORD',
+    '_SERVER.DB_URL',
+    '_SERVER.DB_URL_BASE'
 ];
 
 return [
     'traceLevel' => YII_DEBUG ? 3 : 0,
     'targets' => [
         [
-            'class' => 'app\services\logs\targets\ReqMaskStdOutTarget',
+            'class' => 'app\services\logs\targets\ReqMaskFileTarget',
             'levels' => ['warning'],
-            'maskVars' => $maskVars
+            'maskVars' => $maskVars,
+            'maxFileSize' => 1024 * 50,
+            'maxLogFiles' => 20,
+            'rotateByCopy' => false,
         ],
         [
-            'class' => 'app\services\logs\targets\SecurityStdErrTarget',
+            'class' => 'app\services\logs\targets\SecurityFileTarget',
             'levels' => ['error'],
-            'maskVars' => $maskVars
+            'maskVars' => $maskVars,
+            'maxFileSize' => 1024 * 50,
+            'maxLogFiles' => 20,
+            'rotateByCopy' => false,
         ],
     ],
 ];

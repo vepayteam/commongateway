@@ -12,6 +12,7 @@ $config = [
     'id' => 'basic',
     'basePath' => dirname(__DIR__),
     'language' => 'ru_RU',
+    'timezone' => 'Europe/Moscow',
     'defaultRoute' => 'site',
     'bootstrap' => ['log', 'queue'],
     'aliases' => [

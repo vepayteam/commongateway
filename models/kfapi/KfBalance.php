@@ -78,7 +78,7 @@ class KfBalance extends Model
     public function GetBalance(Partner $partner)
     {
         $bal = new MfoBalance($partner);
-        $out = $bal->GetBalance(false);
+        $out = $bal->GetBalanceWithoutLocal();
 
         $b = null;
         if ($partner->SchetTcb == $this->account) {
