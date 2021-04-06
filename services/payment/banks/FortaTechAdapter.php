@@ -368,24 +368,13 @@ class FortaTechAdapter implements IBankAdapter
             $outCardPayRequest->cards[0]['amount']
         );
 
-        $scriptPath = Yii::getAlias('@app/bin/forta_sign');
-        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-            $scriptPath .= '.exe';
-        }
-
-        $fileSign = Yii::getAlias('@runtime/requests/' . Yii::$app->security->generateRandomString(32) . '.txt');
-        $cmd = sprintf(
-            '%s "%s" "%s" "%s"',
-            $scriptPath,
-            $s,
-            Yii::getAlias('@app/config/forta/default.pem'),
-            $fileSign
+        $hash = hash('sha256', $s, true);
+        $resPrivateKey = openssl_pkey_get_private(
+            'file://' . Yii::getAlias('@app/config/forta/' . $this->gate->Login . '.pem')
         );
-        shell_exec($cmd);
-
-        $sign = file_get_contents($fileSign);
-        unlink($fileSign);
-        return $sign;
+        $signature = null;
+        openssl_private_encrypt($hash, $signature, $resPrivateKey);
+        return base64_encode($signature);
     }
 
     /**
