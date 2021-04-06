@@ -163,12 +163,16 @@ class PaymentService
                 ])
                 ->groupBy('pay_schet.ID')
                 ->all();
-            $data = array_merge($header, $data);
 
-            try {
-                $this->generateAndSendEmailsByPartner($partnerOption, $data);
-            } catch (\Exception $e) {
-                Yii::warning('sendEmailsLateUpdatedPaySchetsError: ' . $e->getMessage());
+            if (count($data) > 0) {
+
+                $data = array_merge($header, $data);
+
+                try {
+                    $this->generateAndSendEmailsByPartner($partnerOption, $data);
+                } catch (\Exception $e) {
+                    Yii::warning('sendEmailsLateUpdatedPaySchetsError: ' . $e->getMessage());
+                }
             }
         }
     }
