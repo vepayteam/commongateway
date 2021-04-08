@@ -1,41 +1,60 @@
 <?php
 
-
 namespace app\services\payment\banks;
 
-
+use app\Api\Payment\Cauri\CauriApiFacade;
+use app\Api\Payment\Cauri\Responses\TransactionStatusResponse;
 use app\services\logs\loggers\CauriLogger;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
+use app\services\payment\banks\bank_adapter_responses\CauriResolveUserResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
+use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
+use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
+use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
-use app\services\payment\exceptions\GateException;
+use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
+use app\services\payment\exceptions\BankAdapterResponseException;
+use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\cauri\CheckStatusPayRequest;
+use app\services\payment\forms\cauri\CreatePayRequest;
 use app\services\payment\forms\cauri\OutCardPayRequest;
+use app\services\payment\forms\cauri\RecurrentPayRequest;
+use app\services\payment\forms\cauri\RefundPayRequest;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\RefundPayForm;
+use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\PartnerBankGate;
-use Vepay\Cauri\Client\Request\PayoutCreateRequest;
+use app\services\payment\models\PaySchet;
+use Vepay\Cauri\Client\Request\UserResolveRequest;
 use Vepay\Cauri\Resource\Payout;
-use Vepay\Cauri\Resource\Transaction;
-use Vepay\Gateway\Client\Validator\ValidationException;
 use Vepay\Gateway\Config;
 use Vepay\Gateway\Logger\Logger;
 use Vepay\Gateway\Logger\LoggerInterface;
+use Yii;
 
 class CauriAdapter implements IBankAdapter
 {
-    const AFT_MIN_SUMM = 120000;
-    const IS_CONFIG_OUT_CARD_PARAMS_CACHE_PREFIX = 'Cauri_IsConfigOutCardParams';
+    public const AFT_MIN_SUMM = 120000;
+    public const IS_CONFIG_OUT_CARD_PARAMS_CACHE_PREFIX = 'Cauri_IsConfigOutCardParams';
+
+    public const STATUS_COMPLETED = 'completed';
+    public const STATUS_FAILED = 'failed';
+    public const STATUS_REFUNDED = 'refunded';
+    public const STATUS_CHARGED_BACK = 'charged_back';
+    public const STATUS_OPENED = 'opened';
+
+    public const ERROR_STATUS_MSG = 'Ошибка проверки статуса'; //TODO: create global error handler
+    public const ERROR_USER_MSG = 'Ошибка получения пользователя'; //TODO: create global error handler
+    private const ERROR_MSG_REQUEST = BankAdapterResponseException::REQUEST_ERROR_MSG;
 
     public static $bank = 8;
 
     /** @var PartnerBankGate */
     protected $gate;
-
 
     /**
      * @inheritDoc
@@ -52,17 +71,58 @@ class CauriAdapter implements IBankAdapter
     /**
      * @inheritDoc
      */
-    public function getBankId()
+    public function getBankId(): int
     {
         return self::$bank;
     }
 
     /**
-     * @inheritDoc
+     * @param DonePayForm $donePayForm
+     * @return ConfirmPayResponse
+     * @throws BankAdapterResponseException
      */
-    public function confirm(DonePayForm $donePayForm)
+    public function confirm(DonePayForm $donePayForm): ConfirmPayResponse
     {
-        throw new GateException('Метод недоступен');
+        $checkStatusPayRequest = new CheckStatusPayRequest();
+        $confirmPayResponse = new ConfirmPayResponse();
+        $checkStatusPayRequest->id = $donePayForm->IdPay;
+        $transaction = $this->getTransactionStatus($checkStatusPayRequest);
+        $confirmPayResponse->status = $transaction->status;
+        $confirmPayResponse->message = $transaction->message;
+        if ($transaction->id) {
+            $confirmPayResponse->transac = $transaction->id;
+        }
+        return $confirmPayResponse;
+    }
+
+    /**
+     * @param CheckStatusPayRequest $checkStatusPayRequest
+     * @return TransactionStatusResponse
+     * @throws BankAdapterResponseException
+     */
+    public function getTransactionStatus(
+        CheckStatusPayRequest $checkStatusPayRequest
+    ): TransactionStatusResponse {
+        $transactionStatusResponse = new TransactionStatusResponse();
+        try {
+            $api = new CauriApiFacade($this->gate);
+            $response = $api->getTransactionStatus($checkStatusPayRequest);
+            $content = $response->getContent();
+            if (!isset($content['status'])) {
+                $transactionStatusResponse->status = BaseResponse::STATUS_ERROR;
+                $transactionStatusResponse->message = self::ERROR_STATUS_MSG;
+                return $transactionStatusResponse;
+            }
+            $transactionStatusResponse->status = $this->convertStatus($content['status']);
+            $transactionStatusResponse->message = $content['reason'] ?? '';
+            $transactionStatusResponse->id = $content['id']; // Transaction ID
+            $transactionStatusResponse->userId = $content['user']['id']; // Cauri user ID
+            $transactionStatusResponse->originalStatus = $content['originalStatus'];
+        } catch (\Exception $e) {
+            Yii::error(' CauriAdapter getTransactionStatus err:' . $e->getMessage());
+            throw new BankAdapterResponseException(self::ERROR_MSG_REQUEST);
+        }
+        return $transactionStatusResponse;
     }
 
     /**
@@ -82,13 +142,128 @@ class CauriAdapter implements IBankAdapter
     }
 
     /**
-     * @inheritDoc
+     * @param CreatePayForm $createPayForm
+     * @return CreatePayResponse
+     * @throws CreatePayException
      */
-    public function createPay(CreatePayForm $createPayForm)
+    public function createPay(CreatePayForm $createPayForm): CreatePayResponse
     {
-        throw new GateException('Метод недоступен');
+        $createPayResponse = new CreatePayResponse();
+        $paySchet = $createPayForm->getPaySchet();
+        $user = $this->getResolveUser($paySchet); // Get unique Banks user id
+        if (!$user->id) {
+            $createPayResponse->status = $user->status;
+            $createPayResponse->message = BankAdapterResponseException::setErrorMsg($user->message);
+            return $createPayResponse;
+        }
+        $createPayRequest = $this->formatCreatePayRequest($createPayForm, $user->id);
+        try {
+            $api = new CauriApiFacade($this->gate);
+            $response = $api->payInCreate($createPayRequest);
+            $content = $response->getContent();
+            $status = $content['status'];
+            if (!isset($content['id']) || $status === self::STATUS_FAILED) {
+                $createPayResponse->status = BaseResponse::STATUS_ERROR;
+                $createPayResponse->message = BankAdapterResponseException::setErrorMsg($content['reason'] ?? '');
+                return $createPayResponse;
+            }
+            // success and have no 3DS
+            if ($status === self::STATUS_COMPLETED && !array_key_exists('acs', $content)) {
+                $createPayResponse->isNeed3DSRedirect = false;
+                $createPayResponse->status = BaseResponse::STATUS_DONE;
+                $createPayResponse->transac = $content['id'];
+                return $createPayResponse;
+            }
+            if (isset($content['acs']) && !array_key_exists('parameters', $content['acs'])) {
+                Yii::error('CauriAdapter payInCreate err: ' . $content);
+                throw new CreatePayException('CauriAdapter Empty 3ds url');
+            }
+            //3DS redirect
+            $createPayResponse->isNeed3DSRedirect = false;
+            $createPayResponse->isNeed3DSVerif = true;
+            $createPayResponse->status = BaseResponse::STATUS_DONE;
+            $createPayResponse->transac = $content['id'];
+            $createPayResponse->url = $content['acs']['url'];
+            $createPayResponse->md = $content['acs']['parameters']['MD'];
+            $createPayResponse->pa = $content['acs']['parameters']['PaReq'];
+        } catch (\Exception $e) {
+            Yii::error('CauriAdapter payInCreate err: ' . $e->getMessage());
+            throw new CreatePayException(self::ERROR_MSG_REQUEST .': ' . $e->getMessage());
+        }
+
+        return $createPayResponse;
     }
 
+    /**
+     * Format payIn Request
+     * @param CreatePayForm $createPayForm
+     * @param int $user
+     * @return CreatePayRequest
+     */
+    private function formatCreatePayRequest(
+        CreatePayForm $createPayForm,
+        int $user
+    ): CreatePayRequest {
+        $paySchet = $createPayForm->getPaySchet();
+        $createPayRequest = new CreatePayRequest();
+        $createPayRequest->user = $user;
+        $createPayRequest->order_id = $paySchet->ID;
+        $createPayRequest->description = 'Счет №' . $paySchet->ID ?? '';
+        $createPayRequest->price = PaymentHelper::convertToRub($paySchet->getSummFull());
+        $createPayRequest->acs_return_url = $createPayForm->getReturnUrl();
+        //card details
+        $createPayRequest->card = [
+            'number' => $createPayForm->CardNumber,
+            'expiration_month' => $createPayForm->CardMonth,
+            'expiration_year' => $createPayForm->CardYear,
+            'security_code' => $createPayForm->CardCVC,
+            'holder' => $createPayForm->CardHolder,
+        ];
+        return $createPayRequest;
+    }
+
+    /**
+     * @param PaySchet $paySchet
+     * @return array
+     */
+    public function formatResolveUserRequest(PaySchet $paySchet): array
+    {
+        return [
+            'ip' => Yii::$app->request->remoteIP,
+            'identifier' => $paySchet->ID, //TODO: Solve unique identifier
+        ];
+    }
+
+    /**
+     *  Get banks user id
+     * @param PaySchet $paySchet
+     * @return CauriResolveUserResponse
+     */
+    private function getResolveUser(PaySchet $paySchet): CauriResolveUserResponse
+    {
+        $data = $this->formatResolveUserRequest($paySchet);
+        //TODO: Solve saving user->id to db
+        $userResolveRequest = new UserResolveRequest($data);
+        $userResponse = new CauriResolveUserResponse();
+
+        try {
+            $api = new CauriApiFacade($this->gate);
+            $response = $api->resolveUser($userResolveRequest);
+            $content = $response->getContent();
+            if (!isset($content['id'])) {
+                $userResponse->status = BaseResponse::STATUS_ERROR;
+                $userResponse->message = BankAdapterResponseException::setErrorMsg(self::ERROR_USER_MSG);
+                return $userResponse;
+            }
+        } catch (\Exception $e) {
+            Yii::error('CauriAdapter resolveUser err: ' . $e->getMessage());
+            $userResponse->status = BaseResponse::STATUS_ERROR;
+            $userResponse->message = $e->getMessage();
+            return $userResponse;
+        }
+        $userResponse->id = $content['id'];
+        return $userResponse;
+    }
 
     /**
      * @inheritDoc
@@ -135,65 +310,98 @@ class CauriAdapter implements IBankAdapter
      */
     public function reversOrder($IdPay)
     {
-        // TODO: Implement reversOrder() method.
+        // TODO: Implement reversOrder() method & add at Cauri API
     }
 
     /**
-     * @inheritDoc
+     * @param OkPayForm $okPayForm
+     * @return CheckStatusPayResponse
+     * @throws BankAdapterResponseException
      */
-    public function checkStatusPay(OkPayForm $okPayForm)
+    public function checkStatusPay(OkPayForm $okPayForm): CheckStatusPayResponse
     {
         $checkStatusPayRequest = new CheckStatusPayRequest();
-        $checkStatusPayRequest->id = $okPayForm->getPaySchet()->ExtBillNumber;
-
-        $transaction = new Transaction();
-
+        $checkStatusPayRequest->id = $okPayForm->getPaySchet()->ExtBillNumber; //TODO: check ID $okPayForm->IdPay
+        $transactionResponse = $this->getTransactionStatus($checkStatusPayRequest);
         $checkStatusPayResponse = new CheckStatusPayResponse();
+        $checkStatusPayResponse->status = $transactionResponse->status;
+        $checkStatusPayResponse->message = $transactionResponse->message;
+        if ($transactionResponse->userId) {
+            $checkStatusPayResponse->cardRefId = $transactionResponse->userId;
+        }
+        return $checkStatusPayResponse;
+    }
+
+    /**
+     * @param AutoPayForm $autoPayForm
+     * @return CreateRecurrentPayResponse
+     * @throws BankAdapterResponseException
+     */
+    public function recurrentPay(AutoPayForm $autoPayForm): CreateRecurrentPayResponse
+    {
+        $paySchet = $autoPayForm->paySchet;
+        $recurrentPayRequest = new RecurrentPayRequest();
+        $createRecurrentPayResponse = new CreateRecurrentPayResponse();
+        $recurrentPayRequest->user = $autoPayForm->getCard()->ExtCardIDP; // Bank internal user ID
+        $recurrentPayRequest->price = PaymentHelper::convertToRub($paySchet->getSummFull());
+        $recurrentPayRequest->description = 'Оплата по счету №' . $paySchet->ID;
 
         try {
-            $response = $transaction->__call('status', [
-                $checkStatusPayRequest->getAttributes(), [
-                    'public_key' => $this->gate->Login,
-                    'private_key' => $this->gate->Token,
-                ]
-            ]);
+            $api = new CauriApiFacade($this->gate);
+            $response = $api->cardManualRecurring($recurrentPayRequest);
             $content = $response->getContent();
-            if(!isset($content['status'])) {
-                $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
-                $checkStatusPayResponse->message = 'Ошибка преобразования статуса';
-                return $checkStatusPayResponse;
+            if (!isset($content['id']) || $content['status'] === self::STATUS_FAILED) {
+                $reason = $content['reason'] ?? '';
+                $createRecurrentPayResponse->status = BaseResponse::STATUS_ERROR;
+                $createRecurrentPayResponse->message = BankAdapterResponseException::setErrorMsg($reason);
+                return $createRecurrentPayResponse;
             }
-            $checkStatusPayResponse->status = $this->convertStatus($content['status']);
-            $checkStatusPayResponse->message = $content['status'];
-            return $checkStatusPayResponse;
-
         } catch (\Exception $e) {
-            $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
-            $checkStatusPayResponse->message = $e->getMessage();
-            return $checkStatusPayResponse;
+            Yii::error(' CauriApi recurrentPay err:' . $e->getMessage());
+            throw new BankAdapterResponseException(self::ERROR_MSG_REQUEST . ': ' . $e->getMessage());
         }
+
+        $createRecurrentPayResponse->status = BaseResponse::STATUS_DONE;
+        $createRecurrentPayResponse->transac = $content['id']; // Bank transaction ID
+        return $createRecurrentPayResponse;
     }
 
     /**
-     * @inheritDoc
+     * @param RefundPayForm $refundPayForm
+     * @return RefundPayResponse
+     * @throws BankAdapterResponseException
      */
-    public function recurrentPay(AutoPayForm $autoPayForm)
+    public function refundPay(RefundPayForm $refundPayForm): RefundPayResponse
     {
-        throw new GateException('Метод недоступен');
+        $refundPayRequest = new RefundPayRequest();
+        $refundPayRequest->id = $refundPayForm->paySchet->ExtBillNumber; // Banks transaction ID
+        $refundPayRequest->amount = PaymentHelper::convertToRub($refundPayForm->paySchet->getSummFull());
+        $refundPayResponse = new RefundPayResponse();
+
+        try {
+            $api = new CauriApiFacade($this->gate);
+            $response = $api->refundCreate($refundPayRequest);
+            $content = $response->getContent();
+            if (!isset($content['id']) || $content['status'] === self::STATUS_FAILED) {
+                $refundPayResponse->status = BaseResponse::STATUS_ERROR;
+                $refundPayResponse->message = BankAdapterResponseException::setErrorMsg($content['reason'] ?? '');
+                return $refundPayResponse;
+            }
+        } catch (\Exception $e) {
+            Yii::error(' CauriApi refundPay err:' . $e->getMessage());
+            throw new BankAdapterResponseException(self::ERROR_MSG_REQUEST . ': ' . $e->getMessage());
+        }
+
+        $refundPayResponse->status = BaseResponse::STATUS_CREATED;
+        $refundPayResponse->message = $content['status'] ?? '';
+        return $refundPayResponse;
     }
 
     /**
-     * @inheritDoc
+     * @param OutCardPayForm $outCardPayForm
+     * @return OutCardPayResponse
      */
-    public function refundPay(RefundPayForm $refundPayForm)
-    {
-        throw new GateException('Метод недоступен');
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function outCardPay(OutCardPayForm $outCardPayForm)
+    public function outCardPay(OutCardPayForm $outCardPayForm): OutCardPayResponse
     {
         $outCardPayRequest = new OutCardPayRequest();
         $outCardPayRequest->amount = $outCardPayForm->amount / 100;
@@ -237,24 +445,26 @@ class CauriAdapter implements IBankAdapter
         return $outCardPayResponse;
     }
 
-    protected function convertStatus(string $status)
+    /**
+     * @param string $status
+     * @return int
+     */
+    public function convertStatus(string $status): int
     {
         switch ($status) {
-
-            case 'opened':
-            case 'charged_back':
+            case self::STATUS_OPENED:
+            case self::STATUS_CHARGED_BACK:
                 return BaseResponse::STATUS_CREATED;
-            case 'completed':
+            case self::STATUS_COMPLETED:
                 return BaseResponse::STATUS_DONE;
-            case 'refunded':
+            case self::STATUS_REFUNDED:
                 return BaseResponse::STATUS_CANCEL;
             default:
                 return BaseResponse::STATUS_ERROR;
-
         }
     }
 
-    public function getAftMinSum()
+    public function getAftMinSum(): int
     {
         return self::AFT_MIN_SUMM;
     }
