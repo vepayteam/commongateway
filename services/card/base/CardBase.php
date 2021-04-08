@@ -136,7 +136,7 @@ class CardBase extends Service
     public function GetRegForm($IdPay)
     {
         if (Yii::$app->params['DEVMODE'] == 'Y') {
-            return 'http://127.0.0.1:806/pay/form/' . $IdPay;
+            return Yii::$app->params['domain'] . '/pay/form/' . $IdPay;
         } elseif (Yii::$app->params['TESTMODE'] == 'Y') {
             return 'https://'.$_SERVER['SERVER_NAME'].'/pay/form/' . $IdPay;
         } else {

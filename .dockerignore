@@ -18,6 +18,7 @@ Dockerfile
 .version
 
 dump/
+runtime/
 
 tests/_output/*
 tests/_support/_generated

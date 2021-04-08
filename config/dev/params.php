@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'domain' => 'http://localhost:806',
+    'domain' => 'http://localhost:8000',
     'adminEmail' => 'support@vepay.online',
     'robotEmail' => 'robot@vepay.online',
     'infoEmail' => 'support@vepay.online',

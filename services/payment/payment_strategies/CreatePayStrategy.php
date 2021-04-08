@@ -60,7 +60,7 @@ class CreatePayStrategy
     {
         $paySchet = $this->createPayForm->getPaySchet();
 
-        if($paySchet->isOld()) {
+        if ($paySchet->isOld()) {
             throw new CreatePayException('Время для оплаты истекло');
         }
 
