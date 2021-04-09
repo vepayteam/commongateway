@@ -7,10 +7,12 @@ services:
     restart: "no"
     volumes:
       - runtime:/www/runtime
+
   api:
     build:
       context: .
       dockerfile: Dockerfile
+      target: dev
       args:
         ENVIRONMENT: dev
     image: api
@@ -23,14 +25,13 @@ services:
       DATABASE_DSN: "mysql:host=mariadb;port=3306;dbname=vepay"
       DATABASE_USER: vepay
       DATABASE_USER_PASSWORD: vepay
-      TEST_URL: "http://localhost:806"
+      TEST_URL: "http://localhost:8000"
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_DB_NUM_QUEUE: 3
       REDIS_DB_NUM_CACHE: 4
     ports:
-      - 806:8000/tcp
-      - 8443:8443/tcp
+      - 8000:8000/tcp
     depends_on:
       - api_init
       - mariadb

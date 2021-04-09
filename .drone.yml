@@ -34,12 +34,31 @@ steps:
     - failure
     - success
 
+- name: run-test-app
+  pull: always
+  image: registry.vepay.cf/apache-php
+  detach: true
+  commands:
+  - mkdir -p $$(pwd)/runtime/logs/console
+  - ln -s $$(pwd) /www
+  - apache2-foreground
+  environment:
+    DATABASE_DSN: mysql:host=mariadb;port=3306;dbname=vepay
+    DATABASE_USER: vepay
+    DATABASE_USER_PASSWORD: vepay
+    REDIS_DB_NUM_CACHE: 4
+    REDIS_DB_NUM_QUEUE: 3
+    REDIS_HOST: redis
+    REDIS_PORT: 6379
+    TEST_URL: https://test-env-${DRONE_REPO_NAME}.backend.vepay.cf/
+
 - name: wait-for-services
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
   - wait-for mariadb:3306 -s -t 60
   - wait-for redis:6379 -s
+  - wait-for 127.0.0.1:8000 -s
 
 - name: prepare-test-env
   pull: always
@@ -61,6 +80,7 @@ steps:
   pull: always
   image: registry.vepay.cf/apache-php
   commands:
+  - vendor/bin/codecept run acceptance
   - vendor/bin/codecept run unit
   - vendor/bin/codecept run functional
   environment:
@@ -72,6 +92,22 @@ steps:
     REDIS_HOST: redis
     REDIS_PORT: 6379
     TEST_URL: https://test-env-${DRONE_REPO_NAME}.backend.vepay.cf/
+
+- name: integration-testing
+  pull: always
+  image: registry.vepay.cf/apache-php
+  commands:
+  - vendor/bin/codecept run kfapi
+  environment:
+    DATABASE_DSN: mysql:host=mariadb;port=3306;dbname=vepay
+    DATABASE_USER: vepay
+    DATABASE_USER_PASSWORD: vepay
+    REDIS_DB_NUM_CACHE: 4
+    REDIS_DB_NUM_QUEUE: 3
+    REDIS_HOST: redis
+    REDIS_PORT: 6379
+    TEST_URL: https://test-env-${DRONE_REPO_NAME}.backend.vepay.cf/
+  failure: ignore
 
 - name: post-test-step
   pull: always
@@ -219,12 +255,31 @@ steps:
   commands:
   - git submodule update --recursive --init
 
+- name: run-test-app
+  pull: always
+  image: registry.vepay.cf/apache-php
+  detach: true
+  commands:
+  - mkdir -p $$(pwd)/runtime/logs/console
+  - ln -s $$(pwd) /www
+  - apache2-foreground
+  environment:
+    DATABASE_DSN: mysql:host=mariadb;port=3306;dbname=vepay
+    DATABASE_USER: vepay
+    DATABASE_USER_PASSWORD: vepay
+    REDIS_DB_NUM_CACHE: 4
+    REDIS_DB_NUM_QUEUE: 3
+    REDIS_HOST: redis
+    REDIS_PORT: 6379
+    TEST_URL: https://test-env-${DRONE_REPO_NAME}.backend.vepay.cf/
+
 - name: wait-for-services
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
   - wait-for mariadb:3306 -s -t 60
   - wait-for redis:6379 -s
+  - wait-for 127.0.0.1:8000 -s
 
 - name: prepare-test-env
   pull: always
@@ -246,6 +301,7 @@ steps:
   pull: always
   image: registry.vepay.cf/apache-php
   commands:
+  - vendor/bin/codecept run acceptance
   - vendor/bin/codecept run unit
   - vendor/bin/codecept run functional
   environment:
@@ -257,6 +313,22 @@ steps:
     REDIS_HOST: redis
     REDIS_PORT: 6379
     TEST_URL: https://test-env-${DRONE_REPO_NAME}.backend.vepay.cf/
+
+- name: integration-testing
+  pull: always
+  image: registry.vepay.cf/apache-php
+  commands:
+  - vendor/bin/codecept run kfapi
+  environment:
+    DATABASE_DSN: mysql:host=mariadb;port=3306;dbname=vepay
+    DATABASE_USER: vepay
+    DATABASE_USER_PASSWORD: vepay
+    REDIS_DB_NUM_CACHE: 4
+    REDIS_DB_NUM_QUEUE: 3
+    REDIS_HOST: redis
+    REDIS_PORT: 6379
+    TEST_URL: https://test-env-${DRONE_REPO_NAME}.backend.vepay.cf/
+  failure: ignore
 
 - name: post-test-step
   pull: always
@@ -634,6 +706,6 @@ get:
 
 ---
 kind: signature
-hmac: 0a2f1b2aa34569ec3820453bc8067931692bfe555fbf4622ffafd8a320e69f4b
+hmac: 44624f99509828c25e518ad5ad5943a082def5b69cdd2fb829919246a10ee16e
 
 ...
