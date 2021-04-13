@@ -1930,10 +1930,19 @@ class TKBankAdapter implements IBankAdapter
 
         $outAccountPayResponse = new TransferToAccountResponse();
         if (isset($ans['xml']) && !empty($ans['xml'])) {
-            $outAccountPayResponse->status = BaseResponse::STATUS_DONE;
-            $outAccountPayResponse->trans = $ans['xml']['ordernumber'];
+            if(isset($ans['xml']['errorinfo']['errorcode']) && $ans['xml']['errorinfo']['errorcode'] == 0) {
+                $outAccountPayResponse->status = BaseResponse::STATUS_DONE;
+                $outAccountPayResponse->trans = $ans['xml']['ordernumber'];
+            } elseif (isset($ans['xml']['errorinfo']['errorcode'])) {
+                $outAccountPayResponse->status = BaseResponse::STATUS_ERROR;
+                $outAccountPayResponse->message = $ans['xml']['errorinfo']['errormessage'];
+            } else {
+                $outAccountPayResponse->status = BaseResponse::STATUS_ERROR;
+                $outAccountPayResponse->message = 'Ошибка запроса';
+            }
         } else {
             $outAccountPayResponse->status = BaseResponse::STATUS_ERROR;
+            $outAccountPayResponse->message = 'Ошибка запроса';
         }
 
         return $outAccountPayResponse;

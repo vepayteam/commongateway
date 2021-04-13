@@ -179,13 +179,16 @@ class OutController extends Controller
         $mfoOutPayaccStrategy = new MfoOutPayaccStrategy($outPayaccForm);
         try {
             $paySchet = $mfoOutPayaccStrategy->exec();
+            return [
+                'status' => $mfoOutPayaccStrategy->transferToAccountResponse->status,
+                'id' => $paySchet->ID,
+                'message' => $mfoOutPayaccStrategy->transferToAccountResponse->message,
+            ];
         } catch (CreatePayException $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
         } catch (GateException $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
         }
-
-        return ['status' => 1, 'id' => $paySchet->ID, 'message' => ''];
     }
 
     /**

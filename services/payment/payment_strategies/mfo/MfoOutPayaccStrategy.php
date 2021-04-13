@@ -7,6 +7,7 @@ namespace app\services\payment\payment_strategies\mfo;
 use app\models\payonline\Uslugatovar;
 use app\models\TU;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
+use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
@@ -18,6 +19,8 @@ class MfoOutPayaccStrategy
 {
     /** @var OutPayaccForm */
     protected $outPayaccForm;
+    /** @var TransferToAccountResponse */
+    public $transferToAccountResponse;
 
     /**
      * @param OutPayaccForm $outPayaccForm
@@ -47,13 +50,18 @@ class MfoOutPayaccStrategy
         }
 
         $this->outPayaccForm->paySchet = $this->createPaySchet($bankAdapterBuilder);
-        $transferToAccountResponse = $bankAdapterBuilder->getBankAdapter()->transferToAccount($this->outPayaccForm);
+        $this->transferToAccountResponse = $bankAdapterBuilder->getBankAdapter()->transferToAccount($this->outPayaccForm);
 
-        if($transferToAccountResponse->status == BaseResponse::STATUS_DONE) {
-            return $this->outPayaccForm->paySchet;
+        if($this->transferToAccountResponse->status == BaseResponse::STATUS_DONE) {
+            $this->outPayaccForm->paySchet->ExtBillNumber = $this->transferToAccountResponse->trans;
+            $this->outPayaccForm->paySchet->ErrorInfo = $this->transferToAccountResponse->message;
         } else {
-            throw new CreatePayException('');
+            $this->outPayaccForm->paySchet->Status = PaySchet::STATUS_ERROR;
+            $this->outPayaccForm->paySchet->ErrorInfo = $this->transferToAccountResponse->message;
         }
+
+        $this->outPayaccForm->paySchet->save(false);
+        return $this->outPayaccForm->paySchet;
     }
 
     /**
