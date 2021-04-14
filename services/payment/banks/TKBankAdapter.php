@@ -1912,13 +1912,8 @@ class TKBankAdapter implements IBankAdapter
     {
         $action = '/api/tcbpay/gate/registerordertoexternalaccount';
 
-        if($outPayaccForm->scenario == OutPayaccForm::SCENARIO_UL) {
-            $outAccountPayRequest = new TransferToAccountUlRequest();
-            $outAccountPayRequest->Inn = $outPayaccForm->inn;
-        } else {
-            $outAccountPayRequest = new TransferToAccountRequest();
-        }
-
+        $outAccountPayRequest = new TransferToAccountRequest();
+        $outAccountPayRequest->Inn = $outPayaccForm->inn;
         $outAccountPayRequest->OrderId = (string)$outPayaccForm->paySchet->ID;
         $outAccountPayRequest->Name = ($outPayaccForm->scenario == OutPayaccForm::SCENARIO_FL ? $outPayaccForm->fio : $outPayaccForm->name);
         $outAccountPayRequest->Bik = strval($outPayaccForm->bic);

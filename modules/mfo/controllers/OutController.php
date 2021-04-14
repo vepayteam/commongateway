@@ -149,7 +149,7 @@ class OutController extends Controller
             return ['status' => 0, 'message' => $e->getMessage()];
         }
 
-        return ['status' => 1, 'id' => $paySchet->ID, 'message' => ''];
+        return ['status' => $paySchet->Status, 'id' => $paySchet->ID, 'message' => $paySchet->ErrorInfo];
     }
 
     /**

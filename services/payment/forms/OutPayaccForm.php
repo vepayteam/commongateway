@@ -40,14 +40,14 @@ class OutPayaccForm extends Model
             [['account'], 'match', 'pattern' => '/^\d{20}$/', 'on' => [self::SCENARIO_FL, self::SCENARIO_UL]],
             [['bic'], 'match', 'pattern' => '/^\d{9}$/', 'on' => [self::SCENARIO_FL, self::SCENARIO_UL]],
             [['descript'], 'string', 'max' => 210, 'on' => [self::SCENARIO_FL, self::SCENARIO_UL]],
-            [['inn'], 'match', 'pattern' => '/^\d{10,13}$/', 'on' => [self::SCENARIO_UL]],
+            [['inn'], 'match', 'pattern' => '/^\d{10,13}$/', 'on' => [self::SCENARIO_FL, self::SCENARIO_UL]],
             [['kpp'], 'string', 'max' => 9, 'on' => [self::SCENARIO_UL]],
             [['name'], 'string', 'max' => 200, 'on' => [self::SCENARIO_UL]],
             [['fio'], 'string', 'max' => 150, 'on' => self::SCENARIO_FL],
             [['amount'], 'number', 'min' => 1, 'max' => 21000000, 'on' => [self::SCENARIO_UL, self::SCENARIO_FL]],
             [['extid'], 'string', 'max' => 40],
             [['name', 'inn', 'account', 'bic', 'descript', 'amount'], 'required', 'on' => [self::SCENARIO_UL]],
-            [['fio', 'account', 'bic', 'descript', 'amount'], 'required', 'on' => self::SCENARIO_FL],
+            [['fio', 'inn', 'account', 'bic', 'descript', 'amount'], 'required', 'on' => self::SCENARIO_FL],
             [['sms'], 'integer', 'on' => [self::SCENARIO_UL, self::SCENARIO_FL]],
 
             ['amount', 'filter', 'filter' => function ($value) {
