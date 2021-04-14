@@ -586,6 +586,7 @@ class TKBankAdapter implements IBankAdapter
             $payResponse = $this->createPay3DSv1($createPayForm, $check3DSVersionResponse);
         }
 
+        $payResponse->isNeed3DSRedirect = false;
         return $payResponse;
     }
 
