@@ -6,7 +6,7 @@ return [
     'robotEmail' => 'robot@vepay.online',
     'infoEmail' => 'support@vepay.online',
     'buhEmail' => 'support@vepay.online',
-    'DEVMODE' => 'N',
+    'DEVMODE' => boolval(getenv('DEVMODE', true)) ? 'Y' : 'N',
     'TESTMODE' => 'Y',
     'accountServiceUrl' => '',
 	'key' => '',
