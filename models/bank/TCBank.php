@@ -1053,8 +1053,17 @@ class TCBank implements IBank
 
         if (isset($ans['xml']) && !empty($ans['xml'])) {
             $xml = $this->parseAns($ans['xml']);
+
+            $result = [];
+
             if (isset($xml['amount'])) {
-                return ['status' => 1, 'message' => '', 'amount' => $xml['amount']];
+                $result = ['status' => 1, 'message' => '', 'amount' => $xml['amount']];
+            }
+            if (array_key_exists('balance', $xml) && is_array($xml['balance'])) {
+                $result['balance'] = $xml['balance'];
+            }
+            if (count($result) > 0) {
+                return $result;
             }
         }
 
