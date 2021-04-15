@@ -6,6 +6,7 @@ namespace app\models\partner\stat\export\csv;
 
 use app\models\partner\UserLk;
 use app\models\TU;
+use app\services\payment\models\PaySchet;
 use Yii;
 use yii\helpers\VarDumper;
 
@@ -92,7 +93,7 @@ class OtchToCSV extends ToCSV
                     $ret_admin,
                     [
                         date("d.m.Y H:i:s", $data['DateCreate']),
-                        $st[$data['Status']],
+                        PaySchet::getStatusTitle($data['Status']),
                         $data['ErrorInfo'],
                         $data['DateOplat'] > 0 ? date("d.m.Y H:i:s", $data['DateOplat']) : '',
                         $data['ExtBillNumber'],
