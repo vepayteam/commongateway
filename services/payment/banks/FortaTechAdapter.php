@@ -418,7 +418,8 @@ class FortaTechAdapter implements IBankAdapter
             CURLOPT_HTTPHEADER => $headers,
         ));
 
-        Yii::warning('FortaTechAdapter req uri=' . $uri .' : ' . Json::encode($data));
+        $maskedData = $this->maskCardInfo($data);
+        Yii::warning('FortaTechAdapter req uri=' . $uri .' : ' . Json::encode($maskedData));
         $response = curl_exec($curl);
         $curlError = curl_error($curl);
         $info = curl_getinfo($curl);
@@ -589,5 +590,22 @@ class FortaTechAdapter implements IBankAdapter
     protected function parseResponse(string $response)
     {
         return Json::decode($response, true);
+    }
+
+    /**
+     * @param array $data
+     * @return array
+     */
+    private function maskCardInfo(array $data): array
+    {
+        if (isset($data['cardNumber'])) {
+            $data['cardNumber'] = preg_replace('/(\d{6})(.+)(\d{4})/', '$1****$3', $data['cardNumber']);
+        }
+
+        if (isset($data['cvv'])) {
+            $data['cvv'] = '***';
+        }
+
+        return $data;
     }
 }
