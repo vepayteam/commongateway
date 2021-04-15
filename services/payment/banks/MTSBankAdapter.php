@@ -663,6 +663,8 @@ class MTSBankAdapter implements IBankAdapter
         if ($createPayResponse->status == BaseResponse::STATUS_DONE) {
             $createPayResponse = $this->_payOrder($createPayForm, $createPayResponse);
         }
+
+        $createPayResponse->isNeed3DSRedirect = false;
         return $createPayResponse;
     }
 
