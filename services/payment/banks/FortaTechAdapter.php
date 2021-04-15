@@ -243,11 +243,11 @@ class FortaTechAdapter implements IBankAdapter
         if($ans['status'] == true && isset($ans['data']['cards'][0]['transferParts'])) {
             $checkStatusPayResponse->status = BaseResponse::STATUS_DONE;
 
+            $errorData = '';
             foreach ($ans['data']['cards'][0]['transferParts'] as $transferPart) {
                 if($transferPart['status'] == 'STATUS_ERROR') {
-                    $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
-                    $checkStatusPayResponse->message = $transferPart['statusMessage'];
-                    break;
+                    $checkStatusPayResponse->status = BaseResponse::STATUS_CREATED;
+                    $errorData .= Json::encode($transferPart) . "\n";
                 } elseif ($transferPart['status'] == 'STATUS_INIT') {
                     $checkStatusPayResponse->status = BaseResponse::STATUS_CREATED;
                 } elseif (
@@ -261,6 +261,11 @@ class FortaTechAdapter implements IBankAdapter
             $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
             $checkStatusPayResponse->message = 'Ошибка запроса';
         }
+
+        if(!empty($errorData)) {
+            $checkStatusPayResponse->message = $errorData;
+        }
+
         return $checkStatusPayResponse;
     }
 
