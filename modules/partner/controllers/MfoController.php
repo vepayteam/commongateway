@@ -81,33 +81,20 @@ class MfoController extends Controller
      */
     public function actionBalance()
     {
-        if (UserLk::IsAdmin(Yii::$app->user)) {
+        $isAdmin = UserLk::IsAdmin(Yii::$app->user);
+        if ($isAdmin) {
             $sel = $this->selectPartner($idpartner, false, true);
-            if (empty($sel)) {
-
-                $partner = Partner::findOne(['ID' => $idpartner]);
-                $MfoBalance = new MfoBalance($partner);
-
-                return $this->render('balance', [
-                    'IsAdmin' => 1,
-                    'Partner' => $partner,
-                    'balances' => $MfoBalance->GetBalanceWithoutLocal(true)
-                ]);
-            } else {
+            if (!empty($sel)) {
                 return $sel;
             }
-        } else {
-
-            $idpartner = UserLk::getPartnerId(Yii::$app->user);
-            $partner = Partner::findOne(['ID' => $idpartner]);
-
-            $MfoBalance = new MfoBalance($partner);
-            return $this->render('balance', [
-                'IsAdmin' => 0,
-                'Partner' => $partner,
-                'balances' => $MfoBalance->GetBalanceWithoutLocal(false)
-            ]);
         }
+        $partner = Partner::findOne(['ID' => $isAdmin ? $idpartner : UserLk::getPartnerId(Yii::$app->user)]);
+        $MfoBalance = new MfoBalance($partner);
+        return $this->render('balance', [
+            'IsAdmin' => $isAdmin ?? 0,
+            'Partner' => $partner,
+            'balances' => $MfoBalance->GetBalanceWithoutLocal((bool)$isAdmin)
+        ]);
     }
 
     /**
@@ -210,7 +197,6 @@ class MfoController extends Controller
             $sort = (int)Yii::$app->request->post('sort', 0);
 
             Yii::$app->response->format = Response::FORMAT_JSON;
-
             $partner = Partner::findOne(['ID' => $idpartner]);
             $MfoBalance = new MfoBalance($partner);
 

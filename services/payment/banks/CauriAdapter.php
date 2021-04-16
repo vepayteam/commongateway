@@ -9,9 +9,11 @@ use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
+use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\cauri\CheckStatusPayRequest;
+use app\services\payment\forms\cauri\GetBalanceRequest;
 use app\services\payment\forms\cauri\OutCardPayRequest;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
@@ -27,6 +29,7 @@ use Vepay\Gateway\Client\Validator\ValidationException;
 use Vepay\Gateway\Config;
 use Vepay\Gateway\Logger\Logger;
 use Vepay\Gateway\Logger\LoggerInterface;
+use yii\base\BaseObject;
 
 class CauriAdapter implements IBankAdapter
 {
@@ -198,9 +201,25 @@ class CauriAdapter implements IBankAdapter
 
     /**
      * @inheritDoc
+     * @throws \app\services\payment\exceptions\BankAdapterResponseException
      */
-    public function getBalance(GetBalanceForm $getBalanceForm)
+    public function getBalance(GetBalanceForm $getBalanceForm): GetBalanceResponse
     {
-        throw new GateException('Метод недоступен');
+        $getBalanceRequest = new GetBalanceRequest();
+        $getBalanceResponse = new GetBalanceResponse();
+        try {
+            //todo get Balance from API
+            $response = [
+                "amount" => "100.00",
+                "rolling_reserve" => "0.20",
+                "currency" => "USD",
+                "base_amount" => "1286.27",
+                "base_rolling_reserve" => "0.00",
+            ];
+        } catch (\Exception $e) {
+            throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
+        }
+        $getBalanceResponse->balance = floatval($response['amount']) ?? 0;
+        return $getBalanceResponse;
     }
 }
