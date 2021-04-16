@@ -3,7 +3,7 @@ modules:
     enabled:
         - REST:
             depends: PhpBrowser
-            url: 'http://127.0.0.1:806'
+            url: 'http://127.0.0.1:8000'
             shortDebugResponse: 300 # only the first 300 chars of the response
         - \Helper\Kfapi
     config:
