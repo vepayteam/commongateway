@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'domain' => 'http://dev.vepay.online',
+    'domain' => 'http://localhost:8000',
     'adminEmail' => 'support@vepay.online',
     'robotEmail' => 'robot@vepay.online',
     'infoEmail' => 'support@vepay.online',
@@ -59,9 +59,9 @@ return [
         'cache' => [
             'class' => 'yii\redis\Cache',
             'redis' => [
-                'hostname' => '127.0.0.1',
-                'port' => 6379,
-                'database' => 4,
+                'hostname' => getenv('REDIS_HOST', true),
+                'port' => getenv('REDIS_PORT', true),
+                'database' => getenv('REDIS_DB_NUM_CACHE', true),
             ],
         ],
     ],

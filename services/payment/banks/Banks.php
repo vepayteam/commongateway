@@ -26,6 +26,8 @@ class Banks
                 return new BRSAdapter();
             case CauriAdapter::$bank:
                 return new CauriAdapter();
+            case FortaTechAdapter::$bank:
+                return new FortaTechAdapter();
             default:
                 throw new \Exception('Ошибка выбора банка');
         }

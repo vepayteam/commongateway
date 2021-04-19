@@ -9,6 +9,7 @@ use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
+use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\adg\CreatePayRequest;
@@ -18,7 +19,6 @@ use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
-use app\services\payment\forms\OutPayaccForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\helpers\ADGroupBankHelper;
 use app\services\payment\models\adb\ClientCardModel;
@@ -167,6 +167,14 @@ class ADGroupBankAdapter implements IBankAdapter
     public function getAftMinSum()
     {
         return self::AFT_MIN_SUMM;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getBalance(GetBalanceForm $getBalanceForm)
+    {
+        throw new GateException('Метод недоступен');
     }
 
     /**

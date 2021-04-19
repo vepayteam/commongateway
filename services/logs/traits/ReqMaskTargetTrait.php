@@ -1,13 +1,13 @@
 <?php
 
-namespace app\services\logs\targets;
+namespace app\services\logs\traits;
 
 use yii\helpers\ArrayHelper;
 use yii\helpers\VarDumper;
 
-class ReqMaskTargetMixin
+trait ReqMaskTargetTrait
 {
-    protected function getContextMessage()
+    protected function getContextMessage(): string
     {
         $context = ArrayHelper::filter($GLOBALS, $this->logVars);
         foreach ($this->maskVars as $var) {
@@ -30,7 +30,7 @@ class ReqMaskTargetMixin
 
     private function maskCardnum($input)
     {
-        $pattern = '/(\\\"cardnum\\\":.*?\\\"\d{4})(\d+?)(\d{4}\\\")/i';
+        $pattern = '/(\\\"cardnum\\\":.*?\\\"\d{6})(\d+?)(\d{4}\\\")/i';
         $replacement = '$1****$3';
 
         $replaced = preg_replace($pattern, $replacement, $input);

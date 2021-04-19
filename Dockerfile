@@ -1,3 +1,26 @@
+FROM registry.vepay.cf/apache-php as base
+
+LABEL maintainer="Vadims I <vivolgin@vepay.online>"
+
+ARG ENVIRONMENT=kube
+
+ENV ENVIRONMENT ${ENVIRONMENT}
+
+COPY --chown=${RUN_USER}:${RUN_GROUP} . ${APACHE_DOCUMENT_ROOT}/
+
+RUN set -ex \
+    && cd ${APACHE_DOCUMENT_ROOT} \
+    && php init --env=${ENVIRONMENT} \
+    \
+    && mkdir -p key/ && echo -n 'DontLoseThisPass2' > key/key.txt \
+    \
+    && mkdir -p web/shopdata \
+    && mkdir -p runtime/logs/console \
+    && chmod -R g+w runtime \
+    && chmod -R g+w web/shopdata
+
+USER ${RUN_USER}:${RUN_GROUP}
+
 #FROM registry.vepay.cf/apache-php as vendor
 #
 #ARG COMPOSER_VERSION=1.10.16
@@ -42,25 +65,35 @@
 #    && chown -R ${RUN_USER}:${RUN_GROUP} web/
 #### @TODO Intermidate containers enable when VF comes out
 
-FROM registry.vepay.cf/apache-php
+FROM registry.vepay.cf/apache-php as dev
 
-LABEL maintainer="Vadims I <vivolgin@vepay.online>"
-
-ARG ENVIRONMENT=kube
-
-ENV ENVIRONMENT ${ENVIRONMENT}
-
-COPY --chown=${RUN_USER}:${RUN_GROUP} . ${APACHE_DOCUMENT_ROOT}/
+ARG COMPOSER_VERSION=1.10.16
+ENV COMPOSER_VERSION=${COMPOSER_VERSION}
 
 RUN set -ex \
-    && cd ${APACHE_DOCUMENT_ROOT} \
-    && php init --env=${ENVIRONMENT} \
+    && apt-get update \
+    && apt-get install -yq \
+                        git \
+                        nodejs \
+                        npm \
+                        unzip \
     \
-    && mkdir -p key/ && echo -n '1234567890' > key/key.txt \
+    && docker-php-source extract \
     \
-    && mkdir -p web/shopdata \
-    && mkdir -p runtime/logs/console \
-    && chmod -R g+w runtime \
-    && chmod -R g+w web/shopdata
-
-USER ${RUN_USER}:${RUN_GROUP}
+    && pecl install xdebug \
+    && docker-php-ext-enable xdebug \
+    \
+    && export XDEBUG_INI='/usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini' \
+    && echo "xdebug.mode=debug" >> ${XDEBUG_INI} \
+    && echo "xdebug.remote_connect_back=1" >> ${XDEBUG_INI} \
+    && echo "xdebug.remote_enable=1" >> ${XDEBUG_INI} \
+    && echo "xdebug.discover_client_host=1" >> ${XDEBUG_INI} \
+    && echo "xdebug.client_port=9000" >> ${XDEBUG_INI} \
+    && echo "xdebug.idekey=PHPSTORM" >> ${XDEBUG_INI} \
+    && php -m \
+    && docker-php-source delete \
+    \
+    && curl -sS https://getcomposer.org/installer -o /tmp/composer-setup.php \
+    && php /tmp/composer-setup.php --install-dir=/usr/bin --filename=composer --version=${COMPOSER_VERSION} \
+    && /usr/bin/composer global require "fxp/composer-asset-plugin:^1.4.6" \
+    && npm install uglify-es clean-css-cli -g

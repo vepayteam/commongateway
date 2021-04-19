@@ -1,20 +1,21 @@
 <?php
 
-namespace app\services\logs\targets;
+namespace app\services\logs\traits;
 
 use Carbon\Carbon;
+use Exception;
 use Yii;
 
-class SecurityTargetMixin
+trait SecurityTargetTrait
 {
     public function export()
     {
         $dbParams = require(Yii::getAlias('@app/config/db.php'));
         foreach ($this->messages as $message) {
-            /** @var \Exception|string $exception */
+            /** @var Exception|string $exception */
             $exception = $message[0];
 
-            if ($exception instanceof \Exception) {
+            if ($exception instanceof Exception) {
                 $log = $exception->__toString();
             } else {
                 $log = (string)$exception;
@@ -30,11 +31,6 @@ class SecurityTargetMixin
                 ]
             ));
         }
-    }
-
-    public function dump($log)
-    {
-        file_put_contents($this->logFile, $log, FILE_APPEND | LOCK_EX);
     }
 
     public function formatMsg($format, $args): string

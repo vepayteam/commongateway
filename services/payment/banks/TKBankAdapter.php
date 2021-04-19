@@ -17,6 +17,7 @@ use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
+use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\traits\TKBank3DSTrait;
@@ -31,7 +32,6 @@ use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
-use app\services\payment\forms\OutPayaccForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\forms\tkb\CheckStatusPayRequest;
 use app\services\payment\forms\tkb\Confirm3DSv2Request;
@@ -39,10 +39,8 @@ use app\services\payment\forms\tkb\CreatePayRequest;
 use app\services\payment\forms\tkb\CreateRecurrentPayRequest;
 use app\services\payment\forms\tkb\DonePay3DSv2Request;
 use app\services\payment\forms\tkb\DonePayRequest;
-use app\services\payment\forms\tkb\TransferToAccountRequest;
 use app\services\payment\forms\tkb\OutCardPayRequest;
 use app\services\payment\forms\tkb\RefundPayRequest;
-use app\services\payment\forms\tkb\TransferToAccountUlRequest;
 use app\services\payment\interfaces\Cache3DSv2Interface;
 use app\services\payment\interfaces\Issuer3DSVersionInterface;
 use app\services\payment\models\PartnerBankGate;
@@ -703,305 +701,6 @@ class TKBankAdapter implements IBankAdapter
     }
 
     /**
-     * Привязка карты
-     * @param array $data
-     * @param User $user
-     * @return string
-     * @throws \yii\db\Exception
-     */
-    public function registerCard($data, $user)
-    {
-        $ans = $this->createTisket($data, $user, -1);
-        if (!empty($ans['url'])) {
-            return $ans['url'];
-        }
-        return '';
-    }
-
-    /**
-     * Оплата привязанной картой
-     * @param array $data
-     * @param User $user
-     * @param int $idCard
-     * @param int $activate
-     * @return string
-     * @throws \yii\db\Exception
-     */
-    public function payCard($data, $user, $idCard, $activate = 0)
-    {
-        $ans = $this->createTisket($data, $user, $idCard, $activate);
-        if (!empty($ans['tisket'])) {
-            return $ans['tisket'];
-        }
-        return '';
-
-    }
-
-    /**
-     * перевод средств на карту
-     * @param array $data
-     * @return array|mixed
-     */
-    public function transferToCard(array $data)
-    {
-
-        $queryData = [
-            'OrderID' => $data['IdPay'],
-            'Amount' => $data['summ'],
-            'Description' => 'Перевод на карту',
-        ];
-
-        if (isset($data['CardTo'])) {
-            $action = "/api/tcbpay/gate/registerordertoregisteredcard";
-            $queryData['CardRefID'] = $data['CardTo'];
-        } else {
-            $action = "/api/tcbpay/gate/registerordertounregisteredcard";
-            $queryData['CardInfo'] = [
-                'CardNumber' => strval($data['CardNum']),
-            ];
-        }
-
-        $queryData = Json::encode($queryData);
-
-        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
-
-        if (isset($ans['xml']) && !empty($ans['xml'])) {
-            $xml = $this->parseAns($ans['xml']);
-            if (isset($xml['Status']) && $xml['Status'] == '0') {
-                return ['status' => 1, 'transac' => $xml['ordernumber']];
-            }
-        }
-
-        return ['status' => 0, 'message' => ''];
-    }
-
-    public function transferToNdfl(array $data)
-    {
-        $action = "/nominal/psr";
-
-        $queryData = Json::encode($data);
-
-        $ans = $this->curlXmlReq($queryData,$this->bankUrlXml.$action);
-
-        if (isset($ans['xml']) && !empty($ans['xml'])) {
-            $xml = $this->parseAns($ans['xml']);
-            if (isset($xml['document']['status']) && $xml['document']['status'] == '0') {
-                return ['status' => 1, 'transac' => $xml['document']['id'] ?? 0, 'rrn' => $xml['document']['id'] ?? 0];
-            } else {
-                return ['status' => 0, 'message' => $xml['document']['comment'] ?? '', 'transac' => $xml['document']['number'] ?? 0];
-            }
-        }
-
-        return ['status' => 0, 'message' => 'Ошибка запроса'];
-    }
-
-    /**
-     * Запрос идентификации персоны
-     * @param int $id
-     * @param array $params
-     * @return array
-     */
-    public function personIndent($id, $params)
-    {
-        $action = "/api/government/identification/simplifiedpersonidentification";
-        $queryData = [
-            'ExtId' => $id,
-            'FirstName' => $params['nam'],
-            'LastName' => $params['fam'],
-            'Patronymic' => $params['otc'],
-            'Series' => strval($params['paspser']),
-            'Number' => strval($params['paspnum'])
-        ];
-
-        if (!empty($params['birth'])) {
-            $queryData['BirthDay'] = $params['birth'];
-        }
-        if (!empty($params['inn'])) {
-            $queryData['Inn'] = $params['inn'];
-        }
-        if (!empty($params['snils'])) {
-            $queryData['Snils'] = $params['snils'];
-        }
-        if (!empty($params['paspcode'])) {
-            $queryData['IssueData'] = $params['paspcode'];
-        }
-        if (!empty($params['paspdate'])) {
-            $queryData['IssueCode'] = $params['paspdate'];
-        }
-        if (!empty($params['paspvid'])) {
-            $queryData['Issuer'] = $params['paspvid'];
-        }
-        if (!empty($params['phone'])) {
-            $queryData['PhoneNumber'] = $params['phone'];
-        }
-
-        $queryData = Json::encode($queryData);
-
-        $addHead = [];
-        if (!empty($params['phonecode']) && !empty($param['OrderId'])) {
-            $addHead = ['TCB-Header-ConfirmationCode:' . $params['phonecode'] . ";OperationID"];
-        }
-
-        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action, $addHead);
-
-        if (isset($ans['xml']) && !empty($ans['xml'])) {
-            if (isset($ans['xml']['OrderId']) && !empty($ans['xml']['OrderId'])) {
-                return ['status' => 1, 'transac' => $ans['xml']['OrderId']];
-            }
-        }
-
-        return ['status' => 0, 'message' => ''];
-    }
-
-    /**
-     * Запрос результата идентификации персоны
-     * @param $id
-     * @return array
-     * @throws \Exception
-     */
-    public function personGetIndentResult($id)
-    {
-        $action = "/api/government/identification/simplifiedpersonidentificationresult";
-
-        $queryData = [
-            'ExtId' => $id
-        ];
-
-        $queryData = Json::encode($queryData);
-
-        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
-
-        if (isset($ans['xml']) && !empty($ans['xml'])) {
-            return ['status' => 1, 'result' => $ans['xml']];
-        }
-
-        return ['status' => 0, 'result' => ''];
-    }
-
-    /**
-     * Платеж с формой
-     * @param array $params
-     * @return array
-     */
-    public function formPayOnly(array $params)
-    {
-        $action = "/api/tcbpay/gate/registerorderfromunregisteredcard";
-
-        $queryData = [
-            'OrderID' => $params['IdPay'],
-            'Amount' => $params['summ'],
-            'Description' => 'Оплата по счету ' . $params['IdPay'],
-            'ReturnUrl' => $this->backUrls['ok'] . $params['IdPay'],
-            'ShowReturnButton' => false,
-            'TTL' => '00.00:' . $params['TimeElapsed'] . ':00',
-        ];
-
-        $queryData = Json::encode($queryData);
-
-        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
-
-        if (isset($ans['xml']) && !empty($ans['xml'])) {
-            $xml = $this->parseAns($ans['xml']);
-            if (isset($xml['Status']) && $xml['Status'] == '0') {
-                return ['status' => 1, 'transac' => $xml['ordernumber'], 'url' => $xml['formurl']];
-            }
-
-        }
-
-        return ['status' => 0, 'message' => ''];
-    }
-
-    /**
-     * Автоплатеж
-     * @param array $params
-     * @return array
-     */
-    public function createAutoPay(array $params)
-    {
-        $action = '/api/tcbpay/gate/registerdirectorderfromregisteredcard';
-
-        $queryData = [
-            'OrderID' => $params['IdPay'],
-            'CardRefID' => $params['CardFrom'],
-            'Amount' => $params['summ'],
-            'Description' => 'Оплата по счету ' . $params['IdPay']
-            //'StartDate' => ''
-        ];
-
-        $queryData = Json::encode($queryData);
-
-        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
-
-        if (isset($ans['xml']) && !empty($ans['xml'])) {
-            $xml = $this->parseAns($ans['xml']);
-            if (isset($xml['Status']) && $xml['Status'] == '0') {
-                return ['status' => 1, 'transac' => $xml['ordernumber']];
-            }
-
-        }
-
-        return ['status' => 0, 'message' => ''];
-    }
-
-    /**
-     * Платеж с сохраненной карты (new)
-     * @param array $params
-     * @return array
-     */
-    public function createRecurrentPay(array $params)
-    {
-        $action = '/api/v1/card/unregistered/debit/wof/no3ds';
-
-        $queryData = [
-            'ExtId' => $params['IdPay'],
-            'Amount' => $params['summ'],
-            'Description' => 'Оплата по счету ' . $params['IdPay'],
-            'CardInfo' => [
-                'CardNumber' => $params['card']['number'],
-                'CardHolder' => $params['card']['holder'],
-                'ExpirationYear' => (int)("20" . $params['card']['year']),
-                'ExpirationMonth' => (int)($params['card']['month'])
-            ]
-        ];
-
-        $queryData = Json::encode($queryData);
-
-        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
-
-        if (isset($ans['xml']) && !empty($ans['xml'])) {
-            $xml = $this->parseAns($ans['xml']);
-            if (isset($xml['ordernumber'])) {
-                return ['status' => 1, 'transac' => $xml['ordernumber']];
-            }
-
-        }
-
-        return ['status' => 0, 'message' => ''];
-    }
-
-
-    /**
-     * Баланс счета
-     * @return array
-     */
-    public function getBalance()
-    {
-        /*$action = '/api/tcbpay/gate/getbalance';
-
-        $ans = $this->curlXmlReq('{}', $this->bankUrl . $action);
-
-        if (isset($ans['xml']) && !empty($ans['xml'])) {
-            $xml = $this->parseAns($ans['xml']);
-            if (isset($xml['Status']) && $xml['Status'] == '0') {
-                return ['status' => 1, 'message' => '', 'amount' => $xml['balance']];
-            }
-        }
-
-        return ['status' => 0, 'message' => 'Ошибка запроса'];*/
-        return $this->getBalanceAcc(['account' => '']);
-    }
-
-    /**
      * Баланс счета
      * @param array $params
      * @return array
@@ -1542,6 +1241,7 @@ class TKBankAdapter implements IBankAdapter
             $payResponse = $this->createPay3DSv1($createPayForm, $check3DSVersionResponse);
         }
 
+        $payResponse->isNeed3DSRedirect = false;
         return $payResponse;
     }
 
@@ -1903,6 +1603,14 @@ class TKBankAdapter implements IBankAdapter
     public function getAftMinSum()
     {
         return self::AFT_MIN_SUMM;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getBalance(GetBalanceForm $getBalanceForm)
+    {
+        throw new GateException('Метод недоступен');
     }
 
     /**
