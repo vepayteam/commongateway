@@ -17,14 +17,6 @@ class ModelsMfoMfoSettingsTest extends \Codeception\Test\Unit
     {
     }
 
-    public function testReadUrl()
-    {
-        $mfoSettings = new MfoSettings();
-        $mfoSettings->IdPartner = 117;
-        $mfoSettings->ReadUrl();
-        $this->tester->assertEquals('http://processing.vepay.ru/c1.php', $mfoSettings->url);
-    }
-
     public function testSave()
     {
         $mfoSettings = new MfoSettings();
