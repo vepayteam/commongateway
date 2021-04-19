@@ -249,18 +249,6 @@ class TKBankAdapter implements IBankAdapter
                 return ['state' => $st, 'Status' => $st, 'message' => $msg];
 
             }
-            /*if (isset($ans['xml']) && !empty($ans['xml'])) {
-                //дополнительно проверить статус после отмены
-                $status = $this->checkStatusOrder($params);
-                $xml = $this->parseAns($ans['xml']);
-                if ($status['state'] == 2 || $status['state'] == 3) {
-                    //1 - оплачен, 2,3 - не оплачен
-                    $statusKode = 1;
-                } else {
-                    $statusKode = 0;
-                }
-                return ['state' => $statusKode, 'Status' => $xml['Status'], 'Message' => ''];
-            }*/
         }
         return ['state' => 0, 'Status' => '', 'message' => ''];
     }
@@ -327,12 +315,6 @@ class TKBankAdapter implements IBankAdapter
             }
 
             $queryData = Json::encode($queryData);
-
-            //$language = 'fullsize';
-            // определяем через что зашли - pageView = MOBILE
-            //if ($user->isMobile()) {
-            //$language = 'mob';
-            //}*/
 
             $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
 
@@ -1649,5 +1631,13 @@ class TKBankAdapter implements IBankAdapter
         }
 
         return $outAccountPayResponse;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function transferToCard(array $data)
+    {
+        // TODO: Implement transferToCard() method.
     }
 }

@@ -13,6 +13,7 @@ use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
+use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
@@ -27,7 +28,6 @@ use app\services\payment\forms\forta\CreatePayRequest;
 use app\services\payment\forms\forta\OutCardPayRequest;
 use app\services\payment\forms\forta\PaymentRequest;
 use app\services\payment\forms\forta\RefundPayRequest;
-use app\services\payment\forms\GetBalanceForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\RefundPayForm;
@@ -537,8 +537,80 @@ class FortaTechAdapter implements IBankAdapter
     /**
      * @inheritDoc
      */
+    public function confirmPay($idpay, $org = 0, $isCron = false)
+    {
+        // TODO: Implement confirmPay() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function transferToCard(array $data)
+    {
+        // TODO: Implement transferToCard() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function PayXml(array $params)
+    {
+        // TODO: Implement PayXml() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function PayApple(array $params)
+    {
+        // TODO: Implement PayApple() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function PayGoogle(array $params)
+    {
+        // TODO: Implement PayGoogle() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function PaySamsung(array $params)
+    {
+        // TODO: Implement PaySamsung() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function ConfirmXml(array $params)
+    {
+        // TODO: Implement ConfirmXml() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function reversOrder($IdPay)
+    {
+        // TODO: Implement reversOrder() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function getBalance(GetBalanceForm $getBalanceForm)
     {
-        throw new GateException('Метод недоступен');
+        // TODO: Implement getBalance() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function transferToAccount(OutPayaccForm $outPayaccForm)
+    {
+        // TODO: Implement transferToAccount() method.
     }
 }

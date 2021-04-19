@@ -30,8 +30,10 @@ use app\services\payment\forms\brs\XmlRequest;
 use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
+use app\services\payment\forms\GetBalanceForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
+use app\services\payment\forms\OutPayaccForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\forms\brs\CreatePayAftRequest;
 use app\services\payment\forms\brs\CreatePayByRegCardRequest;
@@ -110,22 +112,6 @@ class BRSAdapter implements IBankAdapter
     /**
      * @inheritDoc
      */
-    public function confirmPay($idpay, $org = 0, $isCron = false)
-    {
-        // TODO: Implement confirmPay() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function transferToCard(array $data)
-    {
-        // TODO: Implement transferToCard() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function createPay(CreatePayForm $createPayForm)
     {
         $uri = '/ecomm2/MerchantHandler';
@@ -183,54 +169,6 @@ class BRSAdapter implements IBankAdapter
         $createPayRequest->expiry = $createPayForm->CardYear . $createPayForm->CardMonth;
         $createPayRequest->cvc2 = $createPayForm->CardCVC;
         return $createPayRequest;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function PayXml(array $params)
-    {
-        // TODO: Implement PayXml() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function PayApple(array $params)
-    {
-        // TODO: Implement PayApple() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function PayGoogle(array $params)
-    {
-        // TODO: Implement PayGoogle() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function PaySamsung(array $params)
-    {
-        // TODO: Implement PaySamsung() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function ConfirmXml(array $params)
-    {
-        // TODO: Implement ConfirmXml() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function reversOrder($IdPay)
-    {
-        // TODO: Implement reversOrder() method.
     }
 
     /**
