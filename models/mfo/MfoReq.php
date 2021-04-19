@@ -134,7 +134,7 @@ class MfoReq
     public function getLinkOutCard($IdPay)
     {
         if (Yii::$app->params['DEVMODE'] == 'Y') {
-            return 'http://127.0.0.1:806/mfo/default/outcard/' . $IdPay;
+            return Yii::$app->params['domain'] . '/mfo/default/outcard/' . $IdPay;
         } elseif (Yii::$app->params['TESTMODE'] == 'Y') {
             return 'https://'.$_SERVER['SERVER_NAME'].'/mfo/default/outcard/' . $IdPay;
         } else {
