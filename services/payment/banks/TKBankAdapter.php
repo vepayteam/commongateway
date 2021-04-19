@@ -22,6 +22,7 @@ use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\traits\TKBank3DSTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
+use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
@@ -30,8 +31,10 @@ use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
+use app\services\payment\forms\GetBalanceForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
+use app\services\payment\forms\OutPayaccForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\forms\tkb\CheckStatusPayRequest;
 use app\services\payment\forms\tkb\Confirm3DSv2Request;
@@ -41,6 +44,7 @@ use app\services\payment\forms\tkb\DonePay3DSv2Request;
 use app\services\payment\forms\tkb\DonePayRequest;
 use app\services\payment\forms\tkb\OutCardPayRequest;
 use app\services\payment\forms\tkb\RefundPayRequest;
+use app\services\payment\forms\tkb\TransferToAccountRequest;
 use app\services\payment\interfaces\Cache3DSv2Interface;
 use app\services\payment\interfaces\Issuer3DSVersionInterface;
 use app\services\payment\models\PartnerBankGate;
@@ -1631,13 +1635,5 @@ class TKBankAdapter implements IBankAdapter
         }
 
         return $outAccountPayResponse;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function transferToCard(array $data)
-    {
-        // TODO: Implement transferToCard() method.
     }
 }
