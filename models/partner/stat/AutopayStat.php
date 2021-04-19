@@ -91,7 +91,10 @@ class AutopayStat extends Model
             $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
         $query->groupBy('c.ID');
-        $ret['activecards'] = $query->cache(30)->count();
+
+        $countResult = (new Query())->select(['count' => 'COUNT(ID)'])->from('cards')->where(['in', 'ID', $query])->cache(30)->one();
+
+        $ret['activecards'] = $countResult['count'];
 
         //Количество запросов на одну карту
         $query = new Query();
