@@ -143,6 +143,8 @@ use yii\web\UploadedFile;
 class Partner extends \yii\db\ActiveRecord
 {
     public const SCENARIO_SELFREG = 'selfreg';
+    public const VEPAY_ID = 1;
+
 
     public static $TypeContrag = ['Мерчант', 'Партнер'];
 
