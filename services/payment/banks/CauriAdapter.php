@@ -15,6 +15,7 @@ use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CreatePayException;
+use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\cauri\CheckStatusPayRequest;
 use app\services\payment\forms\cauri\CreatePayRequest;
@@ -23,6 +24,7 @@ use app\services\payment\forms\cauri\RecurrentPayRequest;
 use app\services\payment\forms\cauri\RefundPayRequest;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
+use app\services\payment\forms\GetBalanceForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\RefundPayForm;
@@ -467,5 +469,14 @@ class CauriAdapter implements IBankAdapter
     public function getAftMinSum(): int
     {
         return self::AFT_MIN_SUMM;
+    }
+
+
+    /**
+     * @inheritDoc
+     */
+    public function getBalance(GetBalanceForm $getBalanceForm)
+    {
+        throw new GateException('Метод недоступен');
     }
 }

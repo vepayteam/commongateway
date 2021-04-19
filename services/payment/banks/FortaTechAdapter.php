@@ -26,6 +26,7 @@ use app\services\payment\forms\forta\CreatePayRequest;
 use app\services\payment\forms\forta\OutCardPayRequest;
 use app\services\payment\forms\forta\PaymentRequest;
 use app\services\payment\forms\forta\RefundPayRequest;
+use app\services\payment\forms\GetBalanceForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\RefundPayForm;
@@ -589,5 +590,13 @@ class FortaTechAdapter implements IBankAdapter
     protected function parseResponse(string $response)
     {
         return Json::decode($response, true);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getBalance(GetBalanceForm $getBalanceForm)
+    {
+        throw new GateException('Метод недоступен');
     }
 }
