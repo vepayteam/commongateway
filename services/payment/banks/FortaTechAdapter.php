@@ -28,8 +28,10 @@ use app\services\payment\forms\forta\CreatePayRequest;
 use app\services\payment\forms\forta\OutCardPayRequest;
 use app\services\payment\forms\forta\PaymentRequest;
 use app\services\payment\forms\forta\RefundPayRequest;
+use app\services\payment\forms\GetBalanceForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
+use app\services\payment\forms\OutPayaccForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
@@ -532,70 +534,6 @@ class FortaTechAdapter implements IBankAdapter
     protected function parseResponse(string $response)
     {
         return Json::decode($response, true);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function confirmPay($idpay, $org = 0, $isCron = false)
-    {
-        // TODO: Implement confirmPay() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function transferToCard(array $data)
-    {
-        // TODO: Implement transferToCard() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function PayXml(array $params)
-    {
-        // TODO: Implement PayXml() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function PayApple(array $params)
-    {
-        // TODO: Implement PayApple() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function PayGoogle(array $params)
-    {
-        // TODO: Implement PayGoogle() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function PaySamsung(array $params)
-    {
-        // TODO: Implement PaySamsung() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function ConfirmXml(array $params)
-    {
-        // TODO: Implement ConfirmXml() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function reversOrder($IdPay)
-    {
-        // TODO: Implement reversOrder() method.
     }
 
     /**
