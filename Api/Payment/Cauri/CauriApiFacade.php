@@ -18,6 +18,11 @@ use Vepay\Gateway\Client\Response\ResponseInterface;
 use Yii;
 use yii\helpers\Json;
 
+/**
+ * TODO: move Facade to Cauri module
+ * Class CauriApiFacade
+ * @package app\Api\Payment\Cauri
+ */
 class CauriApiFacade
 {
 
