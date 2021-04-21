@@ -43,7 +43,6 @@ class AutopayStat extends Model
         }
 
         $ret = [
-            'cntcards' => 0,
             'cntnewcards' => 0,
             'activecards' => 0,
             'reqonecard' => 0,
