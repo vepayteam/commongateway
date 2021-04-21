@@ -53,6 +53,7 @@ class MfoOutPayaccStrategy
         $this->transferToAccountResponse = $bankAdapterBuilder->getBankAdapter()->transferToAccount($this->outPayaccForm);
 
         if($this->transferToAccountResponse->status == BaseResponse::STATUS_DONE) {
+            $this->outPayaccForm->paySchet->Status = BaseResponse::STATUS_DONE;
             $this->outPayaccForm->paySchet->ExtBillNumber = $this->transferToAccountResponse->trans;
             $this->outPayaccForm->paySchet->ErrorInfo = $this->transferToAccountResponse->message;
         } else {
