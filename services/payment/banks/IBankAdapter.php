@@ -4,6 +4,7 @@
 namespace app\services\payment\banks;
 
 
+use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
@@ -95,10 +96,10 @@ interface IBankAdapter
     public function getAftMinSum();
 
     /**
-     * @param GetBalanceForm $getBalanceForm
+     * @param GetBalanceRequest $getBalanceForm
      * @return GetBalanceResponse
      */
-    public function getBalance(GetBalanceForm $getBalanceForm);
+    public function getBalance(GetBalanceRequest $getBalanceForm);
 
 
 }

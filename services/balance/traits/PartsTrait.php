@@ -8,6 +8,9 @@ use app\models\PayschetPart;
 use app\services\balance\models\PartsBalanceForm;
 use app\services\balance\models\PartsBalancePartnerForm;
 
+/**
+ * @deprecated
+ */
 trait PartsTrait
 {
     /**

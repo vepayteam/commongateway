@@ -11,7 +11,9 @@ use app\models\payonline\Partner;
 use app\models\queue\JobPriorityInterface;
 use app\models\queue\ReceiveStatementsJob;
 use app\models\TU;
-use app\services\payment\models\PartnerBankGate;
+use app\services\payment\models\Bank;
+use app\services\payment\models\repositories\BankRepository;
+use app\services\payment\models\UslugatovarType;
 use Yii;
 use yii\db\Query;
 
@@ -28,6 +30,55 @@ class MfoBalance
     }
 
     /**
+     * @param int $partnerId
+     * @return array
+     */
+    public function getAllEnabledPartnerBankGatesId(int $partnerId): array
+    {
+        if (!$partnerId || !$this->Partner->getBankGates()) {
+            return [];
+        }
+        return $this->Partner->getBankGates()
+            ->select('BankId')
+            ->where([
+                'and',
+                ['PartnerId' => $partnerId],
+                ['Enable' => true],
+            ])
+            ->andWhere([
+                '!=', 'BankId', TCBank::$bank //TODO: remove when will be realised getBalance in adapter
+            ])
+            ->all();
+    }
+
+    /**
+     * @param int $partnerId
+     * @param int $isCustom
+     * @return array|\yii\db\ActiveRecord|null
+     */
+    public function getPartnersUslugatovarById(int $partnerId, int $isCustom = UslugatovarType::TOCARD)
+    {
+        return $this->Partner
+            ->getUslugatovars()
+            ->where([
+                'IDPartner' => $partnerId,
+                'IsCustom'  => $isCustom,
+                'IsDeleted' => 0,
+            ])
+            ->one();
+    }
+
+    /**
+     * @param int $bankId
+     * @return array|\yii\db\ActiveRecord|null
+     */
+    public function getBankById(int $bankId)
+    {
+        return BankRepository::getBankById($bankId);
+    }
+
+    /**
+     * @deprecated
      * Выписка по локальному счету
      * @param int $TypeAcc 0 - счет на выдачу 1 - счет на погашение 2 - номинальный счет
      * @param int $dateFrom
@@ -127,6 +178,7 @@ class MfoBalance
     }
 
     /**
+     * @deprecated
      * Баланс в ТКБ
      * @return mixed
      * @throws \yii\db\Exception

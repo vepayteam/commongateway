@@ -5,6 +5,7 @@ namespace app\services\payment\banks;
 
 
 use app\services\logs\loggers\CauriLogger;
+use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
@@ -15,7 +16,6 @@ use app\services\payment\forms\cauri\CheckStatusPayRequest;
 use app\services\payment\forms\cauri\OutCardPayRequest;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
-use app\services\payment\forms\GetBalanceForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\RefundPayForm;
@@ -199,7 +199,7 @@ class CauriAdapter implements IBankAdapter
     /**
      * @inheritDoc
      */
-    public function getBalance(GetBalanceForm $getBalanceForm)
+    public function getBalance(GetBalanceRequest $getBalanceForm)
     {
         throw new GateException('Метод недоступен');
     }

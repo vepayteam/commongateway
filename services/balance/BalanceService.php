@@ -11,6 +11,9 @@ use app\models\TU;
 use app\services\balance\traits\PartsTrait;
 use app\services\payment\models\PaySchet;
 
+/**
+ * @deprecated
+ */
 class BalanceService
 {
     use PartsTrait;
