@@ -599,6 +599,15 @@ components:
       name: X-Token
       description: Токен, формируется по алгоритму sha1(sha1(ключ) + sha1(тело запроса))
   schemas:
+    BankBalance:
+      type: object
+      properties:
+        amount:
+          type: number
+          description: Сумма баланса
+        currency:
+          type: string
+          description: Валюта баланса
     Part:
       type: object
       properties:
@@ -1019,7 +1028,13 @@ components:
           description: Сообщение ошибки
         amount:
           type: number
-          description: Сумма баланса
+          deprecated: true
+          description: Сумма баланса ()
+        balance:
+          type: array
+          description: Баланс банков
+          items:
+            $ref: "#/components/schemas/BankBalance"
     Error:
       type: object
       properties:
