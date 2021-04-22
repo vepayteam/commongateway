@@ -99,9 +99,6 @@ class VyvodVoznag extends Model
      */
     private function VyplataDirect($mfo)
     {
-        $PBKPOrg = 1;
-
-        $tr = Yii::$app->db->beginTransaction();
         Yii::$app->db->createCommand()->insert(
             'vyvod_system', [
                 'DateOp' => time(),
@@ -121,7 +118,6 @@ class VyvodVoznag extends Model
 
         $usl = $this->GetUslug();
         if (!$usl) {
-            $tr->rollBack();
             Yii::warning("VyvodVoznag: error mfo=" . $this->partner . " usl=" . $usl, "rsbcron");
             if ($this->isCron) {
                 echo "VyvodVoznag: error mfo=" . $this->partner . " usl=" . $usl . "\r\n";
@@ -142,12 +138,23 @@ class VyvodVoznag extends Model
         $mfoOutPayaccStrategy = new MfoVyvodVoznagStrategy($outPayaccForm);
         try {
             $paySchet = $mfoOutPayaccStrategy->exec();
+            $idpay = $paySchet->ID;
+
+            Yii::$app->db->createCommand()->update('vyvod_system', [
+                'IdPay' => $idpay
+            ],'`ID` = :ID', [':ID' => $id])->execute();
+
+            Yii::warning("VyvodVoznag: mfo=" . $this->partner . " idpay=" . $idpay, "rsbcron");
+            if ($this->isCron) {
+                echo "VyvodVoznag: mfo=" . $this->partner . " idpay=" . $idpay . "\r\n";
+            }
+
             if($paySchet->Status == PaySchet::STATUS_DONE) {
                 if ($this->isCron) {
                     echo "VyvodVoznag: mfo=" . $this->partner . ", transac=" . $paySchet->ExtBillNumber . "\r\n";
                     $this->SendMail($this->balance, $this->summ / 100.0,
                         $mfo->Name, $this->recviz['account'],
-                        $this->datefrom, $this->dateto, $paySchet->ID, $paySchet->ExtBillNumber);
+                        $this->datefrom, $this->dateto, $idpay, $paySchet->ExtBillNumber);
                 }
                 Yii::$app->db->createCommand()->update('vyvod_system', [
                     'SatateOp' => 1
