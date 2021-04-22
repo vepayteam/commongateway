@@ -106,6 +106,9 @@ class Uslugatovar extends \yii\db\ActiveRecord
 
     ];
 
+    // ID типов услуг с разбивкой
+    public static $PartsBalanceAccessCustoms = [110, 114, 116, 112, 102, 100, 119];
+
     /**
      * @inheritdoc
      */
