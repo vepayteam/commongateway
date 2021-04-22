@@ -125,6 +125,7 @@ class VyvodVoznag extends Model
             return 0;
         }
 
+
         $outPayaccForm = new OutPayAccountForm();
         $outPayaccForm->scenario = OutPayAccountForm::SCENARIO_UL;
         $outPayaccForm->partner = $mfo;
