@@ -129,36 +129,6 @@ class VyvodVoznag extends Model
             return 0;
         }
 
-        $pay = new CreatePay();
-        $Provparams = new Provparams;
-        $Provparams->prov = $usl;
-        $Provparams->param = [$this->recviz['account'], $this->recviz['bic'], $this->recviz['name'], $this->recviz['inn'], $this->recviz['kpp'], $descript];
-        $Provparams->summ = $this->summ;
-        $Provparams->Usluga = Uslugatovar::findOne(['ID' => $usl]);
-
-        $idpay = $pay->createPay($Provparams,0, 3, TCBank::$bank, $PBKPOrg, 'voznout'.$id, 0);
-
-        if (!$idpay) {
-            Yii::warning("VyvodSumPay: error mfo=" . $this->partner . " idpay=" . $idpay, "rsbcron");
-            if ($this->isCron) {
-                echo "VyvodVoznag: error mfo=" . $this->partner . " idpay=" . $idpay . "\r\n";
-            }
-            $tr->rollBack();
-            return 0;
-        }
-        $idpay = $idpay['IdPay'];
-
-        Yii::$app->db->createCommand()->update('vyvod_system', [
-            'IdPay' => $idpay
-        ],'`ID` = :ID', [':ID' => $id])->execute();
-
-        $tr->commit();
-
-        Yii::warning("VyvodVoznag: mfo=" . $this->partner . " idpay=" . $idpay, "rsbcron");
-        if ($this->isCron) {
-            echo "VyvodVoznag: mfo=" . $this->partner . " idpay=" . $idpay . "\r\n";
-        }
-
         $outPayaccForm = new OutPayAccountForm();
         $outPayaccForm->scenario = OutPayAccountForm::SCENARIO_UL;
         $outPayaccForm->partner = $mfo;
@@ -177,7 +147,7 @@ class VyvodVoznag extends Model
                     echo "VyvodVoznag: mfo=" . $this->partner . ", transac=" . $paySchet->ExtBillNumber . "\r\n";
                     $this->SendMail($this->balance, $this->summ / 100.0,
                         $mfo->Name, $this->recviz['account'],
-                        $this->datefrom, $this->dateto, $idpay, $paySchet->ExtBillNumber);
+                        $this->datefrom, $this->dateto, $paySchet->ID, $paySchet->ExtBillNumber);
                 }
                 Yii::$app->db->createCommand()->update('vyvod_system', [
                     'SatateOp' => 1
