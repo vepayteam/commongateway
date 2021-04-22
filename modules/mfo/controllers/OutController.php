@@ -23,7 +23,7 @@ use app\services\payment\exceptions\CardTokenException;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\OutCardPayForm;
-use app\services\payment\forms\OutPayaccForm;
+use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\models\PaySchet;
 use app\services\payment\payment_strategies\mfo\MfoOutCardStrategy;
 use app\services\payment\payment_strategies\mfo\MfoOutPayaccStrategy;
@@ -129,8 +129,8 @@ class OutController extends Controller
         $mfo = new MfoReq();
         $mfo->LoadData(Yii::$app->request->getRawBody());
 
-        $outPayaccForm = new OutPayaccForm();
-        $outPayaccForm->scenario = OutPayaccForm::SCENARIO_FL;
+        $outPayaccForm = new OutPayAccountForm();
+        $outPayaccForm->scenario = OutPayAccountForm::SCENARIO_FL;
         $outPayaccForm->load($mfo->Req(), '');
 
         if (!$outPayaccForm->validate()) {
@@ -165,8 +165,8 @@ class OutController extends Controller
         $mfo = new MfoReq();
         $mfo->LoadData(Yii::$app->request->getRawBody());
 
-        $outPayaccForm = new OutPayaccForm();
-        $outPayaccForm->scenario = OutPayaccForm::SCENARIO_UL;
+        $outPayaccForm = new OutPayAccountForm();
+        $outPayaccForm->scenario = OutPayAccountForm::SCENARIO_UL;
         $outPayaccForm->load($mfo->Req(), '');
 
         if (!$outPayaccForm->validate()) {

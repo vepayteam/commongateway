@@ -14,7 +14,7 @@ use app\models\SendEmail;
 use app\models\TU;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
-use app\services\payment\forms\OutPayaccForm;
+use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\models\PaySchet;
 use app\services\payment\payment_strategies\mfo\MfoOutPayaccStrategy;
 use app\services\payment\payment_strategies\mfo\MfoVyvodVoznagStrategy;
@@ -159,8 +159,9 @@ class VyvodVoznag extends Model
             echo "VyvodVoznag: mfo=" . $this->partner . " idpay=" . $idpay . "\r\n";
         }
 
-        $outPayaccForm = new OutPayaccForm();
-        $outPayaccForm->scenario = OutPayaccForm::SCENARIO_UL;
+        $outPayaccForm = new OutPayAccountForm();
+        $outPayaccForm->scenario = OutPayAccountForm::SCENARIO_UL;
+        $outPayaccForm->partner = $mfo;
         $outPayaccForm->account = $this->recviz['account'];
         $outPayaccForm->bic = $this->recviz['bic'];
         $outPayaccForm->amount = $this->summ;

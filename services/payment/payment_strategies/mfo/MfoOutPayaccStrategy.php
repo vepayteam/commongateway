@@ -11,21 +11,21 @@ use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
-use app\services\payment\forms\OutPayaccForm;
+use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 
 class MfoOutPayaccStrategy
 {
-    /** @var OutPayaccForm */
+    /** @var OutPayAccountForm */
     protected $outPayaccForm;
     /** @var TransferToAccountResponse */
     public $transferToAccountResponse;
 
     /**
-     * @param OutPayaccForm $outPayaccForm
+     * @param OutPayAccountForm $outPayaccForm
      */
-    public function __construct(OutPayaccForm $outPayaccForm)
+    public function __construct(OutPayAccountForm $outPayaccForm)
     {
         $this->outPayaccForm = $outPayaccForm;
     }

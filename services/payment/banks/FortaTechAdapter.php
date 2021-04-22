@@ -31,7 +31,7 @@ use app\services\payment\forms\forta\RefundPayRequest;
 use app\services\payment\forms\GetBalanceForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
-use app\services\payment\forms\OutPayaccForm;
+use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
@@ -547,7 +547,7 @@ class FortaTechAdapter implements IBankAdapter
     /**
      * @inheritDoc
      */
-    public function transferToAccount(OutPayaccForm $outPayaccForm)
+    public function transferToAccount(OutPayAccountForm $outPayaccForm)
     {
         // TODO: Implement transferToAccount() method.
     }

@@ -13,7 +13,7 @@ use app\models\Payschets;
 use app\models\TU;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
-use app\services\payment\forms\OutPayaccForm;
+use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\payment_strategies\mfo\MfoOutPayaccStrategy;
 use Yii;
 use yii\base\Model;
@@ -139,8 +139,9 @@ class PerevodToPartner extends Model
 
         $tr->commit();
 
-        $outPayaccForm = new OutPayaccForm();
-        $outPayaccForm->scenario = OutPayaccForm::SCENARIO_UL;
+        $outPayaccForm = new OutPayAccountForm();
+        $outPayaccForm->scenario = OutPayAccountForm::SCENARIO_UL;
+        $outPayaccForm->partner = $Partner;
         $outPayaccForm->account = $recviz['RS'];
         $outPayaccForm->bic = $recviz['BIK'];
         $outPayaccForm->amount = $sumPays;

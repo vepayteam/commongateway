@@ -20,7 +20,7 @@ use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\GetBalanceForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
-use app\services\payment\forms\OutPayaccForm;
+use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\helpers\ADGroupBankHelper;
 use app\services\payment\models\adb\ClientCardModel;
@@ -140,7 +140,7 @@ class ADGroupBankAdapter implements IBankAdapter
     /**
      * @inheritDoc
      */
-    public function transferToAccount(OutPayaccForm $outPayaccForm)
+    public function transferToAccount(OutPayAccountForm $outPayaccForm)
     {
         throw new GateException('Метод недоступен');
     }

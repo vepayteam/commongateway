@@ -9,7 +9,7 @@ use app\services\ident\traits\ErrorModelTrait;
 use app\services\payment\models\PaySchet;
 use yii\base\Model;
 
-class OutPayaccForm extends Model
+class OutPayAccountForm extends Model
 {
     const SCENARIO_UL = 'ul';
     const SCENARIO_FL = 'fl';
