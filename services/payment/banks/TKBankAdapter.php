@@ -951,10 +951,19 @@ class TKBankAdapter implements IBankAdapter
     }
 
     /**
-     * @inheritDoc
+     * @param GetBalanceRequest $getBalanceForm
+     * @return GetBalanceResponse
+     * @throws GateException
      */
-    public function getBalance(GetBalanceRequest $getBalanceForm)
+    public function getBalance(GetBalanceRequest $getBalanceForm): GetBalanceResponse
     {
-        throw new GateException('Метод недоступен');
+        $response = $this->getBalanceAcc(['account' => $getBalanceForm->account]);
+        if (!isset($response['amount']) && $response['status'] === 0) {
+            throw new GateException($response['message']);
+        }
+        $getBalanceResponse = new GetBalanceResponse();
+        $getBalanceResponse->amount = (float)$response['amount'];
+        $getBalanceResponse->currency = 'RUB'; //TODO: refactor to global currency
+        return $getBalanceResponse;
     }
 }

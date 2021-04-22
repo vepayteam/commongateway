@@ -5,6 +5,9 @@ use app\models\mfo\MfoReq;
 use app\models\payonline\Partner;
 use app\services\balance\Balance;
 use app\services\balance\response\BalanceResponse;
+use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
+use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
+use app\services\payment\models\Bank;
 
 class ServiceBalanceTest extends \Codeception\Test\Unit
 {
@@ -29,6 +32,10 @@ class ServiceBalanceTest extends \Codeception\Test\Unit
 
     public function testBalanceServiceInit()
     {
+        $this->balance->setAttributes([
+            'partner' => Partner::findOne(['ID' => 201])
+        ]);
+        $this->assertTrue($this->balance->validate());
         $this->assertInstanceOf(Balance::class, $this->balance);
         $this->assertClassHasAttribute('partner', Balance::class);
     }
@@ -40,7 +47,7 @@ class ServiceBalanceTest extends \Codeception\Test\Unit
     {
         $mfoRequest = new MfoReq();
         $this->balance->setAttributes([
-            'partner' => $this->partner
+            'partner' => Partner::findOne(['ID' => 201])
         ]);
         $buildBalance = $this->balance->build($mfoRequest);
         $this->assertInstanceOf(BalanceResponse::class, $buildBalance);
@@ -54,13 +61,9 @@ class ServiceBalanceTest extends \Codeception\Test\Unit
 
     public function testBalanceResponse()
     {
-        $response = new BalanceResponse();
-        $this->assertIsObject($response);
         $this->assertClassHasAttribute('balance', BalanceResponse::class);
-        $this->assertClassHasAttribute('hasError', BalanceResponse::class);
-        $this->assertIsBool(false, $response->hasError);
-        $this->assertIsBool(true, $response->hasError);
-        $this->assertEquals(false, $response->hasError);
+        $this->assertClassHasAttribute('status', BalanceResponse::class);
+        $this->assertClassHasAttribute('message', BalanceResponse::class);
     }
 
     public function testMfoBalanceInit()
@@ -70,4 +73,24 @@ class ServiceBalanceTest extends \Codeception\Test\Unit
         $this->assertClassHasAttribute('Partner', MfoBalance::class);
     }
 
+    public function testGetBalanceResponse()
+    {
+        $this->assertClassHasAttribute('currency', GetBalanceResponse::class);
+        $this->assertClassHasAttribute('amount', GetBalanceResponse::class);
+        $this->assertClassHasAttribute('base_amount', GetBalanceResponse::class);
+        $this->assertClassHasAttribute('rolling_reserve', GetBalanceResponse::class);
+        $this->assertClassHasAttribute('base_rolling_reserve', GetBalanceResponse::class);
+    }
+    public function testGetBalanceRequest()
+    {
+        $this->assertClassHasAttribute('currency', GetBalanceRequest::class);
+        $this->assertClassHasAttribute('account', GetBalanceRequest::class);
+    }
+
+    public function testBalanceTraitFormatRequest()
+    {
+        $bank = $this->getMockBuilder(Bank::class)->getMock();
+        $getBalanceRequest = $this->balance->formatRequest($bank);
+        $this->assertInstanceOf(GetBalanceRequest::class, $getBalanceRequest);
+    }
 }

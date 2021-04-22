@@ -16,7 +16,6 @@ class BankRepository
             ->where([
                 'ID' => $id
             ])
-            ->distinct()
             ->one();
     }
 }

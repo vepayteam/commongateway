@@ -2,17 +2,12 @@
 
 namespace app\modules\mfo\controllers;
 
-use app\models\bank\TcbGate;
-use app\models\mfo\MfoBalance;
 use app\models\payonline\Partner;
 use app\services\balance\Balance;
-use app\services\payment\models\repositories\BankRepository;
+use app\services\balance\response\BalanceResponse;
 use Yii;
 use app\models\api\CorsTrait;
-use app\models\bank\TCBank;
-use app\models\kfapi\KfBalance;
 use app\models\mfo\MfoReq;
-use yii\base\BaseObject;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\web\ForbiddenHttpException;
@@ -57,51 +52,25 @@ class AccountController extends Controller
      * Баланс счета
      * @return array
      * @throws BadRequestHttpException
+     * @throws ForbiddenHttpException
+     * @throws \yii\db\Exception
      * @throws \yii\web\UnauthorizedHttpException
-     * @throws \Exception
      */
-    public function actionBalance()
+    public function actionBalance(): array
     {
         $mfo = new MfoReq();
         $mfo->LoadData(Yii::$app->request->getRawBody());
         if (!$mfo->mfo) {
-            return ['status' => 0, 'message' => 'Партнер не найден'];
+            return ['status' => 0, 'message' => BalanceResponse::PARTNER_NOT_FOUND_ERROR_MSG];
         }
-
         $partner = Partner::findOne(['ID' => $mfo->mfo]);
-        $mfoBalance = new Balance();
-        $mfoBalance->setAttributes([
+        $balance = new Balance();
+        $balance->setAttributes([
             'partner' => $partner
         ]);
-        if (!$mfoBalance->validate()) {
-            return ['status' => 0, 'message' => 'Партнер не найден'];
+        if (!$balance->validate()) {
+            return ['status' => 0, 'message' => BalanceResponse::PARTNER_NOT_FOUND_ERROR_MSG];
         }
-        $allBanksBalance = $mfoBalance->getAllBanksBalance($mfo);
-
-        /** @deprecated TODO: move tkbBanks balance realisation to adapter getBalance method */
-        $kfBal = new KfBalance();
-        $kfBal->load($mfo->Req(), '');
-        if (empty($kfBal->account)) {
-            $kfBal->setAttributes([
-                'account' => $partner->SchetTcb
-            ]);
-        }
-        $bal = null;
-        $tkbBankBalance = [];
-        if ($kfBal->validate()) {
-            $bal = $kfBal->GetBalance($partner);
-            $tkbBank = BankRepository::getBankById(TCBank::$bank);
-            $tkbBankBalance[] = [
-                'amount' => $bal,
-                'currency' => 'RUB',
-                'bank_name' => $tkbBank->getName()
-            ];
-        }
-        return [
-            'status' => $allBanksBalance->status,
-            'message' => $allBanksBalance->message,
-            'amount' => $bal ? round($bal, 2) : null, /** @deprecated TODO: remove **/
-            'balance' => array_merge((array)$allBanksBalance->balance, $tkbBankBalance),
-        ];
+        return (array)$balance->getAllBanksBalance($mfo);
     }
 }

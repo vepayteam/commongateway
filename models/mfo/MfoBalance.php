@@ -8,10 +8,7 @@ use app\models\bank\TcbGate;
 use app\models\partner\admin\VoznagStat;
 use app\models\partner\stat\ExportExcel;
 use app\models\payonline\Partner;
-use app\models\queue\JobPriorityInterface;
 use app\models\queue\ReceiveStatementsJob;
-use app\models\TU;
-use app\services\payment\models\Bank;
 use app\services\payment\models\repositories\BankRepository;
 use app\services\payment\models\UslugatovarType;
 use Yii;
@@ -35,9 +32,6 @@ class MfoBalance
      */
     public function getAllEnabledPartnerBankGatesId(int $partnerId): array
     {
-        if (!$partnerId || !$this->Partner->getBankGates()) {
-            return [];
-        }
         return $this->Partner->getBankGates()
             ->select('BankId')
             ->where([
@@ -45,9 +39,7 @@ class MfoBalance
                 ['PartnerId' => $partnerId],
                 ['Enable' => true],
             ])
-            ->andWhere([
-                '!=', 'BankId', TCBank::$bank //TODO: remove when will be realised getBalance in adapter
-            ])
+            ->distinct()
             ->all();
     }
 

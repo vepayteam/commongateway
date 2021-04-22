@@ -8,15 +8,15 @@ use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
 use app\services\balance\response\BalanceResponse;
 use app\services\balance\traits\BalanceTrait;
-use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\IBankAdapter;
+use app\services\payment\exceptions\GateException;
 use Yii;
 use yii\base\Model;
 
 /**
  * TODO: rename to BalanceService
- * Class Balance
+ * Class Balance - Сервис для получния баланса МФО
  * @package app\services\balance
  */
 class Balance extends Model
@@ -29,7 +29,7 @@ class Balance extends Model
     /** @var Partner $partner */
     public $partner;
 
-    public function rules()
+    public function rules(): array
     {
         return [
             [['partner'], 'required']
@@ -41,8 +41,8 @@ class Balance extends Model
     private $mfoBalanceRepository;
 
     /**
-     * @param \app\models\mfo\MfoReq $mfoRequest
-     * @return \app\services\balance\response\BalanceResponse
+     * @param MfoReq $mfoRequest
+     * @return BalanceResponse
      */
     public function getAllBanksBalance(MfoReq $mfoRequest): BalanceResponse
     {
@@ -52,30 +52,29 @@ class Balance extends Model
     }
 
     /**
-     * @param \app\models\mfo\MfoReq $mfoRequest
-     * @return \app\services\balance\response\BalanceResponse
-     * @throws \app\services\payment\exceptions\GateException
+     * @param MfoReq $mfoRequest
+     * @return BalanceResponse
+     * @throws GateException
      */
     public function build(MfoReq $mfoRequest): BalanceResponse
     {
         $mfoBalanceRepository = new MfoBalance($this->partner);
         $partnerId = $mfoRequest->mfo;
-        // get partners all enabled gates
+        // Получаем все активные шлюзы
         $enabledBankGates = $mfoBalanceRepository->getAllEnabledPartnerBankGatesId($partnerId);
         if (!$enabledBankGates) {
             return $this->balanceError(BalanceResponse::BALANCE_UNAVAILABLE_ERROR_MSG);
         }
         $balanceList = [];
-        $this->uslugaTovar = $mfoBalanceRepository->getPartnersUslugatovarById($partnerId);
+        $this->uslugaTovar = $mfoBalanceRepository->getPartnersUslugatovarById($partnerId); //TODO: refactor remove
         foreach ($enabledBankGates as $activeGate) {
             $bank = $mfoBalanceRepository->getBankById($activeGate->BankId); // Current gate bank
             $bankAdapter = $this->buildAdapter($bank);
-            $getBalanceRequest = new GetBalanceRequest();
-            $getBalanceRequest->currency = 'RUB'; //todo add dynamic currency requests
+            $getBalanceRequest = $this->formatRequest($bank);
             try {
                 $getBalanceResponse = $bankAdapter->getBalance($getBalanceRequest);
             } catch (\Exception $exception) {
-                Yii::error('Service balance: ' . $exception->getMessage() . ' - PartnerId: ' . $partnerId);
+                Yii::error('Balance service: ' . $exception->getMessage() . ' - PartnerId: ' . $partnerId);
                 continue;
             }
             $bankBalanceResponse = array_filter((array)$getBalanceResponse);
@@ -95,8 +94,8 @@ class Balance extends Model
 
     /**
      * @param $bank
-     * @return \app\services\payment\banks\IBankAdapter
-     * @throws \app\services\payment\exceptions\GateException
+     * @return IBankAdapter
+     * @throws GateException
      */
     protected function buildAdapter($bank): IBankAdapter
     {
