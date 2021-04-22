@@ -226,7 +226,7 @@ class PartUserAccess extends \yii\db\ActiveRecord
 
     /**
      * Проверяет есть ли доступ к разделу меню "Баланс по разбивке"
-     * Если у партнера в услугах есть что-либо из $PartsBalanceAccessCustoms, то возвращаем true
+     * Если у партнера в услугах есть что-либо из PartsBalanceAccessCustoms, то возвращаем true
      * @return bool
      */
     public static function checkPartsBalanceAccess(): bool
@@ -237,7 +237,7 @@ class PartUserAccess extends \yii\db\ActiveRecord
         }
 
         $isFound = $partner->getUslugatovars()
-            ->where(['in', 'IsCustom', Uslugatovar::$PartsBalanceAccessCustoms])
+            ->where(['in', 'IsCustom', Uslugatovar::getPartsBalanceAccessCustoms()])
             ->one();
 
         return $isFound !== null;

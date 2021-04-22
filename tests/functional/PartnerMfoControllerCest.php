@@ -36,27 +36,27 @@ class PartnerMfoControllerCest
         return $this->getUser($partner);
     }
 
-    public function findPartnerWithPartsBalanceIdentity()
+    private function findPartnerWithPartsBalanceIdentity()
     {
         /** @var PartnerUsers $partner */
         $partner = PartnerUsers::find()
             ->where(['partner_users.IsDeleted' => 0, 'partner_users.IsActive' => 1, 'partner_users.IsAdmin' => 0])
             ->leftJoin('partner', 'partner.ID = partner_users.IdPartner AND partner.IsDeleted = 0 AND partner.IsBlocked = 0')
             ->leftJoin('uslugatovar', 'uslugatovar.IDPartner = partner_users.IdPartner')
-            ->where(['in', 'uslugatovar.IsCustom', Uslugatovar::$PartsBalanceAccessCustoms])
+            ->where(['in', 'uslugatovar.IsCustom', Uslugatovar::getPartsBalanceAccessCustoms()])
             ->one();
 
         return $this->getUser($partner);
     }
 
-    public function findPartnerWithoutPartsBalanceIdentity()
+    private function findPartnerWithoutPartsBalanceIdentity()
     {
         /** @var PartnerUsers $partner */
         $partner = PartnerUsers::find()
             ->where(['partner_users.IsDeleted' => 0, 'partner_users.IsActive' => 1, 'partner_users.IsAdmin' => 0])
             ->leftJoin('partner', 'partner.ID = partner_users.IdPartner AND partner.IsDeleted = 0 AND partner.IsBlocked = 0')
             ->leftJoin('uslugatovar', 'uslugatovar.IDPartner = partner_users.IdPartner')
-            ->where(['not in', 'uslugatovar.IsCustom', Uslugatovar::$PartsBalanceAccessCustoms])
+            ->where(['not in', 'uslugatovar.IsCustom', Uslugatovar::getPartsBalanceAccessCustoms()])
             ->one();
 
         return $this->getUser($partner);

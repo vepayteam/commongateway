@@ -3,6 +3,7 @@
 namespace app\models\payonline;
 
 use app\models\partner\admin\VoznagStat;
+use app\models\TU;
 use app\services\payment\models\UslugatovarType;
 use Yii;
 use yii\caching\TagDependency;
@@ -105,9 +106,6 @@ class Uslugatovar extends \yii\db\ActiveRecord
         119 => 'Перечисление по разбивке',
 
     ];
-
-    // ID типов услуг с разбивкой
-    public static $PartsBalanceAccessCustoms = [110, 114, 116, 112, 102, 100, 119];
 
     /**
      * @inheritdoc
@@ -251,5 +249,19 @@ class Uslugatovar extends \yii\db\ActiveRecord
             TagDependency::invalidate(Yii::$app->cache, VoznagStat::STAT_DAY_TAG_PREFIX . $this->ID);
         }
         return parent::save($runValidation, $attributeNames);
+    }
+
+    public static function getPartsBalanceAccessCustoms(): array
+    {
+        // ID типов услуг с разбивкой
+        return [
+            TU::$POGASHATFPARTS,
+            TU::$POGASHECOMPARTS,
+            TU::$AVTOPLATECOMPARTS,
+            TU::$AVTOPLATATFPARTS,
+            TU::$ECOMPARTS,
+            TU::$JKHPARTS,
+            TU::$VYVODPAYSPARTS,
+        ];
     }
 }
