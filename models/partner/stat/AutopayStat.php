@@ -62,7 +62,8 @@ class AutopayStat extends Model
         if ($IdPart > 0) {
             $query->andWhere('u.ExtOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
-        $ret['cntcards'] = $query->cache(30)->count();
+        $countResult = (new Query())->select(['count' => 'COUNT(ID)'])->from('cards')->where(['in', 'ID', $query])->cache(30)->one();
+        $ret['cntcards'] = $countResult['count'];
 
         //Количество новых карт
         $query = new Query();
@@ -75,7 +76,8 @@ class AutopayStat extends Model
         if ($IdPart > 0) {
             $query->andWhere('u.ExtOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
-        $ret['cntnewcards'] = $query->cache(30)->count();
+        $countResult = (new Query())->select(['count' => 'COUNT(ID)'])->from('cards')->where(['in', 'ID', $query])->cache(30)->one();
+        $ret['cntnewcards'] = $countResult['count'];
 
         //сколько активных привязанных карт
         $query = new Query();
@@ -106,7 +108,9 @@ class AutopayStat extends Model
         if ($IdPart > 0) {
             $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
-        $ret['reqcards'] = $query->cache(30)->count();
+
+        $countResult = (new Query())->select(['count' => 'COUNT(ID)'])->from('cards')->where(['in', 'ID', $query])->cache(30)->one();
+        $ret['reqcards'] = $countResult['count'];
 
         if ($ret['activecards'] > 0) {
             $ret['reqonecard'] = $ret['reqcards'] / $ret['activecards'] / ceil(($dateto + 1 - $datefrom) / (60 * 60 * 24));
@@ -126,7 +130,9 @@ class AutopayStat extends Model
         if ($IdPart > 0) {
             $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
-        $ret['payscards'] = $query->cache(30)->count();
+        $countResult = (new Query())->select(['count' => 'COUNT(ID)'])->from('cards')->where(['in', 'ID', $query])->cache(30)->one();
+
+        $ret['payscards'] = $countResult['count'];
         $ret['sumpayscards'] = $query->cache(30)->sum('SummPay');
 
         return $ret;
