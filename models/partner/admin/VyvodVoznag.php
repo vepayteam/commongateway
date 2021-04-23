@@ -12,12 +12,6 @@ use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\SendEmail;
 use app\models\TU;
-use app\services\payment\exceptions\CreatePayException;
-use app\services\payment\exceptions\GateException;
-use app\services\payment\forms\OutPayAccountForm;
-use app\services\payment\models\PaySchet;
-use app\services\payment\payment_strategies\mfo\MfoOutPayaccStrategy;
-use app\services\payment\payment_strategies\mfo\MfoVyvodVoznagStrategy;
 use yii\base\Model;
 use Yii;
 
@@ -99,6 +93,9 @@ class VyvodVoznag extends Model
      */
     private function VyplataDirect($mfo)
     {
+        $PBKPOrg = 1;
+
+        $tr = Yii::$app->db->beginTransaction();
         Yii::$app->db->createCommand()->insert(
             'vyvod_system', [
                 'DateOp' => time(),
@@ -118,6 +115,7 @@ class VyvodVoznag extends Model
 
         $usl = $this->GetUslug();
         if (!$usl) {
+            $tr->rollBack();
             Yii::warning("VyvodVoznag: error mfo=" . $this->partner . " usl=" . $usl, "rsbcron");
             if ($this->isCron) {
                 echo "VyvodVoznag: error mfo=" . $this->partner . " usl=" . $usl . "\r\n";
@@ -125,53 +123,80 @@ class VyvodVoznag extends Model
             return 0;
         }
 
+        $pay = new CreatePay();
+        $Provparams = new Provparams;
+        $Provparams->prov = $usl;
+        $Provparams->param = [$this->recviz['account'], $this->recviz['bic'], $this->recviz['name'], $this->recviz['inn'], $this->recviz['kpp'], $descript];
+        $Provparams->summ = $this->summ;
+        $Provparams->Usluga = Uslugatovar::findOne(['ID' => $usl]);
 
-        $outPayaccForm = new OutPayAccountForm();
-        $outPayaccForm->scenario = OutPayAccountForm::SCENARIO_UL;
-        $outPayaccForm->partner = $mfo;
-        $outPayaccForm->account = $this->recviz['account'];
-        $outPayaccForm->bic = $this->recviz['bic'];
-        $outPayaccForm->amount = $this->summ;
-        $outPayaccForm->name = $this->recviz['name'];
-        $outPayaccForm->inn = $this->recviz['inn'];
-        $outPayaccForm->descript = $descript;
+        $idpay = $pay->createPay($Provparams,0, 3, TCBank::$bank, $PBKPOrg, 'voznout'.$id, 0);
 
-        $mfoOutPayaccStrategy = new MfoVyvodVoznagStrategy($outPayaccForm);
-        try {
-            $paySchet = $mfoOutPayaccStrategy->exec();
-            $idpay = $paySchet->ID;
+        if (!$idpay) {
+            Yii::warning("VyvodSumPay: error mfo=" . $this->partner . " idpay=" . $idpay, "rsbcron");
+            if ($this->isCron) {
+                echo "VyvodVoznag: error mfo=" . $this->partner . " idpay=" . $idpay . "\r\n";
+            }
+            $tr->rollBack();
+            return 0;
+        }
+        $idpay = $idpay['IdPay'];
+
+        Yii::$app->db->createCommand()->update('vyvod_system', [
+            'IdPay' => $idpay
+        ],'`ID` = :ID', [':ID' => $id])->execute();
+
+        $tr->commit();
+
+        Yii::warning("VyvodVoznag: mfo=" . $this->partner . " idpay=" . $idpay, "rsbcron");
+        if ($this->isCron) {
+            echo "VyvodVoznag: mfo=" . $this->partner . " idpay=" . $idpay . "\r\n";
+        }
+
+        $TcbGate = new TcbGate($mfo->ID,($this->type == 1 || $mfo->IsCommonSchetVydacha) ? TCBank::$VYVODOCTGATE : TCBank::$VYVODGATE);
+        $bank = new TCBank($TcbGate);
+        $ret = $bank->transferToAccount([
+            'IdPay' => $idpay,
+            'account' => $this->recviz['account'],
+            'bic' => $this->recviz['bic'],
+            'summ' => $this->summ,
+            'name' => $this->recviz['name'],
+            'inn' => $this->recviz['inn'],
+            'descript' => $descript
+        ]);
+
+        if ($ret && $ret['status'] == 1) {
+            //сохранение номера транзакции
+            $payschets = new Payschets();
+            $payschets->SetBankTransact([
+                'idpay' => $idpay,
+                'trx_id' => $ret['transac'],
+                'url' => ''
+            ]);
+
+            Yii::warning("VyvodVoznag: mfo=" . $this->partner . ", transac=" . $ret['transac'], "rsbcron");
+            if ($this->isCron) {
+                echo "VyvodVoznag: mfo=" . $this->partner . ", transac=" . $ret['transac'] . "\r\n";
+            }
 
             Yii::$app->db->createCommand()->update('vyvod_system', [
-                'IdPay' => $idpay
+                'SatateOp' => 1
             ],'`ID` = :ID', [':ID' => $id])->execute();
 
-            Yii::warning("VyvodVoznag: mfo=" . $this->partner . " idpay=" . $idpay, "rsbcron");
             if ($this->isCron) {
-                echo "VyvodVoznag: mfo=" . $this->partner . " idpay=" . $idpay . "\r\n";
+                $this->SendMail($this->balance, $this->summ / 100.0,
+                    $mfo->Name, $this->recviz['account'],
+                    $this->datefrom, $this->dateto, $idpay, $ret['transac']);
             }
 
-            if($paySchet->Status == PaySchet::STATUS_DONE) {
-                if ($this->isCron) {
-                    echo "VyvodVoznag: mfo=" . $this->partner . ", transac=" . $paySchet->ExtBillNumber . "\r\n";
-                    $this->SendMail($this->balance, $this->summ / 100.0,
-                        $mfo->Name, $this->recviz['account'],
-                        $this->datefrom, $this->dateto, $idpay, $paySchet->ExtBillNumber);
-                }
-                Yii::$app->db->createCommand()->update('vyvod_system', [
-                    'SatateOp' => 1
-                ],'`ID` = :ID', [':ID' => $id])->execute();
-
-            } else {
-                Yii::$app->db->createCommand()->update('vyvod_system', [
-                    'SatateOp' => 2
-                ],'`ID` = :ID', [':ID' => $id])->execute();
-            }
-        } catch (\Exception $e) {
+        } else {
+            //не вывелось
             Yii::$app->db->createCommand()->update('vyvod_system', [
                 'SatateOp' => 2
             ],'`ID` = :ID', [':ID' => $id])->execute();
-            return 0;
+
         }
+
         return 1;
     }
 

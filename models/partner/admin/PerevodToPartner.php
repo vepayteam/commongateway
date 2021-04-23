@@ -11,10 +11,6 @@ use app\models\payonline\Provparams;
 use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\TU;
-use app\services\payment\exceptions\CreatePayException;
-use app\services\payment\exceptions\GateException;
-use app\services\payment\forms\OutPayAccountForm;
-use app\services\payment\payment_strategies\mfo\MfoOutPayaccStrategy;
 use Yii;
 use yii\base\Model;
 
@@ -55,6 +51,8 @@ class PerevodToPartner extends Model
      */
     public function CreatePerevod()
     {
+        $PBKPOrg = 1;
+
         $sumPays = round($this->Summ * 100.0);
         $dateFrom = strtotime('yesterday');
         $dateTo = strtotime('today') - 1;
@@ -91,6 +89,7 @@ class PerevodToPartner extends Model
             return ['status' => 0, 'message' => 'Недостаточно средств для перевода'];
         }
 
+        $tr = Yii::$app->db->beginTransaction();
         Yii::$app->db->createCommand()->insert(
             'vyvod_reestr', [
                 'DateOp' => time(),
@@ -115,40 +114,61 @@ class PerevodToPartner extends Model
             $recviz['NaznachenPlatez']
         );
 
-        $outPayaccForm = new OutPayAccountForm();
-        $outPayaccForm->scenario = OutPayAccountForm::SCENARIO_UL;
-        $outPayaccForm->partner = $Partner;
-        $outPayaccForm->account = $recviz['RS'];
-        $outPayaccForm->bic = $recviz['BIK'];
-        $outPayaccForm->amount = $sumPays;
-        $outPayaccForm->name = $recviz['NamePoluchat'];
-        $outPayaccForm->inn = $recviz['INNPolushat'];
-        $outPayaccForm->descript = $descript;
+        $pay = new CreatePay();
+        $Provparams = new Provparams;
+        $Provparams->prov = $usl;
+        $Provparams->param = [$recviz['RS'], $recviz['BIK'], $recviz['NamePoluchat'], $recviz['INNPolushat'], $recviz['KPPPoluchat'], $descript];
+        $Provparams->summ = $sumPays;
+        $Provparams->Usluga = Uslugatovar::findOne(['ID' => $usl]);
 
-        if (!$outPayaccForm->validate()) {
-            Yii::warning("out/payacc: " . $outPayaccForm->GetError(), 'mfo');
-            return ['status' => 0, 'message' => $outPayaccForm->GetError()];
+        $idpay = $pay->createPay($Provparams, 0, 3, TCBank::$bank, $PBKPOrg, 'reestr' . $id, 0);
+
+        if (!$idpay) {
+            $tr->rollBack();
+            return ['status' => 0, 'message' => 'Ошибка создания платежа'];
         }
-        $outPayaccForm->partner = $Partner;
+        $idpay = $idpay['IdPay'];
 
-        $mfoOutPayaccStrategy = new MfoOutPayaccStrategy($outPayaccForm);
-        try {
-            $paySchet = $mfoOutPayaccStrategy->exec();
-            $idpay = $paySchet->ID;
-            if (!$idpay) {
-                return ['status' => 0, 'message' => 'Ошибка создания платежа'];
-            }
+        Yii::$app->db->createCommand()->update('vyvod_reestr', [
+            'IdPay' => $idpay
+        ], '`ID` = :ID', [':ID' => $id])->execute();
+
+        $tr->commit();
+
+        $ret = $tkb->transferToAccount([
+            'IdPay' => $idpay,
+            'account' => $recviz['RS'],
+            'bic' => $recviz['BIK'],
+            'summ' => $sumPays,
+            'name' => $recviz['NamePoluchat'],
+            'inn' => $recviz['INNPolushat'],
+            'descript' => $descript
+        ]);
+
+        if ($ret && $ret['status'] == 1) {
+            //сохранение номера транзакции
+            $payschets = new Payschets();
+            $payschets->SetBankTransact([
+                'idpay' => $idpay,
+                'trx_id' => $ret['transac'],
+                'url' => ''
+            ]);
 
             Yii::$app->db->createCommand()->update('vyvod_reestr', [
-                'IdPay' => $idpay
+                'StateOp' => 1
             ], '`ID` = :ID', [':ID' => $id])->execute();
-        } catch (CreatePayException $e) {
-            return ['status' => 0, 'message' => $e->getMessage()];
-        } catch (GateException $e) {
-            return ['status' => 0, 'message' => $e->getMessage()];
-        }
 
-        return ['status' => 1, 'message' => 'Средства перечислены'];
+            return ['status' => 1, 'message' => 'Средства перечислены'];
+
+        } else {
+            //ошибка
+            $pay->CancelReq($idpay);
+            Yii::$app->db->createCommand()->update('vyvod_reestr', [
+                'StateOp' => 2
+            ], '`ID` = :ID', [':ID' => $id])->execute();
+
+            return ['status' => 0, 'message' => 'Ошибка отправки п/п в банк'];
+        }
     }
 
     /**
