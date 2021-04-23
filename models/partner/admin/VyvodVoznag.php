@@ -170,6 +170,7 @@ class VyvodVoznag extends Model
             Yii::$app->db->createCommand()->update('vyvod_system', [
                 'SatateOp' => 2
             ],'`ID` = :ID', [':ID' => $id])->execute();
+            return 0;
         }
         return 1;
     }
