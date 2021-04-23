@@ -234,6 +234,7 @@ class PayController extends Controller
         $usl = $kfPay->GetUslugAuto($mfo->mfo);
 
         if (!$usl || !$TcbGate->IsGate()) {
+            Yii::warning("pay/auto: нет шлюза. mfo=$mfo->mfo uslugatovarId=$usl bankId={$TcbGate->getBank()}");
             return ['status' => 0, 'message' => 'Нет шлюза'];
         }
 

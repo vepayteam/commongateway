@@ -41,7 +41,7 @@ class BankAdapterBuilder
             ])->orderBy('Priority DESC')->one();
 
         if (!$this->partnerBankGate) {
-            throw new GateException('Нет шлюза');
+            throw new GateException("Нет шлюза. partnerId=$partner->ID uslugatovarId=$uslugatovar->ID");
         }
 
         try {
@@ -74,7 +74,7 @@ class BankAdapterBuilder
             ])->orderBy('Priority DESC')->one();
 
         if (!$this->partnerBankGate) {
-            throw new GateException('Нет шлюза');
+            throw new GateException("Нет шлюза. partnerId=$partner->ID uslugatovarId=$uslugatovar->ID bankId=$bank->ID");
         }
 
         try {
