@@ -8,5 +8,5 @@ class TransactionStatusResponse extends BaseResponse
 {
     public $id;
     public $originalStatus = '';
-    public $userId;
+    public $userId = null;
 }

@@ -37,6 +37,7 @@ use Vepay\Gateway\Config;
 use Vepay\Gateway\Logger\Logger;
 use Vepay\Gateway\Logger\LoggerInterface;
 use Yii;
+use yii\helpers\Json;
 
 class CauriAdapter implements IBankAdapter
 {
@@ -118,8 +119,9 @@ class CauriAdapter implements IBankAdapter
             $transactionStatusResponse->status = $this->convertStatus($content['status']);
             $transactionStatusResponse->message = $content['reason'] ?? '';
             $transactionStatusResponse->id = $content['id']; // Transaction ID
-            $transactionStatusResponse->userId = $content['user']['id']; // Cauri user ID
-            $transactionStatusResponse->originalStatus = $content['originalStatus'];
+            if (isset($content['user']) && !empty($content['user']['id'])) {
+                $transactionStatusResponse->userId = $content['user']['id']; // Cauri user ID
+            }
         } catch (\Exception $e) {
             Yii::error(' CauriAdapter getTransactionStatus err:' . $e->getMessage());
             throw new BankAdapterResponseException(self::ERROR_MSG_REQUEST);
