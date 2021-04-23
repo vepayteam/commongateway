@@ -145,6 +145,7 @@ class OutController extends Controller
 
         $usl = $kfOut->GetUslug($mfo->mfo);
         if (!$usl || !$bankGate || !$bankGate->IsGate()) {
+            Yii::warning("out/payacc: нет шлюза. mfo=$mfo->mfo uslugatovarId=$usl bankId=$bank");
             return ['status' => 0, 'message' => 'Нет шлюза'];
         }
 
@@ -227,6 +228,7 @@ class OutController extends Controller
 
         $usl = $kfOut->GetUslug($mfo->mfo);
         if (!$usl || !$bankGate || !$bankGate->IsGate()) {
+            Yii::warning("out/payacc: нет шлюза. mfo=$mfo->mfo uslugatovarId=$usl bankId=$bank");
             return ['status' => 0, 'message' => 'Нет шлюза'];
         }
 
