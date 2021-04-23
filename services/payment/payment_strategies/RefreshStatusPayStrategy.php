@@ -42,7 +42,7 @@ class RefreshStatusPayStrategy extends OkPayStrategy
 
         // TODO: refact
         $partner = $paySchet->partner;
-        if($paySchet->partner == 1
+        if($paySchet->partner->ID == 1
             && in_array($paySchet->uslugatovar->IsCustom, [
                 TU::$VYPLATVOZN,
                 TU::$REVERSCOMIS,
