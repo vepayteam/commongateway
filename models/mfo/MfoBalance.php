@@ -32,7 +32,8 @@ class MfoBalance
      */
     public function getAllEnabledPartnerBankGatesId(int $partnerId): array
     {
-        return $this->Partner->getBankGates()
+        return $this->Partner
+            ->getBankGates()
             ->select('BankId')
             ->where([
                 'and',
@@ -97,6 +98,7 @@ class MfoBalance
     }
 
     /**
+     * @deprecated
      * Баланс МФО c ТКБ (новая временная реализация)
      * @TODO: Временное решение получения баланса, без обращения к базе для получения баланса счёта.
      *
@@ -223,6 +225,7 @@ class MfoBalance
                 $TcbGate = new TcbGate($this->Partner->ID, TCBank::$AFTGATE);
                 $tcBank = new TCBank($TcbGate);
 
+                //TODO: continue
                 if (!empty($this->Partner->SchetTcbNominal)) {
                     $bal = $tcBank->getBalanceAcc(['account' => $this->Partner->SchetTcbNominal]);
                     if ($bal && $bal['status'] == 1) {
