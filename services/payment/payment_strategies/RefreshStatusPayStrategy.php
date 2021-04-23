@@ -38,7 +38,6 @@ class RefreshStatusPayStrategy extends OkPayStrategy
     public function exec()
     {
         $paySchet = $this->okPayForm->getPaySchet();
-
         $bankAdapterBuilder = new BankAdapterBuilder();
 
         // TODO: refact
