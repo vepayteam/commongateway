@@ -51,8 +51,17 @@ class RefreshStatusPayStrategy extends OkPayStrategy
             )
             && !empty($paySchet->uslugatovar->ExtReestrIDUsluga)
         ) {
+            Yii::warning("RefreshStatusPayStrategy isVyvod ID=" . $this->okPayForm->IdPay);
             $partner = Partner::findOne(['ID' => $paySchet->uslugatovar->ExtReestrIDUsluga]);
         }
+
+        Yii::warning(sprintf(
+            "RefreshStatusPayStrategy beforeBuild ID=%d,  partnerId=%d, uslugaId=%d, bankId=%d",
+            $this->okPayForm->IdPay,
+            $partner->ID,
+            $paySchet->uslugatovar->ID,
+            $paySchet->bank->ID)
+        );
 
         $bankAdapterBuilder->buildByBank($partner, $paySchet->uslugatovar, $paySchet->bank);
 
