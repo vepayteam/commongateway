@@ -55,8 +55,6 @@ class PerevodToPartner extends Model
      */
     public function CreatePerevod()
     {
-        $PBKPOrg = 1;
-
         $sumPays = round($this->Summ * 100.0);
         $dateFrom = strtotime('yesterday');
         $dateTo = strtotime('today') - 1;
@@ -93,7 +91,6 @@ class PerevodToPartner extends Model
             return ['status' => 0, 'message' => 'Недостаточно средств для перевода'];
         }
 
-        $tr = Yii::$app->db->beginTransaction();
         Yii::$app->db->createCommand()->insert(
             'vyvod_reestr', [
                 'DateOp' => time(),
@@ -118,27 +115,6 @@ class PerevodToPartner extends Model
             $recviz['NaznachenPlatez']
         );
 
-        $pay = new CreatePay();
-        $Provparams = new Provparams;
-        $Provparams->prov = $usl;
-        $Provparams->param = [$recviz['RS'], $recviz['BIK'], $recviz['NamePoluchat'], $recviz['INNPolushat'], $recviz['KPPPoluchat'], $descript];
-        $Provparams->summ = $sumPays;
-        $Provparams->Usluga = Uslugatovar::findOne(['ID' => $usl]);
-
-        $idpay = $pay->createPay($Provparams, 0, 3, TCBank::$bank, $PBKPOrg, 'reestr' . $id, 0);
-
-        if (!$idpay) {
-            $tr->rollBack();
-            return ['status' => 0, 'message' => 'Ошибка создания платежа'];
-        }
-        $idpay = $idpay['IdPay'];
-
-        Yii::$app->db->createCommand()->update('vyvod_reestr', [
-            'IdPay' => $idpay
-        ], '`ID` = :ID', [':ID' => $id])->execute();
-
-        $tr->commit();
-
         $outPayaccForm = new OutPayAccountForm();
         $outPayaccForm->scenario = OutPayAccountForm::SCENARIO_UL;
         $outPayaccForm->partner = $Partner;
@@ -157,7 +133,15 @@ class PerevodToPartner extends Model
 
         $mfoOutPayaccStrategy = new MfoOutPayaccStrategy($outPayaccForm);
         try {
-            $mfoOutPayaccStrategy->exec();
+            $paySchet = $mfoOutPayaccStrategy->exec();
+            $idpay = $paySchet->ID;
+            if (!$idpay) {
+                return ['status' => 0, 'message' => 'Ошибка создания платежа'];
+            }
+
+            Yii::$app->db->createCommand()->update('vyvod_reestr', [
+                'IdPay' => $idpay
+            ], '`ID` = :ID', [':ID' => $id])->execute();
         } catch (CreatePayException $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
         } catch (GateException $e) {
