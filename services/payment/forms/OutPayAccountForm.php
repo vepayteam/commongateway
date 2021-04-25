@@ -56,4 +56,48 @@ class OutPayAccountForm extends Model
         ];
     }
 
+    /**
+     * @return mixed|string
+     */
+    public function getLastName()
+    {
+        return $this->getFioArray()[0];
+    }
+
+    /**
+     * @return mixed|string
+     */
+    public function getFirstName()
+    {
+        return $this->getFioArray()[1];
+    }
+
+    /**
+     * @return string
+     */
+    public function getMiddleName()
+    {
+        if(count($this->getFioArray()) < 3) {
+            return '';
+        }
+        return implode(' ', array_slice($this->getFioArray(), 2));
+    }
+
+    /**
+     * @return false|string[]|null
+     */
+    private function getFioArray()
+    {
+        if($this->scenario != self::SCENARIO_FL) {
+            return null;
+        }
+
+        $result = explode(' ', $this->fio);
+        if(count($result) < 2) {
+            return null;
+        } else {
+            return $result;
+        }
+    }
+
 }

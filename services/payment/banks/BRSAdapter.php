@@ -26,6 +26,7 @@ use app\services\payment\forms\brs\CheckStatusPayOutCardRequest;
 use app\services\payment\forms\brs\IXmlRequest;
 use app\services\payment\forms\brs\OutCardPayCheckRequest;
 use app\services\payment\forms\brs\OutCardPayRequest;
+use app\services\payment\forms\brs\TransferToAccountRequest;
 use app\services\payment\forms\brs\XmlRequest;
 use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
@@ -33,6 +34,7 @@ use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\GetBalanceForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
+use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\forms\brs\CreatePayAftRequest;
 use app\services\payment\forms\brs\CreatePayByRegCardRequest;
@@ -582,4 +584,82 @@ class BRSAdapter implements IBankAdapter
             throw new BankAdapterResponseException('Ошибка запроса: ' . $curlError);
         }
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function transferToAccount(OutPayAccountForm $outPayaccForm)
+    {
+        if($outPayaccForm->scenario != OutPayAccountForm::SCENARIO_FL) {
+            throw new GateException('Перечисление денежны средств фозможно только для физ. лиц');
+        }
+
+        $uri = '/eis-app/eis-rs/businessPaymentService/requestTransferB2c';
+        $transferToAccountRequest = new TransferToAccountRequest();
+        $transferToAccountRequest->bic = $outPayaccForm->bic;
+        $transferToAccountRequest->receiverId = $outPayaccForm->paySchet->ID;
+        $transferToAccountRequest->merchantId = $this->gate->Login;
+        $transferToAccountRequest->firstName = $outPayaccForm->getFirstName();
+        $transferToAccountRequest->lastName = $outPayaccForm->getLastName();
+        $transferToAccountRequest->middleName = $outPayaccForm->getLastName();
+        $transferToAccountRequest->amount = $outPayaccForm->amount;
+        $transferToAccountRequest->account = $outPayaccForm->account;
+        $transferToAccountRequest->sourceId = $outPayaccForm->paySchet->ID;
+
+        $requestData = $transferToAccountRequest->getAttributes();
+        $requestData['msgSign'] = $transferToAccountRequest->getMsgSign($this->gate);
+
+        $ans = $this->sendPostB2CRequest($uri, $requestData);
+        $a = 0;
+
+    }
+
+    /**
+     * @param string $uri
+     * @param array $data
+     * @return mixed|null
+     * @throws BankAdapterResponseException
+     */
+    protected function sendPostB2CRequest(string $uri, array $data)
+    {
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => $this->bankUrlB2C . $uri,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 120,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_SSL_VERIFYPEER => 0,
+            CURLOPT_SSL_VERIFYHOST => 0,
+            CURLOPT_SSLCERTTYPE => 'PEM',
+            CURLOPT_SSLKEYTYPE => 'PEM',
+            CURLOPT_SSLCERT => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.pem'),
+            CURLOPT_SSLKEY => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.key'),
+            CURLOPT_POSTFIELDS => Json::encode($data),
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'x-User-Login: ' . $this->gate->Login,
+            ],
+        ));
+
+        Yii::warning('BRSAdapter req POST uri=' . $uri . '; data=' . Json::encode($data));
+        $response = curl_exec($curl);
+        $curlError = curl_error($curl);
+        $info = curl_getinfo($curl);
+
+        if(empty($curlError) && $info['http_code'] == 200) {
+            $response = Json::decode($response, true);
+            Yii::warning('BRSAdapter ans POST uri=' . $uri .' : ' . Json::encode($response) . '; data=' . Json::encode($data));
+            return $response;
+        } else {
+            Yii::error('BRSAdapter error POST uri=' . $uri .'; status=' . $info['http_code'] . '; data=' . Json::encode($data));
+            throw new BankAdapterResponseException('Ошибка запроса: ' . $curlError);
+        }
+    }
+
+
 }

@@ -15,7 +15,7 @@ use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 
-class MfoOutPayaccStrategy
+class MfoOutPayAccountStrategy
 {
     /** @var OutPayAccountForm */
     protected $outPayaccForm;
