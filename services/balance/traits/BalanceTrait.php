@@ -3,6 +3,7 @@
 namespace app\services\balance\traits;
 
 use app\models\bank\TCBank;
+use app\services\balance\Balance;
 use app\services\balance\response\BalanceResponse;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 
@@ -26,13 +27,26 @@ trait BalanceTrait
      */
     public function formatRequest($bank): GetBalanceRequest
     {
-        $account = null;
+        $accounts = [];
         if ($bank->ID === TCBank::$bank) {
-            $account = $this->partner->SchetTcb;
+            $accounts = [
+                Balance::ACCOUNT_TYPE_PAY_OUT => $this->partner->SchetTcb,
+                Balance::ACCOUNT_TYPE_NOMINAL => $this->partner->SchetTcbNominal,
+                Balance::ACCOUNT_TYPE_PAY_IN => $this->partner->SchetTcbTransit,
+            ];
+
+            // Если счета: SchetTcb и SchetTcbTransit совпадают то выводим только счет на выдачу
+            if (
+                !empty($this->partner->SchetTcbTransit)
+                && $this->partner->SchetTcb === $this->partner->SchetTcbTransit
+            ) {
+                unset($accounts[Balance::ACCOUNT_TYPE_PAY_IN]);
+            }
         }
         $getBalanceRequest = new GetBalanceRequest();
         $getBalanceRequest->currency = 'RUB'; //TODO: add dynamic currency requests
-        $getBalanceRequest->account = $account;
+        $getBalanceRequest->bankName = $bank->getName();
+        $getBalanceRequest->accounts = array_filter($accounts);
         return $getBalanceRequest;
     }
 }

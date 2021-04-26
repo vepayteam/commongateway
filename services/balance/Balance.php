@@ -8,6 +8,7 @@ use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
 use app\services\balance\response\BalanceResponse;
 use app\services\balance\traits\BalanceTrait;
+use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\IBankAdapter;
 use app\services\payment\exceptions\GateException;
@@ -25,6 +26,9 @@ class Balance extends Model
 
     public const BALANCE_CACHE_PREFIX = 'balance_cache_partner_';
     public const BALANCE_CACHE_EXPIRE = 30; // in seconds
+    public const ACCOUNT_TYPE_PAY_OUT = 'account_pay_out'; //TODO: move to types
+    public const ACCOUNT_TYPE_PAY_IN = 'account_pay_in'; //TODO: move to types
+    public const ACCOUNT_TYPE_NOMINAL = 'account_nominal'; //TODO: move to types
 
     /** @var Partner $partner */
     public $partner;
@@ -65,30 +69,29 @@ class Balance extends Model
         if (!$enabledBankGates) {
             return $this->balanceError(BalanceResponse::BALANCE_UNAVAILABLE_ERROR_MSG);
         }
-        $balanceList = [];
+        $bankResponse = [];
         $this->uslugaTovar = $mfoBalanceRepository->getPartnersUslugatovarById($partnerId); //TODO: refactor remove
         foreach ($enabledBankGates as $activeGate) {
             $bank = $mfoBalanceRepository->getBankById($activeGate->BankId); // Current gate bank
             $bankAdapter = $this->buildAdapter($bank);
             $getBalanceRequest = $this->formatRequest($bank);
             try {
+                /** @var GetBalanceResponse */
                 $getBalanceResponse = $bankAdapter->getBalance($getBalanceRequest);
             } catch (\Exception $exception) {
                 Yii::error('Balance service: ' . $exception->getMessage() . ' - PartnerId: ' . $partnerId);
                 continue;
             }
-            $bankBalanceResponse = array_filter((array)$getBalanceResponse);
-            if (isset($bankBalanceResponse) && !empty($bankBalanceResponse)) {
-                $bankBalanceResponse['bank_name'] = $bank->getName();
-                $balanceList[] = $bankBalanceResponse;
+            if (isset($getBalanceResponse)) {
+                $bankResponse[] = $getBalanceResponse;
             }
         }
-        if (!$balanceList) {
+        if (!$bankResponse) {
             return $this->balanceError(BalanceResponse::BALANCE_UNAVAILABLE_ERROR_MSG);
         }
         $balanceResponse = new BalanceResponse();
         $balanceResponse->status = BalanceResponse::STATUS_DONE;
-        $balanceResponse->balance = $balanceList;
+        $balanceResponse->banks = $bankResponse;
         return $balanceResponse;
     }
 

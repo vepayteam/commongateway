@@ -61,7 +61,7 @@ class ServiceBalanceTest extends \Codeception\Test\Unit
 
     public function testBalanceResponse()
     {
-        $this->assertClassHasAttribute('balance', BalanceResponse::class);
+        $this->assertClassHasAttribute('banks', BalanceResponse::class);
         $this->assertClassHasAttribute('status', BalanceResponse::class);
         $this->assertClassHasAttribute('message', BalanceResponse::class);
     }
@@ -75,16 +75,12 @@ class ServiceBalanceTest extends \Codeception\Test\Unit
 
     public function testGetBalanceResponse()
     {
-        $this->assertClassHasAttribute('currency', GetBalanceResponse::class);
-        $this->assertClassHasAttribute('amount', GetBalanceResponse::class);
-        $this->assertClassHasAttribute('base_amount', GetBalanceResponse::class);
-        $this->assertClassHasAttribute('rolling_reserve', GetBalanceResponse::class);
-        $this->assertClassHasAttribute('base_rolling_reserve', GetBalanceResponse::class);
+        $this->assertClassHasAttribute('balance', GetBalanceResponse::class);
     }
     public function testGetBalanceRequest()
     {
         $this->assertClassHasAttribute('currency', GetBalanceRequest::class);
-        $this->assertClassHasAttribute('account', GetBalanceRequest::class);
+        $this->assertClassHasAttribute('accounts', GetBalanceRequest::class);
     }
 
     public function testBalanceTraitFormatRequest()

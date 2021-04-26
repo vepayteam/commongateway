@@ -7,8 +7,10 @@ use yii\base\Model;
 class GetBalanceRequest extends Model
 {
     //TODO: check with different $currency ISO format & if bank will respond in all currencies at one time
-    /** @var string $account */
+    /** @var string $currency */
     public $currency = null;
-    /** @var string $account */
-    public $account = null;
+    /** @var array $accounts */
+    public $accounts = [];
+    /** @var string $bankName */
+    public $bankName;
 }

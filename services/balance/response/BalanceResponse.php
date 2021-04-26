@@ -14,7 +14,7 @@ class BalanceResponse
     /** @var string */
     public $message = '';
     /** @var array */
-    public $balance;
+    public $banks;
     /** @deprecated TODO: remove */
     public $amount = null;
 }
