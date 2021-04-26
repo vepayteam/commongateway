@@ -26,9 +26,9 @@ class Balance extends Model
 
     public const BALANCE_CACHE_PREFIX = 'balance_cache_partner_';
     public const BALANCE_CACHE_EXPIRE = 30; // in seconds
-    public const ACCOUNT_TYPE_PAY_OUT = 'account_pay_out'; //TODO: move to types
-    public const ACCOUNT_TYPE_PAY_IN = 'account_pay_in'; //TODO: move to types
-    public const ACCOUNT_TYPE_NOMINAL = 'account_nominal'; //TODO: move to types
+    public const BALANCE_TYPE_PAY_OUT = 'pay_out'; //TODO: move to types
+    public const BALANCE_TYPE_PAY_IN = 'pay_in'; //TODO: move to types
+    public const BALANCE_TYPE_NOMINAL = 'nominal'; //TODO: move to types
 
     /** @var Partner $partner */
     public $partner;

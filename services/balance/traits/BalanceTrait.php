@@ -30,9 +30,9 @@ trait BalanceTrait
         $accounts = [];
         if ($bank->ID === TCBank::$bank) {
             $accounts = [
-                Balance::ACCOUNT_TYPE_PAY_OUT => $this->partner->SchetTcb,
-                Balance::ACCOUNT_TYPE_NOMINAL => $this->partner->SchetTcbNominal,
-                Balance::ACCOUNT_TYPE_PAY_IN => $this->partner->SchetTcbTransit,
+                Balance::BALANCE_TYPE_PAY_OUT => $this->partner->SchetTcb,
+                Balance::BALANCE_TYPE_NOMINAL => $this->partner->SchetTcbNominal,
+                Balance::BALANCE_TYPE_PAY_IN => $this->partner->SchetTcbTransit,
             ];
 
             // Если счета: SchetTcb и SchetTcbTransit совпадают то выводим только счет на выдачу
@@ -40,7 +40,7 @@ trait BalanceTrait
                 !empty($this->partner->SchetTcbTransit)
                 && $this->partner->SchetTcb === $this->partner->SchetTcbTransit
             ) {
-                unset($accounts[Balance::ACCOUNT_TYPE_PAY_IN]);
+                unset($accounts[Balance::BALANCE_TYPE_PAY_IN]);
             }
         }
         $getBalanceRequest = new GetBalanceRequest();
