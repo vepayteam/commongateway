@@ -192,7 +192,7 @@ class CauriAdapter implements IBankAdapter
             $createPayResponse->pa = $content['acs']['parameters']['PaReq'];
         } catch (\Exception $e) {
             Yii::error('CauriAdapter payInCreate err: ' . $e->getMessage());
-            throw new CreatePayException(self::ERROR_MSG_REQUEST .': ' . $e->getMessage());
+            throw new CreatePayException(self::ERROR_MSG_REQUEST . ': ' . $e->getMessage());
         }
 
         return $createPayResponse;
@@ -234,7 +234,7 @@ class CauriAdapter implements IBankAdapter
     {
         return [
             'ip' => Yii::$app->request->remoteIP,
-            'identifier' => $paySchet->ID, //TODO: Solve unique identifier
+            'identifier' => $paySchet->ID, // Unique identifier
         ];
     }
 
@@ -246,7 +246,6 @@ class CauriAdapter implements IBankAdapter
     private function getResolveUser(PaySchet $paySchet): CauriResolveUserResponse
     {
         $data = $this->formatResolveUserRequest($paySchet);
-        //TODO: Solve saving user->id to db
         $userResolveRequest = new UserResolveRequest($data);
         $userResponse = new CauriResolveUserResponse();
 
@@ -325,7 +324,7 @@ class CauriAdapter implements IBankAdapter
     public function checkStatusPay(OkPayForm $okPayForm): CheckStatusPayResponse
     {
         $checkStatusPayRequest = new CheckStatusPayRequest();
-        $checkStatusPayRequest->id = $okPayForm->getPaySchet()->ExtBillNumber; //TODO: check ID $okPayForm->IdPay
+        $checkStatusPayRequest->id = $okPayForm->getPaySchet()->ExtBillNumber;
         $transactionResponse = $this->getTransactionStatus($checkStatusPayRequest);
         $checkStatusPayResponse = new CheckStatusPayResponse();
         $checkStatusPayResponse->status = $transactionResponse->status;

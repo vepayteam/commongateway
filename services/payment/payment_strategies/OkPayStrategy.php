@@ -112,7 +112,7 @@ class OkPayStrategy
                     && in_array($paySchet->uslugatovar->IsCustom, [TU::$JKH, TU::$ECOM])
                 )
             )
-            && isset($checkStatusPayResponse->cardRefId);
+            && $checkStatusPayResponse->hasCardsData();
     }
 
     /**
