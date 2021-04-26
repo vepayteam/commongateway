@@ -23,6 +23,7 @@ use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\models\PartnerBankGate;
 use Vepay\Cauri\Client\Request\PayoutCreateRequest;
+use Vepay\Cauri\Resource\Balance;
 use Vepay\Cauri\Resource\Payout;
 use Vepay\Cauri\Resource\Transaction;
 use Vepay\Gateway\Client\Validator\ValidationException;
@@ -201,21 +202,21 @@ class CauriAdapter implements IBankAdapter
 
     /**
      * @inheritDoc
-     * @throws \app\services\payment\exceptions\BankAdapterResponseException
+     * @throws BankAdapterResponseException
      */
     public function getBalance(GetBalanceForm $getBalanceForm): GetBalanceResponse
     {
         $getBalanceRequest = new GetBalanceRequest();
         $getBalanceResponse = new GetBalanceResponse();
         try {
-            //todo get Balance from API
-            $response = [
-                "amount" => "100.00",
-                "rolling_reserve" => "0.20",
-                "currency" => "USD",
-                "base_amount" => "1286.27",
-                "base_rolling_reserve" => "0.00",
-            ];
+            //TODO: move to Cauri API facade
+            $balance = new Balance();
+            $response = $balance->__call('getBalance', [
+                $getBalanceRequest->getAttributes(), [
+                    'public_key' => $this->gate->Login,
+                    'private_key' => $this->gate->Token,
+                ]
+            ]);
         } catch (\Exception $e) {
             throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
         }
