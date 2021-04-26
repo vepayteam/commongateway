@@ -953,17 +953,28 @@ class TKBankAdapter implements IBankAdapter
     /**
      * @param GetBalanceRequest $getBalanceForm
      * @return GetBalanceResponse
-     * @throws GateException
      */
     public function getBalance(GetBalanceRequest $getBalanceForm): GetBalanceResponse
     {
-        $response = $this->getBalanceAcc(['account' => $getBalanceForm->account]);
-        if (!isset($response['amount']) && $response['status'] === 0) {
-            throw new GateException($response['message']);
-        }
+        $request = [];
         $getBalanceResponse = new GetBalanceResponse();
-        $getBalanceResponse->amount = (float)$response['amount'];
-        $getBalanceResponse->currency = 'RUB'; //TODO: refactor to global currency
+        $getBalanceResponse->bank_name = $getBalanceForm->bankName;
+        if (empty($getBalanceForm->accounts)) {
+            return $getBalanceResponse;
+        }
+        foreach ($getBalanceForm->accounts as $type => $account) {
+            $request['account'] = $account;
+            $response = $this->getBalanceAcc($request);
+            if (!isset($response['amount']) && $response['status'] === 0) {
+                Yii::warning("Balance service:: TKB request failed for type: $type message: " . $response['message']);
+                continue;
+            }
+            array_push($getBalanceResponse->balance, [
+                'amount' => (float)$response['amount'],
+                'currency' => 'RUB',
+                'account_type' => $type,
+            ]);
+        }
         return $getBalanceResponse;
     }
 }
