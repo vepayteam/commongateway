@@ -16,6 +16,7 @@ use app\services\partners\models\PartnerOption;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\BRSAdapter;
 use app\services\payment\forms\AutoPayForm;
+use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\SetPayOkForm;
 use app\services\payment\jobs\RecurrentPayJob;
 use app\services\payment\jobs\RefundPayJob;
@@ -330,5 +331,31 @@ class PaymentService
             return $brsAdapter->getBankReceiver();
         }, 60 * 60 * 24);
         return $data;
+    }
+
+    /**
+     * @param OutPayAccountForm $outPayAccountForm
+     * @return mixed
+     * @throws exceptions\GateException
+     */
+    public function checkSbpCanTransfer(OutPayAccountForm $outPayAccountForm)
+    {
+        // TODO: DRY
+        $uslugatovar = Uslugatovar::findOne([
+            'IDPartner' => $outPayAccountForm->partner->ID,
+            'IsCustom' => TU::$TOSCHET,
+            'IsDeleted' => 0,
+        ]);
+        $brsBank = Bank::findOne([
+            'ID' => BRSAdapter::$bank,
+        ]);
+
+        $bankAdapterBuilder = new BankAdapterBuilder();
+        $bankAdapterBuilder->buildByBank($outPayAccountForm->partner, $uslugatovar, $brsBank);
+
+        /** @var BRSAdapter $brsBankAdapter */
+        $brsAdapter = $bankAdapterBuilder->getBankAdapter();
+
+        return $brsAdapter->checkTransfetB2C($outPayAccountForm);
     }
 }
