@@ -189,6 +189,7 @@ class FortaTechAdapter implements IBankAdapter
             $paidCount = 0;
             foreach ($transferParts as $transferPart) {
                 if($transferPart['status'] == 'STATUS_ERROR') {
+                    $errorData .= Json::encode($transferPart) . "\n";
                     $errorsCount++;
                 } elseif ($transferPart['status'] == 'STATUS_INIT') {
                     $initCount++;
@@ -205,7 +206,8 @@ class FortaTechAdapter implements IBankAdapter
                 $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
             } elseif ($initCount === 0) {
                 // если части платежей с ошибками и успешны
-                $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
+                $checkStatusPayResponse->status = BaseResponse::STATUS_CREATED;
+                $checkStatusPayResponse->message = mb_substr($errorData, 0, 250);
             } else {
                 $checkStatusPayResponse->status = BaseResponse::STATUS_CREATED;
             }
