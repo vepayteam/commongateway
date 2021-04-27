@@ -174,7 +174,7 @@ class OutController extends Controller
             $mutex->release('getPaySchetExt' . $kfOut->extid);
         }
         $params['name'] = $kfOut->fio;
-        $params['inn'] = '';
+        $params['inn'] = $kfOut->inn;
         $params['bic'] = $kfOut->bic;
         $params['account'] = $kfOut->account;
         $params['descript'] = $kfOut->descript;
