@@ -628,7 +628,7 @@ class BRSAdapter implements IBankAdapter
         $transferToAccountRequest = new TransferToAccountRequest();
         $transferToAccountRequest->bic = $outPayaccForm->bic;
         $transferToAccountRequest->receiverId = (string)$outPayaccForm->paySchet->ID;
-        $transferToAccountRequest->merchantId = $this->gate->Login;
+        $transferToAccountRequest->merchantId = $this->gate->Token;
         $transferToAccountRequest->firstName = $outPayaccForm->getFirstName();
         $transferToAccountRequest->lastName = $outPayaccForm->getLastName();
         $transferToAccountRequest->middleName = $outPayaccForm->getLastName();
@@ -713,12 +713,12 @@ class BRSAdapter implements IBankAdapter
      */
     public function checkTransfetB2C(OutPayAccountForm $outPayaccForm)
     {
-        $uri = '/eis-app/eis-rs/businessPaymentService/requestTransferB2c';
+        $uri = '/eis-app/eis-rs/businessPaymentService/checkTransferB2c';
         $id = Yii::$app->security->generateRandomString(16);
         $transferToAccountRequest = new TransferToAccountRequest();
         $transferToAccountRequest->bic = $outPayaccForm->bic;
         $transferToAccountRequest->receiverId = $id;
-        $transferToAccountRequest->merchantId = $this->gate->Login;
+        $transferToAccountRequest->merchantId = $this->gate->Token;
         $transferToAccountRequest->firstName = $outPayaccForm->getFirstName();
         $transferToAccountRequest->lastName = $outPayaccForm->getLastName();
         $transferToAccountRequest->middleName = $outPayaccForm->getLastName();
