@@ -27,6 +27,7 @@ class CreatePayResponse extends BaseResponse
     public $termurl;
     public $doneurl;
     public $creq;
+    public $threeDSServerTransID = '';
 
     /**
      * @param int $paySchetId
