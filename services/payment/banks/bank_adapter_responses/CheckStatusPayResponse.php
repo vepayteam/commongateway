@@ -13,6 +13,10 @@ class CheckStatusPayResponse extends BaseResponse
     public $expMonth;
     public $cardHolder;
 
+    /**
+     * Проверка полученных карточных данных
+     * @return array[]
+     */
     public function rules(): array
     {
         return [
@@ -20,14 +24,5 @@ class CheckStatusPayResponse extends BaseResponse
             [['expYear', 'expMonth'], 'required'],
             [['cardHolder'], 'required'],
         ];
-    }
-
-    /**
-     * Проверка получения карточных данных
-     * @return bool
-     */
-    public function hasCardsData(): bool
-    {
-        return $this->validate();
     }
 }
