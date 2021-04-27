@@ -26,6 +26,7 @@ class BankAdapterBuilder
     /**
      * @param Partner $partner
      * @param Uslugatovar $uslugatovar
+     * @return BankAdapterBuilder
      * @throws GateException
      */
     public function build(Partner $partner, Uslugatovar $uslugatovar)
@@ -42,15 +43,7 @@ class BankAdapterBuilder
         if (!$this->partnerBankGate) {
             throw new GateException("Нет шлюза. partnerId=$partner->ID uslugatovarId=$uslugatovar->ID");
         }
-
-        try {
-            $this->bankAdapter = Banks::getBankAdapter($this->partnerBankGate->BankId);
-        } catch (\Exception $e) {
-            throw new GateException($e->getMessage());
-        }
-
-        $this->bankAdapter->setGate($this->partnerBankGate);
-        return $this;
+        return $this->process();
     }
 
     /**
@@ -75,13 +68,43 @@ class BankAdapterBuilder
         if (!$this->partnerBankGate) {
             throw new GateException("Нет шлюза. partnerId=$partner->ID uslugatovarId=$uslugatovar->ID bankId=$bank->ID");
         }
+        return $this->process();
+    }
 
+    /**
+     * @param Partner $partner
+     * @param Bank $bank
+     * @return $this
+     * @throws GateException
+     */
+    public function buildByBankId(Partner $partner, Bank $bank): BankAdapterBuilder
+    {
+        $this->partner = $partner;
+        $this->partnerBankGate = $partner
+            ->getBankGates()
+            ->where([
+                'BankId' => $bank->ID,
+                'Enable' => 1
+            ])
+            ->orderBy('Priority DESC')
+            ->one();
+
+        if (!$this->partnerBankGate) {
+            throw new GateException("Нет шлюза. partnerId=$partner->ID bankId=$bank->ID");
+        }
+        return $this->process();
+    }
+
+    /**
+     * @throws GateException
+     */
+    protected function process(): BankAdapterBuilder
+    {
         try {
             $this->bankAdapter = Banks::getBankAdapter($this->partnerBankGate->BankId);
         } catch (\Exception $e) {
             throw new GateException($e->getMessage());
         }
-
         $this->bankAdapter->setGate($this->partnerBankGate);
         return $this;
     }

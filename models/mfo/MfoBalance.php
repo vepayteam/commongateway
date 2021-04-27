@@ -1,6 +1,5 @@
 <?php
 
-
 namespace app\models\mfo;
 
 use app\models\bank\TCBank;
@@ -9,7 +8,6 @@ use app\models\partner\admin\VoznagStat;
 use app\models\partner\stat\ExportExcel;
 use app\models\payonline\Partner;
 use app\models\queue\ReceiveStatementsJob;
-use app\services\payment\models\repositories\BankRepository;
 use app\services\payment\models\UslugatovarType;
 use Yii;
 use yii\db\Query;
@@ -38,7 +36,7 @@ class MfoBalance
             ->where([
                 'and',
                 ['PartnerId' => $partnerId],
-                ['Enable' => true],
+                ['Enable' => 1],
             ])
             ->distinct()
             ->all();
@@ -59,15 +57,6 @@ class MfoBalance
                 'IsDeleted' => 0,
             ])
             ->one();
-    }
-
-    /**
-     * @param int $bankId
-     * @return array|\yii\db\ActiveRecord|null
-     */
-    public function getBankById(int $bankId)
-    {
-        return BankRepository::getBankById($bankId);
     }
 
     /**

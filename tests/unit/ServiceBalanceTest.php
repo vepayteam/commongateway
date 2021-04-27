@@ -33,7 +33,7 @@ class ServiceBalanceTest extends \Codeception\Test\Unit
     public function testBalanceServiceInit()
     {
         $this->balance->setAttributes([
-            'partner' => Partner::findOne(['ID' => 201])
+            'partner' => Partner::findOne(['ID' => 123])
         ]);
         $this->assertTrue($this->balance->validate());
         $this->assertInstanceOf(Balance::class, $this->balance);
@@ -47,16 +47,20 @@ class ServiceBalanceTest extends \Codeception\Test\Unit
     {
         $mfoRequest = new MfoReq();
         $this->balance->setAttributes([
-            'partner' => Partner::findOne(['ID' => 201])
+            'partner' => Partner::findOne(['ID' => 123])
         ]);
         $buildBalance = $this->balance->build($mfoRequest);
         $this->assertInstanceOf(BalanceResponse::class, $buildBalance);
+        $this->assertIsString($buildBalance->message);
+        $this->assertEquals([], $buildBalance->banks);
     }
 
     public function testBalanceTraitError()
     {
         $balanceError = $this->balance->balanceError('error message');
         $this->assertInstanceOf(BalanceResponse::class, $balanceError);
+        $this->assertEquals(0, $balanceError->status);
+        $this->assertEquals('error message', $balanceError->message);
     }
 
     public function testBalanceResponse()
@@ -64,6 +68,10 @@ class ServiceBalanceTest extends \Codeception\Test\Unit
         $this->assertClassHasAttribute('banks', BalanceResponse::class);
         $this->assertClassHasAttribute('status', BalanceResponse::class);
         $this->assertClassHasAttribute('message', BalanceResponse::class);
+        $response = new BalanceResponse();
+        $this->assertIsArray($response->banks);
+        $this->assertEquals([], $response->banks);
+        $this->assertEquals('', $response->message);
     }
 
     public function testMfoBalanceInit()
@@ -76,11 +84,18 @@ class ServiceBalanceTest extends \Codeception\Test\Unit
     public function testGetBalanceResponse()
     {
         $this->assertClassHasAttribute('balance', GetBalanceResponse::class);
+        $this->assertClassHasAttribute('bank_name', GetBalanceResponse::class);
+        $response = new GetBalanceResponse();
+        $this->assertIsArray($response->balance);
+        $this->assertIsString($response->bank_name);
     }
     public function testGetBalanceRequest()
     {
         $this->assertClassHasAttribute('currency', GetBalanceRequest::class);
         $this->assertClassHasAttribute('accounts', GetBalanceRequest::class);
+        $request = new GetBalanceRequest();
+        $this->assertIsString($request->bankName);
+        $this->assertIsArray($request->accounts);
     }
 
     public function testBalanceTraitFormatRequest()

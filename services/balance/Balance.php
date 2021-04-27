@@ -5,13 +5,13 @@ namespace app\services\balance;
 use app\models\mfo\MfoBalance;
 use app\models\mfo\MfoReq;
 use app\models\payonline\Partner;
-use app\models\payonline\Uslugatovar;
 use app\services\balance\response\BalanceResponse;
 use app\services\balance\traits\BalanceTrait;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\IBankAdapter;
 use app\services\payment\exceptions\GateException;
+use app\services\payment\models\repositories\BankRepository;
 use Yii;
 use yii\base\Model;
 
@@ -32,6 +32,7 @@ class Balance extends Model
 
     /** @var Partner $partner */
     public $partner;
+    public $partnerGates;
 
     public function rules(): array
     {
@@ -39,8 +40,6 @@ class Balance extends Model
             [['partner'], 'required']
         ];
     }
-    /** @var Uslugatovar $uslugaTovar */
-    private $uslugaTovar;
     /** @var MfoBalance $mfoBalanceRepository */
     private $mfoBalanceRepository;
 
@@ -70,9 +69,8 @@ class Balance extends Model
             return $this->balanceError(BalanceResponse::BALANCE_UNAVAILABLE_ERROR_MSG);
         }
         $bankResponse = [];
-        $this->uslugaTovar = $mfoBalanceRepository->getPartnersUslugatovarById($partnerId); //TODO: refactor remove
         foreach ($enabledBankGates as $activeGate) {
-            $bank = $mfoBalanceRepository->getBankById($activeGate->BankId); // Current gate bank
+            $bank = BankRepository::getBankById($activeGate->BankId);
             $bankAdapter = $this->buildAdapter($bank);
             $getBalanceRequest = $this->formatRequest($bank);
             try {
@@ -103,7 +101,7 @@ class Balance extends Model
     protected function buildAdapter($bank): IBankAdapter
     {
         $bankAdapterBuilder = new BankAdapterBuilder();
-        $bankAdapterBuilder->buildByBank($this->partner, $this->uslugaTovar, $bank);
+        $bankAdapterBuilder->buildByBankId($this->partner, $bank);
         return $bankAdapterBuilder->getBankAdapter();
     }
 }
