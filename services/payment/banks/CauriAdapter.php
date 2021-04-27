@@ -394,9 +394,8 @@ class CauriAdapter implements IBankAdapter
             Yii::error(' CauriApi refundPay err:' . $e->getMessage());
             throw new BankAdapterResponseException(self::ERROR_MSG_REQUEST . ': ' . $e->getMessage());
         }
-
-        $refundPayResponse->status = BaseResponse::STATUS_CREATED;
-        $refundPayResponse->message = $content['status'] ?? '';
+        $refundPayResponse->status = $this->convertStatus($content['status']);
+        $refundPayResponse->message = '';
         return $refundPayResponse;
     }
 
