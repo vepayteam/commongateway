@@ -607,11 +607,11 @@ components:
           description: Валюта баланса
         amount:
           type: number
-          description: Сумма баланса
+          description: Сумма баланса (float)
         account_type:
           type: string
           description: Тип счета баланса
-    BanksList:
+    BankList:
       type: object
       properties:
         bank_name:
@@ -631,12 +631,6 @@ components:
         amount:
           type: number
           description: Идентификатор документа
-#    BankBalance:
-#      type: object
-#        properties:
-#          amount:
-#            type: string
-#            description: Сумма баланса
     CardInfo:
       type: object
       properties:
@@ -1049,12 +1043,11 @@ components:
         amount:
           type: number
           deprecated: true
-          description: Сумма баланса ()
         banks:
           type: array
           description: Баланс банков
           items:
-            $ref: "#/components/schemas/BanksList"
+            $ref: "#/components/schemas/BankList"
     Error:
       type: object
       properties:
