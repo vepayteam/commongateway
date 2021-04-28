@@ -346,6 +346,7 @@ class CauriAdapter implements IBankAdapter
         $recurrentPayRequest = new RecurrentPayRequest();
         $createRecurrentPayResponse = new CreateRecurrentPayResponse();
         $recurrentPayRequest->user = $autoPayForm->getCard()->ExtCardIDP; // Bank internal user ID
+        $recurrentPayRequest->order_id = $autoPayForm->$paySchet->ID; // Order ID will be returned back in a callback
         $recurrentPayRequest->price = PaymentHelper::convertToRub($paySchet->getSummFull());
         $recurrentPayRequest->description = 'Оплата по счету №' . $paySchet->ID;
 
@@ -353,7 +354,7 @@ class CauriAdapter implements IBankAdapter
             $api = new CauriApiFacade($this->gate);
             $response = $api->cardManualRecurring($recurrentPayRequest);
             $content = $response->getContent();
-            if (!isset($content['id']) || $content['status'] === self::STATUS_FAILED) {
+            if (!isset($content['orderId']) || $content['status'] === self::STATUS_FAILED) {
                 $reason = $content['reason'] ?? '';
                 $createRecurrentPayResponse->status = BaseResponse::STATUS_ERROR;
                 $createRecurrentPayResponse->message = BankAdapterResponseException::setErrorMsg($reason);
@@ -365,7 +366,7 @@ class CauriAdapter implements IBankAdapter
         }
 
         $createRecurrentPayResponse->status = BaseResponse::STATUS_DONE;
-        $createRecurrentPayResponse->transac = $content['id']; // Bank transaction ID
+        $createRecurrentPayResponse->transac = $content['orderId'];
         return $createRecurrentPayResponse;
     }
 
