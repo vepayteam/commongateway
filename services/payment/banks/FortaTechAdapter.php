@@ -381,7 +381,7 @@ class FortaTechAdapter implements IBankAdapter
         $response = curl_exec($curl);
         Yii::warning('FortaTechAdapter response:' . $response);
         $curlError = curl_error($curl);
-        Yii::warning('FortaTechAdapter curlError:' . $response);
+        Yii::warning('FortaTechAdapter curlError:' . $curlError);
         $info = curl_getinfo($curl);
 
         try {
