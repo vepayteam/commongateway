@@ -25,38 +25,20 @@ class MfoBalance
     }
 
     /**
-     * @param int $partnerId
      * @return array
      */
-    public function getAllEnabledPartnerBankGatesId(int $partnerId): array
+    public function getAllEnabledPartnerBankGatesId(): array
     {
         return $this->Partner
             ->getBankGates()
             ->select('BankId')
             ->where([
                 'and',
-                ['PartnerId' => $partnerId],
+                ['PartnerId' => $this->Partner->ID],
                 ['Enable' => 1],
             ])
             ->distinct()
             ->all();
-    }
-
-    /**
-     * @param int $partnerId
-     * @param int $isCustom
-     * @return array|\yii\db\ActiveRecord|null
-     */
-    public function getPartnersUslugatovarById(int $partnerId, int $isCustom = UslugatovarType::TOCARD)
-    {
-        return $this->Partner
-            ->getUslugatovars()
-            ->where([
-                'IDPartner' => $partnerId,
-                'IsCustom'  => $isCustom,
-                'IsDeleted' => 0,
-            ])
-            ->one();
     }
 
     /**

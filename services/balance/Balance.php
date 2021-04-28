@@ -62,9 +62,8 @@ class Balance extends Model
     public function build(MfoReq $mfoRequest): BalanceResponse
     {
         $mfoBalanceRepository = new MfoBalance($this->partner);
-        $partnerId = $mfoRequest->mfo;
         // Получаем все активные шлюзы
-        $enabledBankGates = $mfoBalanceRepository->getAllEnabledPartnerBankGatesId($partnerId);
+        $enabledBankGates = $mfoBalanceRepository->getAllEnabledPartnerBankGatesId();
         if (!$enabledBankGates) {
             return $this->balanceError(BalanceResponse::BALANCE_UNAVAILABLE_ERROR_MSG);
         }
@@ -77,7 +76,7 @@ class Balance extends Model
                 /** @var GetBalanceResponse */
                 $getBalanceResponse = $bankAdapter->getBalance($getBalanceRequest);
             } catch (\Exception $exception) {
-                Yii::error('Balance service: ' . $exception->getMessage() . ' - PartnerId: ' . $partnerId);
+                Yii::warning('Balance service: ' . $exception->getMessage() . ' - PartnerId: ' . $mfoRequest->mfo);
                 continue;
             }
             if (isset($getBalanceResponse) && !empty($getBalanceResponse->balance)) {
