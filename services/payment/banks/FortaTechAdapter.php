@@ -386,11 +386,11 @@ class FortaTechAdapter implements IBankAdapter
 
         try {
             Yii::warning(sprintf(
-                'FortaTechAdapter response: %s | curlError: %s | info: %s'),
+                'FortaTechAdapter response: %s | curlError: %s | info: %s',
                 $response,
                 $curlError,
                 Json::encode($info)
-            );
+            ));
             $response = $this->parseResponse($response);
         } catch (\Exception $e) {
             throw new BankAdapterResponseException('Ошибка запроса');
