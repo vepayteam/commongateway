@@ -210,6 +210,7 @@ use yii\bootstrap\Html;
             <input type="hidden" id="md3ds" name="MD" value="">
             <input type="hidden" id="creq3ds" name="creq" value="">
             <input type="hidden" id="termurl3ds" name="TermUrl" value="">
+            <input type="hidden" id="threeDSServerTransID" name="ThreeDSServerTransID" value="">
         </form>
     </div>
 

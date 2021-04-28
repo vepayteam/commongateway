@@ -166,6 +166,7 @@ trait TKBank3DSTrait
             $payResponse->authValue = $ans['xml']['AuthenticationData']['AuthenticationValue'];
             $payResponse->dsTransId = $ans['xml']['AuthenticationData']['DsTransID'];
             $payResponse->eci = $ans['xml']['AuthenticationData']['Eci'];
+            $payResponse->threeDSServerTransID = $check3DSVersionResponse->transactionId;
         } else {
             $payResponse->status = BaseResponse::STATUS_ERROR;
         }
