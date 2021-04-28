@@ -951,18 +951,18 @@ class TKBankAdapter implements IBankAdapter
     }
 
     /**
-     * @param GetBalanceRequest $getBalanceForm
+     * @param GetBalanceRequest $getBalanceRequest
      * @return GetBalanceResponse
      */
-    public function getBalance(GetBalanceRequest $getBalanceForm): GetBalanceResponse
+    public function getBalance(GetBalanceRequest $getBalanceRequest): GetBalanceResponse
     {
         $request = [];
         $getBalanceResponse = new GetBalanceResponse();
-        $getBalanceResponse->bank_name = $getBalanceForm->bankName;
-        if (empty($getBalanceForm->accounts)) {
+        $getBalanceResponse->bank_name = $getBalanceRequest->bankName;
+        if (empty($getBalanceRequest->accounts)) {
             return $getBalanceResponse;
         }
-        foreach ($getBalanceForm->accounts as $type => $account) {
+        foreach ($getBalanceRequest->accounts as $type => $account) {
             $request['account'] = $account;
             $response = $this->getBalanceAcc($request);
             if (!isset($response['amount']) && $response['status'] === 0) {

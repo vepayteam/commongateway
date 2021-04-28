@@ -96,10 +96,10 @@ interface IBankAdapter
     public function getAftMinSum();
 
     /**
-     * @param GetBalanceRequest $getBalanceForm
+     * @param GetBalanceRequest $getBalanceRequest
      * @return GetBalanceResponse
      */
-    public function getBalance(GetBalanceRequest $getBalanceForm);
+    public function getBalance(GetBalanceRequest $getBalanceRequest);
 
 
 }

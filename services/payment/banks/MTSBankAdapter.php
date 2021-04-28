@@ -930,7 +930,7 @@ class MTSBankAdapter implements IBankAdapter
     /**
      * @inheritDoc
      */
-    public function getBalance(GetBalanceRequest $getBalanceForm)
+    public function getBalance(GetBalanceRequest $getBalanceRequest)
     {
         throw new GateException('Метод недоступен');
     }
