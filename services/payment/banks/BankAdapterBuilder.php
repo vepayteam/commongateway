@@ -1,8 +1,6 @@
 <?php
 
-
 namespace app\services\payment\banks;
-
 
 use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
@@ -43,7 +41,7 @@ class BankAdapterBuilder
         if (!$this->partnerBankGate) {
             throw new GateException("Нет шлюза. partnerId=$partner->ID uslugatovarId=$uslugatovar->ID");
         }
-        return $this->process();
+        return $this->buildAdapter();
     }
 
     /**
@@ -68,7 +66,7 @@ class BankAdapterBuilder
         if (!$this->partnerBankGate) {
             throw new GateException("Нет шлюза. partnerId=$partner->ID uslugatovarId=$uslugatovar->ID bankId=$bank->ID");
         }
-        return $this->process();
+        return $this->buildAdapter();
     }
 
     /**
@@ -90,15 +88,20 @@ class BankAdapterBuilder
             ->one();
 
         if (!$this->partnerBankGate) {
-            throw new GateException("Нет шлюза. partnerId=$partner->ID bankId=$bank->ID");
+            throw new GateException(sprintf(
+                "Нет шлюза. partnerId=%d bankId=%d",
+                $partner->ID,
+                $bank->ID
+            ));
         }
-        return $this->process();
+        return $this->buildAdapter();
     }
 
     /**
+     * @return $this
      * @throws GateException
      */
-    protected function process(): BankAdapterBuilder
+    protected function buildAdapter(): BankAdapterBuilder
     {
         try {
             $this->bankAdapter = Banks::getBankAdapter($this->partnerBankGate->BankId);
@@ -132,5 +135,4 @@ class BankAdapterBuilder
     {
         return $this->partnerBankGate;
     }
-
 }

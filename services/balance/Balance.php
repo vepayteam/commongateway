@@ -80,7 +80,7 @@ class Balance extends Model
                 Yii::error('Balance service: ' . $exception->getMessage() . ' - PartnerId: ' . $partnerId);
                 continue;
             }
-            if (isset($getBalanceResponse)) {
+            if (isset($getBalanceResponse) && !empty($getBalanceResponse->balance)) {
                 $bankResponse[] = $getBalanceResponse;
             }
         }
