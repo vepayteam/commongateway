@@ -636,6 +636,15 @@ class BRSAdapter implements IBankAdapter
         $transferToAccountRequest->account = (string)$outPayaccForm->account;
         $transferToAccountRequest->sourceId = (string)$outPayaccForm->paySchet->ID;
 
+        if(Yii::$app->params['TESTMODE'] == 'Y') {
+            $transferToAccountRequest->account = '40702810200000007194';
+            $transferToAccountRequest->bic = '044525151';
+            $transferToAccountRequest->receiverId = '0079167932356';
+            $transferToAccountRequest->firstName = 'Максим';
+            $transferToAccountRequest->lastName = 'Филин';
+            $transferToAccountRequest->middleName = 'Сергеевич';
+        }
+
         $requestData = $transferToAccountRequest->getAttributes();
         $requestData['msgSign'] = $transferToAccountRequest->getMsgSign($this->gate);
         $transferToAccountResponse = new TransferToAccountResponse();
@@ -713,6 +722,7 @@ class BRSAdapter implements IBankAdapter
      */
     public function checkTransfetB2C(OutPayAccountForm $outPayaccForm)
     {
+        // TODO: DRY
         $uri = '/eis-app/eis-rs/businessPaymentService/checkTransferB2c';
         $id = Yii::$app->security->generateRandomString(16);
         $transferToAccountRequest = new TransferToAccountRequest();
@@ -725,6 +735,15 @@ class BRSAdapter implements IBankAdapter
         $transferToAccountRequest->amount = $outPayaccForm->amount;
         $transferToAccountRequest->account = $outPayaccForm->account;
         $transferToAccountRequest->sourceId = $id;
+
+        if(Yii::$app->params['TESTMODE'] == 'Y') {
+            $transferToAccountRequest->account = '40702810200000007194';
+            $transferToAccountRequest->bic = '044525151';
+            $transferToAccountRequest->receiverId = '0079167932356';
+            $transferToAccountRequest->firstName = 'Максим';
+            $transferToAccountRequest->lastName = 'Филин';
+            $transferToAccountRequest->middleName = 'Сергеевич';
+        }
 
         $requestData = $transferToAccountRequest->getAttributes();
         $requestData['msgSign'] = $transferToAccountRequest->getMsgSign($this->gate);

@@ -176,7 +176,11 @@ class OutController extends Controller
             return ['status' => 0, 'message' => $e->getMessage()];
         }
 
-        return ['status' => $paySchet->Status, 'id' => $paySchet->ID, 'message' => $paySchet->ErrorInfo];
+        return [
+            'status' => $paySchet->Status == PaySchet::STATUS_WAITING_CHECK_STATUS ? PaySchet::STATUS_DONE : $paySchet->Status,
+            'id' => $paySchet->ID,
+            'message' => $paySchet->ErrorInfo,
+        ];
     }
 
     /**
@@ -207,9 +211,9 @@ class OutController extends Controller
         try {
             $paySchet = $mfoOutPayaccStrategy->exec();
             return [
-                'status' => $mfoOutPayaccStrategy->transferToAccountResponse->status,
+                'status' => $paySchet->Status == PaySchet::STATUS_WAITING_CHECK_STATUS ? PaySchet::STATUS_DONE : $paySchet->Status,
                 'id' => $paySchet->ID,
-                'message' => $mfoOutPayaccStrategy->transferToAccountResponse->message,
+                'message' => $paySchet->ErrorInfo,
             ];
         } catch (CreatePayException $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
