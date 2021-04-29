@@ -181,21 +181,37 @@ class FortaTechAdapter implements IBankAdapter
         $checkStatusPayResponse = new CheckStatusPayResponse();
 
         if($ans['status'] == true && isset($ans['data']['cards'][0]['transferParts'])) {
-            $checkStatusPayResponse->status = BaseResponse::STATUS_DONE;
+            // TODO: refact
 
+
+            $transferParts = $ans['data']['cards'][0]['transferParts'];
             $errorData = '';
-            foreach ($ans['data']['cards'][0]['transferParts'] as $transferPart) {
+            $errorsCount = 0;
+            $initCount = 0;
+            $paidCount = 0;
+            foreach ($transferParts as $transferPart) {
                 if($transferPart['status'] == 'STATUS_ERROR') {
-                    $checkStatusPayResponse->status = BaseResponse::STATUS_CREATED;
                     $errorData .= Json::encode($transferPart) . "\n";
+                    $errorsCount++;
                 } elseif ($transferPart['status'] == 'STATUS_INIT') {
-                    $checkStatusPayResponse->status = BaseResponse::STATUS_CREATED;
-                } elseif (
-                    $transferPart['status'] == 'STATUS_PAID'
-                    && $checkStatusPayResponse->status == BaseResponse::STATUS_CREATED
-                ) {
-                    continue;
+                    $initCount++;
+                } elseif ($transferPart['status'] == 'STATUS_PAID') {
+                    $paidCount++;
                 }
+            }
+
+            if(count($transferParts) === $paidCount) {
+                // если все части платежей успешны
+                $checkStatusPayResponse->status = BaseResponse::STATUS_DONE;
+            } elseif (count($transferParts) === $errorsCount) {
+                // если все части платежей с ошибкой
+                $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
+            } elseif ($initCount === 0) {
+                // если части платежей с ошибками и успешны
+                $checkStatusPayResponse->status = BaseResponse::STATUS_CREATED;
+                $checkStatusPayResponse->message = mb_substr($errorData, 0, 250);
+            } else {
+                $checkStatusPayResponse->status = BaseResponse::STATUS_CREATED;
             }
         } else {
             $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
@@ -365,10 +381,18 @@ class FortaTechAdapter implements IBankAdapter
 
         Yii::warning('FortaTechAdapter req uri=' . $uri .' : ' . Json::encode($data));
         $response = curl_exec($curl);
+        Yii::warning('FortaTechAdapter response:' . $response);
         $curlError = curl_error($curl);
+        Yii::warning('FortaTechAdapter curlError:' . $curlError);
         $info = curl_getinfo($curl);
 
         try {
+            Yii::warning(sprintf(
+                'FortaTechAdapter response: %s | curlError: %s | info: %s',
+                $response,
+                $curlError,
+                Json::encode($info)
+            ));
             $response = $this->parseResponse($response);
         } catch (\Exception $e) {
             throw new BankAdapterResponseException('Ошибка запроса');
