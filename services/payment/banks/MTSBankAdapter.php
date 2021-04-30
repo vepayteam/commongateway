@@ -9,6 +9,7 @@ use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\Payschets;
 use app\models\TU;
+use app\services\ident\forms\IdentForm;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
@@ -96,6 +97,105 @@ class MTSBankAdapter implements IBankAdapter
     public function getBankId()
     {
         return self::$bank;
+    }
+
+    /**
+     * Завершение оплаты (запрос статуса)
+     *
+     * @param string $idpay
+     * @param int $org
+     * @param bool $isCron
+     * @return array [status (1 - оплачен, 2,3 - не оплачен, 0 - в процессе), message, IdPay (id pay_schet), Params]
+     * @throws \yii\db\Exception
+     */
+    public function confirmPay($idpay, $org = 0, $isCron = false)
+    {
+        $mesg = '';
+        $payschets = new Payschets();
+        //данные счета для оплаты
+        $params = $payschets->getSchetData($idpay, null, $org);
+
+        if ($params) {
+            $state = $params['Status'];
+            $ApprovalCode = $RRN = '';
+            if ($params['Status'] == 0 && $params['sms_accept'] == 1) {
+
+                $status = $this->checkStatusOrder($params, $isCron);
+
+                if (isset($status['xml']['orderinfo']['statedescription'])) {
+                    $mesg = $status['xml']['orderinfo']['statedescription'];
+                }
+
+                if ($status['state'] > 0) {
+                    //1 - оплачен, 2,3 - не оплачен
+                    if (($params['IdUsluga'] == 1 || ($params['IdUser'] > 0 && $params['IdKard'] == 0 && in_array($params['IsCustom'], [TU::$JKH, TU::$ECOM]))) &&
+                        $status['state'] == 1 &&
+                        isset($status['xml']['orderadditionalinfo']['cardrefid'])
+                    ) {
+                        //привязка карты через платеж
+                        $card = [
+                            'number' => str_replace(" ", "", $status['xml']['orderadditionalinfo']['cardnumber']),
+                            'expiry' => $status['xml']['orderadditionalinfo']['cardexpmonth'] . substr($status['xml']['orderadditionalinfo']['cardexpyear'], 2, 2),
+                            'idcard' => $status['xml']['orderadditionalinfo']['cardrefid'],
+                            //'type' => isset($status['xml']['orderadditionalinfo']['cardbrand']) ? $this->GetCardType($status['xml']['orderadditionalinfo']['cardbrand']) : 0,
+                            'type' => Cards::GetTypeCard($status['xml']['orderadditionalinfo']['cardnumber']),
+                            'holder' => isset($status['xml']['orderadditionalinfo']['cardholder']) ? $status['xml']['orderadditionalinfo']['cardholder'] : ''
+                        ];
+                        $payschets->UpdateCardExtId($params['IdUser'], $card, $params['ID'], MTSBankAdapter::$bank);
+                    }
+
+                    if ($status['state'] == 1) {
+                        //$ApprovalCode = isset($status['xml']['APPROVAL_CODE']) ? $status['xml']['APPROVAL_CODE'] : '';
+                        $RRN = isset($status['xml']['orderadditionalinfo']['rrn']) ? $status['xml']['orderadditionalinfo']['rrn'] : '';
+                    }
+
+                    $payschets->confirmPay([
+                        'idpay' => $params['ID'],
+                        'idgroup' => $params['IdGroupOplat'],
+                        'result_code' => $status['state'],
+                        'trx_id' => $params['ExtBillNumber'],
+                        'ApprovalCode' => $ApprovalCode,
+                        'RRN' => $RRN,
+                        'message' => $mesg
+                    ]);
+                }
+                $state = $status['state'];
+            } elseif (in_array($state, [1, 2, 3])) {
+                $mesg = $params['ErrorInfo'];
+                //$ApprovalCode = $params['ApprovalCode'];
+                $RRN = $params['RRN'];
+            }
+            return [
+                'status' => $state,
+                'message' => $mesg,
+                'IdPay' => $params['ID'],
+                'Params' => $params,
+                'info' => ['card' => $params['CardNum'], 'brand' => $params['CardType'], 'rrn' => $RRN, 'transact' => $params['ExtBillNumber']]
+            ];
+        }
+        return ['status' => 0, 'message' => $mesg, 'IdPay' => 0, 'Params' => null, 'info' => null];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function transferToCard(array $data)
+    {
+        throw new GateException('Метод недоступен');
+    }
+
+    /**
+     * Оплата без формы (PCI DSS)
+     * @param array $params
+     * @return array
+     */
+    public function PayXml(array $params)
+    {
+        $ret = $this->RegisterOrder($params);
+        if ($ret['status'] == 1) {
+            $ret = $this->PayOrder($params, $ret['transac']);
+        }
+        return $ret;
     }
 
     /**
@@ -217,6 +317,88 @@ class MTSBankAdapter implements IBankAdapter
         return ['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0];
     }
 
+    /**
+     * Финиш оплаты без формы (PCI DSS)
+     * @param array $params
+     * @return array
+     */
+    public function ConfirmXml(array $params)
+    {
+        $action = '/rest/finish3dsPayment.do';
+        $queryData = [
+            'userName' => $this->shopId,
+            'password' => $this->certFile,
+            'mdOrder' => $params['ExtBillNumber'],
+            'paRes' => $params['PaRes']
+        ];
+
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl.$action);
+
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            if (!isset($ans['xml']['errorCode']) || $ans['xml']['errorCode'] == 0) {
+                return [
+                    'status' => 1,
+                    'transac' => $params['ExtBillNumber'],
+                ];
+            } else {
+                $error = $ans['xml']['errorCode'];
+                $message = $ans['xml']['errorMessage'];
+                return ['status' => 2, 'message' => $error.":".$message, 'fatal' => 1];
+            }
+        }
+
+        return ['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0];
+    }
+
+    /**
+     * Возврат оплаты
+     * @param int $IdPay
+     * @return array
+     * @throws \yii\db\Exception
+     */
+    public function reversOrder($IdPay)
+    {
+        $payschets = new Payschets();
+        //данные счета
+        $params = $payschets->getSchetData($IdPay);
+
+        if ($params['Status'] == 1) {
+
+            if ($params['DateCreate'] < mktime(0, 0, 0, date('n'), date('d'), date('Y'))) {
+                $action = '/rest/refund.do';
+                $queryData = [
+                    'userName' => $this->shopId,
+                    'password' => $this->certFile,
+                    'orderId' => $params['ExtBillNumber'],
+                    'amount' => $params['SummFull']
+                ];
+            } else {
+                $action = '/rest/reverse.do';
+                $queryData = [
+                    'userName' => $this->shopId,
+                    'password' => $this->certFile,
+                    'orderId' => $params['ExtBillNumber']
+                ];
+            }
+
+            $ans = $this->curlXmlReq($queryData, $this->bankUrl.$action);
+
+            if (isset($ans['xml']) && !empty($ans['xml'])) {
+                if (!isset($ans['xml']['errorCode']) || $ans['xml']['errorCode'] == 0) {
+                    return [
+                        'status' => 1,
+                        'Status' => 0,
+                        'message' => ''
+                    ];
+                } else {
+                    $error = $ans['xml']['errorCode'];
+                    $message = $ans['xml']['errorMessage'];
+                    return ['state' => $error == 0, 'Status' => $error, 'message' => $error.":".$message];
+                }
+            }
+        }
+        return ['state' => 0, 'Status' => '', 'message' => ''];
+    }
 
     private function RegisterOrder(array $params)
     {
@@ -244,6 +426,132 @@ class MTSBankAdapter implements IBankAdapter
             }
         }
         return ['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0];
+    }
+
+    // TODO: refact DRY
+    private function RegisterTransferToCard(array $params)
+    {
+        $action = '/registerP2P';
+        $queryData = [
+            'userName' => $this->shopId,
+            'password' => $this->certFile,
+            'orderNumber' => $params['ID'],
+            'amount' => $params['SummFull'],
+            'description' => 'Оплата по счету ' . $params['ID'],
+            'returnUrl' => $this->backUrls['ok'] . $params['ID'],
+            'sessionTimeoutSecs' => $params['TimeElapsed'],
+            'features' => 'WITHOUT_FROM_CARD',
+        ];
+
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl.$action);
+
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            if (!isset($ans['xml']['errorCode']) || $ans['xml']['errorCode'] == 0) {
+                $ordernumber = $ans['xml']['orderId'];
+                return ['status' => 1, 'transac' => $ordernumber];
+            } else {
+                $error = $ans['xml']['errorCode'];
+                $message = $ans['xml']['errorMessage'];
+                return ['status' => 2, 'message' => $error.":".$message, 'fatal' => 1];
+            }
+        }
+        return ['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0];
+    }
+
+    private function PayOrder(array $params, $ordernumber)
+    {
+        $action = '/rest/paymentorder.do';
+        $queryData = [
+            'userName' => $this->shopId,
+            'password' => $this->certFile,
+            'MDORDER' => $ordernumber,
+            '$PAN' => $params['card']['number'],
+            '$CVC' => $params['card']['cvc'],
+            'YYYY' => (int)("20" . $params['card']['year']),
+            'MM' => (int)($params['card']['month']),
+            'TEXT' => $params['card']['holder'],
+            'language' => 'ru',
+            'ip' => $params['IPAddressUser']
+        ];
+
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl.$action);
+
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            if (!isset($ans['xml']['errorCode']) || $ans['xml']['errorCode'] == 0) {
+                $url = $ans['xml']['acsUrl'] ?? '';
+                $pa = $ans['xml']['paReq'] ?? '';
+                $md = $ordernumber;
+                return [
+                    'status' => 1,
+                    'transac' => $ordernumber,
+                    'url' => $url,
+                    'pa' => $pa,
+                    'md' => $md
+                ];
+            } else {
+                $error = $ans['xml']['errorCode'];
+                $message = $ans['xml']['errorMessage'];
+                return ['status' => 2, 'message' => $error.":".$message, 'fatal' => 1];
+            }
+        }
+
+        return ['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0];
+
+    }
+
+    /**
+     * Проверка статуса заказа
+     * @param array $params [ID, IsCustom]
+     * @param bool $isCron
+     * @return array [state, xml]
+     */
+    private function checkStatusOrder($params, $isCron)
+    {
+        $action = '/rest/getOrderStatusExtended.do';
+        $queryData = [
+            'userName' => $this->shopId,
+            'password' => $this->certFile,
+            'orderId' => $params['ExtBillNumber'],
+        ];
+
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl.$action);
+
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            if (!isset($ans['xml']['errorCode']) || $ans['xml']['errorCode'] == 0) {
+                $status = $this->convertState($ans['xml']['orderStatus']);
+                return [
+                    'state' => $status,
+                    'xml' => [
+                        'orderinfo' => [
+                            'statedescription' => $ans['xml']['actionCodeDescription']
+                        ],
+                        'orderadditionalinfo' => [
+                            'rrn' => $ans['xml']['authRefNum'] ?? null,
+                            'cardnumber' => $ans['xml']['cardAuthInfo']['maskedPan'] ?? null,
+                            'expiry' => isset($ans['xml']['cardAuthInfo']['expiration']) ? substr($ans['xml']['cardAuthInfo']['expiration'], 4,2).substr($ans['xml']['cardAuthInfo']['expiration'], 2,2) : null,
+                            'idcard' => $ans['xml']['cardAuthInfo']['approvalCode'] ?? null,
+                            'type' => Cards::GetTypeCard($ans['xml']['cardAuthInfo']['maskedPan']),
+                            'holder' => $ans['xml']['cardAuthInfo']['cardholderName'] ?? null,
+                        ]
+                    ]
+                ];
+            } else {
+                $error = $ans['xml']['errorCode'];
+                $message = $ans['xml']['errorMessage'];
+                if ($error == 6) {
+                    //не найден в банке - если в кроне запрос, то отменить
+                    if ($isCron && isset($params['IsCustom']) && TU::IsInPay($params['IsCustom'])) {
+                        //не найден в банке - если в кроне запрос, то отменить
+                        return ['state' => 2, 'xml' => ['orderinfo' => ['statedescription' => 'Платеж не проведен']]];
+                    } else {
+                        return ['state' => 0, 'xml' => ['orderinfo' => ['statedescription' => 'В обработке']]];
+                    }
+                } else {
+                    return ['state' => 0, 'xml' => ['orderinfo' => ['statedescription' => $message]]];
+                }
+            }
+        }
+        return ['state' => 0];
     }
 
     /**
@@ -358,6 +666,8 @@ class MTSBankAdapter implements IBankAdapter
         if ($createPayResponse->status == BaseResponse::STATUS_DONE) {
             $createPayResponse = $this->_payOrder($createPayForm, $createPayResponse);
         }
+
+        $createPayResponse->isNeed3DSRedirect = false;
         return $createPayResponse;
     }
 
@@ -632,6 +942,11 @@ class MTSBankAdapter implements IBankAdapter
      * @inheritDoc
      */
     public function transferToAccount(OutPayAccountForm $outPayaccForm)
+    {
+        throw new GateException('Метод недоступен');
+    }
+
+    public function ident(IdentForm $identForm)
     {
         throw new GateException('Метод недоступен');
     }

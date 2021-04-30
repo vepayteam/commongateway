@@ -4,6 +4,7 @@
 namespace app\services\payment\banks;
 
 
+use app\services\ident\forms\IdentForm;
 use app\services\logs\loggers\CauriLogger;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
@@ -91,55 +92,6 @@ class CauriAdapter implements IBankAdapter
     public function createPay(CreatePayForm $createPayForm)
     {
         throw new GateException('Метод недоступен');
-    }
-
-
-    /**
-     * @inheritDoc
-     */
-    public function PayXml(array $params)
-    {
-        // TODO: Implement PayXml() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function PayApple(array $params)
-    {
-        // TODO: Implement PayApple() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function PayGoogle(array $params)
-    {
-        // TODO: Implement PayGoogle() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function PaySamsung(array $params)
-    {
-        // TODO: Implement PaySamsung() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function ConfirmXml(array $params)
-    {
-        // TODO: Implement ConfirmXml() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function reversOrder($IdPay)
-    {
-        // TODO: Implement reversOrder() method.
     }
 
     /**
@@ -275,6 +227,11 @@ class CauriAdapter implements IBankAdapter
      * @inheritDoc
      */
     public function transferToAccount(OutPayAccountForm $outPayaccForm)
+    {
+        throw new GateException('Метод недоступен');
+    }
+
+    public function ident(IdentForm $identForm)
     {
         throw new GateException('Метод недоступен');
     }
