@@ -9,6 +9,7 @@ use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\exceptions\GateException;
@@ -20,6 +21,7 @@ use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\GetBalanceForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
+use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\helpers\ADGroupBankHelper;
 use app\services\payment\models\adb\ClientCardModel;
@@ -132,6 +134,14 @@ class ADGroupBankAdapter implements IBankAdapter
      * @inheritDoc
      */
     public function getBalance(GetBalanceForm $getBalanceForm)
+    {
+        throw new GateException('Метод недоступен');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function transferToAccount(OutPayAccountForm $outPayaccForm)
     {
         throw new GateException('Метод недоступен');
     }
