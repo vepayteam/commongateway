@@ -34,10 +34,8 @@ use app\services\payment\models\PaySchet;
 use Vepay\Cauri\Client\Request\UserResolveRequest;
 use Vepay\Cauri\Resource\Payout;
 use Vepay\Gateway\Config;
-use Vepay\Gateway\Logger\Logger;
 use Vepay\Gateway\Logger\LoggerInterface;
 use Yii;
-use yii\helpers\Json;
 
 class CauriAdapter implements IBankAdapter
 {
@@ -239,6 +237,21 @@ class CauriAdapter implements IBankAdapter
     }
 
     /**
+     * @param PaySchet $paySchet
+     * @param int $userId
+     * @return RecurrentPayRequest
+     */
+    private function formatRecurrentPayRequest(PaySchet $paySchet, int $userId): RecurrentPayRequest
+    {
+        $recurrentPayRequest = new RecurrentPayRequest();
+        $recurrentPayRequest->order_id = $paySchet->ID; // Order ID will be returned back in a callback
+        $recurrentPayRequest->user = $userId;
+        $recurrentPayRequest->price = PaymentHelper::convertToRub($paySchet->getSummFull());
+        $recurrentPayRequest->description = 'Оплата по счету №' . $paySchet->ID;
+        return $recurrentPayRequest;
+    }
+
+    /**
      *  Get banks user id
      * @param PaySchet $paySchet
      * @return CauriResolveUserResponse
@@ -264,7 +277,7 @@ class CauriAdapter implements IBankAdapter
             $userResponse->message = $e->getMessage();
             return $userResponse;
         }
-        $userResponse->id = $content['id'];
+        $userResponse->id = (int)$content['id'];
         return $userResponse;
     }
 
@@ -324,7 +337,7 @@ class CauriAdapter implements IBankAdapter
     public function checkStatusPay(OkPayForm $okPayForm): CheckStatusPayResponse
     {
         $checkStatusPayRequest = new CheckStatusPayRequest();
-        $checkStatusPayRequest->id = $okPayForm->getPaySchet()->ExtBillNumber;
+        $checkStatusPayRequest->id = $okPayForm->getPaySchet()->ExtBillNumber; // id of transaction
         $transactionResponse = $this->getTransactionStatus($checkStatusPayRequest);
         $checkStatusPayResponse = new CheckStatusPayResponse();
         $checkStatusPayResponse->status = $transactionResponse->status;
@@ -343,13 +356,20 @@ class CauriAdapter implements IBankAdapter
     public function recurrentPay(AutoPayForm $autoPayForm): CreateRecurrentPayResponse
     {
         $paySchet = $autoPayForm->paySchet;
-        $recurrentPayRequest = new RecurrentPayRequest();
         $createRecurrentPayResponse = new CreateRecurrentPayResponse();
-        $recurrentPayRequest->user = $autoPayForm->getCard()->ExtCardIDP; // Bank internal user ID
-        $recurrentPayRequest->order_id = $paySchet->ID; // Order ID will be returned back in a callback
-        $recurrentPayRequest->price = PaymentHelper::convertToRub($paySchet->getSummFull());
-        $recurrentPayRequest->description = 'Оплата по счету №' . $paySchet->ID;
-
+        $banksUserIdentification = $autoPayForm->getCard()->ExtCardIDP;
+        $userId = $banksUserIdentification;
+        if (isset($banksUserIdentification) && $banksUserIdentification == 0) {
+            $user = $this->getResolveUser($paySchet); // Get unique Banks user id
+            if (!$user->id) {
+                $createRecurrentPayResponse->status = $user->status;
+                $createRecurrentPayResponse->message = BankAdapterResponseException::setErrorMsg($user->message);
+                return $createRecurrentPayResponse;
+            }
+            $userId = $user->id;
+        }
+        /** @var RecurrentPayRequest */
+        $recurrentPayRequest = $this->formatRecurrentPayRequest($paySchet, $userId);
         try {
             $api = new CauriApiFacade($this->gate);
             $response = $api->cardManualRecurring($recurrentPayRequest);
