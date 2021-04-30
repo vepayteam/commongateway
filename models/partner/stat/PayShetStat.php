@@ -284,13 +284,36 @@ class PayShetStat extends Model
             $query->orderBy('ID DESC')->limit($CNTPAGE);
         }
 
-        $ret = [];
+        if($nolimit) {
+
+            $data = self::mapQueryPaymentResult($query);
+
+        } else {
+
+            $data = [];
+
+            foreach ($query->each() as $row) {
+                $row['VoznagSumm'] = $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
+                $data[] = $row;
+            }
+        }
+
+        return ['data' => $data, 'cnt' => $cnt, 'cntpage' => $CNTPAGE, 'sumpay' => $sumPay, 'sumcomis' => $sumComis, 'bankcomis' => $bankcomis, 'voznagps' => $voznagps];
+    }
+
+    /**
+     * @param Query $query
+     *
+     * @return \Generator
+     */
+    private static function mapQueryPaymentResult(Query $query): \Generator
+    {
         foreach ($query->each() as $row) {
+
             $row['VoznagSumm'] = $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
 
-            $ret[] = $row;
+            yield $row;
         }
-        return ['data' => $ret, 'cnt' => $cnt, 'cntpage' => $CNTPAGE, 'sumpay' => $sumPay, 'sumcomis' => $sumComis, 'bankcomis' => $bankcomis, 'voznagps' => $voznagps];
     }
 
     /**
