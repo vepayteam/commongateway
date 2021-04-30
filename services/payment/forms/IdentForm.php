@@ -51,7 +51,4 @@ class IdentForm extends Model
             $this->addError('inn', 'inn или snils обязательны к заполнению');
         }
     }
-
-
-
 }
