@@ -4,6 +4,7 @@
 namespace app\services\payment\banks;
 
 
+use app\services\ident\forms\IdentForm;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
@@ -100,5 +101,5 @@ interface IBankAdapter
      */
     public function getBalance(GetBalanceForm $getBalanceForm);
 
-
+    public function ident(IdentForm $identForm);
 }
