@@ -5,6 +5,7 @@ namespace app\services\payment\banks;
 
 
 use app\models\TU;
+use app\services\ident\forms\IdentForm;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
@@ -562,6 +563,11 @@ class FortaTechAdapter implements IBankAdapter
      * @inheritDoc
      */
     public function getBalance(GetBalanceForm $getBalanceForm)
+    {
+        throw new GateException('Метод недоступен');
+    }
+
+    public function ident(IdentForm $identForm)
     {
         throw new GateException('Метод недоступен');
     }
