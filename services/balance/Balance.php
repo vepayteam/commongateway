@@ -32,7 +32,14 @@ class Balance extends Model
 
     /** @var Partner $partner */
     public $partner;
-    public $partnerGates;
+    /** @var BalanceResponse */
+    private $response;
+
+    public function __construct($config = [])
+    {
+        parent::__construct($config);
+        $this->response = new BalanceResponse();
+    }
 
     public function rules(): array
     {
@@ -61,17 +68,18 @@ class Balance extends Model
      */
     public function build(MfoReq $mfoRequest): BalanceResponse
     {
-        $mfoBalanceRepository = new MfoBalance($this->partner);
         // Получаем все активные шлюзы
-        $enabledBankGates = $mfoBalanceRepository->getAllEnabledPartnerBankGatesId();
+        $enabledBankGates =  $this->getActiveBankGates();
+
         if (!$enabledBankGates) {
-            return $this->balanceError(BalanceResponse::BALANCE_UNAVAILABLE_ERROR_MSG);
+            $this->response->setError(BalanceResponse::BALANCE_UNAVAILABLE_ERROR_MSG);
+            return $this->response;
         }
         $bankResponse = [];
         foreach ($enabledBankGates as $activeGate) {
             $bank = BankRepository::getBankById($activeGate->BankId);
             $bankAdapter = $this->buildAdapter($bank);
-            $getBalanceRequest = $this->formatRequest($bank);
+            $getBalanceRequest = $this->formatRequest($bank, $activeGate);
             try {
                 /** @var GetBalanceResponse */
                 $getBalanceResponse = $bankAdapter->getBalance($getBalanceRequest);
@@ -84,12 +92,11 @@ class Balance extends Model
             }
         }
         if (!$bankResponse) {
-            return $this->balanceError(BalanceResponse::BALANCE_UNAVAILABLE_ERROR_MSG);
+            $this->response->setError(BalanceResponse::BALANCE_UNAVAILABLE_ERROR_MSG);
+            return $this->response;
         }
-        $balanceResponse = new BalanceResponse();
-        $balanceResponse->status = BalanceResponse::STATUS_DONE;
-        $balanceResponse->banks = $bankResponse;
-        return $balanceResponse;
+        $this->response->setBankBalance($bankResponse);
+        return $this->response;
     }
 
     /**

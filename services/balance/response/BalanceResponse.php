@@ -17,4 +17,16 @@ class BalanceResponse
     public $banks = [];
     /** @deprecated TODO: remove */
     public $amount = null;
+
+    public function setBankBalance(array $banks)
+    {
+        $this->status = self::STATUS_DONE;
+        $this->banks = $banks;
+    }
+
+    public function setError(string $message = '')
+    {
+        $this->status = self::STATUS_ERROR;
+        $this->message = $message;
+    }
 }

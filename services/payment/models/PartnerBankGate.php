@@ -14,6 +14,7 @@ use Yii;
  * @property int $BankId
  * @property string|null $TU
  * @property string|null $SchetNumber
+ * @property int $SchetType
  * @property string|null $Login
  * @property string|null $Token
  * @property string|null $Password

@@ -12,6 +12,11 @@ use app\services\payment\models\UslugatovarType;
 use Yii;
 use yii\db\Query;
 
+/**
+ * @deprecated
+ * Class MfoBalance
+ * @package app\models\mfo
+ */
 class MfoBalance
 {
     private const TCB_GATE_ID = 2;
@@ -22,23 +27,6 @@ class MfoBalance
     public function __construct(Partner $Partner)
     {
         $this->Partner = $Partner;
-    }
-
-    /**
-     * @return array
-     */
-    public function getAllEnabledPartnerBankGatesId(): array
-    {
-        return $this->Partner
-            ->getBankGates()
-            ->select('BankId')
-            ->where([
-                'and',
-                ['PartnerId' => $this->Partner->ID],
-                ['Enable' => 1],
-            ])
-            ->distinct()
-            ->all();
     }
 
     /**
