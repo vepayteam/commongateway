@@ -41,6 +41,7 @@ class CreateFormMfoEcomPartsStrategy implements IMfoStrategy
         $usl = $kfPay->GetUslug($this->mfoReq->mfo, TU::$POGASHECOMPARTS);
 
         if (!$usl || !$TcbGate->IsGate()) {
+            Yii::warning("pay/lk: нет шлюза. mfo={$this->mfoReq->mfo} uslugatovarId=$usl bankId={$TcbGate->getBank()}");
             return ['status' => 0, 'message' => 'Нет шлюза'];
         }
 

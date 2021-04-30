@@ -4,9 +4,11 @@
 namespace app\services\payment\banks;
 
 
+use app\services\ident\forms\IdentForm;
 use app\services\logs\loggers\CauriLogger;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
+use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
@@ -14,6 +16,7 @@ use app\services\payment\forms\cauri\CheckStatusPayRequest;
 use app\services\payment\forms\cauri\OutCardPayRequest;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
+use app\services\payment\forms\GetBalanceForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\RefundPayForm;
@@ -68,74 +71,9 @@ class CauriAdapter implements IBankAdapter
     /**
      * @inheritDoc
      */
-    public function confirmPay($idpay, $org = 0, $isCron = false)
-    {
-        // TODO: Implement confirmPay() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function transferToCard(array $data)
-    {
-        // TODO: Implement transferToCard() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function createPay(CreatePayForm $createPayForm)
     {
         throw new GateException('Метод недоступен');
-    }
-
-
-    /**
-     * @inheritDoc
-     */
-    public function PayXml(array $params)
-    {
-        // TODO: Implement PayXml() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function PayApple(array $params)
-    {
-        // TODO: Implement PayApple() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function PayGoogle(array $params)
-    {
-        // TODO: Implement PayGoogle() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function PaySamsung(array $params)
-    {
-        // TODO: Implement PaySamsung() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function ConfirmXml(array $params)
-    {
-        // TODO: Implement ConfirmXml() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function reversOrder($IdPay)
-    {
-        // TODO: Implement reversOrder() method.
     }
 
     /**
@@ -257,5 +195,18 @@ class CauriAdapter implements IBankAdapter
     public function getAftMinSum()
     {
         return self::AFT_MIN_SUMM;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getBalance(GetBalanceForm $getBalanceForm)
+    {
+        throw new GateException('Метод недоступен');
+    }
+
+    public function ident(IdentForm $identForm)
+    {
+        throw new GateException('Метод недоступен');
     }
 }

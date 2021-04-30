@@ -86,9 +86,12 @@ class Notification
             $this->httpCode = 0;
             $this->httpAns = '';
 
+            $isNewStrategy = false;
             try {
                 switch ($value['TypeNotif']) {
                     default:
+                        $isNewStrategy = true;
+                        break;
                     case 0:
                         $res = $this->sendToUser($value);
                         break;
@@ -102,6 +105,9 @@ class Notification
                         $res = $this->sendUserReversHttp($value);
                         break;
                 }
+
+                if($isNewStrategy) continue;
+
                 $connection->createCommand()
                     ->update('notification_pay', [
                         'SendCount' => $value['SendCount'] + 1,
