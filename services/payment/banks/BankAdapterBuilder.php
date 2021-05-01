@@ -9,6 +9,7 @@ use app\models\payonline\Uslugatovar;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\models\Bank;
 use app\services\payment\models\PartnerBankGate;
+use app\services\payment\models\PaySchet;
 
 class BankAdapterBuilder
 {

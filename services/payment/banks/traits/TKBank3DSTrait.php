@@ -103,9 +103,7 @@ trait TKBank3DSTrait
         $authenticate3DSv2Request = new Authenticate3DSv2Request();
         $authenticate3DSv2Request->ExtId = $paySchet->ID;
         $authenticate3DSv2Request->CardInfo = [
-            'CardNumber' => $createPayForm->CardNumber,
-            'ExpirationYear' => "20" . $createPayForm->CardYear,
-            'ExpirationMonth' => $createPayForm->CardMonth,
+            'CardRefId' => $check3DSVersionResponse->cardRefId,
         ];
         $authenticate3DSv2Request->Amount = $paySchet->getSummFull();
 
@@ -142,6 +140,12 @@ trait TKBank3DSTrait
         $payResponse->vesion3DS = $check3DSVersionResponse->version;
         $payResponse->status = BaseResponse::STATUS_DONE;
         $payResponse->cardRefId = $check3DSVersionResponse->cardRefId;
+
+        Yii::$app->cache->set(
+            Cache3DSv2Interface::CACHE_PREFIX_CARD_REF_ID . $paySchet->ID,
+            $check3DSVersionResponse->cardRefId,
+            3600
+        );
 
         if(array_key_exists('ChallengeData', $ans['xml'])) {
             // если нужна авторизация 3ds через форму
