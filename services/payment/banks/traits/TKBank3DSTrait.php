@@ -83,8 +83,18 @@ trait TKBank3DSTrait
             $check3DSVersionResponse->version = $ans['xml']['DsInfo']['ProtocolVersion'];
             $check3DSVersionResponse->transactionId = $ans['xml']['ThreeDSServerTransID'];
             $check3DSVersionResponse->cardRefId = $ans['xml']['CardRefId'];
+
+            if(isset($ans['xml']['ThreeDSServerTransID']) && isset($ans['xml']['DsInfo']['ThreeDSMethodURL'])) {
+                $check3DSVersionResponse->threeDSServerTransID = $ans['xml']['ThreeDSServerTransID'];
+                $check3DSVersionResponse->threeDSMethodURL = $ans['xml']['DsInfo']['ThreeDSMethodURL'];
+            }
         }
 
+        Yii::$app->cache->set(
+            Cache3DSv2Interface::CACHE_PREFIX_CHECK_DATA . $paySchet->ID,
+            $check3DSVersionResponse->getAttributes(),
+            60 * 60
+        );
         return $check3DSVersionResponse;
     }
 

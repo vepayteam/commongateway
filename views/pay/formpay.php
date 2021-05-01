@@ -204,6 +204,12 @@ use yii\bootstrap\Html;
 
     <?php ActiveForm::end(); ?>
 
+    <div id="frameConfirm3dsV2TKB" class="BankFrame" style="height: 100px; display: none">
+        <form id="confirm3dsV2TKB" target="_blank" action="" method='POST'>
+            <input type="hidden" id="confirm3dsV2TKB__threeDSServerTransID" name="ThreeDSServerTransID" value="">
+        </form>
+    </div>
+
     <div id="frame3ds" class="BankFrame" style="height: 600px; display: none">
         <form id="form3ds" action="" method='POST'>
             <input type="hidden" id="pareq3ds" name="PaReq" value="">
