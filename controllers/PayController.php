@@ -38,6 +38,7 @@ use app\services\payment\payment_strategies\OkPayStrategy;
 use kartik\mpdf\Pdf;
 use Yii;
 use yii\db\Exception;
+use yii\helpers\Json;
 use yii\helpers\VarDumper;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
@@ -212,6 +213,7 @@ class PayController extends Controller
             case BaseResponse::STATUS_DONE:
                 $createPayResponse->termurl = $createPayResponse->GetRetUrl($paySchet->ID);
                 //отправить запрос адреса формы 3ds
+                Yii::warning('PayController createPayResponse data: ' . Json::encode($createPayResponse->getAttributes()));
                 return $createPayResponse->getAttributes();
             case BaseResponse::STATUS_ERROR:
                 //отменить счет

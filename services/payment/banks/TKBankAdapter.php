@@ -1228,13 +1228,14 @@ class TKBankAdapter implements IBankAdapter
     {
         $action = '/api/v1/card/unregistered/debit/3ds2Validate';
 
+        $cardRefId = Yii::$app->cache->get(Cache3DSv2Interface::CACHE_PREFIX_CARD_REF_ID . $donePayForm->getPaySchet()->ID);
         $confirm3DSv2Request = new Confirm3DSv2Request();
         $confirm3DSv2Request->ExtID = $donePayForm->getPaySchet()->ID;
         $confirm3DSv2Request->Amount = $donePayForm->getPaySchet()->getSummFull();
         $confirm3DSv2Request->Cres = $donePayForm->cres;
         // TODO: refact on tokenize
         $confirm3DSv2Request->CardInfo = [
-            'CardNumber' => Yii::$app->cache->get(Cache3DSv2Interface::CACHE_PREFIX_CARD_NUMBER . $donePayForm->getPaySchet()->ID),
+            'CardRefId' => $cardRefId,
         ];
 
         $queryData = Json::encode($confirm3DSv2Request->getAttributes());
