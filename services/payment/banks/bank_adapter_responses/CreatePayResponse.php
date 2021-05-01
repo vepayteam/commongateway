@@ -14,6 +14,7 @@ class CreatePayResponse extends BaseResponse
 
     public $vesion3DS = Issuer3DSVersionInterface::V_1;
     public $isNeed3DSVerif = true;
+    public $isNeedSendTransIdTKB = false;
     public $authValue;
     public $dsTransId;
     public $eci;
@@ -28,6 +29,7 @@ class CreatePayResponse extends BaseResponse
     public $doneurl;
     public $creq;
     public $threeDSServerTransID = '';
+    public $threeDSMethodURL;
 
     /**
      * @param int $paySchetId
