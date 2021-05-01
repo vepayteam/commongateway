@@ -89,6 +89,12 @@
                                 // если 3DS v2 и не требуется авторизация, переходим на orderdone
                                 window.location = data.termurl;
                             }
+                        } else if (data.status == 0 && data.threeDSMethodURL && data.isNeedSendTransIdTKB) {
+                            payform.confirm3dsV2TKB(data.threeDSMethodURL, data.threeDSServerTransID);
+
+                            setTimeout(function() {
+                                $('#payform').trigger('submit');
+                            }, 500);
                         } else if (data.status == 1 && data.url && data.isNeed3DSRedirect) {
                             window.location = data.url;
                         } else if (data.status == 2 && data.url) {
@@ -182,6 +188,14 @@
             $('#termurl3ds').val(termurl);
             $('#threeDSServerTransID').val(threeDSServerTransID);
             $('#form3ds').trigger('submit');
+        },
+
+        confirm3dsV2TKB: function(url, transId) {
+            console.log(url, transId);
+            $('#confirm3dsV2TKB').show();
+            $('#confirm3dsV2TKB').attr('action', url);
+            $('#confirm3dsV2TKB__threeDSServerTransID').val(transId);
+            $('#confirm3dsV2TKB').trigger('submit');
         },
 
         applepay: function (merchantIdentifier, amount, label) {

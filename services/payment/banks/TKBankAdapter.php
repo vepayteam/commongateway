@@ -1073,13 +1073,32 @@ class TKBankAdapter implements IBankAdapter
      */
     public function createPay(CreatePayForm $createPayForm)
     {
+        $checkDataCacheKey = Cache3DSv2Interface::CACHE_PREFIX_CHECK_DATA . $createPayForm->getPaySchet()->ID;
+
+        if(Yii::$app->cache->exists($checkDataCacheKey)) {
+            $checkData = Yii::$app->cache->get($checkDataCacheKey);
+
+            $check3DSVersionResponse = new Check3DSVersionResponse();
+            $check3DSVersionResponse->load($checkData, '');
+
+            $payResponse = $this->createPay3DSv2($createPayForm, $check3DSVersionResponse);
+            // TODO: refact on tokenize
+            Yii::$app->cache->set(Cache3DSv2Interface::CACHE_PREFIX_CARD_NUMBER . $createPayForm->getPaySchet()->ID, $createPayForm->CardNumber, 3600);
+
+            return $payResponse;
+        }
+
         /** @var Check3DSVersionResponse $check3DSVersionResponse */
         $check3DSVersionResponse = $this->check3DSVersion($createPayForm);
 
         if(in_array($check3DSVersionResponse->version, Issuer3DSVersionInterface::V_2)) {
-            $payResponse = $this->createPay3DSv2($createPayForm, $check3DSVersionResponse);
-            // TODO: refact on tokenize
-            Yii::$app->cache->set(Cache3DSv2Interface::CACHE_PREFIX_CARD_NUMBER . $createPayForm->getPaySchet()->ID, $createPayForm->CardNumber, 3600);
+            // TODO: add strategy 3ds v2
+            $payResponse = new CreatePayResponse();
+            $payResponse->status = BaseResponse::STATUS_CREATED;
+            $payResponse->isNeedSendTransIdTKB = true;
+            $payResponse->threeDSServerTransID = $check3DSVersionResponse->threeDSServerTransID;
+            $payResponse->threeDSMethodURL = $check3DSVersionResponse->threeDSMethodURL;
+            return $payResponse;
         } else {
             $payResponse = $this->createPay3DSv1($createPayForm, $check3DSVersionResponse);
         }
