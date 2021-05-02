@@ -1079,7 +1079,8 @@ class TKBankAdapter implements IBankAdapter
             $checkData = Yii::$app->cache->get($checkDataCacheKey);
 
             $check3DSVersionResponse = new Check3DSVersionResponse();
-            $check3DSVersionResponse->load($checkData, '');
+            $check3DSVersionResponse->cardRefId = ($checkData['cardRefId'] ?? '');
+            $check3DSVersionResponse->transactionId = ($checkData['transactionId'] ?? '');
 
             $payResponse = $this->createPay3DSv2($createPayForm, $check3DSVersionResponse);
             // TODO: refact on tokenize
