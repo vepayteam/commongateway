@@ -31,6 +31,7 @@ use app\services\payment\exceptions\RefundPayException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
+use app\services\payment\forms\CreatePaySecondStepForm;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\GetBalanceForm;
 use app\services\payment\forms\OkPayForm;
@@ -1082,10 +1083,12 @@ class TKBankAdapter implements IBankAdapter
             $check3DSVersionResponse->cardRefId = ($checkData['cardRefId'] ?? '');
             $check3DSVersionResponse->transactionId = ($checkData['transactionId'] ?? '');
 
-            $payResponse = $this->createPay3DSv2($createPayForm, $check3DSVersionResponse);
+            $paySchet = $createPayForm->getPaySchet();
+            $payResponse = $this->createPay3DSv2($paySchet, $check3DSVersionResponse);
             // TODO: refact on tokenize
             Yii::$app->cache->set(Cache3DSv2Interface::CACHE_PREFIX_CARD_NUMBER . $createPayForm->getPaySchet()->ID, $createPayForm->CardNumber, 3600);
 
+            $payResponse->isNeed3DSRedirect = false;
             return $payResponse;
         }
 
@@ -1106,6 +1109,31 @@ class TKBankAdapter implements IBankAdapter
 
         $payResponse->isNeed3DSRedirect = false;
         return $payResponse;
+    }
+
+    /**
+     * @param CreatePaySecondStepForm $createPaySecondStepForm
+     * @return CreatePayResponse
+     * @throws Check3DSv2Exception
+     * @throws CreatePayException
+     */
+    public function createPayStep2(CreatePaySecondStepForm $createPaySecondStepForm)
+    {
+        $checkDataCacheKey = Cache3DSv2Interface::CACHE_PREFIX_CHECK_DATA . $createPaySecondStepForm->getPaySchet()->ID;
+
+        if(Yii::$app->cache->exists($checkDataCacheKey)) {
+            $checkData = Yii::$app->cache->get($checkDataCacheKey);
+
+            $check3DSVersionResponse = new Check3DSVersionResponse();
+            $check3DSVersionResponse->cardRefId = ($checkData['cardRefId'] ?? '');
+            $check3DSVersionResponse->transactionId = ($checkData['transactionId'] ?? '');
+
+            $paySchet = $createPaySecondStepForm->getPaySchet();
+            $payResponse = $this->createPay3DSv2($paySchet, $check3DSVersionResponse);
+
+            $payResponse->isNeed3DSRedirect = false;
+            return $payResponse;
+        }
     }
 
     /**
@@ -1179,7 +1207,8 @@ class TKBankAdapter implements IBankAdapter
     {
         $paySchet = $donePayForm->getPaySchet();
 
-        if(in_array($paySchet->Version3DS, Issuer3DSVersionInterface::V_2)) {
+        $checkDataCacheKey = Cache3DSv2Interface::CACHE_PREFIX_CHECK_DATA . $paySchet->ID;
+        if(Yii::$app->cache->exists($checkDataCacheKey)) {
             return $this->confirmBy3DSv2($donePayForm);
         } else {
             return $this->confirmBy3DSv1($donePayForm);
