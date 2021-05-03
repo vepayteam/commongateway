@@ -1208,7 +1208,9 @@ class TKBankAdapter implements IBankAdapter
         $paySchet = $donePayForm->getPaySchet();
 
         $checkDataCacheKey = Cache3DSv2Interface::CACHE_PREFIX_CHECK_DATA . $paySchet->ID;
-        if(Yii::$app->cache->exists($checkDataCacheKey)) {
+        if(Yii::$app->cache->exists($checkDataCacheKey)
+            && in_array(Yii::$app->cache->get($checkDataCacheKey)['version'], Issuer3DSVersionInterface::V_2)
+        ) {
             return $this->confirmBy3DSv2($donePayForm);
         } else {
             return $this->confirmBy3DSv1($donePayForm);
