@@ -35,6 +35,7 @@ use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\CreatePaySecondStepForm;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\OkPayForm;
+use app\services\payment\interfaces\Cache3DSv2Interface;
 use app\services\payment\models\PaySchet;
 use app\services\payment\payment_strategies\CreatePayStrategy;
 use app\services\payment\payment_strategies\DonePayStrategy;
@@ -75,6 +76,7 @@ class PayController extends Controller
             'form',
             'orderdone',
             'orderok',
+            'createpay-second-step',
         ])) {
             $this->enableCsrfValidation = false;
         }
@@ -243,8 +245,14 @@ class PayController extends Controller
         /** @var TKBankAdapter $tkbAdapter */
         $tkbAdapter = $bankAdapterBuilder->getBankAdapter();
         $createPayResponse = $tkbAdapter->createPayStep2($createPaySecondStepForm);
+        $paySchet->IsNeed3DSVerif = $createPayResponse->isNeed3DSVerif;
+        $paySchet->save(false);
 
-        return $this->render('createpay-second-step', ['createPayResponse' => $createPayResponse]);
+        if($createPayResponse->isNeed3DSVerif) {
+            return $this->render('createpay-second-step', ['createPayResponse' => $createPayResponse]);
+        } else {
+            return $this->redirect(\yii\helpers\Url::to('/pay/orderdone/' . $paySchet->ID));
+        }
     }
 
     /**
@@ -300,6 +308,10 @@ class PayController extends Controller
         $donePayForm->md = Yii::$app->request->post('MD', null);
         $donePayForm->paRes = Yii::$app->request->post('PaRes', null);
         $donePayForm->cres = Yii::$app->request->post('cres', null);
+
+        if(!empty($donePayForm->cres)) {
+            Yii::$app->cache->set(Cache3DSv2Interface::CACHE_PREFIX_CRES, $donePayForm->cres, 60 * 60);
+        }
 
         Yii::warning('Orderdone ' . $id . 'POST: ' . json_encode(Yii::$app->request->post()));
 
