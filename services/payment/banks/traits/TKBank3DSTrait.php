@@ -107,85 +107,87 @@ trait TKBank3DSTrait
      */
     protected function createPay3DSv2(Payschet $paySchet, Check3DSVersionResponse $check3DSVersionResponse)
     {
-        sleep(5);
-        $action = '/api/v1/card/unregistered/debit/3ds2Authenticate';
+        return Yii::$app->cache->getOrSet(Cache3DSv2Interface::CACHE_PREFIX_AUTH_RESPONSE . $paySchet->ID, function() use ($paySchet, $check3DSVersionResponse) {
+            sleep(5);
+            $action = '/api/v1/card/unregistered/debit/3ds2Authenticate';
 
-        $authenticate3DSv2Request = new Authenticate3DSv2Request();
-        $authenticate3DSv2Request->ExtId = $paySchet->ID;
-        $authenticate3DSv2Request->CardInfo = [
-            'CardRefId' => $check3DSVersionResponse->cardRefId,
-        ];
-        $authenticate3DSv2Request->Amount = $paySchet->getSummFull();
+            $authenticate3DSv2Request = new Authenticate3DSv2Request();
+            $authenticate3DSv2Request->ExtId = $paySchet->ID;
+            $authenticate3DSv2Request->CardInfo = [
+                'CardRefId' => $check3DSVersionResponse->cardRefId,
+            ];
+            $authenticate3DSv2Request->Amount = $paySchet->getSummFull();
 
-        // TODO:
-        $headers = Yii::$app->request->headers;
-        $authenticate3DSv2Request->AuthenticateInfo = [
-            'BrowserInfo' => [
-                'IP' => Yii::$app->request->remoteIP,
-                'AcceptHeader' => "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
-                'JavaEnabled' =>  true,
-                'Language' => 'ru',
-                'ColorDepth' => 24,
-                'ScreenHeight' => 1080,
-                'ScreenWidth' => 1920,
-                'TZ' => -180,
-                'UserAgent' => $headers->has('User-Agent') ? $headers['User-Agent'] :  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36",
-            ],
-            "ChallengeWindowSize" => "05",
-            "ThreeDSCompInd" => "U",
-            "NotificationURL" => $paySchet->getOrderdoneUrl(),
-            "ThreeDSServerTransID" => $check3DSVersionResponse->transactionId,
-        ];
+            // TODO:
+            $headers = Yii::$app->request->headers;
+            $authenticate3DSv2Request->AuthenticateInfo = [
+                'BrowserInfo' => [
+                    'IP' => Yii::$app->request->remoteIP,
+                    'AcceptHeader' => "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+                    'JavaEnabled' =>  true,
+                    'Language' => 'ru',
+                    'ColorDepth' => 24,
+                    'ScreenHeight' => 1080,
+                    'ScreenWidth' => 1920,
+                    'TZ' => -180,
+                    'UserAgent' => $headers->has('User-Agent') ? $headers['User-Agent'] :  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36",
+                ],
+                "ChallengeWindowSize" => "05",
+                "ThreeDSCompInd" => "U",
+                "NotificationURL" => $paySchet->getOrderdoneUrl(),
+                "ThreeDSServerTransID" => $check3DSVersionResponse->transactionId,
+            ];
 
-        $queryData = Json::encode($authenticate3DSv2Request->getAttributes());
+            $queryData = Json::encode($authenticate3DSv2Request->getAttributes());
 
-        // TODO: response as object
-        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+            // TODO: response as object
+            $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
 
-        if(!isset($ans['xml'])) {
-            throw new CreatePayException('Ошибка аутентификации клиента');
-        }
-
-        $payResponse = new CreatePayResponse();
-        $payResponse->vesion3DS = $check3DSVersionResponse->version;
-        $payResponse->status = BaseResponse::STATUS_DONE;
-        $payResponse->cardRefId = $check3DSVersionResponse->cardRefId;
-
-        Yii::$app->cache->set(
-            Cache3DSv2Interface::CACHE_PREFIX_CARD_REF_ID . $paySchet->ID,
-            $check3DSVersionResponse->cardRefId,
-            3600
-        );
-
-        if(array_key_exists('ChallengeData', $ans['xml'])) {
-            // если нужна авторизация 3ds через форму
-            $payResponse->url = $ans['xml']['ChallengeData']['AcsURL'];
-            $payResponse->creq = $ans['xml']['ChallengeData']['Creq'];
-        } elseif (array_key_exists('AuthenticationData', $ans['xml'])) {
-
-            // Поддерживается только определенные ECI
-            if(!in_array(
-                (int)$ans['xml']['AuthenticationData']['Eci'],
-                Issuer3DSVersionInterface::CURRENT_ECI_ARRAY
-            )) {
-                throw new Check3DSv2Exception('Карта не поддерживается, обратитесь в банк');
+            if(!isset($ans['xml'])) {
+                throw new CreatePayException('Ошибка аутентификации клиента');
             }
 
+            $payResponse = new CreatePayResponse();
+            $payResponse->vesion3DS = $check3DSVersionResponse->version;
+            $payResponse->status = BaseResponse::STATUS_DONE;
+            $payResponse->cardRefId = $check3DSVersionResponse->cardRefId;
+
             Yii::$app->cache->set(
-                Cache3DSv2Interface::CACHE_PREFIX_AUTH_DATA . $paySchet->ID,
-                json_encode($ans['xml']['AuthenticationData']),
+                Cache3DSv2Interface::CACHE_PREFIX_CARD_REF_ID . $paySchet->ID,
+                $check3DSVersionResponse->cardRefId,
                 3600
             );
-            $payResponse->isNeed3DSVerif = false;
-            $payResponse->authValue = $ans['xml']['AuthenticationData']['AuthenticationValue'];
-            $payResponse->dsTransId = $ans['xml']['AuthenticationData']['DsTransID'];
-            $payResponse->eci = $ans['xml']['AuthenticationData']['Eci'];
-            $payResponse->threeDSServerTransID = $check3DSVersionResponse->transactionId;
-        } else {
-            $payResponse->status = BaseResponse::STATUS_ERROR;
-        }
 
-        return $payResponse;
+            if(array_key_exists('ChallengeData', $ans['xml'])) {
+                // если нужна авторизация 3ds через форму
+                $payResponse->url = $ans['xml']['ChallengeData']['AcsURL'];
+                $payResponse->creq = $ans['xml']['ChallengeData']['Creq'];
+            } elseif (array_key_exists('AuthenticationData', $ans['xml'])) {
+
+                // Поддерживается только определенные ECI
+                if(!in_array(
+                    (int)$ans['xml']['AuthenticationData']['Eci'],
+                    Issuer3DSVersionInterface::CURRENT_ECI_ARRAY
+                )) {
+                    throw new Check3DSv2Exception('Карта не поддерживается, обратитесь в банк');
+                }
+
+                Yii::$app->cache->set(
+                    Cache3DSv2Interface::CACHE_PREFIX_AUTH_DATA . $paySchet->ID,
+                    json_encode($ans['xml']['AuthenticationData']),
+                    3600
+                );
+                $payResponse->isNeed3DSVerif = false;
+                $payResponse->authValue = $ans['xml']['AuthenticationData']['AuthenticationValue'];
+                $payResponse->dsTransId = $ans['xml']['AuthenticationData']['DsTransID'];
+                $payResponse->eci = $ans['xml']['AuthenticationData']['Eci'];
+                $payResponse->threeDSServerTransID = $check3DSVersionResponse->transactionId;
+            } else {
+                $payResponse->status = BaseResponse::STATUS_ERROR;
+            }
+
+            return $payResponse;
+        });
     }
 
 }

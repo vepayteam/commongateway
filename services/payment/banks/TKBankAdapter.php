@@ -1074,24 +1074,6 @@ class TKBankAdapter implements IBankAdapter
      */
     public function createPay(CreatePayForm $createPayForm)
     {
-        $checkDataCacheKey = Cache3DSv2Interface::CACHE_PREFIX_CHECK_DATA . $createPayForm->getPaySchet()->ID;
-
-        if(Yii::$app->cache->exists($checkDataCacheKey)) {
-            $checkData = Yii::$app->cache->get($checkDataCacheKey);
-
-            $check3DSVersionResponse = new Check3DSVersionResponse();
-            $check3DSVersionResponse->cardRefId = ($checkData['cardRefId'] ?? '');
-            $check3DSVersionResponse->transactionId = ($checkData['transactionId'] ?? '');
-
-            $paySchet = $createPayForm->getPaySchet();
-            $payResponse = $this->createPay3DSv2($paySchet, $check3DSVersionResponse);
-            // TODO: refact on tokenize
-            Yii::$app->cache->set(Cache3DSv2Interface::CACHE_PREFIX_CARD_NUMBER . $createPayForm->getPaySchet()->ID, $createPayForm->CardNumber, 3600);
-
-            $payResponse->isNeed3DSRedirect = false;
-            return $payResponse;
-        }
-
         /** @var Check3DSVersionResponse $check3DSVersionResponse */
         $check3DSVersionResponse = $this->check3DSVersion($createPayForm);
 
@@ -1284,7 +1266,7 @@ class TKBankAdapter implements IBankAdapter
         $confirm3DSv2Request = new Confirm3DSv2Request();
         $confirm3DSv2Request->ExtID = $donePayForm->getPaySchet()->ID;
         $confirm3DSv2Request->Amount = $donePayForm->getPaySchet()->getSummFull();
-        $confirm3DSv2Request->Cres = $donePayForm->cres;
+        $confirm3DSv2Request->Cres = $donePayForm->cres ?? Yii::$app->cache->get(Cache3DSv2Interface::CACHE_PREFIX_CRES);
         // TODO: refact on tokenize
         $confirm3DSv2Request->CardInfo = [
             'CardRefId' => $cardRefId,
