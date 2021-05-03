@@ -40,4 +40,13 @@ class CreatePayResponse extends BaseResponse
         return Yii::$app->params['domain'] . '/pay/orderdone/'.$paySchetId;
     }
 
+    /**
+     * @param int $paySchetId
+     * @return string
+     */
+    public function getStep2Url($paySchetId)
+    {
+        return Yii::$app->params['domain'] . '/pay/createpay-second-step/'.$paySchetId;
+    }
+
 }
