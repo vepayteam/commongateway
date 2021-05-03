@@ -99,17 +99,16 @@ trait TKBank3DSTrait
     }
 
     /**
-     * @param CreatePayForm $createPayForm
+     * @param PaySchet $paySchet
      * @param Check3DSVersionResponse $check3DSVersionResponse
      * @return CreatePayResponse
      * @throws Check3DSv2Exception
      * @throws CreatePayException
      */
-    protected function createPay3DSv2(CreatePayForm $createPayForm, Check3DSVersionResponse $check3DSVersionResponse)
+    protected function createPay3DSv2(Payschet $paySchet, Check3DSVersionResponse $check3DSVersionResponse)
     {
         $action = '/api/v1/card/unregistered/debit/3ds2Authenticate';
 
-        $paySchet = $createPayForm->getPaySchet();
         $authenticate3DSv2Request = new Authenticate3DSv2Request();
         $authenticate3DSv2Request->ExtId = $paySchet->ID;
         $authenticate3DSv2Request->CardInfo = [

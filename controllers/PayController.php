@@ -21,6 +21,9 @@ use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\TU;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
+use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
+use app\services\payment\banks\BankAdapterBuilder;
+use app\services\payment\banks\TKBankAdapter;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2DuplicatedException;
 use app\services\payment\exceptions\reRequestingStatusOkException;
@@ -29,6 +32,7 @@ use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\CreatePayForm;
+use app\services\payment\forms\CreatePaySecondStepForm;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\models\PaySchet;
@@ -209,18 +213,38 @@ class PayController extends Controller
         }
 
         $createPayResponse = $createPayStrategy->getCreatePayResponse();
+        $createPayResponse->termurl = $createPayResponse->GetRetUrl($paySchet->ID);
         switch ($createPayResponse->status) {
             case BaseResponse::STATUS_DONE:
-                $createPayResponse->termurl = $createPayResponse->GetRetUrl($paySchet->ID);
                 //отправить запрос адреса формы 3ds
                 Yii::warning('PayController createPayResponse data: ' . Json::encode($createPayResponse->getAttributes()));
                 return $createPayResponse->getAttributes();
             case BaseResponse::STATUS_ERROR:
                 //отменить счет
                 return $this->redirect(\yii\helpers\Url::to('/pay/orderok?id=' . $form->IdPay));
+            case BaseResponse::STATUS_CREATED:
+                $createPayResponse->termurl = $createPayResponse->getStep2Url($paySchet->ID);
+                return $createPayStrategy->getCreatePayResponse()->getAttributes();
             default:
                 return $createPayStrategy->getCreatePayResponse()->getAttributes();
         }
+    }
+
+    public function actionCreatepaySecondStep($id)
+    {
+        // TODO: refact
+        $createPaySecondStepForm = new CreatePaySecondStepForm();
+        $createPaySecondStepForm->IdPay = $id;
+
+        $paySchet = $createPaySecondStepForm->getPaySchet();
+        $bankAdapterBuilder = new BankAdapterBuilder();
+        $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank);
+
+        /** @var TKBankAdapter $tkbAdapter */
+        $tkbAdapter = $bankAdapterBuilder->getBankAdapter();
+        $createPayResponse = $tkbAdapter->createPayStep2($createPaySecondStepForm);
+
+        return $this->render('createpay-second-step', ['createPayResponse' => $createPayResponse]);
     }
 
     /**
