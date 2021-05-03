@@ -107,6 +107,7 @@ trait TKBank3DSTrait
      */
     protected function createPay3DSv2(Payschet $paySchet, Check3DSVersionResponse $check3DSVersionResponse)
     {
+        sleep(5);
         $action = '/api/v1/card/unregistered/debit/3ds2Authenticate';
 
         $authenticate3DSv2Request = new Authenticate3DSv2Request();

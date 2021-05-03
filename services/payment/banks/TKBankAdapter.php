@@ -1102,6 +1102,7 @@ class TKBankAdapter implements IBankAdapter
             $payResponse->isNeedSendTransIdTKB = true;
             $payResponse->threeDSServerTransID = $check3DSVersionResponse->threeDSServerTransID;
             $payResponse->threeDSMethodURL = $check3DSVersionResponse->threeDSMethodURL;
+            $payResponse->cardRefId = $check3DSVersionResponse->cardRefId;
             return $payResponse;
         } else {
             $payResponse = $this->createPay3DSv1($createPayForm, $check3DSVersionResponse);
