@@ -4,9 +4,9 @@ namespace app\services\balance\traits;
 
 use app\models\bank\TCBank;
 use app\models\payonline\Partner;
-use app\services\balance\Balance;
-use app\services\balance\response\BalanceResponse;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
+use app\services\payment\models\PartnerBankGate;
+use app\services\payment\types\AccountTypes;
 
 trait BalanceTrait
 {
@@ -18,39 +18,31 @@ trait BalanceTrait
     {
         return $this->partner
             ->getAllEnabledPartnerBankGatesByColumnDistinct([
-                    'BankId', //todo remove?
                     'SchetNumber',
                     'Login',
             ]);
     }
 
     /**
+     * @param PartnerBankGate $activeGate
      * @param $bank
-     * @param $activeGate
      * @return GetBalanceRequest
      */
-    public function formatRequest($bank, $activeGate): GetBalanceRequest
+    public function formatRequest(PartnerBankGate $activeGate, $bank): GetBalanceRequest
     {
-        $accounts = [];
+        $accountNumber = null;
+        /** @var AccountTypes */
+        $accountType = AccountTypes::TYPE_DEFAULT;
         if ($bank->ID === TCBank::$bank) {
-            //todo: change to gate settings
-            $accounts = [
-                Balance::BALANCE_TYPE_PAY_OUT => $this->partner->SchetTcb,
-                Balance::BALANCE_TYPE_NOMINAL => $this->partner->SchetTcbNominal,
-                Balance::BALANCE_TYPE_PAY_IN => $this->partner->SchetTcbTransit,
-            ];
-            // Если счета: SchetTcb и SchetTcbTransit совпадают то выводим только счет на выдачу
-            if (
-                !empty($this->partner->SchetTcbTransit)
-                && $this->partner->SchetTcb === $this->partner->SchetTcbTransit
-            ) {
-                unset($accounts[Balance::BALANCE_TYPE_PAY_IN]);
-            }
+            $accountType = $activeGate->SchetType; //TODO: types check by TU | TovarUslugaType
+            $accountNumber = $activeGate->SchetNumber;
         }
+
         $getBalanceRequest = new GetBalanceRequest();
         $getBalanceRequest->currency = 'RUB'; //TODO: add dynamic currency requests
         $getBalanceRequest->bankName = $bank->getName();
-        $getBalanceRequest->accounts = array_filter($accounts);
+        $getBalanceRequest->accountNumber = $accountNumber;
+        $getBalanceRequest->accountType = $accountType;
         return $getBalanceRequest;
     }
 }

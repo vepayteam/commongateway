@@ -414,7 +414,10 @@ class Partner extends ActiveRecord
             ->select($selectBy)
             ->where(['Enable' => 1])
             ->distinct()
-            ->addSelect(['SchetType'])
+            ->addSelect([
+                'SchetType',
+                'BankId'
+            ])
             ->all();
     }
 

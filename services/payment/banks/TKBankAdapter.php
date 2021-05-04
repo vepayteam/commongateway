@@ -958,23 +958,20 @@ class TKBankAdapter implements IBankAdapter
     {
         $request = [];
         $getBalanceResponse = new GetBalanceResponse();
-        $getBalanceResponse->bank_name = $getBalanceRequest->bankName;
-        if (empty($getBalanceRequest->accounts)) {
+        if (empty($getBalanceRequest->accountNumber)) {
             return $getBalanceResponse;
         }
-        foreach ($getBalanceRequest->accounts as $type => $account) {
-            $request['account'] = $account;
-            $response = $this->getBalanceAcc($request);
-            if (!isset($response['amount']) && $response['status'] === 0) {
-                Yii::warning("Balance service:: TKB request failed for type: $type message: " . $response['message']);
-                continue;
-            }
-            array_push($getBalanceResponse->balance, [
-                'amount' => (float)$response['amount'],
-                'currency' => 'RUB',
-                'account_type' => $type,
-            ]);
+        $getBalanceResponse->bank_name = $getBalanceRequest->bankName;
+
+        $type = $getBalanceRequest->accountType;
+        $request['account'] = $getBalanceRequest->accountNumber;
+        $response = $this->getBalanceAcc($request);
+        if (!isset($response['amount']) && $response['status'] === 0) {
+            Yii::warning("Balance service:: TKB request failed for type: $type message: " . $response['message']);
         }
+        $getBalanceResponse->amount = (float)$response['amount'];
+        $getBalanceResponse->currency = 'RUB';
+        $getBalanceResponse->accountType = $type;
         return $getBalanceResponse;
     }
 }

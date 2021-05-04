@@ -111,10 +111,10 @@ $bankGates = $partner->getBankGates()->orderBy('TU ASC, Priority DESC')->all();
                     </div>
 
                     <div class="form-group">
-                        <label for="schet_type">Тип счета</label>
-                        <select class="form-control" name="SchetType" id="schet_type">
+                        <label>Тип счета</label>
+                        <select class="form-control" name="SchetType">
                             <?php
-                            /** @var UslugatovarType $uslugatovarType */
+                            /** @var AccountTypes */
                             foreach (AccountTypes::ALL_TYPES as $key => $type): ?>
                                 <option value="<?= $key ?>">
                                     <?= $type ?>
@@ -123,8 +123,8 @@ $bankGates = $partner->getBankGates()->orderBy('TU ASC, Priority DESC')->all();
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="exampleInputFile">Номер счета</label>
-                        <input name="SchetNumber" class="form-control" type="text">
+                        <label for="SchetNumberInput">Номер счета</label>
+                        <input name="SchetNumber" id="SchetNumberInput" class="form-control" type="text">
                     </div>
 
                     <div class="form-group">

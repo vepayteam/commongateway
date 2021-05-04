@@ -2,7 +2,6 @@
 
 namespace app\services\balance;
 
-use app\models\mfo\MfoBalance;
 use app\models\mfo\MfoReq;
 use app\models\payonline\Partner;
 use app\services\balance\response\BalanceResponse;
@@ -25,10 +24,7 @@ class Balance extends Model
     use BalanceTrait;
 
     public const BALANCE_CACHE_PREFIX = 'balance_cache_partner_';
-    public const BALANCE_CACHE_EXPIRE = 30; // in seconds
-    public const BALANCE_TYPE_PAY_OUT = 'pay_out'; //TODO: move to types
-    public const BALANCE_TYPE_PAY_IN = 'pay_in'; //TODO: move to types
-    public const BALANCE_TYPE_NOMINAL = 'nominal'; //TODO: move to types
+    public const BALANCE_CACHE_EXPIRE = 10; // in seconds
 
     /** @var Partner $partner */
     public $partner;
@@ -47,8 +43,6 @@ class Balance extends Model
             [['partner'], 'required']
         ];
     }
-    /** @var MfoBalance $mfoBalanceRepository */
-    private $mfoBalanceRepository;
 
     /**
      * @param MfoReq $mfoRequest
@@ -70,7 +64,6 @@ class Balance extends Model
     {
         // Получаем все активные шлюзы
         $enabledBankGates =  $this->getActiveBankGates();
-
         if (!$enabledBankGates) {
             $this->response->setError(BalanceResponse::BALANCE_UNAVAILABLE_ERROR_MSG);
             return $this->response;
@@ -79,7 +72,7 @@ class Balance extends Model
         foreach ($enabledBankGates as $activeGate) {
             $bank = BankRepository::getBankById($activeGate->BankId);
             $bankAdapter = $this->buildAdapter($bank);
-            $getBalanceRequest = $this->formatRequest($bank, $activeGate);
+            $getBalanceRequest = $this->formatRequest($activeGate, $bank);
             try {
                 /** @var GetBalanceResponse */
                 $getBalanceResponse = $bankAdapter->getBalance($getBalanceRequest);
@@ -87,7 +80,7 @@ class Balance extends Model
                 Yii::warning('Balance service: ' . $exception->getMessage() . ' - PartnerId: ' . $mfoRequest->mfo);
                 continue;
             }
-            if (isset($getBalanceResponse) && !empty($getBalanceResponse->balance)) {
+            if (isset($getBalanceResponse) && !empty($getBalanceResponse->amount)) {
                 $bankResponse[] = $getBalanceResponse;
             }
         }

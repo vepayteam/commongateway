@@ -14,7 +14,7 @@ use Yii;
  * @property int $BankId
  * @property string|null $TU
  * @property string|null $SchetNumber
- * @property int $SchetType
+ * @property string|null $SchetType
  * @property string|null $Login
  * @property string|null $Token
  * @property string|null $Password
@@ -46,8 +46,8 @@ class PartnerBankGate extends \yii\db\ActiveRecord
     {
         return [
             [['PartnerId', 'BankId'], 'required'],
-            [['PartnerId', 'BankId', 'Priority', 'Enable', 'TU'], 'integer'],
-            [['Login', 'AdvParam_1', 'AdvParam_2', 'AdvParam_3', 'AdvParam_4'], 'string', 'max' => 400],
+            [['PartnerId', 'BankId', 'Priority', 'Enable', 'TU', 'SchetType'], 'integer'],
+            [['Login', 'AdvParam_1', 'AdvParam_2', 'AdvParam_3', 'AdvParam_4', 'SchetNumber'], 'string', 'max' => 400],
             [['Token', 'Password'], 'safe'],
         ];
     }
@@ -71,6 +71,8 @@ class PartnerBankGate extends \yii\db\ActiveRecord
             'AdvParam_4' => 'Adv Param 4',
             'Priority' => 'Priority',
             'Enable' => 'Enable',
+            'SchetType' => 'SchetType',
+            'SchetNumber' => 'SchetNumber',
         ];
     }
 

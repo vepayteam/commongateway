@@ -8,6 +8,7 @@ use app\services\balance\response\BalanceResponse;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\models\Bank;
+use app\services\payment\models\PartnerBankGate;
 
 class ServiceBalanceTest extends \Codeception\Test\Unit
 {
@@ -55,14 +56,6 @@ class ServiceBalanceTest extends \Codeception\Test\Unit
         $this->assertEquals([], $buildBalance->banks);
     }
 
-    public function testBalanceTraitError()
-    {
-        $balanceError = $this->balance->balanceError('error message');
-        $this->assertInstanceOf(BalanceResponse::class, $balanceError);
-        $this->assertEquals(0, $balanceError->status);
-        $this->assertEquals('error message', $balanceError->message);
-    }
-
     public function testBalanceResponse()
     {
         $this->assertClassHasAttribute('banks', BalanceResponse::class);
@@ -74,34 +67,30 @@ class ServiceBalanceTest extends \Codeception\Test\Unit
         $this->assertEquals('', $response->message);
     }
 
-    public function testMfoBalanceInit()
-    {
-        $mfoBalance = new MfoBalance($this->partner);
-        $this->assertInstanceOf(MfoBalance::class, $mfoBalance);
-        $this->assertClassHasAttribute('Partner', MfoBalance::class);
-    }
-
     public function testGetBalanceResponse()
     {
-        $this->assertClassHasAttribute('balance', GetBalanceResponse::class);
+        $this->assertClassHasAttribute('amount', GetBalanceResponse::class);
+        $this->assertClassHasAttribute('currency', GetBalanceResponse::class);
+        $this->assertClassHasAttribute('accountType', GetBalanceResponse::class);
         $this->assertClassHasAttribute('bank_name', GetBalanceResponse::class);
         $response = new GetBalanceResponse();
-        $this->assertIsArray($response->balance);
-        $this->assertIsString($response->bank_name);
+        $this->assertEquals('', $response->amount);
+        $this->assertEquals('', $response->bank_name);
     }
     public function testGetBalanceRequest()
     {
         $this->assertClassHasAttribute('currency', GetBalanceRequest::class);
-        $this->assertClassHasAttribute('accounts', GetBalanceRequest::class);
+        $this->assertClassHasAttribute('accountNumber', GetBalanceRequest::class);
         $request = new GetBalanceRequest();
         $this->assertIsString($request->bankName);
-        $this->assertIsArray($request->accounts);
+        $this->assertEquals('', $request->accountNumber);
     }
 
     public function testBalanceTraitFormatRequest()
     {
         $bank = $this->getMockBuilder(Bank::class)->getMock();
-        $getBalanceRequest = $this->balance->formatRequest($bank);
+        $gate = $this->getMockBuilder(PartnerBankGate::class)->getMock();
+        $getBalanceRequest = $this->balance->formatRequest($gate, $bank);
         $this->assertInstanceOf(GetBalanceRequest::class, $getBalanceRequest);
     }
 }

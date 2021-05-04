@@ -6,6 +6,10 @@ class GetBalanceResponse
 {
     /** @var string */
     public $bank_name = "";
-    /** @var array */
-    public $balance = [];
+    /** @var float */
+    public $amount;
+    /** @var string */
+    public $currency;
+    /** @var int */
+    public $accountType;
 }

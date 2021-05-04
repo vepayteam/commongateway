@@ -12,12 +12,14 @@ use yii\base\Model;
 abstract class AccountTypes extends Model
 {
     public const TYPE_DEFAULT = 0;
-    public const TYPE_TRANSIT = 1;
-    public const TYPE_NOMINAL = 2;
+    public const TYPE_TRANSIT_PAY_IN = 1;
+    public const TYPE_TRANSIT_PAY_OUT = 2;
+    public const TYPE_NOMINAL = 3;
 
     public const ALL_TYPES = [
         self::TYPE_DEFAULT => '',
-        self::TYPE_TRANSIT => 'Транзитный',
-        self::TYPE_NOMINAL => 'Номинальный',
+        self::TYPE_TRANSIT_PAY_IN => 'Счёт поступления (Транзитный)',
+        self::TYPE_TRANSIT_PAY_OUT => 'Счёт выплат (Транзитный)',
+        self::TYPE_NOMINAL => 'Счёт (Номинальный)',
     ];
 }
