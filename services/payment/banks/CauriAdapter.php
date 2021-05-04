@@ -142,22 +142,6 @@ class CauriAdapter implements IBankAdapter
     /**
      * @inheritDoc
      */
-    public function confirmPay($idpay, $org = 0, $isCron = false)
-    {
-        // TODO: Implement confirmPay() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function transferToCard(array $data)
-    {
-        // TODO: Implement transferToCard() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function transferToCard(array $data)
     {
         // TODO: Implement transferToCard() method.
