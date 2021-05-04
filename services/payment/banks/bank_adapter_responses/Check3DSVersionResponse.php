@@ -9,4 +9,7 @@ class Check3DSVersionResponse extends BaseResponse
     public $transactionId;
     public $url;
     public $cardRefId;
+
+    public $threeDSServerTransID;
+    public $threeDSMethodURL;
 }

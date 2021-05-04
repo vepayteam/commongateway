@@ -6,6 +6,7 @@ namespace app\services\payment\banks;
 
 use app\models\TU;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
+use app\services\ident\forms\IdentForm;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
@@ -14,6 +15,7 @@ use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
+use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
@@ -30,6 +32,7 @@ use app\services\payment\forms\forta\PaymentRequest;
 use app\services\payment\forms\forta\RefundPayRequest;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
+use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
@@ -179,21 +182,37 @@ class FortaTechAdapter implements IBankAdapter
         $checkStatusPayResponse = new CheckStatusPayResponse();
 
         if($ans['status'] == true && isset($ans['data']['cards'][0]['transferParts'])) {
-            $checkStatusPayResponse->status = BaseResponse::STATUS_DONE;
+            // TODO: refact
 
+
+            $transferParts = $ans['data']['cards'][0]['transferParts'];
             $errorData = '';
-            foreach ($ans['data']['cards'][0]['transferParts'] as $transferPart) {
+            $errorsCount = 0;
+            $initCount = 0;
+            $paidCount = 0;
+            foreach ($transferParts as $transferPart) {
                 if($transferPart['status'] == 'STATUS_ERROR') {
-                    $checkStatusPayResponse->status = BaseResponse::STATUS_CREATED;
                     $errorData .= Json::encode($transferPart) . "\n";
+                    $errorsCount++;
                 } elseif ($transferPart['status'] == 'STATUS_INIT') {
-                    $checkStatusPayResponse->status = BaseResponse::STATUS_CREATED;
-                } elseif (
-                    $transferPart['status'] == 'STATUS_PAID'
-                    && $checkStatusPayResponse->status == BaseResponse::STATUS_CREATED
-                ) {
-                    continue;
+                    $initCount++;
+                } elseif ($transferPart['status'] == 'STATUS_PAID') {
+                    $paidCount++;
                 }
+            }
+
+            if(count($transferParts) === $paidCount) {
+                // если все части платежей успешны
+                $checkStatusPayResponse->status = BaseResponse::STATUS_DONE;
+            } elseif (count($transferParts) === $errorsCount) {
+                // если все части платежей с ошибкой
+                $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
+            } elseif ($initCount === 0) {
+                // если части платежей с ошибками и успешны
+                $checkStatusPayResponse->status = BaseResponse::STATUS_CREATED;
+                $checkStatusPayResponse->message = mb_substr($errorData, 0, 250);
+            } else {
+                $checkStatusPayResponse->status = BaseResponse::STATUS_CREATED;
             }
         } else {
             $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
@@ -363,10 +382,18 @@ class FortaTechAdapter implements IBankAdapter
 
         Yii::warning('FortaTechAdapter req uri=' . $uri .' : ' . Json::encode($data));
         $response = curl_exec($curl);
+        Yii::warning('FortaTechAdapter response:' . $response);
         $curlError = curl_error($curl);
+        Yii::warning('FortaTechAdapter curlError:' . $curlError);
         $info = curl_getinfo($curl);
 
         try {
+            Yii::warning(sprintf(
+                'FortaTechAdapter response: %s | curlError: %s | info: %s',
+                $response,
+                $curlError,
+                Json::encode($info)
+            ));
             $response = $this->parseResponse($response);
         } catch (\Exception $e) {
             throw new BankAdapterResponseException('Ошибка запроса');
@@ -538,6 +565,19 @@ class FortaTechAdapter implements IBankAdapter
      * @inheritDoc
      */
     public function getBalance(GetBalanceRequest $getBalanceRequest)
+    {
+        // TODO: Implement getBalance() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function transferToAccount(OutPayAccountForm $outPayaccForm)
+    {
+        // TODO: Implement transferToAccount() method.
+    }
+
+    public function ident(IdentForm $identForm)
     {
         throw new GateException('Метод недоступен');
     }
