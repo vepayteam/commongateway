@@ -96,6 +96,7 @@ trait CardsTrait
                 $cardDataToUpdate = [
                     'ExtCardIDP' => $payCard->bankId,
                 ];
+                /** Rules: @var PayCard */
                 if ($payCard->validate()) {
                     array_push($cardDataToUpdate, [
                         'CardNumber' => $payCard->number,
