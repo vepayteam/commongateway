@@ -14,15 +14,13 @@ class CheckStatusPayResponse extends BaseResponse
     public $cardHolder;
 
     /**
-     * Проверка полученных карточных данных
+     * проверка полученного внешнего идентификатора карты
      * @return array[]
      */
     public function rules(): array
     {
         return [
-            [['cardNumber', 'cardRefId'], 'required'],
-            [['expYear', 'expMonth'], 'required'],
-            [['cardHolder'], 'required'],
+            [['cardRefId'], 'required'],
         ];
     }
 }

@@ -122,7 +122,7 @@ class CauriAdapter implements IBankAdapter
             $transactionStatusResponse->message = $content['reason'] ?? '';
             $transactionStatusResponse->id = $content['id']; // Transaction ID
             if (isset($content['user']) && !empty($content['user']['id'])) {
-                $transactionStatusResponse->userId = $content['user']['id']; // Cauri user ID
+                $transactionStatusResponse->userId = (int)$content['user']['id']; // Cauri user ID
             }
         } catch (\Exception $e) {
             Yii::error(' CauriAdapter getTransactionStatus err:' . $e->getMessage());
