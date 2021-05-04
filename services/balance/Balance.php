@@ -24,7 +24,7 @@ class Balance extends Model
     use BalanceTrait;
 
     public const BALANCE_CACHE_PREFIX = 'balance_cache_partner_';
-    public const BALANCE_CACHE_EXPIRE = 10; // in seconds
+    private const BALANCE_CACHE_EXPIRE = 30; // in seconds
 
     /** @var Partner $partner */
     public $partner;

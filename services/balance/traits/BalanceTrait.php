@@ -34,7 +34,7 @@ trait BalanceTrait
         /** @var AccountTypes */
         $accountType = AccountTypes::TYPE_DEFAULT;
         if ($bank->ID === TCBank::$bank) {
-            $accountType = $activeGate->SchetType; //TODO: types check by TU | TovarUslugaType
+            $accountType = $activeGate->SchetType;
             $accountNumber = $activeGate->SchetNumber;
         }
 
