@@ -179,16 +179,6 @@ class VyvodVoznag extends Model
                 echo "VyvodVoznag: mfo=" . $this->partner . ", transac=" . $ret['transac'] . "\r\n";
             }
 
-            //статус не будем смотреть
-            $payschets->confirmPay([
-                'idpay' => $idpay,
-                'result_code' => 1,
-                'trx_id' => $ret['transac'],
-                'ApprovalCode' => '',
-                'RRN' => '',
-                'message' => ''
-            ]);
-
             Yii::$app->db->createCommand()->update('vyvod_system', [
                 'SatateOp' => 1
             ],'`ID` = :ID', [':ID' => $id])->execute();

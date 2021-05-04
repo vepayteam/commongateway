@@ -222,6 +222,16 @@ class PaySchet extends \yii\db\ActiveRecord
         ];
     }
 
+    /**
+     * @param int $statusIndex
+     *
+     * @return string
+     */
+    public static function getStatusTitle(int $statusIndex): string
+    {
+        return (array_key_exists($statusIndex, self::STATUSES) ? self::STATUSES[$statusIndex] : '');
+    }
+
     public function getUslugatovar()
     {
         return $this->hasOne(Uslugatovar::class, ['ID' => 'IdUsluga']);
