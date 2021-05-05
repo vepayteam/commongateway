@@ -156,7 +156,7 @@ use app\services\payment\models\PaySchet;
                href="/partner/stat/list-export-csv?<?=$exportLink?>">
                 <i class="fa fa-share"></i>&nbsp;Экспорт csv
             </a></th>
-        <th>
+            <th>
             <a class="btn btn-white btn-xs pull-right" target="_blank"
                href="/partner/stat/listexport?<?=$exportLink?>">
                 <i class="fa fa-share"></i>&nbsp;Экспорт xlsx

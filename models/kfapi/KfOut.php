@@ -77,7 +77,7 @@ class KfOut extends Model
             [['cardnum', 'amount'/*, 'extid'*/], 'required', 'on' => self::SCENARIO_CARD],
             [['card', 'amount'/*, 'extid'*/], 'required', 'on' => self::SCENARIO_CARDID],
             [['name', 'inn', 'account', 'bic', 'descript', 'amount'/*, 'extid'*/], 'required', 'on' => [self::SCENARIO_UL,self::SCENARIO_NDFL]],
-            [['fio', 'account', 'bic', 'descript', 'amount'/*, 'extid'*/], 'required', 'on' => self::SCENARIO_FL],
+            [['fio', 'inn', 'account', 'bic', 'descript', 'amount'/*, 'extid'*/], 'required', 'on' => self::SCENARIO_FL],
             [['name', 'inn', 'account', 'descript', 'amount'/*, 'extid'*/], 'required', 'on' => [self::SCENARIO_INT,self::SCENARIO_NDFL]],
             [['sendername', 'senderadress', 'senderaccount', 'kbk', 'okato', 'paymentbase', 'taxperiod', 'taxdocnum', 'taxdocdate', 'taxpaymenttype'], 'string', 'max' => 200],
             [['id'], 'required', 'on' => self::SCENARIO_STATE],

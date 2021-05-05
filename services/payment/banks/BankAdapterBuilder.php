@@ -9,6 +9,7 @@ use app\models\payonline\Uslugatovar;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\models\Bank;
 use app\services\payment\models\PartnerBankGate;
+use app\services\payment\models\PaySchet;
 
 class BankAdapterBuilder
 {
@@ -40,7 +41,7 @@ class BankAdapterBuilder
             ])->orderBy('Priority DESC')->one();
 
         if (!$this->partnerBankGate) {
-            throw new GateException('Нет шлюза');
+            throw new GateException("Нет шлюза. partnerId=$partner->ID uslugatovarId=$uslugatovar->ID");
         }
 
         try {
@@ -73,7 +74,7 @@ class BankAdapterBuilder
             ])->orderBy('Priority DESC')->one();
 
         if (!$this->partnerBankGate) {
-            throw new GateException('Нет шлюза');
+            throw new GateException("Нет шлюза. partnerId=$partner->ID uslugatovarId=$uslugatovar->ID bankId=$bank->ID");
         }
 
         try {
