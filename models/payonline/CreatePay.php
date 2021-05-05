@@ -50,7 +50,7 @@ class CreatePay
 
         $this->Provparams = $Provparams;
 
-        $paySchet = $this->addPayschet($agent,0, $TypeWidget, $Bank, $IdOrg, $Extid, $AutoPayIdGate);
+        $paySchet = $this->addPayschet($agent,0, $TypeWidget, $Bank, $IdOrg, $Extid, $AutoPayIdGate, 1800);
         if ($paySchet) {
             $ret = ['IdPay' => $paySchet->ID];
         }
