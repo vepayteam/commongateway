@@ -20,14 +20,9 @@ class ServiceBalanceTest extends \Codeception\Test\Unit
      * @var Balance
      */
     private $balance;
-    /**
-     * @var Partner|\PHPUnit\Framework\MockObject\MockObject
-     */
-    private $partner;
 
     protected function _before()
     {
-        $this->partner = $this->getMockBuilder(Partner::class)->getMock();
         $this->balance = new Balance();
     }
 
@@ -53,17 +48,17 @@ class ServiceBalanceTest extends \Codeception\Test\Unit
         $buildBalance = $this->balance->build($mfoRequest);
         $this->assertInstanceOf(BalanceResponse::class, $buildBalance);
         $this->assertIsString($buildBalance->message);
-        $this->assertEquals([], $buildBalance->banks);
+        $this->assertEquals([], $buildBalance->balance);
     }
 
     public function testBalanceResponse()
     {
-        $this->assertClassHasAttribute('banks', BalanceResponse::class);
+        $this->assertClassHasAttribute('balance', BalanceResponse::class);
         $this->assertClassHasAttribute('status', BalanceResponse::class);
         $this->assertClassHasAttribute('message', BalanceResponse::class);
         $response = new BalanceResponse();
-        $this->assertIsArray($response->banks);
-        $this->assertEquals([], $response->banks);
+        $this->assertIsArray($response->balance);
+        $this->assertEquals([], $response->balance);
         $this->assertEquals('', $response->message);
     }
 
@@ -71,7 +66,7 @@ class ServiceBalanceTest extends \Codeception\Test\Unit
     {
         $this->assertClassHasAttribute('amount', GetBalanceResponse::class);
         $this->assertClassHasAttribute('currency', GetBalanceResponse::class);
-        $this->assertClassHasAttribute('accountType', GetBalanceResponse::class);
+        $this->assertClassHasAttribute('account_type', GetBalanceResponse::class);
         $this->assertClassHasAttribute('bank_name', GetBalanceResponse::class);
         $response = new GetBalanceResponse();
         $this->assertEquals('', $response->amount);

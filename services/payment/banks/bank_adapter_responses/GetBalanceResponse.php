@@ -11,5 +11,5 @@ class GetBalanceResponse
     /** @var string */
     public $currency;
     /** @var int */
-    public $accountType;
+    public $account_type;
 }

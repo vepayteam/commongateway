@@ -1504,7 +1504,7 @@ class TKBankAdapter implements IBankAdapter
         }
         $getBalanceResponse->amount = (float)$response['amount'];
         $getBalanceResponse->currency = 'RUB';
-        $getBalanceResponse->accountType = $type;
+        $getBalanceResponse->account_type = $type;
         return $getBalanceResponse;
     }
 

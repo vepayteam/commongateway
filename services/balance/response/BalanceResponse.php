@@ -14,14 +14,14 @@ class BalanceResponse
     /** @var string */
     public $message = '';
     /** @var array */
-    public $banks = [];
+    public $balance = [];
     /** @deprecated TODO: remove */
     public $amount = null;
 
-    public function setBankBalance(array $banks)
+    public function setBankBalance(array $balance)
     {
         $this->status = self::STATUS_DONE;
-        $this->banks = $banks;
+        $this->balance = $balance;
     }
 
     public function setError(string $message = '')
