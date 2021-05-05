@@ -10,6 +10,7 @@ use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\queue\BinBDInfoJob;
 use app\models\TU;
+use app\services\ident\forms\IdentForm;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\Check3DSVersionResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
@@ -30,6 +31,7 @@ use app\services\payment\exceptions\RefundPayException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
+use app\services\payment\forms\CreatePaySecondStepForm;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\GetBalanceForm;
 use app\services\payment\forms\OkPayForm;
@@ -108,156 +110,6 @@ class TKBankAdapter implements IBankAdapter
     }
 
     /**
-     * Регистрация запроса оплаты в банке и возврат страницы для перенеправлениея клиента
-     * @param array $data
-     * @return array
-     * @throws \yii\db\Exception
-     */
-    public function beginPay($data)
-    {
-        $idkard = isset($data['IdKard']) ? $data['IdKard'] : 0;
-        $user = isset($data['user']) ? $data['user'] : null;
-        $ans = $this->createTisket($data, $user, $idkard);
-        if (!empty($ans['tisket'])) {
-            if ($ans['recurrent']) {
-                return [
-                    'type' => 'recurrent',
-                    'id' => $ans['tisket']
-                ];
-            } else {
-                return [
-                    'type' => 'url',
-                    'url' => $ans['url']
-                ];
-            }
-        }
-        return ['error' => 1];
-    }
-
-
-    public function confirmPay($idpay, $org = 0, $isCron = false)
-    {
-        $mesg = '';
-        $payschets = new Payschets();
-        //данные счета для оплаты
-        $params = $payschets->getSchetData($idpay, null, $org);
-
-        if ($params) {
-            $state = $params['Status'];
-            $ApprovalCode = $RRN = $RCCode = '';
-            if ($params['Status'] == 0 && $params['sms_accept'] == 1) {
-                $status = $this->checkStatusOrder($params, $isCron);
-
-                $mesg = $status['xml']['orderinfo']['statedescription'] ?? '';
-                $RCCode = $status['xml']['orderadditionalinfo']['rc'] ?? '';
-
-                if ($status['state'] > 0) {
-                    //1 - оплачен, 2,3 - не оплачен
-                    if (($params['IdUsluga'] == 1 || ($params['IdUser'] > 0 && $params['IdKard'] == 0 && in_array($params['IsCustom'], [TU::$JKH, TU::$ECOM]))) &&
-                        $status['state'] == 1 &&
-                        isset($status['xml']['orderadditionalinfo']['cardrefid'])
-                    ) {
-                        //привязка карты через платеж
-                        $card = [
-                            'number' => str_replace(" ", "", $status['xml']['orderadditionalinfo']['cardnumber']),
-                            'expiry' => $status['xml']['orderadditionalinfo']['cardexpmonth'] . substr($status['xml']['orderadditionalinfo']['cardexpyear'], 2, 2),
-                            'idcard' => $status['xml']['orderadditionalinfo']['cardrefid'],
-                            //'type' => isset($status['xml']['orderadditionalinfo']['cardbrand']) ? $this->GetCardType($status['xml']['orderadditionalinfo']['cardbrand']) : 0,
-                            'type' => Cards::GetTypeCard($status['xml']['orderadditionalinfo']['cardnumber']),
-                            'holder' => isset($status['xml']['orderadditionalinfo']['cardholder']) ? $status['xml']['orderadditionalinfo']['cardholder'] : ''
-                        ];
-                        $payschets->UpdateCardExtId($params['IdUser'], $card, $params['ID'], self::$bank);
-                    }
-
-                    if ($status['state'] == 1) {
-                        //$ApprovalCode = isset($status['xml']['APPROVAL_CODE']) ? $status['xml']['APPROVAL_CODE'] : '';
-                        $RRN = $status['xml']['orderadditionalinfo']['rrn'] ?? '';
-                    }
-
-                    $payschets->confirmPay([
-                        'idpay' => $params['ID'],
-                        'idgroup' => $params['IdGroupOplat'],
-                        'result_code' => $status['state'],
-                        'trx_id' => $params['ExtBillNumber'],
-                        'ApprovalCode' => $ApprovalCode,
-                        'RRN' => $RRN,
-                        'RCCode' => $RCCode,
-                        'message' => $mesg
-                    ]);
-                }
-                $state = $status['state'];
-                $RCCode = $status['xml']['orderadditionalinfo']['rc'] ?? '';
-
-            } elseif (in_array($state, [1, 2, 3])) {
-                $mesg = $params['ErrorInfo'];
-                //$ApprovalCode = $params['ApprovalCode'];
-                $RRN = $params['RRN'];
-                $RCCode = $params['RCCode'];
-            }
-            return [
-                'status' => $state,
-                'message' => $mesg,
-                'rc' => $RCCode,
-                'IdPay' => $params['ID'],
-                'Params' => $params,
-                'info' => ['card' => $params['CardNum'], 'brand' => $params['CardType'], 'rrn' => $RRN, 'transact' => $params['ExtBillNumber']]
-            ];
-        }
-        return ['status' => 0, 'message' => $mesg, 'rc' => '', 'IdPay' => 0, 'Params' => null, 'info' => null];
-    }
-
-    /**
-     * Возврат оплаты
-     * @param int $IdPay
-     * @return array
-     * @throws \yii\db\Exception
-     */
-    public function reversOrder($IdPay)
-    {
-        $payschets = new Payschets();
-        //данные счета
-        $params = $payschets->getSchetData($IdPay);
-
-        if ($params['Status'] == 1) {
-
-            $queryData = [
-                'ExtId' => $params['ID'],
-                'description' => 'Отмена заказа',
-            ];
-
-            $paymentOnToday  = $params['DateCreate'] >= mktime(0, 0, 0, date('n'), date('d'), date('Y'));
-            if ($paymentOnToday) {
-                //отмена в день оплаты
-                $action = '/api/v1/card/unregistered/debit/reverse';
-            } else {
-                //возврат - отмена на следующий день после оплаты
-                $action = '/api/v1/card/unregistered/debit/refund';
-
-                $queryData['amount'] = $params['SummFull'];
-            }
-
-            $queryData = Json::encode($queryData);
-
-            $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
-            Yii::warning("reversOrder: " . $this->logArr($ans), 'merchant');
-            if (isset($ans['xml']) && !empty($ans['xml'])) {
-                if($paymentOnToday) {
-                    $st = isset($ans['xml']['OrderId']) && isset($ans['xml']['ExtId']) ? 1 : 0;
-
-                } else {
-                    $st = isset($ans['xml']['amount'])
-                        && $ans['xml']['amount'] == $params['SummFull']
-                        && isset($ans['xml']['ExtId']) ? 1 : 0;
-                }
-                $msg = $st ? 'Платеж отменен' : 'Ошибка запроса';
-                return ['state' => $st, 'Status' => $st, 'message' => $msg];
-
-            }
-        }
-        return ['state' => 0, 'Status' => '', 'message' => ''];
-    }
-
-    /**
      * Получение № тарнзакции в банке
      * @param array $data [IdPay]
      * @param User|null $user
@@ -319,6 +171,12 @@ class TKBankAdapter implements IBankAdapter
             }
 
             $queryData = Json::encode($queryData);
+
+            //$language = 'fullsize';
+            // определяем через что зашли - pageView = MOBILE
+            //if ($user->isMobile()) {
+            //$language = 'mob';
+            //}*/
 
             $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
 
@@ -1220,15 +1078,45 @@ class TKBankAdapter implements IBankAdapter
         $check3DSVersionResponse = $this->check3DSVersion($createPayForm);
 
         if(in_array($check3DSVersionResponse->version, Issuer3DSVersionInterface::V_2)) {
-            $payResponse = $this->createPay3DSv2($createPayForm, $check3DSVersionResponse);
-            // TODO: refact on tokenize
-            Yii::$app->cache->set(Cache3DSv2Interface::CACHE_PREFIX_CARD_NUMBER . $createPayForm->getPaySchet()->ID, $createPayForm->CardNumber, 3600);
+            // TODO: add strategy 3ds v2
+            $payResponse = new CreatePayResponse();
+            $payResponse->status = BaseResponse::STATUS_CREATED;
+            $payResponse->isNeedSendTransIdTKB = true;
+            $payResponse->threeDSServerTransID = $check3DSVersionResponse->threeDSServerTransID;
+            $payResponse->threeDSMethodURL = $check3DSVersionResponse->threeDSMethodURL;
+            $payResponse->cardRefId = $check3DSVersionResponse->cardRefId;
+            return $payResponse;
         } else {
             $payResponse = $this->createPay3DSv1($createPayForm, $check3DSVersionResponse);
         }
 
         $payResponse->isNeed3DSRedirect = false;
         return $payResponse;
+    }
+
+    /**
+     * @param CreatePaySecondStepForm $createPaySecondStepForm
+     * @return CreatePayResponse
+     * @throws Check3DSv2Exception
+     * @throws CreatePayException
+     */
+    public function createPayStep2(CreatePaySecondStepForm $createPaySecondStepForm)
+    {
+        $checkDataCacheKey = Cache3DSv2Interface::CACHE_PREFIX_CHECK_DATA . $createPaySecondStepForm->getPaySchet()->ID;
+
+        if(Yii::$app->cache->exists($checkDataCacheKey)) {
+            $checkData = Yii::$app->cache->get($checkDataCacheKey);
+
+            $check3DSVersionResponse = new Check3DSVersionResponse();
+            $check3DSVersionResponse->cardRefId = ($checkData['cardRefId'] ?? '');
+            $check3DSVersionResponse->transactionId = ($checkData['transactionId'] ?? '');
+
+            $paySchet = $createPaySecondStepForm->getPaySchet();
+            $payResponse = $this->createPay3DSv2($paySchet, $check3DSVersionResponse);
+
+            $payResponse->isNeed3DSRedirect = false;
+            return $payResponse;
+        }
     }
 
     /**
@@ -1302,7 +1190,10 @@ class TKBankAdapter implements IBankAdapter
     {
         $paySchet = $donePayForm->getPaySchet();
 
-        if(in_array($paySchet->Version3DS, Issuer3DSVersionInterface::V_2)) {
+        $checkDataCacheKey = Cache3DSv2Interface::CACHE_PREFIX_CHECK_DATA . $paySchet->ID;
+        if(Yii::$app->cache->exists($checkDataCacheKey)
+            && in_array(Yii::$app->cache->get($checkDataCacheKey)['version'], Issuer3DSVersionInterface::V_2)
+        ) {
             return $this->confirmBy3DSv2($donePayForm);
         } else {
             return $this->confirmBy3DSv1($donePayForm);
@@ -1371,13 +1262,14 @@ class TKBankAdapter implements IBankAdapter
     {
         $action = '/api/v1/card/unregistered/debit/3ds2Validate';
 
+        $cardRefId = Yii::$app->cache->get(Cache3DSv2Interface::CACHE_PREFIX_CARD_REF_ID . $donePayForm->getPaySchet()->ID);
         $confirm3DSv2Request = new Confirm3DSv2Request();
         $confirm3DSv2Request->ExtID = $donePayForm->getPaySchet()->ID;
         $confirm3DSv2Request->Amount = $donePayForm->getPaySchet()->getSummFull();
-        $confirm3DSv2Request->Cres = $donePayForm->cres;
+        $confirm3DSv2Request->Cres = $donePayForm->cres ?? Yii::$app->cache->get(Cache3DSv2Interface::CACHE_PREFIX_CRES);
         // TODO: refact on tokenize
         $confirm3DSv2Request->CardInfo = [
-            'CardNumber' => Yii::$app->cache->get(Cache3DSv2Interface::CACHE_PREFIX_CARD_NUMBER . $donePayForm->getPaySchet()->ID),
+            'CardRefId' => $cardRefId,
         ];
 
         $queryData = Json::encode($confirm3DSv2Request->getAttributes());
@@ -1635,5 +1527,10 @@ class TKBankAdapter implements IBankAdapter
         }
 
         return $outAccountPayResponse;
+    }
+
+    public function ident(IdentForm $identForm)
+    {
+        throw new GateException('Метод недоступен');
     }
 }

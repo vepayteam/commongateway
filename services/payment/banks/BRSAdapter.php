@@ -6,6 +6,7 @@ namespace app\services\payment\banks;
 
 use app\models\payonline\Uslugatovar;
 use app\models\TU;
+use app\services\ident\forms\IdentForm;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
@@ -758,5 +759,10 @@ class BRSAdapter implements IBankAdapter
         } catch (BankAdapterResponseException $e) {
             return false;
         }
+    }
+
+    public function ident(IdentForm $identForm)
+    {
+        throw new GateException('Метод недоступен');
     }
 }
