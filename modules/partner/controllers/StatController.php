@@ -195,18 +195,7 @@ class StatController extends Controller
     {
 		ini_set('memory_limit', '1024M');
         $MfoStat = new MfoStat();
-        $data = $MfoStat->ExportOpList(Yii::$app->request->get());
-        if ($data) {
-            Yii::$app->response->format = Response::FORMAT_RAW;
-            Yii::$app->response->setDownloadHeaders(
-                "export.xlsx",
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            );
-
-            return $data;
-        } else {
-            throw new NotFoundHttpException();
-        }
+        $MfoStat->ExportOpListRaw(Yii::$app->request->get());
     }
 
     public function actionListExportCsv()

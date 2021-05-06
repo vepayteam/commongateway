@@ -26,11 +26,24 @@ class RefreshStatusPayJob extends BaseObject implements \yii\queue\JobInterface
         Yii::warning('RefreshStatusPayJob execute: ID='.$this->paySchetId);
         $paySchet = PaySchet::findOne(['ID' => $this->paySchetId]);
 
+        Yii::warning('RefreshStatusPayJob execute isHavePayschet=' . !empty($paySchet));
+        Yii::warning('RefreshStatusPayJob execute paySchetId=' . $paySchet->ID);
+
         $okPayForm = new OkPayForm();
         $okPayForm->IdPay = $this->paySchetId;
 
         $refreshStatusPayStrategy = new RefreshStatusPayStrategy($okPayForm);
         $paySchet = $refreshStatusPayStrategy->exec();
+
+        if($paySchet->Status == PaySchet::STATUS_WAITING) {
+            $paySchet->Status = PaySchet::STATUS_WAITING_CHECK_STATUS;
+            $paySchet->ErrorInfo = 'Ожидает запрос статуса';
+            $paySchet->save(false);
+
+            Yii::$app->queue->delay(5 * 60)->push(new RefreshStatusPayJob([
+                'paySchetId' =>  $paySchet->ID,
+            ]));
+        }
 
         Yii::warning(
             sprintf(
