@@ -599,7 +599,7 @@ components:
       name: X-Token
       description: Токен, формируется по алгоритму sha1(sha1(ключ) + sha1(тело запроса))
   schemas:
-    BankList:
+    BankBalance:
       type: object
       properties:
         bank_name:
@@ -613,7 +613,7 @@ components:
           description: Сумма баланса (float)
         account_type:
           type: string
-          description: Тип счета баланса
+          description: Тип счёта баланса (0 – default (баланса не по счёту) 1 - Счёт поступления (Транзитный) 2 -  Счёт выплат (Транзитный) 3 - Счёт (Номинальный))
     Part:
       type: object
       properties:
@@ -1039,7 +1039,7 @@ components:
           type: array
           description: Баланс по всем банкам
           items:
-            $ref: "#/components/schemas/BankList"
+            $ref: "#/components/schemas/BankBalance"
     Error:
       type: object
       properties:

@@ -404,24 +404,6 @@ class Partner extends ActiveRecord
     }
 
     /**
-     * @param array $selectBy
-     * @return array
-     */
-    public function getAllEnabledPartnerBankGatesByColumnDistinct(array $selectBy): array
-    {
-        return $this
-            ->getEnabledBankGates()
-            ->select($selectBy)
-            ->where(['Enable' => 1])
-            ->distinct()
-            ->addSelect([
-                'SchetType',
-                'BankId'
-            ])
-            ->all();
-    }
-
-    /**
      * @return ActiveQuery
      */
     public function getPaySchets()
