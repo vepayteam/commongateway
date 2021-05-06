@@ -7,7 +7,6 @@ use app\models\payonline\Partner;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\types\AccountTypes;
-use Yii;
 
 trait BalanceTrait
 {
@@ -20,7 +19,6 @@ trait BalanceTrait
         return $this->partner
             ->getEnabledBankGates()
             ->select([
-                'Id',
                 'SchetType',
                 'SchetNumber',
                 'Login',
