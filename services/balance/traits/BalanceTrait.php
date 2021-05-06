@@ -14,21 +14,58 @@ trait BalanceTrait
     /** @var Partner $partner */
     public $partner;
 
+    /**
+     * TODO: change request to orderBy
+     * @return array
+     */
     public function getActiveBankGates(): array
     {
-        return $this->partner
+        $allActiveBankGates = [];
+        $uniqueActiveGates = $this->partner
             ->getEnabledBankGates()
             ->select([
-                'SchetType',
                 'SchetNumber',
                 'Login',
-                'BankId',
             ])
             ->where(['Enable' => 1])
-            ->groupBy([
-                'SchetNumber',
-                'Login'
-            ])->all();
+            ->distinct()
+            ->all();
+
+        if (!$uniqueActiveGates) {
+            return [];
+        }
+        foreach ($uniqueActiveGates as $activeGate) {
+            $allActiveBankGates[] = $this->partner
+                ->getEnabledBankGates()
+                ->select([
+                    'SchetType',
+                    'SchetNumber',
+                    'Login',
+                    'BankId',
+                ])
+                ->where([
+                    'Enable' => 1,
+                    'SchetNumber' => $activeGate->SchetNumber,
+                    'Login' => $activeGate->Login,
+                ])->one();
+        }
+
+        return $allActiveBankGates;
+
+//TODO: change config DB sql_mode to traditional to use groupBy
+//        return $this->partner
+//            ->getEnabledBankGates()
+//            ->select([
+//                'SchetType',
+//                'SchetNumber',
+//                'Login',
+//                'BankId',
+//            ])
+//            ->where(['Enable' => 1])
+//            ->groupBy([
+//                'SchetNumber',
+//                'Login'
+//            ])->all();
     }
 
     /**
