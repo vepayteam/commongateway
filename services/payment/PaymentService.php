@@ -306,7 +306,8 @@ class PaymentService
     }
 
     /**
-     * @return array
+     * @return mixed
+     * @throws \Exception
      */
     public function getSbpBankReceive()
     {
@@ -317,6 +318,11 @@ class PaymentService
                 'IsCustom' => TU::$VYVODPAYS,
                 'IsDeleted' => 0,
             ]);
+
+            if(!$uslugatovar) {
+                throw new \Exception('Услуга не найдена');
+            }
+
             $brsBank = Bank::findOne([
                 'ID' => BRSAdapter::$bank,
             ]);

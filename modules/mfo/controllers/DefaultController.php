@@ -13,6 +13,8 @@ use app\models\Payschets;
 use app\models\TU;
 use app\services\payment\PaymentService;
 use Yii;
+use yii\base\InvalidConfigException;
+use yii\di\NotInstantiableException;
 use yii\filters\auth\HttpBasicAuth;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
@@ -116,7 +118,11 @@ class DefaultController extends Controller
 
     public function actionGetsbpbankreceiver()
     {
-        $data = $this->getPaymentService()->getSbpBankReceive();
+        try {
+            $data = $this->getPaymentService()->getSbpBankReceive();
+        } catch (NotInstantiableException | InvalidConfigException | \Exception $e) {
+            return ['status' => 0, 'message' => $e->getMessage()];
+        }
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         $response = [];
