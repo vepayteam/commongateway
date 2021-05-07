@@ -6,6 +6,7 @@ namespace app\models\partner\stat\export\csv;
 
 use app\models\partner\UserLk;
 use app\models\TU;
+use app\services\payment\models\PaySchet;
 use Yii;
 use yii\helpers\VarDumper;
 
@@ -24,14 +25,13 @@ class OtchToCSV extends ToCSV
         $this->repayment = $repayment;
         $path = Yii::getAlias('@app/runtime/csv/');
         $filename = time() . '.csv';
-        $list = $this->preparationData($list);
-        array_unshift($list, $this->header());
-        parent::__construct($list, $path, $filename);
+        $generator = $this->preparationData($list);
+
+        parent::__construct($generator, $path, $filename);
     }
 
-    private function header(): array
+    private function header(?bool $isAdmin): array
     {
-        $isAdmin = UserLk::IsAdmin(Yii::$app->user);
         $header_admin = $isAdmin ? [
             'Комис. банка',
             'Возн. Vepay',
@@ -66,50 +66,17 @@ class OtchToCSV extends ToCSV
         );
     }
 
-    private function preparationData(array $list): array
+    private function preparationData(array $list): \Generator
     {
         $isAdmin = UserLk::IsAdmin(Yii::$app->user);
-        $ret = [];
-        $st = [0 => "Создан", 1 => "Оплачен", 2 => "Отмена", 3 => "Возврат"];
-        foreach ($list['data'] as $data) {
-            if($this->checkData($data)) {
-                $ret_admin = $isAdmin ? [
-                    number_format($data['BankComis'] / 100.0, 2, '.', ''),
-                    number_format($data['VoznagSumm'] / 100.0, 2, '.', ''),
-                ] : [];
-                $ret[] = array_merge(
-                    [
-                        $data['ID'],
-                        $data['Extid'],
-                        str_replace('"', "", $data['NameUsluga']),
-                        $data['QrParams'],
-                        $data['Dogovor'],
-                        $data['FIO'],
-                        number_format($data['SummPay'] / 100.0, 2, '.', ''),
-                        number_format($data['ComissSumm'] / 100.0, 2, '.', ''),
-                        number_format(($data['SummPay'] + $data['ComissSumm']) / 100.0, 2, '.', ''),
-                    ],
-                    $ret_admin,
-                    [
-                        date("d.m.Y H:i:s", $data['DateCreate']),
-                        $st[$data['Status']],
-                        $data['ErrorInfo'],
-                        $data['DateOplat'] > 0 ? date("d.m.Y H:i:s", $data['DateOplat']) : '',
-                        $data['ExtBillNumber'],
-                        $data['IdOrg'],
-                        $data['CardNum'],
-                        $data['CardHolder'],
-                        $data['RRN'],
-                        $data['IdKard'],
-                        $data['BankName'],
-                    ]
 
-                );
+        $listData = $this->listData($list['data'], $isAdmin);
 
-            }
-        }
-        array_push($ret, $this->totalString($ret));
-        return $ret;
+        yield from array_merge(
+            [$this->header($isAdmin)],
+            $listData,
+            [$this->totalString($listData)]
+        );
     }
 
     public function export()
@@ -138,6 +105,55 @@ class OtchToCSV extends ToCSV
             '',
             '',
         ];
+    }
+
+    private function listData($list, ?bool $isAdmin): array
+    {
+        if ((is_array($list) || $list instanceof \Generator) === false) {
+            throw new \InvalidArgumentException('list должен быть массивом или генератором');
+        }
+
+        $result = [];
+
+        foreach ($list as $data) {
+
+            if($this->checkData($data)) {
+                $ret_admin = $isAdmin ? [
+                    number_format($data['BankComis'] / 100.0, 2, '.', ''),
+                    number_format($data['VoznagSumm'] / 100.0, 2, '.', ''),
+                ] : [];
+                $result[] = array_merge(
+                    [
+                        $data['ID'],
+                        $data['Extid'],
+                        str_replace('"', "", $data['NameUsluga']),
+                        $data['QrParams'],
+                        $data['Dogovor'],
+                        $data['FIO'],
+                        number_format($data['SummPay'] / 100.0, 2, '.', ''),
+                        number_format($data['ComissSumm'] / 100.0, 2, '.', ''),
+                        number_format(($data['SummPay'] + $data['ComissSumm']) / 100.0, 2, '.', ''),
+                    ],
+                    $ret_admin,
+                    [
+                        date("d.m.Y H:i:s", $data['DateCreate']),
+                        PaySchet::getStatusTitle($data['Status']),
+                        $data['ErrorInfo'],
+                        $data['DateOplat'] > 0 ? date("d.m.Y H:i:s", $data['DateOplat']) : '',
+                        $data['ExtBillNumber'],
+                        $data['IdOrg'],
+                        $data['CardNum'],
+                        $data['CardHolder'],
+                        $data['RRN'],
+                        $data['IdKard'],
+                        $data['BankName'],
+                    ]
+
+                );
+            }
+        }
+
+        return $result;
     }
 
     private function checkData(array $data): bool

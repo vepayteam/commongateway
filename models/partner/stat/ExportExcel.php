@@ -2,12 +2,66 @@
 
 namespace app\models\partner\stat;
 
+use app\models\partner\stat\export\phpExportData\ExportDataExcel;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use Yii;
 
 class ExportExcel
 {
+    /**
+     * @param string     $title
+     * @param array      $head
+     * @param \Generator $data
+     * @param array      $totalRules
+     */
+    public function CreateXlsRaw(string $title, array $head, \Generator $data, array $totalRules = []): void
+    {
+        $totals = ['ИТОГО:'];
+
+        // инициируем класс для "низкоуровневой" записи в XLS-файл
+        $exporter = new ExportDataExcel('browser', 'export.xls');
+        $exporter->title = $title;
+        $exporter->initialize();
+
+        // шапка
+        $exporter->addRow($head);
+
+        $rowCellCount = null;
+
+        // данные
+        foreach ($data as $row) {
+
+            if ($rowCellCount === null) {
+                $rowCellCount = count($row);
+            }
+
+            $exporter->addRow($row);
+
+            foreach ($row as $i => $item) {
+                if (isset($totalRules[$i])) {
+                    @$totals[$i] += $item;
+                }
+            }
+        }
+
+        //итого
+        if (count($totals) > 0) {
+
+            for ($i = 1; $i < $rowCellCount; $i++) {
+                $totals[$i] = (array_key_exists($i, $totals) ? $totals[$i] : '');
+            }
+
+            ksort($totals);
+
+            $exporter->addRow($totals);
+        }
+
+        $exporter->finalize();
+
+        exit;
+    }
+
     public function CreateXls($title, $head, $data, $sizes, $itogs = [])
     {
         $GapXLS = 1;   //текущая строка
