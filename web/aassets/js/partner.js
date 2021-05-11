@@ -1138,7 +1138,7 @@
 
         notiflist: function (page) {
             $('[name="datefrom"],[name="dateto"]').datetimepicker({
-                format: 'DD.MM.YYYY'
+                format: 'DD.MM.YYYY HH:mm'
             });
 
             page = page || $('#notiflistform').find('[name="callback-page"]').val();
@@ -1203,6 +1203,36 @@
                     type: "POST",
                     url: '/partner/callback/repeat',
                     data: {'id': idnotif},
+                    beforeSend: function () {
+                        $('#notiflistform').closest('.ibox-content').toggleClass('sk-loading');
+                    },
+                    success: function (data) {
+                        $('#notiflistform').closest('.ibox-content').toggleClass('sk-loading');
+                        if (data.status == 1) {
+                            toastr.success("OK", data.message);
+                            $('#notiflistform').trigger('submit');
+                        } else {
+                            toastr.error("Ошибка", data.message);
+                        }
+                    },
+                    error: function () {
+                        $('#notiflistform').closest('.ibox-content').toggleClass('sk-loading');
+                        toastr.error("Ошибка запроса", "Ошибка");
+                    }
+                });
+                return false;
+            });
+
+            $('#notiflistresult').on('click', '[data-action="repeatnotif-batch"]', function () {
+
+                if (linklink) {
+                    linklink.abort();
+                }
+
+                linklink = $.ajax({
+                    type: "POST",
+                    url: '/partner/callback/repeatbatch',
+                    data: $('#notiflistform').serialize(),
                     beforeSend: function () {
                         $('#notiflistform').closest('.ibox-content').toggleClass('sk-loading');
                     },

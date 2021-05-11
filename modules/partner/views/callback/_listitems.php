@@ -6,6 +6,55 @@
 
 ?>
 
+<?php
+$query = [
+       'datefrom' => $reqdata['datefrom'],
+       'dateto'=> $reqdata['dateto'],
+       'id'=> $reqdata['id'],
+       'Extid'=> $reqdata['Extid'],
+       'httpCode'=> $reqdata['httpCode'],
+];
+if (isset($reqdata['IdPart'])) {
+    $query['IdPart'] = $reqdata['IdPart'];
+}
+if (isset($reqdata['status']) && count($reqdata['status']) > 0) {
+    foreach ($reqdata['status'] as $status) {
+        $query['status'] = $status;
+    }
+}
+if (isset($reqdata['params']) && count($reqdata['params']) > 0) {
+    foreach ($reqdata['params'] as $param){
+        $query['params'][] = $param;
+    }
+}
+?>
+<?php
+
+$queryLink = 'datefrom='. $reqdata['datefrom'];
+$queryLink .= '&dateto=' . $reqdata['dateto'];
+$queryLink .= '&id=' . $reqdata['id'];
+$queryLink .= '&Extid=' . $reqdata['Extid'];
+$queryLink .= '&httpCode=' . $reqdata['httpCode'];
+$queryLink .= '&partner=' . $reqdata['partner'];
+$queryLink .= '&notifstate=' . $reqdata['notifstate'];
+if (isset($reqdata['IdPart'])) {
+    $queryLink .= '&IdPart=' . $reqdata['IdPart'];
+}
+if (isset($reqdata['status']) && count($reqdata['status']) > 0) {
+    foreach ($reqdata['status'] as $status) {
+        $queryLink .= '&status[]=' . $status;
+    }
+}
+if (isset($reqdata['params']) && count($reqdata['params']) > 0) {
+    foreach ($reqdata['params'] as $param){
+        $queryLink .= '&params[]='.$param;
+    }
+}
+?>
+<?php if (count($data) > 0) : ?>
+<input class='btn btn-white btn-xs' data-action="repeatnotif-batch" data-params="<?=$queryLink?>" type='button' value='Массово повторить запрос'>
+<?php endif; ?>
+
 <table class="table table-striped tabledata" style="font-size: 0.9em">
     <thead>
     <tr>
@@ -33,7 +82,19 @@
             </tr>
         <?php endforeach; ?>
     </tbody>
+
 <tfoot>
+
+    <tr>
+        <th colspan='6'>
+
+            <a class="btn btn-white btn-xs" target="_blank"
+               href="/partner/callback/listexport?<?=$queryLink?>">
+                <i class="fa fa-share"></i>&nbsp;Экспорт xls
+            </a>
+        </th>
+    </tr>
+
 <?php if ($payLoad['totalCount'] > $payLoad['pageLimit']) : ?>
     <?php $maxPage = ceil($payLoad['totalCount'] / $payLoad['pageLimit']); ?>
     <tr>

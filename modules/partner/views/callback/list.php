@@ -17,16 +17,32 @@ use yii\web\View; ?>
                     <h5>Список колбэков</h5>
                 </div>
                 <div class="ibox-content">
+
                     <form class="form-horizontal" id="notiflistform">
-                        <div class="form-group"><label class="col-sm-2 control-label">Дата</label>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">Дата</label>
                             <div class="col-md-4">
                                 <div class="input-daterange input-group">
-                                    <input type="text" name="datefrom" value="<?=date("d.m.Y")?>" maxlength="10" class="form-control">
+                                    <input type="text" name="datefrom" value="<?=date("d.m.Y")?> 00:00" maxlength="10" class="form-control">
                                     <span class="input-group-addon">по</span>
-                                    <input type="text" name="dateto" value="<?=date("d.m.Y")?>" maxlength="10" class="form-control">
+                                    <input type="text" name="dateto" value="<?=date("d.m.Y")?> 23:59" maxlength="10" class="form-control">
                                 </div>
                             </div>
                         </div>
+                        <?php if ($IsAdmin) : ?>
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">HTTP-код статуса</label>
+                                <div class="col-sm-4">
+                                    <select class="form-control" name="httpCode">
+                                        <option value="-1">Все</option>
+                                        <?php foreach ($httpCodeList as $httpCode) : ?>
+                                            <option value="<?=$httpCode?>"><?=$httpCode?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
                         <div class="form-group">
                             <label class="col-sm-2 control-label">Статус</label>
                             <div class="col-sm-4">
@@ -37,6 +53,23 @@ use yii\web\View; ?>
                                 </select>
                             </div>
                         </div>
+
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">Ext ID</label>
+                            <div class="col-sm-4">
+                                <input type="text" class="form-control" name="Extid">
+                            </div>
+                        </div>
+
+                        <input type="hidden" name="callback-page" value="1">
+
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">ID Vepay</label>
+                            <div class="col-sm-4">
+                                <input type="text" class="form-control" name="id">
+                            </div>
+                        </div>
+
                         <div class="form-group">
                             <div class="col-sm-offset-2 col-sm-4">
                                 <input name="partner" type="hidden" value="<?= $idpartner ?>">
@@ -62,4 +95,4 @@ use yii\web\View; ?>
         </div>
     </div>
 
-<?php $this->registerJs('lk.notiflist()'); ?>
+<?php $this->registerJs('lk.notiflist();multiselect.statList();'); ?>
