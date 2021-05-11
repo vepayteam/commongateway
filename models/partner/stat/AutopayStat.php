@@ -43,7 +43,6 @@ class AutopayStat extends Model
         }
 
         $ret = [
-            'cntcards' => 0,
             'cntnewcards' => 0,
             'activecards' => 0,
             'reqonecard' => 0,
@@ -51,18 +50,6 @@ class AutopayStat extends Model
             'payscards' => 0,
             'sumpayscards ' => 0
         ];
-
-        //видеть общее количество привязанных карт
-        $query = new Query();
-        $query
-            ->select(['c.ID'])
-            ->from('`cards` AS c')
-            ->leftJoin('user AS u', 'u.ID = c.IdUser')
-            ->where(['c.TypeCard' => 0]);
-        if ($IdPart > 0) {
-            $query->andWhere('u.ExtOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
-        }
-        $ret['cntcards'] = $query->cache(30)->count();
 
         //Количество новых карт
         $query = new Query();
