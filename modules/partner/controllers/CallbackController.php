@@ -172,7 +172,7 @@ class CallbackController extends Controller
                     $notificationPayList = NotificationPay::findAll($notificationPayIdList);
 
                     foreach ($notificationPayList as $notificationPay) {
-                        if (($IsAdmin === true || (int)$notificationPay->paySchet->IdOrg === (int)Yii::$app->user->id) === false) {
+                        if (!$IsAdmin && $notificationPay->paySchet->IdOrg != Yii::$app->user->id) {
                             continue;
                         }
                         $this->repeatIteration($notificationPay);
