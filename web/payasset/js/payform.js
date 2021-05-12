@@ -157,6 +157,9 @@
             $('#md3ds').val(md);
             $('#creq3ds').val(creq);
             $('#termurl3ds').val(termurl);
+            if (!creq) {
+                $('#creq3ds').remove();
+            }
             $('#threeDSServerTransID').val(threeDSServerTransID);
             $('#form3ds').trigger('submit');
         },
