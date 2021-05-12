@@ -31,7 +31,6 @@ use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use GuzzleHttp\RequestOptions;
 use Vepay\Gateway\Client\NativeClient;
-use Vepay\Gateway\Client\Validator\ValidationException;
 use Yii;
 
 class WalletoBankAdapter implements IBankAdapter
@@ -40,7 +39,7 @@ class WalletoBankAdapter implements IBankAdapter
     public static $bank = 10;
 
     private const BANK_URL = 'https://api.sandbox.walletto.eu';
-    private const PEM_PATH = '@app/config/walleto/keys/';
+    private const KEY_ROOT_PATH = '@app/config/walleto/';
     /** @var PartnerBankGate */
     protected $gate;
     protected $bankUrl;
@@ -49,22 +48,21 @@ class WalletoBankAdapter implements IBankAdapter
      */
     protected $api;
 
-    /**
-     * WalletoBankAdapter constructor.
-     */
-    public function __construct()
-    {
-        $config = [
-            RequestOptions::SSL_KEY => Yii::getAlias(self::PEM_PATH . 'walleto_api' . '.key.pem'),
-            RequestOptions::CERT => Yii::getAlias(self::PEM_PATH . 'walleto_api' . '.crt.pem'),
-        ];
-        $this->api = new Client($config);
-    }
-
     public function setGate(PartnerBankGate $partnerBankGate)
     {
         $this->gate = $partnerBankGate;
         $this->bankUrl = self::BANK_URL;
+        $apiClientHeader = [
+            'Authorization' => $partnerBankGate->Token,
+        ];
+        //TODO: move certificates/keys from git directories
+        $config = [
+            RequestOptions::VERIFY => Yii::getAlias(self::KEY_ROOT_PATH . $partnerBankGate->Login . '.pem'),
+            RequestOptions::CERT => Yii::getAlias(self::KEY_ROOT_PATH . $partnerBankGate->Login . '.pem'),
+            RequestOptions::SSL_KEY => Yii::getAlias(self::KEY_ROOT_PATH . $partnerBankGate->Login . '.key'),
+            RequestOptions::HEADERS => $apiClientHeader,
+        ];
+        $this->api = new Client($config);
     }
 
     public function getBankId()

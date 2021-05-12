@@ -7,7 +7,7 @@ use Psr\Http\Message\ResponseInterface;
 
 final class ClientResponse extends GuzzleResponse
 {
-    public function __construct(GuzzleResponse $response)
+    public function __construct(ResponseInterface $response)
     {
         parent::__construct(
             $response->getStatusCode(),

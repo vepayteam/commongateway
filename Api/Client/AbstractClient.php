@@ -4,8 +4,6 @@ namespace app\Api\Client;
 
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Handler\CurlHandler;
-use GuzzleHttp\HandlerStack;
 use GuzzleHttp\RequestOptions;
 use Vepay\Gateway\Logger\Guzzle\LogMiddleware;
 
@@ -15,7 +13,7 @@ abstract class AbstractClient
     public const METHOD_POST = 'POST';
     public const METHOD_PUT = 'PUT';
     /** @var float */
-    private const TIMEOUT = 20.0;
+    private const TIMEOUT = 10.0;
     /**
      * @var GuzzleClient
      */
@@ -27,17 +25,13 @@ abstract class AbstractClient
      */
     public function __construct(array $clientConfig = [])
     {
-        $handler = new CurlHandler();
-        $logMiddleware =  new LogMiddleware();
-        $stack = HandlerStack::create($handler);
+        //$logMiddleware =  new LogMiddleware();
         $config = array_merge([
             RequestOptions::HTTP_ERRORS => false,
-            RequestOptions::TIMEOUT => self::TIMEOUT,
-            'handler' => $stack,
+            RequestOptions::TIMEOUT => self::TIMEOUT
         ], $clientConfig);
         //$stack->push($logMiddleware, $logMiddleware->getName()); //log middleware
-        $this->client = new GuzzleClient($config);
-//        $this->setClient(new GuzzleClient($config));
+        $this->setClient(new GuzzleClient($config));
     }
 
     /**
@@ -54,12 +48,10 @@ abstract class AbstractClient
         array $parameters = [],
         array $headers = []
     ): ClientResponse {
-
         $options = $this->getOptions($method, $parameters, $headers);
         $endpoint = $this->prepareEndpoint($endpoint);
         //TODO: cache implement
         //TODO: logger middleware implement
-        //$this->beforeSend();
         $response = $this->client->request($method, $endpoint, $options);
         return new ClientResponse($response);
     }
@@ -92,8 +84,6 @@ abstract class AbstractClient
         if (!empty($headers)) {
             $options[RequestOptions::HEADERS] = $headers;
         }
-
-        $options[RequestOptions::VERIFY] = false;
         return $options;
     }
 
