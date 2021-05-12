@@ -93,16 +93,24 @@ trait CardsTrait
         if ($rowCard && $rowCard['ID'] > 0) {
             //Карта есть
             if ($rowCard['ExtCardIDP'] != $payCard->bankId) {
-
-                //обновить данные карты
-                Yii::$app->db->createCommand()->update('cards', [
+                $cardDataToUpdate = [
                     'ExtCardIDP' => $payCard->bankId,
-                    'CardNumber' => $payCard->number,
-                    'CardType' => $payCard->type,
-                    'SrokKard' => $payCard->expMonth . $payCard->expYear,
-                    'CardHolder' => mb_substr($payCard->holder, 0, 99),
-                    'IdBank' => $paySchet->Bank,
-                ], '`ID` = :ID', ['ID' => $rowCard['ID']])->execute();
+                ];
+                /** Rules: @var PayCard */
+                if ($payCard->validate()) {
+                    array_push($cardDataToUpdate, [
+                        'CardNumber' => $payCard->number,
+                        'CardType' => $payCard->type,
+                        'SrokKard' => $payCard->expMonth . $payCard->expYear,
+                        'CardHolder' => mb_substr($payCard->holder, 0, 99),
+                        'IdBank' => $paySchet->Bank,
+                    ]);
+                }
+                //обновить данные карты
+                Yii::$app->db
+                    ->createCommand()
+                    ->update('cards', $cardDataToUpdate, '`ID` = :ID', ['ID' => $rowCard['ID']])
+                    ->execute();
             }
 
             Yii::$app->db->createCommand()

@@ -60,7 +60,7 @@ class CreatePayStrategy
     {
         $paySchet = $this->createPayForm->getPaySchet();
 
-        if($paySchet->isOld()) {
+        if ($paySchet->isOld()) {
             throw new CreatePayException('Время для оплаты истекло');
         }
 
@@ -146,7 +146,6 @@ class CreatePayStrategy
                 $this->createPayForm->CardHolder
             );
         }
-
         $card = $this->createUnregisterCard($token, $user, $partnerBankGate);
         $paySchet->IdKard = $card->ID;
         $paySchet->CardNum = Cards::MaskCard($this->createPayForm->CardNumber);
@@ -176,6 +175,7 @@ class CreatePayStrategy
         $card->ExtCardIDP = 0;
         $card->CardType = 0;
         $card->SrokKard = $this->createPayForm->CardMonth . $this->createPayForm->CardYear;
+        $card->CardHolder = mb_substr($this->createPayForm->CardHolder, 0, 99);
         $card->Status = 0;
         $card->DateAdd = time();
         $card->Default = 0;
