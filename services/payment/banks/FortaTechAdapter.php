@@ -438,7 +438,8 @@ class FortaTechAdapter implements IBankAdapter
             CURLOPT_HTTPHEADER => $headers,
         ));
 
-        Yii::warning('FortaTechAdapter req uri=' . $uri .' : ' . Json::encode($data));
+        $maskedRequest = $this->maskRequestCardInfo($data);
+        Yii::warning('FortaTechAdapter req uri=' . $uri .' : ' . Json::encode($maskedRequest));
         $response = curl_exec($curl);
         Yii::warning('FortaTechAdapter response:' . $response);
         $curlError = curl_error($curl);
@@ -453,18 +454,19 @@ class FortaTechAdapter implements IBankAdapter
                 Json::encode($info)
             ));
             $response = $this->parseResponse($response);
+            $maskedResponse = $this->maskResponseCardInfo($response);
         } catch (\Exception $e) {
             throw new BankAdapterResponseException('Ошибка запроса');
         }
 
         if(empty($curlError) && ($info['http_code'] == 200 || $info['http_code'] == 201)) {
-            Yii::warning('FortaTechAdapter ans uri=' . $uri .' : ' . Json::encode($response));
+            Yii::warning('FortaTechAdapter ans uri=' . $uri .' : ' . Json::encode($maskedResponse));
             return $response;
         } elseif (isset($response['errors']['description'])) {
-            Yii::error('FortaTechAdapter ans uri=' . $uri .' : ' . Json::encode($response));
+            Yii::error('FortaTechAdapter ans uri=' . $uri .' : ' . Json::encode($maskedResponse));
             return $response;
         } elseif ($response['result'] == false && isset($response['message'])) {
-            Yii::error('FortaTechAdapter ans uri=' . $uri .' : ' . Json::encode($response));
+            Yii::error('FortaTechAdapter ans uri=' . $uri .' : ' . Json::encode($maskedResponse));
             return $response;
         } else {
             Yii::error('FortaTechAdapter error uri=' . $uri .' status=' . $info['http_code']);
@@ -508,7 +510,8 @@ class FortaTechAdapter implements IBankAdapter
 
         if(empty($curlError) && $info['http_code'] == 200) {
             $response = $this->parseResponse($response);
-            Yii::warning('FortaTechAdapter ans uri=' . $url .' : ' . Json::encode($response));
+            $maskedResponse = $this->maskResponseCardInfo($response);
+            Yii::warning('FortaTechAdapter ans uri=' . $url .' : ' . Json::encode($maskedResponse));
             return $response;
         } else {
             Yii::error('FortaTechAdapter error uri=' . $url .' status=' . $info['http_code']);
@@ -546,7 +549,8 @@ class FortaTechAdapter implements IBankAdapter
 
         if(empty($curlError) && $info['http_code'] == 200) {
             $response = $this->parseResponse($response);
-            Yii::warning('FortaTechAdapter ans uri=' . $url .' : ' . Json::encode($response));
+            $maskedResponse = $this->maskResponseCardInfo($response);
+            Yii::warning('FortaTechAdapter ans uri=' . $url .' : ' . Json::encode($maskedResponse));
             return $response;
         } else {
             Yii::error('FortaTechAdapter error uri=' . $url .' status=' . $info['http_code']);
@@ -584,7 +588,8 @@ class FortaTechAdapter implements IBankAdapter
 
         if (empty($curlError) && $info['http_code'] == 200) {
             $response = $this->parseResponse($response);
-            Yii::warning('FortaTechAdapter ans uri=' . $url . ' : ' . Json::encode($response));
+            $maskedResponse = $this->maskResponseCardInfo($response);
+            Yii::warning('FortaTechAdapter ans uri=' . $url . ' : ' . Json::encode($maskedResponse));
             return $response;
         } else {
             Yii::error('FortaTechAdapter error uri=' . $url . ' status=' . $info['http_code']);
@@ -638,5 +643,43 @@ class FortaTechAdapter implements IBankAdapter
     public function ident(IdentForm $identForm)
     {
         throw new GateException('Метод недоступен');
+    }
+
+    private function maskRequestCardInfo(array $data): array
+    {
+        // CreatePayRequest model
+        if (isset($data['cardNumber'])) {
+            $data['cardNumber'] = $this->maskCardNumber($data['cardNumber']);
+        }
+
+        // CreatePayRequest model
+        if (isset($data['cvv'])) {
+            $data['cvv'] = '***';
+        }
+
+        // OutCardPayRequest model
+        if (isset($data['cards']) && is_array($data['cards'])) {
+            foreach ($data['cards'] as &$card) {
+                $card['card'] = $this->maskCardNumber($card['card']);
+            }
+        }
+
+        return $data;
+    }
+
+    private function maskResponseCardInfo(array $response): array
+    {
+        if (isset($response['data']) && isset($response['data']['cards'])) {
+            foreach ($response['data']['cards'] as &$card) {
+                $card['card'] = $this->maskCardNumber($card['card']);
+            }
+        }
+
+        return $response;
+    }
+
+    private function maskCardNumber(string $cardNumber): string
+    {
+        return preg_replace('/(\d{6})(.+)(\d{4})/', '$1****$3', $cardNumber);
     }
 }
