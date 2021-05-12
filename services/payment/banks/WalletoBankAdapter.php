@@ -2,6 +2,7 @@
 
 namespace app\services\payment\banks;
 
+use app\Api\Client\Client;
 use app\services\ident\forms\IdentForm;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
@@ -28,18 +29,42 @@ use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
+use GuzzleHttp\RequestOptions;
+use Vepay\Gateway\Client\NativeClient;
 use Vepay\Gateway\Client\Validator\ValidationException;
+use Yii;
 
 class WalletoBankAdapter implements IBankAdapter
 {
 
     public static $bank = 10;
+
+    private const BANK_URL = 'https://api.sandbox.walletto.eu';
+    private const PEM_PATH = '@app/config/walleto/keys/';
     /** @var PartnerBankGate */
     protected $gate;
+    protected $bankUrl;
+    /**
+     * @var NativeClient
+     */
+    protected $api;
+
+    /**
+     * WalletoBankAdapter constructor.
+     */
+    public function __construct()
+    {
+        $config = [
+            RequestOptions::SSL_KEY => Yii::getAlias(self::PEM_PATH . 'walleto_api' . '.key.pem'),
+            RequestOptions::CERT => Yii::getAlias(self::PEM_PATH . 'walleto_api' . '.crt.pem'),
+        ];
+        $this->api = new Client($config);
+    }
 
     public function setGate(PartnerBankGate $partnerBankGate)
     {
         $this->gate = $partnerBankGate;
+        $this->bankUrl = self::BANK_URL;
     }
 
     public function getBankId()
