@@ -1,6 +1,5 @@
 <?php
 
-
 namespace app\models\mfo;
 
 use app\models\bank\TCBank;
@@ -8,13 +7,16 @@ use app\models\bank\TcbGate;
 use app\models\partner\admin\VoznagStat;
 use app\models\partner\stat\ExportExcel;
 use app\models\payonline\Partner;
-use app\models\queue\JobPriorityInterface;
 use app\models\queue\ReceiveStatementsJob;
-use app\models\TU;
-use app\services\payment\models\PartnerBankGate;
+use app\services\payment\models\UslugatovarType;
 use Yii;
 use yii\db\Query;
 
+/**
+ * @deprecated
+ * Class MfoBalance
+ * @package app\models\mfo
+ */
 class MfoBalance
 {
     private const TCB_GATE_ID = 2;
@@ -28,6 +30,7 @@ class MfoBalance
     }
 
     /**
+     * @deprecated
      * Выписка по локальному счету
      * @param int $TypeAcc 0 - счет на выдачу 1 - счет на погашение 2 - номинальный счет
      * @param int $dateFrom
@@ -54,6 +57,7 @@ class MfoBalance
     }
 
     /**
+     * @deprecated
      * Баланс МФО c ТКБ (новая временная реализация)
      * @TODO: Временное решение получения баланса, без обращения к базе для получения баланса счёта.
      *
@@ -127,6 +131,7 @@ class MfoBalance
     }
 
     /**
+     * @deprecated
      * Баланс в ТКБ
      * @return mixed
      * @throws \yii\db\Exception
@@ -179,6 +184,7 @@ class MfoBalance
                 $TcbGate = new TcbGate($this->Partner->ID, TCBank::$AFTGATE);
                 $tcBank = new TCBank($TcbGate);
 
+                //TODO: continue
                 if (!empty($this->Partner->SchetTcbNominal)) {
                     $bal = $tcBank->getBalanceAcc(['account' => $this->Partner->SchetTcbNominal]);
                     if ($bal && $bal['status'] == 1) {
