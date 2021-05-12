@@ -145,6 +145,7 @@ class OutController extends Controller
 
         $usl = $kfOut->GetUslug($mfo->mfo);
         if (!$usl || !$bankGate || !$bankGate->IsGate()) {
+            Yii::warning("out/payacc: нет шлюза. mfo=$mfo->mfo uslugatovarId=$usl bankId=$bank");
             return ['status' => 0, 'message' => 'Нет шлюза'];
         }
 
@@ -173,7 +174,7 @@ class OutController extends Controller
             $mutex->release('getPaySchetExt' . $kfOut->extid);
         }
         $params['name'] = $kfOut->fio;
-        $params['inn'] = '';
+        $params['inn'] = $kfOut->inn;
         $params['bic'] = $kfOut->bic;
         $params['account'] = $kfOut->account;
         $params['descript'] = $kfOut->descript;
@@ -227,6 +228,7 @@ class OutController extends Controller
 
         $usl = $kfOut->GetUslug($mfo->mfo);
         if (!$usl || !$bankGate || !$bankGate->IsGate()) {
+            Yii::warning("out/payacc: нет шлюза. mfo=$mfo->mfo uslugatovarId=$usl bankId=$bank");
             return ['status' => 0, 'message' => 'Нет шлюза'];
         }
 
@@ -256,7 +258,6 @@ class OutController extends Controller
         }
         $params['name'] = $kfOut->name;
         $params['inn'] = trim($kfOut->inn);
-        $params['kpp'] = $kfOut->kpp;
         $params['bic'] = $kfOut->bic;
         $params['account'] = $kfOut->account;
         $params['descript'] = $kfOut->descript;

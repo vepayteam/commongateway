@@ -6,11 +6,14 @@ namespace app\services\payment\banks;
 
 use app\models\payonline\Uslugatovar;
 use app\models\TU;
+use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
+use app\services\ident\forms\IdentForm;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
@@ -29,9 +32,9 @@ use app\services\payment\forms\brs\XmlRequest;
 use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
-use app\services\payment\forms\GetBalanceForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
+use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\forms\brs\CreatePayAftRequest;
 use app\services\payment\forms\brs\CreatePayByRegCardRequest;
@@ -516,7 +519,20 @@ class BRSAdapter implements IBankAdapter
     /**
      * @inheritDoc
      */
-    public function getBalance(GetBalanceForm $getBalanceForm)
+    public function getBalance(GetBalanceRequest $getBalanceRequest)
+    {
+        throw new GateException('Метод недоступен');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function transferToAccount(OutPayAccountForm $outPayaccForm)
+    {
+        throw new GateException('Метод недоступен');
+    }
+
+    public function ident(IdentForm $identForm)
     {
         throw new GateException('Метод недоступен');
     }

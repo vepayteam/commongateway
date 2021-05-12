@@ -20,7 +20,7 @@ class ToCSV
     private $filename;
     private $started_content = false;
 
-    public function __construct(array $list, $path, $filename)
+    public function __construct(\Generator $list, $path, $filename)
     {
         $this->list = $list;
         $this->path = $path;

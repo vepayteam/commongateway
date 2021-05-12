@@ -96,6 +96,7 @@ class PayController extends Controller
         }
 
         // рубли в копейки
+        // TODO: in model validation
         $form->amount *= 100;
 
         Yii::warning('/pay/lk mfo='. $mfo->mfo . " sum=" . $form->amount . " extid=" . $form->extid, 'mfo');
@@ -233,6 +234,7 @@ class PayController extends Controller
         $usl = $kfPay->GetUslugAuto($mfo->mfo);
 
         if (!$usl || !$TcbGate->IsGate()) {
+            Yii::warning("pay/auto: нет шлюза. mfo=$mfo->mfo uslugatovarId=$usl bankId={$TcbGate->getBank()}");
             return ['status' => 0, 'message' => 'Нет шлюза'];
         }
 

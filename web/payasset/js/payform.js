@@ -78,30 +78,7 @@
                         $('#payform').hide();
                         $("#loader").show();
                     },
-                    success: function (data, textStatus, jqXHR) {
-                        $("#loader").hide();
-
-                        if (data.status == 1 && !data.isNeed3DSRedirect) {
-                            if (data.isNeed3DSVerif == 1) {
-                                //ок - переход по url банка
-                                payform.load3ds(data.url, data.pa, data.md, data.creq, data.termurl);
-                            } else {
-                                // если 3DS v2 и не требуется авторизация, переходим на orderdone
-                                window.location = data.termurl;
-                            }
-                        } else if (data.status == 1 && data.url && data.isNeed3DSRedirect) {
-                            window.location = data.url;
-                        } else if (data.status == 2 && data.url) {
-                            window.location = data.url;
-                        } else {
-                            $('#addtopay').prop('disabled', false);
-                            $('#payform').show();
-                            $('input[data-inputmask-mask]', '#payform').inputmask();
-                            $('#error_message').html(data.message);
-                            $('#error_message_xs').html(data.message);
-                            $('.errmessage').show();
-                        }
-                    },
+                    success: payform.createPaySuccess,
                     error: function (jqXHR, textStatus, errorThrown) {
                         if (jqXHR.status != 302) {
                             //console.log(jqXHR.status);
@@ -173,14 +150,30 @@
             return !err;
         },
 
-        load3ds: function (url, pa, md, creq, termurl) {
+        load3ds: function (url, pa, md, creq, termurl, threeDSServerTransID = '') {
             $('#frame3ds').show();
             $('#form3ds').attr('action', url);
             $('#pareq3ds').val(pa);
             $('#md3ds').val(md);
             $('#creq3ds').val(creq);
             $('#termurl3ds').val(termurl);
+            if (!creq) {
+                $('#creq3ds').remove();
+            }
+            $('#threeDSServerTransID').val(threeDSServerTransID);
             $('#form3ds').trigger('submit');
+        },
+
+        confirm3dsV2TKB: function(url, transId, termurl) {
+            var json = "{\"threeDSServerTransID\": \"" + transId + "\", \"threeDSMethodNotificationURL\": \"" + termurl + "\"}";
+            var html = "<html><body>" +
+                "<form hidden name =\"threDS\" id=\"threeDSServerTransIDForm\" method=\"post\" action=\"" + url + "\">" +
+                "<input hidden name=\"threeDSMethodData\" placeholder=\"threeDSMethodData\" value=\"" + btoa(json) + "\" />" +
+                "</form> <script type=\"text/javascript\">document.getElementById('threeDSServerTransIDForm').submit();</script></body></html>"
+
+            console.log(json);
+            console.log(html);
+            var iframe = $('#confirm3dsV2TKBFrame').html(html);
         },
 
         applepay: function (merchantIdentifier, amount, label) {
@@ -326,8 +319,63 @@
 
         samsungpay: function (merchantIdentifier, amount, label) {
 
-        }
+        },
 
+        createPaySuccess: function (data, textStatus, jqXHR) {
+            $("#loader").hide();
+
+            if (data.status == 1 && !data.isNeed3DSRedirect) {
+                if (data.isNeed3DSVerif == 1) {
+                    //ок - переход по url банка
+                    payform.load3ds(data.url, data.pa, data.md, data.creq, data.termurl, data.threeDSServerTransID);
+                } else {
+                    // если 3DS v2 и не требуется авторизация, переходим на orderdone
+                    window.location = data.termurl;
+                }
+            } else if (data.status == 0 && data.threeDSMethodURL && data.isNeedSendTransIdTKB) {
+                payform.confirm3dsV2TKB(data.threeDSMethodURL, data.threeDSServerTransID, data.termurl);
+
+                // TODO: DRY
+                setTimeout(function() {
+                    let form = $('#payform').serialize();
+                    $.ajax({
+                        type: 'POST',
+                        url: "/pay/createpay",
+                        data: form,
+                        beforeSend: function () {
+                            $('.errmessage').hide();
+                            $('#addtopay').prop('disabled', true); //блок кнопки
+                            $('#payform').hide();
+                            $("#loader").show();
+                        },
+                        success: payform.createPaySuccess,
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            if (jqXHR.status != 302) {
+                                //console.log(jqXHR.status);
+                                $("#loader").hide();
+                                $('#error_message').html("Ошибка запроса");
+                                $('#error_message_xs').html("Ошибка запроса");
+                                $('.errmessage').show();
+                                $('#addtopay').prop('disabled', false);
+                                $('#payform').show();
+                                $('input[data-inputmask-mask]', '#payform').inputmask();
+                            }
+                        }
+                    });
+                }, 4000);
+            } else if (data.status == 1 && data.url && data.isNeed3DSRedirect) {
+                window.location = data.url;
+            } else if (data.status == 2 && data.url) {
+                window.location = data.url;
+            } else {
+                $('#addtopay').prop('disabled', false);
+                $('#payform').show();
+                $('input[data-inputmask-mask]', '#payform').inputmask();
+                $('#error_message').html(data.message);
+                $('#error_message_xs').html(data.message);
+                $('.errmessage').show();
+            }
+        },
     };
 
     window.payform = payform;
