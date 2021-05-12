@@ -5,6 +5,7 @@ namespace app\services\payment\banks;
 
 
 use app\models\TU;
+use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\ident\forms\IdentForm;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
@@ -28,7 +29,6 @@ use app\services\payment\forms\forta\CreatePayRequest;
 use app\services\payment\forms\forta\OutCardPayRequest;
 use app\services\payment\forms\forta\PaymentRequest;
 use app\services\payment\forms\forta\RefundPayRequest;
-use app\services\payment\forms\GetBalanceForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
@@ -622,7 +622,7 @@ class FortaTechAdapter implements IBankAdapter
     /**
      * @inheritDoc
      */
-    public function getBalance(GetBalanceForm $getBalanceForm)
+    public function getBalance(GetBalanceRequest $getBalanceRequest)
     {
         // TODO: Implement getBalance() method.
     }
