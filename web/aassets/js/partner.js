@@ -1810,6 +1810,7 @@
                 $form.find('select[name=BankId]').val(gate.BankId);
                 $form.find('select[name=TU]').val(gate.TU);
                 $form.find('input[name=SchetNumber]').val(gate.SchetNumber);
+                $form.find('select[name=SchetType]').val(gate.SchetType);
                 $form.find('input[name=Login]').val(gate.Login);
                 $form.find('input[name=Token]').val(gate.Token);
                 $form.find('input[name=Password]').val(gate.Password);
