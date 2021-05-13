@@ -71,13 +71,13 @@ abstract class AbstractClient
         array $headers = []
     ): array {
         $options = [
-            RequestOptions::FORM_PARAMS => [],
+            RequestOptions::JSON => [],
             RequestOptions::QUERY => [],
             RequestOptions::HEADERS => [],
         ];
 
         if (!empty($parameters) and $method === self::METHOD_POST) {
-            $options[RequestOptions::FORM_PARAMS] = $parameters;
+            $options[RequestOptions::JSON] = $parameters;
         }
 
         if (!empty($parameters) and in_array($method, [self::METHOD_GET, self::METHOD_PUT])) {

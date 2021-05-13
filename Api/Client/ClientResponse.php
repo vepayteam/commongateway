@@ -40,7 +40,6 @@ final class ClientResponse extends GuzzleResponse implements Response
         }
         return $decoded;
     }
-
     /**
      * @return bool
      */
