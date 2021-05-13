@@ -62,12 +62,17 @@ class WalletoBankAdapter implements IBankAdapter
             RequestOptions::SSL_KEY => Yii::getAlias(self::KEY_ROOT_PATH . $partnerBankGate->Login . '.key'),
             RequestOptions::HEADERS => $apiClientHeader,
         ];
-        $this->api = new Client($config);
+        $infoMessage = sprintf(
+            'partnerId=%d bankId=%d',
+            $this->gate->PartnerId,
+            $this->getBankId()
+        );
+        $this->api = new Client($config, $infoMessage);
     }
 
     public function getBankId()
     {
-        // TODO: Implement getBankId() method.
+        return self::$bank;
     }
 
     public function confirm(DonePayForm $donePayForm)

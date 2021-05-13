@@ -2,10 +2,11 @@
 
 namespace app\Api\Client;
 
+use app\Api\Logger\Http\LogMiddleware;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\HandlerStack;
 use GuzzleHttp\RequestOptions;
-use Vepay\Gateway\Logger\Guzzle\LogMiddleware;
 
 abstract class AbstractClient
 {
@@ -22,15 +23,18 @@ abstract class AbstractClient
     /**
      * AbstractClient constructor.
      * @param array $clientConfig
+     * @param string $logInfoMessage
      */
-    public function __construct(array $clientConfig = [])
+    public function __construct(array $clientConfig = [], string $logInfoMessage = '')
     {
-        //$logMiddleware =  new LogMiddleware();
+        $stack = HandlerStack::create();
+        $logMiddleware = new LogMiddleware($logInfoMessage);
+        $stack->push($logMiddleware, $logMiddleware->getName());
         $config = array_merge([
             RequestOptions::HTTP_ERRORS => false,
-            RequestOptions::TIMEOUT => self::TIMEOUT
+            RequestOptions::TIMEOUT => self::TIMEOUT,
+            'handler' => $stack
         ], $clientConfig);
-        //$stack->push($logMiddleware, $logMiddleware->getName()); //log middleware
         $this->setClient(new GuzzleClient($config));
     }
 
@@ -51,7 +55,6 @@ abstract class AbstractClient
         $options = $this->getOptions($method, $parameters, $headers);
         $endpoint = $this->prepareEndpoint($endpoint);
         //TODO: cache implement
-        //TODO: logger middleware implement
         $response = $this->client->request($method, $endpoint, $options);
         return new ClientResponse($response);
     }
@@ -85,14 +88,6 @@ abstract class AbstractClient
             $options[RequestOptions::HEADERS] = $headers;
         }
         return $options;
-    }
-
-    private function beforeSend()
-    {
-        //TODO: implement middleware logger,
-        $stack = $this->client->getConfig('handler');
-        $logMiddleware = new LogMiddleware();
-        $stack->push($logMiddleware, $logMiddleware->getName());
     }
 
     /**

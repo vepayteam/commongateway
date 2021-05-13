@@ -1,6 +1,6 @@
 <?php
 
-namespace Vepay\Gateway\Client\Middleware;
+namespace app\Api\Client\Middleware;
 
 interface MiddlewareInterface
 {

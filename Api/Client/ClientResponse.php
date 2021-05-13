@@ -5,7 +5,7 @@ namespace app\Api\Client;
 use GuzzleHttp\Psr7\Response as GuzzleResponse;
 use Psr\Http\Message\ResponseInterface;
 
-final class ClientResponse extends GuzzleResponse
+final class ClientResponse extends GuzzleResponse implements Response
 {
     public function __construct(ResponseInterface $response)
     {
@@ -39,6 +39,14 @@ final class ClientResponse extends GuzzleResponse
             $decoded = $decoded[$key];
         }
         return $decoded;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasErrors(): bool
+    {
+        return !in_array($this->getStatusCode(), [200, 201]);
     }
 
     /**
