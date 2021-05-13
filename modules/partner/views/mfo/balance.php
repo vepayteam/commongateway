@@ -6,6 +6,7 @@
 /* @var $IsAdmin bool */
 
 use app\services\balance\response\BalanceResponse;
+use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\types\AccountTypes;
 use yii\helpers\ArrayHelper;
 use yii\web\View;
@@ -119,7 +120,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                             <div class="full-width">
                                                 <span style="margin-right: 5px;"><?= AccountTypes::ALL_TYPES[$balance->account_type] ?>:</span>
                                                 <b class="pull-right">
-                                                    <?= number_format($balance->amount, 2, '.', ' ') ?>
+                                                    <?= PaymentHelper::formatSum($balance->amount) ?>
                                                     <?= $balance->currency ?>
                                                 </b>
                                             </div>

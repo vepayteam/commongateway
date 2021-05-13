@@ -83,47 +83,27 @@ class MfoController extends Controller
      */
     public function actionBalance()
     {
-        if (UserLk::IsAdmin(Yii::$app->user)) {
+        $isAdmin = UserLk::IsAdmin(Yii::$app->user);
+        if ($isAdmin) {
             $sel = $this->selectPartner($idpartner, false, true);
-            if (empty($sel)) {
-
-                $partner = Partner::findOne(['ID' => $idpartner]);
-                $balance = new Balance();
-                $balance->setAttributes([
-                    'partner' => $partner
-                ]);
-
-                $mfoReq = new MfoReq(); // TODO уброать mforeq
-                $mfoReq->mfo = $partner->ID;
-                $balanceResponse = $balance->getAllBanksBalance($mfoReq);
-
-                return $this->render('balance', [
-                    'IsAdmin' => 1,
-                    'Partner' => $partner,
-                    'BalanceResponse' => $balanceResponse,
-                ]);
-            } else {
+            if (!empty($sel)) {
                 return $sel;
             }
         } else {
-
             $idpartner = UserLk::getPartnerId(Yii::$app->user);
-            $partner = Partner::findOne(['ID' => $idpartner]);
-            $balance = new Balance();
-            $balance->setAttributes([
-                'partner' => $partner
-            ]);
-
-            $mfoReq = new MfoReq(); // TODO уброать mforeq
-            $mfoReq->mfo = $partner->ID;
-            $balanceResponse = $balance->getAllBanksBalance($mfoReq);
-
-            return $this->render('balance', [
-                'IsAdmin' => 0,
-                'Partner' => $partner,
-                'BalanceResponse' => $balanceResponse,
-            ]);
         }
+
+        $partner = Partner::findOne(['ID' => $idpartner]);
+        $balance = new Balance();
+        $balance->setAttributes([
+            'partner' => $partner
+        ]);
+
+        return $this->render('balance', [
+            'IsAdmin' => $isAdmin,
+            'Partner' => $partner,
+            'BalanceResponse' => $balance->getAllBanksBalance(),
+        ]);
     }
 
     /**
