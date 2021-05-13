@@ -20,8 +20,8 @@ class CreatePayRequest extends Model
     public $description;
     /** @var array */
     public $client;
-
     /** @var array */
-    public $location; //todo remove
-
+    public $location;
+    /** @var array */
+    public $options;
 }
