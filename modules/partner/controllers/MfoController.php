@@ -3,9 +3,11 @@
 namespace app\modules\partner\controllers;
 
 use app\models\mfo\MfoBalance;
+use app\models\mfo\MfoReq;
 use app\models\partner\PartUserAccess;
 use app\models\partner\UserLk;
 use app\models\payonline\Partner;
+use app\services\balance\Balance;
 use app\services\balance\BalanceService;
 use app\services\balance\models\PartsBalanceForm;
 use app\services\balance\models\PartsBalancePartnerForm;
@@ -86,12 +88,19 @@ class MfoController extends Controller
             if (empty($sel)) {
 
                 $partner = Partner::findOne(['ID' => $idpartner]);
-                $MfoBalance = new MfoBalance($partner);
+                $balance = new Balance();
+                $balance->setAttributes([
+                    'partner' => $partner
+                ]);
+
+                $mfoReq = new MfoReq(); // TODO уброать mforeq
+                $mfoReq->mfo = $partner->ID;
+                $balanceResponse = $balance->getAllBanksBalance($mfoReq);
 
                 return $this->render('balance', [
                     'IsAdmin' => 1,
                     'Partner' => $partner,
-                    'balances' => $MfoBalance->GetBalanceWithoutLocal(true)
+                    'BalanceResponse' => $balanceResponse,
                 ]);
             } else {
                 return $sel;
@@ -100,12 +109,19 @@ class MfoController extends Controller
 
             $idpartner = UserLk::getPartnerId(Yii::$app->user);
             $partner = Partner::findOne(['ID' => $idpartner]);
+            $balance = new Balance();
+            $balance->setAttributes([
+                'partner' => $partner
+            ]);
 
-            $MfoBalance = new MfoBalance($partner);
+            $mfoReq = new MfoReq(); // TODO уброать mforeq
+            $mfoReq->mfo = $partner->ID;
+            $balanceResponse = $balance->getAllBanksBalance($mfoReq);
+
             return $this->render('balance', [
                 'IsAdmin' => 0,
                 'Partner' => $partner,
-                'balances' => $MfoBalance->GetBalanceWithoutLocal(false)
+                'BalanceResponse' => $balanceResponse,
             ]);
         }
     }

@@ -1,14 +1,16 @@
 <?php
 
 /* @var yii\web\View $this */
-/* @var $balances  */
+/* @var BalanceResponse $BalanceResponse  */
 /* @var \app\models\payonline\Partner $Partner */
 /* @var $IsAdmin bool */
 
+use app\services\balance\response\BalanceResponse;
+use app\services\payment\types\AccountTypes;
+use yii\helpers\ArrayHelper;
 use yii\web\View;
 
 $this->title = "баланс";
-
 $this->params['breadtitle'] = "Баланс";
 $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 
@@ -94,9 +96,9 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
             </div>
         </div>
 
+        <?php if ($BalanceResponse->status === BalanceResponse::STATUS_DONE): ?>
         <div class="col-sm-4">
             <div class="ibox float-e-margins">
-                <?php if ((isset($balances['local']) || isset($balances['localnomin']) || isset($balances['localtrans'])) !== false): ?>
                 <div class="ibox-title">
                     <h5>Баланс</h5>
                 </div>
@@ -107,60 +109,30 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         </div>
                     </div>
 
-                    <?php if ((isset($balances['localtrans']) || isset($balances['localnomin'])) !== false): ?>
-                        <div class="row">
-                            <div class="form-group">
-                                <div class="col-sm-12">
-                                    <?php if (!empty($Partner->SchetTcbNominal)): ?>
-                                        Баланс номинального счета:
-                                    <?php else: ?>
-                                        Баланс транзитного счета на погашение:
-                                    <?php endif; ?>
-                                </div>
-                                <div class="col-sm-12">
-                                    <label>
-                                        <?=number_format(((!empty($Partner->SchetTcbNominal) ? $balances['localnomin'] : $balances['localtrans'])),2, '.',' ')?> руб.
-                                    </label>
-                                    <?php if ($IsAdmin) : ?>
-                                        <div>&nbsp;Возн.: <label><?=number_format($balances['comisin'],2, '.',' ')?> руб.</label></div>
-                                        <?php if (!empty($Partner->SchetTcbNominal)): ?>
-                                            <div>&nbsp;ТКБ: <label><?=number_format($balances['tcbnomin'] ?? 0,2, '.',' ')?> руб.</label></div>
-                                        <?php else: ?>
-                                            <div>&nbsp;ТКБ: <label><?=number_format($balances['tcbtrans'] ?? 0,2, '.',' ')?> руб.</label></div>
-                                        <?php endif; ?>
-                                    <?php endif; ?>
+                    <div class="row">
+                        <?php foreach (ArrayHelper::index($BalanceResponse->balance, null, 'bank_name') as $bankName => $balances): ?>
+                            <div class="col-sm-12">
+                                <b><?= $bankName ?></b>
+                                <div class="form-group">
+                                    <div class="inline">
+                                        <?php foreach ($balances as $balance): ?>
+                                            <div class="full-width">
+                                                <span style="margin-right: 5px;"><?= AccountTypes::ALL_TYPES[$balance->account_type] ?>:</span>
+                                                <b class="pull-right">
+                                                    <?= number_format($balance->amount, 2, '.', ' ') ?>
+                                                    <?= $balance->currency ?>
+                                                </b>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    <?php endif; ?>
-
-                    <?php if (isset($balances['local'])): ?>
-                        <div class="row">
-                            <div class="form-group">
-                                <div class="col-sm-12">
-                                    Баланс транзитного счета<?=(empty($Partner->SchetTcbNominal) ? ' на выдачу' : '')?>:
-                                </div>
-                                <div class="col-sm-12">
-                                    <label>
-                                        <?=number_format($balances['local'],2, '.',' ')?> руб.
-                                    </label>
-                                    <?php if ($IsAdmin) : ?>
-                                        <div>&nbsp;Возн.: <label><?=number_format($balances['comisout'],2, '.',' ')?> руб.</label></div>
-                                        <div>&nbsp;ТКБ: <label><?=number_format($balances['tcb'] ?? 0,2, '.',' ')?> руб.</label></div>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-
+                        <?php endforeach; ?>
+                    </div>
                 </div>
-                <?php else: ?>
-                <div class="ibox-title">
-                    <p>Не указано ни одного счета</p>
-                </div>
-                <?php endif; ?>
             </div>
         </div>
+        <?php endif; ?>
 
     </div>
 
