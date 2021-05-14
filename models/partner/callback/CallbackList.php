@@ -18,6 +18,7 @@ class CallbackList extends Model
     public $id = 0;
     public $Extid = '';
     public $httpCode = 0;
+    public $testMode = false;
 
     public function rules()
     {
@@ -26,6 +27,7 @@ class CallbackList extends Model
             [['Extid'], 'string', 'max' => 40],
             [['datefrom', 'dateto'], 'date', 'format' => 'php:d.m.Y H:i'],
             [['datefrom', 'dateto'], 'required'],
+            [['testMode'], 'boolean'],
         ];
     }
 
@@ -53,9 +55,6 @@ class CallbackList extends Model
 
         $datefrom = strtotime($this->datefrom);
         $dateto = strtotime($this->dateto);
-        if ($datefrom < $dateto - 365 * 86400) {
-            $datefrom = $dateto - 365 * 86400;
-        }
 
         $query = new Query();
 
@@ -73,7 +72,7 @@ class CallbackList extends Model
                 ],
             ]);
 
-        if ( $idpartner > 0 ) {
+        if ($idpartner > 0) {
             $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $idpartner]);
         }
 
@@ -91,7 +90,7 @@ class CallbackList extends Model
         $totalCountResult = (clone $query)->select(['COUNT(*) as cnt'])->all();
         $totalCount = (int) reset($totalCountResult)['cnt'];
 
-        $query->select([
+        $select = [
             'n.ID',
             'n.IdPay',
             'n.DateCreate',
@@ -100,9 +99,15 @@ class CallbackList extends Model
             'n.HttpCode',
             'n.HttpAns',
             'n.FullReq',
-        ]);
+        ];
 
-        if ( $noLimit === false ) {
+        if ($this->testMode === true) {
+            $select = array_merge($select, ['ps.IdOrg', 'ps.Extid']);
+        }
+
+        $query->select($select);
+
+        if ($noLimit === false) {
             if ( $page > 0 ) {
                 $query->offset($pageLimit * ($page - 1));
             }
