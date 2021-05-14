@@ -13,6 +13,7 @@ use app\services\payment\models\PartnerBankGate;
 class ServiceBalanceTest extends \Codeception\Test\Unit
 {
     /**
+     * vendor/bin/codecept run unit ServiceBalanceTest
      * @var \UnitTester
      */
     protected $tester;
@@ -41,11 +42,10 @@ class ServiceBalanceTest extends \Codeception\Test\Unit
      */
     public function testBalanceServiceBuild()
     {
-        $mfoRequest = new MfoReq();
         $this->balance->setAttributes([
             'partner' => Partner::findOne(['ID' => 123])
         ]);
-        $buildBalance = $this->balance->build($mfoRequest);
+        $buildBalance = $this->balance->build();
         $this->assertInstanceOf(BalanceResponse::class, $buildBalance);
         $this->assertIsString($buildBalance->message);
         $this->assertEquals([], $buildBalance->balance);
