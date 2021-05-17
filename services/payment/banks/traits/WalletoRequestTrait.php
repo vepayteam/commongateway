@@ -15,6 +15,7 @@ trait WalletoRequestTrait
      */
     private function formatCreatePayRequest(CreatePayForm $createPayForm): CreatePayRequest
     {
+        $createPayForm->Email = 'test@email.com'; //todo: get from request
         $paySchet = $createPayForm->getPaySchet();
         // amount check currency what is provided by default RUB
         $amount = PaymentHelper::convertToRub($paySchet->getSummFull());
@@ -28,8 +29,15 @@ trait WalletoRequestTrait
             'expiration_year' => '20' . $createPayForm->CardYear,
         ];
         $request->location['ip'] = $this->getRequestIp();
-        $request->client['email'] = $createPayForm->Email;
-        $request->options['force3d'] = true;
+        //TODO: add address, city, country, login, phone, zip
+        $request->client = [
+          'email' => $paySchet->UserEmail
+        ];
+        $request->options = [
+            'force3d' => 1,
+            'auto_charge' => 1,
+            'return_url' => $createPayForm->getReturnUrl(),
+        ];
         $request->currency = 'RUB'; //todo: get from request
         $request->merchant_order_id = $paySchet->ID;
         $request->description = 'Счет №' . $paySchet->ID ?? '';
@@ -37,7 +45,7 @@ trait WalletoRequestTrait
     }
 
     /**
-     * TODO: move from adapter
+     * TODO: move from trait
      * На стороне банка стоит Anti fraud (public ip validation)
      * @return string
      */

@@ -23,6 +23,7 @@ class MerchantPayForm extends BaseForm implements AmountFormInterface
     public $cancelurl = '';
     public $postbackurl = '';
     public $postbackurl_v2 = '';
+    public $client;
 
     public function rules()
     {

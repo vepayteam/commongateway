@@ -7,30 +7,18 @@ use app\services\ident\forms\IdentForm;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
-use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
-use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
-use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
-use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
-use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
-use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\traits\WalletoRequestTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CreatePayException;
-use app\services\payment\exceptions\GateException;
-use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
-use app\services\payment\exceptions\RefundPayException;
 use app\services\payment\forms\AutoPayForm;
-use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
-use app\services\payment\forms\GetBalanceForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\models\PartnerBankGate;
-use app\services\payment\models\PaySchet;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
 use Yii;
@@ -39,9 +27,6 @@ class WalletoBankAdapter implements IBankAdapter
 {
     use WalletoRequestTrait;
 
-    public static $bank = 10;
-    private const BANK_URL = 'https://api.sandbox.walletto.eu';
-    private const KEY_ROOT_PATH = '@app/config/walleto/';
     /** @var PartnerBankGate */
     protected $gate;
     /** @var Client $api */
@@ -49,19 +34,29 @@ class WalletoBankAdapter implements IBankAdapter
     /** @var String $bankUrl */
     protected $bankUrl;
 
+    public static $bank = 10;
+    private const BANK_URL = 'https://api.sandbox.walletto.eu';
+    private const KEY_ROOT_PATH = '@app/config/walleto/';
+
     // Walleto bank statuses
+    private const STATUS_NEW = 'new';
     private const STATUS_PREPARED = 'prepared';
     private const STATUS_SUCCESS = 'success';
     private const STATUS_CHARGED = 'charged';
     private const STATUS_REFUNDED = 'refunded';
     private const STATUS_AUTHORIZED = 'authorized';
     private const STATUS_REVERSED = 'reversed';
+    public const ERROR_STATUS_MSG = 'Ошибка проверки статуса'; //TODO: create global error handler
 
 
     public function setGate(PartnerBankGate $partnerBankGate)
     {
         $this->gate = $partnerBankGate;
         $this->bankUrl = self::BANK_URL;
+
+        $partnerBankGate->Login = 'enrecomsenterprisesltd';
+        $partnerBankGate->Token = 'Basic ZW5yZWNvbXNlbnRlcnByaXNlc2x0ZDphSnpZOHFYZTQ4aXp6YlR1C';
+
         $apiClientHeader = [
             'Authorization' => $partnerBankGate->Token,
         ];
@@ -94,7 +89,7 @@ class WalletoBankAdapter implements IBankAdapter
     {
         $action = 'orders/authorize';
         $url = self::BANK_URL . '/' . $action;
-        $request = $this->formatCreatePayRequest($createPayForm); // request
+        $request = $this->formatCreatePayRequest($createPayForm);
         $createPayResponse = new CreatePayResponse();
         try {
             $response = $this->api->request(
@@ -104,29 +99,59 @@ class WalletoBankAdapter implements IBankAdapter
             );
         } catch (GuzzleException $e) {
             Yii::error('Walleto payInCreate err: ' . $e->getMessage());
-            throw new CreatePayException(BankAdapterResponseException::REQUEST_ERROR_MSG . ' : ' .  $e->getMessage());
+            throw new CreatePayException(
+                BankAdapterResponseException::REQUEST_ERROR_MSG . ' : ' .  $e->getMessage()
+            );
         }
         if (!$response->isSuccess()) {
             Yii::error('Walleto payInCreate err: ' . $response->json('failure_message'));
-            $errorMessage = $response->json('failure_message');
+            $errorMessage = $response->json('failure_message') ?? '';
             $createPayResponse->status = BaseResponse::STATUS_ERROR;
-            $createPayResponse->message = BankAdapterResponseException::setErrorMsg($errorMessage ?? '');
+            $createPayResponse->message = BankAdapterResponseException::setErrorMsg($errorMessage);
             return $createPayResponse;
         }
         $responseData = $response->json('orders')[0];
-        $createPayResponse->status = $this->convertStatus($responseData['status']);
+        $createPayResponse->status = BaseResponse::STATUS_DONE;
         $createPayResponse->isNeed3DSRedirect = false;
         $createPayResponse->isNeed3DSVerif = true;
         $createPayResponse->transac = $responseData['id'];
-        $createPayResponse->url = $responseData['form3d']['action']; //Acquirer ACS URL
-        $createPayResponse->md = $responseData['form3d']['MD'];
-        $createPayResponse->pa = $responseData['form3d']['PaReq'];
+        $createPayResponse->html3dsForm = $responseData['form3d_html'];
         return $createPayResponse;
     }
 
-    public function checkStatusPay(OkPayForm $okPayForm)
+    /**
+     * @param OkPayForm $okPayForm
+     * @return CheckStatusPayResponse
+     * @throws BankAdapterResponseException
+     */
+    public function checkStatusPay(OkPayForm $okPayForm): CheckStatusPayResponse
     {
-        //TODO: !!!
+        $checkStatusPayResponse = new CheckStatusPayResponse();
+        $transactionId = $okPayForm->getPaySchet()->ExtBillNumber;
+        $url = self::BANK_URL . '/orders/' . $transactionId;
+        try {
+            $response = $this->api->request(
+                Client::METHOD_GET,
+                $url,
+                []
+            );
+            if (!$response->isSuccess()) {
+                Yii::error('Walleto checkStatusPay err: ' . $response->json('failure_message'));
+                $errorMessage = $response->json('failure_message') ?? self::ERROR_STATUS_MSG;
+                $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
+                $checkStatusPayResponse->message = BankAdapterResponseException::setErrorMsg($errorMessage);
+                return $checkStatusPayResponse;
+            }
+            $responseData = $response->json('orders');
+            $checkStatusPayResponse->status = $this->convertStatus($responseData[0]['status']);
+            $checkStatusPayResponse->message = '';
+        } catch (GuzzleException $e) {
+            Yii::error(' Walleto checkStatusPay err:' . $e->getMessage());
+            throw new BankAdapterResponseException(
+                BankAdapterResponseException::REQUEST_ERROR_MSG . ' : ' . $e->getMessage()
+            );
+        }
+        return $checkStatusPayResponse;
     }
 
     public function recurrentPay(AutoPayForm $autoPayForm)
@@ -172,9 +197,10 @@ class WalletoBankAdapter implements IBankAdapter
     {
         switch ($status) {
             case self::STATUS_PREPARED:
-            case self::STATUS_CHARGED:
+            case self::STATUS_NEW:
                 return BaseResponse::STATUS_CREATED;
             case self::STATUS_SUCCESS:
+            case self::STATUS_CHARGED:
                 return BaseResponse::STATUS_DONE;
             case self::STATUS_REFUNDED:
                 return BaseResponse::STATUS_CANCEL;

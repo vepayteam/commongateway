@@ -14,7 +14,7 @@ abstract class AbstractClient
     public const METHOD_POST = 'POST';
     public const METHOD_PUT = 'PUT';
     /** @var float */
-    private const TIMEOUT = 10.0;
+    private const TIMEOUT = 20.0;
     /**
      * @var GuzzleClient
      */

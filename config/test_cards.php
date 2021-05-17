@@ -40,7 +40,10 @@ return [
     // cauri
     '4012001037141112',
     // walleto
-    '4111111111111111',
-    '2222400060000007',
-    '4276990011343663',
+    '4111111111111111', // Success authorization
+    '2222400060000007', // Success authorization
+    '4276990011343663', // Non 3-D Secure: declined authorization; 3-D Secure: “Unable to verify enrollment“ scenario
+    '5555555555555599', // Internal system error
+    '4276838748917319', // 3-D Secure scenario “Not enrolled“
+    '4000000000000002', // Declined as fraud
 ];
