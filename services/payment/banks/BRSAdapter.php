@@ -202,7 +202,7 @@ class BRSAdapter implements IBankAdapter
     {
         $uri = '/eis-app/eis-rs/businessPaymentService/getB2сStatus';
         $checkStatusPayOutAccountRequest = new CheckStatusPayOutAccountRequest();
-        $checkStatusPayOutAccountRequest->sourceId = $okPayForm->IdPay;
+        $checkStatusPayOutAccountRequest->sourceId = (string)$okPayForm->IdPay;
 
         $checkStatusPayResponse = new CheckStatusPayResponse();
         try {
