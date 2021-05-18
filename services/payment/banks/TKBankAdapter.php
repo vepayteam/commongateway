@@ -10,6 +10,7 @@ use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\queue\BinBDInfoJob;
 use app\models\TU;
+use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\ident\forms\IdentForm;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\Check3DSVersionResponse;
@@ -33,7 +34,6 @@ use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\CreatePaySecondStepForm;
 use app\services\payment\forms\DonePayForm;
-use app\services\payment\forms\GetBalanceForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
@@ -1484,11 +1484,28 @@ class TKBankAdapter implements IBankAdapter
     }
 
     /**
-     * @inheritDoc
+     * @param GetBalanceRequest $getBalanceRequest
+     * @return GetBalanceResponse
      */
-    public function getBalance(GetBalanceForm $getBalanceForm)
+    public function getBalance(GetBalanceRequest $getBalanceRequest): GetBalanceResponse
     {
-        throw new GateException('Метод недоступен');
+        $request = [];
+        $getBalanceResponse = new GetBalanceResponse();
+        if (empty($getBalanceRequest->accountNumber)) {
+            return $getBalanceResponse;
+        }
+        $getBalanceResponse->bank_name = $getBalanceRequest->bankName;
+
+        $type = $getBalanceRequest->accountType;
+        $request['account'] = $getBalanceRequest->accountNumber;
+        $response = $this->getBalanceAcc($request);
+        if (!isset($response['amount']) && $response['status'] === 0) {
+            Yii::warning("Balance service:: TKB request failed for type: $type message: " . $response['message']);
+        }
+        $getBalanceResponse->amount = (float)$response['amount'];
+        $getBalanceResponse->currency = 'RUB';
+        $getBalanceResponse->account_type = $type;
+        return $getBalanceResponse;
     }
 
     /**

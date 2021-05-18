@@ -70,6 +70,7 @@ class KfBalance extends Model
     }
 
     /**
+     * @deprecated
      * Баланс краутфандинга и МФО с учётом комиссий
      * @param Partner $partner
      * @return double|null

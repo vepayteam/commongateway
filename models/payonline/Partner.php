@@ -3,7 +3,6 @@
 namespace app\models\payonline;
 
 use app\models\mfo\DistributionReports;
-use app\models\mfo\MfoSettings;
 use app\models\mfo\VyvodReestr;
 use app\models\mfo\VyvodSystem;
 use app\models\partner\admin\structures\VyvodSystemFilterParams;
@@ -12,10 +11,11 @@ use app\models\partner\UserLk;
 use app\models\sms\tables\AccessSms;
 use app\models\TU;
 use app\services\partners\models\PartnerOption;
-use app\services\partners\models\PartnerOptions;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use Yii;
+use yii\db\ActiveQuery;
+use yii\db\ActiveRecord;
 use yii\web\UploadedFile;
 
 /**
@@ -140,7 +140,7 @@ use yii\web\UploadedFile;
  * @property PartnerBankRekviz $partner_bank_rekviz
  *
  */
-class Partner extends \yii\db\ActiveRecord
+class Partner extends ActiveRecord
 {
     public const SCENARIO_SELFREG = 'selfreg';
     public const VEPAY_ID = 1;
@@ -390,7 +390,7 @@ class Partner extends \yii\db\ActiveRecord
     }
 
     /**
-     * @return \yii\db\ActiveQuery
+     * @return ActiveQuery
      */
     public function getPartner_bank_rekviz()
     {
@@ -398,7 +398,7 @@ class Partner extends \yii\db\ActiveRecord
     }
 
     /**
-     * @return \yii\db\ActiveQuery
+     * @return ActiveQuery
      */
     public function getPartnerDogovor()
     {
@@ -406,7 +406,7 @@ class Partner extends \yii\db\ActiveRecord
     }
 
     /**
-     * @return \yii\db\ActiveQuery
+     * @return ActiveQuery
      */
     public function getPaySchets()
     {
@@ -687,6 +687,11 @@ class Partner extends \yii\db\ActiveRecord
         return $this->hasMany(PartnerBankGate::class, ['PartnerId' => 'ID']);
     }
 
+    public function getEnabledBankGates(): ActiveQuery
+    {
+        return $this->getBankGates()->where(['Enabled' => 1]);
+    }
+
     public function getVyvodSystem()
     {
         return $this->hasMany(VyvodSystem::class, ['IdPartner' => 'ID']);
@@ -700,7 +705,7 @@ class Partner extends \yii\db\ActiveRecord
     /**
      * @param VyvodSystemFilterParams $params
      *
-     * @return \yii\db\ActiveQuery
+     * @return ActiveQuery
      */
     public function getSummVyveden(VyvodSystemFilterParams $params)
     {
@@ -722,7 +727,7 @@ class Partner extends \yii\db\ActiveRecord
     /**
      * @param VyvodSystemFilterParams $params
      *
-     * @return \yii\db\ActiveQuery
+     * @return ActiveQuery
      */
     public function getDataVyveden(VyvodSystemFilterParams $params)
     {
@@ -744,7 +749,7 @@ class Partner extends \yii\db\ActiveRecord
     /**
      * @param VyvodSystemFilterParams $params
      *
-     * @return \yii\db\ActiveQuery
+     * @return ActiveQuery
      */
     public function getSummPerechisl(VyvodSystemFilterParams $params)
     {
@@ -765,7 +770,7 @@ class Partner extends \yii\db\ActiveRecord
     /**
      * @param VyvodSystemFilterParams $params
      *
-     * @return \yii\db\ActiveQuery
+     * @return ActiveQuery
      */
     public function getDataPerechisl(VyvodSystemFilterParams $params)
     {
