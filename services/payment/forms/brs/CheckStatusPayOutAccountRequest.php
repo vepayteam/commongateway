@@ -9,5 +9,6 @@ use yii\base\Model;
 class CheckStatusPayOutAccountRequest extends Model
 {
     public $sourceId;
+    public $operationId;
 
 }

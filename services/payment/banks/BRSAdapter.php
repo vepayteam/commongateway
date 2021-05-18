@@ -200,9 +200,10 @@ class BRSAdapter implements IBankAdapter
      */
     protected function checkStatusPayOutSchet(OkPayForm $okPayForm)
     {
-        $uri = '/eis-app/eis-rs/businessPaymentService/getB2сStatus';
+        $uri = '/eis-app/eis-rs/businessPaymentService/getB2cStatus';
         $checkStatusPayOutAccountRequest = new CheckStatusPayOutAccountRequest();
         $checkStatusPayOutAccountRequest->sourceId = (string)$okPayForm->IdPay;
+        $checkStatusPayOutAccountRequest->operationId = (string)$okPayForm->getPaySchet()->ExtBillNumber;
 
         $checkStatusPayResponse = new CheckStatusPayResponse();
         try {
@@ -213,7 +214,7 @@ class BRSAdapter implements IBankAdapter
                 $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
             }
 
-            $checkStatusPayResponse->message = ($ans['code'] ?? '');
+            $checkStatusPayResponse->message = ($ans['message'] ?? '');
         } catch (BankAdapterResponseException $e) {
             $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
             $checkStatusPayResponse->message = 'Ошибка запроса';
@@ -655,6 +656,7 @@ class BRSAdapter implements IBankAdapter
             if(isset($ans['code']) && $ans['code'] == 0) {
                 $transferToAccountResponse->status = BaseResponse::STATUS_DONE;
                 $transferToAccountResponse->message = $ans['message'];
+                $transferToAccountResponse->trans = ($ans['operationId'] ?? '');
             } else {
                 $transferToAccountResponse->status = BaseResponse::STATUS_DONE;
                 $transferToAccountResponse->message = ($ans['message'] ?? 'Ошибка запроса');
