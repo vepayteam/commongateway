@@ -22,6 +22,7 @@ use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
+use app\services\payment\banks\interfaces\ITKBankAdapterResponseErrors;
 use app\services\payment\banks\traits\TKBank3DSTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\GateException;
@@ -1349,8 +1350,14 @@ class TKBankAdapter implements IBankAdapter
             $xml = $this->parseAns($response['xml']);
             Yii::warning("checkStatusOrder afterParseAns: " . Json::encode($xml), 'merchant');
             if ($xml && isset($xml['errorinfo']['errorcode']) && (int)$xml['errorinfo']['errorcode'] > 0) {
+                $errorCode = (int)$xml['errorinfo']['errorcode'];
                 Yii::warning("checkStatusPay isCreated IdPay=" . $okPayForm->IdPay, 'merchant');
-                $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
+                if($errorCode == ITKBankAdapterResponseErrors::ERROR_CODE_ENGINEERING_WORKS) {
+                    $checkStatusPayResponse->status = BaseResponse::STATUS_CREATED;
+                } else {
+                    $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
+                }
+
                 $checkStatusPayResponse->message = $xml['errorinfo']['errormessage'];
                 $checkStatusPayResponse->xml = $xml;
             } else {

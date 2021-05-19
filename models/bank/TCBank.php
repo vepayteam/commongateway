@@ -786,9 +786,6 @@ class TCBank implements IBank
         if (isset($data['inn']) && !empty($data['inn'])) {
             $queryData['Inn'] = $data['inn'];
         }
-        if (isset($data['kpp']) && !empty($data['kpp'])) {
-            $queryData['Kpp'] = $data['kpp'];
-        }
 
         $queryData = Json::encode($queryData);
 

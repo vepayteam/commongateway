@@ -2,7 +2,6 @@
 
 namespace app\services\balance;
 
-use app\models\mfo\MfoReq;
 use app\models\payonline\Partner;
 use app\services\balance\response\BalanceResponse;
 use app\services\balance\traits\BalanceTrait;
@@ -45,22 +44,20 @@ class Balance extends Model
     }
 
     /**
-     * @param MfoReq $mfoRequest
      * @return BalanceResponse
      */
-    public function getAllBanksBalance(MfoReq $mfoRequest): BalanceResponse
+    public function getAllBanksBalance(): BalanceResponse
     {
-        return Yii::$app->cache->getOrSet(self::BALANCE_CACHE_PREFIX . $mfoRequest->mfo, function () use ($mfoRequest) {
-            return $this->build($mfoRequest);
+        return Yii::$app->cache->getOrSet($this->getCacheKeyPrefix(), function () {
+            return $this->build();
         }, self::BALANCE_CACHE_EXPIRE);
     }
 
     /**
-     * @param MfoReq $mfoRequest
      * @return BalanceResponse
      * @throws GateException
      */
-    public function build(MfoReq $mfoRequest): BalanceResponse
+    public function build(): BalanceResponse
     {
         // Получаем все активные шлюзы
         $enabledBankGates =  $this->getActiveBankGates();
@@ -77,7 +74,7 @@ class Balance extends Model
                 /** @var GetBalanceResponse */
                 $getBalanceResponse = $bankAdapter->getBalance($getBalanceRequest);
             } catch (\Exception $exception) {
-                Yii::warning('Balance service: ' . $exception->getMessage() . ' - PartnerId: ' . $mfoRequest->mfo);
+                Yii::warning('Balance service: ' . $exception->getMessage() . ' - PartnerId: ' . $this->partner->ID);
                 continue;
             }
             if (isset($getBalanceResponse) && !empty($getBalanceResponse->amount)) {
