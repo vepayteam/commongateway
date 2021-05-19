@@ -3,9 +3,11 @@
 namespace app\modules\partner\controllers;
 
 use app\models\mfo\MfoBalance;
+use app\models\mfo\MfoReq;
 use app\models\partner\PartUserAccess;
 use app\models\partner\UserLk;
 use app\models\payonline\Partner;
+use app\services\balance\Balance;
 use app\services\balance\BalanceService;
 use app\services\balance\models\PartsBalanceForm;
 use app\services\balance\models\PartsBalancePartnerForm;
@@ -81,33 +83,27 @@ class MfoController extends Controller
      */
     public function actionBalance()
     {
-        if (UserLk::IsAdmin(Yii::$app->user)) {
+        $isAdmin = UserLk::IsAdmin(Yii::$app->user);
+        if ($isAdmin) {
             $sel = $this->selectPartner($idpartner, false, true);
-            if (empty($sel)) {
-
-                $partner = Partner::findOne(['ID' => $idpartner]);
-                $MfoBalance = new MfoBalance($partner);
-
-                return $this->render('balance', [
-                    'IsAdmin' => 1,
-                    'Partner' => $partner,
-                    'balances' => $MfoBalance->GetBalanceWithoutLocal(true)
-                ]);
-            } else {
+            if (!empty($sel)) {
                 return $sel;
             }
         } else {
-
             $idpartner = UserLk::getPartnerId(Yii::$app->user);
-            $partner = Partner::findOne(['ID' => $idpartner]);
-
-            $MfoBalance = new MfoBalance($partner);
-            return $this->render('balance', [
-                'IsAdmin' => 0,
-                'Partner' => $partner,
-                'balances' => $MfoBalance->GetBalanceWithoutLocal(false)
-            ]);
         }
+
+        $partner = Partner::findOne(['ID' => $idpartner]);
+        $balance = new Balance();
+        $balance->setAttributes([
+            'partner' => $partner
+        ]);
+
+        return $this->render('balance', [
+            'IsAdmin' => $isAdmin,
+            'Partner' => $partner,
+            'BalanceResponse' => $balance->getAllBanksBalance(),
+        ]);
     }
 
     /**

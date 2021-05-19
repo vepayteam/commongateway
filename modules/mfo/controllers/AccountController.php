@@ -74,6 +74,6 @@ class AccountController extends Controller
         if (!$balance->validate()) {
             return ['status' => 0, 'message' => BalanceResponse::PARTNER_NOT_FOUND_ERROR_MSG];
         }
-        return (array)$balance->getAllBanksBalance($mfo);
+        return (array)$balance->getAllBanksBalance();
     }
 }

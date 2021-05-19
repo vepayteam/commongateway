@@ -20,4 +20,13 @@ class PaymentHelper
     {
         return round($rubles * 100);
     }
+
+    /**
+     * Форматирует сумму в читаемый вид
+     * Пример: 10000.00 -> 10 000.00
+     */
+    public static function formatSum(float $num): string
+    {
+        return number_format($num, 2, '.', ' ');
+    }
 }

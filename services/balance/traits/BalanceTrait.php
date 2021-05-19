@@ -10,7 +10,6 @@ use app\services\payment\types\AccountTypes;
 
 trait BalanceTrait
 {
-
     /** @var Partner $partner */
     public $partner;
 
@@ -89,5 +88,10 @@ trait BalanceTrait
         $getBalanceRequest->accountNumber = $accountNumber;
         $getBalanceRequest->accountType = $accountType;
         return $getBalanceRequest;
+    }
+
+    public function getCacheKeyPrefix(): string
+    {
+        return self::BALANCE_CACHE_PREFIX . $this->partner->ID;
     }
 }
