@@ -1508,6 +1508,7 @@ class TKBankAdapter implements IBankAdapter
         $response = $this->getBalanceAcc($request);
         if (!isset($response['amount']) && $response['status'] === 0) {
             Yii::warning("Balance service:: TKB request failed for type: $type message: " . $response['message']);
+            return $getBalanceResponse;
         }
         $getBalanceResponse->amount = (float)$response['amount'];
         $getBalanceResponse->currency = 'RUB';

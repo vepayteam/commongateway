@@ -19,12 +19,10 @@ use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CreatePayException;
-use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\cauri\CheckStatusPayRequest;
 use app\services\payment\forms\cauri\CreatePayRequest;
-use app\services\payment\forms\cauri\GetBalanceRequest;
 use app\services\payment\forms\cauri\OutCardPayRequest;
 use app\services\payment\forms\cauri\RecurrentPayRequest;
 use app\services\payment\forms\cauri\RefundPayRequest;
@@ -504,23 +502,23 @@ class CauriAdapter implements IBankAdapter
      * @inheritDoc
      * @throws BankAdapterResponseException
      */
-    public function getBalance(GetBalanceForm $getBalanceForm): GetBalanceResponse
+    public function getBalance(GetBalanceRequest $getBalanceRequest): GetBalanceResponse
     {
-        $getBalanceRequest = new GetBalanceRequest();
         $getBalanceResponse = new GetBalanceResponse();
         try {
-            //TODO: move to Cauri API facade
-            $balance = new Balance();
-            $response = $balance->__call('getBalance', [
-                $getBalanceRequest->getAttributes(), [
-                    'public_key' => $this->gate->Login,
-                    'private_key' => $this->gate->Token,
-                ]
-            ]);
+            $api = new CauriApiFacade($this->gate);
+            $responseData = $api->getBalance($getBalanceRequest->getAttributes());
         } catch (\Exception $e) {
             throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
         }
-        $getBalanceResponse->balance = floatval($response['amount']) ?? 0;
+        $response = $responseData->getContent();
+        if (!isset($response['amount']) || empty($response['amount'])) {
+            Yii::warning("Balance service:: Cauri request failed for currency: $getBalanceRequest->currency");
+            return $getBalanceResponse;
+        }
+        $getBalanceResponse->amount = round((float)$response['amount'], 2);
+        $getBalanceResponse->currency = $response['currency'];
+        $getBalanceResponse->account_type = $getBalanceRequest->accountType;
         return $getBalanceResponse;
     }
 
