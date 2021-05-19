@@ -53,10 +53,6 @@ class WalletoBankAdapter implements IBankAdapter
     {
         $this->gate = $partnerBankGate;
         $this->bankUrl = self::BANK_URL;
-
-        $partnerBankGate->Login = 'enrecomsenterprisesltd';
-        $partnerBankGate->Token = 'Basic ZW5yZWNvbXNlbnRlcnByaXNlc2x0ZDphSnpZOHFYZTQ4aXp6YlR1C';
-
         $apiClientHeader = [
             'Authorization' => $partnerBankGate->Token,
         ];

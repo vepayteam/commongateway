@@ -15,7 +15,6 @@ trait WalletoRequestTrait
      */
     private function formatCreatePayRequest(CreatePayForm $createPayForm): CreatePayRequest
     {
-        $createPayForm->Email = 'test@email.com'; //todo: get from request
         $paySchet = $createPayForm->getPaySchet();
         // amount check currency what is provided by default RUB
         $amount = PaymentHelper::convertToRub($paySchet->getSummFull());
