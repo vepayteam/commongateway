@@ -22,7 +22,7 @@ class PayCard extends Model
     public function rules()
     {
         return [
-            [['number', 'expYear', 'expMonth', 'cvv', 'type'], 'number'],
+            [['number', 'expYear', 'expMonth', 'type', 'bankId'], 'number'],
             ['holder', 'string'],
         ];
     }

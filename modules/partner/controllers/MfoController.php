@@ -3,9 +3,11 @@
 namespace app\modules\partner\controllers;
 
 use app\models\mfo\MfoBalance;
+use app\models\mfo\MfoReq;
 use app\models\partner\PartUserAccess;
 use app\models\partner\UserLk;
 use app\models\payonline\Partner;
+use app\services\balance\Balance;
 use app\services\balance\BalanceService;
 use app\services\balance\models\PartsBalanceForm;
 use app\services\balance\models\PartsBalancePartnerForm;
@@ -87,13 +89,20 @@ class MfoController extends Controller
             if (!empty($sel)) {
                 return $sel;
             }
+        } else {
+            $idpartner = UserLk::getPartnerId(Yii::$app->user);
         }
-        $partner = Partner::findOne(['ID' => $isAdmin ? $idpartner : UserLk::getPartnerId(Yii::$app->user)]);
-        $MfoBalance = new MfoBalance($partner);
+
+        $partner = Partner::findOne(['ID' => $idpartner]);
+        $balance = new Balance();
+        $balance->setAttributes([
+            'partner' => $partner
+        ]);
+
         return $this->render('balance', [
-            'IsAdmin' => $isAdmin ?? 0,
+            'IsAdmin' => $isAdmin,
             'Partner' => $partner,
-            'balances' => $MfoBalance->GetBalanceWithoutLocal((bool)$isAdmin)
+            'BalanceResponse' => $balance->getAllBanksBalance(),
         ]);
     }
 

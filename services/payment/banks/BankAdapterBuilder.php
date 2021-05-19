@@ -1,14 +1,13 @@
 <?php
 
-
 namespace app\services\payment\banks;
-
 
 use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\models\Bank;
 use app\services\payment\models\PartnerBankGate;
+use app\services\payment\models\PaySchet;
 
 class BankAdapterBuilder
 {
@@ -26,6 +25,7 @@ class BankAdapterBuilder
     /**
      * @param Partner $partner
      * @param Uslugatovar $uslugatovar
+     * @return BankAdapterBuilder
      * @throws GateException
      */
     public function build(Partner $partner, Uslugatovar $uslugatovar)
@@ -42,15 +42,7 @@ class BankAdapterBuilder
         if (!$this->partnerBankGate) {
             throw new GateException("Нет шлюза. partnerId=$partner->ID uslugatovarId=$uslugatovar->ID");
         }
-
-        try {
-            $this->bankAdapter = Banks::getBankAdapter($this->partnerBankGate->BankId);
-        } catch (\Exception $e) {
-            throw new GateException($e->getMessage());
-        }
-
-        $this->bankAdapter->setGate($this->partnerBankGate);
-        return $this;
+        return $this->buildAdapter();
     }
 
     /**
@@ -75,13 +67,48 @@ class BankAdapterBuilder
         if (!$this->partnerBankGate) {
             throw new GateException("Нет шлюза. partnerId=$partner->ID uslugatovarId=$uslugatovar->ID bankId=$bank->ID");
         }
+        return $this->buildAdapter();
+    }
 
+    /**
+     * @param Partner $partner
+     * @param Bank $bank
+     * @return $this
+     * @throws GateException
+     */
+    public function buildByBankId(Partner $partner, Bank $bank): BankAdapterBuilder
+    {
+        $this->partner = $partner;
+        $this->partnerBankGate = $partner
+            ->getBankGates()
+            ->where([
+                'BankId' => $bank->ID,
+                'Enable' => 1
+            ])
+            ->orderBy('Priority DESC')
+            ->one();
+
+        if (!$this->partnerBankGate) {
+            throw new GateException(sprintf(
+                "Нет шлюза. partnerId=%d bankId=%d",
+                $partner->ID,
+                $bank->ID
+            ));
+        }
+        return $this->buildAdapter();
+    }
+
+    /**
+     * @return $this
+     * @throws GateException
+     */
+    protected function buildAdapter(): BankAdapterBuilder
+    {
         try {
             $this->bankAdapter = Banks::getBankAdapter($this->partnerBankGate->BankId);
         } catch (\Exception $e) {
             throw new GateException($e->getMessage());
         }
-
         $this->bankAdapter->setGate($this->partnerBankGate);
         return $this;
     }
@@ -109,5 +136,4 @@ class BankAdapterBuilder
     {
         return $this->partnerBankGate;
     }
-
 }

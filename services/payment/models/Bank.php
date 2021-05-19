@@ -90,4 +90,8 @@ class Bank extends \yii\db\ActiveRecord
             'SortOrder' => 'Sort Order',
         ];
     }
+    public function getName(): string
+    {
+        return $this->Name;
+    }
 }

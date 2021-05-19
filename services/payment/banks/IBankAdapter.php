@@ -4,10 +4,13 @@
 namespace app\services\payment\banks;
 
 
+use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
+use app\services\ident\forms\IdentForm;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
@@ -24,6 +27,7 @@ use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\GetBalanceForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
+use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
@@ -95,10 +99,17 @@ interface IBankAdapter
     public function getAftMinSum();
 
     /**
-     * @param GetBalanceForm $getBalanceForm
+     * @param GetBalanceRequest $getBalanceRequest
      * @return GetBalanceResponse
      */
-    public function getBalance(GetBalanceForm $getBalanceForm);
+    public function getBalance(GetBalanceRequest $getBalanceRequest);
 
 
+    /**
+     * @param OutPayAccountForm $outPayaccForm
+     * @return TransferToAccountResponse
+     */
+    public function transferToAccount(OutPayAccountForm $outPayaccForm);
+
+    public function ident(IdentForm $identForm);
 }

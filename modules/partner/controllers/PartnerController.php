@@ -558,7 +558,7 @@ class PartnerController extends Controller
         $partnerBankGate = null;
 
         // TODO:
-        if($post['Enable'] == 'on') {
+        if (isset($post['Enable']) && $post['Enable'] == 'on') {
             $post['Enable'] = 1;
         } else {
             $post['Enable'] = 0;
