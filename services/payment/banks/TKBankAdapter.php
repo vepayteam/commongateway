@@ -1548,6 +1548,7 @@ class TKBankAdapter implements IBankAdapter
 
     public function ident(IdentForm $identForm)
     {
+        $uri = "/api/government/identification/simplifiedpersonidentification";
         throw new GateException('Метод недоступен');
     }
 }
