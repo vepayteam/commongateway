@@ -624,6 +624,12 @@ components:
         amount:
           type: number
           description: Идентификатор документа
+    Client:
+      type: object
+      properties:
+        email:
+          type: string
+          description: Email клиента
     CardInfo:
       type: object
       properties:
@@ -769,6 +775,11 @@ components:
           type: string
           format: url
           description: Адрес для Url для возврата после отказа от оплаты
+        client:
+            type: array
+            required: false
+            items:
+              $ref: "#/components/schemas/Client"
     PayLkParts:
       type: object
       properties:
