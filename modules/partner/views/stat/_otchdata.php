@@ -21,6 +21,8 @@ function renderRow($row, $IsAdmin)
             <td class="text-right"><?= number_format($row['BankComis'] / 100.0,2,'.','&nbsp;') ?></td>
             <td class="text-right"><?= number_format($row['MerchVozn'] / 100.0,2,'.','&nbsp;') ?></td>
             <td class="text-right"><?= number_format($row['VoznagSumm'] / 100.0,2,'.','&nbsp;') ?></td>
+        <?php else : ?>
+            <td class="text-right"><?= number_format($row['MerchVozn'] / 100.0,2,'.','&nbsp;') ?></td>
         <?php endif; ?>
         <td class="text-right"><?= number_format($row['CntPays'],0,'.','&nbsp;') ?></td>
         <td></td>
@@ -40,6 +42,8 @@ function renderItog($itog, $IsAdmin)
             <th class="text-right"><?= number_format(round($itog['bankcomis'] / 100.0, 2),2,'.','&nbsp;') ?></th>
             <th class="text-right"><?= number_format(round($itog['merchvozn'] / 100.0, 2),2,'.','&nbsp;') ?></th>
             <th class="text-right"><?= number_format(round($itog['voznagsum'] / 100.0, 2),2,'.','&nbsp;') ?></th>
+        <?php else : ?>
+            <th class="text-right"><?= number_format(round($itog['merchvozn'] / 100.0, 2),2,'.','&nbsp;') ?></th>
         <?php endif; ?>
         <th class="text-right"><?= number_format($itog['cnt'],0,'.','&nbsp;') ?></th>
     </tr>
@@ -53,12 +57,14 @@ function renderItog($itog, $IsAdmin)
         <th>#</th>
         <th>Услуга</th>
         <th class="text-right">К зачислению</th>
-        <th class="text-right">Комиссия</th>
+        <th class="text-right">Комиссия с клиента</th>
         <th class="text-right">К оплате</th>
         <?php if ($IsAdmin) : ?>
             <th class="text-right">Комиссия банка</th>
-            <th class="text-right">Возн. c мерчанта</th>
+            <th class="text-right">Комиссия с мерчанта</th>
             <th class="text-right">Возн. Vepay</th>
+        <?php else : ?>
+            <th class="text-right">Комиссия с мерчанта</th>
         <?php endif; ?>
         <th class="text-right">Число операций</th>
         <th></th>
