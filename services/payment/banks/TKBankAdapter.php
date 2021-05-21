@@ -10,6 +10,7 @@ use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\queue\BinBDInfoJob;
 use app\models\TU;
+use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\ident\forms\IdentForm;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\Check3DSVersionResponse;
@@ -21,6 +22,7 @@ use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
+use app\services\payment\banks\interfaces\ITKBankAdapterResponseErrors;
 use app\services\payment\banks\traits\TKBank3DSTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\GateException;
@@ -33,7 +35,6 @@ use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\CreatePaySecondStepForm;
 use app\services\payment\forms\DonePayForm;
-use app\services\payment\forms\GetBalanceForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
@@ -1349,8 +1350,14 @@ class TKBankAdapter implements IBankAdapter
             $xml = $this->parseAns($response['xml']);
             Yii::warning("checkStatusOrder afterParseAns: " . Json::encode($xml), 'merchant');
             if ($xml && isset($xml['errorinfo']['errorcode']) && (int)$xml['errorinfo']['errorcode'] > 0) {
+                $errorCode = (int)$xml['errorinfo']['errorcode'];
                 Yii::warning("checkStatusPay isCreated IdPay=" . $okPayForm->IdPay, 'merchant');
-                $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
+                if($errorCode == ITKBankAdapterResponseErrors::ERROR_CODE_ENGINEERING_WORKS) {
+                    $checkStatusPayResponse->status = BaseResponse::STATUS_CREATED;
+                } else {
+                    $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
+                }
+
                 $checkStatusPayResponse->message = $xml['errorinfo']['errormessage'];
                 $checkStatusPayResponse->xml = $xml;
             } else {
@@ -1484,11 +1491,28 @@ class TKBankAdapter implements IBankAdapter
     }
 
     /**
-     * @inheritDoc
+     * @param GetBalanceRequest $getBalanceRequest
+     * @return GetBalanceResponse
      */
-    public function getBalance(GetBalanceForm $getBalanceForm)
+    public function getBalance(GetBalanceRequest $getBalanceRequest): GetBalanceResponse
     {
-        throw new GateException('Метод недоступен');
+        $request = [];
+        $getBalanceResponse = new GetBalanceResponse();
+        if (empty($getBalanceRequest->accountNumber)) {
+            return $getBalanceResponse;
+        }
+        $getBalanceResponse->bank_name = $getBalanceRequest->bankName;
+
+        $type = $getBalanceRequest->accountType;
+        $request['account'] = $getBalanceRequest->accountNumber;
+        $response = $this->getBalanceAcc($request);
+        if (!isset($response['amount']) && $response['status'] === 0) {
+            Yii::warning("Balance service:: TKB request failed for type: $type message: " . $response['message']);
+        }
+        $getBalanceResponse->amount = (float)$response['amount'];
+        $getBalanceResponse->currency = 'RUB';
+        $getBalanceResponse->account_type = $type;
+        return $getBalanceResponse;
     }
 
     /**

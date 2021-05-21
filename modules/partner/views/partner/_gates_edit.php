@@ -2,14 +2,12 @@
 
 use app\models\bank\Banks;
 use app\models\payonline\Partner;
-use app\models\payonline\Uslugatovar;
 use app\services\payment\models\UslugatovarType;
-
+use app\services\payment\types\AccountTypes;
 
 /**
  * @var Partner $partner
  */
-
 
 $bankGates = $partner->getBankGates()->orderBy('TU ASC, Priority DESC')->all();
 ?>
@@ -111,9 +109,22 @@ $bankGates = $partner->getBankGates()->orderBy('TU ASC, Priority DESC')->all();
                             <?php endforeach; ?>
                         </select>
                     </div>
+
                     <div class="form-group">
-                        <label for="exampleInputFile">Номер счета</label>
-                        <input name="SchetNumber" class="form-control" type="text">
+                        <label>Тип счета</label>
+                        <select class="form-control" name="SchetType">
+                            <?php
+                            /** @var AccountTypes */
+                            foreach (AccountTypes::ALL_TYPES as $key => $type): ?>
+                                <option value="<?= $key ?>">
+                                    <?= $type ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="SchetNumberInput">Номер счета</label>
+                        <input name="SchetNumber" id="SchetNumberInput" class="form-control" type="text">
                     </div>
 
                     <div class="form-group">

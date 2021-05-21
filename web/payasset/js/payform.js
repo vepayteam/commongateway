@@ -150,13 +150,23 @@
             return !err;
         },
 
-        load3ds: function (url, pa, md, creq, termurl, threeDSServerTransID = '') {
+        load3ds: function (url, pa, md, creq, termurl, threeDSServerTransID = '', html3dsForm = '') {
+            // build html form from response
+            if (html3dsForm) {
+                var formParentDiv = $('.raw3DsForm');
+                formParentDiv.html(html3dsForm);
+                formParentDiv.find('form').trigger('submit');
+                return;
+            }
             $('#frame3ds').show();
             $('#form3ds').attr('action', url);
             $('#pareq3ds').val(pa);
             $('#md3ds').val(md);
             $('#creq3ds').val(creq);
             $('#termurl3ds').val(termurl);
+            if (!creq) {
+                $('#creq3ds').remove();
+            }
             $('#threeDSServerTransID').val(threeDSServerTransID);
             $('#form3ds').trigger('submit');
         },
@@ -324,7 +334,7 @@
             if (data.status == 1 && !data.isNeed3DSRedirect) {
                 if (data.isNeed3DSVerif == 1) {
                     //ок - переход по url банка
-                    payform.load3ds(data.url, data.pa, data.md, data.creq, data.termurl, data.threeDSServerTransID);
+                    payform.load3ds(data.url, data.pa, data.md, data.creq, data.termurl, data.threeDSServerTransID, data.html3dsForm);
                 } else {
                     // если 3DS v2 и не требуется авторизация, переходим на orderdone
                     window.location = data.termurl;
