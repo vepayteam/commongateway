@@ -22,6 +22,7 @@ class DefaultController extends Controller
      */
     public function actionRegisterTracking()
     {
+        $this->enableCsrfValidation = false;
         $model = new FingerPrint();
         $data = Yii::$app->request->post();
         if ($model->load($data, '') && $model->validate()) {

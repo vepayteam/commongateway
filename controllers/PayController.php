@@ -77,6 +77,7 @@ class PayController extends Controller
             'orderdone',
             'orderok',
             'createpay-second-step',
+            'createpay',
         ])) {
             $this->enableCsrfValidation = false;
         }
