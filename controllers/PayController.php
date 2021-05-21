@@ -341,14 +341,6 @@ class PayController extends Controller
         // Дадим время, чтобы банк закрыл платеж
         sleep(5);
 
-        $SesIdPay = Yii::$app->session->get('IdPay');
-        if(
-            !UserLk::IsAdmin(Yii::$app->user)
-            && (!$id || $id != $SesIdPay)
-        ) {
-            throw new NotFoundHttpException();
-        }
-
         $okPayForm = new OkPayForm();
         $okPayForm->IdPay = $id;
 
@@ -358,8 +350,6 @@ class PayController extends Controller
 
         $okPayStrategy = new OkPayStrategy($okPayForm);
         $paySchet = $okPayStrategy->exec();
-
-
 
         // TODO:
         if($paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD && $paySchet->IdOrg == '3') {
