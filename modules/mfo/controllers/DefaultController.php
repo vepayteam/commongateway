@@ -11,7 +11,10 @@ use app\models\payonline\Cards;
 use app\models\payonline\User;
 use app\models\Payschets;
 use app\models\TU;
+use app\services\payment\PaymentService;
 use Yii;
+use yii\base\InvalidConfigException;
+use yii\di\NotInstantiableException;
 use yii\filters\auth\HttpBasicAuth;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
@@ -111,6 +114,35 @@ class DefaultController extends Controller
         } else {
             throw new NotFoundHttpException("Идентификатор не найден");
         }
+    }
+
+    public function actionGetsbpbankreceiver()
+    {
+        try {
+            $data = $this->getPaymentService()->getSbpBankReceive();
+        } catch (NotInstantiableException | InvalidConfigException | \Exception $e) {
+            return ['status' => 0, 'message' => $e->getMessage()];
+        }
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $response = [];
+        foreach ($data['fpsMembers'] as $member) {
+            $response[] = [
+                'name' => $member['bankName'],
+                'bic' => $member['bic'],
+            ];
+        }
+        return $response;
+    }
+
+    /**
+     * @return PaymentService
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\di\NotInstantiableException
+     */
+    protected function getPaymentService()
+    {
+        return Yii::$container->get('PaymentService');
     }
 
 }
