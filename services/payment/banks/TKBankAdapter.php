@@ -10,6 +10,8 @@ use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\queue\BinBDInfoJob;
 use app\models\TU;
+use app\services\ident\IdentService;
+use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\ident\forms\IdentForm;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
@@ -18,6 +20,8 @@ use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
+use app\services\payment\banks\bank_adapter_responses\IdentInitResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
@@ -1546,9 +1550,97 @@ class TKBankAdapter implements IBankAdapter
         return $outAccountPayResponse;
     }
 
-    public function ident(IdentForm $identForm)
+    public function identInit(Ident $ident)
     {
-        $uri = "/api/government/identification/simplifiedpersonidentification";
-        throw new GateException('Метод недоступен');
+        $action = "/api/government/identification/simplifiedpersonidentification";
+        $queryData = [];
+
+        foreach (Ident::getTkbRequestParams() as $key => $attributeName) {
+            if(!empty($ident->$attributeName)) {
+                $queryData[$key] = $ident->$attributeName;
+            }
+        }
+
+        $identResponse = new IdentInitResponse();
+        if(Yii::$app->params['TESTMODE'] == 'Y') {
+            $identResponse->status = BaseResponse::STATUS_DONE;
+            return $identResponse;
+        }
+
+        $ans = $this->curlXmlReq(Json::encode($queryData), $this->bankUrl . $action);
+
+        if (isset($ans['xml']) && isset($ans['xml']['OrderId']) && !empty($ans['xml']['OrderId'])) {
+            $identResponse->status = BaseResponse::STATUS_DONE;
+        } else {
+            $identResponse->status = BaseResponse::STATUS_ERROR;
+        }
+
+        return $identResponse;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function identGetStatus(Ident $ident)
+    {
+        $action = "/api/government/identification/simplifiedpersonidentificationresult";
+        $queryData = [
+            'ExtId' => $ident->Id,
+        ];
+        $queryData = Json::encode($queryData);
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+
+        $identGetStatusResponse = new IdentGetStatusResponse();
+        if(Yii::$app->params['TESTMODE'] == 'Y') {
+            $identGetStatusResponse->status = BaseResponse::STATUS_DONE;
+            $identGetStatusResponse->identStatus = Ident::STATUS_SUCCESS;
+            $identGetStatusResponse->response = ['message' => 'На тестовой среде идентифиткация всегда успешна'];
+            return $identGetStatusResponse;
+        }
+
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            $identStatus = $this->convertIdentGetStatus($ident, $ans['xml']);
+            $identGetStatusResponse->status = ($identStatus == Ident::STATUS_WAITING ? BaseResponse::STATUS_CREATED : BaseResponse::STATUS_DONE);
+            $identGetStatusResponse->identStatus = $this->convertIdentGetStatus($ident, $ans['xml']);
+            $identGetStatusResponse->response = $ans['xml'];
+        } else {
+            $identGetStatusResponse->status = BaseResponse::STATUS_ERROR;
+        }
+
+        return $identGetStatusResponse;
+    }
+
+    /**
+     * @param Ident $ident
+     * @param array $ans
+     * @return int
+     */
+    protected function convertIdentGetStatus(Ident $ident, array $ans)
+    {
+        $status = Ident::STATUS_WAITING;
+        $maxTimeWithInnRequest = 60 * 30;
+        foreach (['Inn', 'Snils', 'Passport', 'PassportDeferred'] as $key) {
+            if(isset($ans[$key])) {
+                if(
+                    $ans[$key]['Status'] == 'Processing'
+                    && $key == 'Inn' && (time() - $ident->DateUpdated) < $maxTimeWithInnRequest
+                ) {
+                    continue;
+                } elseif (in_array($ans[$key]['Status'], ['Processing', 'NotValid']) && $key == 'Inn') {
+                    $status = Ident::STATUS_DENIED;
+                    break;
+                } elseif ($ans[$key]['Status'] == 'Error') {
+                    $status = Ident::STATUS_ERROR;
+                    break;
+                } elseif ($ans[$key]['Status'] == 'NotValid') {
+                    $status = Ident::STATUS_DENIED;
+                    break;
+                } elseif ($ans[$key]['Status'] == 'Valid') {
+                    $status = Ident::STATUS_SUCCESS;
+                    break;
+                }
+            }
+        }
+        return $status;
     }
 }

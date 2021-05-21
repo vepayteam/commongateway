@@ -5,6 +5,7 @@ namespace app\services\payment\banks;
 
 
 use app\models\TU;
+use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\ident\forms\IdentForm;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
@@ -12,6 +13,7 @@ use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
@@ -640,7 +642,7 @@ class FortaTechAdapter implements IBankAdapter
         // TODO: Implement transferToAccount() method.
     }
 
-    public function ident(IdentForm $identForm)
+    public function identInit(Ident $ident)
     {
         throw new GateException('Метод недоступен');
     }
@@ -681,5 +683,13 @@ class FortaTechAdapter implements IBankAdapter
     private function maskCardNumber(string $cardNumber): string
     {
         return preg_replace('/(\d{6})(.+)(\d{4})/', '$1****$3', $cardNumber);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function identGetStatus(Ident $ident)
+    {
+        throw new GateException('Метод недоступен');
     }
 }
