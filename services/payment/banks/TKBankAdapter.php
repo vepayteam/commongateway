@@ -1564,6 +1564,7 @@ class TKBankAdapter implements IBankAdapter
         $identResponse = new IdentInitResponse();
         if(Yii::$app->params['TESTMODE'] == 'Y') {
             $identResponse->status = BaseResponse::STATUS_DONE;
+            $identResponse->response = [];
             return $identResponse;
         }
 
@@ -1605,6 +1606,7 @@ class TKBankAdapter implements IBankAdapter
             $identGetStatusResponse->response = $ans['xml'];
         } else {
             $identGetStatusResponse->status = BaseResponse::STATUS_ERROR;
+            $identGetStatusResponse->response = $ans;
         }
 
         return $identGetStatusResponse;

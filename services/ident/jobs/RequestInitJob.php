@@ -12,6 +12,7 @@ use app\services\payment\exceptions\GateException;
 use app\services\payment\models\UslugatovarType;
 use Yii;
 use yii\base\BaseObject;
+use yii\helpers\Json;
 use yii\queue\Queue;
 
 class RequestInitJob extends BaseObject implements \yii\queue\JobInterface
@@ -32,20 +33,21 @@ class RequestInitJob extends BaseObject implements \yii\queue\JobInterface
             $identResponse = $bankAdapterBuilder->getBankAdapter()->identInit($this->ident);
             if($identResponse->status !== BaseResponse::STATUS_DONE) {
                 $this->ident->Status = Ident::STATUS_ERROR;
+                $this->ident->Response = Json::encode($identResponse->response);
             } else {
                 $this->ident->Status = Ident::STATUS_WAITING;
+                $this->ident->Response = Json::encode($identResponse->response);
 
                 Yii::$app->queue->delay(2 * 60)->push(new RequestGetStatusJob([
                     'identId' => $this->identId,
                 ]));
             }
-
         } catch (\Exception $e) {
-
+            Yii::error('RequestInitJob error ' . $e->getMessage());
+            $this->ident->Status = Ident::STATUS_ERROR;
+            $this->ident->Response = Json::encode(['message' => $e->getMessage()]);
         }
-
-
-
+        $this->ident->save(false);
     }
 
     /**
