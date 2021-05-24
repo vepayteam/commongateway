@@ -74,6 +74,7 @@ $config = [
                 '/oferta' => '/site/oferta',
                 '/admin/statementdiff/<id:\d+>' => 'admin/statement-diff',
                 '/admin/syncbalance/<id:\d+>' => 'admin/syncbalance',
+                '/mfo/getsbpbankreceiver' => 'mfo/default/getsbpbankreceiver',
 
                 '<controller>/<id:\d+>' => '<controller>/index',
                 '<controller>/<action>' => '<controller>/<action>',
