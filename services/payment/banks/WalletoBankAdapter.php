@@ -11,6 +11,7 @@ use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\traits\WalletoRequestTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CreatePayException;
+use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
@@ -203,5 +204,13 @@ class WalletoBankAdapter implements IBankAdapter
             default:
                 return BaseResponse::STATUS_ERROR;
         }
+    }
+
+    /**
+     * @throws GateException
+     */
+    public function currencyExchangeRates()
+    {
+        throw new GateException('Метод недоступен');
     }
 }
