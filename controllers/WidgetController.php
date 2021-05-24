@@ -42,7 +42,13 @@ class WidgetController extends Controller
      */
     public function beforeAction($action)
     {
-        if (in_array($action->id, ['form', 'orderdone', 'orderok'])) {
+        if (in_array($action->id, [
+            'form',
+            'pay',
+            'createpay',
+            'orderdone',
+            'orderok'
+        ])) {
             $this->enableCsrfValidation = false;
         }
         return parent::beforeAction($action);
