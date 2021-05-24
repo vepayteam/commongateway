@@ -1,8 +1,6 @@
 <?php
 
-
 namespace app\services\payment\banks;
-
 
 class Banks
 {
@@ -28,9 +26,10 @@ class Banks
                 return new CauriAdapter();
             case FortaTechAdapter::$bank:
                 return new FortaTechAdapter();
+            case WalletoBankAdapter::$bank:
+                return new WalletoBankAdapter();
             default:
                 throw new \Exception('Ошибка выбора банка');
         }
     }
-
 }
