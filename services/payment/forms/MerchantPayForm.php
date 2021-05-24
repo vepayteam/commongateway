@@ -1,10 +1,9 @@
 <?php
 
-
 namespace app\services\payment\forms;
 
-
 use app\services\payment\interfaces\AmountFormInterface;
+use yii\validators\EmailValidator;
 
 class MerchantPayForm extends BaseForm implements AmountFormInterface
 {
@@ -23,8 +22,17 @@ class MerchantPayForm extends BaseForm implements AmountFormInterface
     public $cancelurl = '';
     public $postbackurl = '';
     public $postbackurl_v2 = '';
+    public $client;
+    private const REQUIRED = 'required';
+    // Add Client request required attributes
+    private const CLIENT_REQUIRED_RULES = [
+        'email'
+    ];
 
-    public function rules()
+    /**
+     * @return array
+     */
+    public function rules(): array
     {
         return [
             [['type'], 'integer', 'min' => 0],
@@ -38,7 +46,43 @@ class MerchantPayForm extends BaseForm implements AmountFormInterface
             [['timeout'], 'integer', 'min' => 10, 'max' => 59],
             [['amount'], 'required'],
             [['amount', 'card'], 'required'],
+            [['client'], 'validateClient'],
         ];
+    }
+
+    public function validateClient()
+    {
+        if (!is_array($this->client)) {
+            return;
+        }
+        foreach (self::CLIENT_REQUIRED_RULES as $requiredRule) {
+            if (!array_key_exists($requiredRule, $this->client)) {
+                $this->setError($requiredRule, self::REQUIRED);
+            }
+        }
+        foreach ($this->client as $key => $clientData) {
+            $emailValidator = new EmailValidator();
+            if ($key === 'email' && !$emailValidator->validate($clientData)) {
+                $this->setError($key);
+            }
+            // add custom client arrays attributes validation
+        }
+    }
+
+    /**
+     * @param string $key
+     * @param string $state
+     */
+    public function setError(string $key, string $state = 'invalid')
+    {
+        $this->addError(
+            $key,
+            sprintf(
+                'Attribute %s is %s',
+                $key,
+                $state
+            )
+        );
     }
 
     /**

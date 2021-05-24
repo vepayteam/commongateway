@@ -98,6 +98,7 @@ class PayController extends Controller
         // рубли в копейки
         // TODO: in model validation
         $form->amount *= 100;
+        $form->client = $mfo->getRequestData('client');
 
         Yii::warning('/pay/lk mfo='. $mfo->mfo . " sum=" . $form->amount . " extid=" . $form->extid, 'mfo');
         $paymentStrategy = new MfoPayLkCreateStrategy($form);
