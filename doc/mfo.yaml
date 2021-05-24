@@ -10,9 +10,9 @@ tags:
   - name: Card
     description: Запросы по картам.
   - name: Pay
-    description: Запросы погашения займа
+    description: Запросы pay in
   - name: Out
-    description: Запросы выдачи займа
+    description: Запросы pay out
   - name: Ident
     description: Запросы идентификации
   - name: Info
@@ -210,8 +210,8 @@ paths:
     post:
       tags:
         - Pay
-      summary: Погашение займа с карты автоплатежом
-      description: Отправляется запрос погашения займа автоплатежом
+      summary: Автоплатеж (рекуррентный платеж)
+      description: Отправляется запрос на совершение автоплатежа
       requestBody:
         content:
           application/json:
@@ -237,8 +237,7 @@ paths:
       tags:
         - Pay
       summary: Статус платежа
-      description: Запрос результата операции. Средства будут списаны с карты и перечислены
-        МФО при успешном статусе платежа.
+      description: Запрос результата операции
       requestBody:
         content:
           application/json:
@@ -263,7 +262,7 @@ paths:
     post:
       tags:
         - Out
-      summary: Выплата денежных средств на карту
+      summary: Выплата денежных средств на карту (pay out)
       description: Отправляется перевод денежных средств на карту клиента
       requestBody:
         content:
@@ -289,8 +288,8 @@ paths:
     post:
       tags:
         - Out
-      summary: Выдача займа на счет юрлица
-      description: Отправляется запрос выдачи займа на счет юрлица
+      summary:  Выплата денежных средств на счет юрлица (pay out)
+      description: Отправляется перевод денежных средств на счет юрлица
       requestBody:
         content:
           application/json:
@@ -315,8 +314,8 @@ paths:
     post:
       tags:
         - Out
-      summary: Выдача займа на счет физлица
-      description: Отправляется запрос выдачи займа на счет физлица
+      summary: Выплата денежных средств на счет физлица (pay out)
+      description: Отправляется перевод денежных средств на счет физлица
       requestBody:
         content:
           application/json:
@@ -367,9 +366,8 @@ paths:
     post:
       tags:
         - Out
-      summary: Статус выдачи займа
-      description: Запрос результата операции. Средства будут перечислены со счета МФО
-        заёмщику при успешном статусе платежа.
+      summary: Статус операции pay out
+      description: Запрос результата операции
       requestBody:
         content:
           application/json:
@@ -420,7 +418,7 @@ paths:
       description: Отправляется запрос идентификации, в ответе на который возвращается id
         операции. По нему в последующем необходимо уточнить статус выполнения
         операции. Для идентификации телефона необходимо отправить дополнительный
-        запрос идентификации, в котором указать код пришедший по СМС.
+        запрос идентификации, в котором указать код, пришедший по СМС.
       requestBody:
         content:
           application/json:
@@ -446,7 +444,7 @@ paths:
       tags:
         - Ident
       summary: Статус идентификации
-      description: Запрос результата операции. Средства будут перечислены со счета МФО заёмщику при успешном статусе платежа.
+      description: Запрос результата идентификации.
       requestBody:
         content:
           application/json:
@@ -473,7 +471,7 @@ paths:
         - Ident
       summary: Идентификация пользователя в Руна Банке
       description: Отправляется запрос идентификации, в ответе на который возвращается id
-        операции. По нему в последующем необходимо уточнить статус выполнения
+        операции. По нему в дальнейшем необходимо уточнить статус выполнения
         операции.
       requestBody:
         content:
@@ -598,7 +596,7 @@ paths:
       tags:
         - Info
       summary: Запрос баланса счета
-      description: Запрос баланса счета площадки.
+      description: Запрос баланса счета площадки
       responses:
         "200":
           description: OK
@@ -664,7 +662,7 @@ paths:
       tags:
         - Callback
       summary: Запрос проверки возможности оплаты
-      description: Запрос проверки возможности оплаты от МФО. URL для запроса задаётся в личном кабинете
+      description: Запрос проверки возможности оплаты. URL для запроса задаётся в личном кабинете
       parameters:
         - name: extid
           in: query
@@ -724,6 +722,12 @@ components:
         amount:
           type: number
           description: Идентификатор документа
+    Client:
+      type: object
+      properties:
+        email:
+          type: string
+          description: Email клиента
     CardInfo:
       type: object
       properties:
@@ -778,11 +782,11 @@ components:
         successurl:
           type: string
           format: url
-          description: Адрес для Url для возврата после заверщения платежа (успех)
+          description: Адрес для Url для возврата после завершения платежа (успех)
         failurl:
           type: string
           format: url
-          description: Адрес для Url для возврата после заверщения платежа (ошибка)
+          description: Адрес для Url для возврата после завершения платежа (ошибка)
         cancelurl:
           type: string
           format: url
@@ -860,15 +864,20 @@ components:
         successurl:
           type: string
           format: url
-          description: Адрес для Url для возврата после заверщения платежа (успех)
+          description: Адрес для Url для возврата после завершения платежа (успех)
         failurl:
           type: string
           format: url
-          description: Адрес для Url для возврата после заверщения платежа (ошибка)
+          description: Адрес для Url для возврата после завершения платежа (ошибка)
         cancelurl:
           type: string
           format: url
           description: Адрес для Url для возврата после отказа от оплаты
+        client:
+            type: array
+            required: false
+            items:
+              $ref: "#/components/schemas/Client"
     PayLkParts:
       type: object
       properties:
@@ -884,7 +893,7 @@ components:
         successurl:
           type: string
           format: url
-          description: Адрес для Url для возврата после заверщения платежа (успех)
+          description: Адрес для Url для возврата после завершения платежа (успех)
         cancelurl:
           type: string
           format: url
@@ -896,7 +905,7 @@ components:
         failurl:
           type: string
           format: url
-          description: Адрес для Url для возврата после заверщения платежа (ошибка)
+          description: Адрес для Url для возврата после завершения платежа (ошибка)
         timeout:
           type: integer
           minimum: 10
@@ -1318,12 +1327,8 @@ components:
       type: object
       properties:
         status:
-          type: integer
-          description: 0 - успешно, или код ошибки. При указанном коде ошибки в ответе на
-            колбэк выполняется возврат средств.
-        message:
+          description: 0 - успешно, или код ошибки.
           type: string
-          description: Описание ошибки
     BrsSpbReceiver:
       type: object
       properties:

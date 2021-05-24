@@ -65,20 +65,37 @@ class AutopayStat extends Model
         $ret['cntnewcards'] = $query->cache(30)->count();
 
         //сколько активных привязанных карт
-        $query = new Query();
-        $query
-            ->select(['c.ID'])
-            ->from('`cards` AS c')
-            ->leftJoin('`pay_schet` AS ps', 'ps.IdKard = c.ID')
-            ->leftJoin('`uslugatovar` AS u', 'u.ID = ps.IdUsluga')
-            ->where(['between', 'ps.DateCreate', $datefrom, $dateto])
-            ->andWhere(['c.TypeCard' => 0])
-            ->andWhere(['in', 'u.IsCustom', TU::AutoPay()]);
+        $wherePartner = '';
         if ($IdPart > 0) {
-            $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
+            $wherePartner = "IDPartner = $IdPart AND";
         }
-        $query->groupBy('c.ID');
-        $ret['activecards'] = $query->cache(30)->count();
+        $query = sprintf(
+            'SELECT
+                        COUNT(*)
+                    FROM cards AS c
+                    WHERE c.ID IN     
+                    (
+                        SELECT distinct
+                            ps.IdKard
+                        FROM
+                            pay_schet AS ps
+                        WHERE
+                            ps.IdUsluga IN (SELECT 
+                                    ID
+                                FROM
+                                    uslugatovar
+                                WHERE
+                                    %s 
+                                    IsCustom IN (%s))
+                                AND (`ps`.`DateCreate` BETWEEN %d AND %d)
+                    ) AND (`c`.`TypeCard` = 0)',
+            $wherePartner,
+            implode(', ', TU::AutoPay()),
+            $datefrom,
+            $dateto
+        );
+
+        $ret['activecards'] = Yii::$app->db->createCommand($query)->cache(1)->queryScalar();
 
         //Количество запросов на одну карту
         $query = new Query();
