@@ -563,19 +563,6 @@ class BRSAdapter implements IBankAdapter
     }
 
     /**
-     * @inheritDoc
-     */
-    public function transferToAccount(OutPayAccountForm $outPayaccForm)
-    {
-        throw new GateException('Метод недоступен');
-    }
-
-    public function ident(IdentForm $identForm)
-    {
-        throw new GateException('Метод недоступен');
-    }
-
-    /**
      * @return mixed|null
      * @throws BankAdapterResponseException
      */
@@ -778,6 +765,6 @@ class BRSAdapter implements IBankAdapter
 
     public function ident(IdentForm $identForm)
     {
-        throw new GateException('Метод недоступен');
+        // TODO: Implement ident() method.
     }
 }
