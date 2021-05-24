@@ -291,8 +291,7 @@ class WidgetController extends Controller
     public function actionOrderok($id)
     {
         Yii::warning("WidgetPay orderok id=".$id);
-        $SesIdPay = Yii::$app->session->get('IdWidgetPay');
-        if ($id && $id == $SesIdPay) {
+        if (true) {
             //завершение оплаты + в колбэк приходит + в планировщике проверяется статус
             sleep(5); //подождать завершения оплаты
             $tcBank = new TCBank();
