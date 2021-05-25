@@ -56,7 +56,7 @@ class BRSAdapter implements IBankAdapter
     const KEYS_PATH = '@app/config/brs/';
 
     const BALANCE_CARD_NUM = '5100476090795931'; // Карта используется для запроса баланса TODO: переместить в другое место?
-    const BALANCE_AMOUNT = 1000;
+    const BALANCE_FAKE_AMOUNT = 1000;
 
     public static $bank = 7;
 
@@ -526,13 +526,14 @@ class BRSAdapter implements IBankAdapter
     }
 
     /**
-     * @inheritDoc
+     * Для запроса баланса используется outCardPayCheck запрос, тк у них нету отдельного эндпоинта для получения баланса
+     * По логике outCardPayCheck запрос проверяет возможность перевода на карту и по своместитульству в ответе возвращает баланс партнера
      */
     public function getBalance(GetBalanceRequest $getBalanceRequest): GetBalanceResponse
     {
         $outCardPayCheckRequest = new OutCardPayCheckRequest();
         $outCardPayCheckRequest->card = self::BALANCE_CARD_NUM;
-        $outCardPayCheckRequest->amount = self::BALANCE_AMOUNT;
+        $outCardPayCheckRequest->amount = self::BALANCE_FAKE_AMOUNT;
         $outCardPayCheckRequest->tr_date = Carbon::now()->format('YmdHis');
 
         $answer = $this->sendXmlRequest($outCardPayCheckRequest);
