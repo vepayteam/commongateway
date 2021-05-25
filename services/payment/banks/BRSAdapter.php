@@ -55,6 +55,9 @@ class BRSAdapter implements IBankAdapter
     const AFT_MIN_SUMM = 180000;
     const KEYS_PATH = '@app/config/brs/';
 
+    const BALANCE_CARD_NUM = '5100476090795931'; // Карта используется для запроса баланса TODO: переместить в другое место?
+    const BALANCE_AMOUNT = 1000;
+
     public static $bank = 7;
 
     /** @var PartnerBankGate */
@@ -525,9 +528,29 @@ class BRSAdapter implements IBankAdapter
     /**
      * @inheritDoc
      */
-    public function getBalance(GetBalanceRequest $getBalanceRequest)
+    public function getBalance(GetBalanceRequest $getBalanceRequest): GetBalanceResponse
     {
-        throw new GateException('Метод недоступен');
+        $outCardPayCheckRequest = new OutCardPayCheckRequest();
+        $outCardPayCheckRequest->card = self::BALANCE_CARD_NUM;
+        $outCardPayCheckRequest->amount = self::BALANCE_AMOUNT;
+        $outCardPayCheckRequest->tr_date = Carbon::now()->format('YmdHis');
+
+        $answer = $this->sendXmlRequest($outCardPayCheckRequest);
+        if (array_key_exists('error', $answer)) {
+            $error = $answer['error']['code'] . ': ' . $answer['error']['description'];
+
+            throw new BankAdapterResponseException(
+                BankAdapterResponseException::setErrorMsg($error)
+            );
+        }
+
+        $balanceResponse = new GetBalanceResponse();
+        $balanceResponse->bank_name = $getBalanceRequest->bankName;
+        $balanceResponse->amount = ((float) $answer['container']['partner_available_amount']) / 100;
+        $balanceResponse->currency = $getBalanceRequest->currency;
+        $balanceResponse->account_type = $getBalanceRequest->accountType;
+
+        return $balanceResponse;
     }
 
     /**
