@@ -42,6 +42,7 @@ use app\services\payment\forms\brs\CreatePayRequest;
 use app\services\payment\forms\brs\CheckStatusPayRequest;
 use app\services\payment\forms\brs\RecurrentPayRequest;
 use app\services\payment\forms\brs\RefundPayRequest;
+use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
@@ -547,7 +548,7 @@ class BRSAdapter implements IBankAdapter
 
         $balanceResponse = new GetBalanceResponse();
         $balanceResponse->bank_name = $getBalanceRequest->bankName;
-        $balanceResponse->amount = ((float) $answer['container']['partner_available_amount']) / 100;
+        $balanceResponse->amount = PaymentHelper::convertToRub((int) $answer['container']['partner_available_amount']);
         $balanceResponse->currency = $getBalanceRequest->currency;
         $balanceResponse->account_type = $getBalanceRequest->accountType;
 
