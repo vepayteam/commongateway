@@ -7,14 +7,17 @@ use yii\db\ActiveRecord;
 /**
  * @property string Name
  * @property int Number
- * @property int Code
+ * @property string Code
+ * @property int Id
  */
 class Currency extends ActiveRecord
 {
+
     public static function tableName(): string
     {
         return 'currency';
     }
+
     public function rules(): array
     {
         return [
@@ -23,4 +26,5 @@ class Currency extends ActiveRecord
             [['Name', 'Code'], 'string', 'max' => 250],
         ];
     }
+
 }
