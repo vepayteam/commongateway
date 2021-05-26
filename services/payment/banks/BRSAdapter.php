@@ -4,6 +4,7 @@
 namespace app\services\payment\banks;
 
 
+use app\models\payonline\Cards;
 use app\models\payonline\Uslugatovar;
 use app\models\TU;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
@@ -343,7 +344,8 @@ class BRSAdapter implements IBankAdapter
             CURLOPT_TIMEOUT => 120,
         ));
 
-        Yii::warning('BRSAdapter req uri=' . $uri .' : ' . Json::encode($data));
+        $requestDataLog = Cards::MaskCardLog(Json::encode($data));
+        Yii::warning('BRSAdapter req uri=' . $uri .' : ' . $requestDataLog);
         $response = curl_exec($curl);
         $curlError = curl_error($curl);
         $info = curl_getinfo($curl);
