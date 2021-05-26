@@ -6,14 +6,20 @@ namespace app\services\payment;
 
 use app\models\kfapi\KfRequest;
 use app\models\partner\stat\export\csv\ToCSV;
+use app\models\payonline\Partner;
+use app\models\payonline\Uslugatovar;
 use app\models\queue\JobPriorityInterface;
 use app\models\SendEmail;
+use app\models\TU;
 use app\modules\partner\models\PaySchetLogForm;
 use app\services\partners\models\PartnerOption;
+use app\services\payment\banks\BankAdapterBuilder;
+use app\services\payment\banks\BRSAdapter;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\SetPayOkForm;
 use app\services\payment\jobs\RecurrentPayJob;
 use app\services\payment\jobs\RefundPayJob;
+use app\services\payment\models\Bank;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\PaySchetLog;
 use app\services\payment\models\UslugatovarType;
@@ -30,6 +36,8 @@ use Yii;
 class PaymentService
 {
     use PayPartsTrait, CardsTrait, ValidateTrait;
+
+    const GET_SBP_BANK_RECEIVER_CACHE_KEY = 'Getsbpbankreceiver';
 
     public function createPay(KfRequest $kfRequest)
     {
@@ -295,5 +303,38 @@ class PaymentService
             }
             $page++;
         }
+    }
+
+    /**
+     * @return mixed
+     * @throws \Exception
+     */
+    public function getSbpBankReceive()
+    {
+        $data = Yii::$app->cache->getOrSet(self::GET_SBP_BANK_RECEIVER_CACHE_KEY, function() {
+            $partner = Partner::findOne(['ID' => Partner::VEPAY_ID]);
+            $uslugatovar = Uslugatovar::findOne([
+                'IDPartner' => Partner::VEPAY_ID,
+                'IsCustom' => TU::$VYVODPAYS,
+                'IsDeleted' => 0,
+            ]);
+
+            if(!$uslugatovar) {
+                throw new \Exception('Услуга не найдена');
+            }
+
+            $brsBank = Bank::findOne([
+                'ID' => BRSAdapter::$bank,
+            ]);
+
+            $bankAdapterBuilder = new BankAdapterBuilder();
+            $bankAdapterBuilder->buildByBank($partner, $uslugatovar, $brsBank);
+
+            /** @var BRSAdapter $brsBankAdapter */
+            $brsAdapter = $bankAdapterBuilder->getBankAdapter();
+
+            return $brsAdapter->getBankReceiver();
+        }, 60 * 60 * 24);
+        return $data;
     }
 }

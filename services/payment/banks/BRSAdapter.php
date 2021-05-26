@@ -4,6 +4,7 @@
 namespace app\services\payment\banks;
 
 
+use app\models\payonline\Cards;
 use app\models\payonline\Uslugatovar;
 use app\models\TU;
 use app\services\ident\models\Ident;
@@ -64,6 +65,7 @@ class BRSAdapter implements IBankAdapter
 
     protected $bankUrl;
     protected $bankUrl3DS;
+    protected $bankUrlB2C;
 
     protected $bankUrlXml;
 
@@ -72,6 +74,9 @@ class BRSAdapter implements IBankAdapter
 
     const BANK_URL_3DS = 'https://securepay.rsb.ru/ecomm2/ClientHandler';
     const BANK_URL_3DS_TEST = 'https://testsecurepay.rsb.ru/ecomm2/ClientHandler';
+
+    const BANK_URL_B2C = 'https://212.46.217.150:7603';
+    const BANK_URL_B2C_TEST = 'https://212.46.217.150:7601';
 
     const BANK_URL_XML = 'https://194.67.29.215:8443';
     const BANK_URL_XML_TEST = 'https://194.67.29.216:8443';
@@ -87,10 +92,12 @@ class BRSAdapter implements IBankAdapter
             $this->bankUrl = self::BANK_URL_TEST;
             $this->bankUrl3DS = self::BANK_URL_3DS_TEST;
             $this->bankUrlXml = self::BANK_URL_XML_TEST;
+            $this->bankUrlB2C = self::BANK_URL_B2C_TEST;
         } else {
             $this->bankUrl = self::BANK_URL;
             $this->bankUrl3DS = self::BANK_URL_3DS;
             $this->bankUrlXml = self::BANK_URL_XML;
+            $this->bankUrlB2C = self::BANK_URL_B2C;
         }
     }
 
@@ -339,7 +346,8 @@ class BRSAdapter implements IBankAdapter
             CURLOPT_TIMEOUT => 120,
         ));
 
-        Yii::warning('BRSAdapter req uri=' . $uri .' : ' . Json::encode($data));
+        $requestDataLog = Cards::MaskCardLog(Json::encode($data));
+        Yii::warning('BRSAdapter req uri=' . $uri .' : ' . $requestDataLog);
         $response = curl_exec($curl);
         $curlError = curl_error($curl);
         $info = curl_getinfo($curl);
@@ -524,6 +532,61 @@ class BRSAdapter implements IBankAdapter
     public function getBalance(GetBalanceRequest $getBalanceRequest)
     {
         throw new GateException('Метод недоступен');
+    }
+
+    /**
+     * @return mixed|null
+     * @throws BankAdapterResponseException
+     */
+    public function getBankReceiver()
+    {
+        $uri = '/eis-app/eis-rs/businessPaymentService/getFpsReference';
+        $ans = $this->sendGetB2CRequest($uri);
+        return $ans;
+    }
+
+    /**
+     * @param $uri
+     * @return mixed|null
+     * @throws BankAdapterResponseException
+     */
+    protected function sendGetB2CRequest($uri)
+    {
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => $this->bankUrlB2C . $uri,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 120,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'GET',
+            CURLOPT_SSL_VERIFYPEER => 0,
+            CURLOPT_SSL_VERIFYHOST => 0,
+            CURLOPT_SSLCERTTYPE => 'PEM',
+            CURLOPT_SSLKEYTYPE => 'PEM',
+            CURLOPT_SSLCERT => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.pem'),
+            CURLOPT_SSLKEY => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.key'),
+            CURLOPT_HTTPHEADER => [
+                'x-User-Login: ' . $this->gate->Login,
+            ],
+        ));
+
+        Yii::warning('BRSAdapter req GET uri=' . $uri);
+        $response = curl_exec($curl);
+        $curlError = curl_error($curl);
+        $info = curl_getinfo($curl);
+
+        if(empty($curlError) && $info['http_code'] == 200) {
+            $response = Json::decode($response, true);
+            Yii::warning('BRSAdapter ans GET uri=' . $uri .' : ' . Json::encode($response));
+            return $response;
+        } else {
+            Yii::error('BRSAdapter error GET uri=' . $uri .' status=' . $info['http_code']);
+            throw new BankAdapterResponseException('Ошибка запроса: ' . $curlError);
+        }
     }
 
     /**
