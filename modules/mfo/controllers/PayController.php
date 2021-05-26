@@ -345,7 +345,7 @@ class PayController extends Controller
         ]);
 
         if(!$paySchet) {
-            throw new BadRequestHttpException();
+            return ['status' => 0, 'message' => 'Счет не найден'];
         }
 
         if($paySchet->Status == PaySchet::STATUS_WAITING) {
