@@ -6,7 +6,7 @@ use app\models\mfo\DistributionReports;
 use app\models\mfo\VyvodReestr;
 use app\models\mfo\VyvodSystem;
 use app\models\partner\admin\structures\VyvodSystemFilterParams;
-use app\models\partner\admin\VoznagStatNew;
+use app\models\partner\admin\VoznagStat;
 use app\models\partner\UserLk;
 use app\models\sms\tables\AccessSms;
 use app\models\TU;
@@ -720,7 +720,7 @@ class Partner extends ActiveRecord
                       ->andWhere(['TypeVyvod' => $params->getTypeVyvyod()]);
 
         return (($params->getFilterByStateOp() === true)
-            ? $query->andWhere(['SatateOp' => [VoznagStatNew::OPERATION_STATE_IN_PROGRESS, VoznagStatNew::OPERATION_STATE_READY]])->cache(60 * 60)
+            ? $query->andWhere(['SatateOp' => [VoznagStat::OPERATION_STATE_IN_PROGRESS, VoznagStat::OPERATION_STATE_READY]])->cache(60 * 60)
             : $query->cache(60 * 60));
     }
 
@@ -738,7 +738,7 @@ class Partner extends ActiveRecord
         ];
 
         if ($params->getFilterByStateOp() === true) {
-            $whereParams[] = ['SatateOp' => [VoznagStatNew::OPERATION_STATE_IN_PROGRESS, VoznagStatNew::OPERATION_STATE_READY]];
+            $whereParams[] = ['SatateOp' => [VoznagStat::OPERATION_STATE_IN_PROGRESS, VoznagStat::OPERATION_STATE_READY]];
         }
 
         $query = $this->getVyvodSystem()->select(['DateTo'])->where($whereParams)->orderBy(['DateTo' => SORT_DESC]);
@@ -763,7 +763,7 @@ class Partner extends ActiveRecord
                       ]);
 
         return (($params->getFilterByStateOp() === true)
-            ? $query->andWhere(['StateOp' => [VoznagStatNew::OPERATION_STATE_IN_PROGRESS, VoznagStatNew::OPERATION_STATE_READY]])->cache(60 * 60)
+            ? $query->andWhere(['StateOp' => [VoznagStat::OPERATION_STATE_IN_PROGRESS, VoznagStat::OPERATION_STATE_READY]])->cache(60 * 60)
             : $query->cache(60 * 60));
     }
 
@@ -780,7 +780,7 @@ class Partner extends ActiveRecord
         ];
 
         if ($params->getFilterByStateOp() === true) {
-            $whereParams[] = ['StateOp' => [VoznagStatNew::OPERATION_STATE_IN_PROGRESS, VoznagStatNew::OPERATION_STATE_READY]];
+            $whereParams[] = ['StateOp' => [VoznagStat::OPERATION_STATE_IN_PROGRESS, VoznagStat::OPERATION_STATE_READY]];
         }
 
         $query = $this->getVyvodReestr()->select(['DateTo'])->where($whereParams)->orderBy(['DateTo' => SORT_DESC]);

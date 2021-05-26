@@ -214,7 +214,7 @@ class MfoController extends Controller
                 return [
                     'status' => 1,
                     'ostbeg' => number_format($MfoBalance->GetOstBeg($dateFrom, $dateTo,$istransit - 10)/100.0, 2, '.', ' '),
-                    'ostend' => number_format($MfoBalance->GetOstEnd($dateTo, $istransit - 10)/100.0, 2, '.', ' '),
+                    'ostend' => number_format($MfoBalance->GetOstEnd($dateFrom, $dateTo, $istransit - 10)/100.0, 2, '.', ' '),
                     'data' => $this->renderPartial('_balanceorderlocal', [
                         'listorder' => $MfoBalance->GetOrdersLocal($istransit - 10, $dateFrom, $dateTo, $sort),
                         'IsAdmin' => $IsAdmin,
@@ -225,7 +225,7 @@ class MfoController extends Controller
                 return [
                     'status' => 1,
                     'ostbeg' => number_format($MfoBalance->GetOstBeg($dateFrom, $dateTo, $istransit)/100.0, 2, '.', ' '),
-                    'ostend' => number_format($MfoBalance->GetOstEnd($dateTo, $istransit)/100.0, 2, '.', ' '),
+                    'ostend' => number_format($MfoBalance->GetOstEnd($dateFrom, $dateTo, $istransit)/100.0, 2, '.', ' '),
                     'data' => $this->renderPartial('_balanceorder', [
                         'listorder' => $MfoBalance->GetBankStatemets($istransit, $dateFrom, $dateTo, $sort),
                         'IsAdmin' => $IsAdmin,

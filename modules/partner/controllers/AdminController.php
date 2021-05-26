@@ -14,7 +14,6 @@ use app\models\partner\admin\PerevodToPartner;
 use app\models\partner\admin\SystemVoznagList;
 use app\models\partner\admin\Uslugi;
 use app\models\partner\admin\VoznagStat;
-use app\models\partner\admin\VoznagStatNew;
 use app\models\partner\admin\VyvodList;
 use app\models\partner\admin\VyvodVoznag;
 use app\models\partner\stat\StatFilter;
@@ -219,7 +218,7 @@ class AdminController extends Controller
             $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
             switch (Yii::$app->request->post('TypeOtch')) {
                 case VoznagStatForm::TYPE_REPORT:
-                    $payShetList = new VoznagStatNew();
+                    $payShetList = new VoznagStat();
                     //@todo DRY!!!
                     if (!$payShetList->load($post, '') || !$payShetList->validate()) {
                         return ['status' => 0, 'message' => 'Ошибка запроса'];
@@ -251,9 +250,9 @@ class AdminController extends Controller
             }
 
             if (Yii::$app->request->post('TypeOtch') == VoznagStatForm::TYPE_REPORT) {
-                $payShetList->TypeUslug = VoznagStatNew::TYPE_SERVICE_POGAS;
+                $payShetList->TypeUslug = VoznagStat::TYPE_SERVICE_POGAS;
                 $dataIn = $payShetList->GetOtchMerchant($IsAdmin);
-                $payShetList->TypeUslug = VoznagStatNew::TYPE_SERVICE_VYDACHA;
+                $payShetList->TypeUslug = VoznagStat::TYPE_SERVICE_VYDACHA;
                 $dataOut = $payShetList->GetOtchMerchant($IsAdmin);
                 $view = '_comisotchetdata';
                 $params = [
