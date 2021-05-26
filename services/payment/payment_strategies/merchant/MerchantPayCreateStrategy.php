@@ -10,6 +10,7 @@ use app\services\payment\banks\IBankAdapter;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\MerchantPayForm;
+use app\services\payment\models\Currency;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\repositories\CurrencyRepository;
 use app\services\payment\models\UslugatovarType;
@@ -40,7 +41,8 @@ class MerchantPayCreateStrategy
     {
         /** @var Uslugatovar $uslugatovar */
         $uslugatovar = $this->getUslugatovar();
-        $currency = $this->currencyRepository->getCurrency($this->payForm->currency)[0];
+        /** @var Currency $currency */
+        $currency = $this->currencyRepository->getCurrency($this->payForm->currency);
         Yii::warning('getUslugatovar extid=' . $this->payForm->extid, 'merchant');
         if (!$uslugatovar) {
             throw new GateException('Услуга не найдена');
@@ -104,7 +106,6 @@ class MerchantPayCreateStrategy
         $paySchet = new PaySchet();
         $currencyRepository = new CurrencyRepository();
         $currency = $currencyRepository->getCurrency($this->payForm->currency);
-
         $paySchet->Bank = $bankAdapterBuilder->getBankAdapter()->getBankId();
         $paySchet->IdUsluga = $bankAdapterBuilder->getUslugatovar()->ID;
         $paySchet->IdOrg = $this->payForm->partner->ID;
@@ -126,7 +127,7 @@ class MerchantPayCreateStrategy
         $paySchet->sms_accept = 1;
         $paySchet->FIO = $this->payForm->fullname;
         $paySchet->Dogovor = $this->payForm->document_id;
-        //TODO: client personal data save to related db table & refactor
+        //TODO: client personal data save to related db (User) table & refactor
         if ($this->payForm->client) {
             if (isset($this->payForm->client['email']) && $this->payForm->client['email']) {
                 $paySchet->UserEmail = $this->payForm->client['email'];

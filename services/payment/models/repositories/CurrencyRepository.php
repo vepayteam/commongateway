@@ -25,15 +25,15 @@ class CurrencyRepository
 
     /**
      * @param string $currency
-     * @return array
+     * @return array|ActiveRecord|null
      */
-    public function getCurrency(string $currency): array
+    public function getCurrency(string $currency)
     {
         return Currency::find()
             ->where([
                 'Code' => $currency
             ])
-            ->all();
+            ->one();
     }
 
     /**
