@@ -1,14 +1,13 @@
 openapi: 3.0.0
 info:
-  title: API МФО
-  description: Vepay API для МФО
+  title: API Vepay
   version: 1.0.8
 security:
   - Mfo: []
     Token: []
 tags:
   - name: Card
-    description: Запросы по картам.
+    description: Запросы по картам
   - name: Pay
     description: Запросы pay in
   - name: Out
@@ -84,7 +83,7 @@ paths:
       tags:
         - Card
       summary: Получить идентификатор карты
-      description: Перед запросом идентификатора карты, необходимо проверь статус
+      description: Перед запросом идентификатора карты необходимо проверь статус
         завершения платежа по регистрации карты. У карт «для пополнения» срок
         действия отсутствует.
       requestBody:
@@ -137,8 +136,8 @@ paths:
     post:
       tags:
         - Pay
-      summary: Погашение займа с карты из кабинета МФО
-      description: Отправляется запрос погашения займа, с переходом к форме ввода
+      summary: Запрос оплаты pay in через платежную форму
+      description: Отправляется запрос на оплату с переходом к форме ввода
         реквизитов карты
       requestBody:
         content:
@@ -164,6 +163,8 @@ paths:
     post:
       tags:
         - Pay
+      summary: Запрос оплаты pay in через платежную форму с разбивкой
+      description: Разбивка (сплитование) платежа
       requestBody:
         content:
           application/json:
@@ -187,6 +188,8 @@ paths:
     post:
       tags:
         - Pay
+      summary: Запрос на совершение автоплатежа с разбивкой
+      description: Разбивка (сплитование) автоплатежа
       requestBody:
         content:
           application/json:
