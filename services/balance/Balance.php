@@ -48,6 +48,7 @@ class Balance extends Model
      */
     public function getAllBanksBalance(): BalanceResponse
     {
+        return $this->build();
         return Yii::$app->cache->getOrSet($this->getCacheKeyPrefix(), function () {
             return $this->build();
         }, self::BALANCE_CACHE_EXPIRE);
@@ -77,7 +78,7 @@ class Balance extends Model
                 Yii::warning('Balance service: ' . $exception->getMessage() . ' - PartnerId: ' . $this->partner->ID);
                 continue;
             }
-            if (isset($getBalanceResponse) && !empty($getBalanceResponse->amount)) {
+            if (isset($getBalanceResponse) && is_float($getBalanceResponse->amount)) {
                 $bankResponse[] = $getBalanceResponse;
             }
         }
