@@ -37,10 +37,10 @@ trait XmlRequestTrait
     }
 
     /**
-     * @param string $xml
+     * @param string $body
      * @return string
      */
-    protected function buildSignature(string $xml, PartnerBankGate $partnerBankGate)
+    protected function buildSignature(string $body, PartnerBankGate $partnerBankGate)
     {
         if(!file_exists(Yii::getAlias('@runtime/requests'))) {
             mkdir(Yii::getAlias('@runtime/requests'), 0777);
@@ -48,7 +48,7 @@ trait XmlRequestTrait
 
         $fileRequest = Yii::getAlias('@runtime/requests/' . Yii::$app->security->generateRandomString(32) . '.txt');
         $fileResponse = Yii::getAlias('@runtime/requests/' . Yii::$app->security->generateRandomString(32) . '.txt');
-        file_put_contents($fileRequest, $xml);
+        file_put_contents($fileRequest, $body);
 
         $cmd  = sprintf('openssl dgst -sha1 -sign "%s" -hex "%s" > "%s"',
             Yii::getAlias(BRSAdapter::KEYS_PATH . $partnerBankGate->Login . '.key'),

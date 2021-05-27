@@ -25,10 +25,12 @@ use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\RefundPayException;
 use app\services\payment\exceptions\BRSAdapterExeception;
 use app\services\payment\forms\AutoPayForm;
+use app\services\payment\forms\brs\CheckStatusPayOutAccountRequest;
 use app\services\payment\forms\brs\CheckStatusPayOutCardRequest;
 use app\services\payment\forms\brs\IXmlRequest;
 use app\services\payment\forms\brs\OutCardPayCheckRequest;
 use app\services\payment\forms\brs\OutCardPayRequest;
+use app\services\payment\forms\brs\TransferToAccountRequest;
 use app\services\payment\forms\brs\XmlRequest;
 use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
@@ -186,9 +188,39 @@ class BRSAdapter implements IBankAdapter
     {
         if($okPayForm->getPaySchet()->uslugatovar->IsCustom == TU::$TOCARD) {
             return $this->checkStatusPayOutCard($okPayForm);
+        } elseif ($okPayForm->getPaySchet()->uslugatovar->IsCustom == TU::$TOSCHET) {
+            return $this->checkStatusPayOutSchet($okPayForm);
         } else {
             return $this->checkStatusPayBase($okPayForm);
         }
+    }
+
+    /**
+     * @param OkPayForm $okPayForm
+     * @return CheckStatusPayResponse
+     */
+    protected function checkStatusPayOutSchet(OkPayForm $okPayForm)
+    {
+        $uri = '/eis-app/eis-rs/businessPaymentService/getB2cStatus';
+        $checkStatusPayOutAccountRequest = new CheckStatusPayOutAccountRequest();
+        $checkStatusPayOutAccountRequest->sourceId = (string)$okPayForm->IdPay;
+        $checkStatusPayOutAccountRequest->operationId = (string)$okPayForm->getPaySchet()->ExtBillNumber;
+
+        $checkStatusPayResponse = new CheckStatusPayResponse();
+        try {
+            $ans = $this->sendPostB2CRequest($uri, $checkStatusPayOutAccountRequest->getAttributes());
+            if(isset($ans['code']) && $ans['code'] == 0) {
+                $checkStatusPayResponse->status = BaseResponse::STATUS_DONE;
+            } else {
+                $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
+            }
+
+            $checkStatusPayResponse->message = ($ans['message'] ?? '');
+        } catch (BankAdapterResponseException $e) {
+            $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
+            $checkStatusPayResponse->message = 'Ошибка запроса';
+        }
+        return $checkStatusPayResponse;
     }
 
     /**
@@ -592,11 +624,149 @@ class BRSAdapter implements IBankAdapter
      */
     public function transferToAccount(OutPayAccountForm $outPayaccForm)
     {
-        throw new GateException('Метод недоступен');
+        if($outPayaccForm->scenario != OutPayAccountForm::SCENARIO_FL) {
+            throw new GateException('Перечисление денежны средств фозможно только для физ. лиц');
+        }
+
+        $uri = '/eis-app/eis-rs/businessPaymentService/requestTransferB2c';
+        $transferToAccountRequest = new TransferToAccountRequest();
+        $transferToAccountRequest->bic = $outPayaccForm->bic;
+        $transferToAccountRequest->receiverId = (string)$outPayaccForm->paySchet->ID;
+        $transferToAccountRequest->merchantId = $this->gate->Token;
+        $transferToAccountRequest->firstName = $outPayaccForm->getFirstName();
+        $transferToAccountRequest->lastName = $outPayaccForm->getLastName();
+        $transferToAccountRequest->middleName = $outPayaccForm->getLastName();
+        $transferToAccountRequest->amount = $outPayaccForm->amount;
+        $transferToAccountRequest->account = (string)$outPayaccForm->account;
+        $transferToAccountRequest->sourceId = (string)$outPayaccForm->paySchet->ID;
+
+        if(Yii::$app->params['TESTMODE'] == 'Y') {
+            $transferToAccountRequest->account = '40702810200000007194';
+            $transferToAccountRequest->bic = '044525151';
+            $transferToAccountRequest->receiverId = '0079167932356';
+            $transferToAccountRequest->firstName = 'Максим';
+            $transferToAccountRequest->lastName = 'Филин';
+            $transferToAccountRequest->middleName = 'Сергеевич';
+        }
+
+        $requestData = $transferToAccountRequest->getAttributes();
+        $requestData['msgSign'] = $transferToAccountRequest->getMsgSign($this->gate);
+        $transferToAccountResponse = new TransferToAccountResponse();
+
+        try {
+            $ans = $this->sendPostB2CRequest($uri, $requestData);
+            if(isset($ans['code']) && $ans['code'] == 0) {
+                $transferToAccountResponse->status = BaseResponse::STATUS_DONE;
+                $transferToAccountResponse->message = $ans['message'];
+                $transferToAccountResponse->trans = ($ans['operationId'] ?? '');
+            } else {
+                $transferToAccountResponse->status = BaseResponse::STATUS_DONE;
+                $transferToAccountResponse->message = ($ans['message'] ?? 'Ошибка запроса');
+            }
+        } catch (BankAdapterResponseException $e) {
+            $transferToAccountResponse->status = BaseResponse::STATUS_ERROR;
+            $transferToAccountResponse->message = $e->getMessage();
+        }
+        return $transferToAccountResponse;
+    }
+
+    /**
+     * @param string $uri
+     * @param array $data
+     * @return mixed|null
+     * @throws BankAdapterResponseException
+     */
+    protected function sendPostB2CRequest(string $uri, array $data)
+    {
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => $this->bankUrlB2C . $uri,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 120,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_SSL_VERIFYPEER => 0,
+            CURLOPT_SSL_VERIFYHOST => 0,
+            CURLOPT_SSLCERTTYPE => 'PEM',
+            CURLOPT_SSLKEYTYPE => 'PEM',
+            CURLOPT_SSLCERT => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.pem'),
+            CURLOPT_SSLKEY => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.key'),
+            CURLOPT_POSTFIELDS => Json::encode($data),
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'x-User-Login: ' . $this->gate->Login,
+            ],
+        ));
+
+        Yii::warning('BRSAdapter req POST uri=' . $uri . '; data=' . Json::encode($data));
+        $response = curl_exec($curl);
+        $curlError = curl_error($curl);
+        $info = curl_getinfo($curl);
+
+        if(empty($curlError)) {
+            try {
+                $response = Json::decode($response, true);
+                Yii::warning('BRSAdapter ans POST uri=' . $uri .' : ' . Json::encode($response) . '; data=' . Json::encode($data));
+                return $response;
+            } catch (\Exception $e) {
+                throw new BankAdapterResponseException($e->getMessage());
+            }
+        } else {
+            Yii::error('BRSAdapter error POST uri=' . $uri .'; status=' . $info['http_code'] . '; data=' . Json::encode($data));
+            throw new BankAdapterResponseException('Ошибка запроса: ' . $curlError);
+        }
+    }
+
+    /**
+     * @param OutPayAccountForm $outPayaccForm
+     * @return bool
+     */
+    public function checkTransfetB2C(OutPayAccountForm $outPayaccForm)
+    {
+        // TODO: DRY
+        $uri = '/eis-app/eis-rs/businessPaymentService/checkTransferB2c';
+        $id = Yii::$app->security->generateRandomString(16);
+        $transferToAccountRequest = new TransferToAccountRequest();
+        $transferToAccountRequest->bic = $outPayaccForm->bic;
+        $transferToAccountRequest->receiverId = $id;
+        $transferToAccountRequest->merchantId = $this->gate->Token;
+        $transferToAccountRequest->firstName = $outPayaccForm->getFirstName();
+        $transferToAccountRequest->lastName = $outPayaccForm->getLastName();
+        $transferToAccountRequest->middleName = $outPayaccForm->getLastName();
+        $transferToAccountRequest->amount = $outPayaccForm->amount;
+        $transferToAccountRequest->account = $outPayaccForm->account;
+        $transferToAccountRequest->sourceId = $id;
+
+        if(Yii::$app->params['TESTMODE'] == 'Y') {
+            $transferToAccountRequest->account = '40702810200000007194';
+            $transferToAccountRequest->bic = '044525151';
+            $transferToAccountRequest->receiverId = '0079167932356';
+            $transferToAccountRequest->firstName = 'Максим';
+            $transferToAccountRequest->lastName = 'Филин';
+            $transferToAccountRequest->middleName = 'Сергеевич';
+        }
+
+        $requestData = $transferToAccountRequest->getAttributes();
+        $requestData['msgSign'] = $transferToAccountRequest->getMsgSign($this->gate);
+
+        try {
+            $ans = $this->sendPostB2CRequest($uri, $requestData);
+            if(isset($ans['code']) && $ans['code'] == 0) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (BankAdapterResponseException $e) {
+            return false;
+        }
     }
 
     public function ident(IdentForm $identForm)
     {
-        throw new GateException('Метод недоступен');
+        // TODO: Implement ident() method.
     }
 }

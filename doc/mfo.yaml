@@ -339,6 +339,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /out/check-sbp-can-transfer:
+    post:
+      tags:
+        - Out
+      summary: СБП. Проверка возможности выдачи займа на счет физлица
+      description: Проверка возможности выдачи займа на счет физлица
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckSbpOutF"
+        description: Параметры перевода
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusId"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /out/state:
     post:
       tags:
@@ -987,6 +1013,21 @@ components:
         extid:
           type: string
           description: Внешний идентификатор запроса
+    CheckSbpOutF:
+      type: object
+      properties:
+        fio:
+          type: string
+          description: ФИО получателя
+        account:
+          type: string
+          description: Счет в банке
+        bic:
+          type: string
+          description: БИК банка
+        amount:
+          type: number
+          description: Cумма платежа
     Status:
       type: object
       properties:
