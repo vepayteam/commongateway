@@ -8,6 +8,7 @@ use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
+use app\services\payment\banks\bank_adapter_responses\ExchangeRatesResponse;
 use app\services\payment\banks\traits\WalletoRequestTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CreatePayException;
@@ -19,6 +20,7 @@ use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\models\PartnerBankGate;
+use Carbon\Carbon;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
 use Yii;
@@ -183,6 +185,44 @@ class WalletoBankAdapter implements IBankAdapter
     public function ident(IdentForm $identForm)
     {
         // TODO: Implement ident() method.
+    }
+
+    /**
+     * @param Carbon $date дата за которую надо получить курс валют
+     * @return ExchangeRatesResponse
+     * @throws BankAdapterResponseException
+     */
+    public function getExchangeRates(Carbon $date): ExchangeRatesResponse
+    {
+        $url = self::BANK_URL . '/exchange_rates/';
+        $date = $date->format('Y-m-d'); // 2021-06-30
+
+        $exchangeRatesResp = new ExchangeRatesResponse();
+
+        try {
+            $response = $this->api->request(
+                Client::METHOD_GET,
+                $url,
+                ['date' => $date]
+            );
+        } catch (GuzzleException $e) {
+            Yii::error('Walleto getExchangeRates err: ' . $e->getMessage());
+            throw new BankAdapterResponseException(
+                BankAdapterResponseException::setErrorMsg($e->getMessage())
+            );
+        }
+
+        if (!$response->isSuccess()) {
+            Yii::error('Walleto getExchangeRates err: ' . $response->json());
+            $errorMessage = $response->json();
+            $exchangeRatesResp->status = BaseResponse::STATUS_ERROR;
+            $exchangeRatesResp->message = BankAdapterResponseException::setErrorMsg($errorMessage);
+            return $exchangeRatesResp;
+        }
+
+        $exchangeRatesResp->status = BaseResponse::STATUS_DONE;
+        $exchangeRatesResp->exchangeRates = $response->json('exchange_rates');
+        return $exchangeRatesResp;
     }
 
     /**
