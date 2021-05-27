@@ -8,11 +8,10 @@ use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
-use app\services\payment\banks\bank_adapter_responses\ExchangeRatesResponse;
+use app\services\payment\banks\bank_adapter_responses\CurrencyExchangeRatesResponse;
 use app\services\payment\banks\traits\WalletoRequestTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CreatePayException;
-use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
@@ -189,44 +188,6 @@ class WalletoBankAdapter implements IBankAdapter
     }
 
     /**
-     * @param Carbon $date дата за которую надо получить курс валют
-     * @return ExchangeRatesResponse
-     * @throws BankAdapterResponseException
-     */
-    public function getExchangeRates(Carbon $date): ExchangeRatesResponse
-    {
-        $url = self::BANK_URL . '/exchange_rates/';
-        $date = $date->format('Y-m-d'); // 2021-06-30
-
-        $exchangeRatesResp = new ExchangeRatesResponse();
-
-        try {
-            $response = $this->api->request(
-                Client::METHOD_GET,
-                $url,
-                ['date' => $date]
-            );
-        } catch (GuzzleException $e) {
-            Yii::error('Walleto getExchangeRates err: ' . $e->getMessage());
-            throw new BankAdapterResponseException(
-                BankAdapterResponseException::setErrorMsg($e->getMessage())
-            );
-        }
-
-        if (!$response->isSuccess()) {
-            Yii::error('Walleto getExchangeRates err: ' . $response->json());
-            $errorMessage = $response->json();
-            $exchangeRatesResp->status = BaseResponse::STATUS_ERROR;
-            $exchangeRatesResp->message = BankAdapterResponseException::setErrorMsg($errorMessage);
-            return $exchangeRatesResp;
-        }
-
-        $exchangeRatesResp->status = BaseResponse::STATUS_DONE;
-        $exchangeRatesResp->exchangeRates = $response->json('exchange_rates');
-        return $exchangeRatesResp;
-    }
-
-    /**
      * @param string $status
      * @return int
      */
@@ -247,10 +208,39 @@ class WalletoBankAdapter implements IBankAdapter
     }
 
     /**
-     * @throws GateException
+     * @return CurrencyExchangeRatesResponse
+     * @throws BankAdapterResponseException
      */
-    public function currencyExchangeRates()
+    public function currencyExchangeRates(): CurrencyExchangeRatesResponse
     {
-        throw new GateException('Метод недоступен');
+        $url = self::BANK_URL . '/exchange_rates/';
+        $date = Carbon::now()->format('Y-m-d'); // сегодняшняя дата в формате 2021-06-30
+
+        $currencyExchangeRatesResponse = new CurrencyExchangeRatesResponse();
+
+        try {
+            $response = $this->api->request(
+                Client::METHOD_GET,
+                $url,
+                ['date' => $date]
+            );
+        } catch (GuzzleException $e) {
+            Yii::error('Walleto currencyExchangeRates err: ' . $e->getMessage());
+            throw new BankAdapterResponseException(
+                BankAdapterResponseException::setErrorMsg($e->getMessage())
+            );
+        }
+
+        if (!$response->isSuccess()) {
+            Yii::error('Walleto currencyExchangeRates err: ' . $response->json());
+            $errorMessage = $response->json();
+            $currencyExchangeRatesResponse->status = BaseResponse::STATUS_ERROR;
+            $currencyExchangeRatesResponse->message = BankAdapterResponseException::setErrorMsg($errorMessage);
+            return $currencyExchangeRatesResponse;
+        }
+
+        $currencyExchangeRatesResponse->status = BaseResponse::STATUS_DONE;
+        $currencyExchangeRatesResponse->exchangeRates = $response->json('exchange_rates');
+        return $currencyExchangeRatesResponse;
     }
 }
