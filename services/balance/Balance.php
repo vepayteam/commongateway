@@ -48,7 +48,6 @@ class Balance extends Model
      */
     public function getAllBanksBalance(): BalanceResponse
     {
-        return $this->build();
         return Yii::$app->cache->getOrSet($this->getCacheKeyPrefix(), function () {
             return $this->build();
         }, self::BALANCE_CACHE_EXPIRE);
