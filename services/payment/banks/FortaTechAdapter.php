@@ -729,4 +729,11 @@ class FortaTechAdapter implements IBankAdapter
     {
         return preg_replace('/(\d{6})(.+)(\d{4})/', '$1****$3', $cardNumber);
     }
+    /**
+     * @throws GateException
+     */
+    public function currencyExchangeRates()
+    {
+        throw new GateException('Метод недоступен');
+    }
 }

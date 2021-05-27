@@ -1,8 +1,6 @@
 <?php
 
-
 namespace app\services\payment\banks;
-
 
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\ident\forms\IdentForm;
@@ -112,4 +110,6 @@ interface IBankAdapter
     public function transferToAccount(OutPayAccountForm $outPayaccForm);
 
     public function ident(IdentForm $identForm);
+
+    public function currencyExchangeRates();
 }

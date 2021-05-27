@@ -950,4 +950,12 @@ class MTSBankAdapter implements IBankAdapter
     {
         throw new GateException('Метод недоступен');
     }
+
+    /**
+     * @throws GateException
+     */
+    public function currencyExchangeRates()
+    {
+        throw new GateException('Метод недоступен');
+    }
 }
