@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: API Vepay
-  version: 1.0.7
+  version: 1.0.8
 security:
   - Mfo: []
     Token: []
@@ -391,6 +391,28 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /getsbpbankreceiver:
+    post:
+      tags:
+        - Out
+      summary: Список банк-участинков банка СПБ БРС
+      description: Запрос возвращает список банк-участников банка Русский стандарт, сервис быстрых платежей
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type:
+                  array
+                items:
+                  $ref: "#/components/schemas/BrsSpbReceiver"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /ident/req:
     post:
       tags:
@@ -425,7 +447,7 @@ paths:
       tags:
         - Ident
       summary: Статус идентификации
-      description: Запрос результата идентификации. 
+      description: Запрос результата идентификации.
       requestBody:
         content:
           application/json:
@@ -494,6 +516,59 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/IdentRunaStateResponse"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /ident/request-init:
+    post:
+      tags:
+        - Ident
+      summary: Упращенная идентификация пользователя
+      description: Отправляется запрос идентификации, в ответе на который возвращается id
+        операции.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IdentRequestInit"
+        description: Параметры перевода
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusId"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /ident/request-state:
+    post:
+      tags:
+        - Ident
+      summary: Статус упращенной идентификации
+      description: Запрос результата упращенной идентификации
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IdState"
+        description: ID запрса
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentRequestStatus"
         default:
           description: Error (40X,500)
           content:
@@ -1154,6 +1229,47 @@ components:
         snils:
           type: string
           description: СНИЛС (при необходимости проверки)
+    IdentRequestInit:
+      type: object
+      properties:
+        LastName:
+          type: string
+          description: Фамилия
+        FirstName:
+          type: string
+          description: Имя
+        Patronymic:
+          type: string
+          description: Отчество
+        Series:
+          type: string
+          description: Серия паспорта
+        Number:
+          type: string
+          description: Номер паспорта
+        IssueDate:
+          type: string
+          description: Дата выдачи паспорта
+        IssueCode:
+          type: string
+          description: Код подразделения паспорта
+        Inn:
+          type: string
+          description: ИНН (при необходимости проверки)
+        Snils:
+          type: string
+          description: СНИЛС (при необходимости проверки)
+    IdentRequestStatus:
+      type: object
+      properties:
+        status:
+          type: integer
+          description:
+            Статус обработки. 0 - заявка создана, 1 - ожидается результат, 2- ошибка запроса, 3 - успешная идентификация, 4 - неуспешная идентификация, 5 - превышен интервал времени на обработку запроса
+        info:
+          type: string
+          description:
+            JSON, подробная информация
     IdentRunaInit:
       type: object
       properties:
@@ -1216,4 +1332,12 @@ components:
         status:
           description: 0 - успешно, или код ошибки.
           type: string
-
+    BrsSpbReceiver:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Название банка
+        bic:
+          type: string
+          description: БИК

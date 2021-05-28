@@ -63,7 +63,7 @@ class UslugatovarType extends \yii\db\ActiveRecord
             self::VYVODPAYS => 'Вывод средств',
             self::REVERSCOMIS => 'Возмещение комисии',
             self::PEREVPAYS => 'Внутренний перевод между счетами',
-            self::IDENT => 'Упращенная идентификация пользователей',
+            self::IDENT => 'Упрощенная идентификация пользователей',
 
             self::POGASHATFPARTS => 'Погашение займа AFT с разбивкой',
             self::POGASHECOMPARTS => 'Погашение займа ECOM с разбивкой',
