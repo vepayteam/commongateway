@@ -241,7 +241,7 @@ class PayController extends Controller
 
         $paySchet = $createPaySecondStepForm->getPaySchet();
         $bankAdapterBuilder = new BankAdapterBuilder();
-        $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank);
+        $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank);
 
         /** @var TKBankAdapter $tkbAdapter */
         $tkbAdapter = $bankAdapterBuilder->getBankAdapter();
