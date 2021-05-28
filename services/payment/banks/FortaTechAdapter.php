@@ -249,7 +249,7 @@ class FortaTechAdapter implements IBankAdapter
         $checkStatusPayResponse->message = $ans['status'];
 
         if($checkStatusPayResponse->status == BaseResponse::STATUS_DONE && array_key_exists('pay', $ans)) {
-            $checkStatusPayResponse->operations = Json::encode($ans['pay']);
+            $checkStatusPayResponse->operations = $ans['pay'];
         }
         return $checkStatusPayResponse;
     }
@@ -350,12 +350,10 @@ class FortaTechAdapter implements IBankAdapter
         $refundPayResponse = new RefundPayResponse();
         try {
             $operations = Json::decode($refundPayForm->paySchet->Operations, true);
-
             foreach ($operations as $operation) {
                 $refundPayRequest = new RefundPayRequest();
-                $refundPayRequest->payment_id = $operation[''];
+                $refundPayRequest->payment_id = $operation['payment_id'];
                 $ans = $this->sendRequest($action, $refundPayRequest->getAttributes());
-
 
                 if(array_key_exists('refund_id', $ans) && !empty($ans['refund_id'])) {
                     $refundIds = Yii::$app->cache->getOrSet(
