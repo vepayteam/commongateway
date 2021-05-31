@@ -34,10 +34,7 @@ return [
                 'yii\web\HttpException:401',
                 'yii\web\HttpException:404',
             ],
-            'maskVars' => $maskVars,
-            'maxFileSize' => 1024 * 50,
-            'maxLogFiles' => 20,
-            'rotateByCopy' => false
+            'maskVars' => $maskVars
         ],
         [
             'class' => 'app\services\logs\targets\SecurityJSONStdErrTarget',
@@ -46,10 +43,7 @@ return [
                 'yii\web\HttpException:401',
                 'yii\web\HttpException:404',
             ],
-            'maskVars' => $maskVars,
-            'maxFileSize' => 1024 * 50,
-            'maxLogFiles' => 20,
-            'rotateByCopy' => false
+            'maskVars' => $maskVars
         ],
     ],
 ];
