@@ -28,6 +28,8 @@ class Banks
                 return new FortaTechAdapter();
             case WalletoBankAdapter::$bank:
                 return new WalletoBankAdapter();
+            case RunaBankAdapter::$bank:
+                return new RunaBankAdapter();
             default:
                 throw new \Exception('Ошибка выбора банка');
         }

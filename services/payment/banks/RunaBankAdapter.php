@@ -5,8 +5,12 @@ namespace app\services\payment\banks;
 
 
 use app\services\ident\exceptions\RunaIdentException;
+use app\services\ident\forms\RunaIdentInitForm;
+use app\services\ident\forms\RunaIdentStateForm;
+use app\services\ident\interfaces\RunaIdentResponseInteface;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
+use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
@@ -42,7 +46,7 @@ class RunaBankAdapter implements IBankAdapter
     const DOMAIN = 'https://ecommerce.runabank.ru/pc4x4';
     const DOMAIN_TEST = 'https://ecommerce-sec.runabank.ru/pc4x4';
 
-    public static $bank = 10;
+    public static $bank = 11;
     private $domain;
     /** @var PartnerBankGate */
     private $gate;
@@ -145,7 +149,31 @@ class RunaBankAdapter implements IBankAdapter
      */
     public function identInit(Ident $ident)
     {
-        $uri = '';
+        $runaIdentInitForm = new RunaIdentInitForm();
+        $runaIdentInitForm->cid_origin = $this->gate->Token;
+        $runaIdentInitForm->passport_series = $ident->Series;
+        $runaIdentInitForm->passport_number = $ident->Number;
+        $runaIdentInitForm->name = $ident->FirstName;
+        $runaIdentInitForm->surname = $ident->LastName;
+        $runaIdentInitForm->patronymic = $ident->Patronymic;
+        $runaIdentInitForm->inn = $ident->Inn;
+        $runaIdentInitForm->snils = $ident->Snils;
+
+//        if(!$runaIdentInitForm->validate()) {
+//            throw new \Exception($runaIdentInitForm->getError());
+//        }
+
+        $ans = $this->sendIdentRequest('init', 'verify_docs', $runaIdentInitForm);
+        $identInitResponse = new IdentInitResponse();
+        $identInitResponse->response = $ans;
+        if($ans['state_code'] != RunaIdentResponseInteface::RESPONSE_STATUS_INIT) {
+            $identInitResponse->status = BaseResponse::STATUS_ERROR;
+            $identInitResponse->message = $ans['state_description'] ?? 'Ошибка запроса';
+        } else {
+            $identInitResponse->status = BaseResponse::STATUS_DONE;
+        }
+
+        return $identInitResponse;
     }
 
     /**
@@ -153,9 +181,39 @@ class RunaBankAdapter implements IBankAdapter
      */
     public function identGetStatus(Ident $ident)
     {
-        // TODO: Implement identGetStatus() method.
+        $initResponse = json_decode($ident->Response, true);
+
+        if(!isset($initResponse['tid']) || empty($initResponse['tid'])) {
+            throw new \Exception('Ошибка параметра запроса');
+        }
+
+        $runaIdentStateForm = new RunaIdentStateForm();
+        $runaIdentStateForm->tid = $initResponse['tid'];
+        $runaIdentStateForm->attach_smev_response = true;
+
+        $identGetStatusResponse = new IdentGetStatusResponse();
+        try {
+            $ans = $this->sendIdentRequest('get_state', 'verify_docs', $runaIdentStateForm);
+        } catch (RunaIdentException $e) {
+            $identGetStatusResponse->status = BaseResponse::STATUS_ERROR;
+            $identGetStatusResponse->message = $e->getMessage();
+            $identGetStatusResponse->response = $ans ?? [];
+            return $identGetStatusResponse;
+        }
+
+        $identGetStatusResponse->status = BaseResponse::STATUS_DONE;
+        $identGetStatusResponse->identStatus = $this->convertIdentStateStatus($ans);
+        $identGetStatusResponse->response = $ans;
+        return $identGetStatusResponse;
     }
 
+    /**
+     * @param $method
+     * @param $mode
+     * @param Model $model
+     * @return mixed
+     * @throws \Exception
+     */
     protected function sendIdentRequest($method, $mode, Model $model)
     {
         $certPath = Yii::getAlias('@app/config/runacert');
@@ -201,6 +259,26 @@ class RunaBankAdapter implements IBankAdapter
             return json_decode($response, true);
         } catch (\Exception $e) {
             throw $e;
+        }
+    }
+
+    /**
+     * @param array $response
+     * @return int
+     */
+    protected function convertIdentStateStatus(array $response)
+    {
+        if(!isset($response['state_code'])) {
+            return Ident::STATUS_ERROR;
+        }
+
+        switch($response['state_code']) {
+            case '00000':
+                return Ident::STATUS_SUCCESS;
+            case '00008':
+                return Ident::STATUS_WAITING;
+            default:
+                return Ident::STATUS_DENIED;
         }
     }
 }
