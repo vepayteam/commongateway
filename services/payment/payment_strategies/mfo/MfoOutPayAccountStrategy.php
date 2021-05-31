@@ -12,10 +12,12 @@ use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\OutPayAccountForm;
+use app\services\payment\jobs\RefreshStatusPayJob;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
+use Yii;
 
-class MfoOutPayaccStrategy
+class MfoOutPayAccountStrategy
 {
     /** @var OutPayAccountForm */
     protected $outPayaccForm;
@@ -53,9 +55,13 @@ class MfoOutPayaccStrategy
         $this->transferToAccountResponse = $bankAdapterBuilder->getBankAdapter()->transferToAccount($this->outPayaccForm);
 
         if($this->transferToAccountResponse->status == BaseResponse::STATUS_DONE) {
-            $this->outPayaccForm->paySchet->Status = BaseResponse::STATUS_DONE;
+            $this->outPayaccForm->paySchet->Status = PaySchet::STATUS_WAITING_CHECK_STATUS;
             $this->outPayaccForm->paySchet->ExtBillNumber = $this->transferToAccountResponse->trans;
-            $this->outPayaccForm->paySchet->ErrorInfo = $this->transferToAccountResponse->message;
+            $this->outPayaccForm->paySchet->ErrorInfo = 'Ожидает запрос статуса';
+
+            Yii::$app->queue->push(new RefreshStatusPayJob([
+                'paySchetId' =>  $this->outPayaccForm->paySchet->ID,
+            ]));
         } else {
             $this->outPayaccForm->paySchet->Status = PaySchet::STATUS_ERROR;
             $this->outPayaccForm->paySchet->ErrorInfo = $this->transferToAccountResponse->message;

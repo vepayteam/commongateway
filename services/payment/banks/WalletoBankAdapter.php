@@ -4,10 +4,13 @@ namespace app\services\payment\banks;
 
 use app\Api\Client\Client;
 use app\services\ident\forms\IdentForm;
+use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
+use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
+use app\services\payment\banks\bank_adapter_responses\IdentInitResponse;
 use app\services\payment\banks\traits\WalletoRequestTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CreatePayException;
@@ -203,5 +206,21 @@ class WalletoBankAdapter implements IBankAdapter
             default:
                 return BaseResponse::STATUS_ERROR;
         }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function identInit(Ident $ident)
+    {
+        // TODO: Implement identInit() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function identGetStatus(Ident $ident)
+    {
+        // TODO: Implement identGetStatus() method.
     }
 }
