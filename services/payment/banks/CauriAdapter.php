@@ -4,7 +4,6 @@ namespace app\services\payment\banks;
 
 use app\Api\Payment\Cauri\CauriApiFacade;
 use app\Api\Payment\Cauri\Responses\TransactionStatusResponse;
-use app\services\ident\forms\IdentForm;
 use app\services\ident\models\Ident;
 use app\services\logs\loggers\CauriLogger;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
@@ -524,6 +523,14 @@ class CauriAdapter implements IBankAdapter
      * @inheritDoc
      */
     public function identGetStatus(Ident $ident)
+    {
+        throw new GateException('Метод недоступен');
+    }
+
+    /**
+     * @throws GateException
+     */
+    public function currencyExchangeRates()
     {
         throw new GateException('Метод недоступен');
     }
