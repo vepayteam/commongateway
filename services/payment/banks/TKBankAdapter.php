@@ -13,7 +13,6 @@ use app\models\TU;
 use app\services\ident\IdentService;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
-use app\services\ident\forms\IdentForm;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\Check3DSVersionResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
@@ -1662,10 +1661,5 @@ class TKBankAdapter implements IBankAdapter
     public function currencyExchangeRates()
     {
         throw new GateException('Метод недоступен');
-    }
-
-    public function ident(IdentForm $identForm)
-    {
-        // TODO: Implement ident() method.
     }
 }

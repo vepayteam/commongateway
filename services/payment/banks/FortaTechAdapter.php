@@ -8,7 +8,6 @@ use app\Api\Client\Client;
 use app\models\TU;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
-use app\services\ident\forms\IdentForm;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
@@ -686,11 +685,6 @@ class FortaTechAdapter implements IBankAdapter
     public function transferToAccount(OutPayAccountForm $outPayaccForm)
     {
         // TODO: Implement transferToAccount() method.
-    }
-
-    public function ident(IdentForm $identForm)
-    {
-        throw new GateException('Метод недоступен');
     }
 
     public function identInit(Ident $ident)

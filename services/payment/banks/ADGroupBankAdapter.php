@@ -6,7 +6,6 @@ namespace app\services\payment\banks;
 
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
-use app\services\ident\forms\IdentForm;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
@@ -168,10 +167,5 @@ class ADGroupBankAdapter implements IBankAdapter
     public function currencyExchangeRates()
     {
         throw new GateException('Метод недоступен');
-    }
-
-    public function ident(IdentForm $identForm)
-    {
-        // TODO: Implement ident() method.
     }
 }

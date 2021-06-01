@@ -3,7 +3,6 @@
 namespace app\services\payment\banks;
 
 use app\Api\Client\Client;
-use app\services\ident\forms\IdentForm;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
@@ -181,11 +180,6 @@ class WalletoBankAdapter implements IBankAdapter
     public function transferToAccount(OutPayAccountForm $outPayaccForm)
     {
         // TODO: Implement transferToAccount() method.
-    }
-
-    public function ident(IdentForm $identForm)
-    {
-        // TODO: Implement ident() method.
     }
 
     /**
