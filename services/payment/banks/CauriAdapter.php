@@ -535,4 +535,9 @@ class CauriAdapter implements IBankAdapter
     {
         throw new GateException('Метод недоступен');
     }
+
+    public function ident(IdentForm $identForm)
+    {
+        throw new GateException('Метод недоступен');
+    }
 }
