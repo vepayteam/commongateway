@@ -20,6 +20,15 @@ class CurrencyExchange extends ActiveRecord
         return 'currency_exchanges';
     }
 
+    public function rules()
+    {
+        return [
+            ['BankId', 'integer'],
+            [['From', 'To'], 'string', 'length' => [1, 5]],
+            ['Rate', 'double'],
+        ];
+    }
+
     public function getBank()
     {
         return $this->hasOne(Bank::class, ['ID' => 'BankId']);
