@@ -1,5 +1,7 @@
 <?php
 
+use app\services\ident\models\Ident;
+use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CreatePayForm;
@@ -250,5 +252,30 @@ class TKBankAdapterTest extends \Codeception\Test\Unit
         $refundPay->setAccessible(true);
         $this->expectException(yii\base\ErrorException::class);
         $this->assertEquals(null, $refundPay->invoke($tKBankAdapter, $refundPayForm));
+    }
+
+    public function testIdentInit()
+    {
+        /** @var Ident $ident */
+        $ident = $this->getMockBuilder(\app\services\ident\models\Ident::class)->getMock();
+        $tkBankAdapter = new TKBankAdapter();
+        $identInitResponse = $tkBankAdapter->identInit($ident);
+
+        $this->assertTrue($identInitResponse->status == BaseResponse::STATUS_DONE);
+    }
+
+    public function testIdentGetStatus()
+    {
+        /** @var Ident $ident */
+        $ident = $this->getMockBuilder(\app\services\ident\models\Ident::class)->getMock();
+        $gate = new PartnerBankGate();
+        $gate->Login = 'test';
+        $gate->Token = 'test';
+        $gate->Password = 'test';
+        $tkBankAdapter = new TKBankAdapter();
+        $tkBankAdapter->setGate($gate);
+        $identInitResponse = $tkBankAdapter->identGetStatus($ident);
+
+        $this->assertTrue($identInitResponse->status == BaseResponse::STATUS_DONE);
     }
 }

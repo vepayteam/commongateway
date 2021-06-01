@@ -4,6 +4,7 @@ namespace app\services\payment\banks;
 
 use app\Api\Client\Client;
 use app\services\ident\forms\IdentForm;
+use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
@@ -242,5 +243,21 @@ class WalletoBankAdapter implements IBankAdapter
         $currencyExchangeRatesResponse->status = BaseResponse::STATUS_DONE;
         $currencyExchangeRatesResponse->exchangeRates = $response->json('exchange_rates');
         return $currencyExchangeRatesResponse;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function identInit(Ident $ident)
+    {
+        // TODO: Implement identInit() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function identGetStatus(Ident $ident)
+    {
+        // TODO: Implement identGetStatus() method.
     }
 }

@@ -2,12 +2,16 @@
 
 namespace app\services\payment\banks;
 
+
+use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\ident\forms\IdentForm;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
+use app\services\payment\banks\bank_adapter_responses\IdentInitResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
@@ -110,6 +114,18 @@ interface IBankAdapter
     public function transferToAccount(OutPayAccountForm $outPayaccForm);
 
     public function ident(IdentForm $identForm);
+
+    /**
+     * @param Ident $ident
+     * @return IdentInitResponse
+     */
+    public function identInit(Ident $ident);
+
+    /**
+     * @param Ident $ident
+     * @return IdentGetStatusResponse
+     */
+    public function identGetStatus(Ident $ident);
 
     public function currencyExchangeRates();
 }
