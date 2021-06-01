@@ -968,4 +968,9 @@ class MTSBankAdapter implements IBankAdapter
     {
         throw new GateException('Метод недоступен');
     }
+
+    public function ident(IdentForm $identForm)
+    {
+        // TODO: Implement ident() method.
+    }
 }
