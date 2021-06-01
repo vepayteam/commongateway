@@ -137,6 +137,7 @@ class AutopayStat extends Model
     }
 
     /**
+     * @deprecated
      * Рекуррентные платежи
      * @return array
      * @throws \Throwable
