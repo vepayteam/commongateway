@@ -9,6 +9,7 @@ use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
+use app\services\payment\banks\bank_adapter_responses\CurrencyExchangeRatesResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentInitResponse;
 use app\services\payment\banks\traits\WalletoRequestTrait;
@@ -22,6 +23,7 @@ use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\models\PartnerBankGate;
+use Carbon\Carbon;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
 use Yii;
@@ -61,7 +63,8 @@ class WalletoBankAdapter implements IBankAdapter
         ];
         //TODO: move certificates/keys from git directories
         $config = [
-            RequestOptions::VERIFY => Yii::getAlias(self::KEY_ROOT_PATH . $partnerBankGate->Login . '.pem'),
+//            RequestOptions::VERIFY => Yii::getAlias(self::KEY_ROOT_PATH . $partnerBankGate->Login . '.pem'),
+            RequestOptions::VERIFY => false,
             RequestOptions::CERT => Yii::getAlias(self::KEY_ROOT_PATH . $partnerBankGate->Login . '.pem'),
             RequestOptions::SSL_KEY => Yii::getAlias(self::KEY_ROOT_PATH . $partnerBankGate->Login . '.key'),
             RequestOptions::HEADERS => $apiClientHeader,
@@ -175,7 +178,7 @@ class WalletoBankAdapter implements IBankAdapter
 
     public function getBalance(GetBalanceRequest $getBalanceForm)
     {
-        // TODO: Implement getBalance() method.
+        $response = $this->currencyExchangeRates();
     }
 
     public function transferToAccount(OutPayAccountForm $outPayaccForm)
@@ -222,5 +225,42 @@ class WalletoBankAdapter implements IBankAdapter
     public function identGetStatus(Ident $ident)
     {
         // TODO: Implement identGetStatus() method.
+    }
+
+    /**
+     * @return CurrencyExchangeRatesResponse
+     * @throws BankAdapterResponseException
+     */
+    public function currencyExchangeRates(): CurrencyExchangeRatesResponse
+    {
+        $url = self::BANK_URL . '/exchange_rates/';
+        $date = Carbon::now()->format('Y-m-d'); // сегодняшняя дата в формате 2021-06-30
+
+        $currencyExchangeRatesResponse = new CurrencyExchangeRatesResponse();
+
+        try {
+            $response = $this->api->request(
+                Client::METHOD_GET,
+                $url,
+                ['date' => $date]
+            );
+        } catch (GuzzleException $e) {
+            Yii::error('Walleto currencyExchangeRates err: ' . $e->getMessage());
+            throw new BankAdapterResponseException(
+                BankAdapterResponseException::setErrorMsg($e->getMessage())
+            );
+        }
+
+        if (!$response->isSuccess()) {
+            Yii::error('Walleto currencyExchangeRates err: ' . $response->json());
+            $errorMessage = $response->json();
+            $currencyExchangeRatesResponse->status = BaseResponse::STATUS_ERROR;
+            $currencyExchangeRatesResponse->message = BankAdapterResponseException::setErrorMsg($errorMessage);
+            return $currencyExchangeRatesResponse;
+        }
+
+        $currencyExchangeRatesResponse->status = BaseResponse::STATUS_DONE;
+        $currencyExchangeRatesResponse->exchangeRates = $response->json('exchange_rates');
+        return $currencyExchangeRatesResponse;
     }
 }
