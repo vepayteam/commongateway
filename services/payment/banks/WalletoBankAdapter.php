@@ -3,7 +3,6 @@
 namespace app\services\payment\banks;
 
 use app\Api\Client\Client;
-use app\services\ident\forms\IdentForm;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
@@ -63,8 +62,7 @@ class WalletoBankAdapter implements IBankAdapter
         ];
         //TODO: move certificates/keys from git directories
         $config = [
-//            RequestOptions::VERIFY => Yii::getAlias(self::KEY_ROOT_PATH . $partnerBankGate->Login . '.pem'),
-            RequestOptions::VERIFY => false,
+            RequestOptions::VERIFY => Yii::getAlias(self::KEY_ROOT_PATH . $partnerBankGate->Login . '.pem'),
             RequestOptions::CERT => Yii::getAlias(self::KEY_ROOT_PATH . $partnerBankGate->Login . '.pem'),
             RequestOptions::SSL_KEY => Yii::getAlias(self::KEY_ROOT_PATH . $partnerBankGate->Login . '.key'),
             RequestOptions::HEADERS => $apiClientHeader,
@@ -178,17 +176,12 @@ class WalletoBankAdapter implements IBankAdapter
 
     public function getBalance(GetBalanceRequest $getBalanceForm)
     {
-        $response = $this->currencyExchangeRates();
+        // TODO: Implement getBalance() method.
     }
 
     public function transferToAccount(OutPayAccountForm $outPayaccForm)
     {
         // TODO: Implement transferToAccount() method.
-    }
-
-    public function ident(IdentForm $identForm)
-    {
-        // TODO: Implement ident() method.
     }
 
     /**

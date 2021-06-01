@@ -11,7 +11,6 @@ use app\models\Payschets;
 use app\models\TU;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
-use app\services\ident\forms\IdentForm;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
@@ -957,6 +956,14 @@ class MTSBankAdapter implements IBankAdapter
      * @inheritDoc
      */
     public function identGetStatus(Ident $ident)
+    {
+        throw new GateException('Метод недоступен');
+    }
+
+    /**
+     * @throws GateException
+     */
+    public function currencyExchangeRates()
     {
         throw new GateException('Метод недоступен');
     }
