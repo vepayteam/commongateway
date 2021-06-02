@@ -12,7 +12,10 @@ use app\services\ident\exceptions\RunaIdentException;
 use app\services\ident\forms\RunaIdentInitForm;
 use app\services\ident\forms\RunaIdentStateForm;
 use app\services\ident\IdentService;
+use app\services\ident\RequestInitStrategy;
+use app\services\ident\models\Ident;
 use app\services\ident\models\IdentRuna;
+use app\services\payment\exceptions\GateException;
 use Yii;
 use yii\base\InvalidConfigException;
 use yii\di\NotInstantiableException;
@@ -199,6 +202,55 @@ class IdentController extends Controller
             'message' => $runaIdentStateResponse->state_description,
             'details' => $runaIdentStateResponse->details,
         ];
+    }
+
+    public function actionRequestInit()
+    {
+        $mfo = new MfoReq();
+        $mfo->LoadData(Yii::$app->request->getRawBody());
+
+        $ident = new Ident();
+        $ident->load($mfo->Req(), '');
+        $ident->PartnerId = $mfo->mfo;
+
+        $requestInitStrategy = new RequestInitStrategy($ident);
+        try {
+            $requestInitStrategy->exec();
+        } catch (GateException | BadRequestHttpException | \Exception $e) {
+            return [
+                'status' => 2,
+                'message' => $e->getMessage(),
+            ];
+        }
+
+        return [
+            'status' => 1,
+            'id' => $ident->Id,
+        ];
+    }
+
+    public function actionRequestStatus()
+    {
+        $mfo = new MfoReq();
+        $mfo->LoadData(Yii::$app->request->getRawBody());
+
+        $identId = $mfo->GetReq('id');
+        if(!$identId) {
+            throw new BadRequestHttpException();
+        }
+
+        $ident = Ident::findOne(['Id' => $identId, 'PartnerId' => $mfo->mfo]);
+        if(!$ident) {
+            return [
+                'status' => 2,
+                'message' => 'Запрос не найден',
+            ];
+        } else {
+            return [
+                'status' => $ident->Status,
+                'info' => Json::decode($ident->Response, true),
+             ];
+        }
     }
 
     /**

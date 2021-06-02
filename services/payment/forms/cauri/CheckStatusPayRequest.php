@@ -1,8 +1,6 @@
 <?php
 
-
 namespace app\services\payment\forms\cauri;
-
 
 use yii\base\Model;
 
