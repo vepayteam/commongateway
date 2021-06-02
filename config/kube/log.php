@@ -28,20 +28,22 @@ return [
     'traceLevel' => YII_DEBUG ? 3 : 0,
     'targets' => [
         [
-            'class' => 'app\services\logs\targets\ReqMaskFileTarget',
+            'class' => 'app\services\logs\targets\ReqMaskJSONStdOutTarget',
             'levels' => ['warning'],
-            'maskVars' => $maskVars,
-            'maxFileSize' => 1024 * 50,
-            'maxLogFiles' => 20,
-            'rotateByCopy' => false,
+            'except' => [
+                'yii\web\HttpException:401',
+                'yii\web\HttpException:404',
+            ],
+            'maskVars' => $maskVars
         ],
         [
-            'class' => 'app\services\logs\targets\SecurityFileTarget',
+            'class' => 'app\services\logs\targets\SecurityJSONStdErrTarget',
             'levels' => ['error'],
-            'maskVars' => $maskVars,
-            'maxFileSize' => 1024 * 50,
-            'maxLogFiles' => 20,
-            'rotateByCopy' => false,
+            'except' => [
+                'yii\web\HttpException:401',
+                'yii\web\HttpException:404',
+            ],
+            'maskVars' => $maskVars
         ],
     ],
 ];
