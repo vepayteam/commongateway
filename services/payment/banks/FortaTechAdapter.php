@@ -4,14 +4,16 @@
 namespace app\services\payment\banks;
 
 
+use app\Api\Client\Client;
 use app\models\TU;
+use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
-use app\services\ident\forms\IdentForm;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
@@ -36,6 +38,8 @@ use app\services\payment\forms\RefundPayForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use Faker\Provider\Base;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\RequestOptions;
 use Vepay\Gateway\Client\Validator\ValidationException;
 use Yii;
 use yii\helpers\Json;
@@ -52,6 +56,8 @@ class FortaTechAdapter implements IBankAdapter
     protected $bankUrl;
     /** @var PartnerBankGate */
     protected $gate;
+    /** @var Client */
+    protected $api;
 
     /**
      * @inheritDoc
@@ -64,6 +70,18 @@ class FortaTechAdapter implements IBankAdapter
         } else {
             $this->bankUrl = self::BANK_URL;
         }
+        $apiClientHeader = [
+            'Authorization' => 'Token: ' . $this->gate->Token,
+        ];
+        $config = [
+            RequestOptions::HEADERS => $apiClientHeader,
+        ];
+        $infoMessage = sprintf(
+            'partnerId=%d bankId=%d',
+            $this->gate->PartnerId,
+            $this->getBankId()
+        );
+        $this->api = new Client($config, $infoMessage);
     }
 
     /**
@@ -625,11 +643,40 @@ class FortaTechAdapter implements IBankAdapter
     }
 
     /**
-     * @inheritDoc
+     * @param GetBalanceRequest $getBalanceRequest
+     * @return GetBalanceResponse
+     * @throws BankAdapterResponseException
      */
-    public function getBalance(GetBalanceRequest $getBalanceRequest)
-    {
-        // TODO: Implement getBalance() method.
+    public function getBalance(
+        GetBalanceRequest $getBalanceRequest
+    ): GetBalanceResponse {
+        $endpoint = $this->bankUrl . '/api/wallets';
+        $type = $getBalanceRequest->accountType;
+        $currency = $getBalanceRequest->currency;
+        $getBalanceResponse = new GetBalanceResponse();
+        $getBalanceResponse->bank_name = $getBalanceRequest->bankName;
+        try {
+            $response = $this->api->request(
+                Client::METHOD_GET,
+                $endpoint
+            );
+        } catch (GuzzleException $e) {
+            throw new BankAdapterResponseException(
+                BankAdapterResponseException::REQUEST_ERROR_MSG . ' : ' . $e->getMessage()
+            );
+        }
+
+        if (!$response->isSuccess()) {
+            $errorMsg = 'Balance service:: FortaTech request failed for type: ' . $type;
+            throw new BankAdapterResponseException(
+                BankAdapterResponseException::setErrorMsg($errorMsg)
+            );
+        }
+        $responseData = $response->json('balance');
+        $getBalanceResponse->amount = (float)$responseData[0]['availableBalance'];
+        $getBalanceResponse->currency = $currency;
+        $getBalanceResponse->account_type = $type;
+        return $getBalanceResponse;
     }
 
     /**
@@ -640,7 +687,7 @@ class FortaTechAdapter implements IBankAdapter
         // TODO: Implement transferToAccount() method.
     }
 
-    public function ident(IdentForm $identForm)
+    public function identInit(Ident $ident)
     {
         throw new GateException('Метод недоступен');
     }
@@ -681,5 +728,20 @@ class FortaTechAdapter implements IBankAdapter
     private function maskCardNumber(string $cardNumber): string
     {
         return preg_replace('/(\d{6})(.+)(\d{4})/', '$1****$3', $cardNumber);
+    }
+    /**
+     * @throws GateException
+     */
+    public function currencyExchangeRates()
+    {
+        throw new GateException('Метод недоступен');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function identGetStatus(Ident $ident)
+    {
+        throw new GateException('Метод недоступен');
     }
 }
