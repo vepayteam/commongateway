@@ -4,13 +4,16 @@
 namespace app\services\payment\banks;
 
 
+use app\Api\Client\Client;
 use app\models\TU;
-use app\services\ident\forms\IdentForm;
+use app\services\ident\models\Ident;
+use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
@@ -28,7 +31,6 @@ use app\services\payment\forms\forta\CreatePayRequest;
 use app\services\payment\forms\forta\OutCardPayRequest;
 use app\services\payment\forms\forta\PaymentRequest;
 use app\services\payment\forms\forta\RefundPayRequest;
-use app\services\payment\forms\GetBalanceForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
@@ -36,6 +38,8 @@ use app\services\payment\forms\RefundPayForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use Faker\Provider\Base;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\RequestOptions;
 use Vepay\Gateway\Client\Validator\ValidationException;
 use Yii;
 use yii\helpers\Json;
@@ -52,6 +56,8 @@ class FortaTechAdapter implements IBankAdapter
     protected $bankUrl;
     /** @var PartnerBankGate */
     protected $gate;
+    /** @var Client */
+    protected $api;
 
     /**
      * @inheritDoc
@@ -64,6 +70,18 @@ class FortaTechAdapter implements IBankAdapter
         } else {
             $this->bankUrl = self::BANK_URL;
         }
+        $apiClientHeader = [
+            'Authorization' => 'Token: ' . $this->gate->Token,
+        ];
+        $config = [
+            RequestOptions::HEADERS => $apiClientHeader,
+        ];
+        $infoMessage = sprintf(
+            'partnerId=%d bankId=%d',
+            $this->gate->PartnerId,
+            $this->getBankId()
+        );
+        $this->api = new Client($config, $infoMessage);
     }
 
     /**
@@ -438,7 +456,8 @@ class FortaTechAdapter implements IBankAdapter
             CURLOPT_HTTPHEADER => $headers,
         ));
 
-        Yii::warning('FortaTechAdapter req uri=' . $uri .' : ' . Json::encode($data));
+        $maskedRequest = $this->maskRequestCardInfo($data);
+        Yii::warning('FortaTechAdapter req uri=' . $uri .' : ' . Json::encode($maskedRequest));
         $response = curl_exec($curl);
         Yii::warning('FortaTechAdapter response:' . $response);
         $curlError = curl_error($curl);
@@ -453,18 +472,19 @@ class FortaTechAdapter implements IBankAdapter
                 Json::encode($info)
             ));
             $response = $this->parseResponse($response);
+            $maskedResponse = $this->maskResponseCardInfo($response);
         } catch (\Exception $e) {
             throw new BankAdapterResponseException('Ошибка запроса');
         }
 
         if(empty($curlError) && ($info['http_code'] == 200 || $info['http_code'] == 201)) {
-            Yii::warning('FortaTechAdapter ans uri=' . $uri .' : ' . Json::encode($response));
+            Yii::warning('FortaTechAdapter ans uri=' . $uri .' : ' . Json::encode($maskedResponse));
             return $response;
         } elseif (isset($response['errors']['description'])) {
-            Yii::error('FortaTechAdapter ans uri=' . $uri .' : ' . Json::encode($response));
+            Yii::error('FortaTechAdapter ans uri=' . $uri .' : ' . Json::encode($maskedResponse));
             return $response;
         } elseif ($response['result'] == false && isset($response['message'])) {
-            Yii::error('FortaTechAdapter ans uri=' . $uri .' : ' . Json::encode($response));
+            Yii::error('FortaTechAdapter ans uri=' . $uri .' : ' . Json::encode($maskedResponse));
             return $response;
         } else {
             Yii::error('FortaTechAdapter error uri=' . $uri .' status=' . $info['http_code']);
@@ -508,7 +528,8 @@ class FortaTechAdapter implements IBankAdapter
 
         if(empty($curlError) && $info['http_code'] == 200) {
             $response = $this->parseResponse($response);
-            Yii::warning('FortaTechAdapter ans uri=' . $url .' : ' . Json::encode($response));
+            $maskedResponse = $this->maskResponseCardInfo($response);
+            Yii::warning('FortaTechAdapter ans uri=' . $url .' : ' . Json::encode($maskedResponse));
             return $response;
         } else {
             Yii::error('FortaTechAdapter error uri=' . $url .' status=' . $info['http_code']);
@@ -546,7 +567,8 @@ class FortaTechAdapter implements IBankAdapter
 
         if(empty($curlError) && $info['http_code'] == 200) {
             $response = $this->parseResponse($response);
-            Yii::warning('FortaTechAdapter ans uri=' . $url .' : ' . Json::encode($response));
+            $maskedResponse = $this->maskResponseCardInfo($response);
+            Yii::warning('FortaTechAdapter ans uri=' . $url .' : ' . Json::encode($maskedResponse));
             return $response;
         } else {
             Yii::error('FortaTechAdapter error uri=' . $url .' status=' . $info['http_code']);
@@ -584,7 +606,8 @@ class FortaTechAdapter implements IBankAdapter
 
         if (empty($curlError) && $info['http_code'] == 200) {
             $response = $this->parseResponse($response);
-            Yii::warning('FortaTechAdapter ans uri=' . $url . ' : ' . Json::encode($response));
+            $maskedResponse = $this->maskResponseCardInfo($response);
+            Yii::warning('FortaTechAdapter ans uri=' . $url . ' : ' . Json::encode($maskedResponse));
             return $response;
         } else {
             Yii::error('FortaTechAdapter error uri=' . $url . ' status=' . $info['http_code']);
@@ -620,11 +643,40 @@ class FortaTechAdapter implements IBankAdapter
     }
 
     /**
-     * @inheritDoc
+     * @param GetBalanceRequest $getBalanceRequest
+     * @return GetBalanceResponse
+     * @throws BankAdapterResponseException
      */
-    public function getBalance(GetBalanceForm $getBalanceForm)
-    {
-        // TODO: Implement getBalance() method.
+    public function getBalance(
+        GetBalanceRequest $getBalanceRequest
+    ): GetBalanceResponse {
+        $endpoint = $this->bankUrl . '/api/wallets';
+        $type = $getBalanceRequest->accountType;
+        $currency = $getBalanceRequest->currency;
+        $getBalanceResponse = new GetBalanceResponse();
+        $getBalanceResponse->bank_name = $getBalanceRequest->bankName;
+        try {
+            $response = $this->api->request(
+                Client::METHOD_GET,
+                $endpoint
+            );
+        } catch (GuzzleException $e) {
+            throw new BankAdapterResponseException(
+                BankAdapterResponseException::REQUEST_ERROR_MSG . ' : ' . $e->getMessage()
+            );
+        }
+
+        if (!$response->isSuccess()) {
+            $errorMsg = 'Balance service:: FortaTech request failed for type: ' . $type;
+            throw new BankAdapterResponseException(
+                BankAdapterResponseException::setErrorMsg($errorMsg)
+            );
+        }
+        $responseData = $response->json('balance');
+        $getBalanceResponse->amount = (float)$responseData[0]['availableBalance'];
+        $getBalanceResponse->currency = $currency;
+        $getBalanceResponse->account_type = $type;
+        return $getBalanceResponse;
     }
 
     /**
@@ -635,7 +687,60 @@ class FortaTechAdapter implements IBankAdapter
         // TODO: Implement transferToAccount() method.
     }
 
-    public function ident(IdentForm $identForm)
+    public function identInit(Ident $ident)
+    {
+        throw new GateException('Метод недоступен');
+    }
+
+    private function maskRequestCardInfo(array $data): array
+    {
+        // CreatePayRequest model
+        if (isset($data['cardNumber'])) {
+            $data['cardNumber'] = $this->maskCardNumber($data['cardNumber']);
+        }
+
+        // CreatePayRequest model
+        if (isset($data['cvv'])) {
+            $data['cvv'] = '***';
+        }
+
+        // OutCardPayRequest model
+        if (isset($data['cards']) && is_array($data['cards'])) {
+            foreach ($data['cards'] as &$card) {
+                $card['card'] = $this->maskCardNumber($card['card']);
+            }
+        }
+
+        return $data;
+    }
+
+    private function maskResponseCardInfo(array $response): array
+    {
+        if (isset($response['data']) && isset($response['data']['cards'])) {
+            foreach ($response['data']['cards'] as &$card) {
+                $card['card'] = $this->maskCardNumber($card['card']);
+            }
+        }
+
+        return $response;
+    }
+
+    private function maskCardNumber(string $cardNumber): string
+    {
+        return preg_replace('/(\d{6})(.+)(\d{4})/', '$1****$3', $cardNumber);
+    }
+    /**
+     * @throws GateException
+     */
+    public function currencyExchangeRates()
+    {
+        throw new GateException('Метод недоступен');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function identGetStatus(Ident $ident)
     {
         throw new GateException('Метод недоступен');
     }

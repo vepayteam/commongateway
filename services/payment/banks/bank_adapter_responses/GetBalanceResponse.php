@@ -1,14 +1,15 @@
 <?php
 
-
 namespace app\services\payment\banks\bank_adapter_responses;
 
-
-use yii\base\Model;
-
-class GetBalanceResponse extends Model
+class GetBalanceResponse
 {
+    /** @var string */
+    public $bank_name = "";
     /** @var float */
-    public $balance;
-
+    public $amount;
+    /** @var string */
+    public $currency;
+    /** @var int */
+    public $account_type;
 }

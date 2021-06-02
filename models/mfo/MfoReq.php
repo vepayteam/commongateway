@@ -113,6 +113,19 @@ class MfoReq
         return $this->req;
     }
 
+    /**
+     * @param string|null $field
+     * @return array|mixed
+     */
+    public function getRequestData(string $field = null)
+    {
+        $data = $this->Req();
+        if (!is_null($field)) {
+            $data = (isset($data[$field])) ? $data[$field] : null;
+        }
+        return $data;
+    }
+
     public function GetReq($fld, $defval = null)
     {
         return isset($this->req[$fld]) ? $this->req[$fld] : $defval;

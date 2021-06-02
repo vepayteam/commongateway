@@ -35,12 +35,12 @@ class MerchantPayCreateStrategy
         /** @var Uslugatovar $uslugatovar */
         $uslugatovar = $this->getUslugatovar();
         Yii::warning('getUslugatovar extid=' . $this->payForm->extid, 'merchant');
-        if(!$uslugatovar) {
+        if (!$uslugatovar) {
             throw new GateException('Услуга не найдена');
         }
 
         $validateErrors = $this->getPaymentService()->validatePaySchetWithUslugatovar($this->payForm, $uslugatovar);
-        if(count($validateErrors) > 0) {
+        if (count($validateErrors) > 0) {
             throw new GateException($validateErrors[0]);
         }
 
@@ -50,7 +50,8 @@ class MerchantPayCreateStrategy
 
         Yii::warning('getReplyRequest extid=' . $this->payForm->extid, 'merchant');
         $replyPaySchet = $this->getReplyRequest($bankAdapterBuilder);
-        if($replyPaySchet && $replyPaySchet->SummPay == $this->payForm->amount) {
+
+        if ($replyPaySchet && $replyPaySchet->SummPay == $this->payForm->amount) {
             return $replyPaySchet;
         } elseif ($replyPaySchet && $replyPaySchet->SummPay != $this->payForm->amount) {
             throw new CreatePayException('Нарушение уникальности запроса');
@@ -114,6 +115,12 @@ class MerchantPayCreateStrategy
         $paySchet->sms_accept = 1;
         $paySchet->FIO = $this->payForm->fullname;
         $paySchet->Dogovor = $this->payForm->document_id;
+
+        //TODO: client personal data save to other db
+        //TODO: add address, city, country, login, phone, zip
+        if ($this->payForm->client && $this->payForm->client['email']) {
+            $paySchet->UserEmail = $this->payForm->client['email'];
+        }
 
         if (!$paySchet->save()) {
             throw new CreatePayException('Не удалось создать счет');
