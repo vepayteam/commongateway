@@ -13,6 +13,7 @@ use app\models\payonline\CreatePay;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\CardRegForm;
+use app\services\payment\models\PaySchet;
 use app\services\payment\payment_strategies\mfo\MfoCardRegStrategy;
 use Yii;
 use yii\base\Exception;
@@ -194,6 +195,10 @@ class CardController extends Controller
                 'status' => 2,
                 'message' => 'Платеж не успешный'
             ];
+        }
+
+        if($statePay == PaySchet::STATUS_WAITING) {
+            return ['status' => 0, 'message' => 'В обработке'];
         }
 
         $Card = $kfCard->FindKardByPay($mfo->mfo, $type);
