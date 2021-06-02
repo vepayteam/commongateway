@@ -786,11 +786,7 @@
             $('#recurrentpaytabs a').on('click', function () {
                 let id = $(this).attr('href');
                 $('input[name="graphtype"]').val(id[5]);
-                if (id == '#auto') {
-                    lk.recurrentcardformload();
-                } else {
-                    lk.statrekurrentload();
-                }
+                lk.recurrentcardformload();
             });
         },
 
@@ -816,44 +812,6 @@
                     }
                 },
                 error: function (data) {
-                    $('#recurrentcardform').closest('.ibox-content').toggleClass('sk-loading');
-                    $('#recurrentcardresult').html("Ошибка запроса");
-                }
-            });
-        },
-
-        statrekurrentload: function () {
-            if (linklink) {
-                linklink.abort();
-            }
-            linklink = $.ajax({
-                type: "POST",
-                url: '/partner/stat/recurrentpaysdata',
-                data: $('#recurrentcardform').serialize(),
-                beforeSend: function () {
-                    $("#recurrentcardresult").empty();
-                    $('#recurrentcardresult').parent().attr('style', 'background-color: #fff;')
-                    $('#recurrentcardform').closest('.ibox-content').toggleClass('sk-loading');
-                },
-                success: function (data) {
-                    $('#recurrentcardform').closest('.ibox-content').toggleClass('sk-loading');
-                    if (data.status == 1) {
-                        Morris.Line({
-                            element: 'recurrentcardresult',
-                            data: data.data,
-                            xkey: 'x',
-                            ykeys: ['a'],
-                            labels: [data.label],
-                            lineColors: ['#f46f2a'],
-                            hideHover: 'auto',
-                            parseTime: false,
-                            resize: true
-                        });
-                    } else {
-                        $('#recurrentcardresult').html(data.message);
-                    }
-                },
-                error: function () {
                     $('#recurrentcardform').closest('.ibox-content').toggleClass('sk-loading');
                     $('#recurrentcardresult').html("Ошибка запроса");
                 }

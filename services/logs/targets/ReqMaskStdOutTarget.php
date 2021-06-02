@@ -9,7 +9,7 @@ class ReqMaskStdOutTarget extends Target
 {
     use ReqMaskTargetTrait;
 
-    private $stream;
+    public $stream;
 
     public function __construct($config = [])
     {
