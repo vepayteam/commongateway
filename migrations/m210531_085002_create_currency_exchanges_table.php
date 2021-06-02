@@ -16,8 +16,8 @@ class m210531_085002_create_currency_exchanges_table extends Migration
         $this->createTable(CurrencyExchange::tableName(), [
             'Id' => $this->primaryKey(),
             'BankId' => $this->integer()->unsigned(),
-            'From' => $this->string(5),
-            'To' => $this->string(5),
+            'From' => $this->string(3),
+            'To' => $this->string(3),
             'Rate' => $this->float(),
             'CreatedAt' => $this->timestamp(),
         ]);
