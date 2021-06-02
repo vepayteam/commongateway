@@ -6,6 +6,7 @@ namespace app\models;
 
 class TU
 {
+    // TODO: merge with UslugatovarType
     public static $JKH = 0; //оплата жкх
     public static $REGCARD = 1; //регистрация карты
     public static $ECOM = 2; //оплата еком
@@ -20,6 +21,7 @@ class TU
     public static $VYVODPAYS = 19; //перечисление платежей
     public static $REVERSCOMIS = 21; //возмещение комиссии
     public static $PEREVPAYS = 23; //перевод на выдачу
+    public static $IDENT = 24; //идентификация
 
     public static $JKHPARTS = 100; //оплата жкх с разбивкой
     public static $ECOMPARTS = 102; //оплата еком с разбивкой

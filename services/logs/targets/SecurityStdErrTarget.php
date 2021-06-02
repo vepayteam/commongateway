@@ -9,7 +9,7 @@ use yii\log\Target;
 class SecurityStdErrTarget extends Target
 {
     use SecurityTargetTrait;
-    private $stream;
+    public $stream;
 
     public function __construct($config = [])
     {
@@ -25,6 +25,6 @@ class SecurityStdErrTarget extends Target
     
     public function dump($log)
     {
-        fwrite($this->stream, $log);
+        fwrite($this->stream, $log . "\n");
     }
 }
