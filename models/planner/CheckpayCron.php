@@ -67,7 +67,10 @@ class CheckpayCron
                     $isCheckedTimeExecQuery = true;
                 }
 
+                /** @var PaySchet $paySchet */
                 foreach ($paySchets as $paySchet) {
+                    $paySchet->Status = PaySchet::STATUS_WAITING_CHECK_STATUS;
+                    $paySchet->ErrorInfo = 'Ожидает запрос статуса';
                     $paySchet->save(false);
                     Yii::warning('CheckpayCron checkStatePay pushed: ID=' . $paySchet->ID);
                     Yii::$app->queue->push(new RefreshStatusPayJob([

@@ -6,15 +6,15 @@ return [
     'robotEmail' => 'robot@vepay.online',
     'infoEmail' => 'support@vepay.online',
     'buhEmail' => 'support@vepay.online',
-    'DEVMODE' => 'N',
+    'DEVMODE' => boolval(getenv('DEVMODE', true)) ? 'Y' : 'N',
     'TESTMODE' => 'Y',
     'accountServiceUrl' => '',
-	'key' => '',
-    'keycancel' => '',
+	'key' => '4l80z8E9s0',
+    'keycancel' => 'Q0YimN4R5rPL3uld8094Rz85E4E5h93sR0',
     'info' => [
-        'email' => '',
-        'phone' => '',
-        'address' => '',
+        'email' => 'support@vepay.online',
+        'phone' => '+7 (499) 954-84-95',
+        'address' => 'Москва, Нижний Сусальный переулок, 5с18',
     ],
     'tcb' => [
         'id' => '',
@@ -32,7 +32,6 @@ return [
         'id' => '',
         'key' => '',
     ],
-
     'kkt' => [
         'urlico' => '',
         'inn' => "",
@@ -83,4 +82,5 @@ return [
     ],
     'login_user_token_valid_time' => 60*60,
     'support_email' => 'support@vepay.online',
+        'remote_ip' => getenv('REMOTE_IP', true)
 ];

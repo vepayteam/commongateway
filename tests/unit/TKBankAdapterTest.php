@@ -1,5 +1,7 @@
 <?php
 
+use app\services\ident\models\Ident;
+use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CreatePayForm;
@@ -40,24 +42,6 @@ class TKBankAdapterTest extends \Codeception\Test\Unit
     {
         $tKBankAdapter = new TKBankAdapter();
         $this->assertIsInt($tKBankAdapter->getBankId());
-    }
-
-    public function testBeginPay()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->assertEquals(['error' => 1], $tKBankAdapter->beginPay(['IdPay' => null]));
-    }
-
-    public function testСonfirmPay()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->assertEquals(['status' => 0, 'message' => '', 'rc' => '', 'IdPay' => 0, 'Params' => null, 'info' => null], $tKBankAdapter->confirmPay(null));
-    }
-
-    public function testReversOrder()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->assertEquals(['state' => 0, 'Status' => '', 'message' => ''], $tKBankAdapter->reversOrder(null));
     }
 
     public function testCreateTisket()
@@ -174,208 +158,6 @@ class TKBankAdapterTest extends \Codeception\Test\Unit
         $this->assertEquals('DJRRXBXlCVuKh6ULoN87847QX+Y=', $HmacSha1->invoke($tKBankAdapter, 'test', 'test'));
     }
 
-    public function testRegisterCard()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->assertEquals('', $tKBankAdapter->registerCard(null, null));
-    }
-
-    public function testPayCard()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->assertEquals('', $tKBankAdapter->payCard(null, null, null));
-    }
-
-    public function testTransferToCard()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->expectException(yii\base\ErrorException::class);
-        $this->assertEquals('', $tKBankAdapter->transferToCard(['IdPay' => null, 'summ' => 0, 'CardNum' => 0]));
-    }
-
-    public function testTransferToAccount()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->expectException(yii\base\ErrorException::class);
-        $this->assertEquals('', $tKBankAdapter->transferToAccount(['IdPay' => null, 'summ' => 0, 'CardNum' => 0, 'account' => null, 'bic' => null, 'name' => null, 'descript' => '']));
-    }
-
-    public function testTransferToNdfl()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->expectException(yii\base\ErrorException::class);
-        $this->assertEquals('', $tKBankAdapter->transferToNdfl([]));
-    }
-
-    public function testPersonIndent()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->expectException(yii\base\ErrorException::class);
-        $this->assertEquals('', $tKBankAdapter->personIndent(0, ['nam' => null, 'fam' => null, 'otc' => null, 'paspser' => null, 'paspnum' => null]));
-    }
-
-    public function testPersonGetIndentResult()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->expectException(yii\base\ErrorException::class);
-        $this->assertEquals('', $tKBankAdapter->personGetIndentResult(0));
-    }
-
-    public function testFormPayOnly()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->expectException(yii\base\ErrorException::class);
-        $this->assertEquals('', $tKBankAdapter->formPayOnly([]));
-    }
-
-    public function testCreateAutoPay()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->expectException(yii\base\ErrorException::class);
-        $this->assertEquals('', $tKBankAdapter->createAutoPay([]));
-    }
-
-    public function testCreateRecurrentPay()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->expectException(yii\base\ErrorException::class);
-        $this->assertEquals('', $tKBankAdapter->createRecurrentPay([]));
-    }
-
-    public function testGetBalance()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->expectException(yii\base\ErrorException::class);
-        $this->assertEquals('', $tKBankAdapter->getBalance());
-    }
-
-    public function testGetBalanceAcc()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->expectException(yii\base\ErrorException::class);
-        $this->assertEquals('', $tKBankAdapter->getBalanceAcc([]));
-    }
-
-    public function testGetStatement()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->expectException(yii\base\ErrorException::class);
-        $this->assertEquals('', $tKBankAdapter->getStatement([]));
-    }
-
-    public function testGetStatementNominal()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->expectException(yii\base\ErrorException::class);
-        $this->assertEquals('', $tKBankAdapter->getStatementNominal([]));
-    }
-
-    public function testGetStatementAbs()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->expectException(yii\base\ErrorException::class);
-        $this->assertEquals('', $tKBankAdapter->getStatementAbs([]));
-    }
-
-    public function testActivateCard()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->expectException(yii\base\ErrorException::class);
-        $this->assertEquals('', $tKBankAdapter->ActivateCard(0, []));
-    }
-
-    public function testSimpleActivateCard()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->expectException(yii\base\ErrorException::class);
-        $this->assertEquals('', $tKBankAdapter->SimpleActivateCard(0, []));
-    }
-
-    public function testStateActivateCard()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->expectException(yii\base\ErrorException::class);
-        $this->assertEquals('', $tKBankAdapter->StateActivateCard(0));
-    }
-
-    public function testGetBinDBInfo()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->expectException(yii\base\ErrorException::class);
-        $this->assertEquals('', $tKBankAdapter->GetBinDBInfo(0));
-    }
-
-    public function testPayXml()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->expectException(yii\base\ErrorException::class);
-        $this->assertEquals('', $tKBankAdapter->PayXml([]));
-    }
-
-    public function testPayApple()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->assertEquals(['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0], $tKBankAdapter->PayApple([]));
-    }
-
-    public function testPayGoogle()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->assertEquals(['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0], $tKBankAdapter->PayGoogle([]));
-    }
-
-    public function testPaySamsung()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->assertEquals(['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0], $tKBankAdapter->PaySamsung([]));
-    }
-
-    public function testConfirmXml()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->expectException(yii\base\ErrorException::class);
-        $this->assertEquals('', $tKBankAdapter->ConfirmXml([]));
-    }
-
-    public function testRegisterBenificiar()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $this->expectException(yii\base\ErrorException::class);
-        $this->assertEquals('', $tKBankAdapter->RegisterBenificiar([]));
-    }
-
-    public function testGetCardType()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $tKBankAdapterReflectionClass = new ReflectionClass(TKBankAdapter::class);
-        $GetCardType = $tKBankAdapterReflectionClass->getMethod('GetCardType');
-        $GetCardType->setAccessible(true);
-        $this->assertEquals(0, $GetCardType->invoke($tKBankAdapter, 'VISA'));
-        $this->assertEquals(1, $GetCardType->invoke($tKBankAdapter, 'MASTER'));
-        $this->assertEquals(2, $GetCardType->invoke($tKBankAdapter, 'MIR'));
-        $this->assertEquals(3, $GetCardType->invoke($tKBankAdapter, 'AMERICANEXPRESS'));
-        $this->assertEquals(4, $GetCardType->invoke($tKBankAdapter, 'JCB'));
-        $this->assertEquals(5, $GetCardType->invoke($tKBankAdapter, 'DINNERS'));
-        $this->assertEquals(0, $GetCardType->invoke($tKBankAdapter, 'TEST'));
-    }
-
-    public function testBuildSoapRequestRawBody()
-    {
-        $tKBankAdapter = new TKBankAdapter();
-        $tKBankAdapterReflectionClass = new ReflectionClass(TKBankAdapter::class);
-        $buildSoapRequestRawBody = $tKBankAdapterReflectionClass->getMethod('buildSoapRequestRawBody');
-        $buildSoapRequestRawBody->setAccessible(true);
-        $this->assertEquals(null, $buildSoapRequestRawBody->invoke($tKBankAdapter, null, null));
-    }
-
-    public function testCreatePay()
-    {
-        $createPayForm = $this->getMockBuilder(CreatePayForm::class)->getMock();
-        $tKBankAdapter = new TKBankAdapter();
-        $this->expectException(yii\base\ErrorException::class);
-        $this->assertEquals('', $tKBankAdapter->createPay($createPayForm));
-    }
-
     public function testCreatePay3DSv1()
     {
         $createPayForm = $this->getMockBuilder(CreatePayForm::class)->getMock();
@@ -470,5 +252,30 @@ class TKBankAdapterTest extends \Codeception\Test\Unit
         $refundPay->setAccessible(true);
         $this->expectException(yii\base\ErrorException::class);
         $this->assertEquals(null, $refundPay->invoke($tKBankAdapter, $refundPayForm));
+    }
+
+    public function testIdentInit()
+    {
+        /** @var Ident $ident */
+        $ident = $this->getMockBuilder(\app\services\ident\models\Ident::class)->getMock();
+        $tkBankAdapter = new TKBankAdapter();
+        $identInitResponse = $tkBankAdapter->identInit($ident);
+
+        $this->assertTrue($identInitResponse->status == BaseResponse::STATUS_DONE);
+    }
+
+    public function testIdentGetStatus()
+    {
+        /** @var Ident $ident */
+        $ident = $this->getMockBuilder(\app\services\ident\models\Ident::class)->getMock();
+        $gate = new PartnerBankGate();
+        $gate->Login = 'test';
+        $gate->Token = 'test';
+        $gate->Password = 'test';
+        $tkBankAdapter = new TKBankAdapter();
+        $tkBankAdapter->setGate($gate);
+        $identInitResponse = $tkBankAdapter->identGetStatus($ident);
+
+        $this->assertTrue($identInitResponse->status == BaseResponse::STATUS_DONE);
     }
 }

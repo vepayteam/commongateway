@@ -4,13 +4,18 @@
 namespace app\services\payment\banks;
 
 
+use app\models\payonline\Cards;
 use app\models\payonline\Uslugatovar;
 use app\models\TU;
+use app\services\ident\models\Ident;
+use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
+use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\exceptions\BankAdapterResponseException;
@@ -20,16 +25,19 @@ use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\RefundPayException;
 use app\services\payment\exceptions\BRSAdapterExeception;
 use app\services\payment\forms\AutoPayForm;
+use app\services\payment\forms\brs\CheckStatusPayOutAccountRequest;
 use app\services\payment\forms\brs\CheckStatusPayOutCardRequest;
 use app\services\payment\forms\brs\IXmlRequest;
 use app\services\payment\forms\brs\OutCardPayCheckRequest;
 use app\services\payment\forms\brs\OutCardPayRequest;
+use app\services\payment\forms\brs\TransferToAccountRequest;
 use app\services\payment\forms\brs\XmlRequest;
 use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
+use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\forms\brs\CreatePayAftRequest;
 use app\services\payment\forms\brs\CreatePayByRegCardRequest;
@@ -57,6 +65,7 @@ class BRSAdapter implements IBankAdapter
 
     protected $bankUrl;
     protected $bankUrl3DS;
+    protected $bankUrlB2C;
 
     protected $bankUrlXml;
 
@@ -65,6 +74,9 @@ class BRSAdapter implements IBankAdapter
 
     const BANK_URL_3DS = 'https://securepay.rsb.ru/ecomm2/ClientHandler';
     const BANK_URL_3DS_TEST = 'https://testsecurepay.rsb.ru/ecomm2/ClientHandler';
+
+    const BANK_URL_B2C = 'https://212.46.217.150:7603';
+    const BANK_URL_B2C_TEST = 'https://212.46.217.150:7601';
 
     const BANK_URL_XML = 'https://194.67.29.215:8443';
     const BANK_URL_XML_TEST = 'https://194.67.29.216:8443';
@@ -80,10 +92,12 @@ class BRSAdapter implements IBankAdapter
             $this->bankUrl = self::BANK_URL_TEST;
             $this->bankUrl3DS = self::BANK_URL_3DS_TEST;
             $this->bankUrlXml = self::BANK_URL_XML_TEST;
+            $this->bankUrlB2C = self::BANK_URL_B2C_TEST;
         } else {
             $this->bankUrl = self::BANK_URL;
             $this->bankUrl3DS = self::BANK_URL_3DS;
             $this->bankUrlXml = self::BANK_URL_XML;
+            $this->bankUrlB2C = self::BANK_URL_B2C;
         }
     }
 
@@ -103,22 +117,6 @@ class BRSAdapter implements IBankAdapter
         $confirmPayResponse = new ConfirmPayResponse();
         $confirmPayResponse->status = BaseResponse::STATUS_DONE;
         return $confirmPayResponse;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function confirmPay($idpay, $org = 0, $isCron = false)
-    {
-        // TODO: Implement confirmPay() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function transferToCard(array $data)
-    {
-        // TODO: Implement transferToCard() method.
     }
 
     /**
@@ -186,61 +184,43 @@ class BRSAdapter implements IBankAdapter
     /**
      * @inheritDoc
      */
-    public function PayXml(array $params)
-    {
-        // TODO: Implement PayXml() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function PayApple(array $params)
-    {
-        // TODO: Implement PayApple() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function PayGoogle(array $params)
-    {
-        // TODO: Implement PayGoogle() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function PaySamsung(array $params)
-    {
-        // TODO: Implement PaySamsung() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function ConfirmXml(array $params)
-    {
-        // TODO: Implement ConfirmXml() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function reversOrder($IdPay)
-    {
-        // TODO: Implement reversOrder() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function checkStatusPay(OkPayForm $okPayForm)
     {
         if($okPayForm->getPaySchet()->uslugatovar->IsCustom == TU::$TOCARD) {
             return $this->checkStatusPayOutCard($okPayForm);
+        } elseif ($okPayForm->getPaySchet()->uslugatovar->IsCustom == TU::$TOSCHET) {
+            return $this->checkStatusPayOutSchet($okPayForm);
         } else {
             return $this->checkStatusPayBase($okPayForm);
         }
+    }
+
+    /**
+     * @param OkPayForm $okPayForm
+     * @return CheckStatusPayResponse
+     */
+    protected function checkStatusPayOutSchet(OkPayForm $okPayForm)
+    {
+        $uri = '/eis-app/eis-rs/businessPaymentService/getB2cStatus';
+        $checkStatusPayOutAccountRequest = new CheckStatusPayOutAccountRequest();
+        $checkStatusPayOutAccountRequest->sourceId = (string)$okPayForm->IdPay;
+        $checkStatusPayOutAccountRequest->operationId = (string)$okPayForm->getPaySchet()->ExtBillNumber;
+
+        $checkStatusPayResponse = new CheckStatusPayResponse();
+        try {
+            $ans = $this->sendPostB2CRequest($uri, $checkStatusPayOutAccountRequest->getAttributes());
+            if(isset($ans['code']) && $ans['code'] == 0) {
+                $checkStatusPayResponse->status = BaseResponse::STATUS_DONE;
+            } else {
+                $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
+            }
+
+            $checkStatusPayResponse->message = ($ans['message'] ?? '');
+        } catch (BankAdapterResponseException $e) {
+            $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
+            $checkStatusPayResponse->message = 'Ошибка запроса';
+        }
+        return $checkStatusPayResponse;
     }
 
     /**
@@ -396,7 +376,8 @@ class BRSAdapter implements IBankAdapter
             CURLOPT_TIMEOUT => 120,
         ));
 
-        Yii::warning('BRSAdapter req uri=' . $uri .' : ' . Json::encode($data));
+        $requestDataLog = Cards::MaskCardLog(Json::encode($data));
+        Yii::warning('BRSAdapter req uri=' . $uri .' : ' . $requestDataLog);
         $response = curl_exec($curl);
         $curlError = curl_error($curl);
         $info = curl_getinfo($curl);
@@ -573,5 +554,235 @@ class BRSAdapter implements IBankAdapter
     public function getAftMinSum()
     {
         return self::AFT_MIN_SUMM;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getBalance(GetBalanceRequest $getBalanceRequest)
+    {
+        throw new GateException('Метод недоступен');
+    }
+
+    /**
+     * @return mixed|null
+     * @throws BankAdapterResponseException
+     */
+    public function getBankReceiver()
+    {
+        $uri = '/eis-app/eis-rs/businessPaymentService/getFpsReference';
+        $ans = $this->sendGetB2CRequest($uri);
+        return $ans;
+    }
+
+    /**
+     * @param $uri
+     * @return mixed|null
+     * @throws BankAdapterResponseException
+     */
+    protected function sendGetB2CRequest($uri)
+    {
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => $this->bankUrlB2C . $uri,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 120,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'GET',
+            CURLOPT_SSL_VERIFYPEER => 0,
+            CURLOPT_SSL_VERIFYHOST => 0,
+            CURLOPT_SSLCERTTYPE => 'PEM',
+            CURLOPT_SSLKEYTYPE => 'PEM',
+            CURLOPT_SSLCERT => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.pem'),
+            CURLOPT_SSLKEY => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.key'),
+            CURLOPT_HTTPHEADER => [
+                'x-User-Login: ' . $this->gate->Login,
+            ],
+        ));
+
+        Yii::warning('BRSAdapter req GET uri=' . $uri);
+        $response = curl_exec($curl);
+        $curlError = curl_error($curl);
+        $info = curl_getinfo($curl);
+
+        if(empty($curlError) && $info['http_code'] == 200) {
+            $response = Json::decode($response, true);
+            Yii::warning('BRSAdapter ans GET uri=' . $uri .' : ' . Json::encode($response));
+            return $response;
+        } else {
+            Yii::error('BRSAdapter error GET uri=' . $uri .' status=' . $info['http_code']);
+            throw new BankAdapterResponseException('Ошибка запроса: ' . $curlError);
+        }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function transferToAccount(OutPayAccountForm $outPayaccForm)
+    {
+        if($outPayaccForm->scenario != OutPayAccountForm::SCENARIO_FL) {
+            throw new GateException('Перечисление денежны средств фозможно только для физ. лиц');
+        }
+
+        $uri = '/eis-app/eis-rs/businessPaymentService/requestTransferB2c';
+        $transferToAccountRequest = new TransferToAccountRequest();
+        $transferToAccountRequest->bic = $outPayaccForm->bic;
+        $transferToAccountRequest->receiverId = (string)$outPayaccForm->paySchet->ID;
+        $transferToAccountRequest->merchantId = $this->gate->Token;
+        $transferToAccountRequest->firstName = $outPayaccForm->getFirstName();
+        $transferToAccountRequest->lastName = $outPayaccForm->getLastName();
+        $transferToAccountRequest->middleName = $outPayaccForm->getLastName();
+        $transferToAccountRequest->amount = $outPayaccForm->amount;
+        $transferToAccountRequest->account = (string)$outPayaccForm->account;
+        $transferToAccountRequest->sourceId = (string)$outPayaccForm->paySchet->ID;
+
+        if(Yii::$app->params['TESTMODE'] == 'Y') {
+            $transferToAccountRequest->account = '40702810200000007194';
+            $transferToAccountRequest->bic = '044525151';
+            $transferToAccountRequest->receiverId = '0079167932356';
+            $transferToAccountRequest->firstName = 'Максим';
+            $transferToAccountRequest->lastName = 'Филин';
+            $transferToAccountRequest->middleName = 'Сергеевич';
+        }
+
+        $requestData = $transferToAccountRequest->getAttributes();
+        $requestData['msgSign'] = $transferToAccountRequest->getMsgSign($this->gate);
+        $transferToAccountResponse = new TransferToAccountResponse();
+
+        try {
+            $ans = $this->sendPostB2CRequest($uri, $requestData);
+            if(isset($ans['code']) && $ans['code'] == 0) {
+                $transferToAccountResponse->status = BaseResponse::STATUS_DONE;
+                $transferToAccountResponse->message = $ans['message'];
+                $transferToAccountResponse->trans = ($ans['operationId'] ?? '');
+            } else {
+                $transferToAccountResponse->status = BaseResponse::STATUS_DONE;
+                $transferToAccountResponse->message = ($ans['message'] ?? 'Ошибка запроса');
+            }
+        } catch (BankAdapterResponseException $e) {
+            $transferToAccountResponse->status = BaseResponse::STATUS_ERROR;
+            $transferToAccountResponse->message = $e->getMessage();
+        }
+        return $transferToAccountResponse;
+    }
+
+    /**
+     * @param string $uri
+     * @param array $data
+     * @return mixed|null
+     * @throws BankAdapterResponseException
+     */
+    protected function sendPostB2CRequest(string $uri, array $data)
+    {
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => $this->bankUrlB2C . $uri,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 120,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_SSL_VERIFYPEER => 0,
+            CURLOPT_SSL_VERIFYHOST => 0,
+            CURLOPT_SSLCERTTYPE => 'PEM',
+            CURLOPT_SSLKEYTYPE => 'PEM',
+            CURLOPT_SSLCERT => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.pem'),
+            CURLOPT_SSLKEY => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.key'),
+            CURLOPT_POSTFIELDS => Json::encode($data),
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'x-User-Login: ' . $this->gate->Login,
+            ],
+        ));
+
+        Yii::warning('BRSAdapter req POST uri=' . $uri . '; data=' . Json::encode($data));
+        $response = curl_exec($curl);
+        $curlError = curl_error($curl);
+        $info = curl_getinfo($curl);
+
+        if(empty($curlError)) {
+            try {
+                $response = Json::decode($response, true);
+                Yii::warning('BRSAdapter ans POST uri=' . $uri .' : ' . Json::encode($response) . '; data=' . Json::encode($data));
+                return $response;
+            } catch (\Exception $e) {
+                throw new BankAdapterResponseException($e->getMessage());
+            }
+        } else {
+            Yii::error('BRSAdapter error POST uri=' . $uri .'; status=' . $info['http_code'] . '; data=' . Json::encode($data));
+            throw new BankAdapterResponseException('Ошибка запроса: ' . $curlError);
+        }
+    }
+
+    /**
+     * @param OutPayAccountForm $outPayaccForm
+     * @return bool
+     */
+    public function checkTransfetB2C(OutPayAccountForm $outPayaccForm)
+    {
+        // TODO: DRY
+        $uri = '/eis-app/eis-rs/businessPaymentService/checkTransferB2c';
+        $id = Yii::$app->security->generateRandomString(16);
+        $transferToAccountRequest = new TransferToAccountRequest();
+        $transferToAccountRequest->bic = $outPayaccForm->bic;
+        $transferToAccountRequest->receiverId = $id;
+        $transferToAccountRequest->merchantId = $this->gate->Token;
+        $transferToAccountRequest->firstName = $outPayaccForm->getFirstName();
+        $transferToAccountRequest->lastName = $outPayaccForm->getLastName();
+        $transferToAccountRequest->middleName = $outPayaccForm->getLastName();
+        $transferToAccountRequest->amount = $outPayaccForm->amount;
+        $transferToAccountRequest->account = $outPayaccForm->account;
+        $transferToAccountRequest->sourceId = $id;
+
+        if(Yii::$app->params['TESTMODE'] == 'Y') {
+            $transferToAccountRequest->account = '40702810200000007194';
+            $transferToAccountRequest->bic = '044525151';
+            $transferToAccountRequest->receiverId = '0079167932356';
+            $transferToAccountRequest->firstName = 'Максим';
+            $transferToAccountRequest->lastName = 'Филин';
+            $transferToAccountRequest->middleName = 'Сергеевич';
+        }
+
+        $requestData = $transferToAccountRequest->getAttributes();
+        $requestData['msgSign'] = $transferToAccountRequest->getMsgSign($this->gate);
+
+        try {
+            $ans = $this->sendPostB2CRequest($uri, $requestData);
+            if(isset($ans['code']) && $ans['code'] == 0) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (BankAdapterResponseException $e) {
+            return false;
+        }
+    }
+
+    public function identInit(Ident $ident)
+    {
+        throw new GateException('Метод недоступен');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function identGetStatus(Ident $ident)
+    {
+        // TODO: Implement ident() method.
+    }
+
+    /**
+     * @throws GateException
+     */
+    public function currencyExchangeRates()
+    {
+        throw new GateException('Метод недоступен');
     }
 }

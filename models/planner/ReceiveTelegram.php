@@ -18,7 +18,7 @@ class ReceiveTelegram
         $bank = 2;
 
         $host = 'https://test.vepay.online';
-        //$host = 'http://127.0.0.1:806';
+        //$host = 'http://127.0.0.1:8000';
 
         $ret = '';
         if ($this->CurlGet($host.'/site/feed/?bank='.$bank, '')) {

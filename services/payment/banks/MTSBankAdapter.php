@@ -9,11 +9,16 @@ use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\Payschets;
 use app\models\TU;
+use app\services\ident\models\Ident;
+use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
+use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
+use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\exceptions\GateException;
@@ -29,6 +34,7 @@ use app\services\payment\forms\mts\RefundPayRequest;
 use app\services\payment\forms\mts\ReversePayRequest;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
+use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
@@ -176,66 +182,7 @@ class MTSBankAdapter implements IBankAdapter
      */
     public function transferToCard(array $data)
     {
-        throw new \Exception('Перечисление денег на карту через МТС банк недоступен');
-//        $payschets = new Payschets();
-//        $params = $payschets->getSchetData($data['IdPay']);
-//
-//        $formData = [
-//            'amount' => (int)$params['SummFull'],
-//            'orderNumber' => $params['ID'],
-//            'orderDescription' => $params['NameUsluga'],
-//            'returnUrl' => $this->backUrls['ok'] . $params['ID'],
-//            'failUrl' => $this->backUrls['ok'] . $params['ID'],
-//            'transactionTypeIndicator' => 'D',
-//            'type' => 'WITHOUT_FROM_CARD',
-//            'features' => [
-//                'feature' => 'WITHOUT_FROM_CARD',
-//            ]
-//        ];
-//
-//        $registerP2P = new RegisterP2P();
-//        if(!$registerP2P->load($formData, '') || !$registerP2P->validate()) {
-//            throw new \Exception('Ошибка данных');
-//        }
-//
-//        $partner = Partner::findOne(['ID' => $params['IDPartner']]);
-//
-//        $response = (new SoapRequestBuilder($this->bankP2PUrl, 'registerP2P', $registerP2P))
-//            ->addSecurity($partner->MtsLoginOct, $partner->MtsPasswordOct)
-//            ->addBody()
-//            ->sendRequest();
-//
-//        $responseReturn = $response->xpath('//Body/registerP2PResponse/return')[0];
-//        $errorResponse = (string)$responseReturn->attributes()['errorCode'];
-//        $errorMessage = (string)$responseReturn->attributes()['errorMessage'];
-//
-//        if($errorResponse != 0) {
-//            throw new \Exception($errorMessage);
-//        }
-//        $orderId = (string)$response->xpath('//Body/registerP2PResponse/return/orderId')[0];
-//
-//
-//        $data = [
-//            'orderId' => $orderId,
-//            'type' => 'WITHOUT_FROM_CARD',
-//            'toCard' => [
-//                'pan' => $data['CardNum'],
-//                'cvc' => '',
-//                'expirationYear' => '',
-//                'expirationMonth' => '',
-//                'cardholderName' => '',
-//            ],
-//        ];
-//
-//        $performP2P = new PerfomP2P();
-//        if(!$performP2P->load($data, '') || !$performP2P->validate()) {
-//            throw new \Exception('Ошибка данных');
-//        }
-//
-//        $response = (new SoapRequestBuilder($this->bankP2PUrl, 'performP2P', $performP2P))
-//            ->addSecurity($partner->MtsLoginOct, $partner->MtsPasswordOct)
-//            ->addBody()
-//            ->sendRequest();
+        throw new GateException('Метод недоступен');
     }
 
     /**
@@ -720,6 +667,8 @@ class MTSBankAdapter implements IBankAdapter
         if ($createPayResponse->status == BaseResponse::STATUS_DONE) {
             $createPayResponse = $this->_payOrder($createPayForm, $createPayResponse);
         }
+
+        $createPayResponse->isNeed3DSRedirect = false;
         return $createPayResponse;
     }
 
@@ -980,5 +929,42 @@ class MTSBankAdapter implements IBankAdapter
     public function getAftMinSum()
     {
         return self::AFT_MIN_SUMM;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getBalance(GetBalanceRequest $getBalanceRequest)
+    {
+        throw new GateException('Метод недоступен');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function transferToAccount(OutPayAccountForm $outPayaccForm)
+    {
+        throw new GateException('Метод недоступен');
+    }
+
+    public function identInit(Ident $ident)
+    {
+        throw new GateException('Метод недоступен');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function identGetStatus(Ident $ident)
+    {
+        throw new GateException('Метод недоступен');
+    }
+
+    /**
+     * @throws GateException
+     */
+    public function currencyExchangeRates()
+    {
+        throw new GateException('Метод недоступен');
     }
 }

@@ -113,6 +113,19 @@ class MfoReq
         return $this->req;
     }
 
+    /**
+     * @param string|null $field
+     * @return array|mixed
+     */
+    public function getRequestData(string $field = null)
+    {
+        $data = $this->Req();
+        if (!is_null($field)) {
+            $data = (isset($data[$field])) ? $data[$field] : null;
+        }
+        return $data;
+    }
+
     public function GetReq($fld, $defval = null)
     {
         return isset($this->req[$fld]) ? $this->req[$fld] : $defval;
@@ -134,7 +147,7 @@ class MfoReq
     public function getLinkOutCard($IdPay)
     {
         if (Yii::$app->params['DEVMODE'] == 'Y') {
-            return 'http://127.0.0.1:806/mfo/default/outcard/' . $IdPay;
+            return Yii::$app->params['domain'] . '/mfo/default/outcard/' . $IdPay;
         } elseif (Yii::$app->params['TESTMODE'] == 'Y') {
             return 'https://'.$_SERVER['SERVER_NAME'].'/mfo/default/outcard/' . $IdPay;
         } else {

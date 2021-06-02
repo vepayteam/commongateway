@@ -30,7 +30,7 @@ trait ReqMaskTargetTrait
 
     private function maskCardnum($input)
     {
-        $pattern = '/(\\\"cardnum\\\":.*?\\\"\d{4})(\d+?)(\d{4}\\\")/i';
+        $pattern = '/(\\\"cardnum\\\":.*?\\\"\d{6})(\d+?)(\d{4}\\\")/i';
         $replacement = '$1****$3';
 
         $replaced = preg_replace($pattern, $replacement, $input);

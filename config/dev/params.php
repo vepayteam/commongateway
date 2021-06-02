@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'domain' => 'http://localhost:806',
+    'domain' => 'http://localhost:8000',
     'adminEmail' => 'support@vepay.online',
     'robotEmail' => 'robot@vepay.online',
     'infoEmail' => 'support@vepay.online',
@@ -76,5 +76,5 @@ return [
     ],
     'login_user_token_valid_time' => 60*60,
     'support_email' => 'support@vepay.online',
-	
+    'remote_ip' => '',
 ];
