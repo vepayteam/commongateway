@@ -29,7 +29,7 @@ return [
     'targets' => [
         [
             'class' => 'app\services\logs\targets\ReqMaskJSONStdOutTarget',
-            'levels' => array_filter(['warning', 'info', YII_DEBUG ? 'debug' : '']),
+            'levels' => array_filter(['warning', 'info', YII_DEBUG ? 'trace' : '']),
             'except' => [
                 'yii\web\HttpException:401',
                 'yii\web\HttpException:404',
