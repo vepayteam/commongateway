@@ -21,10 +21,10 @@ return [
     'targets' => [
         [
             'class' => 'app\services\logs\targets\ReqMaskFileTarget',
-            'levels' => ['warning'],
+            'levels' => ['warning', 'info'],
             'maskVars' => $maskVars,
             'maxFileSize' => 1024 * 50,
-            'maxLogFiles' => 20,
+            'maxLogFiles' => 50,
             'rotateByCopy' => false,
         ],
         [
@@ -32,7 +32,7 @@ return [
             'levels' => ['error'],
             'maskVars' => $maskVars,
             'maxFileSize' => 1024 * 50,
-            'maxLogFiles' => 20,
+            'maxLogFiles' => 50,
             'rotateByCopy' => false,
         ],
     ],
