@@ -193,6 +193,7 @@ class Cards extends \yii\db\ActiveRecord
 
     public static function MaskCardLog($post)
     {
+        // TKB
         if (preg_match('/\"CardNumber\":\"(\d+)\"/ius', $post, $m)) {
             $post = str_ireplace($m[1], self::MaskCard($m[1]), $post);
         }
@@ -200,6 +201,14 @@ class Cards extends \yii\db\ActiveRecord
             $post = str_ireplace($m[1], "***", $post);
         }
         if (preg_match('/\"CardNumberHash\":\"(\w+)\"/ius', $post, $m)) {
+            $post = str_ireplace($m[1], "***", $post);
+        }
+
+        // BRS
+        if (preg_match('/\"pan\":\"(\d+)\"/ius', $post, $m)) {
+            $post = str_ireplace($m[1], self::MaskCard($m[1]), $post);
+        }
+        if (preg_match('/\"cvc2\":\"(\d+)\"/ius', $post, $m)) {
             $post = str_ireplace($m[1], "***", $post);
         }
         return $post;

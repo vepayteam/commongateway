@@ -204,12 +204,19 @@ use yii\bootstrap\Html;
 
     <?php ActiveForm::end(); ?>
 
+    <iframe name="threDS" id="confirm3dsV2TKBFrame" style="height: 1px; display: none">
+    </iframe>
+
+
+    <div class="raw3DsForm"></div>
+
     <div id="frame3ds" class="BankFrame" style="height: 600px; display: none">
         <form id="form3ds" action="" method='POST'>
             <input type="hidden" id="pareq3ds" name="PaReq" value="">
             <input type="hidden" id="md3ds" name="MD" value="">
             <input type="hidden" id="creq3ds" name="creq" value="">
             <input type="hidden" id="termurl3ds" name="TermUrl" value="">
+            <input type="hidden" id="threeDSServerTransID" name="ThreeDSServerTransID" value="">
         </form>
     </div>
 

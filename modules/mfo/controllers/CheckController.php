@@ -59,9 +59,15 @@ class CheckController extends Controller
         $mfo->LoadData(Yii::$app->request->getRawBody());
 
         if ($mfo->mfo) {
-            return ['status' => 1];
+            return [
+                'status' => 1,
+                'message' => '',
+            ];
         }
 
-        return ['status' => 0];
+        return [
+            'status' => 0,
+            'message' => '',
+        ];
     }
 }

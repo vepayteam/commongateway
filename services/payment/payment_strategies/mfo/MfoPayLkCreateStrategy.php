@@ -65,7 +65,7 @@ class MfoPayLkCreateStrategy extends MerchantPayCreateStrategy
             ->one();
 
         if(!$gate) {
-            throw new \Exception('Нет шлюза');
+            throw new \Exception("Нет шлюза. partnerId={$this->payForm->partner->ID}");
         }
 
         $bankAdapter = Banks::getBankAdapter($gate->BankId);
