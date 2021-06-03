@@ -72,8 +72,7 @@ class CallbackList extends Model
             $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $idpartner]);
         }
 
-        $totalCountResult = (clone $query)->select(['COUNT(*) as cnt'])->all();
-        $totalCount = (int) reset($totalCountResult)['cnt'];
+        $totalCount = $query->count();
 
         $query->select([
             'n.ID',
