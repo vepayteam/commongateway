@@ -10,15 +10,22 @@ use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\queue\BinBDInfoJob;
 use app\models\TU;
+use app\services\ident\IdentService;
+use app\services\ident\models\Ident;
+use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\Check3DSVersionResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
+use app\services\payment\banks\bank_adapter_responses\IdentInitResponse;
+use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
+use app\services\payment\banks\interfaces\ITKBankAdapterResponseErrors;
 use app\services\payment\banks\traits\TKBank3DSTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\GateException;
@@ -29,10 +36,11 @@ use app\services\payment\exceptions\RefundPayException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
+use app\services\payment\forms\CreatePaySecondStepForm;
 use app\services\payment\forms\DonePayForm;
-use app\services\payment\forms\GetBalanceForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
+use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\forms\tkb\CheckStatusPayRequest;
 use app\services\payment\forms\tkb\Confirm3DSv2Request;
@@ -42,6 +50,7 @@ use app\services\payment\forms\tkb\DonePay3DSv2Request;
 use app\services\payment\forms\tkb\DonePayRequest;
 use app\services\payment\forms\tkb\OutCardPayRequest;
 use app\services\payment\forms\tkb\RefundPayRequest;
+use app\services\payment\forms\tkb\TransferToAccountRequest;
 use app\services\payment\interfaces\Cache3DSv2Interface;
 use app\services\payment\interfaces\Issuer3DSVersionInterface;
 use app\services\payment\models\PartnerBankGate;
@@ -567,6 +576,500 @@ class TKBankAdapter implements IBankAdapter
     }
 
     /**
+     * Выписка по счету - список исполненных документов
+     * @param array $params
+     * @return array
+     */
+    public function getStatement(array $params)
+    {
+        $action = '/api/v1/banking/account/statement/document';
+
+        $queryData = [
+            'Account' => $params['account'],
+            'StartDate' => $params['datefrom'],
+            'EndDate' => $params['dateto'],
+        ];
+
+        $queryData = Json::encode($queryData);
+
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl.$action);
+
+        //$ans['xml'] = '{"Statement":[{"Id":169721172315,"DateDoc":"2019-12-26T00:00:00","Operdate":"2019-12-27T00:00:00","DocNumber":6,"DocSumm":{"Sum":5000.0,"Currency":"RUB"},"DocSummD":-5000.0,"PayerName":"ТКБ БАНК ПАО//9731051046","PayerBik":"044525388","PayerBank":"ТКБ БАНК ПАО","PayerBankAccount":"30101810800000000388","PayerINN":"9731051046","PayerAccount":"30232810100000089118","PayerKPP":"770901001","PayeeName":"ИП Шулькина Елена Андреевна","PayeeBik":"044525092","PayeeBank":"МОСКОВСКИЙ ФИЛИАЛ АО КБ \"МОДУЛЬБАНК\"","PayeeBankAccount":"30101810645250000092","PayeeAccount":"40802810970010219076","PayeeINN":"780423122803","Description":"Вывод средств с виртуального счета. e2bdb4f9-b161-449a-99ba-1e1fb028b4dc","IsCredit":false,"Ro":"01","IsCharge":false,"Queue":"5"},{"Id":169721161191,"DateDoc":"2019-12-26T00:00:00","Operdate":"2019-12-26T00:00:00","DocNumber":6,"DocSumm":{"Sum":45.0,"Currency":"RUB"},"DocSummD":-45.0,"PayerName":"ООО \"ЛЕМОН ОНЛАЙН\"","PayerBik":"044525388","PayerBank":"ТКБ БАНК ПАО","PayerBankAccount":"30101810800000000388","PayerINN":"7709129705","PayerAccount":"30232810100000089118","PayerKPP":"770901001","PayeeName":"ТКБ БАНК ПАО","PayeeBik":"044525388","PayeeBank":"ТКБ БАНК ПАО","PayeeBankAccount":"30101810800000000388","PayeeAccount":"70601810300002740215","PayeeKPP":"770901001","PayeeINN":"7709129705","Description":"Комиссия Банка за проведение операции по документу № 6 от 27.12.2019 года","IsCredit":false,"Ro":"17","IsCharge":false,"Queue":"5"},{"Id":169686144588,"DateDoc":"2019-12-26T00:00:00","Operdate":"2019-12-26T00:00:00","DocNumber":19,"DocSumm":{"Sum":45.0,"Currency":"RUB"},"DocSummD":-45.0,"PayerName":"ООО \"ЛЕМОН ОНЛАЙН\"","PayerBik":"044525388","PayerBank":"ТКБ БАНК ПАО","PayerBankAccount":"30101810800000000388","PayerINN":"7709129705","PayerAccount":"30232810100000089118","PayerKPP":"770901001","PayeeName":"ТКБ БАНК ПАО","PayeeBik":"044525388","PayeeBank":"ТКБ БАНК ПАО","PayeeBankAccount":"30101810800000000388","PayeeAccount":"70601810300002740215","PayeeKPP":"770901001","PayeeINN":"7709129705","Description":"Комиссия Банка за проведение операции по документу № 19 от 26.12.2019 года","IsCredit":false,"Ro":"17","IsCharge":false,"Queue":"5"},{"Id":169648342687,"DateDoc":"2019-12-26T00:00:00","Operdate":"2019-12-26T00:00:00","DocNumber":42,"DocSumm":{"Sum":35000.0,"Currency":"RUB"},"DocSummD":35000.0,"PayerName":"ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ \"ЛЕМОН ОНЛАЙН\"","PayerBik":"046015207","PayerBank":"ФИЛИАЛ \"РОСТОВСКИЙ\" АО \"АЛЬФА-БАНК\"","PayerBankAccount":"30101810500000000207","PayerINN":"9731051046","PayerAccount":"40702810226000005976","PayeeName":"ООО \"ЛЕМОН ОНЛАЙН\"","PayeeBik":"044525388","PayeeBank":"ТКБ БАНК ПАО","PayeeBankAccount":"30101810800000000388","PayeeAccount":"30232810100000089118","PayeeKPP":"770901001","PayeeINN":"9731051046","Description":"Пополнение транзитного счета: 30232810100000089118 по договору  И-0294/19 от 17.12.2019г. Сумма 35000-00 Без налога (НДС)","IsCredit":true,"Ro":"01","IsCharge":false,"Queue":"5"},{"Id":169298935004,"DateDoc":"2019-12-24T00:00:00","Operdate":"2019-12-25T00:00:00","DocNumber":41,"DocSumm":{"Sum":10000.0,"Currency":"RUB"},"DocSummD":10000.0,"PayerName":"ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ \"ЛЕМОН ОНЛАЙН\"","PayerBik":"046015207","PayerBank":"ФИЛИАЛ \"РОСТОВСКИЙ\" АО \"АЛЬФА-БАНК\"","PayerBankAccount":"30101810500000000207","PayerINN":"9731051046","PayerAccount":"40702810226000005976","PayeeName":"ООО \"ЛЕМОН ОНЛАЙН\"","PayeeBik":"044525388","PayeeBank":"ТКБ БАНК ПАО","PayeeBankAccount":"30101810800000000388","PayeeAccount":"30232810100000089118","PayeeKPP":"770901001","PayeeINN":"9731051046","Description":"Пополнение транзитного счета: 30232810100000089118 по договору  И-0294/19 от 17.12.2019г. Сумма 10000-00 Без налога (НДС)","IsCredit":true,"Ro":"01","IsCharge":false,"Queue":"5"}]}';
+        //$ans['xml'] = Json::decode($ans['xml']);
+
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            $ans['xml'] = self::array_change_key_case_recursive($ans['xml'], CASE_LOWER);
+            if (isset($ans['xml']['statement'])) {
+                return [
+                    'status' => 1,
+                    'message' => '',
+                    'statements' => $ans['xml']['statement']
+                ];
+            }
+        }
+
+        return ['status' => 0, 'message' => 'Ошибка запроса'];
+    }
+
+    /**
+     * Выписка по счету - список исполненных документов
+     * @param array $params
+     * @return array
+     */
+    public function getStatementNominal(array $params)
+    {
+        $action = '/nominal/v2/getStatement';
+
+        $queryData = [
+            'accountNumber' => $params['account'],
+            'startDate' => $params['datefrom'],
+            'endDate' => $params['dateto'],
+        ];
+
+        $queryData = Json::encode($queryData);
+
+        $ans = $this->curlXmlReq($queryData, $this->bankUrlXml.$action);
+
+        //$ans['xml'] = '';
+        //$ans['xml'] = Json::decode($ans['xml']);
+
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            $ans['xml'] = self::array_change_key_case_recursive($ans['xml'], CASE_LOWER);
+            if (isset($ans['xml']['documents'])) {
+                return [
+                    'status' => 1,
+                    'message' => '',
+                    'statements' => $ans['xml']['documents']
+                ];
+            }
+        }
+
+        return ['status' => 0, 'message' => 'Ошибка запроса'];
+    }
+
+    /**
+     * Выписка по счету (ABS) (для номинального счета)
+     * @param array $params
+     * @return array
+     */
+    public function getStatementAbs(array $params)
+    {
+        $action = '/api/v1/getstatementABS';
+
+        $queryData = [
+            'AccountNumber' => $params['account'],
+            'DateStart' => $params['datefrom'],
+            'DateEnd' => $params['dateto'],
+        ];
+
+        $queryData = Json::encode($queryData);
+
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl.$action);
+
+        //$ans['xml'] = '{"Transactions":[{"Account":"40701810820020100001","AccountCredit":"40701810820020100001","AccountDebet":"30102810900000000388","BranchID":0,"CardAmount":200000.0,"CardCurrency":"XTS","CardDeviceType":0,"CardID":0,"CardNetID":0,"Comment":"Пополнение лицевого счета МСБ ОНЛАЙН на электронной платформе \"ЛЕМОН ОНЛАЙН\" Сумма 200000-00 Без налога (НДС)","ExecDate":"2019-12-25T00:00:00","FeeAmount":0.0,"FeeMerchBankAmount":0.0,"Hold":false,"ID":169382686642,"IsCash":false,"IsFee":false,"IsInet":false,"IsOnline":false,"NOper":0.0,"OperDate":"2019-12-25T00:00:00","PayCurrency":"RUB","PriRas":"C","TotalAmount":200000.0,"TransactID":0,"ValNetAmount":200000.0,"ValNetCurrency":"RUB"},{"Account":"40701810820020100001","AccountCredit":"40701810820020100001","AccountDebet":"30102810900000000388","BranchID":0,"CardAmount":5000.0,"CardCurrency":"XTS","CardDeviceType":0,"CardID":0,"CardNetID":0,"Comment":"Пополнение лицевого счета владельца ИНН 121524898903 на электронной платформе \"ЛЕМОН ОНЛАЙН\" Сумма Без налога (НДС)","ExecDate":"2019-12-24T00:00:00","FeeAmount":0.0,"FeeMerchBankAmount":0.0,"Hold":false,"ID":169067401209,"IsCash":false,"IsFee":false,"IsInet":false,"IsOnline":false,"NOper":0.0,"OperDate":"2019-12-24T00:00:00","PayCurrency":"RUB","PriRas":"C","TotalAmount":5000.0,"TransactID":0,"ValNetAmount":5000.0,"ValNetCurrency":"RUB"},{"Account":"40701810820020100001","AccountCredit":"40701810820020100001","AccountDebet":"30102810900000000388","BranchID":0,"CardAmount":5000.0,"CardCurrency":"XTS","CardDeviceType":0,"CardID":0,"CardNetID":0,"Comment":"Пополнение лицевого счета владельца ИНН 332400408444 на электронной платформе \"ЛЕМОН ОНЛАЙН\" Сумма Без налога (НДС) Без НДС","ExecDate":"2019-12-24T00:00:00","FeeAmount":0.0,"FeeMerchBankAmount":0.0,"Hold":false,"ID":169071053989,"IsCash":false,"IsFee":false,"IsInet":false,"IsOnline":false,"NOper":0.0,"OperDate":"2019-12-24T00:00:00","PayCurrency":"RUB","PriRas":"C","TotalAmount":5000.0,"TransactID":0,"ValNetAmount":5000.0,"ValNetCurrency":"RUB"},{"Account":"40701810820020100001","AccountCredit":"40701810820020100001","AccountDebet":"30102810900000000388","BranchID":0,"CardAmount":182000.0,"CardCurrency":"XTS","CardDeviceType":0,"CardID":0,"CardNetID":0,"Comment":"Пополнение лицевого счета МСБ ОНЛАЙН на электронной платформе \"ЛЕМОН ОНЛАЙН\" Сумма 182000-00 Без налога (НДС)","ExecDate":"2019-12-24T00:00:00","FeeAmount":0.0,"FeeMerchBankAmount":0.0,"Hold":false,"ID":169082413799,"IsCash":false,"IsFee":false,"IsInet":false,"IsOnline":false,"NOper":0.0,"OperDate":"2019-12-24T00:00:00","PayCurrency":"RUB","PriRas":"C","TotalAmount":182000.0,"TransactID":0,"ValNetAmount":182000.0,"ValNetCurrency":"RUB"},{"Account":"40701810820020100001","AccountCredit":"40701810820020100001","AccountDebet":"30102810900000000388","BranchID":0,"CardAmount":10000.0,"CardCurrency":"XTS","CardDeviceType":0,"CardID":0,"CardNetID":0,"Comment":"Пополнение лицевого счета владельца ИНН 744408469746 на электронной платформе \"ЛЕМОН ОНЛАЙН\" Сумма Без налога (НДС)","ExecDate":"2019-12-24T00:00:00","FeeAmount":0.0,"FeeMerchBankAmount":0.0,"Hold":false,"ID":169114032397,"IsCash":false,"IsFee":false,"IsInet":false,"IsOnline":false,"NOper":0.0,"OperDate":"2019-12-24T00:00:00","PayCurrency":"RUB","PriRas":"C","TotalAmount":10000.0,"TransactID":0,"ValNetAmount":10000.0,"ValNetCurrency":"RUB"},{"Account":"40701810820020100001","AccountCredit":"40701810820020100001","AccountDebet":"30102810900000000388","BranchID":0,"CardAmount":50000.0,"CardCurrency":"XTS","CardDeviceType":0,"CardID":0,"CardNetID":0,"Comment":"Пополнение лицевого счета владельца ИНН 502771963554 на электронной платформе \"ЛЕМОН ОНЛАЙН\" Сумма Без налога (НДС)","ExecDate":"2019-12-24T00:00:00","FeeAmount":0.0,"FeeMerchBankAmount":0.0,"Hold":false,"ID":169153340417,"IsCash":false,"IsFee":false,"IsInet":false,"IsOnline":false,"NOper":0.0,"OperDate":"2019-12-24T00:00:00","PayCurrency":"RUB","PriRas":"C","TotalAmount":50000.0,"TransactID":0,"ValNetAmount":50000.0,"ValNetCurrency":"RUB"}]}';
+        //$ans['xml'] = Json::decode($ans['xml']);
+
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            $ans['xml'] = self::array_change_key_case_recursive($ans['xml'], CASE_LOWER);
+            if (isset($ans['xml']['transactions'])) {
+                return [
+                    'status' => 1,
+                    'message' => '',
+                    'statements' => $ans['xml']['transactions']
+                ];
+            }
+        }
+
+        return ['status' => 0, 'message' => 'Ошибка запроса'];
+    }
+
+    public function ActivateCard($Id, array $params)
+    {
+        $action = '/api/tcbpay/gate/activatecard';
+        $queryData = [
+            "OrderID" => $Id,
+            "EAN" => $params["cardnum"],
+            "ClientData" => [
+                "Sex" => $params["client"]["sex"],
+                "FirstName" => $params["client"]["firstname"],
+                "MiddleName" => $params["client"]["middlename"],
+                "FamilyName" => $params["client"]["surname"],
+                "MobilePhone" => $params["client"]["phone"],
+                "Birth" => [
+                    "Day" => $params["client"]["birthday"],
+                    "Place" => $params["client"]["birthplace"],
+                    "Country" => [
+                        "Code" => $params["client"]["birthcountrycode"],
+                        "Name" => $params["client"]["birthcountry"]
+                    ],
+                ],
+                "Country" => [
+                    "Code" => $params["client"]["countrycode"],
+                    "Name" => $params["client"]["countryname"]
+                ],
+                "City" => [
+                    "Code" => $params["client"]["citycode"],
+                    "Name" => $params["client"]["cityname"]
+                ],
+                "RegistrationAddress" => [
+                    "Country" => [
+                        "Code" => "",
+                        "Name" => $params["client"]["registrationaddress"]["country"]
+                    ],
+                    "Region" => [
+                        "Code" => "",
+                        "Name" => $params["client"]["registrationaddress"]["region"]
+                    ],
+                    "District" => [
+                        "Code" => "",
+                        "Name" => $params["client"]["registrationaddress"]["district"]
+                    ],
+                    "City" => [
+                        "Code" => "",
+                        "Name" => $params["client"]["registrationaddress"]["city"]
+                    ],
+                    "Settlement" => [
+                        "Code" => "",
+                        "Name" => $params["client"]["registrationaddress"]["settlement"]
+                    ],
+                    "Street" => [
+                        "Code" => "",
+                        "Name" => $params["client"]["registrationaddress"]["street"]
+                    ],
+                    "House" => $params["client"]["registrationaddress"]["house"],
+                    "Flat" => $params["client"]["registrationaddress"]["flat"]
+                ],
+                "PostalAddress" => [
+                    "Country" => [
+                        "Code" => "",
+                        "Name" => $params["client"]["registrationaddress"]["country"]
+                    ],
+                    "Region" => [
+                        "Code" => "",
+                        "Name" => $params["client"]["registrationaddress"]["region"]
+                    ],
+                    "District" => [
+                        "Code" => "",
+                        "Name" => $params["client"]["registrationaddress"]["district"]
+                    ],
+                    "City" => [
+                        "Code" => "",
+                        "Name" => $params["client"]["registrationaddress"]["city"]
+                    ],
+                    "Settlement" => [
+                        "Code" => "",
+                        "Name" => $params["client"]["registrationaddress"]["settlement"]
+                    ],
+                    "Street" => [
+                        "Code" => "",
+                        "Name" => $params["client"]["registrationaddress"]["street"]
+                    ],
+                    "House" => $params["client"]["registrationaddress"]["house"],
+                    "Flat" => $params["client"]["registrationaddress"]["flat"]
+                ],
+                "Document" => [
+                    "Num" => $params["client"]["document"]["num"],
+                    "Series" => $params["client"]["document"]["series"],
+                    "Date" => $params["client"]["document"]["date"],
+                    "RegName" => $params["client"]["document"]["regname"],
+                    "RegCode" => $params["client"]["document"]["regcode"],
+                    "DateEnd" => $params["client"]["document"]["dateend"]
+                ]
+            ],
+            "ControlInfo" => $params["controlword"],
+
+        ];
+
+        $queryData = Json::encode($queryData);
+
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            $xml = $this->parseAns($ans['xml']);
+            if (isset($xml['Status']) && $xml['Status'] == '0') {
+                return ['status' => 1, 'message' => ''];
+            }
+        }
+
+        return ['status' => 0, 'message' => ''];
+
+    }
+
+    public function SimpleActivateCard($Id, array $params)
+    {
+        $action = '/api/tcbpay/gate/simpleactivatecard';
+        $queryData = [
+            "OrderID" => $Id,
+            "EAN" => $params["cardnum"],
+            "ClientData" => [
+                "Sex" => $params["client"]["sex"],
+                "FirstName" => $params["client"]["firstname"],
+                "MiddleName" => $params["client"]["middlename"],
+                "FamilyName" => $params["client"]["surname"],
+                "MobilePhone" => $params["client"]["phone"],
+                "Country" => [
+                    "Code" => $params["client"]["countrycode"],
+                    "Name" => $params["client"]["countryname"]
+                ],
+                "City" => [
+                    "Code" => $params["client"]["citycode"],
+                    "Name" => $params["client"]["cityname"]
+                ],
+                "Document" => [
+                    "Num" => $params["client"]["document"]["num"],
+                    "Series" => $params["client"]["document"]["series"]
+                ]
+            ],
+            "ControlInfo" => $params["controlword"],
+
+        ];
+
+        $queryData = Json::encode($queryData);
+
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            $xml = $this->parseAns($ans['xml']);
+            if (isset($xml['Status']) && $xml['Status'] == '0') {
+                return ['status' => 1, 'message' => ''];
+            }
+        }
+
+        return ['status' => 0, 'message' => ''];
+    }
+
+    public function StateActivateCard($Id)
+    {
+        $action = '/api/tcbpay/gate/getactivatecardstate';
+        $queryData = [
+            "OrderID" => $Id
+        ];
+
+        $queryData = Json::encode($queryData);
+
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            $xml = $this->parseAns($ans['xml']);
+            if (isset($xml['Status'])) {
+                $state = 0;
+                if ($xml['Status'] == 3) {
+                    $state = 1;
+                } elseif ($xml['Status'] == 6) {
+                    $state = 2;
+                }
+                return ['status' => $state, 'message' => $xml['StateDescription']];
+            }
+        }
+
+        return ['status' => 0, 'message' => ''];
+    }
+
+    /**
+     * Проверка карты по бин
+     * @param $CardNum
+     * @return array
+     */
+    public function GetBinDBInfo($CardNum)
+    {
+        $CardNum = str_ireplace(' ', '', $CardNum);
+        $action = '/api/tcbpay/gate/getbindbinfo';
+        $queryData = [
+            "BIN" => substr($CardNum, 7, 1) == "*" ? substr($CardNum, 0, 6) : substr($CardNum, 0, 8)
+        ];
+
+        $queryData = Json::encode($queryData);
+
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            $xml = $this->parseAns($ans['xml']);
+            if (isset($xml['bininfo'])) {
+                return ['status' => 1, 'info' => $xml['bininfo']];
+            }
+        }
+
+        return ['status' => 0, 'message' => ''];
+
+    }
+
+    /**
+     * Оплата без формы (PCI DSS)
+     * @param array $params
+     * @return array
+     */
+    public function PayXml(array $params)
+    {
+        $action = '/api/tcbpay/gate/registerorderfromunregisteredcardwof';
+
+        $queryData = [
+            'OrderID' => $params['ID'],
+            'Amount' => $params['SummFull'],
+            'Description' => 'Оплата по счету ' . $params['ID'],
+            'CardInfo' => [
+                'CardNumber' => $params['card']['number'],
+                'CardHolder' => $params['card']['holder'],
+                'ExpirationYear' => intval("20" . $params['card']['year']),
+                'ExpirationMonth' => intval($params['card']['month']),
+                'CVV' => $params['card']['cvc'],
+            ],
+            //'ReturnUrl' => $this->backUrls['ok'].$params['ID'],
+            'ShowReturnButton' => false,
+            'TTL' => '00.00:' . ($params['TimeElapsed'] / 60) . ':00'
+        ];
+
+        if (!empty($params['Email'])) {
+            $queryData['ClientInfo']['Email'] = $params['Email'];
+        }
+
+        $queryData = Json::encode($queryData);
+
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            $xml = $this->parseAns($ans['xml']);
+            if (isset($xml['Status']) && $xml['Status'] == '0') {
+                return ['status' => 1,
+                    'transac' => $xml['ordernumber'],
+                    'url' => $xml['acsurl'],
+                    'pa' => $xml['pareq'],
+                    'md' => $xml['md']
+                ];
+            } else {
+                return ['status' => 2, 'message' => $xml['errorinfo']['errormessage']];
+            }
+        }
+
+        return ['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0];
+
+    }
+
+    /**
+     * Оплата ApplePay
+     * @param array $params
+     * @return array
+     */
+    public function PayApple(array $params)
+    {
+        return ['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0];
+    }
+
+    /**
+     * Оплата GooglePay
+     * @param array $params
+     * @return array
+     */
+    public function PayGoogle(array $params)
+    {
+        return ['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0];
+    }
+
+    /**
+     * Оплата SamsungPay
+     * @param array $params
+     * @return array
+     */
+    public function PaySamsung(array $params)
+    {
+        return ['status' => 0, 'message' => 'Ошибка запроса, попробуйте повторить позднее', 'fatal' => 0];
+    }
+
+    /**
+     * Финиш оплаты без формы (PCI DSS)
+     * @param array $params
+     * @return array
+     */
+    public function ConfirmXml(array $params)
+    {
+        $action = '/api/tcbpay/gate/registerorderfromcardfinish';
+
+        $queryData = [
+            'OrderID' => $params['ID'],
+            'MD' => $params['MD'],
+            'PaRes' => $params['PaRes'],
+        ];
+
+        $queryData = Json::encode($queryData);
+
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            $xml = $this->parseAns($ans['xml']);
+            if (isset($xml['Status']) && $xml['Status'] == '0') {
+                return ['status' => 1, 'transac' => $xml['ordernumber']];
+            } else {
+                return ['status' => 2, 'message' => $xml['errorinfo']['errormessage']];
+            }
+        }
+
+        return ['status' => 0, 'message' => '', 'fatal' => 0];
+
+    }
+
+    /**
+     * Регистрация бенифициаров
+     *
+     * @param array $params
+     * @return array
+     */
+    public function RegisterBenificiar(array $params)
+    {
+        $action = '/cxf/CftNominalService';
+
+        $queryData = $params['req'];
+
+        $ans = $this->curlXmlReq($queryData,
+            $this->bankUrlXml.$action,
+            ['SOAPAction: "http://cft.transcapital.ru/CftNominalIntegrator/SetBeneficiary"'],
+            false
+        );
+
+        //$ans['xml'] = '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><ns2:SetBeneficiaryResponse xmlns:ns2="http://cft.transcapital.ru/CftNominalIntegrator/"><errCode>0</errCode><errMsg></errMsg></ns2:SetBeneficiaryResponse></soap:Body></soap:Envelope>';
+
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            return [
+                'status' => 1,
+                'message' => '',
+                'soap' => $ans['xml']
+            ];
+        } elseif (isset($ans['httperror']) && !empty($ans['httperror'])) {
+            return [
+                'status' => 1,
+                'message' => '',
+                'soap' => $ans['httperror']
+            ];
+        }
+
+        return ['status' => 0, 'message' => 'Ошибка запроса'];
+    }
+
+    private function GetCardType($strbrand)
+    {
+        //0 - visa, 1 - mastercard 2 - mir 3 - american express 4 - JCB 5 - Dinnersclub
+        if (strtoupper($strbrand) === 'VISA') {
+            return 0;
+        } elseif (strtoupper($strbrand) === 'MASTER') {
+            return 1;
+        } elseif (strtoupper($strbrand) === 'MIR') {
+            return 2;
+        } elseif (strtoupper($strbrand) === 'AMERICANEXPRESS') {
+            return 3;
+        } elseif (strtoupper($strbrand) === 'JCB') {
+            return 4;
+        } elseif (strtoupper($strbrand) === 'DINNERS') {
+            return 5;
+        }
+
+        return 0;
+    }
+
+    private function buildSoapRequestRawBody($method, $data)
+    {
+        $xml = new SimpleXMLElement('<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                  xmlns:p2p="http://engine.paymentgate.ru/webservices/p2p" />');
+    }
+
+    /**
      * @param CreatePayForm $createPayForm
      * @return CreatePayResponse
      * @throws BankAdapterResponseException
@@ -579,15 +1082,45 @@ class TKBankAdapter implements IBankAdapter
         $check3DSVersionResponse = $this->check3DSVersion($createPayForm);
 
         if(in_array($check3DSVersionResponse->version, Issuer3DSVersionInterface::V_2)) {
-            $payResponse = $this->createPay3DSv2($createPayForm, $check3DSVersionResponse);
-            // TODO: refact on tokenize
-            Yii::$app->cache->set(Cache3DSv2Interface::CACHE_PREFIX_CARD_NUMBER . $createPayForm->getPaySchet()->ID, $createPayForm->CardNumber, 3600);
+            // TODO: add strategy 3ds v2
+            $payResponse = new CreatePayResponse();
+            $payResponse->status = BaseResponse::STATUS_CREATED;
+            $payResponse->isNeedSendTransIdTKB = true;
+            $payResponse->threeDSServerTransID = $check3DSVersionResponse->threeDSServerTransID;
+            $payResponse->threeDSMethodURL = $check3DSVersionResponse->threeDSMethodURL;
+            $payResponse->cardRefId = $check3DSVersionResponse->cardRefId;
+            return $payResponse;
         } else {
             $payResponse = $this->createPay3DSv1($createPayForm, $check3DSVersionResponse);
         }
 
         $payResponse->isNeed3DSRedirect = false;
         return $payResponse;
+    }
+
+    /**
+     * @param CreatePaySecondStepForm $createPaySecondStepForm
+     * @return CreatePayResponse
+     * @throws Check3DSv2Exception
+     * @throws CreatePayException
+     */
+    public function createPayStep2(CreatePaySecondStepForm $createPaySecondStepForm)
+    {
+        $checkDataCacheKey = Cache3DSv2Interface::CACHE_PREFIX_CHECK_DATA . $createPaySecondStepForm->getPaySchet()->ID;
+
+        if(Yii::$app->cache->exists($checkDataCacheKey)) {
+            $checkData = Yii::$app->cache->get($checkDataCacheKey);
+
+            $check3DSVersionResponse = new Check3DSVersionResponse();
+            $check3DSVersionResponse->cardRefId = ($checkData['cardRefId'] ?? '');
+            $check3DSVersionResponse->transactionId = ($checkData['transactionId'] ?? '');
+
+            $paySchet = $createPaySecondStepForm->getPaySchet();
+            $payResponse = $this->createPay3DSv2($paySchet, $check3DSVersionResponse);
+
+            $payResponse->isNeed3DSRedirect = false;
+            return $payResponse;
+        }
     }
 
     /**
@@ -661,7 +1194,10 @@ class TKBankAdapter implements IBankAdapter
     {
         $paySchet = $donePayForm->getPaySchet();
 
-        if(in_array($paySchet->Version3DS, Issuer3DSVersionInterface::V_2)) {
+        $checkDataCacheKey = Cache3DSv2Interface::CACHE_PREFIX_CHECK_DATA . $paySchet->ID;
+        if(Yii::$app->cache->exists($checkDataCacheKey)
+            && in_array(Yii::$app->cache->get($checkDataCacheKey)['version'], Issuer3DSVersionInterface::V_2)
+        ) {
             return $this->confirmBy3DSv2($donePayForm);
         } else {
             return $this->confirmBy3DSv1($donePayForm);
@@ -730,13 +1266,14 @@ class TKBankAdapter implements IBankAdapter
     {
         $action = '/api/v1/card/unregistered/debit/3ds2Validate';
 
+        $cardRefId = Yii::$app->cache->get(Cache3DSv2Interface::CACHE_PREFIX_CARD_REF_ID . $donePayForm->getPaySchet()->ID);
         $confirm3DSv2Request = new Confirm3DSv2Request();
         $confirm3DSv2Request->ExtID = $donePayForm->getPaySchet()->ID;
         $confirm3DSv2Request->Amount = $donePayForm->getPaySchet()->getSummFull();
-        $confirm3DSv2Request->Cres = $donePayForm->cres;
+        $confirm3DSv2Request->Cres = $donePayForm->cres ?? Yii::$app->cache->get(Cache3DSv2Interface::CACHE_PREFIX_CRES);
         // TODO: refact on tokenize
         $confirm3DSv2Request->CardInfo = [
-            'CardNumber' => Yii::$app->cache->get(Cache3DSv2Interface::CACHE_PREFIX_CARD_NUMBER . $donePayForm->getPaySchet()->ID),
+            'CardRefId' => $cardRefId,
         ];
 
         $queryData = Json::encode($confirm3DSv2Request->getAttributes());
@@ -816,8 +1353,14 @@ class TKBankAdapter implements IBankAdapter
             $xml = $this->parseAns($response['xml']);
             Yii::warning("checkStatusOrder afterParseAns: " . Json::encode($xml), 'merchant');
             if ($xml && isset($xml['errorinfo']['errorcode']) && (int)$xml['errorinfo']['errorcode'] > 0) {
+                $errorCode = (int)$xml['errorinfo']['errorcode'];
                 Yii::warning("checkStatusPay isCreated IdPay=" . $okPayForm->IdPay, 'merchant');
-                $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
+                if($errorCode == ITKBankAdapterResponseErrors::ERROR_CODE_ENGINEERING_WORKS) {
+                    $checkStatusPayResponse->status = BaseResponse::STATUS_CREATED;
+                } else {
+                    $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
+                }
+
                 $checkStatusPayResponse->message = $xml['errorinfo']['errormessage'];
                 $checkStatusPayResponse->xml = $xml;
             } else {
@@ -951,9 +1494,171 @@ class TKBankAdapter implements IBankAdapter
     }
 
     /**
+     * @param GetBalanceRequest $getBalanceRequest
+     * @return GetBalanceResponse
+     * @throws BankAdapterResponseException
+     */
+    public function getBalance(GetBalanceRequest $getBalanceRequest): GetBalanceResponse
+    {
+        $request = [];
+        $getBalanceResponse = new GetBalanceResponse();
+        if (empty($getBalanceRequest->accountNumber)) {
+            return $getBalanceResponse;
+        }
+        $getBalanceResponse->bank_name = $getBalanceRequest->bankName;
+
+        $type = $getBalanceRequest->accountType;
+        $request['account'] = $getBalanceRequest->accountNumber;
+        $response = $this->getBalanceAcc($request);
+        if (!isset($response['amount']) && $response['status'] === 0) {
+            throw new BankAdapterResponseException(
+                "Balance service:: TKB request failed for type: $type message: " . $response['message']
+            );
+        }
+        $getBalanceResponse->amount = (float)$response['amount'];
+        $getBalanceResponse->currency = 'RUB';
+        $getBalanceResponse->account_type = $type;
+        return $getBalanceResponse;
+    }
+
+    /**
      * @inheritDoc
      */
-    public function getBalance(GetBalanceForm $getBalanceForm)
+    public function transferToAccount(OutPayAccountForm $outPayaccForm)
+    {
+        $action = '/api/tcbpay/gate/registerordertoexternalaccount';
+
+        $outAccountPayRequest = new TransferToAccountRequest();
+        $outAccountPayRequest->Inn = $outPayaccForm->inn;
+        $outAccountPayRequest->OrderId = (string)$outPayaccForm->paySchet->ID;
+        $outAccountPayRequest->Name = ($outPayaccForm->scenario == OutPayAccountForm::SCENARIO_FL ? $outPayaccForm->fio : $outPayaccForm->name);
+        $outAccountPayRequest->Bik = strval($outPayaccForm->bic);
+        $outAccountPayRequest->Account = strval($outPayaccForm->account);
+        $outAccountPayRequest->Amount = $outPayaccForm->amount;
+        $outAccountPayRequest->Description = $outPayaccForm->descript;
+
+        $ans = $this->curlXmlReq(Json::encode($outAccountPayRequest->getAttributes()), $this->bankUrl . $action);
+
+        $outAccountPayResponse = new TransferToAccountResponse();
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            if(isset($ans['xml']['errorinfo']['errorcode']) && $ans['xml']['errorinfo']['errorcode'] == 0) {
+                $outAccountPayResponse->status = BaseResponse::STATUS_DONE;
+                $outAccountPayResponse->trans = $ans['xml']['ordernumber'];
+            } elseif (isset($ans['xml']['errorinfo']['errorcode'])) {
+                $outAccountPayResponse->status = BaseResponse::STATUS_ERROR;
+                $outAccountPayResponse->message = $ans['xml']['errorinfo']['errormessage'];
+            } else {
+                $outAccountPayResponse->status = BaseResponse::STATUS_ERROR;
+                $outAccountPayResponse->message = 'Ошибка запроса';
+            }
+        } else {
+            $outAccountPayResponse->status = BaseResponse::STATUS_ERROR;
+            $outAccountPayResponse->message = 'Ошибка запроса';
+        }
+
+        return $outAccountPayResponse;
+    }
+
+    public function identInit(Ident $ident)
+    {
+        $action = "/api/government/identification/simplifiedpersonidentification";
+        $queryData = [];
+
+        foreach (Ident::getTkbRequestParams() as $key => $attributeName) {
+            if(!empty($ident->$attributeName)) {
+                $queryData[$key] = $ident->$attributeName;
+            }
+        }
+
+        $identResponse = new IdentInitResponse();
+        if(Yii::$app->params['TESTMODE'] == 'Y') {
+            $identResponse->status = BaseResponse::STATUS_DONE;
+            $identResponse->response = [];
+            return $identResponse;
+        }
+
+        $ans = $this->curlXmlReq(Json::encode($queryData), $this->bankUrl . $action);
+
+        if (isset($ans['xml']) && isset($ans['xml']['OrderId']) && !empty($ans['xml']['OrderId'])) {
+            $identResponse->status = BaseResponse::STATUS_DONE;
+        } else {
+            $identResponse->status = BaseResponse::STATUS_ERROR;
+        }
+
+        return $identResponse;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function identGetStatus(Ident $ident)
+    {
+        $action = "/api/government/identification/simplifiedpersonidentificationresult";
+        $queryData = [
+            'ExtId' => $ident->Id,
+        ];
+        $queryData = Json::encode($queryData);
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+
+        $identGetStatusResponse = new IdentGetStatusResponse();
+        if(Yii::$app->params['TESTMODE'] == 'Y') {
+            $identGetStatusResponse->status = BaseResponse::STATUS_DONE;
+            $identGetStatusResponse->identStatus = Ident::STATUS_SUCCESS;
+            $identGetStatusResponse->response = ['message' => 'На тестовой среде идентифиткация всегда успешна'];
+            return $identGetStatusResponse;
+        }
+
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            $identStatus = $this->convertIdentGetStatus($ident, $ans['xml']);
+            $identGetStatusResponse->status = ($identStatus == Ident::STATUS_WAITING ? BaseResponse::STATUS_CREATED : BaseResponse::STATUS_DONE);
+            $identGetStatusResponse->identStatus = $this->convertIdentGetStatus($ident, $ans['xml']);
+            $identGetStatusResponse->response = $ans['xml'];
+        } else {
+            $identGetStatusResponse->status = BaseResponse::STATUS_ERROR;
+            $identGetStatusResponse->response = $ans;
+        }
+
+        return $identGetStatusResponse;
+    }
+
+    /**
+     * @param Ident $ident
+     * @param array $ans
+     * @return int
+     */
+    protected function convertIdentGetStatus(Ident $ident, array $ans)
+    {
+        $status = Ident::STATUS_WAITING;
+        $maxTimeWithInnRequest = 60 * 30;
+        foreach (['Inn', 'Snils', 'Passport', 'PassportDeferred'] as $key) {
+            if(isset($ans[$key])) {
+                if(
+                    $ans[$key]['Status'] == 'Processing'
+                    && $key == 'Inn' && (time() - $ident->DateUpdated) < $maxTimeWithInnRequest
+                ) {
+                    continue;
+                } elseif (in_array($ans[$key]['Status'], ['Processing', 'NotValid']) && $key == 'Inn') {
+                    $status = Ident::STATUS_DENIED;
+                    break;
+                } elseif ($ans[$key]['Status'] == 'Error') {
+                    $status = Ident::STATUS_ERROR;
+                    break;
+                } elseif ($ans[$key]['Status'] == 'NotValid') {
+                    $status = Ident::STATUS_DENIED;
+                    break;
+                } elseif ($ans[$key]['Status'] == 'Valid') {
+                    $status = Ident::STATUS_SUCCESS;
+                    break;
+                }
+            }
+        }
+        return $status;
+    }
+
+    /**
+     * @throws GateException
+     */
+    public function currencyExchangeRates()
     {
         throw new GateException('Метод недоступен');
     }

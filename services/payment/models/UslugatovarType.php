@@ -27,6 +27,7 @@ class UslugatovarType extends \yii\db\ActiveRecord
     const VYVODPAYS = 19; //перечисление платежей
     const REVERSCOMIS = 21; //возмещение комиссии
     const PEREVPAYS = 23; //перевод на выдачу
+    const IDENT = 24; //идентификация
 
     const JKHPARTS = 100; //оплата жкх с разбивкой
     const ECOMPARTS = 102; //оплата еком с разбивкой
@@ -62,6 +63,7 @@ class UslugatovarType extends \yii\db\ActiveRecord
             self::VYVODPAYS => 'Вывод средств',
             self::REVERSCOMIS => 'Возмещение комисии',
             self::PEREVPAYS => 'Внутренний перевод между счетами',
+            self::IDENT => 'Упрощенная идентификация пользователей',
 
             self::POGASHATFPARTS => 'Погашение займа AFT с разбивкой',
             self::POGASHECOMPARTS => 'Погашение займа ECOM с разбивкой',

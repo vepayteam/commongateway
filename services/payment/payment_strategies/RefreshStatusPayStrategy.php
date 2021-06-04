@@ -7,6 +7,7 @@ namespace app\services\payment\payment_strategies;
 use app\models\antifraud\AntiFraud;
 use app\models\bank\BankCheck;
 use app\models\payonline\Cards;
+use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
 use app\models\queue\DraftPrintJob;
 use app\models\queue\ReverspayJob;
@@ -37,9 +38,32 @@ class RefreshStatusPayStrategy extends OkPayStrategy
     public function exec()
     {
         $paySchet = $this->okPayForm->getPaySchet();
-
         $bankAdapterBuilder = new BankAdapterBuilder();
-        $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank);
+
+        // TODO: refact
+        $partner = $paySchet->partner;
+        if($paySchet->partner->ID == 1
+            && in_array($paySchet->uslugatovar->IsCustom, [
+                TU::$VYPLATVOZN,
+                TU::$REVERSCOMIS,
+                TU::$PEREVPAYS,
+                TU::$VYVODPAYS]
+            )
+            && !empty($paySchet->uslugatovar->ExtReestrIDUsluga)
+        ) {
+            Yii::warning("RefreshStatusPayStrategy isVyvod ID=" . $this->okPayForm->IdPay);
+            $partner = Partner::findOne(['ID' => $paySchet->uslugatovar->ExtReestrIDUsluga]);
+        }
+
+        Yii::warning(sprintf(
+            "RefreshStatusPayStrategy beforeBuild ID=%d,  partnerId=%d, uslugaId=%d, bankId=%d",
+            $this->okPayForm->IdPay,
+            $partner->ID,
+            $paySchet->uslugatovar->ID,
+            $paySchet->bank->ID)
+        );
+
+        $bankAdapterBuilder->buildByBank($partner, $paySchet->uslugatovar, $paySchet->bank);
 
         /** @var CheckStatusPayResponse $checkStatusPayResponse */
         $checkStatusPayResponse = $bankAdapterBuilder->getBankAdapter()->checkStatusPay($this->okPayForm);

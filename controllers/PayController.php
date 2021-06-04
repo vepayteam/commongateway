@@ -21,6 +21,9 @@ use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\TU;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
+use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
+use app\services\payment\banks\BankAdapterBuilder;
+use app\services\payment\banks\TKBankAdapter;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2DuplicatedException;
 use app\services\payment\exceptions\reRequestingStatusOkException;
@@ -29,8 +32,10 @@ use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\CreatePayForm;
+use app\services\payment\forms\CreatePaySecondStepForm;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\OkPayForm;
+use app\services\payment\interfaces\Cache3DSv2Interface;
 use app\services\payment\models\PaySchet;
 use app\services\payment\payment_strategies\CreatePayStrategy;
 use app\services\payment\payment_strategies\DonePayStrategy;
@@ -38,6 +43,7 @@ use app\services\payment\payment_strategies\OkPayStrategy;
 use kartik\mpdf\Pdf;
 use Yii;
 use yii\db\Exception;
+use yii\helpers\Json;
 use yii\helpers\VarDumper;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
@@ -70,6 +76,8 @@ class PayController extends Controller
             'form',
             'orderdone',
             'orderok',
+            'createpay-second-step',
+            'createpay',
         ])) {
             $this->enableCsrfValidation = false;
         }
@@ -208,16 +216,43 @@ class PayController extends Controller
         }
 
         $createPayResponse = $createPayStrategy->getCreatePayResponse();
+        $createPayResponse->termurl = $createPayResponse->GetRetUrl($paySchet->ID);
         switch ($createPayResponse->status) {
             case BaseResponse::STATUS_DONE:
-                $createPayResponse->termurl = $createPayResponse->GetRetUrl($paySchet->ID);
                 //отправить запрос адреса формы 3ds
+                Yii::warning('PayController createPayResponse data: ' . Json::encode($createPayResponse->getAttributes()));
                 return $createPayResponse->getAttributes();
             case BaseResponse::STATUS_ERROR:
                 //отменить счет
                 return $this->redirect(\yii\helpers\Url::to('/pay/orderok?id=' . $form->IdPay));
+            case BaseResponse::STATUS_CREATED:
+                $createPayResponse->termurl = $createPayResponse->getStep2Url($paySchet->ID);
+                return $createPayStrategy->getCreatePayResponse()->getAttributes();
             default:
                 return $createPayStrategy->getCreatePayResponse()->getAttributes();
+        }
+    }
+
+    public function actionCreatepaySecondStep($id)
+    {
+        // TODO: refact
+        $createPaySecondStepForm = new CreatePaySecondStepForm();
+        $createPaySecondStepForm->IdPay = $id;
+
+        $paySchet = $createPaySecondStepForm->getPaySchet();
+        $bankAdapterBuilder = new BankAdapterBuilder();
+        $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank);
+
+        /** @var TKBankAdapter $tkbAdapter */
+        $tkbAdapter = $bankAdapterBuilder->getBankAdapter();
+        $createPayResponse = $tkbAdapter->createPayStep2($createPaySecondStepForm);
+        $paySchet->IsNeed3DSVerif = $createPayResponse->isNeed3DSVerif;
+        $paySchet->save(false);
+
+        if($createPayResponse->isNeed3DSVerif) {
+            return $this->render('createpay-second-step', ['createPayResponse' => $createPayResponse]);
+        } else {
+            return $this->redirect(\yii\helpers\Url::to('/pay/orderdone/' . $paySchet->ID));
         }
     }
 
@@ -275,6 +310,10 @@ class PayController extends Controller
         $donePayForm->paRes = Yii::$app->request->post('PaRes', null);
         $donePayForm->cres = Yii::$app->request->post('cres', null);
 
+        if(!empty($donePayForm->cres)) {
+            Yii::$app->cache->set(Cache3DSv2Interface::CACHE_PREFIX_CRES, $donePayForm->cres, 60 * 60);
+        }
+
         Yii::warning('Orderdone ' . $id . 'POST: ' . json_encode(Yii::$app->request->post()));
 
         if(!$donePayForm->validate()) {
@@ -302,14 +341,6 @@ class PayController extends Controller
         // Дадим время, чтобы банк закрыл платеж
         sleep(5);
 
-        $SesIdPay = Yii::$app->session->get('IdPay');
-        if(
-            !UserLk::IsAdmin(Yii::$app->user)
-            && (!$id || $id != $SesIdPay)
-        ) {
-            throw new NotFoundHttpException();
-        }
-
         $okPayForm = new OkPayForm();
         $okPayForm->IdPay = $id;
 
@@ -319,8 +350,6 @@ class PayController extends Controller
 
         $okPayStrategy = new OkPayStrategy($okPayForm);
         $paySchet = $okPayStrategy->exec();
-
-
 
         // TODO:
         if($paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD && $paySchet->IdOrg == '3') {

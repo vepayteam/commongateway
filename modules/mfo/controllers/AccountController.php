@@ -2,12 +2,14 @@
 
 namespace app\modules\mfo\controllers;
 
-use app\models\bank\TcbGate;
+use app\Api\Client\AbstractClient;
+use app\Api\Client\Client;
 use app\models\payonline\Partner;
+use app\services\balance\Balance;
+use app\services\balance\response\BalanceResponse;
+use GuzzleHttp\RequestOptions;
 use Yii;
 use app\models\api\CorsTrait;
-use app\models\bank\TCBank;
-use app\models\kfapi\KfBalance;
 use app\models\mfo\MfoReq;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
@@ -53,51 +55,25 @@ class AccountController extends Controller
      * Баланс счета
      * @return array
      * @throws BadRequestHttpException
+     * @throws ForbiddenHttpException
+     * @throws \yii\db\Exception
      * @throws \yii\web\UnauthorizedHttpException
-     * @throws \Exception
      */
-    public function actionBalance()
+    public function actionBalance(): array
     {
         $mfo = new MfoReq();
         $mfo->LoadData(Yii::$app->request->getRawBody());
-
         if (!$mfo->mfo) {
-            return ['status' => 0, 'mesage' => ''];
+            return ['status' => 0, 'message' => BalanceResponse::PARTNER_NOT_FOUND_ERROR_MSG];
         }
-
         $partner = Partner::findOne(['ID' => $mfo->mfo]);
-
-        $kfBal = new KfBalance();
-        $kfBal->load($mfo->Req(), '');
-        if (empty($kfBal->account)) {
-            $kfBal->setAttributes([
-                'account' => $partner->SchetTcb
-            ]);
+        $balance = new Balance();
+        $balance->setAttributes([
+            'partner' => $partner
+        ]);
+        if (!$balance->validate()) {
+            return ['status' => 0, 'message' => BalanceResponse::PARTNER_NOT_FOUND_ERROR_MSG];
         }
-        if (!$kfBal->validate()) {
-            return ['status' => 0, 'mesage' => $kfBal->GetError()];
-        }
-
-        $bal = $kfBal->GetBalance($partner);
-        $state = [
-            'status' => 1,
-            'message' => '',
-            'amount' => round($bal, 2)
-        ];
-
-        /*$TcbGate = new TcbGate($mfo->mfo, TCBank::$AFTGATE);
-        $tcBank = new TCBank($TcbGate);
-        $ret = $tcBank->getBalance();
-        if ($ret && isset($ret['status']) && $ret['status'] == 1) {
-            $state = [
-                'status' => 1,
-                'message' => '',
-                'amount' => round($ret['amount'], 2)
-            ];
-        } else {
-            $state = ['status' => 0, 'message' => $ret['message'], 'amount' => '0.00'];
-        }*/
-        return $state;
+        return (array)$balance->getAllBanksBalance();
     }
-
 }
