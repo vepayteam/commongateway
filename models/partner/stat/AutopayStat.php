@@ -66,11 +66,33 @@ class AutopayStat extends Model
         if ($IdPart > 0) {
             $wherePartner = "IDPartner = $IdPart AND";
         }
-        $query->groupBy('c.ID');
+        $query = sprintf(
+            'SELECT
+                        COUNT(*)
+                    FROM cards AS c
+                    WHERE c.ID IN     
+                    (
+                        SELECT distinct
+                            ps.IdKard
+                        FROM
+                            pay_schet AS ps
+                        WHERE
+                            ps.IdUsluga IN (SELECT 
+                                    ID
+                                FROM
+                                    uslugatovar
+                                WHERE
+                                    %s 
+                                    IsCustom IN (%s))
+                                AND (`ps`.`DateCreate` BETWEEN %d AND %d)
+                    ) AND (`c`.`TypeCard` = 0)',
+            $wherePartner,
+            implode(', ', TU::AutoPay()),
+            $datefrom,
+            $dateto
+        );
 
-        $countResult = (new Query())->select(['count' => 'COUNT(ID)'])->from('cards')->where(['in', 'ID', $query])->cache(30)->one();
-
-        $ret['activecards'] = $countResult['count'];
+        $ret['activecards'] = Yii::$app->db->createCommand($query)->cache(1)->queryScalar();
 
         //Количество запросов на одну карту
         $query = new Query();
