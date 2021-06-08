@@ -12,6 +12,7 @@ use yii\db\ActiveRecord;
  * @property string To
  * @property float Rate
  * @property Carbon CreatedAt
+ * @property Carbon RateFrom
  */
 class CurrencyExchange extends ActiveRecord
 {

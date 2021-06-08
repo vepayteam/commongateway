@@ -52,6 +52,7 @@ class WalletoBankAdapter implements IBankAdapter
     private const STATUS_REVERSED = 'reversed';
     public const ERROR_STATUS_MSG = 'Ошибка проверки статуса'; //TODO: create global error handler
 
+    private const BANK_TIMEZONE = 'Europe/Vilnius';
 
     public function setGate(PartnerBankGate $partnerBankGate)
     {
@@ -227,7 +228,7 @@ class WalletoBankAdapter implements IBankAdapter
     public function currencyExchangeRates(): CurrencyExchangeRatesResponse
     {
         $url = self::BANK_URL . '/exchange_rates/';
-        $date = Carbon::now()->format('Y-m-d'); // сегодняшняя дата в формате 2021-06-30
+        $date = Carbon::now(self::BANK_TIMEZONE)->format('Y-m-d'); // сегодняшняя дата в формате 2021-06-30
 
         $currencyExchangeRatesResponse = new CurrencyExchangeRatesResponse();
 
