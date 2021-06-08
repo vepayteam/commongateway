@@ -185,7 +185,9 @@ class WalletoBankAdapter implements IBankAdapter
             $response = $this->api->request(
                 Client::METHOD_PUT,
                 self::BANK_URL . $uri,
-                []
+                [
+                    'amount' => $refundPayForm->paySchet->getSummFull() / 100,
+                ]
             );
             if (!$response->isSuccess()) {
                 $errorMessage = $response->json('failure_message') ?? self::ERROR_STATUS_MSG;
