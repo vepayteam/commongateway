@@ -6,6 +6,7 @@ use app\models\partner\UserLk;
 use app\models\TU;
 use Yii;
 use yii\base\Model;
+use yii\db\Expression;
 use yii\db\Query;
 
 class AutopayStat extends Model
@@ -109,7 +110,7 @@ class AutopayStat extends Model
             $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
 
-        $countResult = (new Query())->select(['count' => 'COUNT(ID)'])->from('cards')->where(['in', 'ID', $query])->cache(30)->one();
+        $countResult = (new Query())->select(['count' => 'COUNT(ID)'])->from('pay_schet')->where(['in', 'ID', $query])->cache(30)->one();
         $ret['reqcards'] = $countResult['count'];
 
         if ($ret['activecards'] > 0) {
@@ -117,25 +118,40 @@ class AutopayStat extends Model
         }
 
         //Сколько успешных запросов
-        $query = new Query();
-        $query
-            ->select(['ps.SummPay'])
-            ->from('`pay_schet` AS ps')
-            ->leftJoin('`cards` AS c', 'ps.IdKard = c.ID')
-            ->leftJoin('`uslugatovar` AS u', 'u.ID = ps.IdUsluga')
-            ->where(['between', 'ps.DateCreate', $datefrom, $dateto])
-            ->andWhere(['c.TypeCard' => 0])
-            ->andWhere(['ps.Status' => 1])
-            ->andWhere(['in', 'u.IsCustom', TU::AutoPay()]);
+        $query = $this->handleSuccessQuery((new Query())->select(['ps.ID']), $datefrom,$dateto);
+        $countResult = (new Query())->select(['count' => 'COUNT(ID)'])->from('pay_schet')->where(['in', 'ID', $query])->cache(30)->one();
+
+        $ret['payscards'] = $countResult['count'];
+        $ret['sumpayscards'] = $this->handleSuccessQuery(
+            (new Query())->select(new Expression('sum(SummPay)')),$datefrom,$dateto
+        )->cache(30)->scalar();
+
+        return $ret;
+    }
+
+    /**
+     * @param Query $query
+     * @param       $datefrom
+     * @param       $dateto
+     * @param int   $IdPart
+     *
+     * @return Query
+     */
+    private function handleSuccessQuery(Query $query, $datefrom, $dateto, $IdPart = 0)
+    {
+        $query->from('`pay_schet` AS ps')
+              ->leftJoin('`cards` AS c', 'ps.IdKard = c.ID')
+              ->leftJoin('`uslugatovar` AS u', 'u.ID = ps.IdUsluga')
+              ->where(['between', 'ps.DateCreate', $datefrom, $dateto])
+              ->andWhere(['c.TypeCard' => 0])
+              ->andWhere(['ps.Status' => 1])
+              ->andWhere(['in', 'u.IsCustom', TU::AutoPay()]);
+
         if ($IdPart > 0) {
             $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
-        $countResult = (new Query())->select(['count' => 'COUNT(ID)'])->from('cards')->where(['in', 'ID', $query])->cache(30)->one();
 
-        $ret['payscards'] = $countResult['count'];
-        $ret['sumpayscards'] = $query->cache(30)->sum('SummPay');
-
-        return $ret;
+        return $query;
     }
 
     /**
