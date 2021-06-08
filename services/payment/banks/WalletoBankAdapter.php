@@ -52,7 +52,7 @@ class WalletoBankAdapter implements IBankAdapter
     private const STATUS_REVERSED = 'reversed';
     public const ERROR_STATUS_MSG = 'Ошибка проверки статуса'; //TODO: create global error handler
 
-    private const BANK_TIMEZONE = 'Europe/Vilnius';
+    public const BANK_TIMEZONE = 'Europe/Vilnius';
 
     public function setGate(PartnerBankGate $partnerBankGate)
     {

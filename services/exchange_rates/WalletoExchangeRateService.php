@@ -95,7 +95,7 @@ class WalletoExchangeRateService
             $record->To = $to;
             $record->Rate = $rate;
             $record->CreatedAt = Carbon::now();
-            $record->RateFrom = Carbon::now();
+            $record->RateFrom = $this->getRateFrom();
             $record->save();
 
             $inserted++;
@@ -126,5 +126,10 @@ class WalletoExchangeRateService
             ->one();
 
         return $bank;
+    }
+
+    private function getRateFrom(): Carbon
+    {
+        return Carbon::now(WalletoBankAdapter::BANK_TIMEZONE)->startOfDay();
     }
 }
