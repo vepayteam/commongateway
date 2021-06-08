@@ -72,7 +72,7 @@ class CallbackList extends Model
                 ],
             ]);
 
-        if ($idpartner > 0) {
+        if ( $idpartner > 0 ) {
             $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $idpartner]);
         }
 
