@@ -16,7 +16,7 @@ class m210607_144317_add_rate_from_column_to_currency_exchanges_table extends Mi
         $this->addColumn(
             CurrencyExchange::tableName(),
             'RateFrom',
-            $this->timestamp()
+            $this->timestamp()->defaultValue(null)
         );
     }
 
