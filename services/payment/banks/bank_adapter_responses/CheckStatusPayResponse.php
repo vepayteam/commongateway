@@ -12,6 +12,7 @@ class CheckStatusPayResponse extends BaseResponse
     public $expYear;
     public $expMonth;
     public $cardHolder;
+    public $operations;
 
     /**
      * проверка полученного внешнего идентификатора карты
