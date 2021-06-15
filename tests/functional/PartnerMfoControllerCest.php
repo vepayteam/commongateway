@@ -44,6 +44,7 @@ class PartnerMfoControllerCest
             ->leftJoin('partner', 'partner.ID = partner_users.IdPartner AND partner.IsDeleted = 0 AND partner.IsBlocked = 0')
             ->leftJoin('uslugatovar', 'uslugatovar.IDPartner = partner_users.IdPartner')
             ->where(['in', 'uslugatovar.IsCustom', Uslugatovar::getPartsBalanceAccessCustoms()])
+            ->where(['uslugatovar.IsDeleted' => false])
             ->one();
 
         return $this->getUser($partner);
@@ -57,7 +58,7 @@ class PartnerMfoControllerCest
             ->leftJoin('partner', 'partner.ID = partner_users.IdPartner AND partner.IsDeleted = 0 AND partner.IsBlocked = 0')
             ->leftJoin('uslugatovar', 'uslugatovar.IDPartner = partner_users.IdPartner')
             ->where(['not in', 'uslugatovar.IsCustom', Uslugatovar::getPartsBalanceAccessCustoms()])
-            ->where(['IsDeleted' => false])
+            ->orWhere(['uslugatovar.IsDeleted' => true])
             ->one();
 
         return $this->getUser($partner);
@@ -120,7 +121,7 @@ class PartnerMfoControllerCest
         $I->amLoggedInAs($this->findPartnerWithoutPartsBalanceIdentity());
 
         $I->amOnRoute('partner/mfo/parts-balance');
-        $I->seeCurrentUrlEquals('/partner');
+        $I->dontSee('Баланс по разбивке (Платформа)');
     }
 
 //    public function tryToPartsBalanceProcessingTest(FunctionalTester $I)
@@ -149,7 +150,7 @@ class PartnerMfoControllerCest
         $I->amLoggedInAs($this->findPartnerWithoutPartsBalanceIdentity());
 
         $I->amOnRoute('partner/mfo/parts-balance-partner');
-        $I->seeCurrentUrlEquals('/partner');
+        $I->dontSee('Баланс по разбивке (Партнер)');
     }
 
 //    public function tryToPartsBalancePartnerProcessingTest(FunctionalTester $I)
