@@ -2,11 +2,11 @@
 $params = require(__DIR__ . '/params.php');
 
 date_default_timezone_set('Europe/Moscow');
-setlocale (LC_TIME, "RUS");
+setlocale(LC_TIME, "RUS");
 ini_set('max_execution_time', 120);
-ini_set('memory_limit','512M');
-ini_set('session.gc_maxlifetime',3600 * 24);
-ini_set('session.cookie_lifetime',0);
+ini_set('memory_limit', '512M');
+ini_set('session.gc_maxlifetime', 3600 * 24);
+ini_set('session.cookie_lifetime', 0);
 
 $config = [
     'id' => 'basic',
@@ -17,8 +17,8 @@ $config = [
     'bootstrap' => ['log', 'queue'],
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
-        '@npm'   => '@vendor/npm-asset',
-        '@runtime'=>'@app/runtime',
+        '@npm' => '@vendor/npm-asset',
+        '@runtime' => '@app/runtime',
         '@web' => $params['domain'],
     ],
     'components' => [
@@ -27,7 +27,7 @@ $config = [
             'cookieValidationKey' => 'm04W7J9wtXYYl5Hp4f51QbvERNbMgJgPq',
             'baseUrl' => '',
             //'parsers' => [
-                //'application/json' => 'yii\web\JsonParser',
+            //'application/json' => 'yii\web\JsonParser',
             //],
         ],
         'session' => [
@@ -194,47 +194,5 @@ if (YII_ENV_DEV) {
         ];
     }
 }
-
-$config['components']['log']['targets'][] = [
-    'class' => 'yii\log\FileTarget',
-    'levels' => ['error', 'warning', 'info'],
-    'categories' => ['russrandart'],
-    'logFile' => '@app/runtime/logs/console/russrandart.log',
-    'maxFileSize' => 1024 * 2,
-    'maxLogFiles' => 20,
-    'logVars' => [],
-];
-
-$config['components']['log']['targets'][] = [
-    'class' => 'yii\log\FileTarget',
-    'levels' => ['error', 'warning', 'info'],
-    'categories' => ['rsbcron', 'queue'],
-    'logFile' => '@app/runtime/logs/console/rsbcron.log',
-    'maxFileSize' => 1024 * 30,
-    'maxLogFiles' => 20,
-    'rotateByCopy' => false,
-    'logVars' => [],
-];
-$config['components']['log']['targets'][] = [
-    'class' => 'yii\log\FileTarget',
-    'levels' => ['error', 'warning', 'info'],
-    'categories' => ['mfo'],
-    'logFile' => '@app/runtime/logs/mfo.log',
-    'maxFileSize' => 1024 * 10,
-    'maxLogFiles' => 20,
-    'rotateByCopy' => false,
-    'logVars' => [],
-];
-
-$config['components']['log']['targets'][] = [
-    'class' => 'yii\log\FileTarget',
-    'levels' => ['error', 'warning', 'info'],
-    'categories' => ['merchant'],
-    'logFile' => '@app/runtime/logs/console/merchant.log',
-    'maxFileSize' => 1024 * 30,
-    'maxLogFiles' => 20,
-    'rotateByCopy' => false,
-    'logVars' => [],
-];
 
 return $config;
