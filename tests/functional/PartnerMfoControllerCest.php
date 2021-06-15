@@ -57,6 +57,7 @@ class PartnerMfoControllerCest
             ->leftJoin('partner', 'partner.ID = partner_users.IdPartner AND partner.IsDeleted = 0 AND partner.IsBlocked = 0')
             ->leftJoin('uslugatovar', 'uslugatovar.IDPartner = partner_users.IdPartner')
             ->where(['not in', 'uslugatovar.IsCustom', Uslugatovar::getPartsBalanceAccessCustoms()])
+            ->where(['IsDeleted' => false])
             ->one();
 
         return $this->getUser($partner);
