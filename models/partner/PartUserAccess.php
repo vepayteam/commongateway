@@ -238,6 +238,7 @@ class PartUserAccess extends \yii\db\ActiveRecord
 
         $isFound = $partner->getUslugatovars()
             ->where(['in', 'IsCustom', Uslugatovar::getPartsBalanceAccessCustoms()])
+            ->where(['IsDeleted' => false])
             ->one();
 
         return $isFound !== null;
