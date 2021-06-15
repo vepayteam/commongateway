@@ -1,18 +1,17 @@
 openapi: 3.0.0
 info:
-  title: API МФО
-  description: Vepay API для МФО
-  version: 1.0.7
+  title: API Vepay
+  version: 1.0.8
 security:
   - Mfo: []
     Token: []
 tags:
   - name: Card
-    description: Запросы по картам.
+    description: Запросы по картам
   - name: Pay
-    description: Запросы погашения займа
+    description: Запросы pay in
   - name: Out
-    description: Запросы выдачи займа
+    description: Запросы pay out
   - name: Ident
     description: Запросы идентификации
   - name: Info
@@ -84,7 +83,7 @@ paths:
       tags:
         - Card
       summary: Получить идентификатор карты
-      description: Перед запросом идентификатора карты, необходимо проверь статус
+      description: Перед запросом идентификатора карты необходимо проверь статус
         завершения платежа по регистрации карты. У карт «для пополнения» срок
         действия отсутствует.
       requestBody:
@@ -137,8 +136,8 @@ paths:
     post:
       tags:
         - Pay
-      summary: Погашение займа с карты из кабинета МФО
-      description: Отправляется запрос погашения займа, с переходом к форме ввода
+      summary: Запрос оплаты pay in через платежную форму
+      description: Отправляется запрос на оплату с переходом к форме ввода
         реквизитов карты
       requestBody:
         content:
@@ -164,6 +163,8 @@ paths:
     post:
       tags:
         - Pay
+      summary: Запрос оплаты pay in через платежную форму с разбивкой
+      description: Разбивка (сплитование) платежа
       requestBody:
         content:
           application/json:
@@ -187,6 +188,8 @@ paths:
     post:
       tags:
         - Pay
+      summary: Запрос на совершение автоплатежа с разбивкой
+      description: Разбивка (сплитование) автоплатежа
       requestBody:
         content:
           application/json:
@@ -210,8 +213,8 @@ paths:
     post:
       tags:
         - Pay
-      summary: Погашение займа с карты автоплатежом
-      description: Отправляется запрос погашения займа автоплатежом
+      summary: Автоплатеж (рекуррентный платеж)
+      description: Отправляется запрос на совершение автоплатежа
       requestBody:
         content:
           application/json:
@@ -237,8 +240,7 @@ paths:
       tags:
         - Pay
       summary: Статус платежа
-      description: Запрос результата операции. Средства будут списаны с карты и перечислены
-        МФО при успешном статусе платежа.
+      description: Запрос результата операции
       requestBody:
         content:
           application/json:
@@ -263,7 +265,7 @@ paths:
     post:
       tags:
         - Out
-      summary: Выплата денежных средств на карту
+      summary: Выплата денежных средств на карту (pay out)
       description: Отправляется перевод денежных средств на карту клиента
       requestBody:
         content:
@@ -289,8 +291,8 @@ paths:
     post:
       tags:
         - Out
-      summary: Выдача займа на счет юрлица
-      description: Отправляется запрос выдачи займа на счет юрлица
+      summary:  Выплата денежных средств на счет юрлица (pay out)
+      description: Отправляется перевод денежных средств на счет юрлица
       requestBody:
         content:
           application/json:
@@ -315,8 +317,8 @@ paths:
     post:
       tags:
         - Out
-      summary: Выдача займа на счет физлица
-      description: Отправляется запрос выдачи займа на счет физлица
+      summary: Выплата денежных средств на счет физлица (pay out)
+      description: Отправляется перевод денежных средств на счет физлица
       requestBody:
         content:
           application/json:
@@ -337,13 +339,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /out/check-sbp-can-transfer:
+    post:
+      tags:
+        - Out
+      summary: СБП. Проверка возможности выдачи займа на счет физлица
+      description: Проверка возможности выдачи займа на счет физлица
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckSbpOutF"
+        description: Параметры перевода
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusId"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /out/state:
     post:
       tags:
         - Out
-      summary: Статус выдачи займа
-      description: Запрос результата операции. Средства будут перечислены со счета МФО
-        заёмщику при успешном статусе платежа.
+      summary: Статус операции pay out
+      description: Запрос результата операции
       requestBody:
         content:
           application/json:
@@ -364,6 +391,28 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /getsbpbankreceiver:
+    post:
+      tags:
+        - Out
+      summary: Список банк-участинков банка СПБ БРС
+      description: Запрос возвращает список банк-участников банка Русский стандарт, сервис быстрых платежей
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type:
+                  array
+                items:
+                  $ref: "#/components/schemas/BrsSpbReceiver"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /ident/req:
     post:
       tags:
@@ -372,7 +421,7 @@ paths:
       description: Отправляется запрос идентификации, в ответе на который возвращается id
         операции. По нему в последующем необходимо уточнить статус выполнения
         операции. Для идентификации телефона необходимо отправить дополнительный
-        запрос идентификации, в котором указать код пришедший по СМС.
+        запрос идентификации, в котором указать код, пришедший по СМС.
       requestBody:
         content:
           application/json:
@@ -398,7 +447,7 @@ paths:
       tags:
         - Ident
       summary: Статус идентификации
-      description: Запрос результата операции. Средства будут перечислены со счета МФО заёмщику при успешном статусе платежа.
+      description: Запрос результата идентификации.
       requestBody:
         content:
           application/json:
@@ -425,7 +474,7 @@ paths:
         - Ident
       summary: Идентификация пользователя в Руна Банке
       description: Отправляется запрос идентификации, в ответе на который возвращается id
-        операции. По нему в последующем необходимо уточнить статус выполнения
+        операции. По нему в дальнейшем необходимо уточнить статус выполнения
         операции.
       requestBody:
         content:
@@ -473,6 +522,59 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /ident/request-init:
+    post:
+      tags:
+        - Ident
+      summary: Упращенная идентификация пользователя
+      description: Отправляется запрос идентификации, в ответе на который возвращается id
+        операции.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IdentRequestInit"
+        description: Параметры перевода
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusId"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /ident/request-state:
+    post:
+      tags:
+        - Ident
+      summary: Статус упращенной идентификации
+      description: Запрос результата упращенной идентификации
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IdState"
+        description: ID запрса
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentRequestStatus"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /сheck:
     post:
       tags:
@@ -497,7 +599,7 @@ paths:
       tags:
         - Info
       summary: Запрос баланса счета
-      description: Запрос баланса счета площадки.
+      description: Запрос баланса счета площадки
       responses:
         "200":
           description: OK
@@ -563,7 +665,7 @@ paths:
       tags:
         - Callback
       summary: Запрос проверки возможности оплаты
-      description: Запрос проверки возможности оплаты от МФО. URL для запроса задаётся в личном кабинете
+      description: Запрос проверки возможности оплаты. URL для запроса задаётся в личном кабинете
       parameters:
         - name: extid
           in: query
@@ -623,6 +725,12 @@ components:
         amount:
           type: number
           description: Идентификатор документа
+    Client:
+      type: object
+      properties:
+        email:
+          type: string
+          description: Email клиента
     CardInfo:
       type: object
       properties:
@@ -677,11 +785,11 @@ components:
         successurl:
           type: string
           format: url
-          description: Адрес для Url для возврата после заверщения платежа (успех)
+          description: Адрес для Url для возврата после завершения платежа (успех)
         failurl:
           type: string
           format: url
-          description: Адрес для Url для возврата после заверщения платежа (ошибка)
+          description: Адрес для Url для возврата после завершения платежа (ошибка)
         cancelurl:
           type: string
           format: url
@@ -759,15 +867,20 @@ components:
         successurl:
           type: string
           format: url
-          description: Адрес для Url для возврата после заверщения платежа (успех)
+          description: Адрес для Url для возврата после завершения платежа (успех)
         failurl:
           type: string
           format: url
-          description: Адрес для Url для возврата после заверщения платежа (ошибка)
+          description: Адрес для Url для возврата после завершения платежа (ошибка)
         cancelurl:
           type: string
           format: url
           description: Адрес для Url для возврата после отказа от оплаты
+        client:
+            type: array
+            required: false
+            items:
+              $ref: "#/components/schemas/Client"
     PayLkParts:
       type: object
       properties:
@@ -783,7 +896,7 @@ components:
         successurl:
           type: string
           format: url
-          description: Адрес для Url для возврата после заверщения платежа (успех)
+          description: Адрес для Url для возврата после завершения платежа (успех)
         cancelurl:
           type: string
           format: url
@@ -795,7 +908,7 @@ components:
         failurl:
           type: string
           format: url
-          description: Адрес для Url для возврата после заверщения платежа (ошибка)
+          description: Адрес для Url для возврата после завершения платежа (ошибка)
         timeout:
           type: integer
           minimum: 10
@@ -975,6 +1088,21 @@ components:
         extid:
           type: string
           description: Внешний идентификатор запроса
+    CheckSbpOutF:
+      type: object
+      properties:
+        fio:
+          type: string
+          description: ФИО получателя
+        account:
+          type: string
+          description: Счет в банке
+        bic:
+          type: string
+          description: БИК банка
+        amount:
+          type: number
+          description: Cумма платежа
     Status:
       type: object
       properties:
@@ -1101,6 +1229,47 @@ components:
         snils:
           type: string
           description: СНИЛС (при необходимости проверки)
+    IdentRequestInit:
+      type: object
+      properties:
+        LastName:
+          type: string
+          description: Фамилия
+        FirstName:
+          type: string
+          description: Имя
+        Patronymic:
+          type: string
+          description: Отчество
+        Series:
+          type: string
+          description: Серия паспорта
+        Number:
+          type: string
+          description: Номер паспорта
+        IssueDate:
+          type: string
+          description: Дата выдачи паспорта
+        IssueCode:
+          type: string
+          description: Код подразделения паспорта
+        Inn:
+          type: string
+          description: ИНН (при необходимости проверки)
+        Snils:
+          type: string
+          description: СНИЛС (при необходимости проверки)
+    IdentRequestStatus:
+      type: object
+      properties:
+        status:
+          type: integer
+          description:
+            Статус обработки. 0 - заявка создана, 1 - ожидается результат, 2- ошибка запроса, 3 - успешная идентификация, 4 - неуспешная идентификация, 5 - превышен интервал времени на обработку запроса
+        info:
+          type: string
+          description:
+            JSON, подробная информация
     IdentRunaInit:
       type: object
       properties:
@@ -1161,9 +1330,14 @@ components:
       type: object
       properties:
         status:
-          type: integer
-          description: 0 - успешно, или код ошибки. При указанном коде ошибки в ответе на
-            колбэк выполняется возврат средств.
-        message:
+          description: 0 - успешно, или код ошибки.
           type: string
-          description: Описание ошибки
+    BrsSpbReceiver:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Название банка
+        bic:
+          type: string
+          description: БИК

@@ -4,7 +4,7 @@ namespace app\services\payment\banks;
 
 use app\Api\Payment\Cauri\CauriApiFacade;
 use app\Api\Payment\Cauri\Responses\TransactionStatusResponse;
-use app\services\ident\forms\IdentForm;
+use app\services\ident\models\Ident;
 use app\services\logs\loggers\CauriLogger;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
@@ -13,6 +13,7 @@ use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
@@ -530,7 +531,23 @@ class CauriAdapter implements IBankAdapter
         throw new GateException('Метод недоступен');
     }
 
-    public function ident(IdentForm $identForm)
+    public function identInit(Ident $ident)
+    {
+        throw new GateException('Метод недоступен');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function identGetStatus(Ident $ident)
+    {
+        throw new GateException('Метод недоступен');
+    }
+
+    /**
+     * @throws GateException
+     */
+    public function currencyExchangeRates()
     {
         throw new GateException('Метод недоступен');
     }

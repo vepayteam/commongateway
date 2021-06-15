@@ -74,6 +74,7 @@ $config = [
                 '/oferta' => '/site/oferta',
                 '/admin/statementdiff/<id:\d+>' => 'admin/statement-diff',
                 '/admin/syncbalance/<id:\d+>' => 'admin/syncbalance',
+                '/mfo/getsbpbankreceiver' => 'mfo/default/getsbpbankreceiver',
 
                 '<controller>/<id:\d+>' => '<controller>/index',
                 '<controller>/<action>' => '<controller>/<action>',
@@ -131,6 +132,7 @@ $config = [
             'PartnersService' => ['class' => 'app\services\partners\PartnersService'],
             'AuthService' => ['class' => 'app\services\auth\AuthService'],
             'NotificationsService' => ['class' => 'app\services\notifications\NotificationsService'],
+            'WalletoExchangeRateService' => ['class' => 'app\services\exchange_rates\WalletoExchangeRateService'],
         ],
     ],
     'modules' => [

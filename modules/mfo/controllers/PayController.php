@@ -98,6 +98,7 @@ class PayController extends Controller
         // рубли в копейки
         // TODO: in model validation
         $form->amount *= 100;
+        $form->client = $mfo->getRequestData('client');
 
         Yii::warning('/pay/lk mfo='. $mfo->mfo . " sum=" . $form->amount . " extid=" . $form->extid, 'mfo');
         $paymentStrategy = new MfoPayLkCreateStrategy($form);
@@ -336,22 +337,26 @@ class PayController extends Controller
         $mfo = new MfoReq();
         $mfo->LoadData(Yii::$app->request->getRawBody());
 
-        $IdPay = $mfo->GetReq('id');
+        $paySchetId = $mfo->GetReq('id');
 
-        $payschets = new Payschets();
-        $params = $payschets->getSchetData($IdPay,null, $mfo->mfo);
-        if ($params) {
-            if($params['Status'] == PaySchet::STATUS_NOT_EXEC) {
-                return ['status' => 0, 'message' => 'В обработке' , 'rc' => ''];
-            }
+        $paySchet = PaySchet::findOne([
+            'ID' => $paySchetId,
+            'IdOrg' => $mfo->mfo,
+        ]);
 
-            $merchBank = BankMerchant::Create($params);
-            $ret = $merchBank->confirmPay($IdPay, $mfo->mfo);
-            if ($ret && isset($ret['status']) && $ret['IdPay'] != 0) {
-                return ['status' => (int)$ret['status'], 'message' => (string)$ret['message'], 'rc' => isset($ret['rc']) ?(string)$ret['rc'] : ''];
-            }
+        if(!$paySchet) {
+            return ['status' => 0, 'message' => 'Счет не найден'];
         }
-        return ['status' => 0, 'message' => 'Счет не найден'];
+
+        if($paySchet->Status == PaySchet::STATUS_WAITING) {
+            return ['status' => 0, 'message' => 'В обработке' , 'rc' => ''];
+        } else {
+            return [
+                'status' => (int)$paySchet->Status,
+                'message' => (string)$paySchet->ErrorInfo,
+                'rc' => $paySchet->RCCode,
+            ];
+        }
     }
 
 }

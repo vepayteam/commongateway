@@ -18,7 +18,7 @@ use Yii;
 class VyvodVoznag extends Model
 {
     private $recviz = [
-        'account' => '40701810801500000482',
+        'account' => '40702810401500092051',
         'bic' => '044525999',
         'name' => 'ООО "ПРОЦЕССИНГОВАЯ КОМПАНИЯ БЫСТРЫХ ПЛАТЕЖЕЙ"',
         'inn' => '7728487400',

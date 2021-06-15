@@ -14,7 +14,7 @@ use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 
-class MfoVyvodVoznagStrategy extends MfoOutPayaccStrategy
+class MfoVyvodVoznagStrategy extends MfoOutPayAccountStrategy
 {
     /**
      * @return Uslugatovar|null

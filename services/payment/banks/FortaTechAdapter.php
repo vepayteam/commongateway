@@ -4,14 +4,16 @@
 namespace app\services\payment\banks;
 
 
+use app\Api\Client\Client;
 use app\models\TU;
+use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
-use app\services\ident\forms\IdentForm;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
@@ -36,6 +38,8 @@ use app\services\payment\forms\RefundPayForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use Faker\Provider\Base;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\RequestOptions;
 use Vepay\Gateway\Client\Validator\ValidationException;
 use Yii;
 use yii\helpers\Json;
@@ -46,12 +50,14 @@ class FortaTechAdapter implements IBankAdapter
     const BANK_URL = 'https://pay1time.com';
     const BANK_URL_TEST = 'https://pay1time.com';
 
-    const REFUND_ID_CACHE_PREFIX = 'Forta__RefundId__';
+    const REFUND_ID_CACHE_PREFIX = 'Forta__RefundIds__';
 
     public static $bank = 9;
     protected $bankUrl;
     /** @var PartnerBankGate */
     protected $gate;
+    /** @var Client */
+    protected $api;
 
     /**
      * @inheritDoc
@@ -64,6 +70,18 @@ class FortaTechAdapter implements IBankAdapter
         } else {
             $this->bankUrl = self::BANK_URL;
         }
+        $apiClientHeader = [
+            'Authorization' => 'Token: ' . $this->gate->Token,
+        ];
+        $config = [
+            RequestOptions::HEADERS => $apiClientHeader,
+        ];
+        $infoMessage = sprintf(
+            'partnerId=%d bankId=%d',
+            $this->gate->PartnerId,
+            $this->getBankId()
+        );
+        $this->api = new Client($config, $infoMessage);
     }
 
     /**
@@ -230,6 +248,9 @@ class FortaTechAdapter implements IBankAdapter
         $checkStatusPayResponse->status = $this->convertStatus($ans['status']);
         $checkStatusPayResponse->message = $ans['status'];
 
+        if($checkStatusPayResponse->status == BaseResponse::STATUS_DONE && array_key_exists('pay', $ans)) {
+            $checkStatusPayResponse->operations = $ans['pay'];
+        }
         return $checkStatusPayResponse;
     }
 
@@ -246,8 +267,6 @@ class FortaTechAdapter implements IBankAdapter
 
         if($ans['status'] == true && isset($ans['data']['cards'][0]['transferParts'])) {
             // TODO: refact
-
-
             $transferParts = $ans['data']['cards'][0]['transferParts'];
             $errorData = '';
             $errorsCount = 0;
@@ -284,21 +303,31 @@ class FortaTechAdapter implements IBankAdapter
         return $checkStatusPayResponse;
     }
 
+    /**
+     * @param OkPayForm $okPayForm
+     * @return CheckStatusPayResponse
+     */
     protected function checkStatusPayRefund(OkPayForm $okPayForm)
     {
-        $ans = $this->sendGetStatusRefundRequest($okPayForm->getPaySchet());
+        $refundIds = Yii::$app->cache->get(
+            self::REFUND_ID_CACHE_PREFIX . $okPayForm->getPaySchet()->ID
+        );
 
         $checkStatusPayResponse = new CheckStatusPayResponse();
-        if(isset($ans['status'])) {
+        $checkStatusPayResponse->status = BaseResponse::STATUS_CANCEL;
+        $checkStatusPayResponse->message = 'Возврат';
+        foreach ($refundIds as $refundId) {
+            $ans = $this->sendGetStatusRefundRequest($refundId);
             if($ans['status'] == 'STATUS_REFUND') {
-                $checkStatusPayResponse->status = BaseResponse::STATUS_CANCEL;
-                $checkStatusPayResponse->message = 'Возврат';
+                continue;
             } elseif ($ans['status'] == 'STATUS_ERROR' && isset($ans['message'])) {
                 $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
                 $checkStatusPayResponse->message = $ans['message'];
+                break;
             } else {
                 $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
                 $checkStatusPayResponse->message = '';
+                break;
             }
         }
         return $checkStatusPayResponse;
@@ -318,23 +347,45 @@ class FortaTechAdapter implements IBankAdapter
     public function refundPay(RefundPayForm $refundPayForm)
     {
         $action = '/api/refund';
-        $refundPayRequest = new RefundPayRequest();
-        $refundPayRequest->payment_id = $refundPayForm->paySchet->ExtBillNumber;
-        $ans = $this->sendRequest($action, $refundPayRequest->getAttributes());
-
         $refundPayResponse = new RefundPayResponse();
-        if(array_key_exists('refund_id', $ans) && !empty($ans['refund_id'])) {
-            Yii::$app->cache->set(
-                self::REFUND_ID_CACHE_PREFIX . $refundPayForm->paySchet->ID,
-                $ans['refund_id'],
-                60 * 60 * 24 * 30
-            );
-            $refundPayResponse->status = BaseResponse::STATUS_CREATED;
-            $refundPayResponse->message = isset($ans['status']) ? $ans['status'] : '';
-        } else {
+        try {
+            $operations = Json::decode($refundPayForm->paySchet->Operations, true);
+            foreach ($operations as $operation) {
+                $refundPayRequest = new RefundPayRequest();
+                $refundPayRequest->payment_id = $operation['payment_id'];
+                $ans = $this->sendRequest($action, $refundPayRequest->getAttributes());
+
+                if(array_key_exists('refund_id', $ans) && !empty($ans['refund_id'])) {
+                    $refundIds = Yii::$app->cache->getOrSet(
+                        self::REFUND_ID_CACHE_PREFIX . $refundPayForm->paySchet->ID,
+                        function() {
+                            return [];
+                        }
+                    );
+                    $refundIds[] = $ans['refund_id'];
+                    Yii::$app->cache->set(
+                        self::REFUND_ID_CACHE_PREFIX . $refundPayForm->paySchet->ID,
+                        $refundIds,
+                        60 * 60 * 24 * 30
+                    );
+                    $refundPayResponse->status = BaseResponse::STATUS_CREATED;
+                    $refundPayResponse->message = isset($ans['status']) ? $ans['status'] : '';
+                } else {
+                    $refundPayResponse->status = BaseResponse::STATUS_ERROR;
+                    $refundPayResponse->message = isset($ans['message']) ? $ans['message'] : 'Ошибка запроса';
+                }
+
+            }
+
+        } catch (\Exception $e) {
             $refundPayResponse->status = BaseResponse::STATUS_ERROR;
-            $refundPayResponse->message = isset($ans['message']) ? $ans['message'] : 'Ошибка запроса';
+            $refundPayResponse->message = $e->getMessage();
         }
+
+
+
+
+
         return $refundPayResponse;
     }
 
@@ -558,14 +609,14 @@ class FortaTechAdapter implements IBankAdapter
         }
     }
 
-    public function sendGetStatusRefundRequest(PaySchet $paySchet)
+    public function sendGetStatusRefundRequest($refundId)
     {
         $curl = curl_init();
 
         $url = sprintf(
             '%s/api/refund?refund_id=%s',
             $this->bankUrl,
-            Yii::$app->cache->get(self::REFUND_ID_CACHE_PREFIX . $paySchet->ID)
+            $refundId
         );
         curl_setopt_array($curl, array(
             CURLOPT_URL => $url,
@@ -625,11 +676,40 @@ class FortaTechAdapter implements IBankAdapter
     }
 
     /**
-     * @inheritDoc
+     * @param GetBalanceRequest $getBalanceRequest
+     * @return GetBalanceResponse
+     * @throws BankAdapterResponseException
      */
-    public function getBalance(GetBalanceRequest $getBalanceRequest)
-    {
-        // TODO: Implement getBalance() method.
+    public function getBalance(
+        GetBalanceRequest $getBalanceRequest
+    ): GetBalanceResponse {
+        $endpoint = $this->bankUrl . '/api/wallets';
+        $type = $getBalanceRequest->accountType;
+        $currency = $getBalanceRequest->currency;
+        $getBalanceResponse = new GetBalanceResponse();
+        $getBalanceResponse->bank_name = $getBalanceRequest->bankName;
+        try {
+            $response = $this->api->request(
+                Client::METHOD_GET,
+                $endpoint
+            );
+        } catch (GuzzleException $e) {
+            throw new BankAdapterResponseException(
+                BankAdapterResponseException::REQUEST_ERROR_MSG . ' : ' . $e->getMessage()
+            );
+        }
+
+        if (!$response->isSuccess()) {
+            $errorMsg = 'Balance service:: FortaTech request failed for type: ' . $type;
+            throw new BankAdapterResponseException(
+                BankAdapterResponseException::setErrorMsg($errorMsg)
+            );
+        }
+        $responseData = $response->json('balance');
+        $getBalanceResponse->amount = (float)$responseData[0]['availableBalance'];
+        $getBalanceResponse->currency = $currency;
+        $getBalanceResponse->account_type = $type;
+        return $getBalanceResponse;
     }
 
     /**
@@ -640,7 +720,7 @@ class FortaTechAdapter implements IBankAdapter
         // TODO: Implement transferToAccount() method.
     }
 
-    public function ident(IdentForm $identForm)
+    public function identInit(Ident $ident)
     {
         throw new GateException('Метод недоступен');
     }
@@ -681,5 +761,20 @@ class FortaTechAdapter implements IBankAdapter
     private function maskCardNumber(string $cardNumber): string
     {
         return preg_replace('/(\d{6})(.+)(\d{4})/', '$1****$3', $cardNumber);
+    }
+    /**
+     * @throws GateException
+     */
+    public function currencyExchangeRates()
+    {
+        throw new GateException('Метод недоступен');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function identGetStatus(Ident $ident)
+    {
+        throw new GateException('Метод недоступен');
     }
 }

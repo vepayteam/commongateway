@@ -20,7 +20,7 @@
 
             <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
         </form>
-        <p class="m-t"> <small>ООО "ПРОЦЕССИНГОВАЯ КОМПАНИЯ БЫСТРЫХ ПЛАТЕЖЕЙ" &copy; 2019</small> </p>
+        <p class="m-t"> <small>ООО "ПРОЦЕССИНГОВАЯ КОМПАНИЯ БЫСТРЫХ ПЛАТЕЖЕЙ" &copy; <?= date('Y') ?></small> </p>
     </div>
 </div>
 

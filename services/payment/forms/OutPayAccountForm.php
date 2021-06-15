@@ -13,6 +13,7 @@ class OutPayAccountForm extends Model
 {
     const SCENARIO_UL = 'ul';
     const SCENARIO_FL = 'fl';
+    const SCENARIO_BRS_CHECK = 'brs_check';
 
     use ErrorModelTrait;
 
@@ -48,12 +49,53 @@ class OutPayAccountForm extends Model
             [['extid'], 'string', 'max' => 40],
             [['name', 'inn', 'account', 'bic', 'descript', 'amount'], 'required', 'on' => [self::SCENARIO_UL]],
             [['fio', 'inn', 'account', 'bic', 'descript', 'amount'], 'required', 'on' => self::SCENARIO_FL],
+            [['fio', 'account', 'bic', 'amount'], 'required', 'on' => self::SCENARIO_BRS_CHECK],
             [['sms'], 'integer', 'on' => [self::SCENARIO_UL, self::SCENARIO_FL]],
 
             ['amount', 'filter', 'filter' => function ($value) {
                 return $value * 100;
             }],
         ];
+    }
+
+    /**
+     * @return mixed|string
+     */
+    public function getLastName()
+    {
+        return $this->getFioArray()[0];
+    }
+
+    /**
+     * @return mixed|string
+     */
+    public function getFirstName()
+    {
+        return $this->getFioArray()[1];
+    }
+
+    /**
+     * @return string
+     */
+    public function getMiddleName()
+    {
+        if(count($this->getFioArray()) < 3) {
+            return '';
+        }
+        return implode(' ', array_slice($this->getFioArray(), 2));
+    }
+
+    /**
+     * @return false|string[]|null
+     */
+    private function getFioArray()
+    {
+        $result = explode(' ', $this->fio);
+        if(count($result) < 2) {
+            return null;
+        } else {
+            return $result;
+        }
     }
 
 }
