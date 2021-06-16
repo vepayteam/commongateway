@@ -3,13 +3,13 @@
 Yii::setAlias('@tests', dirname(__DIR__) . '/tests');
 
 $params = require(__DIR__ . '/params.php');
-//$db = require(__DIR__ . '/db.php');
 
 date_default_timezone_set('Europe/Moscow');
 setlocale (LC_TIME, "RUS");
 
-$console = [
+return [
     'id' => 'basic-console',
+    'language' => 'ru_RU',
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log', 'gii', 'queue'],
     'controllerNamespace' => 'app\commands',
@@ -19,18 +19,6 @@ $console = [
     'components' => [
         'cache' => [
             'class' => 'yii\caching\FileCache',
-        ],
-        'log' => [
-            'traceLevel' => YII_DEBUG ? 3 : 0,
-            'targets' => [
-                [
-                    'class' => 'yii\log\FileTarget',
-                    'levels' => ['error', 'warning'],
-                    'maxFileSize' => 1024 * 50,
-                    'maxLogFiles' => 20,
-                    'rotateByCopy' => false
-                ],
-            ],
         ],
         'mailer' => [
             'class' => 'yii\swiftmailer\Mailer',
@@ -49,8 +37,8 @@ $console = [
                 'streamoptions' => ['ssl' => ['verify_peer' => FALSE, 'verify_peer_name' => FALSE]]
             ],
         ],
+        'log' => require(__DIR__ . '/log.php'),
         'db' => require(__DIR__ . '/db.php'),
-
         'redis' => $params['components']['redis'],
         'queue' => $params['components']['queue'],
     ],
@@ -63,56 +51,7 @@ $console = [
             'PartnersService' => ['class' => 'app\services\partners\PartnersService'],
             'AuthService' => ['class' => 'app\services\auth\AuthService'],
             'NotificationsService' => ['class' => 'app\services\notifications\NotificationsService'],
+            'WalletoExchangeRateService' => ['class' => 'app\services\exchange_rates\WalletoExchangeRateService'],
         ],
     ],
 ];
-
-$console['components']['log']['targets'][] = [
-    'class' => 'yii\log\FileTarget',
-    'levels' => ['error', 'warning', 'info'],
-    'categories' => ['russrandart'],
-    'logFile' => '@app/runtime/logs/console/russrandart.log',
-    'maxFileSize' => 1024 * 2,
-    'maxLogFiles' => 20,
-    'logVars' => [],
-];
-
-$console['components']['log']['targets'][] = [
-    'class' => 'yii\log\FileTarget',
-    'levels' => ['error', 'warning', 'info'],
-    'categories' => ['rsbcron'],
-    'logFile' => '@app/runtime/logs/console/rsbcron.log',
-    'maxFileSize' => 1024 * 30,
-    'maxLogFiles' => 20,
-    'rotateByCopy' => false,
-    'logVars' => [],
-];
-$console['components']['log']['targets'][] = [
-    'class' => 'yii\log\FileTarget',
-    'levels' => ['error', 'warning', 'info'],
-    'categories' => ['merchant'],
-    'logFile' => '@app/runtime/logs/console/merchant.log',
-    'maxFileSize' => 1024 * 30,
-    'maxLogFiles' => 20,
-    'rotateByCopy' => false,
-];
-$console['components']['log']['targets'][] = [
-    'class' => 'yii\log\FileTarget',
-    'levels' => ['error', 'warning', 'info'],
-    'categories' => ['reestr'],
-    'logFile' => '@app/runtime/logs/console/reestr.log',
-    'maxFileSize' => 1024 * 10,
-    'maxLogFiles' => 20,
-    'logVars' => [],
-];
-$console['components']['log']['targets'][] = [
-    'class' => 'yii\log\FileTarget',
-    'levels' => ['error', 'warning', 'info'],
-    'categories' => ['payreestr'],
-    'logFile' => '@app/runtime/logs/console/payreestr.log',
-    'maxFileSize' => 1024 * 10,
-    'maxLogFiles' => 20,
-    'logVars' => [],
-];
-
-return $console;
