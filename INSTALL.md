@@ -78,6 +78,8 @@
     
     yii widget/send-emails-late-updated-pay-schets - в 9.00
 
+    yii exchange/update - каждые сутки по Вильнюсу (UTC+3) в 00:00
+
 5. В дальнейшем обновлять:
 
     Обновить файлы: git checkout master, git pull 

@@ -85,11 +85,6 @@ RUN set -ex \
     \
     && export XDEBUG_INI='/usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini' \
     && echo "xdebug.mode=debug" >> ${XDEBUG_INI} \
-    && echo "xdebug.remote_connect_back=1" >> ${XDEBUG_INI} \
-    && echo "xdebug.remote_enable=1" >> ${XDEBUG_INI} \
-    && echo "xdebug.discover_client_host=1" >> ${XDEBUG_INI} \
-    && echo "xdebug.client_port=9000" >> ${XDEBUG_INI} \
-    && echo "xdebug.idekey=PHPSTORM" >> ${XDEBUG_INI} \
     && php -m \
     && docker-php-source delete \
     \
