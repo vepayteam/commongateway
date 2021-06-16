@@ -109,11 +109,15 @@ class MfoController extends Controller
     /**
      * Балансы МФО
      *
-     * @return string
+     * @return string|Response
      * @throws \yii\db\Exception
      */
     public function actionPartsBalance()
     {
+        if (!UserLk::IsAdmin(Yii::$app->user) && !PartUserAccess::checkPartsBalanceAccess()) {
+            return $this->redirect('/partner');
+        }
+
         $partners = null;
         $data = null;
 
@@ -131,6 +135,10 @@ class MfoController extends Controller
 
     public function actionPartsBalanceProcessing()
     {
+        if (!UserLk::IsAdmin(Yii::$app->user) && !PartUserAccess::checkPartsBalanceAccess()) {
+            return $this->redirect('/partner');
+        }
+
         $this->enableCsrfValidation = false;
         $post = Yii::$app->request->post();
 
@@ -149,6 +157,10 @@ class MfoController extends Controller
 
     public function actionPartsBalancePartner()
     {
+        if (!UserLk::IsAdmin(Yii::$app->user) && !PartUserAccess::checkPartsBalanceAccess()) {
+            return $this->redirect('/partner');
+        }
+
         $partners = null;
         $data = null;
 
@@ -166,6 +178,10 @@ class MfoController extends Controller
 
     public function actionPartsBalancePartnerProcessing()
     {
+        if (!UserLk::IsAdmin(Yii::$app->user) && !PartUserAccess::checkPartsBalanceAccess()) {
+            return $this->redirect('/partner');
+        }
+
         $this->enableCsrfValidation = false;
         $post = Yii::$app->request->post();
 
