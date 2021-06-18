@@ -102,7 +102,7 @@ use app\services\payment\models\PaySchet;
                 <td><?= $row['BankName'] ?></td>
                 <td>
                     <input class='btn btn-white btn-xs' data-action="logpay" data-id='<?= $row['ID'] ?>' type='button' value='Лог'>
-                    <?php if ($row['Status'] == 1 && TU::IsInPay($row['IsCustom'])): ?>
+                    <?php if ($row['Status'] == 1 && (TU::IsInPay($row['IsCustom']) || TU::IsInAutoAll($row['IsCustom']))): ?>
                         <input class='btn btn-white btn-xs' data-action="cancelpay" data-id='<?= $row['ID'] ?>' type='button' value='Отменить'>
                     <?php endif; ?>
                         <input class="btn btn-white btn-xs excerpt" data-id="<?=$row['ID']?>" type="button" value="Выписка">
