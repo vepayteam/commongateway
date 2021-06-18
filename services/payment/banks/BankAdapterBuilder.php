@@ -122,6 +122,30 @@ class BankAdapterBuilder
     }
 
     /**
+     * @param Bank $bank
+     * @return $this
+     * @throws GateException
+     */
+    public function buildByBankOnly(Bank $bank): BankAdapterBuilder
+    {
+        $this->partnerBankGate = PartnerBankGate::find()
+            ->where([
+                'BankId' => $bank->ID,
+                'Enable' => 1
+            ])
+            ->orderBy('Priority DESC')
+            ->one();
+
+        if (!$this->partnerBankGate) {
+            throw new GateException(sprintf(
+                "Нет шлюза. bankId=%d",
+                $bank->ID
+            ));
+        }
+        return $this->buildAdapter();
+    }
+
+    /**
      * @return $this
      * @throws GateException
      */

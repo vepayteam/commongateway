@@ -33,6 +33,7 @@ $bankGates = $partner->getBankGates()->orderBy('TU ASC, Priority DESC')->all();
         <th>Банк</th>
         <th>Приоритет</th>
         <th>Активно</th>
+        <th>Тип счета</th>
         <th>Номер счета</th>
         <th>Логин</th>
         <th></th>
@@ -48,6 +49,7 @@ $bankGates = $partner->getBankGates()->orderBy('TU ASC, Priority DESC')->all();
             <td><?= $bankGate->bank->Name ?></td>
             <td><?= $bankGate->Priority ?></td>
             <td><?= $bankGate->Enable ?></td>
+            <td><?= AccountTypes::ALL_TYPES[$bankGate->SchetType] ?></td>
             <td><?= $bankGate->SchetNumber ?></td>
             <td><?= $bankGate->Login ?></td>
             <td>

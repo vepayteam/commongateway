@@ -2,6 +2,7 @@
 
 namespace app\models\partner;
 
+use app\models\payonline\Uslugatovar;
 use Yii;
 use yii\base\Action;
 use yii\web\User;
@@ -221,5 +222,25 @@ class PartUserAccess extends \yii\db\ActiveRecord
         }
 
         return $razd;
+    }
+
+    /**
+     * Проверяет есть ли доступ к разделу меню "Баланс по разбивке"
+     * Если у партнера в услугах есть что-либо из PartsBalanceAccessCustoms, то возвращаем true
+     * @return bool
+     */
+    public static function checkPartsBalanceAccess(): bool
+    {
+        $partner = UserLk::getPart(Yii::$app->user);
+        if (!$partner) {
+            return false;
+        }
+
+        $isFound = $partner->getUslugatovars()
+            ->where(['in', 'IsCustom', Uslugatovar::getPartsBalanceAccessCustoms()])
+            ->andWhere(['IsDeleted' => 0])
+            ->one();
+
+        return $isFound !== null;
     }
 }
