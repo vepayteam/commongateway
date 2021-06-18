@@ -303,20 +303,4 @@ class WalletoBankAdapter implements IBankAdapter
         $currencyExchangeRatesResponse->exchangeRates = $response->json('exchange_rates');
         return $currencyExchangeRatesResponse;
     }
-
-    /**
-     * @inheritDoc
-     */
-    public function identInit(Ident $ident)
-    {
-        // TODO: Implement identInit() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function identGetStatus(Ident $ident)
-    {
-        // TODO: Implement identGetStatus() method.
-    }
 }
