@@ -72,6 +72,7 @@ use Yii;
  * @property string|null $FIO
  * @property string|null $UserEmail
  * @property string|null $RCCode
+ * @property string|null $Operations
  * @property Uslugatovar $uslugatovar
  * @property Partner $partner
  * @property PaySchetLog[] $log

@@ -30,6 +30,7 @@ use app\services\payment\PaymentService;
 use Yii;
 use yii\db\Exception;
 use yii\db\Query;
+use yii\helpers\Json;
 use yii\mutex\FileMutex;
 
 class OkPayStrategy
@@ -77,6 +78,7 @@ class OkPayStrategy
             $paySchet->ErrorInfo = $checkStatusPayResponse->message;
             $paySchet->RRN = $checkStatusPayResponse->rrn;
             $paySchet->RCCode = $checkStatusPayResponse->xml['orderadditionalinfo']['rc'] ?? '';
+            $paySchet->Operations = Json::encode($checkStatusPayResponse->operations ?? []);
             $paySchet->save(false);
 
             $this->getNotificationsService()->sendPostbacks($paySchet);

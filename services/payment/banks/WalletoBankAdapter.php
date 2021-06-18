@@ -11,6 +11,8 @@ use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CurrencyExchangeRatesResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
+use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
+use app\services\payment\banks\bank_adapter_responses\IdentInitResponse;
 use app\services\payment\banks\traits\WalletoRequestTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CreatePayException;
@@ -54,6 +56,7 @@ class WalletoBankAdapter implements IBankAdapter
     private const STATUS_REVERSED = 'reversed';
     public const ERROR_STATUS_MSG = 'Ошибка проверки статуса'; //TODO: create global error handler
 
+    public const BANK_TIMEZONE = 'Europe/Vilnius';
 
     public function setGate(PartnerBankGate $partnerBankGate)
     {
@@ -249,13 +252,29 @@ class WalletoBankAdapter implements IBankAdapter
     }
 
     /**
+     * @inheritDoc
+     */
+    public function identInit(Ident $ident)
+    {
+        // TODO: Implement identInit() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function identGetStatus(Ident $ident)
+    {
+        // TODO: Implement identGetStatus() method.
+    }
+
+    /**
      * @return CurrencyExchangeRatesResponse
      * @throws BankAdapterResponseException
      */
     public function currencyExchangeRates(): CurrencyExchangeRatesResponse
     {
         $url = self::BANK_URL . '/exchange_rates/';
-        $date = Carbon::now()->format('Y-m-d'); // сегодняшняя дата в формате 2021-06-30
+        $date = Carbon::now(self::BANK_TIMEZONE)->format('Y-m-d'); // сегодняшняя дата в формате 2021-06-30
 
         $currencyExchangeRatesResponse = new CurrencyExchangeRatesResponse();
 
