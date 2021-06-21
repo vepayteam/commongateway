@@ -24,7 +24,7 @@ class PartnerOption extends \yii\db\ActiveRecord
         self::CARD_REG_TEXT_HEADER_NAME => [
             'title' => 'Текст сообщения при регистрации карты',
             'type' => 'textarea',
-            'default' => 'Cписанная cумма, списанная с карты, при успешном списании, вернется обратно на вашу банковскую карту.',
+            'default' => 'Для проверки банковской карты с нее будет списана, затем возвращена случайная сумма до 10р.',
         ],
         self::EMAILS_BY_SEND_LATE_UPDATE_PAY_SCHETS_NAME => [
             'title' => 'Emails для отправки реестров с поздним обновлением статуса, через запятую',
@@ -32,7 +32,7 @@ class PartnerOption extends \yii\db\ActiveRecord
             'default' => '',
         ],
         self::DELTA_TIME_LATE_UPDATE_PAY_SCHETS_NAME => [
-            'title' => 'Время, после которого обнорвление статуса считать поздним, в секундах',
+            'title' => 'Время, после которого обновление статуса считать поздним, в секундах',
             'type' => 'number',
             'default' => '18000',
         ],
