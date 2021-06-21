@@ -1496,7 +1496,6 @@ class TKBankAdapter implements IBankAdapter
     /**
      * @param GetBalanceRequest $getBalanceRequest
      * @return GetBalanceResponse
-     * @throws BankAdapterResponseException
      */
     public function getBalance(GetBalanceRequest $getBalanceRequest): GetBalanceResponse
     {
@@ -1511,9 +1510,7 @@ class TKBankAdapter implements IBankAdapter
         $request['account'] = $getBalanceRequest->accountNumber;
         $response = $this->getBalanceAcc($request);
         if (!isset($response['amount']) && $response['status'] === 0) {
-            throw new BankAdapterResponseException(
-                "Balance service:: TKB request failed for type: $type message: " . $response['message']
-            );
+            Yii::warning("Balance service:: TKB request failed for type: $type message: " . $response['message']);
         }
         $getBalanceResponse->amount = (float)$response['amount'];
         $getBalanceResponse->currency = 'RUB';
