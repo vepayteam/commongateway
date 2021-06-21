@@ -517,6 +517,7 @@ class CauriAdapter implements IBankAdapter
             Yii::warning("Balance service:: Cauri request failed for currency: $getBalanceRequest->currency");
             return $getBalanceResponse;
         }
+        $getBalanceResponse->bank_name = $getBalanceRequest->bankName;
         $getBalanceResponse->amount = round((float)$response['amount'], 2);
         $getBalanceResponse->currency = $response['currency'];
         $getBalanceResponse->account_type = $getBalanceRequest->accountType;
