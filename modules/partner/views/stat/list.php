@@ -94,11 +94,11 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="col-sm-2 control-label">Наименование банка-эквайера</label>
+                        <label class="col-sm-2 control-label">Провайдер</label>
                         <div class="col-sm-4">
                             <input type="text" class="form-control" name="params[bankName]">
                         </div>
-                        <label class="col-sm-2 control-label">Номер операции на стороне банка-эквайера</label>
+                        <label class="col-sm-2 control-label">Номер операции на стороне провайдера</label>
                         <div class="col-sm-4">
                             <input type="text" class="form-control" name="params[operationNumber]">
                         </div>

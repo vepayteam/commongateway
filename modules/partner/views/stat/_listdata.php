@@ -48,7 +48,7 @@ use app\services\payment\models\PaySchet;
         <th>Держатель карты</th>
         <th>RRN</th>
         <th>Хэш от номера карты</th>
-        <th>Наименование банка-эквайера</th>
+        <th>Провайдер</th>
         <th>Действия</th>
     </tr>
     </thead>
