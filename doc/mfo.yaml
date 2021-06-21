@@ -727,10 +727,36 @@ components:
           description: Идентификатор документа
     Client:
       type: object
+      required: false
       properties:
         email:
           type: string
+          required: true
           description: Email клиента
+        phone:
+          type: string
+          required: false
+          description: Телефон клиента
+        country:
+          type: string
+          required: false
+          description: Страна клиента (формат ISO 3166-1 alpha-3)
+        city:
+          type: string
+          required: false
+          description: Город клиента
+        address:
+          type: string
+          required: false
+          description: Адресс клиента
+        zip:
+          type: string
+          required: false
+          description: Zip код клиента адреса
+        login:
+          type: string
+          required: false
+          description: Логин авторизации клиента
     CardInfo:
       type: object
       properties:
@@ -843,7 +869,11 @@ components:
       properties:
         amount:
           type: number
-          description: Cумма платежа, руб
+          description: Cумма платежа
+        currency:
+          type: string
+          required: false
+          description: Валюта платежа (По умолчанию RUB)
         type:
           type: number
           description: Тип шлюза
