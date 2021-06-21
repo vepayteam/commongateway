@@ -27,7 +27,7 @@ trait WalletoRequestTrait
             'expiration_month' => str_pad($createPayForm->CardMonth, 2, '0', STR_PAD_LEFT),
             'expiration_year' => '20' . $createPayForm->CardYear,
         ];
-        $request->location['ip'] = $this->getRequestIp();
+        $request->location['ip'] = ($this->getRequestIp() == '127.0.0.1' ? '195.58.60.180' : $this->getRequestIp());
         //TODO: add address, city, country, login, phone, zip
         $request->client = [
           'email' => $paySchet->UserEmail
