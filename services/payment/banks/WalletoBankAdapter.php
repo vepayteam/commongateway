@@ -199,7 +199,13 @@ class WalletoBankAdapter implements IBankAdapter
                 return $refundPayResponse;
             }
             $responseData = $response->json('orders');
-            $refundPayResponse->status = $this->convertStatus($responseData[0]['status']);
+            $requestStatus = $this->convertStatus($responseData[0]['status']);
+            if($requestStatus == BaseResponse::STATUS_CANCEL) {
+                $refundPayResponse->status = BaseResponse::STATUS_DONE;
+            } else {
+                $refundPayResponse->status = $this->convertStatus($responseData[0]['status']);
+            }
+
             $refundPayResponse->message = '';
         } catch (GuzzleException $e) {
             Yii::error(' Walleto refundPay err:' . $e->getMessage());
