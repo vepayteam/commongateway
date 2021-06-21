@@ -281,4 +281,9 @@ class RunaBankAdapter implements IBankAdapter
                 return Ident::STATUS_DENIED;
         }
     }
+
+    public function currencyExchangeRates()
+    {
+        // TODO: Implement currencyExchangeRates() method.
+    }
 }
