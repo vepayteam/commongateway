@@ -50,21 +50,6 @@ trait BalanceTrait
         }
 
         return $allActiveBankGates;
-
-//TODO: change config DB sql_mode to traditional to use groupBy
-//        return $this->partner
-//            ->getEnabledBankGates()
-//            ->select([
-//                'SchetType',
-//                'SchetNumber',
-//                'Login',
-//                'BankId',
-//            ])
-//            ->where(['Enable' => 1])
-//            ->groupBy([
-//                'SchetNumber',
-//                'Login'
-//            ])->all();
     }
 
     /**
@@ -74,14 +59,9 @@ trait BalanceTrait
      */
     public function formatRequest(PartnerBankGate $activeGate, $bank): GetBalanceRequest
     {
-        $accountNumber = null;
         /** @var AccountTypes */
-        $accountType = AccountTypes::TYPE_DEFAULT;
-        if ($bank->ID === TCBank::$bank) {
-            $accountType = $activeGate->SchetType;
-            $accountNumber = $activeGate->SchetNumber;
-        }
-
+        $accountType = $activeGate->SchetType;
+        $accountNumber = $activeGate->SchetNumber ?? null;
         $getBalanceRequest = new GetBalanceRequest();
         $getBalanceRequest->currency = 'RUB'; //TODO: add dynamic currency requests
         $getBalanceRequest->bankName = $bank->getName();

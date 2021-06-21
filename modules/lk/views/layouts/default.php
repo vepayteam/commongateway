@@ -88,7 +88,7 @@ $this->beginPage()
             </div>
             <?= $content ?>
         </div>
-        <div class="content-footer"><span class="content-footer-desc">ООО "ПРОЦЕССИНГОВАЯ КОМПАНИЯ БЫСТРЫХ ПЛАТЕЖЕЙ" © 2020</span>
+        <div class="content-footer"><span class="content-footer-desc">ООО "ПРОЦЕССИНГОВАЯ КОМПАНИЯ БЫСТРЫХ ПЛАТЕЖЕЙ" © <?= date('Y') ?></span>
             <div class="content-footer-right">
                 <button class="btn btn-outline-primary btn-white mr-4">Подключить кассу</button>
                 <div class="content-footer-social">

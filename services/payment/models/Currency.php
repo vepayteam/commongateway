@@ -3,11 +3,13 @@
 namespace app\services\payment\models;
 
 use yii\db\ActiveRecord;
+use yii\helpers\ArrayHelper;
 
 /**
  * @property string Name
  * @property int Number
- * @property int Code
+ * @property string Code
+ * @property int Id
  */
 class Currency extends ActiveRecord
 {
@@ -15,6 +17,7 @@ class Currency extends ActiveRecord
     {
         return 'currency';
     }
+
     public function rules(): array
     {
         return [
@@ -22,5 +25,17 @@ class Currency extends ActiveRecord
             [['Number'], 'integer'],
             [['Name', 'Code'], 'string', 'max' => 250],
         ];
+    }
+
+    /**
+     * @return array
+     */
+    public static function getCurrencyCodes(): array
+    {
+        $currencies = Currency::find()
+            ->select(['Code'])
+            ->all();
+
+        return ArrayHelper::getColumn($currencies, 'Code');
     }
 }

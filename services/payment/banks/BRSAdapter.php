@@ -9,13 +9,11 @@ use app\models\payonline\Uslugatovar;
 use app\models\TU;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
-use app\services\ident\forms\IdentForm;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
-use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
@@ -778,5 +776,13 @@ class BRSAdapter implements IBankAdapter
     public function identGetStatus(Ident $ident)
     {
         // TODO: Implement ident() method.
+    }
+
+    /**
+     * @throws GateException
+     */
+    public function currencyExchangeRates()
+    {
+        throw new GateException('Метод недоступен');
     }
 }
