@@ -56,7 +56,7 @@ class RecarringCest
     public function tryToRecarringPay(KfapiTester $I)
     {
         $jsonData = [
-            "card" => 32,
+            "card" => 483,
             "amount" => 10.00,
             "extid" => "rc99999"
         ];

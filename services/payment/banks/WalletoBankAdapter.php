@@ -7,13 +7,16 @@ use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
+use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CurrencyExchangeRatesResponse;
+use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentInitResponse;
 use app\services\payment\banks\traits\WalletoRequestTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CreatePayException;
+use app\services\payment\exceptions\RefundPayException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
@@ -22,6 +25,7 @@ use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\models\PartnerBankGate;
+use app\services\payment\models\PaySchet;
 use Carbon\Carbon;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
@@ -61,9 +65,15 @@ class WalletoBankAdapter implements IBankAdapter
         $apiClientHeader = [
             'Authorization' => $partnerBankGate->Token,
         ];
+
+        $verify = Yii::getAlias(self::KEY_ROOT_PATH . $partnerBankGate->Login . '.pem');
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+            $verify = false;
+        }
+
         //TODO: move certificates/keys from git directories
         $config = [
-            RequestOptions::VERIFY => Yii::getAlias(self::KEY_ROOT_PATH . $partnerBankGate->Login . '.pem'),
+            RequestOptions::VERIFY => $verify,
             RequestOptions::CERT => Yii::getAlias(self::KEY_ROOT_PATH . $partnerBankGate->Login . '.pem'),
             RequestOptions::SSL_KEY => Yii::getAlias(self::KEY_ROOT_PATH . $partnerBankGate->Login . '.key'),
             RequestOptions::HEADERS => $apiClientHeader,
@@ -162,7 +172,49 @@ class WalletoBankAdapter implements IBankAdapter
 
     public function refundPay(RefundPayForm $refundPayForm)
     {
-        // TODO: Implement refundPay() method.
+        $refundPayResponse = new RefundPayResponse();
+
+        $paySchet = $refundPayForm->paySchet;
+        if($paySchet->Status != PaySchet::STATUS_DONE) {
+            throw new RefundPayException('Невозможно отменить незавершенный платеж');
+        }
+
+        $uri = '/orders/' . $paySchet->ExtBillNumber . '/cancel';
+        if($paySchet->DateCreate < Carbon::now()->startOfDay()->timestamp) {
+            $uri = '/orders/' . $paySchet->ExtBillNumber . '/refund';
+        }
+
+        try {
+            $response = $this->api->request(
+                Client::METHOD_PUT,
+                self::BANK_URL . $uri,
+                [
+                    'amount' => $refundPayForm->paySchet->getSummFull() / 100,
+                ]
+            );
+            if (!$response->isSuccess()) {
+                $errorMessage = $response->json('failure_message') ?? self::ERROR_STATUS_MSG;
+                $refundPayResponse->status = BaseResponse::STATUS_ERROR;
+                $refundPayResponse->message = BankAdapterResponseException::setErrorMsg($errorMessage);
+                return $refundPayResponse;
+            }
+            $responseData = $response->json('orders');
+            $requestStatus = $this->convertStatus($responseData[0]['status']);
+            if($requestStatus == BaseResponse::STATUS_CANCEL) {
+                $refundPayResponse->status = BaseResponse::STATUS_DONE;
+            } else {
+                $refundPayResponse->status = $this->convertStatus($responseData[0]['status']);
+            }
+
+            $refundPayResponse->message = '';
+        } catch (GuzzleException $e) {
+            Yii::error(' Walleto refundPay err:' . $e->getMessage());
+            throw new BankAdapterResponseException(
+                BankAdapterResponseException::REQUEST_ERROR_MSG . ' : ' . $e->getMessage()
+            );
+        }
+
+        return $refundPayResponse;
     }
 
     public function outCardPay(OutCardPayForm $outCardPayForm)

@@ -6,9 +6,8 @@ use yii\base\Model;
 
 class GetBalanceRequest extends Model
 {
-    //TODO: check with different $currency ISO format & if bank will respond in all currencies at one time
     /** @var string $currency */
-    public $currency = "";
+    public $currency = "RUB"; //by default is RUB
     /** @var string $accountNumber */
     public $accountNumber;
     /** @var string $bankName */
