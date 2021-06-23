@@ -3,12 +3,15 @@
 namespace app\services\payment\forms;
 
 use app\services\payment\interfaces\AmountFormInterface;
+use app\services\payment\models\repositories\CurrencyRepository;
 use yii\validators\EmailValidator;
+use yii\validators\StringValidator;
 
 class MerchantPayForm extends BaseForm implements AmountFormInterface
 {
     public $type;
     public $amount = 0;
+    public $currency = 'RUB'; // required
     public $document_id = '';
     public $fullname = '';
     public $extid = '';
@@ -23,10 +26,18 @@ class MerchantPayForm extends BaseForm implements AmountFormInterface
     public $postbackurl = '';
     public $postbackurl_v2 = '';
     public $client;
-    private const REQUIRED = 'required';
-    // Add Client request required attributes
-    private const CLIENT_REQUIRED_RULES = [
-        'email'
+    public const REQUIRED = 'required';
+    public const NOT_SUPPORTED = 'not supported';
+
+    // Client request attributes
+    public const CLIENT_FIELDS = [
+        'email' => 'required',
+        'address' => '',
+        'city' => '',
+        'country' => '',
+        'login' => '',
+        'phone' => '',
+        'zip' => ''
     ];
 
     /**
@@ -44,28 +55,83 @@ class MerchantPayForm extends BaseForm implements AmountFormInterface
             [['successurl', 'failurl', 'cancelurl', 'postbackurl', 'postbackurl_v2'], 'string', 'max' => 300],
             [['descript'], 'string', 'max' => 200],
             [['timeout'], 'integer', 'min' => 10, 'max' => 59],
-            [['amount'], 'required'],
+            [['amount', 'currency'], 'required'],
             [['amount', 'card'], 'required'],
             [['client'], 'validateClient'],
+            [['currency'], 'validateCurrency'],
         ];
     }
 
+    public function validateCurrency()
+    {
+        $db = new CurrencyRepository();
+        $currencyKey = 'currency';
+        $validator = $this->getClientValidator($currencyKey);
+
+        if (!$validator->validate($this->currency)) {
+            $this->setError($currencyKey);
+            return;
+        }
+        if (!$db->hasCurrency($this->currency)) {
+            $this->setError($currencyKey, self::NOT_SUPPORTED);
+        }
+    }
     public function validateClient()
     {
         if (!is_array($this->client)) {
             return;
         }
-        foreach (self::CLIENT_REQUIRED_RULES as $requiredRule) {
-            if (!array_key_exists($requiredRule, $this->client)) {
-                $this->setError($requiredRule, self::REQUIRED);
-            }
-        }
         foreach ($this->client as $key => $clientData) {
-            $emailValidator = new EmailValidator();
-            if ($key === 'email' && !$emailValidator->validate($clientData)) {
+            // check if not client attribute not exist
+            if (!array_key_exists($key, self::CLIENT_FIELDS)) {
+                $this->setError($key, self::NOT_SUPPORTED);
+                return;
+            }
+            // check if attribute is required
+            if (self::CLIENT_FIELDS[$key] == self::REQUIRED && empty($clientData)) {
+                $this->setError($key, self::REQUIRED);
+                return;
+            }
+            // check attribute value
+            $clientValidator = $this->getClientValidator($key);
+            if (!$clientValidator->validate($clientData)) {
                 $this->setError($key);
             }
-            // add custom client arrays attributes validation
+        }
+    }
+
+    /**
+     * add custom client arrays attributes validation
+     * @param $key
+     * @return EmailValidator|StringValidator
+     */
+    public function getClientValidator($key)
+    {
+        $emailValidator = new EmailValidator();
+        $stringValidator = new StringValidator();
+        switch ($key) {
+            case 'currency':
+                $stringValidator->max = 3;
+                return $stringValidator;
+            case 'email':
+                return $emailValidator;
+            case 'address':
+                $stringValidator->max = 255;
+                return $stringValidator;
+            case 'city':
+            case 'phone':
+            case 'login':
+                $stringValidator->max = 32;
+                return $stringValidator;
+            case 'zip':
+                $stringValidator->max = 16;
+                return $stringValidator;
+            case 'country':
+                $stringValidator->min = 2;
+                $stringValidator->max = 3;
+                return $stringValidator;
+            default:
+                return $stringValidator;
         }
     }
 
