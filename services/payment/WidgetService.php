@@ -14,7 +14,10 @@ use yii\db\Exception;
 
 class WidgetService
 {
-    private int $idPartner;
+    /**
+     * @var int
+     */
+    private $idPartner;
 
     public function __construct(int $idPartner)
     {
