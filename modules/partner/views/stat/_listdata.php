@@ -27,11 +27,11 @@ use app\services\payment\models\PaySchet;
         <th>Услуга</th>
         <th>Реквизиты</th>
         <th class="text-right">Сумма</th>
-        <th class="text-right">Комиссия</th>
+        <th class="text-right">Комиссия с клиента</th>
         <th class="text-right">К оплате</th>
         <?php if ($IsAdmin) : ?>
             <th class="text-right">
-                Комисия банка
+                Комиссия банка
             </th>
             <th class="text-right">
                 Возн. Vepay

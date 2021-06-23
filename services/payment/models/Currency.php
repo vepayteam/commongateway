@@ -8,7 +8,8 @@ use yii\helpers\ArrayHelper;
 /**
  * @property string Name
  * @property int Number
- * @property int Code
+ * @property string Code
+ * @property int Id
  */
 class Currency extends ActiveRecord
 {
@@ -16,6 +17,7 @@ class Currency extends ActiveRecord
     {
         return 'currency';
     }
+
     public function rules(): array
     {
         return [

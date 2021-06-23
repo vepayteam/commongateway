@@ -37,6 +37,8 @@ use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use Vepay\Cauri\Client\Request\UserResolveRequest;
+use Vepay\Cauri\Client\Request\PayoutCreateRequest;
+use Vepay\Cauri\Resource\Balance;
 use Vepay\Cauri\Resource\Payout;
 use Vepay\Gateway\Config;
 use Vepay\Gateway\Logger\LoggerInterface;
@@ -497,13 +499,29 @@ class CauriAdapter implements IBankAdapter
         return self::AFT_MIN_SUMM;
     }
 
-
     /**
      * @inheritDoc
+     * @throws BankAdapterResponseException
      */
-    public function getBalance(GetBalanceRequest $getBalanceRequest)
+    public function getBalance(GetBalanceRequest $getBalanceRequest): GetBalanceResponse
     {
-        throw new GateException('Метод недоступен');
+        $getBalanceResponse = new GetBalanceResponse();
+        try {
+            $api = new CauriApiFacade($this->gate);
+            $responseData = $api->getBalance($getBalanceRequest->getAttributes());
+        } catch (\Exception $e) {
+            throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
+        }
+        $response = $responseData->getContent();
+        if (!isset($response['amount']) || empty($response['amount'])) {
+            Yii::warning("Balance service:: Cauri request failed for currency: $getBalanceRequest->currency");
+            return $getBalanceResponse;
+        }
+        $getBalanceResponse->bank_name = $getBalanceRequest->bankName;
+        $getBalanceResponse->amount = round((float)$response['amount'], 2);
+        $getBalanceResponse->currency = $response['currency'];
+        $getBalanceResponse->account_type = $getBalanceRequest->accountType;
+        return $getBalanceResponse;
     }
 
     /**

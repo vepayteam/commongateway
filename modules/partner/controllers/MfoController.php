@@ -222,7 +222,6 @@ class MfoController extends Controller
             $sort = (int)Yii::$app->request->post('sort', 0);
 
             Yii::$app->response->format = Response::FORMAT_JSON;
-
             $partner = Partner::findOne(['ID' => $idpartner]);
             $MfoBalance = new MfoBalance($partner);
 

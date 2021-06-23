@@ -2,6 +2,7 @@
 
 namespace app\Api\Payment\Cauri;
 
+use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\forms\cauri\CheckStatusPayRequest;
 use app\services\payment\forms\cauri\CreatePayRequest;
 use app\services\payment\forms\cauri\RecurrentPayRequest;
@@ -9,6 +10,7 @@ use app\services\payment\forms\cauri\RefundPayRequest;
 use app\services\payment\models\PartnerBankGate;
 use Exception;
 use Vepay\Cauri\Client\Request\UserResolveRequest;
+use Vepay\Cauri\Resource\Balance;
 use Vepay\Cauri\Resource\Card;
 use Vepay\Cauri\Resource\Payin;
 use Vepay\Cauri\Resource\Refund;
@@ -25,7 +27,6 @@ use yii\helpers\Json;
  */
 class CauriApiFacade
 {
-
     /**
      * @var array $requestOptions
      */
@@ -101,12 +102,30 @@ class CauriApiFacade
         ]);
     }
 
+    /**
+     * Docs: https://docs.pa.cauri.com/api/#manual-recurring
+     * @param RecurrentPayRequest $request
+     * @return ResponseInterface
+     */
     public function cardManualRecurring(RecurrentPayRequest $request): ResponseInterface
     {
         $card = new Card();
         Yii::warning('CauriAPI manualRecurring req:' . Json::encode($request->getAttributes()));
         return $card->__call('manualRecurring', [
             $request->getAttributes(), $this->requestOptions
+        ]);
+    }
+
+    /**
+     * Docs: https://docs.pa.cauri.com/api/#get-merchants-balance
+     * @param array $request
+     * @return ResponseInterface
+     */
+    public function getBalance(array $request): ResponseInterface
+    {
+        $balance = new Balance();
+        return $balance->__call('getBalance', [
+            $request, $this->requestOptions
         ]);
     }
 }
