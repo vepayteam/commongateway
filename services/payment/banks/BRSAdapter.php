@@ -87,18 +87,12 @@ class BRSAdapter implements IBankAdapter
     public function setGate(PartnerBankGate $partnerBankGate)
     {
         $this->gate = $partnerBankGate;
+        $config = Yii::$app->params['services']['payments']['BRS'];
 
-        if (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] == 'Y') {
-            $this->bankUrl = self::BANK_URL_TEST;
-            $this->bankUrl3DS = self::BANK_URL_3DS_TEST;
-            $this->bankUrlXml = self::BANK_URL_XML_TEST;
-            $this->bankUrlB2C = self::BANK_URL_B2C_TEST;
-        } else {
-            $this->bankUrl = self::BANK_URL;
-            $this->bankUrl3DS = self::BANK_URL_3DS;
-            $this->bankUrlXml = self::BANK_URL_XML;
-            $this->bankUrlB2C = self::BANK_URL_B2C;
-        }
+        $this->bankUrl = $config['url'];
+        $this->bankUrl3DS = $config['url_3ds'];
+        $this->bankUrlXml = $config['url_xml'];
+        $this->bankUrlB2C = $config['url_b2c'];
     }
 
     /**
