@@ -27,7 +27,7 @@ class WidgetService
     /**
      * @return Partner|null
      */
-    public function getPartner(): Partner
+    public function getPartner(): ?Partner
     {
         return Partner::findOne(['ID' => $this->idPartner, 'IsDeleted' => 0]);
     }
@@ -35,7 +35,7 @@ class WidgetService
     /**
      * @return Uslugatovar|null
      */
-    public function getUslugatovar(): Uslugatovar
+    public function getUslugatovar(): ?Uslugatovar
     {
         return Uslugatovar::findOne(['IDPartner' => $this->idPartner, 'IsCustom' => TU::$ECOM, 'IsDeleted' => 0]);
     }
@@ -45,7 +45,7 @@ class WidgetService
      * @param Uslugatovar $uslugatovar
      * @return int|null
      */
-    public function createPaySchet(OrderPay $orderPay, Uslugatovar $uslugatovar)
+    public function createPaySchet(OrderPay $orderPay, Uslugatovar $uslugatovar): ?int
     {
         $formPay = new KfPay();
         $formPay->scenario = KfPay::SCENARIO_FORM;
