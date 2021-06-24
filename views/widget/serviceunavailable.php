@@ -19,7 +19,7 @@ use yii\web\View;
 
     <div class="row margin-top16">
         <div class="col-xs-12 text-center">
-            <p class="infoend">Сервис оплаты по платежной ссылке для <b><?=$partner->Name?></b> не доступен.</p>
+            <p class="infoend">Сервис оплаты по платежной ссылке для <b><?=$partner->Name?></b> недоступен.</p>
             <p class="infoend">Обратитесь к <b><?=$partner->Name?></b> для оплаты заказа.</p>
         </div>
     </div>
