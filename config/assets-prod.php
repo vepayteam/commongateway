@@ -10,10 +10,10 @@ return [
         'basePath' => '@webroot/assets',
         'baseUrl' => '@web/assets',
         'js' => [
-            'common-3f896ecb9a754fd01e01d9a5501d734a.js',
+            'common-b37ac75505c58a47c819fdcb2b68b3ea.js',
         ],
         'css' => [
-            'common-e45c093ec488ab49af6923d8472fd157.css',
+            'common-5a275f3505ac1d0e117cf42d7cdded9a.css',
         ],
         'depends' => [],
         'sourcePath' => null,
@@ -23,10 +23,10 @@ return [
         'basePath' => '@webroot/assets',
         'baseUrl' => '@web/assets',
         'js' => [
-            'site-517548ad14d64ca7d3df810321dcd967.js',
+            'site-f30e2799f02b5c7e8c5a0d93f9d4e47e.js',
         ],
         'css' => [
-            'site-4f7815602f5ad1bc03960753f7152cb6.css',
+            'site-4d02b7353b446b685627696e7bbc90a5.css',
         ],
         'depends' => [],
         'sourcePath' => null,
@@ -36,7 +36,7 @@ return [
         'basePath' => '@webroot/assets',
         'baseUrl' => '@web/assets',
         'js' => [
-            'swagger-2174fcbd2f61ee8b70a8375b2b7b77b9.js',
+            'swagger-700b441e468978dde62c84f72d21313c.js',
         ],
         'css' => [
             'swagger-3db8efb3bd864ee5c0d02d2973b3ed1e.css',
@@ -65,7 +65,7 @@ return [
             'partner-2519ec59c3228cdc043c5b2a2dec40b3.js',
         ],
         'css' => [
-            'partner-5f253030995cbfe7c4daf5a0277ae8c4.css',
+            'partner-d30651ca33f36dda2a08fca71243d76f.css',
         ],
         'depends' => [],
         'sourcePath' => null,
@@ -78,7 +78,7 @@ return [
             'pay-e31aa20c42760dd0743b053bdb24a928.js',
         ],
         'css' => [
-            'pay-70b79ef0add4f3ea0f74f927f1d740b7.css',
+            'pay-26d5739b2ec9724046c78940f51f56d8.css',
         ],
         'depends' => [],
         'sourcePath' => null,
@@ -88,10 +88,10 @@ return [
         'basePath' => '@webroot/assets',
         'baseUrl' => '@web/assets',
         'js' => [
-            'widget-e6faa059a4e92f02eb2dd909ff1e8076.js',
+            'widget-71594548e353da3b23a00527f6603eb9.js',
         ],
         'css' => [
-            'widget-fc04b7c1d66d8e69b1ef023994eddd5f.css',
+            'widget-ef6e03eae531339a61918e1b9e8fca8e.css',
         ],
         'depends' => [],
         'sourcePath' => null,
