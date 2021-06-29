@@ -4,15 +4,19 @@ namespace app\controllers;
 
 use app\models\api\CorsTrait;
 use app\models\api\Reguser;
-use app\models\bank\TCBank;
 use app\models\kfapi\KfCard;
 use app\models\kfapi\KfPay;
 use app\models\kfapi\KfRequest;
 use app\models\payonline\CreatePay;
+use app\models\payonline\Uslugatovar;
+use app\models\TU;
+use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
+use app\services\payment\forms\DonePayForm;
 use app\services\payment\helpers\PaymentHelper;
+use app\services\payment\models\PaySchet;
 use app\services\payment\payment_strategies\mfo\MfoAutoPayStrategy;
 use Yii;
 use yii\web\BadRequestHttpException;
@@ -129,8 +133,22 @@ class RecarringController extends Controller
             return ['status' => 0, 'message' => 'Пользователь не найден'];
         }
 
+        $uslugatovar = Uslugatovar::findOne(['IDPartner' => $kfRequest->IdPartner, 'IsCustom' => TU::$REGCARD]);
+        if (!$uslugatovar) {
+            Yii::warning('recarring/reg: услуга ' . TU::$REGCARD . ' не найдена idPartner=' . $kfRequest->IdPartner);
+            return ['status' => 0, 'message' => 'Услуга не найдена'];
+        }
+
+        try {
+            $bankAdapterBuilder = new BankAdapterBuilder();
+            $bankAdapter = $bankAdapterBuilder->build($kfRequest->partner, $uslugatovar)->getBankAdapter();
+        } catch (GateException $e) {
+            Yii::warning('recarring/reg: ' . $e->getMessage());
+            return ['status' => 0, 'message' => $e->getMessage()];
+        }
+
         $pay = new CreatePay($user);
-        $data = $pay->payActivateCard(0, $kfCard, 3, TCBank::$bank, $kfRequest->IdPartner);
+        $data = $pay->payActivateCard(0, $kfCard, 3, $bankAdapter->getBankId(), $kfRequest->IdPartner);
 
         //PCI DSS form
         return [
@@ -162,8 +180,29 @@ class RecarringController extends Controller
             return ['status' => 0, 'message' => $err];
         }
 
-        $tcBank = new TCBank();
-        $tcBank->confirmPay($kfCard->id);
+        $paySchet = PaySchet::findOne(['ID' => $kfCard->id]);
+        if (!$paySchet) {
+            Yii::warning('recarring/get: paySchet не найден id=' . $kfCard->id);
+            return ['status' => 0, 'message' => 'Счет не найден'];
+        }
+
+        $uslugatovar = Uslugatovar::findOne(['ID' => $paySchet->IdUsluga]);
+        $partner = $kfRequest->partner;
+        if (!$uslugatovar || !$partner) {
+            Yii::warning('recarring/get: partner или uslugatovar не найдена paySchet id=' . $kfCard->id);
+            return ['status' => 0, 'message' => 'Счет не найден'];
+        }
+
+        $donePayForm = new DonePayForm(['IdPay' => $paySchet->ID]);
+
+        $bankAdapterBuilder = new BankAdapterBuilder();
+        try {
+            $bankAdapter = $bankAdapterBuilder->build($partner, $uslugatovar)->getBankAdapter();
+            $bankAdapter->confirm($donePayForm);
+        } catch (GateException $e) {
+            Yii::warning('recarring/get: ' . $e->getMessage());
+            return ['status' => 0, 'message' => $e->getMessage()];
+        }
 
         $card = $kfCard->FindKardByPay($kfRequest->IdPartner, 0);
         if (!$card) {
@@ -238,7 +277,7 @@ class RecarringController extends Controller
             return ['status' => 0, 'message' => $err];
         }
 
-        Yii::warning("recarring/pay: autoPayForm extid=$autoPayForm->extid amount=$autoPayForm->amount", 'mfo');
+        Yii::warning("recarring/pay: autoPayForm extid=$autoPayForm->extid amount=$autoPayForm->amount");
         $autoPayForm->amount = PaymentHelper::convertToPenny($autoPayForm->amount); // рубли в копейки
 
         $mfoAutoPayStrategy = new MfoAutoPayStrategy($autoPayForm);
@@ -274,15 +313,30 @@ class RecarringController extends Controller
             return ['status' => 0, 'message' => $err];
         }
 
-        $tcBank = new TCBank();
-        $result = $tcBank->confirmPay($kfPay->id, $kfRequest->IdPartner);
-
-        if ($result && isset($result['status']) && $result['IdPay'] != 0) {
-            $state = ['status' => intval($result['status']), 'message' => strval($result['message'])];
-        } else {
-            $state = ['status' => 0, 'message' => 'Счет не найден'];
+        $paySchet = PaySchet::findOne(['ID' => $kfPay->id]);
+        if (!$paySchet) {
+            Yii::warning('recarring/state: paySchet не найден id=' . $kfPay->id);
+            return ['status' => 0, 'message' => 'Счет не найден'];
         }
 
-        return $state;
+        $uslugatovar = Uslugatovar::findOne(['ID' => $paySchet->IdUsluga]);
+        $partner = $kfRequest->partner;
+        if (!$uslugatovar || !$partner) {
+            Yii::warning('recarring/state: partner или uslugatovar не найдена paySchet id=' . $kfPay->id);
+            return ['status' => 0, 'message' => 'Счет не найден'];
+        }
+
+        $donePayForm = new DonePayForm(['IdPay' => $paySchet->ID]);
+
+        $bankAdapterBuilder = new BankAdapterBuilder();
+        try {
+            $bankAdapter = $bankAdapterBuilder->build($partner, $uslugatovar)->getBankAdapter();
+            $payResponse = $bankAdapter->confirm($donePayForm);
+        } catch (GateException $e) {
+            Yii::warning('recarring/state: ');
+            return ['status' => 0, 'message' => $e->getMessage()];
+        }
+
+        return ['status' => intval($payResponse->status), 'message' => $payResponse->message];
     }
 }
