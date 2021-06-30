@@ -6,6 +6,7 @@ class CheckStatusPayResponse extends BaseResponse
 {
     public $xml;
     public $rrn = '';
+    public $transId;
 
     public $cardNumber;
     public $cardRefId;
