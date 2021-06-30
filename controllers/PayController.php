@@ -235,6 +235,11 @@ class PayController extends Controller
 
     public function actionCreatepaySecondStep($id)
     {
+        // TODO: DRY
+        if(Yii::$app->request->isPost) {
+            return $this->redirect(\yii\helpers\Url::to('/pay/orderdone/' . $id));
+        }
+
         // TODO: refact
         $createPaySecondStepForm = new CreatePaySecondStepForm();
         $createPaySecondStepForm->IdPay = $id;
