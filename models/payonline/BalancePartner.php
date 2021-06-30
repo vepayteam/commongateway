@@ -1,8 +1,6 @@
 <?php
 
-
 namespace app\models\payonline;
-
 
 use Yii;
 
@@ -22,14 +20,14 @@ class BalancePartner
 
     /**
      * Пополнить
-     * @param $summ
+     * @param $sum
      * @param $info
-     * @param int $optype
-     * @param int $IdPay - id pay_sceht
-     * @param int $IdStatem - id statements_account
+     * @param int $opType
+     * @param int $idPay
+     * @param int $idStatm
      * @throws \yii\db\Exception
      */
-    public function Inc($summ, $info, $optype, $IdPay, $IdStatem)
+    public function Inc($sum, $info, int $opType, int $idPay, int $idStatm)
     {
         $tr = null;
         if (!Yii::$app->db->transaction) {
@@ -37,9 +35,9 @@ class BalancePartner
         }
 
         if ($this->Type == self::OUT) {
-            $this->IncOut($summ, $info, $optype, $IdPay, $IdStatem);
+            $this->IncOut($sum, $info, $opType, $idPay, $idStatm);
         } else {
-            $this->IncIn($summ, $info, $optype, $IdPay, $IdStatem);
+            $this->IncIn($sum, $info, $opType, $idPay, $idStatm);
         }
 
         if ($tr) {
@@ -49,154 +47,50 @@ class BalancePartner
 
     /**
      * Пополнить погашения
-     * @param $summ
+     * @param $sum
      * @param $info
-     * @param $optype
-     * @param $IdPay
-     * @param $IdStatem
+     * @param int $opType
+     * @param int $idPay
+     * @param int $idStatm
      * @throws \yii\db\Exception
      */
-    private function IncIn($summ, $info, $optype, $IdPay, $IdStatem)
+    private function IncIn($sum, $info, int $opType, int $idPay, int $idStatm)
     {
-        Yii::$app->db->createCommand('
-            UPDATE
-                `partner`
-            SET
-                `BalanceIn` = `BalanceIn` + :SUMM
-            WHERE
-                `ID` = :ID
-        ', [':SUMM' => $summ, ':ID' => $this->IdPartner])->execute();
+        $partner = Partner::findOne(['ID' => $this->IdPartner]);
+        $partner->BalanceIn += $sum;
+        $partner->save();
 
-        $this->OurderIn($summ, $info, $optype, $IdPay, $IdStatem);
-    }
-
-    /**
-     * Выписка погашения
-     * @param $summ
-     * @param $info
-     * @param $optype
-     * @param $IdPay
-     * @param $IdStatem
-     * @throws \yii\db\Exception
-     */
-    private function OurderIn($summ, $info, $optype, $IdPay, $IdStatem)
-    {
-        Yii::$app->db->createCommand('
-            INSERT INTO
-                `partner_orderin` 
-            (
-              `IdPartner`,
-              `Comment`,
-              `Summ`,
-              `DateOp`,
-              `TypeOrder`,
-              `SummAfter`,
-              `IdPay`,
-              `IdStatm`
-            ) 
-            SELECT 
-                p.ID,
-                :INFO,
-                :SUMM,
-                UNIX_TIMESTAMP(),
-                :TYPEOP,
-                p.BalanceIn,
-                :IDPAY,
-                :IDSTATM
-            FROM 
-                 partner AS p
-            WHERE
-                p.ID = :ID
-        ', [
-            ':INFO' => mb_substr($info, 0, 250),
-            ':SUMM' => $summ,
-            ':TYPEOP' => $optype,
-            ':ID' => $this->IdPartner,
-            ':IDPAY' => $IdPay,
-            ':IDSTATM' => $IdStatem
-        ])->execute();
-    }
-
-    /**
-     * Выписка выдача
-     * @param $summ
-     * @param $info
-     * @param $optype
-     * @param $IdPay
-     * @param $IdStatem
-     * @throws \yii\db\Exception
-     */
-    private function OurderOut($summ, $info, $optype, $IdPay, $IdStatem)
-    {
-        Yii::$app->db->createCommand('
-            INSERT INTO
-                `partner_orderout` 
-            (
-              `IdPartner`,
-              `Comment`,
-              `Summ`,
-              `DateOp`,
-              `TypeOrder`,
-              `SummAfter`,
-              `IdPay`,
-              `IdStatm`             
-            ) 
-            SELECT 
-                p.ID,
-                :INFO,
-                :SUMM,
-                UNIX_TIMESTAMP(),
-                :TYPEOP,
-                p.BalanceOut,
-                :IDPAY,
-                :IDSTATM                   
-            FROM 
-                 partner AS p
-            WHERE
-                p.ID = :ID
-        ', [
-            ':INFO' => mb_substr($info, 0, 250),
-            ':SUMM' => $summ,
-            ':TYPEOP' => $optype,
-            ':ID' => $this->IdPartner,
-            ':IDPAY' => $IdPay,
-            ':IDSTATM' => $IdStatem
-        ])->execute();
+        $this->OrderIn($partner, $sum, $info, $opType, $idPay, $idStatm);
     }
 
     /**
      * Пополнить выдачу
-     * @param $summ
+     * @param $sum
      * @param $info
-     * @param $optype
-     * @param $IdPay
-     * @param $IdStatem
+     * @param int $opType
+     * @param int $IdPay
+     * @param int $IdStatm
      * @throws \yii\db\Exception
      */
-    private function IncOut($summ, $info, $optype, $IdPay, $IdStatem)
+    private function IncOut($sum, $info, int $opType, int $IdPay, int $IdStatm)
     {
-        Yii::$app->db->createCommand('
-            UPDATE
-                `partner`
-            SET
-                `BalanceOut` = `BalanceOut` + :SUMM
-            WHERE
-                `ID` = :ID
-        ', [':SUMM' => $summ, ':ID' => $this->IdPartner])->execute();
+        $partner = Partner::findOne(['ID' => $this->IdPartner]);
+        $partner->BalanceOut += $sum;
+        $partner->save();
 
-        $this->OurderOut($summ, $info, $optype, $IdPay, $IdStatem);
+        $this->OrderOut($partner, $sum, $info, $opType, $IdPay, $IdStatm);
     }
 
     /**
      * Списать
-     * @param $summ
+     * @param $sum
      * @param $info
-     * @param int $optype
-     * @param int $IdPay - id pay_sceht
-     * @param int $IdStatem - id statements_account
+     * @param int $opType
+     * @param int $idPay
+     * @param int $idStatm
      * @throws \yii\db\Exception
      */
-    public function Dec($summ, $info, $optype, $IdPay, $IdStatem)
+    public function Dec($sum, $info, int $opType, int $idPay, int $idStatm)
     {
         $tr = null;
         if (!Yii::$app->db->transaction) {
@@ -204,9 +98,9 @@ class BalancePartner
         }
 
         if ($this->Type == self::OUT) {
-            $this->DecOut($summ, $info, $optype, $IdPay, $IdStatem);
+            $this->DecOut($sum, $info, $opType, $idPay, $idStatm);
         } else {
-            $this->DecIn($summ, $info, $optype, $IdPay, $IdStatem);
+            $this->DecIn($sum, $info, $opType, $idPay, $idStatm);
         }
 
         if ($tr) {
@@ -216,48 +110,84 @@ class BalancePartner
 
     /**
      * Списать с погашения
-     * @param $summ
+     * @param $sum
      * @param $info
-     * @param $optype
-     * @param $IdPay
-     * @param $IdStatem
+     * @param int $opType
+     * @param int $idPay
+     * @param int $idStatm
      * @throws \yii\db\Exception
      */
-    private function DecIn($summ, $info, $optype, $IdPay, $IdStatem)
+    private function DecIn($sum, $info, int $opType, int $idPay, int $idStatm)
     {
-        Yii::$app->db->createCommand('
-            UPDATE
-                `partner`
-            SET
-                `BalanceIn` = `BalanceIn` - :SUMM
-            WHERE
-                `ID` = :ID
-        ', [':SUMM' => $summ, ':ID' => $this->IdPartner])->execute();
+        $partner = Partner::findOne(['ID' => $this->IdPartner]);
+        $partner->BalanceIn -= $sum;
+        $partner->save();
 
-        $this->OurderIn(-$summ, $info, $optype, $IdPay, $IdStatem);
+        $this->OrderIn($partner, -$sum, $info, $opType, $idPay, $idStatm);
     }
 
     /**
      * Списать с выдачи
-     * @param $summ
+     * @param $sum
      * @param $info
-     * @param $optype
-     * @param $IdPay
-     * @param $IdStatem
+     * @param int $opType
+     * @param int $idPay
+     * @param int $idStatm
      * @throws \yii\db\Exception
      */
-    private function DecOut($summ, $info, $optype, $IdPay, $IdStatem)
+    private function DecOut($sum, $info, int $opType, int $idPay, int $idStatm)
     {
-        Yii::$app->db->createCommand('
-            UPDATE
-                `partner`
-            SET
-                `BalanceOut` = `BalanceOut` - :SUMM
-            WHERE
-                `ID` = :ID
-        ', [':SUMM' => $summ, ':ID' => $this->IdPartner])->execute();
+        $partner = Partner::findOne(['ID' => $this->IdPartner]);
+        $partner->BalanceOut -= $sum;
+        $partner->save();
 
-        $this->OurderOut(-$summ, $info, $optype, $IdPay, $IdStatem);
+        $this->OrderOut($partner, -$sum, $info, $opType, $idPay, $idStatm);
     }
 
+    /**
+     * Выписка погашения
+     * @param Partner $partner
+     * @param $sum
+     * @param $info
+     * @param int $opType
+     * @param int $idPay
+     * @param int $idStatm
+     * @throws \yii\db\Exception
+     */
+    private function OrderIn(Partner $partner, $sum, $info, int $opType, int $idPay, int $idStatm)
+    {
+        $orderIn = new PartnerOrderIn();
+        $orderIn->IdPartner = $partner->ID;
+        $orderIn->Comment = mb_substr($info, 0, 250);
+        $orderIn->Summ = $sum;
+        $orderIn->DateOp = time();
+        $orderIn->TypeOrder = $opType;
+        $orderIn->SummAfter = $partner->BalanceIn;
+        $orderIn->IdPay = $idPay;
+        $orderIn->IdStatm = $idStatm;
+        $orderIn->save();
+    }
+
+    /**
+     * Выписка выдача
+     * @param Partner $partner
+     * @param $sum
+     * @param $info
+     * @param int $opType
+     * @param int $idPay
+     * @param int $idStatm
+     */
+    private function OrderOut(Partner $partner, $sum, $info, int $opType, int $idPay, int $idStatm)
+    {
+        $orderIn = new PartnerOrderOut();
+        $orderIn->IdPartner = $partner->ID;
+        $orderIn->Comment = mb_substr($info, 0, 250);
+        $orderIn->Summ = $sum;
+        $orderIn->DateOp = time();
+        $orderIn->TypeOrder = $opType;
+        $orderIn->SummAfter = $partner->BalanceOut;
+        $orderIn->IdPay = $idPay;
+        $orderIn->IdStatm = $idStatm;
+        $orderIn->save();
+    }
 }
