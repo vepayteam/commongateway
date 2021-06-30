@@ -6,6 +6,7 @@ use app\models\SendEmail;
 use Yii;
 use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
+use yii\helpers\Json;
 
 /**
  * Class OrderNotif
@@ -83,7 +84,7 @@ class OrderNotif extends ActiveRecord
             $content = Yii::$app->controller->renderPartial('@app/mail/order_notif', [
                 'orderNotif' => $orderNotif,
                 'orderPay' => $orderPay,
-                'orderTo' => $orderPay->OrderTo ? json_decode($orderPay->OrderTo) : null,
+                'orderTo' => $orderPay->OrderTo ? Json::decode($orderPay->OrderTo) : null,
             ]);
 
             $sendEmail = new SendEmail();
