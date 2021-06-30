@@ -140,7 +140,7 @@ class PayController extends Controller
                     "img-src 'self' data: https://mc.yandex.ru https://google.com/pay https://google.com/pay https://www.gstatic.com; ".
                     "connect-src 'self' https://mc.yandex.ru https://play.google.com;";
                 if (!empty($params['URLSite'])) {
-                    $csp .= ' frame-src ' . $params['URLSite'].';';
+                    $csp .= ' frame-src *;';
                 }
                 Yii::$app->response->headers->add('Content-Security-Policy', $csp);
 
@@ -235,6 +235,11 @@ class PayController extends Controller
 
     public function actionCreatepaySecondStep($id)
     {
+        // TODO: DRY
+        if(Yii::$app->request->isPost) {
+            return $this->redirect(\yii\helpers\Url::to('/pay/orderdone/' . $id));
+        }
+
         // TODO: refact
         $createPaySecondStepForm = new CreatePaySecondStepForm();
         $createPaySecondStepForm->IdPay = $id;
