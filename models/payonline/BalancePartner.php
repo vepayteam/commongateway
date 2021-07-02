@@ -6,6 +6,8 @@ use Yii;
 
 class BalancePartner
 {
+    private const MAX_COMMENT_LENGTH = 250;
+
     public const IN = 0;
     public const OUT = 1;
 
@@ -20,14 +22,14 @@ class BalancePartner
 
     /**
      * Пополнить
-     * @param $sum
-     * @param $info
+     * @param int $sum
+     * @param string $info
      * @param int $opType
      * @param int $idPay
      * @param int $idStatm
      * @throws \yii\db\Exception
      */
-    public function Inc($sum, $info, int $opType, int $idPay, int $idStatm)
+    public function Inc(int $sum, string $info, int $opType, int $idPay, int $idStatm)
     {
         $tr = null;
         if (!Yii::$app->db->transaction) {
@@ -47,50 +49,50 @@ class BalancePartner
 
     /**
      * Пополнить погашения
-     * @param $sum
-     * @param $info
+     * @param int $sum
+     * @param string $info
      * @param int $opType
      * @param int $idPay
      * @param int $idStatm
      * @throws \yii\db\Exception
      */
-    private function IncIn($sum, $info, int $opType, int $idPay, int $idStatm)
+    private function IncIn(int $sum, string $info, int $opType, int $idPay, int $idStatm)
     {
         $partner = Partner::findOne(['ID' => $this->IdPartner]);
         $partner->BalanceIn += $sum;
-        $partner->save();
+        $partner->save(false);
 
         $this->OrderIn($partner, $sum, $info, $opType, $idPay, $idStatm);
     }
 
     /**
      * Пополнить выдачу
-     * @param $sum
-     * @param $info
+     * @param int $sum
+     * @param string $info
      * @param int $opType
      * @param int $IdPay
      * @param int $IdStatm
      * @throws \yii\db\Exception
      */
-    private function IncOut($sum, $info, int $opType, int $IdPay, int $IdStatm)
+    private function IncOut(int $sum, string $info, int $opType, int $IdPay, int $IdStatm)
     {
         $partner = Partner::findOne(['ID' => $this->IdPartner]);
         $partner->BalanceOut += $sum;
-        $partner->save();
+        $partner->save(false);
 
         $this->OrderOut($partner, $sum, $info, $opType, $IdPay, $IdStatm);
     }
 
     /**
      * Списать
-     * @param $sum
-     * @param $info
+     * @param int $sum
+     * @param string $info
      * @param int $opType
      * @param int $idPay
      * @param int $idStatm
      * @throws \yii\db\Exception
      */
-    public function Dec($sum, $info, int $opType, int $idPay, int $idStatm)
+    public function Dec(int $sum, string $info, int $opType, int $idPay, int $idStatm)
     {
         $tr = null;
         if (!Yii::$app->db->transaction) {
@@ -110,36 +112,36 @@ class BalancePartner
 
     /**
      * Списать с погашения
-     * @param $sum
-     * @param $info
+     * @param int $sum
+     * @param string $info
      * @param int $opType
      * @param int $idPay
      * @param int $idStatm
      * @throws \yii\db\Exception
      */
-    private function DecIn($sum, $info, int $opType, int $idPay, int $idStatm)
+    private function DecIn(int $sum, string $info, int $opType, int $idPay, int $idStatm)
     {
         $partner = Partner::findOne(['ID' => $this->IdPartner]);
         $partner->BalanceIn -= $sum;
-        $partner->save();
+        $partner->save(false);
 
         $this->OrderIn($partner, -$sum, $info, $opType, $idPay, $idStatm);
     }
 
     /**
      * Списать с выдачи
-     * @param $sum
-     * @param $info
+     * @param int $sum
+     * @param string $info
      * @param int $opType
      * @param int $idPay
      * @param int $idStatm
      * @throws \yii\db\Exception
      */
-    private function DecOut($sum, $info, int $opType, int $idPay, int $idStatm)
+    private function DecOut(int $sum, string $info, int $opType, int $idPay, int $idStatm)
     {
         $partner = Partner::findOne(['ID' => $this->IdPartner]);
         $partner->BalanceOut -= $sum;
-        $partner->save();
+        $partner->save(false);
 
         $this->OrderOut($partner, -$sum, $info, $opType, $idPay, $idStatm);
     }
@@ -147,14 +149,14 @@ class BalancePartner
     /**
      * Выписка погашения
      * @param Partner $partner
-     * @param $sum
-     * @param $info
+     * @param int $sum
+     * @param string $info
      * @param int $opType
      * @param int $idPay
      * @param int $idStatm
      * @throws \yii\db\Exception
      */
-    private function OrderIn(Partner $partner, $sum, $info, int $opType, int $idPay, int $idStatm)
+    private function OrderIn(Partner $partner, int $sum, string $info, int $opType, int $idPay, int $idStatm)
     {
         $orderIn = new PartnerOrderIn();
         $orderIn->IdPartner = $partner->ID;
@@ -165,29 +167,29 @@ class BalancePartner
         $orderIn->SummAfter = $partner->BalanceIn;
         $orderIn->IdPay = $idPay;
         $orderIn->IdStatm = $idStatm;
-        $orderIn->save();
+        $orderIn->save(false);
     }
 
     /**
      * Выписка выдача
      * @param Partner $partner
-     * @param $sum
-     * @param $info
+     * @param int $sum
+     * @param string $info
      * @param int $opType
      * @param int $idPay
      * @param int $idStatm
      */
-    private function OrderOut(Partner $partner, $sum, $info, int $opType, int $idPay, int $idStatm)
+    private function OrderOut(Partner $partner, int $sum, string $info, int $opType, int $idPay, int $idStatm)
     {
-        $orderIn = new PartnerOrderOut();
-        $orderIn->IdPartner = $partner->ID;
-        $orderIn->Comment = mb_substr($info, 0, 250);
-        $orderIn->Summ = $sum;
-        $orderIn->DateOp = time();
-        $orderIn->TypeOrder = $opType;
-        $orderIn->SummAfter = $partner->BalanceOut;
-        $orderIn->IdPay = $idPay;
-        $orderIn->IdStatm = $idStatm;
-        $orderIn->save();
+        $orderOut = new PartnerOrderOut();
+        $orderOut->IdPartner = $partner->ID;
+        $orderOut->Comment = mb_substr($info, 0, self::MAX_COMMENT_LENGTH);
+        $orderOut->Summ = $sum;
+        $orderOut->DateOp = time();
+        $orderOut->TypeOrder = $opType;
+        $orderOut->SummAfter = $partner->BalanceOut;
+        $orderOut->IdPay = $idPay;
+        $orderOut->IdStatm = $idStatm;
+        $orderOut->save(false);
     }
 }

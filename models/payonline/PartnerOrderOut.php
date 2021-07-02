@@ -5,7 +5,7 @@ namespace app\models\payonline;
 use yii\db\ActiveRecord;
 
 /**
- * Class PartnerOrderOut
+ * This is the model class for table "partner_orderout".
  *
  * @property int ID
  * @property int IdPartner
@@ -20,7 +20,7 @@ use yii\db\ActiveRecord;
 class PartnerOrderOut extends ActiveRecord
 {
     /**
-     * @return string
+     * {@inheritdoc}
      */
     public static function tableName(): string
     {
