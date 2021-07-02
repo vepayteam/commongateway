@@ -20,7 +20,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
             <div class="ibox-content">
                 <form class="form-horizontal" id="statlistform">
                     <div class="form-group">
-                        <label class="col-sm-2 control-label">Дата создания операции</label>
+                        <label class="col-sm-2 control-label">Дата</label>
                         <div class="col-md-4">
                             <div class="float-right">
                                 <div class="btn-group">
@@ -43,7 +43,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                 <select class="form-control" name="IdPart">
                                     <option value="-1" data-ismfo="-1">Все</option>
                                     <?php foreach ($partnerlist as $partn) : ?>
-                                        <option value="<?=$partn->ID?>" data-ismfo="<?= $partn->ID == 1 ? 2 : $partn->IsMfo?>"><?=$partn->ID?> | <?=$partn->Name?></option>
+                                        <option value="<?=$partn->ID?>" data-ismfo="<?= $partn->ID == 1 ? 2 : $partn->IsMfo?>"><?=$partn->Name?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -76,11 +76,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         </div>
                         <label class="col-sm-2 control-label">Сумма платежа</label>
                         <div class="col-sm-4">
-                            <div class="input-daterange input-group">
-                                <input type="text" name="summpayFrom" maxlength="10" class="form-control">
-                                <span class="input-group-addon">по</span>
-                                <input type="text" name="summpayTo" maxlength="10" class="form-control">
-                            </div>
+                            <input type="text" class="form-control" name="summpay">
                         </div>
                     </div>
                     <div class="form-group">
@@ -91,31 +87,6 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         <label class="col-sm-2 control-label">Договор</label>
                         <div class="col-sm-4">
                             <input type="text" class="form-control" name="params[0]">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="col-sm-2 control-label">Наименование банка-эквайера</label>
-                        <div class="col-sm-4">
-                            <input type="text" class="form-control" name="params[bankName]">
-                        </div>
-                        <label class="col-sm-2 control-label">Номер операции на стороне банка-эквайера</label>
-                        <div class="col-sm-4">
-                            <input type="text" class="form-control" name="params[operationNumber]">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="col-sm-2 control-label">Маска карты</label>
-                        <div class="col-sm-4">
-                            <input type="text" class="form-control" name="params[cardMask]" maxlength="30">
-                        </div>
-
-                        <label class="col-sm-2 control-label">Полная сумма к выплате</label>
-                        <div class="col-sm-4">
-                            <div class="input-daterange input-group">
-                                <input type="text" name="params[fullSummpayFrom]" maxlength="10" class="form-control">
-                                <span class="input-group-addon">по</span>
-                                <input type="text" name="params[fullSummpayTo]" maxlength="10" class="form-control">
-                            </div>
                         </div>
                     </div>
                     <input type="hidden" name="paytype" value="-1">

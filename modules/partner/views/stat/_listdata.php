@@ -131,8 +131,7 @@ use app\services\payment\models\PaySchet;
             $exportLink = 'datefrom='. $reqdata['datefrom'];
             $exportLink .= '&dateto=' . $reqdata['dateto'];
             $exportLink .= '&id=' . $reqdata['id'];
-            $exportLink .= '&summpayFrom=' . $reqdata['summpayFrom'];
-            $exportLink .= '&summpayTo=' . $reqdata['summpayTo'];
+            $exportLink .= '&summpay=' . $reqdata['summpay'];
             $exportLink .= '&Extid=' . $reqdata['Extid'];
             if (isset($reqdata['IdPart'])) {
                 $exportLink .= '&IdPart=' . $reqdata['IdPart'];
@@ -148,8 +147,8 @@ use app\services\payment\models\PaySchet;
                 }
             }
             if (isset($reqdata['params']) && count($reqdata['params']) > 0) {
-                foreach ($reqdata['params'] as $k => $param) {
-                    $exportLink .= '&params['.$k.']='.$param;
+                foreach ($reqdata['params'] as $param){
+                    $exportLink .= '&params[]='.$param;
                 }
             }
             ?>
