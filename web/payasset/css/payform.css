@@ -4,8 +4,8 @@ html {
 
 body {
     font-family: 'M PLUS 1p', sans-serif;
+    background: #fff;
     height: 100%;
-    background: transparent;
 }
 
 div, span, h1, h2, h3, h4, h5, h6, label, input {
@@ -23,11 +23,8 @@ p {
 
 .middle {
     min-height: 100%;
-    padding: 56px 100px;
-}
-
-.middle-background {
     background: #282333;
+    padding: 56px 100px;
 }
 
 .container {

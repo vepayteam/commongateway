@@ -6,7 +6,7 @@
 use yii\bootstrap\ActiveForm;
 use yii\bootstrap\Html;
 ?>
-<div id="middle-wrapper" class="middle middle-background">
+<div class="middle">
     <section class="container">
         <div class="row margin-top24 rowlogo">
             <div class="col-xs-12">
@@ -80,7 +80,6 @@ use yii\bootstrap\Html;
 <noscript><div><img src="https://mc.yandex.ru/watch/56963551" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <?php
 $this->registerJs('setTimeout(tracking.sendToServer, 500)', \yii\web\View::POS_READY);
-$this->registerJs('payform.checkIframe();');
 $this->registerJsFile('/payasset/js/ym.js');
 $this->registerJsFile('/payasset/js/jquery.inputmask.min.js');
 ?>

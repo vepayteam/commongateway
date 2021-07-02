@@ -383,22 +383,6 @@
                 $('.errmessage').show();
             }
         },
-
-        checkIframe: function () {
-            let isFramed
-            try {
-                isFramed = window != window.top || document != top.document || self.location != top.location;
-            } catch (e) {
-                isFramed = true;
-            }
-
-            if (isFramed) {
-                const middleWrapper = document.getElementById('middle-wrapper');
-                if (middleWrapper) {
-                    middleWrapper.classList.remove('middle-background');
-                }
-            }
-        }
     };
 
     window.payform = payform;
