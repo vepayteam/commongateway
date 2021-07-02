@@ -48,4 +48,7 @@ return [
     '5555555555555599', // Internal system error
     '4276838748917319', // 3-D Secure scenario “Not enrolled“
     '4000000000000002', // Declined as fraud
+    
+    //mir
+    '2200240780950941',
 ];
