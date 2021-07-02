@@ -403,7 +403,7 @@ class PayShetStat extends Model
                 }
             }
             if (array_key_exists('cardMask', $this->params) && $this->params['bankName'] !== '') {
-                $query->andWhere(['like', 'b.Name',  $this->params['bankName']]);
+                $query->andWhere(['like', 'ps.BankName',  $this->params['bankName']]);
             }
             if (array_key_exists('operationNumber', $this->params) && $this->params['operationNumber'] !== '') {
                 $query->andWhere('ps.ExtBillNumber = :EXTBILLNUMBER', [':EXTBILLNUMBER' => $this->params['operationNumber']]);
