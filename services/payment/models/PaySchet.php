@@ -9,7 +9,6 @@ use app\services\notifications\models\NotificationPay;
 use app\services\payment\banks\Banks;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\models\active_query\PaySchetQuery;
-use Carbon\Carbon;
 use Yii;
 
 /**
@@ -425,16 +424,5 @@ class PaySchet extends \yii\db\ActiveRecord
     public function getFormatSummPay()
     {
         return sprintf("%02.2f", $this->SummPay / 100.0);
-    }
-
-    /**
-     * @return bool
-     */
-    public function isNeedContinueRefreshStatus()
-    {
-        $now = Carbon::now();
-        $dateCreate = Carbon::createFromTimestamp($this->DateCreate);
-
-        return $now < $dateCreate->addDays(3);
     }
 }
