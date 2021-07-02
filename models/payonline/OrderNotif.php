@@ -15,22 +15,31 @@ use yii\helpers\Json;
  * @property int IdOrder ID Order
  * @property int DateAdd Дата создания
  * @property int DateSended Дата отправки
- * @property int TypeSend Тип отправки 0 - email; 1 - sms
- * @property int StateSend Статус отправки 0 - в очереди; 1 - успешно; 2 - ошибка
+ * @property int TypeSend Тип отправки константы TYPE_SEND_*
+ * @property int StateSend Статус отправки константы STATE_SEND_*
  *
- * @property OrderPay $orderPay
+ * @property-read OrderPay $orderPay
  */
 class OrderNotif extends ActiveRecord
 {
+    /** Тип отправки email */
     const TYPE_SEND_EMAIL = 0;
+
+    /** Тип отправки смс */
     const TYPE_SEND_SMS = 1;
 
+
+    /** Статус в очереди */
     const STATE_SEND_WAIT = 0;
+
+    /** Статус успешно */
     const STATE_SEND_SUCCESS = 1;
+
+    /** Статус ошибка */
     const STATE_SEND_ERROR = 2;
 
     /**
-     * @return string
+     * @inheritdoc
      */
     public static function tableName(): string
     {
@@ -68,11 +77,12 @@ class OrderNotif extends ActiveRecord
     public function SendEmails()
     {
         $orderNotifList = OrderNotif::find()
-            ->joinWith('orderPay')
+            ->alias('orderNotifyAlias')
+            ->joinWith('orderPay orderPayAlias')
             ->where([
-                'order_pay.StateOrder' => self::STATE_SEND_WAIT,
-                'order_notif.DateSended' => 0,
-                'order_notif.TypeSend' => self::TYPE_SEND_EMAIL
+                'orderPayAlias.StateOrder' => self::STATE_SEND_WAIT,
+                'orderNotifyAlias.DateSended' => 0,
+                'orderNotifyAlias.TypeSend' => self::TYPE_SEND_EMAIL
             ])
             ->all();
 
@@ -104,6 +114,6 @@ class OrderNotif extends ActiveRecord
         $orderNotif->DateSended = 0;
         $orderNotif->TypeSend = $typeSend;
         $orderNotif->StateSend = self::STATE_SEND_WAIT;
-        $orderNotif->save();
+        $orderNotif->save(false);
     }
 }
