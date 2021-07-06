@@ -58,6 +58,7 @@ use app\services\payment\models\PaySchet;
 use app\services\payment\exceptions\reRequestingStatusException;
 use app\services\payment\exceptions\reRequestingStatusOkException;
 use Carbon\Carbon;
+use Faker\Provider\Base;
 use qfsx\yii2\curl\Curl;
 use SimpleXMLElement;
 use Yii;
@@ -1369,6 +1370,11 @@ class TKBankAdapter implements IBankAdapter
                 if(!in_array($status, BaseResponse::STATUSES)) {
                     throw new BankAdapterResponseException('Ошибка преобразования статусов');
                 }
+
+                if($status == BaseResponse::STATUS_DONE && isset($xml['orderinfo']['orderid'])) {
+                    $checkStatusPayResponse->transId = $xml['orderinfo']['orderid'];
+                }
+
                 $checkStatusPayResponse->status = $status;
                 $checkStatusPayResponse->xml = $xml;
                 $checkStatusPayResponse->rrn = $xml['orderadditionalinfo']['rrn'] ?? '';

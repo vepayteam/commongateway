@@ -74,6 +74,9 @@ class OkPayStrategy
             }
             $this->confirmPay($paySchet, $checkStatusPayResponse);
 
+            if($checkStatusPayResponse->transId) {
+                $paySchet->ExtBillNumber = $checkStatusPayResponse->transId;
+            }
             $paySchet->Status = $checkStatusPayResponse->status;
             $paySchet->ErrorInfo = $checkStatusPayResponse->message;
             $paySchet->RRN = $checkStatusPayResponse->rrn;

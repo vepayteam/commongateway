@@ -79,6 +79,14 @@ return [
             'runaLogin' => '784',
             'runaMode' => 'verify_docs'
         ],
+        'payments' => [
+            'BRS' => [
+                'url' => 'https://testsecurepay2.rsb.ru:9443',
+                'url_3ds' => 'https://testsecurepay2.rsb.ru/ecomm2/ClientHandler',
+                'url_xml' => 'https://194.67.29.216:8443',
+                'url_b2c' => 'https://212.46.217.150:7601',
+            ],
+        ],
     ],
     'login_user_token_valid_time' => 60*60,
     'support_email' => 'support@vepay.online',
