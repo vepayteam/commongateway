@@ -9,7 +9,6 @@ use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\models\PaySchet;
 use app\services\payment\payment_strategies\RefreshStatusPayStrategy;
-use Carbon\Carbon;
 use Yii;
 use yii\base\BaseObject;
 use yii\helpers\Json;
@@ -41,11 +40,9 @@ class RefreshStatusPayJob extends BaseObject implements \yii\queue\JobInterface
             $paySchet->ErrorInfo = 'Ожидает запрос статуса';
             $paySchet->save(false);
 
-            if($paySchet->isNeedContinueRefreshStatus()) {
-                Yii::$app->queue->delay(5 * 60)->push(new RefreshStatusPayJob([
-                    'paySchetId' =>  $paySchet->ID,
-                ]));
-            }
+            Yii::$app->queue->delay(5 * 60)->push(new RefreshStatusPayJob([
+                'paySchetId' =>  $paySchet->ID,
+            ]));
         }
 
         Yii::warning(
