@@ -235,11 +235,6 @@ class PayController extends Controller
 
     public function actionCreatepaySecondStep($id)
     {
-        // TODO: DRY
-        if(Yii::$app->request->isPost) {
-            return $this->redirect(\yii\helpers\Url::to('/pay/orderdone/' . $id));
-        }
-
         // TODO: refact
         $createPaySecondStepForm = new CreatePaySecondStepForm();
         $createPaySecondStepForm->IdPay = $id;
@@ -250,7 +245,12 @@ class PayController extends Controller
 
         /** @var TKBankAdapter $tkbAdapter */
         $tkbAdapter = $bankAdapterBuilder->getBankAdapter();
-        $createPayResponse = $tkbAdapter->createPayStep2($createPaySecondStepForm);
+        try {
+            $createPayResponse = $tkbAdapter->createPayStep2($createPaySecondStepForm);
+        } catch (Check3DSv2Exception $e){
+            return $this->redirect(\yii\helpers\Url::to('/pay/orderdone/' . $id));
+        }
+
         $paySchet->IsNeed3DSVerif = $createPayResponse->isNeed3DSVerif;
         $paySchet->save(false);
 

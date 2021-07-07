@@ -172,15 +172,12 @@
         },
 
         confirm3dsV2TKB: function(url, transId, termurl) {
-            var json = "{\"threeDSServerTransID\": \"" + transId + "\", \"threeDSMethodNotificationURL\": \"" + termurl + "\"}";
-            var html = "<html><body>" +
+            var json = "{\"threeDSServerTransID\": \"" + transId + "\", \"threeDSMethodNotificationURL\": \"" + termurl + "\"}",
+                html = "<html lang='ru'><body>" +
                 "<form hidden target='threDS' name =\"threDS\" id=\"threeDSServerTransIDForm\" method=\"post\" action=\"" + url + "\">" +
                 "<input hidden name=\"threeDSMethodData\" placeholder=\"threeDSMethodData\" value=\"" + btoa(json) + "\" />" +
-                "</form> <script type=\"text/javascript\">document.getElementById('threeDSServerTransIDForm').submit();</script></body></html>"
-
-            console.log(json);
-            console.log(html);
-            var iframe = $('#confirm3dsV2TKBFrame').html(html);
+                "</form> <script type=\"text/javascript\">document.getElementById('threeDSServerTransIDForm').submit();</script></body></html>";
+            $('#confirm3dsV2TKBFrame').html(html);
         },
 
         applepay: function (merchantIdentifier, amount, label) {
