@@ -36,10 +36,10 @@ class PartnerService extends Component
         try {
             $this->createPartner($partner);
 
-            $this->createUslugatovars($partner);
-
             $partnerReg->State = PartnerReg::STATE_REGISTERED;
             $partnerReg->save(false);
+
+            $this->createUslugatovars($partner);
 
             $transaction->commit();
         } catch (\Exception $e) {

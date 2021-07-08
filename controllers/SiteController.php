@@ -27,6 +27,22 @@ use yii\web\Response;
 
 class SiteController extends Controller
 {
+
+    /**
+     * @var PartnerService
+     */
+    private $partnerService;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function init()
+    {
+        parent::init();
+
+        $this->partnerService = \Yii::$app->get(PartnerService::class);
+    }
+
     public function behaviors()
     {
         if (!YII_ENV_DEV) {
@@ -141,7 +157,7 @@ class SiteController extends Controller
      * @throws Exception
      * @throws NotFoundHttpException
      */
-    public function actionRegisterAdd(PartnerService $service)
+    public function actionRegisterAdd()
     {
         $id = (int)Yii::$app->request->post('regid', 0);
         $PartnerReg = PartnerReg::findOne(['ID' => $id, 'State' => 0]);
@@ -158,20 +174,7 @@ class SiteController extends Controller
                 return ['status' => 0, 'message' => $this->getError($partner)];
             }
 
-            $service->create($partner);
-//
-//            $partner->save(false);
-//
-//            $PartnerReg->State = 1;
-//            $PartnerReg->save(false);
-//
-//            if ($partner->IsMfo) {
-//                //создание услуг МФО при добавлении
-//                $partner->CreateUslugMfo();
-//            } else {
-//                //создание услуги магазину при добавлении
-//                $partner->CreateUslug();
-//            }
+            $this->partnerService->register($partner, $PartnerReg);
 
             $url = '';
             /*if ($partner->UrState == 2) {
@@ -186,12 +189,6 @@ class SiteController extends Controller
                     $url = $kfCard->GetRegForm($data['IdPay']);
                 }
             }*/
-
-//            Yii::$app->queue->push(new SendMailJob([
-//                'email' => 'info@vepay.online',
-//                'subject' => "Зарегистрирован контрагент",
-//                'content' => "Зарегистрирован контрагент " . $partner->Name
-//            ]));
 
             return ['status' => 1, 'id' => $partner->ID, 'url' => $url];
         }

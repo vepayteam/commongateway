@@ -32,6 +32,21 @@ class PartnerController extends Controller
 {
     use SelectPartnerTrait;
 
+    /**
+     * @var PartnerService
+     */
+    private $partnerService;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function init()
+    {
+        parent::init();
+
+        $this->partnerService = \Yii::$app->get(PartnerService::class);
+    }
+
     public function behaviors()
     {
         return [
@@ -89,7 +104,7 @@ class PartnerController extends Controller
         }
     }
 
-    public function actionPartnerAdd(PartnerService $service)
+    public function actionPartnerAdd()
     {
         if (UserLk::IsAdmin(Yii::$app->user)) {
             if (Yii::$app->request->isAjax && !Yii::$app->request->isPjax) {
@@ -102,7 +117,7 @@ class PartnerController extends Controller
                     return ['status' => 0, 'message' => $this->getError($partner)];
                 }
 
-                $service->create($partner);
+                $this->partnerService->create($partner);
 
                 return ['status' => 1, 'id' => $partner->ID];
 
@@ -183,7 +198,7 @@ class PartnerController extends Controller
         return $this->redirect('/partner');
     }
 
-    public function actionPartnerKkmSave(PartnerService $service)
+    public function actionPartnerKkmSave()
     {
         if (UserLk::IsAdmin(Yii::$app->user)) {
             if (Yii::$app->request->isAjax && !Yii::$app->request->isPjax) {
@@ -203,7 +218,7 @@ class PartnerController extends Controller
                 $uploadedSingKey = UploadedFile::getInstance($partner, 'OrangeDataSingKey');
                 $uploadedConKey = UploadedFile::getInstance($partner, 'OrangeDataConKey');
                 $uploadedConCert = UploadedFile::getInstance($partner, 'OrangeDataConCert');
-                if ($service->saveKeysKkm($partner, $uploadedSingKey, $uploadedConKey, $uploadedConCert)) {
+                if ($this->partnerService->saveKeysKkm($partner, $uploadedSingKey, $uploadedConKey, $uploadedConCert)) {
                     return ['status' => 1];
                 } else {
                     return ['status' => 0, 'message' => 'Ошибка сохранения файла'];
@@ -213,7 +228,7 @@ class PartnerController extends Controller
         return $this->redirect('/partner');
     }
 
-    public function actionPartnerApplepaySave(PartnerService $service)
+    public function actionPartnerApplepaySave()
     {
         if (UserLk::IsAdmin(Yii::$app->user)) {
             if (Yii::$app->request->isAjax && !Yii::$app->request->isPjax) {
@@ -232,7 +247,7 @@ class PartnerController extends Controller
 
                 $uploadedKey = UploadedFile::getInstance($partner, 'Apple_MerchIdentKey');
                 $uploadedCert = UploadedFile::getInstance($partner, 'Apple_MerchIdentCert');
-                if ($service->saveKeysApplepay($partner, $uploadedKey, $uploadedCert)) {
+                if ($this->partnerService->saveKeysApplepay($partner, $uploadedKey, $uploadedCert)) {
                     return ['status' => 1];
                 } else {
                     return ['status' => 0, 'message' => 'Ошибка сохранения файла'];
@@ -513,7 +528,7 @@ class PartnerController extends Controller
      * Сохранить пользователя
      * @return array|string
      */
-    public function actionUsersSave(PartnerService $service)
+    public function actionUsersSave()
     {
         if (Yii::$app->request->isAjax && !Yii::$app->request->isPjax) {
 
@@ -522,7 +537,7 @@ class PartnerController extends Controller
             $us = PartnerUsers::findOne(['ID' => Yii::$app->request->post('ID')]);
             if (!$us) {
                 $us = new PartnerUsers();
-                $partner = $service->getPartner(Yii::$app->request->post('IdPartner', 0));
+                $partner = $this->partnerService->getPartner(Yii::$app->request->post('IdPartner', 0));
                 if ($partner) {
                     $us->IdPartner = $partner->ID;
                 }

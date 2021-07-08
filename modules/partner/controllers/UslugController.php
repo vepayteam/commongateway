@@ -21,6 +21,21 @@ class UslugController extends Controller
 {
     use SelectPartnerTrait;
 
+    /**
+     * @var PartnerService
+     */
+    private $partnerService;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function init()
+    {
+        parent::init();
+
+        $this->partnerService = \Yii::$app->get(PartnerService::class);
+    }
+
     public function behaviors()
     {
         return [
@@ -188,12 +203,10 @@ class UslugController extends Controller
         }
     }
 
-
-
-    public function actionPointEdit($id, PartnerService $service)
+    public function actionPointEdit($id)
     {
         $usl = Uslugatovar::findOne(['ID' => $id]);
-        $partner = $service->getPartner($usl->IDPartner);
+        $partner = $this->partnerService->getPartner($usl->IDPartner);
 
         return $this->render('point-edit', [
             'usl' => $usl,
@@ -203,13 +216,13 @@ class UslugController extends Controller
         ]);
     }
 
-    public function actionPointAdd($id, PartnerService $service)
+    public function actionPointAdd($id)
     {
         $sel = $id == 0 ? $this->selectPartner($id) : '';
         if (empty($sel)) {
             $usl = new Uslugatovar();
             $usl->IDPartner = $id;
-            $partner = $service->getPartner($id);
+            $partner = $this->partnerService->getPartner($id);
             return $this->render('point-edit', [
                 'usl' => $usl,
                 'partner' => $partner,
