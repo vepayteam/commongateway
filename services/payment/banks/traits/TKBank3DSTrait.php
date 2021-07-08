@@ -165,10 +165,13 @@ trait TKBank3DSTrait
             } elseif (array_key_exists('AuthenticationData', $ans['xml'])) {
 
                 // Поддерживается только определенные ECI
-                if(!in_array(
-                    (int)$ans['xml']['AuthenticationData']['Eci'],
-                    Issuer3DSVersionInterface::CURRENT_ECI_ARRAY
-                )) {
+                if(
+                    $ans['xml']['AuthenticationData']['Status'] == 'NOK' ||
+                    !in_array(
+                        (int)$ans['xml']['AuthenticationData']['Eci'],
+                        Issuer3DSVersionInterface::CURRENT_ECI_ARRAY
+                    )
+                ) {
                     throw new Check3DSv2Exception('Карта не поддерживается, обратитесь в банк');
                 }
 
