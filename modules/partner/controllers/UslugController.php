@@ -8,6 +8,7 @@ use app\models\partner\stat\StatFilter;
 use app\models\partner\UserLk;
 use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
+use app\services\PartnerService;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
@@ -189,10 +190,10 @@ class UslugController extends Controller
 
 
 
-    public function actionPointEdit($id)
+    public function actionPointEdit($id, PartnerService $service)
     {
         $usl = Uslugatovar::findOne(['ID' => $id]);
-        $partner = Partner::getPartner($usl->IDPartner);
+        $partner = $service->getPartner($usl->IDPartner);
 
         return $this->render('point-edit', [
             'usl' => $usl,
@@ -202,13 +203,13 @@ class UslugController extends Controller
         ]);
     }
 
-    public function actionPointAdd($id)
+    public function actionPointAdd($id, PartnerService $service)
     {
         $sel = $id == 0 ? $this->selectPartner($id) : '';
         if (empty($sel)) {
             $usl = new Uslugatovar();
             $usl->IDPartner = $id;
-            $partner = Partner::getPartner($id);
+            $partner = $service->getPartner($id);
             return $this->render('point-edit', [
                 'usl' => $usl,
                 'partner' => $partner,

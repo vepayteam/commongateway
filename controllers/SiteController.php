@@ -13,8 +13,10 @@ use app\models\site\CheckPay;
 use app\models\site\ContactForm;
 use app\models\site\PartnerReg;
 use app\models\telegram\Telegram;
+use app\services\PartnerService;
 use Carbon\Carbon;
 use Yii;
+use yii\base\Model;
 use yii\bootstrap\ActiveForm;
 use yii\db\Exception;
 use yii\helpers\Url;
@@ -139,7 +141,7 @@ class SiteController extends Controller
      * @throws Exception
      * @throws NotFoundHttpException
      */
-    public function actionRegisterAdd()
+    public function actionRegisterAdd(PartnerService $service)
     {
         $id = (int)Yii::$app->request->post('regid', 0);
         $PartnerReg = PartnerReg::findOne(['ID' => $id, 'State' => 0]);
@@ -153,21 +155,23 @@ class SiteController extends Controller
             $partner->load(Yii::$app->request->post(), 'Partner');
             $partner->setAttribute('Email', $PartnerReg->Email);
             if (!$partner->validate()) {
-                return ['status' => 0, 'message' => $partner->GetError()];
+                return ['status' => 0, 'message' => $this->getError($partner)];
             }
 
-            $partner->save(false);
-
-            $PartnerReg->State = 1;
-            $PartnerReg->save(false);
-
-            if ($partner->IsMfo) {
-                //создание услуг МФО при добавлении
-                $partner->CreateUslugMfo();
-            } else {
-                //создание услуги магазину при добавлении
-                $partner->CreateUslug();
-            }
+            $service->create($partner);
+//
+//            $partner->save(false);
+//
+//            $PartnerReg->State = 1;
+//            $PartnerReg->save(false);
+//
+//            if ($partner->IsMfo) {
+//                //создание услуг МФО при добавлении
+//                $partner->CreateUslugMfo();
+//            } else {
+//                //создание услуги магазину при добавлении
+//                $partner->CreateUslug();
+//            }
 
             $url = '';
             /*if ($partner->UrState == 2) {
@@ -183,11 +187,11 @@ class SiteController extends Controller
                 }
             }*/
 
-            Yii::$app->queue->push(new SendMailJob([
-                'email' => 'info@vepay.online',
-                'subject' => "Зарегистрирован контрагент",
-                'content' => "Зарегистрирован контрагент " . $partner->Name
-            ]));
+//            Yii::$app->queue->push(new SendMailJob([
+//                'email' => 'info@vepay.online',
+//                'subject' => "Зарегистрирован контрагент",
+//                'content' => "Зарегистрирован контрагент " . $partner->Name
+//            ]));
 
             return ['status' => 1, 'id' => $partner->ID, 'url' => $url];
         }
@@ -279,6 +283,17 @@ class SiteController extends Controller
     public function actionTest()
     {
         print_r(Carbon::now()->addDays(-1)->timestamp);
+    }
+
+    /**
+     * @param Model $model
+     * @return mixed|null
+     * @todo Поменять способ выведения ошибок.
+     */
+    private function getError(Model $model)
+    {
+        $firstErrors = $model->getFirstErrors();
+        return array_pop($firstErrors);
     }
 
 }
