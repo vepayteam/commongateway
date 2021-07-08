@@ -5,7 +5,6 @@ namespace app\controllers;
 use app\models\api\Reguser;
 use app\models\bank\TCBank;
 use app\models\kfapi\KfCard;
-use app\models\payonline\CreatePay;
 use app\models\payonline\Partner;
 use app\models\queue\JobPriorityInterface;
 use app\models\queue\SendMailJob;

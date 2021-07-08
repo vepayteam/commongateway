@@ -10,12 +10,12 @@ use app\models\crypt\CardToken;
 use app\models\kfapi\KfCard;
 use app\models\kfapi\KfPay;
 use app\models\kfapi\KfRequest;
-use app\models\payonline\CreatePay;
 use app\models\Payschets;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\payment_strategies\mfo\MfoAutoPayStrategy;
+use app\services\PaySchetService;
 use Yii;
 use yii\base\Exception;
 use yii\mutex\FileMutex;
@@ -27,6 +27,21 @@ use yii\web\Response;
 class RecarringController extends Controller
 {
     use CorsTrait;
+
+    /**
+     * @var PaySchetService
+     */
+    private $paySchetService;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function init()
+    {
+        parent::init();
+
+        $this->paySchetService = \Yii::$app->get(PaySchetService::class);
+    }
 
     public function behaviors()
     {
@@ -118,8 +133,7 @@ class RecarringController extends Controller
         $user = $reguser->findUser('0', $kf->IdPartner.'-'.time(), md5($kf->IdPartner.'-'.time()), $kf->IdPartner, false);
 
         if ($user) {
-            $pay = new CreatePay($user);
-            $data = $pay->payActivateCard(0, $kfCard,3, TCBank::$bank, $kf->IdPartner); //Provparams
+            $data = $this->paySchetService->payActivateCard($user,0, $kfCard,3, TCBank::$bank, $kf->IdPartner); //Provparams
 
             //PCI DSS form
             return [

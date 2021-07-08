@@ -122,6 +122,8 @@ $config = [
         'cache' => $params['components']['cache'],
         'redis' => $params['components']['redis'],
         'queue' => $params['components']['queue'],
+
+        \app\services\PaySchetService::class => \app\services\PaySchetService::class,
     ],
     'params' => $params,
     'container' => [

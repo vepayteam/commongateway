@@ -6,7 +6,6 @@ namespace app\models\planner;
 
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
-use app\models\payonline\CreatePay;
 use app\models\payonline\Provparams;
 use app\models\payonline\Uslugatovar;
 use app\models\Payschets;

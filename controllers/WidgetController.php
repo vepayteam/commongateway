@@ -5,7 +5,6 @@ namespace app\controllers;
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\kfapi\KfPay;
-use app\models\payonline\CreatePay;
 use app\models\payonline\OrderPay;
 use app\models\payonline\Partner;
 use app\models\payonline\PayForm;
@@ -13,6 +12,7 @@ use app\models\payonline\RefererPoint;
 use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\TU;
+use app\services\PaySchetService;
 use Yii;
 use yii\db\Exception;
 use yii\web\BadRequestHttpException;
@@ -25,6 +25,21 @@ class WidgetController extends Controller
     public $layout = 'widgetlayout';
 
     private $bank = 2; //0 - РСБ , 1 - Россия 2 - ТКБ
+
+    /**
+     * @var PaySchetService
+     */
+    private $paySchetService;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function init()
+    {
+        parent::init();
+
+        $this->paySchetService = \Yii::$app->get(PaySchetService::class);
+    }
 
     public function actions()
     {
@@ -129,6 +144,7 @@ class WidgetController extends Controller
      * @return array|Response
      * @throws NotFoundHttpException
      * @throws \yii\db\Exception
+     * @throws \app\services\payment\exceptions\CreatePayException
      */
     public function actionCreatepay()
     {
@@ -165,12 +181,19 @@ class WidgetController extends Controller
                     'failurl' => $uslug->UrlReturnFail
                 ]);
 
-                $pay = new CreatePay();
-                $data = $pay->payToMfo(null, [$order->ID, $order->Comment], $kfPay, $uslug->ID, $this->bank, $order->IdPartner, 0);
+                $data = $this->paySchetService->payToMfo(
+                    null,
+                    [$order->ID, $order->Comment],
+                    $kfPay,
+                    $uslug->ID,
+                    $this->bank,
+                    $order->IdPartner,
+                    0
+                );
                 if ($data) {
                     $order->IdPaySchet = $data['IdPay'];
                     if ($order->ID) {
-                        $pay->setIdOrder($order->ID, $data);
+                        $this->paySchetService->setIdOrder($order->ID, $data);
                     }
                 } else {
                     return ['status' => 0, 'message' => 'Ошибка создания заказа'];
