@@ -160,7 +160,7 @@ class BalancePartner
     {
         $orderIn = new PartnerOrderIn();
         $orderIn->IdPartner = $partner->ID;
-        $orderIn->Comment = mb_substr($info, 0, 250);
+        $orderIn->Comment = mb_substr($info, 0, self::MAX_COMMENT_LENGTH);
         $orderIn->Summ = $sum;
         $orderIn->DateOp = time();
         $orderIn->TypeOrder = $opType;
