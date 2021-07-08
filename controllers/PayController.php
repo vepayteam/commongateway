@@ -140,7 +140,7 @@ class PayController extends Controller
                     "img-src 'self' data: https://mc.yandex.ru https://google.com/pay https://google.com/pay https://www.gstatic.com; ".
                     "connect-src 'self' https://mc.yandex.ru https://play.google.com;";
                 if (!empty($params['URLSite'])) {
-                    $csp .= ' frame-src *;';
+                    $csp .= ' frame-src ' . $params['URLSite'].';';
                 }
                 Yii::$app->response->headers->add('Content-Security-Policy', $csp);
 
