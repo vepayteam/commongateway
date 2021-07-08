@@ -81,10 +81,10 @@ return [
         ],
         'payments' => [
             'BRS' => [
-                'url' => 'https://testsecurepay2.rsb.ru:9443',
-                'url_3ds' => 'https://testsecurepay2.rsb.ru/ecomm2/ClientHandler',
-                'url_xml' => 'https://194.67.29.216:8443',
-                'url_b2c' => 'https://212.46.217.150:7601',
+                'url' => getenv('PARAMS_PAYMENTS_BRS_URL', true),
+                'url_3ds' => getenv('PARAMS_PAYMENTS_BRS_URL_3DS', true),
+                'url_xml' => getenv('PARAMS_PAYMENTS_BRS_URL_XML', true),
+                'url_b2c' => getenv('PARAMS_PAYMENTS_BRS_URL_B2C', true),
             ],
         ],
     ],

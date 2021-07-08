@@ -172,15 +172,12 @@
         },
 
         confirm3dsV2TKB: function(url, transId, termurl) {
-            var json = "{\"threeDSServerTransID\": \"" + transId + "\", \"threeDSMethodNotificationURL\": \"" + termurl + "\"}";
-            var html = "<html><body>" +
-                "<form hidden name =\"threDS\" id=\"threeDSServerTransIDForm\" method=\"post\" action=\"" + url + "\">" +
+            var json = "{\"threeDSServerTransID\": \"" + transId + "\", \"threeDSMethodNotificationURL\": \"" + termurl + "\"}",
+                html = "<html lang='ru'><body>" +
+                "<form hidden target='threDS' name =\"threeDS\" id=\"threeDSServerTransIDForm\" method=\"post\" action=\"" + url + "\">" +
                 "<input hidden name=\"threeDSMethodData\" placeholder=\"threeDSMethodData\" value=\"" + btoa(json) + "\" />" +
-                "</form> <script type=\"text/javascript\">document.getElementById('threeDSServerTransIDForm').submit();</script></body></html>"
-
-            console.log(json);
-            console.log(html);
-            var iframe = $('#confirm3dsV2TKBFrame').html(html);
+                "</form> <script type=\"text/javascript\">document.getElementById('threeDSServerTransIDForm').submit();</script></body></html>";
+            $('#confirm3dsV2TKBFrame').html(html);
         },
 
         applepay: function (merchantIdentifier, amount, label) {
@@ -342,34 +339,9 @@
             } else if (data.status == 0 && data.threeDSMethodURL && data.isNeedSendTransIdTKB) {
                 payform.confirm3dsV2TKB(data.threeDSMethodURL, data.threeDSServerTransID, data.termurl);
 
-                // TODO: DRY
                 setTimeout(function() {
-                    let form = $('#payform').serialize();
-                    $.ajax({
-                        type: 'POST',
-                        url: "/pay/createpay",
-                        data: form,
-                        beforeSend: function () {
-                            $('.errmessage').hide();
-                            $('#addtopay').prop('disabled', true); //блок кнопки
-                            $('#payform').hide();
-                            $("#loader").show();
-                        },
-                        success: payform.createPaySuccess,
-                        error: function (jqXHR, textStatus, errorThrown) {
-                            if (jqXHR.status != 302) {
-                                //console.log(jqXHR.status);
-                                $("#loader").hide();
-                                $('#error_message').html("Ошибка запроса");
-                                $('#error_message_xs').html("Ошибка запроса");
-                                $('.errmessage').show();
-                                $('#addtopay').prop('disabled', false);
-                                $('#payform').show();
-                                $('input[data-inputmask-mask]', '#payform').inputmask();
-                            }
-                        }
-                    });
-                }, 4000);
+                    window.location = data.termurl;
+                }, 5000);
             } else if (data.status == 1 && data.url && data.isNeed3DSRedirect) {
                 window.location = data.url;
             } else if (data.status == 2 && data.url) {
