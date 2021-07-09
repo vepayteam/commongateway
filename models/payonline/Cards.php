@@ -5,7 +5,9 @@ namespace app\models\payonline;
 use app\models\payonline\active_query\CardActiveQuery;
 use app\services\cards\models\PanToken;
 use app\services\payment\models\Bank;
-use Yii;
+use app\services\payment\models\PaySchet;
+use yii\db\ActiveQuery;
+use yii\db\ActiveRecord;
 
 /**
  * This is the model class for table "cards".
@@ -30,30 +32,40 @@ use Yii;
  * @property Bank $bank
  * @property PanToken $panToken
  */
-class Cards extends \yii\db\ActiveRecord
+class Cards extends ActiveRecord
 {
-    public const BRANDS = [
-        'VISA' => 0,
-        'MASTERCARD' => 1,
-        'MIR' => 2,
-        'AMERICAN EXPRESS' => 3,
-        'JCB' => 4,
-        'DINNERSCLUB' => 5,
-        'MAESTRO' => 6,
-        'DISCOVER' => 7,
-        'CHINA UNIONPAY' => 8,
+    public const BRAND_NAMES = [
+        self::BRAND_VISA => 'VISA',
+        self::BRAND_MASTERCARD => 'MASTERCARD',
+        self::BRAND_MIR => 'MIR',
+        self::BRAND_AMERICAN_EXPRESS => 'AMERICAN EXPRESS',
+        self::BRAND_JCB => 'JCB',
+        self::BRAND_DINNERSCLUB => 'DINNERSCLUB',
+        self::BRAND_MAESTRO => 'MAESTRO',
+        self::BRAND_DISCOVER => 'DISCOVER',
+        self::BRAND_CHINA_UNIONPAY => 'CHINA UNIONPAY',
     ];
+
+    public const BRAND_VISA = 0;
+    public const BRAND_MASTERCARD = 1;
+    public const BRAND_MIR = 2;
+    public const BRAND_AMERICAN_EXPRESS = 3;
+    public const BRAND_JCB = 4;
+    public const BRAND_DINNERSCLUB = 5;
+    public const BRAND_MAESTRO = 6;
+    public const BRAND_DISCOVER = 7;
+    public const BRAND_CHINA_UNIONPAY = 8;
 
     /**
      * @inheritdoc
      */
-    public static function tableName()
+    public static function tableName(): string
     {
         return 'cards';
     }
 
     /**
-     * @return CardActiveQuery|\yii\db\ActiveQuery
+     * @return CardActiveQuery|ActiveQuery
      */
     public static function find()
     {
@@ -63,12 +75,14 @@ class Cards extends \yii\db\ActiveRecord
     /**
      * @inheritdoc
      */
-    public function rules()
+    public function rules(): array
     {
         return [
             [['IdUser', 'DateAdd'], 'required'],
-            [['IdUser', 'CardType', 'TypeCard', 'SrokKard', 'Status', 'DateAdd', 'CheckSumm', 'Default', 'IsDeleted',
-                'IdPan', 'IdBank'], 'integer'],
+            [[
+                'IdUser', 'CardType', 'TypeCard', 'SrokKard', 'Status', 'DateAdd', 'CheckSumm', 'Default', 'IsDeleted',
+                'IdPan', 'IdBank'
+            ], 'integer'],
             [['NameCard', 'ExtCardIDP'], 'string', 'max' => 150],
             [['CardNumber'], 'string', 'max' => 40],
             [['CardHolder'], 'string', 'max' => 100],
@@ -78,7 +92,7 @@ class Cards extends \yii\db\ActiveRecord
     /**
      * @inheritdoc
      */
-    public function attributeLabels()
+    public function attributeLabels(): array
     {
         return [
             'ID' => 'ID',
@@ -86,48 +100,58 @@ class Cards extends \yii\db\ActiveRecord
             'NameCard' => 'Наименование',
             'ExtCardIDP' => 'Внешний токен',
             'CardNumber' => 'Номер карты',
-            'CardType' => 'tip karty: 0 - visa, 1 - mastercard 2 - mir',
-            'TypeCard' => '0 - dlia oplaty 1 - dlia popolnenia',
+            'CardType' => 'Тип карты 0 - Visa; 1 - Mastercard; 2 - Mir',
+            'TypeCard' => '0 - для оплаты; 1 - для пополнения',
             'CardHolder' => 'Держатель',
             'SrokKard' => 'Срок действия MMYY',
-            'Status' => 'status karty: 0 - ne podtvejdena 1 - aktivna 2 - zablokirovana',
-            'DateAdd' => 'data dobavlenia',
-            'CheckSumm' => 'CheckSumm',
+            'Status' => 'Статус карты: 0 - не подтверждена; 1 - активна; 2 - заблокирована',
+            'DateAdd' => 'Дата добавления',
+            'CheckSumm' => 'Контрольная сумма',
             'Default' => 'Default',
             'IdPan' => 'IdPan',
             'IdBank' => 'IdBank',
-            'IsDeleted' => '0 - activna 1 - udalena',
+            'IsDeleted' => '0 - активна; 1 - удалена',
         ];
     }
 
-    public function beforeSave($insert)
+    /**
+     * @inheritdoc
+     */
+    public function beforeSave($insert): bool
     {
         if ($this->Default == 1) {
-            \Yii::$app->db->createCommand()
-                ->update('cards',
-                    ['Default' => 0],
-                    ['IdUser' => $this->IdUser, 'IsDeleted' => 0])
-            ->execute();
+            Cards::updateAll(['Default' => 0], ['IdUser' => $this->IdUser, 'IsDeleted' => 0]);
         }
+
         return parent::beforeSave($insert);
     }
 
-    public function getUser()
+    public function getUser(): ActiveQuery
     {
         return $this->hasOne(User::class, ['ID' => 'IdUser']);
     }
 
-    public function getBank()
+    public function getBank(): ActiveQuery
     {
         return $this->hasOne(Bank::class, ['ID' => 'IdBank']);
     }
 
-    public function getPanToken()
+    public function getPanToken(): ActiveQuery
     {
         return $this->hasOne(PanToken::class, ['ID' => 'IdPan']);
     }
 
-    public function allowUpdFields()
+    public function getMonth(): string
+    {
+        return mb_substr(sprintf('%04d', $this->SrokKard), 0, 2);
+    }
+
+    public function getYear(): string
+    {
+        return mb_substr(sprintf('%04d', $this->SrokKard), 2, 2);
+    }
+
+    public function allowUpdFields(): array
     {
         return [
             'NameCard',
@@ -135,59 +159,27 @@ class Cards extends \yii\db\ActiveRecord
         ];
     }
 
-    public function getMonth()
-    {
-        return mb_substr(sprintf('%04d', $this->SrokKard), 0, 2);
-    }
-
-    public function getYear()
-    {
-        return mb_substr(sprintf('%04d', $this->SrokKard), 2, 2);
-    }
-
     public static function Convert()
     {
-        /*$res = \Yii::$app->db->createCommand("
-            SELECT 
-              `ID`,
-              `ExtCardIDP`
-            FROM
-              `cards` 
-            WHERE
-                TypeCard = 1
-                AND `ExtCardIDP` REGEXP '^[0123456789]{16,18}$'
-        ")->query();
-        while ($row = $res->read()) {
-            $t = new \app\models\crypt\Tokenizer();
-            $id = $t->CreateToken($row['ExtCardIDP'], 0);
-            if ($id) {
-                \Yii::$app->db->createCommand()->update('cards', ['ExtCardIDP' => $id, 'IdPan' => $id], '`ID` = :ID', ['ID' => $row['ID']])->execute();
-            }
-        }*/
+        $paySchets = PaySchet::find()
+            ->where(['REGEXP', 'CardNum', '^[0123456789]{16,18}$'])
+            ->all();
 
-        $res = \Yii::$app->db->createCommand("
-            SELECT 
-              `ID`,
-              `CardNum`
-            FROM
-              `pay_schet` 
-            WHERE
-               `CardNum` REGEXP '^[0123456789]{16,18}$'
-        ")->query();
-        while ($row = $res->read()) {
-            \Yii::$app->db->createCommand()
-                ->update('pay_schet', ['CardNum' => self::MaskCard($row['CardNum'])],'`ID` = :ID', [':ID' => $row['ID']])
-                ->execute();
+        /** @var PaySchet $paySchet */
+        foreach ($paySchets as $paySchet) {
+            $paySchet->CardNum = self::MaskCard($paySchet->CardNum);
+            $paySchet->save();
         }
     }
 
-    public static function MaskCard($card)
+    public static function MaskCard($card): string
     {
         if (strlen($card) == 16) {
-            $card = substr($card, 0, 6)."******".substr($card, -4, 4);
+            $card = substr($card, 0, 6) . '******' . substr($card, -4, 4);
         } else {
-            $card = substr($card, 0, 6)."********".substr($card, -4, 4);
+            $card = substr($card, 0, 6) . '********' . substr($card, -4, 4);
         }
+
         return $card;
     }
 
@@ -211,19 +203,21 @@ class Cards extends \yii\db\ActiveRecord
         if (preg_match('/\"cvc2\":\"(\d+)\"/ius', $post, $m)) {
             $post = str_ireplace($m[1], "***", $post);
         }
+
         return $post;
     }
 
 
     /**
      * Проверка номера карты
+     *
      * @param string $s
      * @return bool
      */
-    public static function CheckValidCard($s)
+    public static function CheckValidCard(string $s): bool
     {
         // оставить только цифры
-        $s = strrev(preg_replace('/[^\d]/','', $s));
+        $s = strrev(preg_replace('/[^\d]/', '', $s));
 
         // вычисление контрольной суммы
         $sum = 0;
@@ -234,7 +228,7 @@ class Cards extends \yii\db\ActiveRecord
             } else {
                 // удвоить нечетные цифры и вычесть 9, если они больше 9
                 $val = $s[$i] * 2;
-                if ($val > 9)  $val -= 9;
+                if ($val > 9) $val -= 9;
             }
             $sum += $val;
         }
@@ -245,29 +239,35 @@ class Cards extends \yii\db\ActiveRecord
 
     /**
      * Тип карты
-     * @param $CardNumber
-     * @return int 0 - visa, 1 - mastercard 2 - mir 3 - american express 4 - JCB 5 - Dinnersclub 6 - Maestro 7 - Discover 8 - China UnionPay
+     *
+     * @param $cardNumber
+     * @return int
      */
-    public static function GetTypeCard($CardNumber)
+    public static function GetTypeCard($cardNumber): int
     {
-        if (mb_substr($CardNumber, 0, 1) == '4') {
-            return self::BRANDS['VISA']; //visa
-        } elseif (in_array(mb_substr($CardNumber, 0, 2), ['51', '52', '53', '54', '55'])) {
-            return self::BRANDS['MASTERCARD']; //mastercard
-        } elseif (mb_substr($CardNumber, 0, 1) == '2') {
-            return self::BRANDS['MIR']; //mir
-        } elseif (in_array(mb_substr($CardNumber, 0, 2), ['50', '56', '57', '58', '63', '67'])) {
-            return self::BRANDS['MAESTRO']; //Maestro
-        } elseif (in_array(mb_substr($CardNumber, 0, 2), ['34', '37'])) {
-            return self::BRANDS['AMERICAN EXPRESS']; //american express
-        } elseif (in_array(mb_substr($CardNumber, 0, 2), ['31', '35'])) {
-            return self::BRANDS['JCB']; //JCB
-        } elseif (in_array(mb_substr($CardNumber, 0, 2), ['30', '36', '38'])) {
-            return self::BRANDS['DINNERSCLUB']; //Dinnersclub
-        } elseif (mb_substr($CardNumber, 0, 2) == '60') {
-            return self::BRANDS['DISCOVER']; //Discover
-        } elseif (mb_substr($CardNumber, 0, 2) == '62') {
-            return self::BRANDS['CHINA UNIONPAY']; //China UnionPay
+        $firstLet = mb_substr($cardNumber, 0, 1);
+        switch ($firstLet) {
+            case '4':
+                return self::BRAND_VISA;
+            case '2':
+                return self::BRAND_MIR;
+        }
+
+        $twoFirstLet = mb_substr($cardNumber, 0, 2);
+        $brandList = [
+            self::BRAND_MASTERCARD => ['51', '52', '53', '54', '55'],
+            self::BRAND_MAESTRO => ['50', '56', '57', '58', '63', '67'],
+            self::BRAND_AMERICAN_EXPRESS => ['34', '37'],
+            self::BRAND_JCB => ['31', '35'],
+            self::BRAND_DINNERSCLUB => ['30', '36', '38'],
+            self::BRAND_DISCOVER => ['60'],
+            self::BRAND_CHINA_UNIONPAY => ['62'],
+        ];
+
+        foreach ($brandList as $brand => $list) {
+            if (in_array($twoFirstLet, $list)) {
+                return $brand;
+            }
         }
 
         return 0;
@@ -275,20 +275,12 @@ class Cards extends \yii\db\ActiveRecord
 
     /**
      * Брэнд карты по типу
-     * @param $CardType
+     *
+     * @param int $cardType
      * @return string
      */
-    public static function GetCardBrand($CardType)
+    public static function GetCardBrand(int $cardType): string
     {
-        $type = '';
-        if ($CardType >= 0 && $CardType <= 8) {
-            foreach (self::BRANDS as $name => $v) {
-                if($CardType == $v) {
-                    return $name;
-                }
-            }
-        }
-        return $type;
+        return self::BRAND_NAMES[$cardType];
     }
-
 }

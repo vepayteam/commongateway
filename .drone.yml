@@ -7,6 +7,9 @@ platform:
   os: linux
   arch: amd64
 
+concurrency:
+  limit: 1
+
 steps:
 - name: submodules
   pull: if-not-exists
@@ -64,7 +67,7 @@ steps:
   pull: always
   image: registry.vepay.cf/apache-php
   commands:
-  - php init --env=kube
+  - php init --env=dev
   - php yii migrate/up --interactive=0
   environment:
     DATABASE_DSN: mysql:host=mariadb;port=3306;dbname=vepay
@@ -166,7 +169,7 @@ steps:
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
-- name: helm-values-generator-03b308fe5feffd319e3ffc2d14c6488a
+- name: helm-values-generator-2c01f413085afa9d2b29d4a553c05991
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
@@ -177,8 +180,9 @@ steps:
   - yq write values.yaml "ingress.hosts[0].paths[0]" "/" -i
   - yq write values.yaml "ingress.tls[0].hosts[0]" "`replace-slash ${DRONE_SOURCE_BRANCH}`-${DRONE_REPO_NAME}.backend.vepay.cf" -i
   - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-cf-wildcard-certificate" -i
-  - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+50000000))" -i
   - yq write values.yaml "redis.enabled" "true" -i
+  - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+50000000))" -i
+  - yq write values.yaml "config.payments.brs.url_xml" "https://194.67.29.216:8443" -i
   - echo "=>>>" && cat values.yaml
 
 - name: helm-deployment-upgrade-baa45884b60a4f0c9e522a66e07efbf7
@@ -249,6 +253,9 @@ platform:
   os: linux
   arch: amd64
 
+concurrency:
+  limit: 1
+
 steps:
 - name: submodules
   pull: if-not-exists
@@ -286,7 +293,7 @@ steps:
   pull: always
   image: registry.vepay.cf/apache-php
   commands:
-  - php init --env=kube
+  - php init --env=dev
   - php yii migrate/up --interactive=0
   environment:
     DATABASE_DSN: mysql:host=mariadb;port=3306;dbname=vepay
@@ -388,7 +395,7 @@ steps:
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
-- name: helm-values-generator-5aa35f7f6c8f5a7ea7eef0b1c6b06f08
+- name: helm-values-generator-28816239dab68401ae71bbb58e5f47cb
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
@@ -400,6 +407,7 @@ steps:
   - yq write values.yaml "ingress.tls[0].hosts[0]" "${DRONE_BRANCH}-test-${DRONE_REPO_NAME}.backend.vepay.cf" -i
   - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-cf-wildcard-certificate" -i
   - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+100000000))" -i
+  - yq write values.yaml "config.payments.brs.url_xml" "https://194.67.29.216:8443" -i
   - echo "=>>>" && cat values.yaml
 
 - name: helm-deployment-upgrade-92ef42f80124f30279fb47f2cd4ffd68
@@ -514,6 +522,9 @@ platform:
   os: linux
   arch: amd64
 
+concurrency:
+  limit: 1
+
 steps:
 - name: submodules
   pull: if-not-exists
@@ -565,7 +576,7 @@ steps:
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
-- name: helm-values-generator-17ef4086c7651b48aef96fc3ff60f344
+- name: helm-values-generator-e18252b4e72a7df1957e0520ce8c97b0
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
@@ -580,6 +591,7 @@ steps:
   - yq write values.yaml "ingress.tls[0].hosts[1]" "test.vepay.online" -i
   - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-cf-wildcard-certificate" -i
   - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+200000000))" -i
+  - yq write values.yaml "config.payments.brs.url_xml" "https://194.67.29.216:8443" -i
   - echo "=>>>" && cat values.yaml
 
 - name: helm-deployment-upgrade-091eac7be9d381f18978b1c621dd6a86
@@ -631,6 +643,9 @@ name: promote-release
 platform:
   os: linux
   arch: amd64
+
+concurrency:
+  limit: 1
 
 steps:
 - name: assert-version-provided
@@ -707,6 +722,6 @@ get:
 
 ---
 kind: signature
-hmac: cef716eeb3a1a45527e8b3e44e2f90284dec72d0a1fad6213de14976a5a82627
+hmac: 44888da4ec5e21bd5ec0896d85ebc8d8971658c5fbb3d171b5bb784ed857dee1
 
 ...

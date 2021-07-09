@@ -4,29 +4,31 @@ namespace app\controllers;
 
 use app\models\api\CorsTrait;
 use app\models\api\Reguser;
-use app\models\bank\TCBank;
-use app\models\bank\TcbGate;
-use app\models\crypt\CardToken;
 use app\models\kfapi\KfCard;
 use app\models\kfapi\KfPay;
 use app\models\kfapi\KfRequest;
-use app\models\Payschets;
+use app\models\payonline\Uslugatovar;
+use app\models\TU;
+use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
+use app\services\payment\forms\DonePayForm;
+use app\services\payment\helpers\PaymentHelper;
+use app\services\payment\models\PaySchet;
 use app\services\payment\payment_strategies\mfo\MfoAutoPayStrategy;
 use app\services\PaySchetService;
 use Yii;
-use yii\base\Exception;
-use yii\mutex\FileMutex;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\web\ForbiddenHttpException;
 use yii\web\Response;
+use yii\web\UnauthorizedHttpException;
 
 class RecarringController extends Controller
 {
     use CorsTrait;
+
 
     /**
      * @var PaySchetService
@@ -43,7 +45,10 @@ class RecarringController extends Controller
         $this->paySchetService = \Yii::$app->get(PaySchetService::class);
     }
 
-    public function behaviors()
+    /**
+     * @return array
+     */
+    public function behaviors(): array
     {
         $behaviors = parent::behaviors();
         $this->updateBehaviorsCors($behaviors);
@@ -55,17 +60,21 @@ class RecarringController extends Controller
      * @return bool
      * @throws BadRequestHttpException
      */
-    public function beforeAction($action)
+    public function beforeAction($action): bool
     {
         if ($this->checkBeforeAction()) {
             Yii::$app->response->format = Response::FORMAT_JSON;
             $this->enableCsrfValidation = false;
             return parent::beforeAction($action);
         }
+
         return false;
     }
 
-    protected function verbs()
+    /**
+     * @return array
+     */
+    protected function verbs(): array
     {
         return [
             'info' => ['POST'],
@@ -82,35 +91,37 @@ class RecarringController extends Controller
      * @return array
      * @throws BadRequestHttpException
      * @throws \yii\db\Exception
-     * @throws \yii\web\UnauthorizedHttpException
+     * @throws UnauthorizedHttpException
      * @throws ForbiddenHttpException
      */
-    public function actionInfo()
+    public function actionInfo(): array
     {
-        $kf = new KfRequest();
-        $kf->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody(), 0);
+        $kfRequest = new KfRequest();
+        $kfRequest->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody(), 0);
 
         $kfCard = new KfCard();
         $kfCard->scenario = KfCard::SCENARIO_INFO;
-        $kfCard->load($kf->req, '');
+        $kfCard->load($kfRequest->req, '');
         if (!$kfCard->validate()) {
-            return ['status' => 0, 'message' => $kfCard->GetError()];
+            $err = $kfCard->GetError();
+            Yii::warning('recarring/info: ошибка валидации формы: ' . $err);
+            return ['status' => 0, 'message' => $err];
         }
 
-        $card = $kfCard->FindKard($kf->IdPartner, 0);
-
-        //информация и карте
-        if ($card) {
-            return [
-                'status' => 1,
-                'card' => [
-                    'id' => (int)($card->ID),
-                    'num' => (string)($card->CardNumber),
-                    'exp' => $card->getMonth() . "/" . $card->getYear()
-                ]
-            ];
+        $card = $kfCard->FindKard($kfRequest->IdPartner, 0);
+        if (!$card) {
+            Yii::warning('recarring/info: карта не найдена idPartner=' . $kfRequest->IdPartner);
+            return ['status' => 0, 'message' => 'Карта не найдена'];
         }
-        return ['status' => 0, 'message' => ''];
+
+        return [
+            'status' => 1,
+            'card' => [
+                'id' => intval($card->ID),
+                'num' => $card->CardNumber,
+                'exp' => $card->getMonth() . "/" . $card->getYear()
+            ]
+        ];
     }
 
     /**
@@ -119,31 +130,47 @@ class RecarringController extends Controller
      * @throws BadRequestHttpException
      * @throws ForbiddenHttpException
      * @throws \yii\db\Exception
-     * @throws \yii\web\UnauthorizedHttpException
+     * @throws UnauthorizedHttpException
      */
-    public function actionReg()
+    public function actionReg(): array
     {
-        $kf = new KfRequest();
-        $kf->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody(), 0);
+        $kfRequest = new KfRequest();
+        $kfRequest->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody(), 0);
 
         $kfCard = new KfCard();
         $kfCard->scenario = KfCard::SCENARIO_REG;
 
-        $reguser = new Reguser();
-        $user = $reguser->findUser('0', $kf->IdPartner.'-'.time(), md5($kf->IdPartner.'-'.time()), $kf->IdPartner, false);
+        $regUser = new Reguser();
+        $extUser = $kfRequest->IdPartner . '-' . time();
 
-        if ($user) {
-            $data = $this->paySchetService->payActivateCard($user,0, $kfCard,3, TCBank::$bank, $kf->IdPartner); //Provparams
-
-            //PCI DSS form
-            return [
-                'status' => 1,
-                'id' => (int)$data['IdPay'],
-                'url' => $kfCard->GetRegForm($data['IdPay'])
-            ];
-
+        $user = $regUser->findUser('0', $extUser, md5($extUser), $kfRequest->IdPartner, false);
+        if (!$user) {
+            Yii::warning('recarring/reg: пользователь не найден idPartner=' . $kfRequest->IdPartner);
+            return ['status' => 0, 'message' => 'Пользователь не найден'];
         }
-        return ['status' => 0, 'message' => ''];
+
+        $uslugatovar = Uslugatovar::findOne(['IDPartner' => $kfRequest->IdPartner, 'IsCustom' => TU::$REGCARD]);
+        if (!$uslugatovar) {
+            Yii::warning('recarring/reg: услуга ' . TU::$REGCARD . ' не найдена idPartner=' . $kfRequest->IdPartner);
+            return ['status' => 0, 'message' => 'Услуга не найдена'];
+        }
+
+        try {
+            $bankAdapterBuilder = new BankAdapterBuilder();
+            $bankAdapter = $bankAdapterBuilder->build($kfRequest->partner, $uslugatovar)->getBankAdapter();
+        } catch (GateException $e) {
+            Yii::warning('recarring/reg: ' . $e->getMessage());
+            return ['status' => 0, 'message' => $e->getMessage()];
+        }
+
+        $data = $this->paySchetService->payActivateCard($user,0, $kfCard, 3, $bankAdapter->getBankId(), $kfRequest->IdPartner);
+
+        //PCI DSS form
+        return [
+            'status' => 1,
+            'id' => intval($data['IdPay']),
+            'url' => $kfCard->GetRegForm($data['IdPay'])
+        ];
     }
 
     /**
@@ -152,99 +179,127 @@ class RecarringController extends Controller
      * @throws BadRequestHttpException
      * @throws ForbiddenHttpException
      * @throws \yii\db\Exception
-     * @throws \yii\web\UnauthorizedHttpException
+     * @throws UnauthorizedHttpException
      */
-    public function actionGet()
+    public function actionGet(): array
     {
-        $kf = new KfRequest();
-        $kf->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody(), 0);
+        $kfRequest = new KfRequest();
+        $kfRequest->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody(), 0);
 
         $kfCard = new KfCard();
         $kfCard->scenario = KfCard::SCENARIO_GET;
-        $kfCard->load($kf->req, '');
+        $kfCard->load($kfRequest->req, '');
         if (!$kfCard->validate()) {
-            return ['status' => 0, 'message' => $kfCard->GetError()];
+            $err = $kfCard->GetError();
+            Yii::warning('recarring/get: ошибка валидации формы: ' . $err);
+            return ['status' => 0, 'message' => $err];
         }
 
-        $tcBank = new TCBank();
-        $tcBank->confirmPay($kfCard->id);
-
-        $card = $kfCard->FindKardByPay($kf->IdPartner, 0);
-
-        //информация по карте
-        if ($card) {
-            return [
-                'status' => 1,
-                'card' => [
-                    'id' => (int)$card->ID,
-                    'num' => (string)$card->CardNumber,
-                    'exp' => $card->getMonth() . "/" . $card->getYear()
-                ]
-            ];
+        $paySchet = PaySchet::findOne(['ID' => $kfCard->id]);
+        if (!$paySchet) {
+            Yii::warning('recarring/get: paySchet не найден id=' . $kfCard->id);
+            return ['status' => 0, 'message' => 'Счет не найден'];
         }
-        return ['status' => 0, 'message' => ''];
+
+        $uslugatovar = Uslugatovar::findOne(['ID' => $paySchet->IdUsluga]);
+        $partner = $kfRequest->partner;
+        if (!$uslugatovar || !$partner) {
+            Yii::warning('recarring/get: partner или uslugatovar не найдена paySchet id=' . $kfCard->id);
+            return ['status' => 0, 'message' => 'Счет не найден'];
+        }
+
+        $donePayForm = new DonePayForm(['IdPay' => $paySchet->ID]);
+
+        $bankAdapterBuilder = new BankAdapterBuilder();
+        try {
+            $bankAdapter = $bankAdapterBuilder->build($partner, $uslugatovar)->getBankAdapter();
+            $bankAdapter->confirm($donePayForm);
+        } catch (GateException $e) {
+            Yii::warning('recarring/get: ' . $e->getMessage());
+            return ['status' => 0, 'message' => $e->getMessage()];
+        }
+
+        $card = $kfCard->FindKardByPay($kfRequest->IdPartner, 0);
+        if (!$card) {
+            Yii::warning('recarring/get: карта не найдена idPartner=' . $kfRequest->IdPartner);
+            return ['status' => 0, 'message' => 'Карта не найдена'];
+        }
+
+        return [
+            'status' => 1,
+            'card' => [
+                'id' => intval($card->ID),
+                'num' => $card->CardNumber,
+                'exp' => $card->getMonth() . "/" . $card->getYear()
+            ]
+        ];
     }
 
     /**
      * Удалить карту (у нас)
      * @return array
      * @throws BadRequestHttpException
-     * @throws \yii\web\UnauthorizedHttpException
+     * @throws UnauthorizedHttpException
      * @throws \yii\db\Exception
      * @throws ForbiddenHttpException
      */
-    public function actionDel()
+    public function actionDel(): array
     {
-        $kf = new KfRequest();
-        $kf->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody(), 0);
+        $kfRequest = new KfRequest();
+        $kfRequest->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody(), 0);
 
         $kfCard = new KfCard();
         $kfCard->scenario = KfCard::SCENARIO_INFO;
-        $kfCard->load($kf->req, '');
+        $kfCard->load($kfRequest->req, '');
         if (!$kfCard->validate()) {
-            return ['status' => 0, 'message' => $kfCard->GetError()];
+            $err = $kfCard->GetError();
+            Yii::warning('recarring/del: ошибка валидации формы: ' . $err);
+            return ['status' => 0, 'message' => $err];
         }
 
-        $card = $kfCard->FindKard($kf->IdPartner, 0);
-        if ($card) {
-            //удалить карту
-            $card->IsDeleted = 1;
-            $card->save(false);
-            return ['status' => 1];
+        $card = $kfCard->FindKard($kfRequest->IdPartner, 0);
+        if (!$card) {
+            Yii::warning('recarring/del: карта не найдена idPartner=' . $kfRequest->IdPartner);
+            return ['status' => 0, 'message' => ''];
         }
-        return ['status' => 0, 'message' => ''];
+
+        //удалить карту
+        $card->IsDeleted = 1;
+        $card->save(false);
+
+        return ['status' => 1];
     }
 
     /**
      * Автоплатеж
      * @return array
      * @throws BadRequestHttpException
-     * @throws \yii\db\Exception
-     * @throws \yii\web\UnauthorizedHttpException
-     * @throws \Exception
+     * @throws ForbiddenHttpException
+     * @throws UnauthorizedHttpException
      */
-    public function actionPay()
+    public function actionPay(): array
     {
-        $kf = new KfRequest();
-        $kf->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody(), 0);
+        $kfRequest = new KfRequest();
+        $kfRequest->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody(), 0);
 
         $autoPayForm = new AutoPayForm();
-        $autoPayForm->partner = $kf->partner;
-        $autoPayForm->load($kf->req, '');
-        if(!$autoPayForm->validate()) {
-            Yii::warning("mfo/pay/auto: ошибка валидации формы");
-            return ['status' => 0, 'message' => $autoPayForm->getError()];
+        $autoPayForm->partner = $kfRequest->partner;
+        $autoPayForm->load($kfRequest->req, '');
+
+        if (!$autoPayForm->validate()) {
+            $err = $autoPayForm->getError();
+            Yii::warning('recarring/pay: ошибка валидации формы: ' . $err);
+            return ['status' => 0, 'message' => $err];
         }
-        Yii::warning("mfo/pay/auto AutoPayForm extid=$autoPayForm->extid amount=$autoPayForm->amount", 'mfo');
-        // рубли в копейки
-        $autoPayForm->amount *= 100;
+
+        Yii::warning("recarring/pay: autoPayForm extid=$autoPayForm->extid amount=$autoPayForm->amount");
+        $autoPayForm->amount = PaymentHelper::convertToPenny($autoPayForm->amount); // рубли в копейки
 
         $mfoAutoPayStrategy = new MfoAutoPayStrategy($autoPayForm);
         try {
             $paySchet = $mfoAutoPayStrategy->exec();
-        } catch (CreatePayException $e) {
-            return ['status' => 2, 'message' => $e->getMessage()];
-        } catch (GateException $e) {
+        } catch (CreatePayException | GateException $e) {
+            Yii::warning('recarring/pay: mfoAutoPayStrategy exec exception: ' . $e->getMessage());
             return ['status' => 2, 'message' => $e->getMessage()];
         }
 
@@ -257,27 +312,46 @@ class RecarringController extends Controller
      * @throws BadRequestHttpException
      * @throws ForbiddenHttpException
      * @throws \yii\db\Exception
-     * @throws \yii\web\UnauthorizedHttpException
+     * @throws UnauthorizedHttpException
      */
-    public function actionState()
+    public function actionState(): array
     {
-        $kf = new KfRequest();
-        $kf->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody(), 0);
+        $kfRequest = new KfRequest();
+        $kfRequest->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody(), 0);
 
         $kfPay = new KfPay();
         $kfPay->scenario = KfPay::SCENARIO_STATE;
-        $kfPay->load($kf->req, '');
+        $kfPay->load($kfRequest->req, '');
         if (!$kfPay->validate()) {
-            return ['status' => 0, 'message' => $kfPay->GetError()];
+            $err = $kfPay->GetError();
+            Yii::warning('recarring/state: ошибка валидации формы: ' . $err);
+            return ['status' => 0, 'message' => $err];
         }
 
-        $tcBank = new TCBank();
-        $ret = $tcBank->confirmPay($kfPay->id, $kf->IdPartner);
-        if ($ret && isset($ret['status']) && $ret['IdPay'] != 0) {
-            $state = ['status' => (int)$ret['status'], 'message' => (string)$ret['message']];
-        } else {
-            $state = ['status' => 0, 'message' => 'Счет не найден'];
+        $paySchet = PaySchet::findOne(['ID' => $kfPay->id]);
+        if (!$paySchet) {
+            Yii::warning('recarring/state: paySchet не найден id=' . $kfPay->id);
+            return ['status' => 0, 'message' => 'Счет не найден'];
         }
-        return $state;
+
+        $uslugatovar = Uslugatovar::findOne(['ID' => $paySchet->IdUsluga]);
+        $partner = $kfRequest->partner;
+        if (!$uslugatovar || !$partner) {
+            Yii::warning('recarring/state: partner или uslugatovar не найдена paySchet id=' . $kfPay->id);
+            return ['status' => 0, 'message' => 'Счет не найден'];
+        }
+
+        $donePayForm = new DonePayForm(['IdPay' => $paySchet->ID]);
+
+        $bankAdapterBuilder = new BankAdapterBuilder();
+        try {
+            $bankAdapter = $bankAdapterBuilder->build($partner, $uslugatovar)->getBankAdapter();
+            $payResponse = $bankAdapter->confirm($donePayForm);
+        } catch (GateException $e) {
+            Yii::warning('recarring/state: ');
+            return ['status' => 0, 'message' => $e->getMessage()];
+        }
+
+        return ['status' => intval($payResponse->status), 'message' => $payResponse->message];
     }
 }
