@@ -77,7 +77,7 @@ class ModelsMfoMfoReqTest extends \Codeception\Test\Unit
     {
         $mfoReq = new MfoReq();
         if (Yii::$app->params['DEVMODE'] == 'Y') {
-            $this->tester->assertEquals('http://127.0.0.1:8000/mfo/default/outcard/999999', $mfoReq->getLinkOutCard('999999'));
+            $this->tester->assertEquals(Yii::$app->params['domain'] . '/mfo/default/outcard/999999', $mfoReq->getLinkOutCard('999999'));
         } elseif (Yii::$app->params['TESTMODE'] == 'Y') {
             $this->tester->assertEquals('https://'.$_SERVER['SERVER_NAME'].'/mfo/default/outcard/999999', $mfoReq->getLinkOutCard('999999'));
         }

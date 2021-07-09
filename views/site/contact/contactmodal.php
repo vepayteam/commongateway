@@ -1,13 +1,16 @@
 <?php
+
+use app\models\site\ContactForm;
+use yii\helpers\Html;
+use yii\web\View;
+
 /**
  * Форма "Напишите нам" встраиваемая
  *
- * @var $model \app\models\ContactForm
- * @var $this \yii\web\View
+ * @var ContactForm $model
+ * @var View $this
  * @var string $formType
  */
-use yii\helpers\Html;
-use yii\web\View;
 
 ?>
 <form id="form_cont" name="form_cont" action="#" method="post" class="send_common">

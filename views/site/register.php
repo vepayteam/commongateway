@@ -1,11 +1,13 @@
 <?php
-/* @var $this \yii\web\View */
-/* @var $PartnerReg PartnerReg */
-/* @var $Partner Partner */
 
 use app\models\payonline\Partner;
 use app\models\site\PartnerReg;
 use yii\bootstrap\ActiveForm;
+use yii\web\View;
+
+/* @var $this View */
+/* @var $PartnerReg PartnerReg */
+/* @var $Partner Partner */
 
 $this->title = "Регистация в системе";
 
