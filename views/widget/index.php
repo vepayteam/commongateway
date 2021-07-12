@@ -1,15 +1,15 @@
 <?php
 
+use app\models\payonline\OrderPay;
+use app\models\payonline\PayForm;
 use yii\bootstrap\ActiveForm;
 use yii\bootstrap\Html;
 use yii\web\View;
-use yii\helpers\Url;
 
-/* @var \yii\web\View $this */
-/* @var \app\models\payonline\OrderPay $order */
-/* @var $isorder */
-/* @var \app\models\payonline\PayForm $payform */
-/* @var int $bank */
+/* @var View $this */
+/* @var OrderPay $order */
+/* @var bool $isorder */
+/* @var PayForm $payform */
 ?>
 
 <section class="container">
@@ -126,7 +126,6 @@ use yii\helpers\Url;
                     <input type="hidden" name="Order[Comment]" value="<?=$order->Comment?>">
                     <input type="hidden" name="Order[SumOrder]" value="<?=$order->SumOrder?>">
                 <?php endif; ?>
-                <input type="hidden" name="bank" value="<?=$bank?>">
 
                 <?= Html::Button('Оплатить', [
                     'class' => 'btn btn-success paybtn',

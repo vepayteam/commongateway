@@ -3,6 +3,10 @@ $params = require(__DIR__ . '/params.php');
 $db = require(__DIR__ . '/test_db.php');
 
 /**
+ * @TODO Слить с основным конфигом (web.php)!
+ */
+
+/**
  * Application configuration shared by all test types
  */
 return [
@@ -43,6 +47,10 @@ return [
         'cache' => $params['components']['cache'],
         'redis' => $params['components']['redis'],
         'queue' => $params['components']['queue'],
+
+        // Сервисы
+        \app\services\PartnerService::class => \app\services\PartnerService::class,
+        \app\services\PaySchetService::class => \app\services\PaySchetService::class,
     ],
     'params' => $params,
     'container' => [

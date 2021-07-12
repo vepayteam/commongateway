@@ -8,8 +8,10 @@ use app\models\site\CheckPay;
 use app\models\site\ContactForm;
 use app\models\site\PartnerReg;
 use app\models\telegram\Telegram;
+use app\services\PartnerService;
 use Throwable;
 use Yii;
+use yii\base\Model;
 use yii\bootstrap\ActiveForm;
 use yii\db\StaleObjectException;
 use yii\web\BadRequestHttpException;
@@ -19,6 +21,22 @@ use yii\web\Response;
 
 class SiteController extends Controller
 {
+
+    /**
+     * @var PartnerService
+     */
+    private $partnerService;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function init()
+    {
+        parent::init();
+
+        $this->partnerService = \Yii::$app->get(PartnerService::class);
+    }
+
     /**
      * @return array
      */
@@ -151,27 +169,10 @@ class SiteController extends Controller
         $partner->load(Yii::$app->request->post(), 'Partner');
         $partner->setAttribute('Email', $partnerReg->Email);
         if (!$partner->validate()) {
-            return ['status' => 0, 'message' => $partner->GetError()];
+            return ['status' => 0, 'message' => $this->getError()];
         }
 
-        $partner->save(false);
-
-        $partnerReg->State = 1;
-        $partnerReg->save(false);
-
-        if ($partner->IsMfo) {
-            //создание услуг МФО при добавлении
-            $partner->CreateUslugMfo();
-        } else {
-            //создание услуги магазину при добавлении
-            $partner->CreateUslug();
-        }
-
-        Yii::$app->queue->push(new SendMailJob([
-            'email' => 'info@vepay.online',
-            'subject' => 'Зарегистрирован контрагент',
-            'content' => 'Зарегистрирован контрагент ' . $partner->Name
-        ]));
+        $this->partnerService->register($partner, $partnerReg);
 
         return ['status' => 1, 'id' => $partner->ID, 'url' => ''];
     }
@@ -252,5 +253,16 @@ class SiteController extends Controller
         } else {
             return ['status' => 0, 'message' => 'Ошибка: ' . $contactForm->GetError()];
         }
+    }
+
+    /**
+     * @param Model $model
+     * @return mixed|null
+     * @todo Поменять способ выведения ошибок.
+     */
+    private function getError(Model $model)
+    {
+        $firstErrors = $model->getFirstErrors();
+        return array_pop($firstErrors);
     }
 }

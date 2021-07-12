@@ -7,7 +7,6 @@ use app\models\api\Reguser;
 use app\models\kfapi\KfCard;
 use app\models\kfapi\KfPay;
 use app\models\kfapi\KfRequest;
-use app\models\payonline\CreatePay;
 use app\models\payonline\Uslugatovar;
 use app\models\TU;
 use app\services\payment\banks\BankAdapterBuilder;
@@ -18,6 +17,7 @@ use app\services\payment\forms\DonePayForm;
 use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\PaySchet;
 use app\services\payment\payment_strategies\mfo\MfoAutoPayStrategy;
+use app\services\PaySchetService;
 use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
@@ -28,6 +28,22 @@ use yii\web\UnauthorizedHttpException;
 class RecarringController extends Controller
 {
     use CorsTrait;
+
+
+    /**
+     * @var PaySchetService
+     */
+    private $paySchetService;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function init()
+    {
+        parent::init();
+
+        $this->paySchetService = \Yii::$app->get(PaySchetService::class);
+    }
 
     /**
      * @return array
@@ -147,8 +163,7 @@ class RecarringController extends Controller
             return ['status' => 0, 'message' => $e->getMessage()];
         }
 
-        $pay = new CreatePay($user);
-        $data = $pay->payActivateCard(0, $kfCard, 3, $bankAdapter->getBankId(), $kfRequest->IdPartner);
+        $data = $this->paySchetService->payActivateCard($user,0, $kfCard, 3, $bankAdapter->getBankId(), $kfRequest->IdPartner);
 
         //PCI DSS form
         return [

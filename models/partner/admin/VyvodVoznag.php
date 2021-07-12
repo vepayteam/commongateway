@@ -5,13 +5,13 @@ namespace app\models\partner\admin;
 
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
-use app\models\payonline\CreatePay;
 use app\models\payonline\Partner;
 use app\models\payonline\Provparams;
 use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\SendEmail;
 use app\models\TU;
+use app\services\PaySchetService;
 use yii\base\Model;
 use Yii;
 
@@ -90,9 +90,13 @@ class VyvodVoznag extends Model
      * @param Partner $mfo
      * @return int
      * @throws \yii\db\Exception
+     * @throws \app\services\payment\exceptions\CreatePayException
      */
     private function VyplataDirect($mfo)
     {
+        /** @var PaySchetService $paySchetService */
+        $paySchetService = \Yii::$app->get(PaySchetService::class);
+
         $PBKPOrg = 1;
 
         $tr = Yii::$app->db->beginTransaction();
@@ -123,14 +127,13 @@ class VyvodVoznag extends Model
             return 0;
         }
 
-        $pay = new CreatePay();
         $Provparams = new Provparams;
         $Provparams->prov = $usl;
         $Provparams->param = [$this->recviz['account'], $this->recviz['bic'], $this->recviz['name'], $this->recviz['inn'], $this->recviz['kpp'], $descript];
         $Provparams->summ = $this->summ;
         $Provparams->Usluga = Uslugatovar::findOne(['ID' => $usl]);
 
-        $idpay = $pay->createPay($Provparams,0, 3, TCBank::$bank, $PBKPOrg, 'voznout'.$id, 0);
+        $idpay = $paySchetService->createPay($Provparams,0, 3, TCBank::$bank, $PBKPOrg, 'voznout'.$id, 0);
 
         if (!$idpay) {
             Yii::warning("VyvodSumPay: error mfo=" . $this->partner . " idpay=" . $idpay, "rsbcron");

@@ -8,9 +8,9 @@ use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\kfapi\KfPayParts;
 use app\models\mfo\MfoReq;
-use app\models\payonline\CreatePay;
 use app\models\PayschetPart;
 use app\models\TU;
+use app\services\PaySchetService;
 use Yii;
 use yii\base\Exception;
 use yii\mutex\FileMutex;
@@ -27,8 +27,17 @@ class CreateFormMfoEcomPartsStrategy implements IMfoStrategy
         $this->mfoReq = $mfoReq;
     }
 
+    /**
+     * @throws \yii\db\Exception
+     * @throws \yii\base\InvalidConfigException
+     * @throws \app\services\payment\exceptions\CreatePayException
+     * @throws Exception
+     */
     public function exec()
     {
+        /** @var PaySchetService $paySchetService */
+        $paySchetService = \Yii::$app->get(PaySchetService::class);
+
         $kfPay = new KfPayParts();
         $kfPay->scenario = KfPayParts::SCENARIO_FORM;
         $kfPay->load($this->mfoReq->Req(), '');
@@ -45,14 +54,13 @@ class CreateFormMfoEcomPartsStrategy implements IMfoStrategy
             return ['status' => 0, 'message' => 'Нет шлюза'];
         }
 
-        $pay = new CreatePay();
         $mutex = new FileMutex();
         if (!empty($kfPay->extid)) {
             //проверка на повторный запрос
             if (!$mutex->acquire('getPaySchetExt' . $kfPay->extid, 30)) {
                 throw new Exception('getPaySchetExt: error lock!');
             }
-            $paramsExist = $pay->getPaySchetExt($kfPay->extid, $usl, $this->mfoReq->mfo);
+            $paramsExist = $paySchetService->getPaySchetExt($kfPay->extid, $usl, $this->mfoReq->mfo);
             if ($paramsExist) {
                 if ($kfPay->amount == $paramsExist['sumin']) {
                     return ['status' => 1, 'message' => '', 'id' => (int)$paramsExist['IdPay'], 'url' => $kfPay->GetPayForm($paramsExist['IdPay'])];
@@ -62,7 +70,15 @@ class CreateFormMfoEcomPartsStrategy implements IMfoStrategy
                 }
             }
         }
-        $params = $pay->payToMfo(null, [$kfPay->document_id, $kfPay->fullname], $kfPay, $usl, TCBank::$bank, $this->mfoReq->mfo,0);
+        $params = $paySchetService->payToMfo(
+            null,
+            [$kfPay->document_id, $kfPay->fullname],
+            $kfPay,
+            $usl,
+            TCBank::$bank,
+            $this->mfoReq->mfo,
+            0
+        );
         foreach ($this->mfoReq->Req()['parts'] as $part) {
             $payschetPart = new PayschetPart();
             $payschetPart->PayschetId = $params['IdPay'];
