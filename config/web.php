@@ -123,6 +123,8 @@ $config = [
         'redis' => $params['components']['redis'],
         'queue' => $params['components']['queue'],
 
+        // Сервисы
+        \app\services\PartnerService::class => \app\services\PartnerService::class,
         \app\services\PaySchetService::class => \app\services\PaySchetService::class,
     ],
     'params' => $params,

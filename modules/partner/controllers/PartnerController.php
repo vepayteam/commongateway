@@ -15,8 +15,10 @@ use app\models\payonline\Partner;
 use app\models\payonline\PartnerBankRekviz;
 use app\models\payonline\Uslugatovar;
 use app\services\partners\PartnersService;
+use app\services\PartnerService;
 use app\services\payment\models\PartnerBankGate;
 use Yii;
+use yii\base\Model;
 use yii\filters\AccessControl;
 use yii\helpers\Url;
 use yii\web\BadRequestHttpException;
@@ -24,10 +26,26 @@ use yii\web\Controller;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
+use yii\web\UploadedFile;
 
 class PartnerController extends Controller
 {
     use SelectPartnerTrait;
+
+    /**
+     * @var PartnerService
+     */
+    private $partnerService;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function init()
+    {
+        parent::init();
+
+        $this->partnerService = \Yii::$app->get(PartnerService::class);
+    }
 
     public function behaviors()
     {
@@ -96,17 +114,10 @@ class PartnerController extends Controller
                 $partner = new Partner();
                 $partner->load(Yii::$app->request->post(), 'PartnerAdd');
                 if (!$partner->validate()) {
-                    return ['status' => 0, 'message' => $partner->GetError()];
+                    return ['status' => 0, 'message' => $this->getError($partner)];
                 }
-                $partner->save(false);
 
-                if ($partner->IsMfo) {
-                    //создание услуг МФО при добавлении
-                    $partner->CreateUslugMfo();
-                } else {
-                    //создание услуги магазину при добавлении
-                    $partner->CreateUslug();
-                }
+                $this->partnerService->create($partner);
 
                 return ['status' => 1, 'id' => $partner->ID];
 
@@ -176,7 +187,7 @@ class PartnerController extends Controller
 
                 $partner->load(Yii::$app->request->post(), 'Partner');
                 if (!$partner->validate()) {
-                    return ['status' => 0, 'message' => $partner->GetError()];
+                    return ['status' => 0, 'message' => $this->getError($partner)];
                 }
                 $partner->save(false);
 
@@ -201,9 +212,17 @@ class PartnerController extends Controller
 
                 $partner->load(Yii::$app->request->post(), 'Partner');
                 if (!$partner->validate()) {
-                    return ['status' => 0, 'message' => $partner->GetError()];
+                    return ['status' => 0, 'message' => $this->getError($partner)];
                 }
-                return $partner->uploadKeysKkm();
+
+                $uploadedSingKey = UploadedFile::getInstance($partner, 'OrangeDataSingKey');
+                $uploadedConKey = UploadedFile::getInstance($partner, 'OrangeDataConKey');
+                $uploadedConCert = UploadedFile::getInstance($partner, 'OrangeDataConCert');
+                if ($this->partnerService->saveKeysKkm($partner, $uploadedSingKey, $uploadedConKey, $uploadedConCert)) {
+                    return ['status' => 1];
+                } else {
+                    return ['status' => 0, 'message' => 'Ошибка сохранения файла'];
+                }
             }
         }
         return $this->redirect('/partner');
@@ -223,9 +242,16 @@ class PartnerController extends Controller
 
                 $partner->load(Yii::$app->request->post(), 'Partner');
                 if (!$partner->validate()) {
-                    return ['status' => 0, 'message' => $partner->GetError()];
+                    return ['status' => 0, 'message' => $this->getError($partner)];
                 }
-                return $partner->uploadKeysApplepay();
+
+                $uploadedKey = UploadedFile::getInstance($partner, 'Apple_MerchIdentKey');
+                $uploadedCert = UploadedFile::getInstance($partner, 'Apple_MerchIdentCert');
+                if ($this->partnerService->saveKeysApplepay($partner, $uploadedKey, $uploadedCert)) {
+                    return ['status' => 1];
+                } else {
+                    return ['status' => 0, 'message' => 'Ошибка сохранения файла'];
+                }
             }
         }
         return $this->redirect('/partner');
@@ -355,7 +381,7 @@ class PartnerController extends Controller
 
                 $bankrecv->load(Yii::$app->request->post(), 'PartnerBankRekviz');
                 if (!$bankrecv->validate()) {
-                    return ['status' => 0, 'message' => $bankrecv->GetError()];
+                    return ['status' => 0, 'message' => $this->getError($bankrecv)];
                 }
                 $bankrecv->save(false);
 
@@ -511,7 +537,7 @@ class PartnerController extends Controller
             $us = PartnerUsers::findOne(['ID' => Yii::$app->request->post('ID')]);
             if (!$us) {
                 $us = new PartnerUsers();
-                $partner = Partner::getPartner(Yii::$app->request->post('IdPartner', 0));
+                $partner = $this->partnerService->getPartner(Yii::$app->request->post('IdPartner', 0));
                 if ($partner) {
                     $us->IdPartner = $partner->ID;
                 }
@@ -591,6 +617,17 @@ class PartnerController extends Controller
     private function getPartnersService()
     {
         return Yii::$container->get('PartnersService');
+    }
+
+    /**
+     * @param Model $model
+     * @return mixed|null
+     * @todo Поменять способ выведения ошибок.
+     */
+    private function getError(Model $model)
+    {
+        $firstErrors = $model->getFirstErrors();
+        return array_pop($firstErrors);
     }
 
 }
