@@ -7,9 +7,9 @@ use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\kfapi\KfPay;
 use app\models\kfapi\KfRequest;
-use app\models\payonline\CreatePay;
 use app\models\Payschets;
 use app\models\TU;
+use app\services\PaySchetService;
 use Yii;
 use yii\base\Exception;
 use yii\mutex\FileMutex;
@@ -23,6 +23,21 @@ use yii\web\Response;
 class PayController extends Controller
 {
     use CorsTrait;
+
+    /**
+     * @var PaySchetService
+     */
+    private $paySchetService;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function init()
+    {
+        parent::init();
+
+        $this->paySchetService = \Yii::$app->get(PaySchetService::class);
+    }
 
     public function behaviors()
     {
@@ -84,14 +99,13 @@ class PayController extends Controller
 
         Yii::warning('/pay/in kfmfo='. $kf->IdPartner . " sum=".$kfPay->amount . " extid=".$kfPay->extid, 'mfo');
 
-        $pay = new CreatePay();
         $mutex = new FileMutex();
         if (!empty($kfPay->extid)) {
             //проверка на повторный запрос
             if (!$mutex->acquire('getPaySchetExt' . $kfPay->extid, 30)) {
                 throw new Exception('getPaySchetExt: error lock!');
             }
-            $paramsExist = $pay->getPaySchetExt($kfPay->extid, $usl, $kf->IdPartner);
+            $paramsExist = $this->paySchetService->getPaySchetExt($kfPay->extid, $usl, $kf->IdPartner);
             if ($paramsExist) {
                 if ($kfPay->amount == $paramsExist['sumin']) {
                     return ['status' => 1, 'id' => (int)$paramsExist['IdPay'], 'url' => $kfPay->GetPayForm($paramsExist['IdPay']), 'message' => ''];
@@ -101,7 +115,7 @@ class PayController extends Controller
             }
         }
 
-        $params = $pay->payToMfo(null, [$kfPay->document_id, $kfPay->fullname], $kfPay, $usl, TCBank::$bank, $kf->IdPartner, 0);
+        $params = $this->paySchetService->payToMfo(null, [$kfPay->document_id, $kfPay->fullname], $kfPay, $usl, TCBank::$bank, $kf->IdPartner, 0);
         if (!empty($kfPay->extid)) {
             $mutex->release('getPaySchetExt' . $kfPay->extid);
         }

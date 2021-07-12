@@ -7,13 +7,13 @@ namespace app\services\payment\traits;
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\partner\admin\VyvodParts;
-use app\models\payonline\CreatePay;
 use app\models\payonline\Partner;
 use app\models\payonline\Provparams;
 use app\models\payonline\Uslugatovar;
 use app\models\PayschetPart;
 use app\models\Payschets;
 use app\models\TU;
+use app\services\PaySchetService;
 use Carbon\Carbon;
 use Yii;
 use yii\db\Query;
@@ -51,6 +51,9 @@ trait PayPartsTrait
      */
     private function payPartsSenderToRecipient(Partner $senderPartner, Partner $recipientPartner, Carbon $dateFrom, Carbon $dateTo)
     {
+        /** @var PaySchetService $paySchetService */
+        $paySchetService = \Yii::$app->get(PaySchetService::class);
+
         $transaction = Yii::$app->db->beginTransaction();
 
         $transactionOk = true;
@@ -101,7 +104,6 @@ trait PayPartsTrait
                 $recipientPartner->ID,
                 $dateFrom->locale('ru')->format('d-m-Y')
             );
-            $pay = new CreatePay();
             $Provparams = new Provparams;
             $Provparams->prov = $usl;
 
@@ -121,7 +123,7 @@ trait PayPartsTrait
             $Provparams->summ = $vyvodParts->Amount;
             $Provparams->Usluga = $usl;
 
-            $idpay = $pay->createPay($Provparams,0, 3, TCBank::$bank, $senderPartner->ID, 'vozparts '. $vyvodParts->Id, 0);
+            $idpay = $paySchetService->createPay($Provparams,0, 3, TCBank::$bank, $senderPartner->ID, 'vozparts '. $vyvodParts->Id, 0);
             if (!$idpay) {
                 Yii::warning("VyvodParts: error mfo=" . $senderPartner->ID . " idpay=" . $idpay, 'pay-parts');
                 $transaction->rollBack();
