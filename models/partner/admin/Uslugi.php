@@ -4,6 +4,7 @@ namespace app\models\partner\admin;
 
 use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
+use app\services\PartnerService;
 use Yii;
 use yii\base\DynamicModel;
 use yii\helpers\FileHelper;
@@ -56,7 +57,10 @@ class Uslugi
      */
     public function updateUsluga($request)
     {
-        $partner = Partner::getPartner($request->post('idpart', 0));
+        /** @var PartnerService $partnerService */
+        $partnerService = \Yii::$app->get(PartnerService::class);
+
+        $partner = $partnerService->getPartner($request->post('idpart', 0));
         $usl = Uslugatovar::findOne(['ID' => $request->post('ID'), 'IDPartner' => $partner->ID]);
         if (!$usl) {
             $usl = new Uslugatovar();

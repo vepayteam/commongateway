@@ -17,6 +17,17 @@ use Yii;
  */
 class PartnerReg extends \yii\db\ActiveRecord
 {
+
+    /**
+     * Статус: новый.
+     */
+    const STATE_NEW = 0;
+
+    /**
+     * Статус: зарегистрирован.
+     */
+    const STATE_REGISTERED = 1;
+
     /**
      * {@inheritdoc}
      */
