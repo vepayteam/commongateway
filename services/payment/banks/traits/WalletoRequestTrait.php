@@ -17,7 +17,7 @@ trait WalletoRequestTrait
     {
         $paySchet = $createPayForm->getPaySchet();
         // amount check currency what is provided by default RUB
-        $amount = PaymentHelper::convertToRub($paySchet->getSummFull());
+        $amount = PaymentHelper::convertToFullAmount($paySchet->getSummFull());
         $request = new CreatePayRequest();
         $request->amount = $amount;
         $request->pan = $createPayForm->CardNumber;
@@ -30,14 +30,20 @@ trait WalletoRequestTrait
         $request->location['ip'] = ($this->getRequestIp() == '127.0.0.1' ? '195.58.60.180' : $this->getRequestIp());
         //TODO: add address, city, country, login, phone, zip
         $request->client = [
-          'email' => $paySchet->UserEmail
+          'email' => $paySchet->UserEmail,
+          'address' => $paySchet->AddressUser ?? '',
+          'city' => $paySchet->CityUser ?? '',
+          'country' => $paySchet->CountryUser ?? '',
+          'login' => $paySchet->LoginUser ?? '',
+          'phone' => $paySchet->PhoneUser ?? '',
+          'zip' => $paySchet->ZipUser ?? '',
         ];
         $request->options = [
             'force3d' => 1,
             'auto_charge' => 1,
             'return_url' => $createPayForm->getReturnUrl(),
         ];
-        $request->currency = 'RUB'; //todo: get from request
+        $request->currency = $paySchet->currency->Code;
         $request->merchant_order_id = $paySchet->ID;
         $request->description = 'Счет №' . $paySchet->ID ?? '';
         return $request;

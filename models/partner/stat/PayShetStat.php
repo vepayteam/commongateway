@@ -4,6 +4,7 @@ namespace app\models\partner\stat;
 
 use app\models\partner\UserLk;
 use app\models\TU;
+use app\services\payment\models\repositories\CurrencyRepository;
 use Yii;
 use yii\base\Model;
 use yii\db\Expression;
@@ -115,6 +116,7 @@ class PayShetStat extends Model
                 'ps.IdKard',//
                 'qp.NameUsluga',
                 'ps.SummPay',
+                'ps.CurrencyId',
                 'ps.ComissSumm',
                 'ps.MerchVozn',
                 'ps.BankComis',
@@ -271,6 +273,7 @@ class PayShetStat extends Model
             'ps.IdKard',//
             'qp.NameUsluga',
             'ps.SummPay',
+            'ps.CurrencyId',
             'ps.ComissSumm',
             'ps.MerchVozn',
             'ps.BankComis',
@@ -317,11 +320,11 @@ class PayShetStat extends Model
             $data = self::mapQueryPaymentResult($res);
 
         } else {
-
             $data = [];
 
             foreach ($res as $row) {
                 $row['VoznagSumm'] = $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
+                $row['Currency'] = CurrencyRepository::getCurrencyCodeById($row['CurrencyId'])->Code;
                 $data[] = $row;
             }
         }
@@ -339,7 +342,7 @@ class PayShetStat extends Model
         foreach ($res as $row) {
 
             $row['VoznagSumm'] = $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
-
+            $row['Currency'] = CurrencyRepository::getCurrencyCodeById($row['CurrencyId'])->Code;
             yield $row;
         }
     }

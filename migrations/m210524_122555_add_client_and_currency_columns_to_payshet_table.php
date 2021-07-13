@@ -24,39 +24,34 @@ class m210524_122555_add_client_and_currency_columns_to_payshet_table extends Mi
      */
     public function safeUp()
     {
-        $paySchet = new PaySchet();
         $defaultCurrency = Currency::find()
             ->select(['Id'])
             ->where([
-                'Code' => 'RUB'
+                'Code' => Currency::MAIN_CURRENCY
             ])
             ->one();
 
         foreach (self::NEW_STRING_COLUMNS as $column) {
-            if (!$paySchet->hasAttribute($column)) {
-                $length = 255;
-                switch ($column) {
-                    case "LoginUser":
-                    case "PhoneUser":
-                        $length = 32;
-                        break;
-                    case "ZipUser":
-                        $length = 16;
-                        break;
-                }
-                $this->createStringColumn($column, $length);
+            $length = 255;
+            switch ($column) {
+                case "LoginUser":
+                case "PhoneUser":
+                    $length = 32;
+                    break;
+                case "ZipUser":
+                    $length = 16;
+                    break;
             }
+            $this->createStringColumn($column, $length);
         }
-        if (!$paySchet->hasAttribute(self::CURRENCY_ID_KEY)) {
-            $this->addColumn(
-                PaySchet::tableName(),
-                self::CURRENCY_ID_KEY,
-                $this->integer()
-                    ->unsigned()
-                    ->notNull()
-                    ->defaultValue($defaultCurrency->Id)
-            );
-        }
+        $this->addColumn(
+            PaySchet::tableName(),
+            self::CURRENCY_ID_KEY,
+            $this->integer()
+                ->unsigned()
+                ->notNull()
+                ->defaultValue($defaultCurrency->Id)
+        );
 
         $gates = new PartnerBankGate();
         if ($gates->hasAttribute(self::CURRENCY_ID_KEY)) {
