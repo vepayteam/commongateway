@@ -41,7 +41,8 @@ class CardRegForm extends Model
             ['partner', 'required'],
             [['extid'], 'string', 'max' => 40],
             [['successurl', 'failurl', 'cancelurl', 'postbackurl', 'postbackurl_v2'], 'url'],
-            [['successurl', 'failurl', 'cancelurl', 'postbackurl', 'postbackurl_v2'], 'string', 'max' => 300],
+            [['successurl', 'failurl', 'cancelurl'], 'string', 'max' => 1000],
+            [['postbackurl', 'postbackurl_v2'], 'string', 'max' => 255],
             [['timeout'], 'integer', 'min' => 10, 'max' => 59],
         ];
     }

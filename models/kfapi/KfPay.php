@@ -41,7 +41,7 @@ class KfPay extends Model
             [['postbackurl', 'postbackurl_v2'], 'url', 'on' => [self::SCENARIO_FORM, self::SCENARIO_AUTO]],
             [['postbackurl', 'postbackurl_v2'], 'string', 'max' => 300, 'on' => [self::SCENARIO_FORM, self::SCENARIO_AUTO]],
             [['successurl', 'failurl', 'cancelurl'], 'url', 'on' => [self::SCENARIO_FORM]],
-            [['successurl', 'failurl', 'cancelurl'], 'string', 'max' => 300, 'on' => [self::SCENARIO_FORM]],
+            [['successurl', 'failurl', 'cancelurl'], 'string', 'max' => 1000, 'on' => [self::SCENARIO_FORM]],
             [['descript'], 'string', 'max' => 200, 'on' => [self::SCENARIO_FORM]],
             [['card'], 'integer', 'on' => self::SCENARIO_AUTO],
             [['timeout'], 'integer', 'min' => 10, 'max' => 59, 'on' => [self::SCENARIO_FORM]],
