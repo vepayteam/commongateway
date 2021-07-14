@@ -27,7 +27,7 @@ trait WalletoRequestTrait
             'expiration_month' => str_pad($createPayForm->CardMonth, 2, '0', STR_PAD_LEFT),
             'expiration_year' => '20' . $createPayForm->CardYear,
         ];
-        $request->location['ip'] = ($this->getRequestIp() == '127.0.0.1' ? '195.58.60.180' : $this->getRequestIp());
+        $request->location['ip'] = $this->getRequestIp();
         //TODO: add address, city, country, login, phone, zip
         $request->client = [
           'email' => $paySchet->UserEmail,
@@ -56,9 +56,18 @@ trait WalletoRequestTrait
      */
     protected function getRequestIp(): string
     {
-        if (isset(Yii::$app->params['remote_ip']) ?? !empty(Yii::$app->params['remote_ip'])) {
+        if (isset(Yii::$app->params['remote_ip']) && !empty(Yii::$app->params['remote_ip'])) {
             return Yii::$app->params['remote_ip'];
         }
-        return Yii::$app->request->remoteIP;
+
+        $ip = Yii::$app->request->remoteIP;
+
+        // если внутренний IP в docker для локальной машины или локалхост
+        if (strpos($ip, '172.18.') === 0 || $ip === '127.0.0.1') {
+            /* @todo Легаси: выяснить и указать в phpDoc, почему здесь такой IP  */
+            $ip = '195.58.60.180';
+        }
+
+        return $ip;
     }
 }
