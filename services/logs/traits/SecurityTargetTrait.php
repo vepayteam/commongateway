@@ -2,14 +2,13 @@
 
 namespace app\services\logs\traits;
 
+use app\services\Helpers;
 use Exception;
-use Yii;
 
 trait SecurityTargetTrait
 {
     public function export()
     {
-        $dbParams = require(Yii::getAlias('@app/config/db.php'));
         foreach ($this->messages as $message) {
             /** @var Exception|string $exception */
             $exception = $message[0];
@@ -21,16 +20,9 @@ trait SecurityTargetTrait
             }
 
             $this->dump($this->formatMessage(array_merge(
-                [$this->maskByDbAccess($log, $dbParams)],
+                [Helpers::searchAndReplaceSecurity($log)],
                 array_slice($message, 1)
             )));
         }
-    }
-
-    private function maskByDbAccess($str, $dbParams)
-    {
-        $str = str_replace($dbParams['username'], '***', $str);
-        $str = str_replace($dbParams['password'], '***', $str);
-        return $str;
     }
 }

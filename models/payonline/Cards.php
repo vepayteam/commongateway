@@ -4,6 +4,7 @@ namespace app\models\payonline;
 
 use app\models\payonline\active_query\CardActiveQuery;
 use app\services\cards\models\PanToken;
+use app\services\Helpers;
 use app\services\payment\models\Bank;
 use app\services\payment\models\PaySchet;
 use yii\db\ActiveQuery;
@@ -216,25 +217,7 @@ class Cards extends ActiveRecord
      */
     public static function CheckValidCard(string $s): bool
     {
-        // оставить только цифры
-        $s = strrev(preg_replace('/[^\d]/', '', $s));
-
-        // вычисление контрольной суммы
-        $sum = 0;
-        for ($i = 0, $j = strlen($s); $i < $j; $i++) {
-            // использовать четные цифры как есть
-            if (($i % 2) == 0) {
-                $val = $s[$i];
-            } else {
-                // удвоить нечетные цифры и вычесть 9, если они больше 9
-                $val = $s[$i] * 2;
-                if ($val > 9) $val -= 9;
-            }
-            $sum += $val;
-        }
-
-        // число корректно, если сумма равна 10
-        return (($sum % 10) == 0);
+        return Helpers::checkByLuhnAlgorithm($s);
     }
 
     /**
