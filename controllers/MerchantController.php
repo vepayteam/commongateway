@@ -10,12 +10,12 @@ use app\models\kfapi\KfCard;
 use app\models\kfapi\KfFormPay;
 use app\models\kfapi\KfPay;
 use app\models\kfapi\KfRequest;
-use app\models\payonline\CreatePay;
 use app\models\Payschets;
 use app\services\payment\models\PaySchet;
 use app\services\payment\payment_strategies\CreateFormEcomPartsStrategy;
 use app\services\payment\payment_strategies\CreateFormJkhPartsStrategy;
 use app\services\payment\payment_strategies\IPaymentStrategy;
+use app\services\PaySchetService;
 use Yii;
 use yii\db\Exception;
 use yii\mutex\FileMutex;
@@ -29,6 +29,21 @@ use yii\web\UnauthorizedHttpException;
 class MerchantController extends Controller
 {
     use CorsTrait;
+
+    /**
+     * @var PaySchetService
+     */
+    private $paySchetService;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function init()
+    {
+        parent::init();
+
+        $this->paySchetService = \Yii::$app->get(PaySchetService::class);
+    }
 
     /**
      * {@inheritDoc}
@@ -125,6 +140,7 @@ class MerchantController extends Controller
      * @return array
      * @throws BadRequestHttpException
      * @throws Exception
+     * @throws CreatePayException
      * @throws ForbiddenHttpException
      * @throws UnauthorizedHttpException
      * @todo Проверить корректность работы метода: выяснить почему здесь неиспользуемая переменная $TcbGate.
@@ -162,14 +178,13 @@ class MerchantController extends Controller
             $user = $reguser->findUser('0', $kf->IdPartner . '-' . time(), md5($kf->IdPartner . '-' . time()), $kf->IdPartner, false);
         }
         Yii::warning("/merchant/pay CreatePay id={$id}", 'merchant');
-        $pay = new CreatePay($user);
         $mutex = new FileMutex();
         if (!empty($kfPay->extid)) {
             // проверка на повторный запрос
             if (!$mutex->acquire('getPaySchetExt' . $kfPay->extid, 30)) {
                 throw new Exception('getPaySchetExt: error lock!');
             }
-            $paramsExist = $pay->getPaySchetExt($kfPay->extid, $usl, $kf->IdPartner);
+            $paramsExist = $this->paySchetService->getPaySchetExt($kfPay->extid, $usl, $kf->IdPartner);
             if ($paramsExist) {
                 if ($kfPay->amount == $paramsExist['sumin']) {
                     return ['status' => 1, 'id' => (int)$paramsExist['IdPay'], 'url' => $kfPay->GetPayForm($paramsExist['IdPay']), 'message' => ''];
@@ -179,7 +194,7 @@ class MerchantController extends Controller
             }
         }
         Yii::warning("merchant/pay payToMfo id=$id", 'merchant');
-        $params = $pay->payToMfo($user, [$kfPay->descript], $kfPay, $usl, 2, $kf->IdPartner, 0);
+        $params = $this->paySchetService->payToMfo($user, [$kfPay->descript], $kfPay, $usl, 2, $kf->IdPartner, 0);
         if (!empty($kfPay->extid)) {
             $mutex->release('getPaySchetExt' . $kfPay->extid);
         }

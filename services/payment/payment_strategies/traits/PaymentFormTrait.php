@@ -7,7 +7,6 @@ namespace app\services\payment\payment_strategies\traits;
 use app\models\api\Reguser;
 use app\models\bank\TcbGate;
 use app\models\kfapi\KfRequest;
-use app\models\payonline\CreatePay;
 use app\models\PayschetPart;
 use yii\web\User;
 
@@ -28,15 +27,8 @@ trait PaymentFormTrait
         return new TcbGate($partnerId ?? $this->request->IdPartner, $this->gate);
     }
 
-    private function createPay()
-    {
-        $user = $this->getUser();
-        $pay = new CreatePay($user);
-        return $pay;
-    }
-
     /**
-     * @param CreatePay $pay
+     * @param $params
      */
     private function createPayParts($params)
     {

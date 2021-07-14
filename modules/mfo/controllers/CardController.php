@@ -9,7 +9,6 @@ use app\models\bank\TcbGate;
 use app\models\kfapi\KfCard;
 use app\models\kfapi\KfPay;
 use app\models\mfo\MfoReq;
-use app\models\payonline\CreatePay;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\CardRegForm;

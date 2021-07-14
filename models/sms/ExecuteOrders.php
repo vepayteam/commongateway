@@ -6,7 +6,6 @@ namespace app\models\sms;
 
 use app\models\bank\TCBank;
 use app\models\crypt\CardToken;
-use app\models\payonline\CreatePay;
 use app\models\Payschets;
 use app\models\sms\tables\Sms;
 use app\models\TU;
@@ -22,7 +21,6 @@ use yii\helpers\VarDumper;
  * @property array   $errors
  * @property array[] $records
  * @property Payschets $payschets
- * @property CreatePay $pay
  */
 class ExecuteOrders implements IExecuteOrders
 {
@@ -34,15 +32,13 @@ class ExecuteOrders implements IExecuteOrders
     private $recordQuery = false;
     private $sendingOrders = false;
     private $payschets;
-    private $pay;
 
-    public function __construct(string $code, Sms $smsModel, TCBank $bank, Payschets $payschets, CreatePay $pay)
+    public function __construct(string $code, Sms $smsModel, TCBank $bank, Payschets $payschets)
     {
         $this->code = $code;
         $this->sms = $smsModel;
         $this->bankClient = $bank;
         $this->payschets = $payschets;
-        $this->pay = $pay;
         $this->records = $this->records($this->orders()); // это не логика это голые запросы.
     }
 
@@ -60,7 +56,7 @@ class ExecuteOrders implements IExecuteOrders
             'code' => $code,
             'partner_id' => Yii::$app->user->identity->getPartner()
         ])->one();
-        return new self($code, $model, new TCBank(), new Payschets(), new CreatePay());
+        return new self($code, $model, new TCBank(), new Payschets());
     }
 
     /**
@@ -72,7 +68,7 @@ class ExecuteOrders implements IExecuteOrders
      */
     public static function buildAjax(ConfirmCode $code): self
     {
-        $model = new self($code->code(), $code->sms(), new TCBank(), new Payschets(), new CreatePay());
+        $model = new self($code->code(), $code->sms(), new TCBank(), new Payschets());
         if (!$model->successful()) {
             foreach ($model->errors as $error) {
                 Stop::app($error['code'], $error['message']);
