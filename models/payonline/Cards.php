@@ -2,9 +2,9 @@
 
 namespace app\models\payonline;
 
+use app\helpers\Validators;
 use app\models\payonline\active_query\CardActiveQuery;
 use app\services\cards\models\PanToken;
-use app\services\Helpers;
 use app\services\payment\models\Bank;
 use app\services\payment\models\PaySchet;
 use yii\db\ActiveQuery;
@@ -208,7 +208,6 @@ class Cards extends ActiveRecord
         return $post;
     }
 
-
     /**
      * Проверка номера карты
      *
@@ -217,7 +216,7 @@ class Cards extends ActiveRecord
      */
     public static function CheckValidCard(string $s): bool
     {
-        return Helpers::checkByLuhnAlgorithm($s);
+        return Validators::checkByLuhnAlgorithm($s);
     }
 
     /**

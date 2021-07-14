@@ -2,7 +2,7 @@
 
 namespace app\services\logs\traits;
 
-use app\services\Helpers;
+use app\helpers\Modifiers;
 use yii\helpers\ArrayHelper;
 use yii\helpers\VarDumper;
 
@@ -19,7 +19,7 @@ trait ReqMaskTargetTrait
         $result = [];
         foreach ($context as $key => $value) {
             $dump = VarDumper::dumpAsString($value);
-            $result[] = "\${$key} = " . Helpers::searchAndReplaceSecurity($dump);
+            $result[] = "\${$key} = " . Modifiers::searchAndReplaceSecurity($dump);
         }
         return implode("\n\n", $result);
     }

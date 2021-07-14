@@ -2,7 +2,7 @@
 
 namespace app\services\logs\traits;
 
-use app\services\Helpers;
+use app\helpers\Modifiers;
 use Exception;
 
 trait SecurityTargetTrait
@@ -20,7 +20,7 @@ trait SecurityTargetTrait
             }
 
             $this->dump($this->formatMessage(array_merge(
-                [Helpers::searchAndReplaceSecurity($log)],
+                [Modifiers::searchAndReplaceSecurity($log)],
                 array_slice($message, 1)
             )));
         }
