@@ -1277,6 +1277,12 @@ class TKBankAdapter implements IBankAdapter
             'CardRefId' => $cardRefId,
         ];
 
+        Yii::warning('TKBankAdapter get cardRefId cache: paySchet.ID=' . $donePayForm->getPaySchet()->ID
+            . ' paySchet.Extid=' . $donePayForm->getPaySchet()->Extid
+            . ' cardRefId=' . $cardRefId
+        );
+        Yii::warning('TKBankAdapter get paySchet cardRefId=' . $donePayForm->getPaySchet()->CardRefId3DS);
+
         $queryData = Json::encode($confirm3DSv2Request->getAttributes());
         $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
 
