@@ -26,6 +26,7 @@ return [
             'maxFileSize' => 1024 * 50,
             'maxLogFiles' => 50,
             'rotateByCopy' => false,
+            'microtime' => true,
             'except' => [
                 'yii\web\HttpException:401',
                 'yii\web\HttpException:404',
@@ -38,6 +39,7 @@ return [
             'maxFileSize' => 1024 * 50,
             'maxLogFiles' => 50,
             'rotateByCopy' => false,
+            'microtime' => true,
             'except' => [
                 'yii\web\HttpException:401',
                 'yii\web\HttpException:404',
