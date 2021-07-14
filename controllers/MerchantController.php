@@ -12,6 +12,7 @@ use app\models\kfapi\KfPay;
 use app\models\kfapi\KfRequest;
 use app\models\payonline\CreatePay;
 use app\models\Payschets;
+use app\services\payment\models\PaySchet;
 use app\services\payment\payment_strategies\CreateFormEcomPartsStrategy;
 use app\services\payment\payment_strategies\CreateFormJkhPartsStrategy;
 use app\services\payment\payment_strategies\IPaymentStrategy;
@@ -277,12 +278,17 @@ class MerchantController extends Controller
                     }
                 }
             }
+
+            // $paySchet точно не будет null, в методе $tcBank->confirmPay() идет проверка
+            $paySchet = PaySchet::findOne(['ID' => $IdPay]);
+
             $state = [
                 'status' => (int)$confirmPayResult['status'],
                 'message' => (string)$confirmPayResult['message'],
                 'rc' => isset($confirmPayResult['rc']) ? (string)$confirmPayResult['rc'] : '',
                 'info' => $confirmPayResult['info'],
                 'card' => $card,
+                'channel' => $paySchet->bank->ChannelName,
             ];
         } else {
             $state = ['status' => 0, 'message' => 'Счет не найден'];

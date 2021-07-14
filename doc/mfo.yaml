@@ -254,7 +254,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: "#/components/schemas/StatusChannel"
         default:
           description: Error (40X,500)
           content:
@@ -1145,6 +1145,21 @@ components:
         rc:
           type: string
           description: Код ошибки банка (может отсутствовать)
+    StatusChannel:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Статус (0 - в обработке, 1 - успешно, 2 - ошибка, 3 - отменен)
+        message:
+          type: string
+          description: Сообщение ошибки
+        rc:
+          type: string
+          description: Код ошибки банка (может отсутствовать)
+        channel:
+          type: string
+          description: Банк-эквайер через который была совершена транзакция
     StatusResult:
       type: object
       properties:

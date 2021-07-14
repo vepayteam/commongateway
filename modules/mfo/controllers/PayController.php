@@ -357,12 +357,18 @@ class PayController extends Controller
         }
 
         if($paySchet->Status == PaySchet::STATUS_WAITING) {
-            return ['status' => 0, 'message' => 'В обработке' , 'rc' => ''];
+            return [
+                'status' => 0,
+                'message' => 'В обработке',
+                'rc' => '',
+                'channel' => $paySchet->bank->ChannelName,
+            ];
         } else {
             return [
                 'status' => (int)$paySchet->Status,
                 'message' => (string)$paySchet->ErrorInfo,
                 'rc' => $paySchet->RCCode,
+                'channel' => $paySchet->bank->ChannelName,
             ];
         }
     }
