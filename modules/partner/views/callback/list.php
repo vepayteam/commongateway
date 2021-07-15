@@ -3,9 +3,9 @@
 /* @var yii\web\View $this */
 /* @var $idpartner int */
 
-$this->title = "колбэки";
+$this->title = "коллбэки";
 
-$this->params['breadtitle'] = "Список колбэков";
+$this->params['breadtitle'] = "Список коллбэков";
 $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 
 use yii\web\View; ?>
@@ -14,7 +14,7 @@ use yii\web\View; ?>
         <div class="col-sm-12">
             <div class="ibox float-e-margins">
                 <div class="ibox-title">
-                    <h5>Список колбэков</h5>
+                    <h5>Список коллбэков</h5>
                 </div>
                 <div class="ibox-content">
 

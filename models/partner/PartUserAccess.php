@@ -24,7 +24,7 @@ class PartUserAccess extends \yii\db\ActiveRecord
         3 => 'Компания',
         6 => 'Счета',
         52 => 'Настройки',
-        7 => 'Колбэки'
+        7 => 'Коллбэки'
     ];
 
     //разделы для мерчантов /partner

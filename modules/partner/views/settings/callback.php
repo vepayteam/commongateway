@@ -9,9 +9,9 @@ use app\models\mfo\MfoSettings;
 use yii\bootstrap\Html;
 use yii\web\View;
 
-$this->title = "настройки колбэков";
+$this->title = "настройки коллбэков";
 
-$this->params['breadtitle'] = "Настройки: колбэки";
+$this->params['breadtitle'] = "Настройки: коллбэки";
 $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 ?>
 
@@ -19,7 +19,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
             <div class="col-sm-12">
                 <div class="ibox float-e-margins">
                     <div class="ibox-title">
-                        <h4>Настройки: колбэки</h4>
+                        <h4>Настройки: коллбэки</h4>
                         <?php if ($IsAdmin) {
                             echo $this->render('_tabs');
                         } ?>

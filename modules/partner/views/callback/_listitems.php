@@ -1,33 +1,12 @@
 <?php
 
 /* @var yii\web\View $this */
+/* @var array $reqdata */
 /* @var array $data */
 /* @var $IsAdmin bool */
 
 ?>
 
-<?php
-$query = [
-       'datefrom' => $reqdata['datefrom'],
-       'dateto'=> $reqdata['dateto'],
-       'id'=> $reqdata['id'],
-       'Extid'=> $reqdata['Extid'],
-       'httpCode'=> $reqdata['httpCode'],
-];
-if (isset($reqdata['IdPart'])) {
-    $query['IdPart'] = $reqdata['IdPart'];
-}
-if (isset($reqdata['status']) && count($reqdata['status']) > 0) {
-    foreach ($reqdata['status'] as $status) {
-        $query['status'] = $status;
-    }
-}
-if (isset($reqdata['params']) && count($reqdata['params']) > 0) {
-    foreach ($reqdata['params'] as $param){
-        $query['params'][] = $param;
-    }
-}
-?>
 <?php
 
 $queryLink = 'datefrom='. $reqdata['datefrom'];

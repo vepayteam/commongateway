@@ -70,7 +70,7 @@ class CallbackController extends Controller
     }
 
     /**
-     * Список колбэков МФО
+     * Список коллбэков МФО
      * @return string
      * @throws \yii\db\Exception
      */
