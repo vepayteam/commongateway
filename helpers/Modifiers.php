@@ -8,7 +8,7 @@ class Modifiers
 {
     public static function searchAndReplacePan(string $input): string
     {
-        if (preg_match('/[245]\d{15,17}/xu', $input, $cards)) {
+        if (preg_match('/[23456]\d{15,17}/xu', $input, $cards)) {
             foreach ($cards as $card) {
                 if (Validators::checkByLuhnAlgorithm($card)) {
                     $panToBeMasked = substr($card, 6, strlen($card) - 10);
