@@ -227,6 +227,8 @@ class PayController extends Controller
     {
         // TODO: DRY
         if (Yii::$app->request->isPost) {
+
+            Yii::warning('PayController actionCreatepaySecondStep redirect to orderdone: IdPay=' . $id);
             return $this->redirect(Url::to('/pay/orderdone/' . $id));
         }
 
@@ -320,6 +322,7 @@ class PayController extends Controller
         Yii::warning('Orderdone ' . $id . ' POST: ' . json_encode(Yii::$app->request->post()));
 
         if (!$donePayForm->validate()) {
+            Yii::warning('Orderdone validate fail ' . $id);
             throw new BadRequestHttpException();
         }
 
