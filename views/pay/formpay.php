@@ -10,7 +10,7 @@ use app\services\partners\models\PartnerOption;
 use yii\bootstrap\ActiveForm;
 use yii\bootstrap\Html;
 ?>
-<div class="middle">
+<div id="middle-wrapper" class="middle middle-background">
 <section class="container">
     <div class="row margin-top24 rowlogo">
         <div class="col-xs-12">
@@ -27,7 +27,7 @@ use yii\bootstrap\Html;
             </div>
         <?php else: ?>
             <div class="infotop">
-                Cписанная cумма, списанная с карты, при успешном списании, вернется обратно на вашу банковскую карту.
+                Для проверки банковской карты с нее будет списано 11 р, затем будет произведен возврат
             </div>
         <?php endif; ?>
     <?php else: ?>
@@ -246,6 +246,7 @@ use yii\bootstrap\Html;
 <noscript><div><img src="https://mc.yandex.ru/watch/66552382" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <?php
 $this->registerJs('payform.init();');
+$this->registerJs('payform.checkIframe();');
 if (isset($apple['IsUseApplepay']) && $apple['IsUseApplepay'] && isset($apple['Apple_MerchantID']) && !empty($apple['Apple_MerchantID'])) {
     $this->registerJs('payform.applepay("' . $apple['Apple_MerchantID'] . '", "' . ($params['SummFull'] / 100.0) . '", "' . $params['NamePartner'] . '");');
 }

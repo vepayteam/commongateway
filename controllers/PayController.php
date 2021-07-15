@@ -2,35 +2,25 @@
 
 namespace app\controllers;
 
-use app\models\antifraud\AntiFraud;
-use app\models\antifraud\tables\AFFingerPrit;
-use app\models\bank\BankMerchant;
 use app\models\bank\ApplePay;
-use app\models\bank\Banks;
+use app\models\bank\BankMerchant;
 use app\models\bank\GooglePay;
-use app\models\bank\IBank;
-use app\models\bank\MTSBank;
 use app\models\bank\SamsungPay;
-use app\models\bank\TCBank;
-use app\models\crypt\Tokenizer;
-use app\models\partner\UserLk;
-use app\models\payonline\Cards;
-use app\models\payonline\Partner;
 use app\models\payonline\PayForm;
 use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\TU;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
-use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\TKBankAdapter;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2DuplicatedException;
-use app\services\payment\exceptions\reRequestingStatusOkException;
-use app\services\payment\exceptions\reRequestingStatusException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
+use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
+use app\services\payment\exceptions\reRequestingStatusException;
+use app\services\payment\exceptions\reRequestingStatusOkException;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\CreatePaySecondStepForm;
 use app\services\payment\forms\DonePayForm;
@@ -44,9 +34,10 @@ use kartik\mpdf\Pdf;
 use Yii;
 use yii\db\Exception;
 use yii\helpers\Json;
-use yii\helpers\VarDumper;
+use yii\helpers\Url;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
+use yii\web\ErrorAction;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
@@ -54,19 +45,20 @@ class PayController extends Controller
 {
     public $layout = 'paylayout';
 
+    /**
+     * {@inheritDoc}
+     */
     public function actions()
     {
         return [
             'error' => [
-                'class' => 'yii\web\ErrorAction',
+                'class' => ErrorAction::class,
             ],
         ];
     }
 
     /**
-     * @param $action
-     * @return bool
-     * @throws BadRequestHttpException
+     * {@inheritDoc}
      */
     public function beforeAction($action)
     {
@@ -86,7 +78,7 @@ class PayController extends Controller
 
     public function actionFormData($id)
     {
-        Yii::warning("SetData open id=".$id);
+        Yii::warning("SetData open id=" . $id);
         $payschets = new Payschets();
         //данные счета для оплаты
         $params = $payschets->getSchetData($id, null);
@@ -99,7 +91,7 @@ class PayController extends Controller
         //разрешить открытие во фрейме на сайте мерчанта
         $csp = "default-src 'self' 'unsafe-inline' https://mc.yandex.ru; img-src 'self' data: https://mc.yandex.ru; connect-src 'self' https://mc.yandex.ru;";
         if (!empty($params['URLSite'])) {
-            $csp .= ' frame-src ' . $params['URLSite'].';';
+            $csp .= ' frame-src ' . $params['URLSite'] . ';';
         }
         Yii::$app->response->headers->add('Content-Security-Policy', $csp);
         return $this->render('formdata', ['params' => $params, 'formData' => $formData]);
@@ -107,54 +99,53 @@ class PayController extends Controller
 
     public function actionSaveData($id)
     {
-        Yii::warning("SaveData open id=".$id);
+        Yii::warning("SaveData open id=" . $id);
         $payschets = new Payschets();
         if (!$payschets->validateAndSaveSchetFormData($id, Yii::$app->request->post())) {
             throw new BadRequestHttpException();
         }
-        return $this->redirect(\yii\helpers\Url::to('/pay/form/'.$id));
+        return $this->redirect(Url::to('/pay/form/' . $id));
     }
 
     /**
      * Форма оплаты своя (PCI DSS)
+     *
      * @param $id
-     * @return string
+     * @return string|Response
+     * @throws Exception
      * @throws NotFoundHttpException
-     * @throws \yii\db\Exception
      */
     public function actionForm($id)
     {
-        Yii::warning("PayForm open id=".$id);
+        Yii::warning("PayForm open id={$id}");
         $payschets = new Payschets();
-        //данные счета для оплаты
+        // данные счета для оплаты
         $params = $payschets->getSchetData($id, null);
         $payform = new PayForm();
         if ($params && TU::IsInPay($params['IsCustom'])) {
-            if ($params['Status'] == 0 && $params['UserClickPay'] == 0 &&
-                $params['DateCreate'] + $params['TimeElapsed'] > time()
+            if (
+                $params['Status'] == 0
+                && $params['UserClickPay'] == 0
+                && $params['DateCreate'] + $params['TimeElapsed'] > time()
             ) {
                 $payschets->SetIpAddress($params['ID']);
 
                 //разрешить открытие во фрейме на сайте мерчанта
-                $csp = "default-src 'self' 'unsafe-inline' https://mc.yandex.ru https://pay.google.com; ".
-                    "img-src 'self' data: https://mc.yandex.ru https://google.com/pay https://google.com/pay https://www.gstatic.com; ".
-                    "connect-src 'self' https://mc.yandex.ru https://play.google.com;";
-                if (!empty($params['URLSite'])) {
-                    $csp .= ' frame-src ' . $params['URLSite'].';';
-                }
+                $csp = "default-src 'self' 'unsafe-inline' https://mc.yandex.ru https://pay.google.com; " .
+                    "img-src 'self' data: https://mc.yandex.ru https://google.com/pay https://google.com/pay https://www.gstatic.com; " .
+                    "connect-src *; frame-src *;";
                 Yii::$app->response->headers->add('Content-Security-Policy', $csp);
 
-                $ApplePay = new ApplePay();
-                $apple = $ApplePay->GetConf($params['IDPartner']);
-                $GooglePay = new GooglePay();
-                $google = $GooglePay->GetConf($params['IDPartner']);
-                $SamsungPay = new SamsungPay();
-                $samsung = $SamsungPay->GetConf($params['IDPartner']);
-
-                return $this->render('formpay', ['params' => $params, 'apple' => $apple, 'google' => $google, 'samsung' => $samsung, 'payform' => $payform]);
+                return $this->render('formpay', [
+                    'params' => $params,
+                    'apple' => (new ApplePay())->GetConf($params['IDPartner']),
+                    'google' => (new GooglePay())->GetConf($params['IDPartner']),
+                    'samsung' => (new SamsungPay())->GetConf($params['IDPartner']),
+                    'payform' => $payform,
+                ]);
 
             } else {
-                return $this->redirect(\yii\helpers\Url::to('/pay/orderok?id='.$id));
+                return $this->redirect(Url::to('/pay/orderok?id=' . $id));
             }
         } else {
             throw new NotFoundHttpException("Счет для оплаты не найден");
@@ -163,22 +154,21 @@ class PayController extends Controller
 
     /**
      * Форма оплаты своя (PCI DSS)
+     *
      * @return array|Response
      * @throws NotFoundHttpException
-     * @throws \app\services\payment\exceptions\MerchantRequestAlreadyExistsException
-     * @throws reRequestingStatusException
-     * @throws reRequestingStatusOkException
+     * @throws MerchantRequestAlreadyExistsException
      */
     public function actionCreatepay()
     {
-        if(!Yii::$app->request->isAjax) {
+        if (!Yii::$app->request->isAjax) {
             throw new NotFoundHttpException();
         }
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         $form = new CreatePayForm();
 
-        if(!$form->load(Yii::$app->request->post(), 'PayForm') || !$form->validate()) {
+        if (!$form->load(Yii::$app->request->post(), 'PayForm') || !$form->validate()) {
             return ['status' => 0, 'message' => $form->GetError()];
         }
         Yii::warning("PayForm create id=" . $form->IdPay);
@@ -201,13 +191,13 @@ class PayController extends Controller
                 'url' => Yii::$app->params['domain'] . '/pay/orderok?id=' . $form->IdPay,
             ];
         } catch (Check3DSv2DuplicatedException $e) {
-            //отменить счет
+            // отменить счет
             return [
                 'status' => 2,
                 'message' => $e->getMessage(),
                 'url' => Yii::$app->params['domain'] . '/pay/orderok?id=' . $form->IdPay,
             ];
-        }  catch (BankAdapterResponseException $e) {
+        } catch (BankAdapterResponseException $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
         } catch (Check3DSv2Exception $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
@@ -219,12 +209,12 @@ class PayController extends Controller
         $createPayResponse->termurl = $createPayResponse->GetRetUrl($paySchet->ID);
         switch ($createPayResponse->status) {
             case BaseResponse::STATUS_DONE:
-                //отправить запрос адреса формы 3ds
+                // отправить запрос адреса формы 3ds
                 Yii::warning('PayController createPayResponse data: ' . Json::encode($createPayResponse->getAttributes()));
                 return $createPayResponse->getAttributes();
             case BaseResponse::STATUS_ERROR:
-                //отменить счет
-                return $this->redirect(\yii\helpers\Url::to('/pay/orderok?id=' . $form->IdPay));
+                // отменить счет
+                return $this->redirect(Url::to('/pay/orderok?id=' . $form->IdPay));
             case BaseResponse::STATUS_CREATED:
                 $createPayResponse->termurl = $createPayResponse->getStep2Url($paySchet->ID);
                 return $createPayStrategy->getCreatePayResponse()->getAttributes();
@@ -235,6 +225,11 @@ class PayController extends Controller
 
     public function actionCreatepaySecondStep($id)
     {
+        // TODO: DRY
+        if (Yii::$app->request->isPost) {
+            return $this->redirect(Url::to('/pay/orderdone/' . $id));
+        }
+
         // TODO: refact
         $createPaySecondStepForm = new CreatePaySecondStepForm();
         $createPaySecondStepForm->IdPay = $id;
@@ -245,19 +240,26 @@ class PayController extends Controller
 
         /** @var TKBankAdapter $tkbAdapter */
         $tkbAdapter = $bankAdapterBuilder->getBankAdapter();
-        $createPayResponse = $tkbAdapter->createPayStep2($createPaySecondStepForm);
+        try {
+            $createPayResponse = $tkbAdapter->createPayStep2($createPaySecondStepForm);
+        } catch (Check3DSv2Exception $e) {
+            Yii::$app->errorHandler->logException($e);
+            return $this->redirect(Url::to('/pay/orderdone/' . $id));
+        }
+
         $paySchet->IsNeed3DSVerif = $createPayResponse->isNeed3DSVerif;
         $paySchet->save(false);
 
-        if($createPayResponse->isNeed3DSVerif) {
+        if ($createPayResponse->isNeed3DSVerif) {
             return $this->render('createpay-second-step', ['createPayResponse' => $createPayResponse]);
         } else {
-            return $this->redirect(\yii\helpers\Url::to('/pay/orderdone/' . $paySchet->ID));
+            return $this->redirect(Url::to('/pay/orderdone/' . $paySchet->ID));
         }
     }
 
     /**
      * Отказаться от оплтаты
+     *
      * @return array
      * @throws Exception
      * @throws NotFoundHttpException
@@ -268,17 +270,17 @@ class PayController extends Controller
             Yii::$app->response->format = Response::FORMAT_JSON;
 
             $payschets = new Payschets();
-            $params = $payschets->getSchetData(Yii::$app->request->post('ID'),null);
+            $params = $payschets->getSchetData(Yii::$app->request->post('ID'), null);
             if ($params && $params['Status'] == 0 && $params['UserClickPay'] == 0 && TU::IsInPay($params['IsCustom'])) {
                 Yii::$app->session->set('IdPay', $params['ID']);
-                //отменить счет
+                // отменить счет
                 $payschets->confirmPay([
                     'idpay' => $params['ID'],
                     'result_code' => 2,
                     'trx_id' => 0,
                     'ApprovalCode' => '',
                     'RRN' => '',
-                    'message' => 'Отказ от оплаты'
+                    'message' => 'Отказ от оплаты',
                 ]);
                 return ['status' => 1];
             }
@@ -290,9 +292,10 @@ class PayController extends Controller
 
     /**
      * Завершение оплаты после 3DS(PCI DSS)
+     *
      * @param $id
      * @return string
-     * @throws Exception
+     * @throws BadRequestHttpException
      * @throws NotFoundHttpException
      */
     public function actionOrderdone($id = null)
@@ -302,7 +305,7 @@ class PayController extends Controller
         $donePayForm->trans = Yii::$app->request->post('trans_id', null);
 
         // Для тестирования, добавляем возможность передать ид транзакции GET параметром
-        if(!empty($trans = Yii::$app->request->get('trans_id', null))) {
+        if (!empty($trans = Yii::$app->request->get('trans_id', null))) {
             $donePayForm->trans = $trans;
         }
 
@@ -310,25 +313,26 @@ class PayController extends Controller
         $donePayForm->paRes = Yii::$app->request->post('PaRes', null);
         $donePayForm->cres = Yii::$app->request->post('cres', null);
 
-        if(!empty($donePayForm->cres)) {
+        if (!empty($donePayForm->cres)) {
             Yii::$app->cache->set(Cache3DSv2Interface::CACHE_PREFIX_CRES, $donePayForm->cres, 60 * 60);
         }
 
-        Yii::warning('Orderdone ' . $id . 'POST: ' . json_encode(Yii::$app->request->post()));
+        Yii::warning('Orderdone ' . $id . ' POST: ' . json_encode(Yii::$app->request->post()));
 
-        if(!$donePayForm->validate()) {
+        if (!$donePayForm->validate()) {
             throw new BadRequestHttpException();
         }
 
-        Yii::warning("PayForm done id=".$id);
+        Yii::warning("PayForm done id={$id}");
         $donePayStrategy = new DonePayStrategy($donePayForm);
         $paySchet = $donePayStrategy->exec();
 
-        return $this->redirect(\yii\helpers\Url::to('/pay/orderok?id=' . $paySchet->ID));
+        return $this->redirect(Url::to('/pay/orderok?id=' . $paySchet->ID));
     }
 
     /**
      * Статус оплаты (PCI DSS)
+     *
      * @param $id
      * @return string
      * @throws Exception
@@ -336,7 +340,7 @@ class PayController extends Controller
      */
     public function actionOrderok($id)
     {
-        Yii::warning("PayForm orderok id=" . $id);
+        Yii::warning("PayForm orderok id={$id}");
 
         // Дадим время, чтобы банк закрыл платеж
         sleep(5);
@@ -344,18 +348,17 @@ class PayController extends Controller
         $okPayForm = new OkPayForm();
         $okPayForm->IdPay = $id;
 
-        if(!$okPayForm->existPaySchet()) {
+        if (!$okPayForm->existPaySchet()) {
             throw new NotFoundHttpException();
         }
 
         $okPayStrategy = new OkPayStrategy($okPayForm);
         $paySchet = $okPayStrategy->exec();
 
-        // TODO:
-        if($paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD && $paySchet->IdOrg == '3') {
-            return $this->redirect("https://cashtoyou.ru/registration/third/");
+        if ($paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD && $paySchet->IdOrg == '3') {
+            return $this->redirect('https://cashtoyou.ru/registration/third/');
         } elseif ($paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD && $paySchet->IdOrg == '8') {
-            return $this->redirect("https://oneclickmoney.ru/registration/third/");
+            return $this->redirect('https://oneclickmoney.ru/registration/third/');
         }
 
         if (in_array($paySchet->Status, [PaySchet::STATUS_DONE, PaySchet::STATUS_CANCEL])) {
@@ -365,10 +368,8 @@ class PayController extends Controller
 
         } elseif ($paySchet->Status == PaySchet::STATUS_ERROR) {
             if (!empty($paySchet->FailedUrl) && (mb_stripos($paySchet->ErrorInfo, 'Отказ от оплаты') === false || empty($paySchet->CancelUrl))) {
-                //перевод на fail
                 return $this->redirect(Payschets::RedirectUrl($paySchet->FailedUrl, $id, $paySchet->Extid));
             } elseif (!empty($params['CancelUrl'])) {
-                //перевод на cancel
                 return $this->redirect(Payschets::RedirectUrl($paySchet->CancelUrl, $id, $paySchet->Extid));
             } else {
                 return $this->render('paycancel', ['message' => $paySchet->ErrorInfo]);
@@ -381,7 +382,7 @@ class PayController extends Controller
     public function actionOrderPrint($id)
     {
         // TODO: DRY
-        Yii::warning("PayForm orderprint id=".$id);
+        Yii::warning("PayForm orderprint id=" . $id);
         $SesIdPay = Yii::$app->session->get('IdPay');
         if (!$id || $id != $SesIdPay) {
             throw new NotFoundHttpException();
@@ -403,7 +404,7 @@ class PayController extends Controller
     public function actionOrderInvoice($id)
     {
         // TODO: DRY
-        Yii::warning("PayForm orderinvoice id=".$id);
+        Yii::warning("PayForm orderinvoice id=" . $id);
         $SesIdPay = Yii::$app->session->get('IdPay');
         if (!$id || $id != $SesIdPay) {
             throw new NotFoundHttpException();
@@ -439,8 +440,11 @@ class PayController extends Controller
         if (Yii::$app->request->isAjax) {
             Yii::$app->response->format = Response::FORMAT_JSON;
 
+            $idPay = (int)Yii::$app->request->post('IdPay');
+            $validationUrl = Yii::$app->request->post('validationURL');
+
             $payschets = new Payschets();
-            $params = $payschets->getSchetData((int)Yii::$app->request->post('IdPay'),null);
+            $params = $payschets->getSchetData($idPay, null);
             if (!$params) {
                 throw new NotFoundHttpException();
             }
@@ -448,14 +452,12 @@ class PayController extends Controller
             $bank = BankMerchant::GetApplePayBank();
             $payschets->ChangeBank($params['ID'], $bank);
 
-            $validationURL = Yii::$app->request->post('validationURL');
-            if (!empty($validationURL)) {
-                $ApplePay = new ApplePay();
-                return [
-                    'status' => $ApplePay->ValidateSession($params['IDPartner'], $validationURL)
-                ];
+            if (!empty($validationUrl)) {
+                $applePay = new ApplePay();
+                return ['status' => $applePay->ValidateSession($params['IDPartner'], $validationUrl)];
+            } else {
+                return ['status' => 0];
             }
-            return ['status' => 0];
         }
         return '';
     }
@@ -465,22 +467,30 @@ class PayController extends Controller
         if (Yii::$app->request->isAjax) {
             Yii::$app->response->format = Response::FORMAT_JSON;
 
+            $idPay = (int)Yii::$app->request->post('IdPay');
+            $paymentToken = Yii::$app->request->post('paymentToken');
+
             $payschets = new Payschets();
-            $params = $payschets->getSchetData((int)Yii::$app->request->post('IdPay'),null);
-            if (!$params) {
+            $params = $payschets->getSchetData($idPay, null);
+            if ($params === null) {
                 throw new NotFoundHttpException();
             }
 
-            $paymentToken = Yii::$app->request->post('paymentToken');
             $merchBank = BankMerchant::Create($params);
-            $ApplePay = new ApplePay();
-            $res = $merchBank->PayApple($params + ['Apple_MerchantID' => $ApplePay->GetConf($params['IDPartner'])['Apple_MerchantID'], 'PaymentToken' => $paymentToken]);
+            $applePay = new ApplePay();
+            $res = $merchBank->PayApple(
+                $params +
+                [
+                    'Apple_MerchantID' => $applePay->GetConf($params['IDPartner'])['Apple_MerchantID'],
+                    'PaymentToken' => $paymentToken,
+                ]
+            );
 
             if ($res) {
                 return ['status' => 1];
+            } else {
+                return ['status' => 0, 'message' => 'Ошибка запроса'];
             }
-            return ['status' => 0, 'message' => 'Ошибка запроса'];
-            //return $this->redirect(\yii\helpers\Url::to('/pay/orderok?id='.$params['ID']));
         }
         return '';
     }
@@ -490,21 +500,23 @@ class PayController extends Controller
         if (Yii::$app->request->isAjax) {
             Yii::$app->response->format = Response::FORMAT_JSON;
 
+            $idPay = (int)Yii::$app->request->post('IdPay');
+            $paymentToken = Yii::$app->request->post('paymentToken');
+
             $payschets = new Payschets();
-            $params = $payschets->getSchetData((int)Yii::$app->request->post('IdPay'),null);
+            $params = $payschets->getSchetData($idPay, null);
             if (!$params) {
                 throw new NotFoundHttpException();
             }
 
-            $paymentToken = Yii::$app->request->post('paymentToken');
             $merchBank = BankMerchant::Create($params);
             $res = $merchBank->PayGoogle($params + ['PaymentToken' => $paymentToken]);
 
             if ($res) {
                 return ['status' => 1];
+            } else {
+                return ['status' => 0, 'message' => 'Ошибка запроса'];
             }
-            return ['status' => 0, 'message' => 'Ошибка запроса'];
-            //return $this->redirect(\yii\helpers\Url::to('/pay/orderok?id='.$params['ID']));
         }
         return '';
     }
@@ -514,40 +526,25 @@ class PayController extends Controller
         if (Yii::$app->request->isAjax) {
             Yii::$app->response->format = Response::FORMAT_JSON;
 
+            $idPay = (int)Yii::$app->request->post('IdPay');
+            $paymentToken = Yii::$app->request->post('paymentToken');
+
             $payschets = new Payschets();
-            $params = $payschets->getSchetData((int)Yii::$app->request->post('IdPay'),null);
+            $params = $payschets->getSchetData($idPay, null);
             if (!$params) {
                 throw new NotFoundHttpException();
             }
 
-            $paymentToken = Yii::$app->request->post('paymentToken');
             $merchBank = BankMerchant::Create($params);
             $res = $merchBank->PaySamsung($params + ['PaymentToken' => $paymentToken]);
 
             if ($res) {
                 return ['status' => 1];
+            } else {
+                return ['status' => 0, 'message' => 'Ошибка запроса'];
             }
-            return ['status' => 0, 'message' => 'Ошибка запроса'];
-            //return $this->redirect(\yii\helpers\Url::to('/pay/orderok?id='.$params['ID']));
         }
         return '';
     }
 
-//    public function actionRegisterTracking(){
-//        Yii::$app->response->format = Response::FORMAT_JSON;
-//        if ()
-//        new FingerPrint();
-//    }
-
-    private function antifraud_validated(PayForm $form, $user_hash): bool
-    {
-        /**@var AFFingerPrit $finger_print */
-        try{
-            $antifraud = new AntiFraud($form->IdPay);
-            $validated = $antifraud->validate($user_hash, $form->CardNumber);
-            return $validated;
-        } catch (\Throwable $e) {
-            return true;
-        }
-    }
 }

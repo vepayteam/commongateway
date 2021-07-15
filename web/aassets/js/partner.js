@@ -1806,6 +1806,7 @@
                 $form.find('input[name=AdvParam_2]').val(gate.AdvParam_2);
                 $form.find('input[name=AdvParam_3]').val(gate.AdvParam_3);
                 $form.find('input[name=AdvParam_4]').val(gate.AdvParam_4);
+                $form.find('select[name=CurrencyId]').val(gate.CurrencyId);
 
                 $('#partner-edit__bank-gates-edit-modal').modal('show');
                 return false;

@@ -9,6 +9,7 @@ use app\services\notifications\models\NotificationPay;
 use app\services\payment\banks\Banks;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\models\active_query\PaySchetQuery;
+use Carbon\Carbon;
 use Yii;
 
 /**
@@ -19,6 +20,7 @@ use Yii;
  * @property int $IdKard id kard, esli privaizanoi kartoi oplata
  * @property int $IdUsluga id usluga
  * @property int $IdShablon id shablon
+ * @property int $CurrencyId id currency
  * @property int $IdOrder id order_pay
  * @property int $IdOrg custom id partner
  * @property string|null $Extid custom partner vneshnii id
@@ -50,6 +52,10 @@ use Yii;
  * @property string|null $IPAddressUser ip adres platelshika
  * @property string|null $CountryUser strana platelshika
  * @property string|null $CityUser gorod platelshika
+ * @property string|null $AddressUser Adress platelshika
+ * @property string|null $ZipUser Zip kod platelshika
+ * @property string|null $LoginUser Login platelshika
+ * @property string|null $PhoneUser Telefon platelshika
  * @property int $UserClickPay 0 - ne klikal oplatu 1 - klikal oplatu
  * @property int $CountSendOK kollichestvo poslanyh zaprosov v magazin ob uspeshnoi oplate
  * @property int $SendKvitMail otpravit kvitanciuu ob oplate na pochtu
@@ -139,7 +145,7 @@ class PaySchet extends \yii\db\ActiveRecord
             [['IdUser', 'IdKard', 'IdUsluga', 'IdShablon', 'IdOrder', 'IdOrg', 'IdGroupOplat', 'Period', 'IdQrProv',
                 'SummPay', 'ComissSumm', 'MerchVozn', 'BankComis', 'Status', 'DateCreate', 'DateOplat', 'DateLastUpdate',
                 'PayType', 'TimeElapsed', 'ExtKeyAcces', 'CardExp', 'UserClickPay', 'CountSendOK', 'SendKvitMail',
-                'IdAgent', 'TypeWidget', 'Bank', 'IsAutoPay', 'AutoPayIdGate', 'sms_accept'
+                'IdAgent', 'TypeWidget', 'Bank', 'IsAutoPay', 'AutoPayIdGate', 'sms_accept', 'CurrencyId'
                 ],
                 'integer'
             ],
@@ -170,6 +176,7 @@ class PaySchet extends \yii\db\ActiveRecord
             'IdShablon' => 'Id Shablon',
             'IdOrder' => 'Id Order',
             'IdOrg' => 'Id Org',
+            'CurrencyId' => 'Id Currency',
             'Extid' => 'Extid',
             'IdGroupOplat' => 'Id Group Oplat',
             'Period' => 'Period',
@@ -199,6 +206,10 @@ class PaySchet extends \yii\db\ActiveRecord
             'IPAddressUser' => 'Ip Address User',
             'CountryUser' => 'Country User',
             'CityUser' => 'City User',
+            'AddressUser' => 'Address User',
+            'LoginUser' => 'Login User',
+            'PhoneUser' => 'Phone User',
+            'ZipUser' => 'Zip code User',
             'UserClickPay' => 'User Click Pay',
             'CountSendOK' => 'Count Send Ok',
             'SendKvitMail' => 'Send Kvit Mail',
@@ -414,5 +425,16 @@ class PaySchet extends \yii\db\ActiveRecord
     public function getFormatSummPay()
     {
         return sprintf("%02.2f", $this->SummPay / 100.0);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isNeedContinueRefreshStatus()
+    {
+        $now = Carbon::now();
+        $dateCreate = Carbon::createFromTimestamp($this->DateCreate);
+
+        return $now < $dateCreate->addDays(3);
     }
 }

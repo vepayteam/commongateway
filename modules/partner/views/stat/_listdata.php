@@ -27,11 +27,11 @@ use app\services\payment\models\PaySchet;
         <th>Услуга</th>
         <th>Реквизиты</th>
         <th class="text-right">Сумма</th>
-        <th class="text-right">Комиссия</th>
+        <th class="text-right">Комиссия с клиента</th>
         <th class="text-right">К оплате</th>
         <?php if ($IsAdmin) : ?>
             <th class="text-right">
-                Комисия банка
+                Комиссия банка
             </th>
             <th class="text-right">
                 Возн. Vepay
@@ -48,7 +48,7 @@ use app\services\payment\models\PaySchet;
         <th>Держатель карты</th>
         <th>RRN</th>
         <th>Хэш от номера карты</th>
-        <th>Наименование банка-эквайера</th>
+        <th>Провайдер</th>
         <th>Действия</th>
     </tr>
     </thead>
@@ -102,7 +102,7 @@ use app\services\payment\models\PaySchet;
                 <td><?= $row['BankName'] ?></td>
                 <td>
                     <input class='btn btn-white btn-xs' data-action="logpay" data-id='<?= $row['ID'] ?>' type='button' value='Лог'>
-                    <?php if ($row['Status'] == 1 && TU::IsInPay($row['IsCustom'])): ?>
+                    <?php if ($row['Status'] == 1 && (TU::IsInPay($row['IsCustom']) || TU::IsInAutoAll($row['IsCustom']))): ?>
                         <input class='btn btn-white btn-xs' data-action="cancelpay" data-id='<?= $row['ID'] ?>' type='button' value='Отменить'>
                     <?php endif; ?>
                         <input class="btn btn-white btn-xs excerpt" data-id="<?=$row['ID']?>" type="button" value="Выписка">
@@ -131,7 +131,8 @@ use app\services\payment\models\PaySchet;
             $exportLink = 'datefrom='. $reqdata['datefrom'];
             $exportLink .= '&dateto=' . $reqdata['dateto'];
             $exportLink .= '&id=' . $reqdata['id'];
-            $exportLink .= '&summpay=' . $reqdata['summpay'];
+            $exportLink .= '&summpayFrom=' . $reqdata['summpayFrom'];
+            $exportLink .= '&summpayTo=' . $reqdata['summpayTo'];
             $exportLink .= '&Extid=' . $reqdata['Extid'];
             if (isset($reqdata['IdPart'])) {
                 $exportLink .= '&IdPart=' . $reqdata['IdPart'];
@@ -147,8 +148,8 @@ use app\services\payment\models\PaySchet;
                 }
             }
             if (isset($reqdata['params']) && count($reqdata['params']) > 0) {
-                foreach ($reqdata['params'] as $param){
-                    $exportLink .= '&params[]='.$param;
+                foreach ($reqdata['params'] as $k => $param) {
+                    $exportLink .= '&params['.$k.']='.$param;
                 }
             }
             ?>

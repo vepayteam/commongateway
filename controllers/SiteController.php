@@ -2,22 +2,18 @@
 
 namespace app\controllers;
 
-use app\models\api\Reguser;
-use app\models\bank\TCBank;
-use app\models\kfapi\KfCard;
-use app\models\payonline\CreatePay;
 use app\models\payonline\Partner;
-use app\models\queue\JobPriorityInterface;
 use app\models\queue\SendMailJob;
 use app\models\site\CheckPay;
 use app\models\site\ContactForm;
 use app\models\site\PartnerReg;
 use app\models\telegram\Telegram;
-use Carbon\Carbon;
+use app\services\PartnerService;
+use Throwable;
 use Yii;
+use yii\base\Model;
 use yii\bootstrap\ActiveForm;
-use yii\db\Exception;
-use yii\helpers\Url;
+use yii\db\StaleObjectException;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -25,7 +21,26 @@ use yii\web\Response;
 
 class SiteController extends Controller
 {
-    public function behaviors()
+
+    /**
+     * @var PartnerService
+     */
+    private $partnerService;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function init()
+    {
+        parent::init();
+
+        $this->partnerService = \Yii::$app->get(PartnerService::class);
+    }
+
+    /**
+     * @return array
+     */
+    public function behaviors(): array
     {
         if (!YII_ENV_DEV) {
             $behaviors = parent::behaviors();
@@ -40,7 +55,10 @@ class SiteController extends Controller
         }
     }
 
-    public function actions()
+    /**
+     * @return array
+     */
+    public function actions(): array
     {
         return [
             'error' => [
@@ -52,13 +70,9 @@ class SiteController extends Controller
     /**
      * @return string
      */
-    public function actionIndex()
+    public function actionIndex(): string
     {
-        $model = new ContactForm();
-        return $this->render('index', [
-            'config' => Yii::$app->params['info'],
-            'model' => $model
-        ]);
+        return $this->render('index');
     }
 
     /**
@@ -66,42 +80,42 @@ class SiteController extends Controller
      *
      * @return string
      * @throws BadRequestHttpException
+     * @throws Throwable
+     * @throws StaleObjectException
      */
-    public function actionReg()
+    public function actionReg(): string
     {
         $email = Yii::$app->request->get('email');
-        $urstate = Yii::$app->request->get('ur', 0);
 
-        $PartnerReg = new PartnerReg();
-        if ($PartnerReg->load([
-            'Email' => $email,
-            'EmailCode' => hash('sha1', random_bytes(40)),
-            'UrState' => $urstate,
-            'DateReg' => time(),
-            'State' => 0,
-            'IdPay' => 0
-        ], '') && $PartnerReg->validate()) {
-
-            $old = PartnerReg::findAll(['Email' => $email, 'State' => 0]);
-            foreach ($old as $pregold) {
-                $pregold->delete();
-            }
-
-            $PartnerReg->save(false);
-
-            $subject = "Регистрация с системе Vepay";
-            $content = $this->renderPartial('@app/mail/checkmail', ['PartnerReg' => $PartnerReg]);
-
-            Yii::$app->queue->push(new SendMailJob([
-                'email' => $PartnerReg->Email,
-                'subject' => $subject,
-                'content' => $content
-            ]));
-
-            return $this->render('message', ['message' => 'На указанную электронну почту отправлено регистрационное письмо. Для завершения регистрации перейдите по ссылке.']);
+        $partnerReg = new PartnerReg();
+        if (!$partnerReg->load([
+                'UrState' => Yii::$app->request->get('ur', 0),
+                'Email' => $email,
+                'EmailCode' => hash('sha1', random_bytes(40)),
+                'DateReg' => time(),
+                'State' => 0,
+                'IdPay' => 0
+            ], '') || !$partnerReg->validate()) {
+            throw new BadRequestHttpException();
         }
-        throw new BadRequestHttpException();
 
+        $oldPartnerRegs = PartnerReg::findAll(['Email' => $email, 'State' => 0]);
+        foreach ($oldPartnerRegs as $oldPartnerReg) {
+            $oldPartnerReg->delete();
+        }
+
+        $partnerReg->save(false);
+
+        $subject = "Регистрация с системе Vepay";
+        $content = $this->renderPartial('@app/mail/checkmail', ['PartnerReg' => $partnerReg]);
+
+        Yii::$app->queue->push(new SendMailJob([
+            'email' => $partnerReg->Email,
+            'subject' => $subject,
+            'content' => $content
+        ]));
+
+        return $this->render('message', ['message' => 'На указанную электронну почту отправлено регистрационное письмо. Для завершения регистрации перейдите по ссылке.']);
     }
 
     /**
@@ -110,95 +124,63 @@ class SiteController extends Controller
      * @return string
      * @throws NotFoundHttpException
      */
-    public function actionRegister()
+    public function actionRegister(): string
     {
-        $id = (int)Yii::$app->request->get('id', 0);
+        $id = intval(Yii::$app->request->get('id', 0));
         $code = Yii::$app->request->get('code');
 
-        if ($id && !empty($code)) {
-            $PartnerReg = PartnerReg::findOne(['ID' => $id, 'State' => 0]);
-            if ($PartnerReg && $PartnerReg->EmailCode == $code) {
-
-                $Partner = new Partner();
-                $Partner->setAttribute('Email', $PartnerReg->Email);
-
-                return $this->render('register', [
-                    'PartnerReg' => $PartnerReg,
-                    'Partner' => $Partner
-                ]);
-            }
+        if (!$id || empty($code)) {
+            throw new NotFoundHttpException();
         }
 
-        throw new NotFoundHttpException();
+        $partnerReg = PartnerReg::findOne(['ID' => $id, 'State' => 0]);
+        if (!$partnerReg || $partnerReg->EmailCode != $code) {
+            throw new NotFoundHttpException();
+        }
+
+        $partner = new Partner();
+        $partner->setAttribute('Email', $partnerReg->Email);
+
+        return $this->render('register', [
+            'PartnerReg' => $partnerReg,
+            'Partner' => $partner
+        ]);
     }
 
     /**
      * Самостоятельная регистрация - сохранить данные
      *
      * @return array
-     * @throws Exception
      * @throws NotFoundHttpException
      */
-    public function actionRegisterAdd()
+    public function actionRegisterAdd(): array
     {
-        $id = (int)Yii::$app->request->post('regid', 0);
-        $PartnerReg = PartnerReg::findOne(['ID' => $id, 'State' => 0]);
+        $id = intval(Yii::$app->request->post('regid', 0));
+        $partnerReg = PartnerReg::findOne(['ID' => $id, 'State' => 0]);
 
-        if (Yii::$app->request->isAjax && !Yii::$app->request->isPjax && $PartnerReg) {
-
-            Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-
-            $partner = new Partner();
-            $partner->scenario = Partner::SCENARIO_SELFREG;
-            $partner->load(Yii::$app->request->post(), 'Partner');
-            $partner->setAttribute('Email', $PartnerReg->Email);
-            if (!$partner->validate()) {
-                return ['status' => 0, 'message' => $partner->GetError()];
-            }
-
-            $partner->save(false);
-
-            $PartnerReg->State = 1;
-            $PartnerReg->save(false);
-
-            if ($partner->IsMfo) {
-                //создание услуг МФО при добавлении
-                $partner->CreateUslugMfo();
-            } else {
-                //создание услуги магазину при добавлении
-                $partner->CreateUslug();
-            }
-
-            $url = '';
-            /*if ($partner->UrState == 2) {
-                //привязать карту через тестовый платеж для физлица
-                $kfCard = new KfCard();
-                $kfCard->scenario = KfCard::SCENARIO_REG;
-                $reguser = new Reguser();
-                $user = $reguser->findUser('0', $partner->ID.'-'.time(), md5($partner->ID.'-'.time()), $partner->ID, false);
-                if ($user) {
-                    $pay = new CreatePay($user);
-                    $data = $pay->payActivateCard(0, 3, TCBank::$bank, $partner->ID); //Provparams
-                    $url = $kfCard->GetRegForm($data['IdPay']);
-                }
-            }*/
-
-            Yii::$app->queue->push(new SendMailJob([
-                'email' => 'info@vepay.online',
-                'subject' => "Зарегистрирован контрагент",
-                'content' => "Зарегистрирован контрагент " . $partner->Name
-            ]));
-
-            return ['status' => 1, 'id' => $partner->ID, 'url' => $url];
+        if (!Yii::$app->request->isAjax || Yii::$app->request->isPjax || !$partnerReg) {
+            throw new NotFoundHttpException();
         }
 
-        throw new NotFoundHttpException();
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $partner = new Partner();
+        $partner->scenario = Partner::SCENARIO_SELFREG;
+        $partner->load(Yii::$app->request->post(), 'Partner');
+        $partner->setAttribute('Email', $partnerReg->Email);
+        if (!$partner->validate()) {
+            return ['status' => 0, 'message' => $this->getError()];
+        }
+
+        $this->partnerService->register($partner, $partnerReg);
+
+        return ['status' => 1, 'id' => $partner->ID, 'url' => ''];
     }
 
     /**
      * @return string
      */
-    public function actionOferta()
+    public function actionOferta(): string
     {
         return $this->renderPartial('ofert');
     }
@@ -206,79 +188,81 @@ class SiteController extends Controller
     /**
      * Форма контактов
      * @param string $op
-     * @param string $form_type
-     * @return string|\yii\web\Response
+     * @param string $formType
+     * @return string|Response
      */
-    public function actionFormcont($op = '', $form_type = '')
+    public function actionFormcont(string $op = '', string $formType = '')
     {
-        if (Yii::$app->request->isAjax && preg_match('/[\w_]/', $form_type) && preg_match('/[\w_]/', $op)) {
-
-            $model = new ContactForm();
-            $form = $form_type == 'feedback' ? 'feedbackmodal' : 'contactmodal';
-            return $this->renderAjax('contact/' . $form, [
-                'model' => $model,
-                'formType' => $form_type
-            ]);
-
-        } else {
+        if (!Yii::$app->request->isAjax) {
             return $this->redirect(['index']);
         }
 
+        $model = new ContactForm();
+        $form = $formType == 'feedback' ? 'feedbackmodal' : 'contactmodal';
+        return $this->renderAjax('contact/' . $form, [
+            'model' => $model,
+            'formType' => $formType
+        ]);
     }
 
-    public function actionFeed()
+    /**
+     * @return array
+     */
+    public function actionFeed(): array
     {
-        $Telegram = new Telegram();
         Yii::$app->response->format = Response::FORMAT_JSON;
-        $ret = $Telegram->ReadMesages();
-        if ($ret) {
-            return ['status' => 1, 'data' => $ret];
+
+        $telegram = new Telegram();
+        $tgMessages = $telegram->ReadMesages();
+        if ($tgMessages) {
+            return ['status' => 1, 'data' => $tgMessages];
         }
+
         return ['status' => 0];
     }
 
     /**
      * Отправка сообщения c сайта (AJAX)
-     * @return array|\yii\web\Response
+     * @return array|Response
      */
     public function actionContactsend()
     {
-        if (Yii::$app->request->isAjax) {
-            Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-            $model = new ContactForm();
-            $formName = "ContactForm";
-            if (isset(Yii::$app->request->post()['ContactFormInline'])) {
-                $formName = "ContactFormInline";
-            }
-
-            if (isset(Yii::$app->request->post()['ContactForm']['subject']) &&
-                isset(Yii::$app->request->post()['ContactForm']['subject']) == "checkpay") {
-
-                $checkPay = new CheckPay();
-                $message = $checkPay->check(Yii::$app->request->post()['ContactForm']);
-
-                return ['status' => 1, 'head' => $message['head'], 'message' => $message['mesg']];
-
-            } else {
-
-                if ($model->load(Yii::$app->request->post(), $formName) &&
-                    $model->contact(Yii::$app->params['infoEmail'])) {
-                    return ['status' => 1, 'head' => 'Ваше обращение принято.', 'message' => 'В ближайшее время мы вам направим ответ.'];
-                } else {
-                    $err = ActiveForm::validate($model);
-                    if (isset(array_values($err)[0][0])) {
-                        $err = array_values($err)[0][0];
-                    }
-                    return ['status' => 0, 'message' => 'Ошибка: ' . $err];
-                }
-            }
+        if (!Yii::$app->request->isAjax) {
+            return $this->redirect(['index']);
         }
-        return $this->redirect(['index']);
+
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $contactForm = new ContactForm();
+        $formName = 'ContactForm';
+
+        if (Yii::$app->request->post('ContactFormInline')) {
+            $formName = 'ContactFormInline';
+        }
+
+        $formParams = Yii::$app->request->post('ContactForm');
+        if ($formParams['subject'] && $formParams['subject'] === 'checkpay') {
+            $checkPay = new CheckPay();
+            $message = $checkPay->check($formParams);
+
+            return ['status' => 1, 'head' => $message['head'], 'message' => $message['mesg']];
+        }
+
+        if ($contactForm->load(Yii::$app->request->post(), $formName) && $contactForm->contact(Yii::$app->params['infoEmail'])) {
+            return ['status' => 1, 'head' => 'Ваше обращение принято.', 'message' => 'В ближайшее время мы вам направим ответ.'];
+        } else {
+            return ['status' => 0, 'message' => 'Ошибка: ' . $contactForm->GetError()];
+        }
     }
 
-    public function actionTest()
+    /**
+     * @param Model $model
+     * @return mixed|null
+     * @todo Поменять способ выведения ошибок.
+     */
+    private function getError(Model $model)
     {
-        print_r(Carbon::now()->addDays(-1)->timestamp);
+        $firstErrors = $model->getFirstErrors();
+        return array_pop($firstErrors);
     }
-
 }

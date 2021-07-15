@@ -8,13 +8,13 @@ use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\Options;
 use app\models\payonline\BalancePartner;
-use app\models\payonline\CreatePay;
 use app\models\payonline\Partner;
 use app\models\payonline\Provparams;
 use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\SendEmail;
 use app\models\TU;
+use app\services\PaySchetService;
 use Yii;
 
 class VyvodSumPay
@@ -24,9 +24,13 @@ class VyvodSumPay
      * (в рабочие дни, и в пн за пт+сб+вс)
      *
      * @throws \yii\db\Exception
+     * @throws \app\services\payment\exceptions\CreatePayException
      */
     public function execute()
     {
+        /** @var PaySchetService $paySchetService */
+        $paySchetService = \Yii::$app->get(PaySchetService::class);
+
         $PBKPOrg = 1;
 
         if ($this->IsDisabledDay()) {
@@ -174,14 +178,13 @@ class VyvodSumPay
                         continue;
                     }
 
-                    $pay = new CreatePay();
                     $Provparams = new Provparams;
                     $Provparams->prov = $usl;
                     $Provparams->param = [$recviz['RS'], $recviz['BIK'], $recviz['NamePoluchat'], $recviz['INNPolushat'], $recviz['KPPPoluchat'], $descript];
                     $Provparams->summ = $sumPays;
                     $Provparams->Usluga = Uslugatovar::findOne(['ID' => $usl]);
 
-                    $idpay = $pay->createPay($Provparams, 0, 3, TCBank::$bank, $PBKPOrg, 'reestr' . $id, 0);
+                    $idpay = $paySchetService->createPay($Provparams, 0, 3, TCBank::$bank, $PBKPOrg, 'reestr' . $id, 0);
 
                     if (!$idpay) {
                         $tr->rollBack();

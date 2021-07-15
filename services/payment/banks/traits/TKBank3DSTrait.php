@@ -157,6 +157,11 @@ trait TKBank3DSTrait
                 $check3DSVersionResponse->cardRefId,
                 3600
             );
+            Yii::warning('TKBank3DSTrait set cardRefId cache: paySchet.ID=' . $paySchet->ID
+                . ' paySchet.Extid=' . $paySchet->Extid
+                . ' cardRefId=' . $check3DSVersionResponse->cardRefId
+            );
+            Yii::warning('TKBank3DSTrait get paySchet cardRefId=' . $paySchet->CardRefId3DS);
 
             if(array_key_exists('ChallengeData', $ans['xml'])) {
                 // если нужна авторизация 3ds через форму
@@ -165,10 +170,13 @@ trait TKBank3DSTrait
             } elseif (array_key_exists('AuthenticationData', $ans['xml'])) {
 
                 // Поддерживается только определенные ECI
-                if(!in_array(
-                    (int)$ans['xml']['AuthenticationData']['Eci'],
-                    Issuer3DSVersionInterface::CURRENT_ECI_ARRAY
-                )) {
+                if(
+                    $ans['xml']['AuthenticationData']['Status'] == 'NOK' ||
+                    !in_array(
+                        (int)$ans['xml']['AuthenticationData']['Eci'],
+                        Issuer3DSVersionInterface::CURRENT_ECI_ARRAY
+                    )
+                ) {
                     throw new Check3DSv2Exception('Карта не поддерживается, обратитесь в банк');
                 }
 
