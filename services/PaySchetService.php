@@ -242,7 +242,7 @@ class PaySchetService extends Component
         $provparams->prov = $usl;
         $provparams->param = $params;
         $provparams->summ = round(floatval($kfOut->amount) * 100.0);
-        $provparams->Usluga = Uslugatovar::findOne(['ID' => $this->Provparams->prov]);
+        $provparams->Usluga = Uslugatovar::findOne(['ID' => $provparams->prov]);
 
         $paySchet = $this->addPayschet(
             $user,
