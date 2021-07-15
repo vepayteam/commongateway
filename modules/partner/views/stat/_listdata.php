@@ -29,6 +29,7 @@ use app\services\payment\models\PaySchet;
         <th class="text-right">Сумма</th>
         <th class="text-right">Комиссия с клиента</th>
         <th class="text-right">К оплате</th>
+        <th class="text-right">Валюта </th>
         <?php if ($IsAdmin) : ?>
             <th class="text-right">
                 Комиссия банка
@@ -68,6 +69,7 @@ use app\services\payment\models\PaySchet;
                 <td class="text-right"><?= number_format($row['SummPay'] / 100.0,2,'.','&nbsp;') ?></td>
                 <td class="text-right"><?= number_format($row['ComissSumm'] / 100.0,2,'.','&nbsp;') ?></td>
                 <td class="text-right"><?= number_format(($row['SummPay']+$row['ComissSumm']) / 100.0,2,'.','&nbsp;') ?></td>
+                <td class="text-right"><?= $row['Currency'] ?></td>
                 <?php if ($IsAdmin) : ?>
                     <td class="text-right">
                         <?= number_format($row['BankComis'] / 100.0,2,'.','&nbsp;') ?>

@@ -1,4 +1,5 @@
 <?php
+
 /* @var \yii\web\View $this */
 /* @var array $params */
 /* @var array $apple */
@@ -7,6 +8,8 @@
 /* @var \app\models\payonline\PayForm $payform */
 
 use app\services\partners\models\PartnerOption;
+use app\services\payment\helpers\PaymentHelper;
+use app\services\payment\models\Currency;
 use yii\bootstrap\ActiveForm;
 use yii\bootstrap\Html;
 ?>
@@ -40,8 +43,20 @@ use yii\bootstrap\Html;
     <?php if ($params['IdUsluga'] != 1) : ?>
         <div class="row nopadding">
             <div class="col-xs-12">
-                <div class="info"><span>Сумма</span> <span class="pull-right blacksumm"><?=number_format($params['SummPay']/100.0, 2, ',', '')?> ₽</span></div>
-                <div class="info"><span>Комиссия</span> <span class="pull-right blacksumm"><?=number_format($params['ComissSumm']/100.0, 2, ',', '')?> ₽</span></div>
+                <div class="info">
+                    <span>Сумма </span>
+                    <span class="pull-right blacksumm">
+                        <?= PaymentHelper::formatSum($params['amountPay']) ?>
+                        <?= Currency::SYMBOLS[$params['currency']] ?>
+                    </span>
+                </div>
+                <div class="info">
+                    <span>Комиссия </span>
+                    <span class="pull-right blacksumm">
+                        <?= PaymentHelper::formatSum($params['amountCommission']) ?>
+                        <?= Currency::SYMBOLS[$params['currency']] ?>
+                    </span>
+                </div>
             </div>
         </div>
     <?php endif; ?>
