@@ -24,6 +24,7 @@ use app\services\payment\forms\CreatePayForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PayCard;
 use app\services\payment\models\PaySchet;
+use app\services\payment\models\repositories\CurrencyRepository;
 use app\services\payment\models\UslugatovarType;
 use app\services\payment\PaymentService;
 use Yii;
@@ -35,37 +36,36 @@ class CreatePayStrategy
 
     /** @var CreatePayForm */
     protected $createPayForm;
-
     /** @var PaymentService */
     protected $paymentService;
     /** @var CreatePayResponse  */
     protected $createPayResponse;
+    /** @var CurrencyRepository */
+    private $currencyRepository;
 
     public function __construct(CreatePayForm $payForm)
     {
         $this->createPayForm = $payForm;
         $this->paymentService = Yii::$container->get('PaymentService');
+        $this->currencyRepository = new CurrencyRepository();
     }
 
     /**
      * @return PaySchet
-     * @throws CreatePayException
-     * @throws Exception
-     * @throws GateException
      * @throws BankAdapterResponseException
      * @throws Check3DSv2Exception
-     * @throws MerchantRequestAlreadyExistsException
+     * @throws CreatePayException
+     * @throws GateException
      */
-    public function exec()
+    public function exec(): PaySchet
     {
         $paySchet = $this->createPayForm->getPaySchet();
 
         if ($paySchet->isOld()) {
             throw new CreatePayException('Время для оплаты истекло');
         }
-
         $bankAdapterBuilder = new BankAdapterBuilder();
-        $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar);
+        $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar, $paySchet->currency);
         $this->setCardPay($paySchet, $bankAdapterBuilder->getPartnerBankGate());
 
         try {
@@ -73,7 +73,8 @@ class CreatePayStrategy
         } catch (MerchantRequestAlreadyExistsException $e) {
             $bankAdapterBuilder->getBankAdapter()->reRequestingStatus($paySchet);
         }
-        if(in_array($this->createPayResponse->status, [BaseResponse::STATUS_CANCEL, BaseResponse::STATUS_ERROR])) {
+
+        if (in_array($this->createPayResponse->status, [BaseResponse::STATUS_CANCEL, BaseResponse::STATUS_ERROR])) {
             $this->paymentService->cancelPay($paySchet, $this->createPayResponse->message);
             return $paySchet;
         }
@@ -84,6 +85,7 @@ class CreatePayStrategy
 
     /**
      * @param PaySchet $paySchet
+     * @param PartnerBankGate $partnerBankGate
      */
     protected function updatePaySchet(PaySchet $paySchet, PartnerBankGate $partnerBankGate)
     {
@@ -123,6 +125,9 @@ class CreatePayStrategy
     }
 
 
+    /**
+     * @throws CreatePayException
+     */
     protected function setCardPay(PaySchet $paySchet, PartnerBankGate $partnerBankGate)
     {
         $cartToken = new CardToken();
@@ -131,7 +136,7 @@ class CreatePayStrategy
             $this->createPayForm->CardMonth.$this->createPayForm->CardYear
         );
 
-        if($paySchet->IdUser) {
+        if ($paySchet->IdUser) {
             $user = User::findOne(['ID' => $paySchet->IdUser]);
         } else {
             $reguser = new Reguser();
@@ -154,7 +159,7 @@ class CreatePayStrategy
         $paySchet->CardExp = $this->createPayForm->CardMonth . $this->createPayForm->CardYear;
         $paySchet->IdShablon = $token;
 
-        if(!$paySchet->save()) {
+        if (!$paySchet->save()) {
             throw new CreatePayException('Ошибка валидации данных счета');
         }
     }
@@ -191,7 +196,7 @@ class CreatePayStrategy
     /**
      * @return CreatePayResponse
      */
-    public function getCreatePayResponse()
+    public function getCreatePayResponse(): CreatePayResponse
     {
         return $this->createPayResponse;
     }
