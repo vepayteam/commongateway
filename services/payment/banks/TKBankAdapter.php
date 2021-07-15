@@ -1252,6 +1252,9 @@ class TKBankAdapter implements IBankAdapter
         $paySchet = $donePayForm->getPaySchet();
 
         if($paySchet->IsNeed3DSVerif) {
+            Yii::warning('TKBankAdapter confirmBy3DSv2: ID=' . $paySchet->ID
+                . ' IsNeed3DSVerif=' . $paySchet->IsNeed3DSVerif
+            );
             $this->validateBy3DSv2($donePayForm);
         }
         return $this->finishBy3DSv2($donePayForm);
@@ -1281,7 +1284,9 @@ class TKBankAdapter implements IBankAdapter
             . ' paySchet.Extid=' . $donePayForm->getPaySchet()->Extid
             . ' cardRefId=' . $cardRefId
         );
-        Yii::warning('TKBankAdapter get paySchet cardRefId=' . $donePayForm->getPaySchet()->CardRefId3DS);
+        Yii::warning('TKBankAdapter get paySchet: paySchet.ID=' . $donePayForm->getPaySchet()->ID
+            . ' cardRefId=' . $donePayForm->getPaySchet()->CardRefId3DS
+        );
 
         $queryData = Json::encode($confirm3DSv2Request->getAttributes());
         $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
