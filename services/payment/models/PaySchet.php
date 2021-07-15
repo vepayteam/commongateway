@@ -81,6 +81,7 @@ use Yii;
  * @property string|null $Operations
  * @property Uslugatovar $uslugatovar
  * @property Partner $partner
+ * @property Currency $currency
  * @property PaySchetLog[] $log
  * @property User $user
  * @property Bank $bank
@@ -324,6 +325,11 @@ class PaySchet extends \yii\db\ActiveRecord
     public function getBank()
     {
         return $this->hasOne(Bank::class, ['ID' => 'Bank']);
+    }
+
+    public function getCurrency()
+    {
+        return $this->hasOne(Currency::class, ['Id' => 'CurrencyId'])->one();
     }
 
     public function getLog()

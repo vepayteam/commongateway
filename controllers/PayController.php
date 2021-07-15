@@ -25,12 +25,15 @@ use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\CreatePaySecondStepForm;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\OkPayForm;
+use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\interfaces\Cache3DSv2Interface;
 use app\services\payment\models\PaySchet;
+use app\services\payment\models\repositories\CurrencyRepository;
 use app\services\payment\payment_strategies\CreatePayStrategy;
 use app\services\payment\payment_strategies\DonePayStrategy;
 use app\services\payment\payment_strategies\OkPayStrategy;
 use kartik\mpdf\Pdf;
+use NumberFormatter;
 use Yii;
 use yii\db\Exception;
 use yii\helpers\Json;
@@ -119,7 +122,9 @@ class PayController extends Controller
     {
         Yii::warning("PayForm open id={$id}");
         $payschets = new Payschets();
-        // данные счета для оплаты
+        $currencyRepository = new CurrencyRepository();
+
+        //данные счета для оплаты
         $params = $payschets->getSchetData($id, null);
         $payform = new PayForm();
         if ($params && TU::IsInPay($params['IsCustom'])) {
@@ -135,6 +140,11 @@ class PayController extends Controller
                     "img-src 'self' data: https://mc.yandex.ru https://google.com/pay https://google.com/pay https://www.gstatic.com; " .
                     "connect-src *; frame-src *;";
                 Yii::$app->response->headers->add('Content-Security-Policy', $csp);
+
+                $currency = $currencyRepository->getCurrency(null, $params['CurrencyId']);
+                $params['amountPay'] = PaymentHelper::convertToFullAmount($params['SummPay']);
+                $params['amountCommission'] = PaymentHelper::convertToFullAmount($params['ComissSumm']);
+                $params['currency'] = $currency->Code;
 
                 return $this->render('formpay', [
                     'params' => $params,
@@ -315,6 +325,7 @@ class PayController extends Controller
         Yii::warning('Orderdone ' . $id . ' POST: ' . json_encode(Yii::$app->request->post()));
 
         if (!$donePayForm->validate()) {
+            Yii::warning('Orderdone validate fail ' . $id);
             throw new BadRequestHttpException();
         }
 
