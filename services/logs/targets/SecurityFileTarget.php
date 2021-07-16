@@ -2,15 +2,14 @@
 
 namespace app\services\logs\targets;
 
-use app\services\logs\traits\SecurityTargetTrait;
+use app\helpers\Modifiers;
 use yii\log\FileTarget;
 
 class SecurityFileTarget extends FileTarget
 {
-    use SecurityTargetTrait;
-
-    public function dump($log)
+    public function formatMessage($message): string
     {
-        file_put_contents($this->logFile, $log, FILE_APPEND | LOCK_EX);
+        $message = parent::formatMessage($message);
+        return Modifiers::searchAndReplaceSecurity($message);
     }
 }
