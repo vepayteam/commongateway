@@ -22,7 +22,7 @@ class m210713_100154_add_channel_name_to_banks_table extends Migration
      */
     public function safeUp()
     {
-        $this->addColumn(Bank::tableName(), 'ChannelName', $this->string(250)->after('Name'));
+        $this->addColumn('banks', 'ChannelName', $this->string(250)->after('Name'));
 
         Bank::updateAll(['ChannelName' => 'vepay'], ['ID' => 0]);
         Bank::updateAll(['ChannelName' => 'Russia'], ['ID' => 1]);
@@ -42,6 +42,6 @@ class m210713_100154_add_channel_name_to_banks_table extends Migration
      */
     public function safeDown()
     {
-        $this->dropColumn(Bank::tableName(), 'ChannelName');
+        $this->dropColumn('banks', 'ChannelName');
     }
 }
