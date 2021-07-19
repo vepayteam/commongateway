@@ -1159,7 +1159,7 @@ components:
           description: Код ошибки банка (может отсутствовать)
         channel:
           type: string
-          description: Банк-эквайер через который была совершена транзакция
+          description: Банк-эквайер, через который была совершена транзакция
     StatusResult:
       type: object
       properties:

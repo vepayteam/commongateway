@@ -418,7 +418,7 @@ components:
           $ref: "#/components/schemas/CardInfo"
         channel:
           type: string
-          description: Банк-эквайер через который была совершена транзакция
+          description: Банк-эквайер, через который была совершена транзакция
     StatusId:
       type: object
       properties:
