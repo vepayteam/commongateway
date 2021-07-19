@@ -3,6 +3,7 @@
 namespace app\services\payment\forms;
 
 use app\services\payment\interfaces\AmountFormInterface;
+use app\services\payment\models\Currency;
 use app\services\payment\models\repositories\CurrencyRepository;
 use yii\validators\EmailValidator;
 use yii\validators\StringValidator;
@@ -11,7 +12,7 @@ class MerchantPayForm extends BaseForm implements AmountFormInterface
 {
     public $type;
     public $amount = 0;
-    public $currency = 'RUB'; // required
+    public $currency = Currency::MAIN_CURRENCY;
     public $document_id = '';
     public $fullname = '';
     public $extid = '';

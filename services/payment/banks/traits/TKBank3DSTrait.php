@@ -157,6 +157,11 @@ trait TKBank3DSTrait
                 $check3DSVersionResponse->cardRefId,
                 3600
             );
+            Yii::warning('TKBank3DSTrait set cardRefId cache: paySchet.ID=' . $paySchet->ID
+                . ' paySchet.Extid=' . $paySchet->Extid
+                . ' cardRefId=' . $check3DSVersionResponse->cardRefId
+            );
+            Yii::warning('TKBank3DSTrait get paySchet: paySchet.ID=' . $paySchet->ID . ' cardRefId=' . $paySchet->CardRefId3DS);
 
             if(array_key_exists('ChallengeData', $ans['xml'])) {
                 // если нужна авторизация 3ds через форму
