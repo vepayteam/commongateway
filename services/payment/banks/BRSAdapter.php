@@ -576,7 +576,7 @@ class BRSAdapter implements IBankAdapter
 
         $balanceResponse = new GetBalanceResponse();
         $balanceResponse->bank_name = $getBalanceRequest->bankName;
-        $balanceResponse->amount = PaymentHelper::convertToRub((int) $answer['container']['partner_available_amount']);
+        $balanceResponse->amount = PaymentHelper::convertToFullAmount(intval($answer['container']['partner_available_amount']));
         $balanceResponse->currency = $getBalanceRequest->currency;
         $balanceResponse->account_type = $getBalanceRequest->accountType;
 
