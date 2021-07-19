@@ -5,12 +5,12 @@ namespace app\models\partner\admin;
 
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
-use app\models\payonline\CreatePay;
 use app\models\payonline\Partner;
 use app\models\payonline\Provparams;
 use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\TU;
+use app\services\PaySchetService;
 use Yii;
 use yii\base\Model;
 
@@ -48,9 +48,13 @@ class PerevodToPartner extends Model
      * Перевод средств контрагенту через платеж ТКБ
      * @return array
      * @throws \yii\db\Exception
+     * @throws \app\services\payment\exceptions\CreatePayException
      */
     public function CreatePerevod()
     {
+        /** @var PaySchetService $paySchetService */
+        $paySchetService = \Yii::$app->get(PaySchetService::class);
+
         $PBKPOrg = 1;
 
         $sumPays = round($this->Summ * 100.0);
@@ -114,14 +118,13 @@ class PerevodToPartner extends Model
             $recviz['NaznachenPlatez']
         );
 
-        $pay = new CreatePay();
         $Provparams = new Provparams;
         $Provparams->prov = $usl;
         $Provparams->param = [$recviz['RS'], $recviz['BIK'], $recviz['NamePoluchat'], $recviz['INNPolushat'], $recviz['KPPPoluchat'], $descript];
         $Provparams->summ = $sumPays;
         $Provparams->Usluga = Uslugatovar::findOne(['ID' => $usl]);
 
-        $idpay = $pay->createPay($Provparams, 0, 3, TCBank::$bank, $PBKPOrg, 'reestr' . $id, 0);
+        $idpay = $paySchetService->createPay($Provparams, 0, 3, TCBank::$bank, $PBKPOrg, 'reestr' . $id, 0);
 
         if (!$idpay) {
             $tr->rollBack();
@@ -162,7 +165,7 @@ class PerevodToPartner extends Model
 
         } else {
             //ошибка
-            $pay->CancelReq($idpay);
+            $paySchetService->cancelReq($idpay);
             Yii::$app->db->createCommand()->update('vyvod_reestr', [
                 'StateOp' => 2
             ], '`ID` = :ID', [':ID' => $id])->execute();

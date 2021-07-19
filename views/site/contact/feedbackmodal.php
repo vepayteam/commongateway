@@ -1,11 +1,14 @@
 <?php
+
+use app\models\site\ContactForm;
+use yii\web\View;
+
 /**
  * Форма "Обратная связь" для окна
  *
- * @var $model \app\models\ContactForm
- * @var $this \yii\web\View
+ * @var $model ContactForm
+ * @var $this View
  */
-use yii\web\View;
 
 ?>
 <div class="form_wrapper" id="contactwindow">
@@ -204,7 +207,7 @@ use yii\web\View;
         err = err | CustomValid.checkReuired($('textarea[name="ContactForm[date]"]'), err);
         return !err;
     }
-    
+
     $('#subject').on('change', function () {
         var type = $(this).find(":selected").val();
         if (type == "checkpay") {

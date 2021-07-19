@@ -64,6 +64,7 @@ class Payschets
                 ps.`SummPay`,
                 ps.`SummPay` + ps.`ComissSumm` AS SummFull,
                 ps.`ComissSumm`,
+                ps.`CurrencyId`,
                 ps.`Status`,
                 ps.`IdUser`,
                 ps.`IdKard`,
@@ -1008,8 +1009,14 @@ class Payschets
             $geoIp = new GeoInfo();
             Yii::$app->db->createCommand()->update('pay_schet', [
                 'IPAddressUser' => Yii::$app->request->getUserIP(),
-                'CountryUser' => $geoIp->GetCountry(),
-                'CityUser' => $geoIp->GetCity()
+            ], ['ID' => $IdPay])->execute();
+
+            $country = $geoIp->GetCountry();
+            $city = $geoIp->GetCity();
+            if(!empty($country) && !empty($city))
+            Yii::$app->db->createCommand()->update('pay_schet', [
+                'CountryUser' => $country,
+                'CityUser' => $city
             ], ['ID' => $IdPay])->execute();
         } catch (Exception $e) {
         }

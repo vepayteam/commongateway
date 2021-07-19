@@ -2,6 +2,7 @@
 
 namespace app\services\logs\traits;
 
+use app\helpers\Modifiers;
 use yii\helpers\ArrayHelper;
 use yii\helpers\VarDumper;
 
@@ -18,26 +19,8 @@ trait ReqMaskTargetTrait
         $result = [];
         foreach ($context as $key => $value) {
             $dump = VarDumper::dumpAsString($value);
-            if (str_contains($dump, 'cardnum')) {
-                $dump = $this->maskCardnum($dump);
-            }
-
-            $result[] = "\${$key} = " . $dump;
+            $result[] = "\${$key} = " . Modifiers::searchAndReplaceSecurity($dump);
         }
-
         return implode("\n\n", $result);
-    }
-
-    private function maskCardnum($input)
-    {
-        $pattern = '/(\\\"cardnum\\\":.*?\\\"\d{6})(\d+?)(\d{4}\\\")/i';
-        $replacement = '$1****$3';
-
-        $replaced = preg_replace($pattern, $replacement, $input);
-        if ($replaced) {
-            return $replaced;
-        }
-
-        return $input;
     }
 }

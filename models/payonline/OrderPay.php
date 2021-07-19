@@ -2,41 +2,46 @@
 
 namespace app\models\payonline;
 
-use Yii;
+use app\services\payment\helpers\PaymentHelper;
+use yii\db\ActiveRecord;
 
 /**
  * This is the model class for table "order_pay".
  *
- * @property string $ID
- * @property string $IdPartner id partner
- * @property string $DateAdd data vystavlenia
- * @property string $DateEnd data okonchania deistvia scheta
- * @property string $DateOplata data oplaty
- * @property int $SumOrder summa scheta
- * @property string $Comment komentarii
- * @property string $EmailTo nomer dlia email
- * @property string $EmailSended data otpravki email
- * @property string $SmsTo nomer dlia sms
- * @property string $SmsSended data otpravki sms
- * @property int $StateOrder status - 0 - ojidaet 1 - oplachen 2 - otshibka
- * @property string $IdPaySchet id pay_schet
- * @property int $IdDeleted 1 - udaleno
- * @property string $OrderTo корзина
+ * @property string $ID ID
+ * @property string $IdPartner ID partner
+ * @property string $DateAdd Дата выставления счета
+ * @property string $DateEnd Дата окончания действия счета
+ * @property string $DateOplata Дата оплаты
+ * @property int $SumOrder Сумма счета
+ * @property string $Comment Комментарий
+ * @property string $EmailTo Адрес электронной почты
+ * @property string $EmailSended Дата отправки письма
+ * @property string $SmsTo Номер телефона
+ * @property string $SmsSended Дата отправки смс
+ * @property int $StateOrder Статус 0 - ожидает оплаты; 1 - оплачен; 2 - ошибка
+ * @property string $IdPaySchet ID pay_schet
+ * @property int $IdDeleted Удалено
+ * @property string $OrderTo Корзина
  */
-class OrderPay extends \yii\db\ActiveRecord
+class OrderPay extends ActiveRecord
 {
+    const STATUS_WAITING = 0;
+    const STATUS_DONE = 1;
+    const STATUS_ERROR = 2;
+
     /**
-     * {@inheritdoc}
+     * @return string
      */
-    public static function tableName()
+    public static function tableName(): string
     {
         return 'order_pay';
     }
 
     /**
-     * {@inheritdoc}
+     * @return array
      */
-    public function rules()
+    public function rules(): array
     {
         return [
             [['IdPartner', 'SumOrder'], 'required'],
@@ -50,43 +55,49 @@ class OrderPay extends \yii\db\ActiveRecord
     }
 
     /**
-     * {@inheritdoc}
+     * @return string[]
      */
-    public function attributeLabels()
+    public function attributeLabels(): array
     {
         return [
             'ID' => 'ID',
-            'IdPartner' => 'id partner',
-            'DateAdd' => 'data vystavlenia',
-            'DateEnd' => 'data okonchania deistvia scheta',
-            'DateOplata' => 'data oplaty',
+            'IdPartner' => 'ID Partner',
+            'DateAdd' => 'Дата выставления счета',
+            'DateEnd' => 'Дата окончания действия счета',
+            'DateOplata' => 'Дата оплаты',
             'SumOrder' => 'Сумма счета',
             'Comment' => 'Комментарий',
             'EmailTo' => 'Адрес электронной почты',
-            'EmailSended' => 'data otpravki email',
+            'EmailSended' => 'Дата отправки письма',
             'SmsTo' => 'Номер телефона',
-            'SmsSended' => 'data otpravki sms',
+            'SmsSended' => 'Дата отправки смс',
             'StateOrder' => 'Статус',
-            'IdPaySchet' => 'id pay_schet',
-            'IdDeleted' => '1 - udaleno',
-            'OrderTo' => 'корзина',
+            'IdPaySchet' => 'ID PaySchet',
+            'IdDeleted' => 'Удалено',
+            'OrderTo' => 'Корзина',
         ];
     }
 
+    /**
+     * @return mixed|null
+     */
     public function GetError()
     {
         $err = $this->firstErrors;
-        $err = array_pop($err);
-        return $err;
+        return array_pop($err);
     }
 
-    public function beforeSave($insert)
+    /**
+     * @param bool $insert
+     * @return bool
+     */
+    public function beforeSave($insert): bool
     {
         if ($insert) {
             $this->DateAdd = time();
         }
-        $this->SumOrder = round($this->SumOrder * 100.0);
-        // $this->OrderTo = json_encode($this->OrderTo);
+
+        $this->SumOrder = PaymentHelper::convertToPenny($this->SumOrder);
         return parent::beforeSave($insert);
     }
 

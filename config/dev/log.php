@@ -17,7 +17,7 @@ return [
     'targets' => [
         [
             'class' => 'app\services\logs\targets\ReqMaskStdOutTarget',
-            'levels' => ['warning'],
+            'levels' => ['warning', 'info'],
             'maskVars' => $maskVars
         ],
         [

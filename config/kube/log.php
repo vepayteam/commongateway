@@ -1,9 +1,6 @@
 <?php
 
 $maskVars = [
-    '_SERVER.HTTP_AUTHORIZATION',
-    '_SERVER.PHP_AUTH_USER',
-    '_SERVER.PHP_AUTH_PW',
     '_POST.login',
     '_POST.passw',
     '_POST.token',
@@ -13,15 +10,30 @@ $maskVars = [
     '_POST.PayForm.CardCVC',
     '_POST.InsertKey',
     '_POST.ChangeKeys',
-    '_SESSION.__id',
-    '_SERVER.REDIRECT_REDIRECT_DATABASE_USER',
-    '_SERVER.REDIRECT_REDIRECT_DATABASE_USER_PASSWORD',
-    '_SERVER.REDIRECT_DATABASE_USER',
-    '_SERVER.REDIRECT_DATABASE_USER_PASSWORD',
-    '_SERVER.DATABASE_USER',
-    '_SERVER.DATABASE_USER_PASSWORD',
-    '_SERVER.DB_URL',
-    '_SERVER.DB_URL_BASE'
+    '_SESSION.__id'
+];
+
+$logVars = [
+    '_GET',
+    '_POST',
+    '_FILES',
+    '_COOKIE',
+    '_SESSION',
+    '_SERVER.HTTP_USER_AGENT',
+    '_SERVER.HTTP_ACCEPT',
+    '_SERVER.HTTP_REFERER',
+    '_SERVER.CONTENT_TYPE',
+    '_SERVER.SERVER_ADDR',
+    '_SERVER.SERVER_PORT',
+    '_SERVER.REMOTE_ADDR',
+    '_SERVER.SCRIPT_FILENAME',
+    '_SERVER.REDIRECT_URL',
+    '_SERVER.SERVER_PROTOCOL',
+    '_SERVER.REQUEST_METHOD',
+    '_SERVER.QUERY_STRING',
+    '_SERVER.REQUEST_URI',
+    '_SERVER.REQUEST_TIME',
+    '_SERVER.REDIRECT_QUERY_STRING'
 ];
 
 return [
@@ -29,12 +41,13 @@ return [
     'targets' => [
         [
             'class' => 'app\services\logs\targets\ReqMaskJSONStdOutTarget',
-            'levels' => ['warning'],
+            'levels' => array_filter(['warning', 'info', YII_DEBUG ? 'trace' : '']),
             'except' => [
                 'yii\web\HttpException:401',
                 'yii\web\HttpException:404',
             ],
-            'maskVars' => $maskVars
+            'maskVars' => $maskVars,
+            'logVars' => $logVars
         ],
         [
             'class' => 'app\services\logs\targets\SecurityJSONStdErrTarget',
@@ -43,7 +56,8 @@ return [
                 'yii\web\HttpException:401',
                 'yii\web\HttpException:404',
             ],
-            'maskVars' => $maskVars
+            'maskVars' => $maskVars,
+            'logVars' => $logVars
         ],
     ],
 ];

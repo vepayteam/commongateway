@@ -30,6 +30,7 @@ use app\services\payment\PaymentService;
 use Yii;
 use yii\db\Exception;
 use yii\db\Query;
+use yii\helpers\Json;
 use yii\mutex\FileMutex;
 
 class OkPayStrategy
@@ -61,7 +62,7 @@ class OkPayStrategy
         $paySchet = $this->okPayForm->getPaySchet();
 
         $bankAdapterBuilder = new BankAdapterBuilder();
-        $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar);
+        $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar, $paySchet->currency);
 
         if($paySchet->Status == PaySchet::STATUS_WAITING && $paySchet->sms_accept == 1) {
             /** @var CheckStatusPayResponse $checkStatusPayResponse */
@@ -73,10 +74,14 @@ class OkPayStrategy
             }
             $this->confirmPay($paySchet, $checkStatusPayResponse);
 
+            if($checkStatusPayResponse->transId) {
+                $paySchet->ExtBillNumber = $checkStatusPayResponse->transId;
+            }
             $paySchet->Status = $checkStatusPayResponse->status;
             $paySchet->ErrorInfo = $checkStatusPayResponse->message;
             $paySchet->RRN = $checkStatusPayResponse->rrn;
             $paySchet->RCCode = $checkStatusPayResponse->xml['orderadditionalinfo']['rc'] ?? '';
+            $paySchet->Operations = Json::encode($checkStatusPayResponse->operations ?? []);
             $paySchet->save(false);
 
             $this->getNotificationsService()->sendPostbacks($paySchet);

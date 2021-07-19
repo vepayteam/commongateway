@@ -1,93 +1,119 @@
 <?php
 
-
 namespace app\models\payonline;
-
 
 use app\models\SendEmail;
 use Yii;
+use yii\db\ActiveQuery;
+use yii\db\ActiveRecord;
+use yii\helpers\Json;
 
-class OrderNotif
+/**
+ * Class OrderNotif
+ *
+ * @property int ID ID
+ * @property int IdOrder ID Order
+ * @property int DateAdd Дата создания
+ * @property int DateSended Дата отправки
+ * @property int TypeSend Тип отправки константы TYPE_SEND_*
+ * @property int StateSend Статус отправки константы STATE_SEND_*
+ *
+ * @property-read OrderPay $orderPay
+ */
+class OrderNotif extends ActiveRecord
 {
-    public function SendNotif(OrderPay $order)
-    {
-        if (!empty($order->EmailTo)) {
-            Yii::$app->db->createCommand()->insert('order_notif', [
-                'IdOrder' => $order->ID,
-                'DateAdd' => time(),
-                'DateSended' => 0,
-                'TypeSend' => 0,
-                'StateSend' => 0
-            ])->execute();
+    /** Тип отправки email */
+    const TYPE_SEND_EMAIL = 0;
 
-            Yii::$app->db->createCommand()->update('order_pay', [
-                'EmailSended' => time(),
-            ], ['ID' => $order->ID])->execute();
+    /** Тип отправки смс */
+    const TYPE_SEND_SMS = 1;
+
+
+    /** Статус в очереди */
+    const STATE_SEND_WAIT = 0;
+
+    /** Статус успешно */
+    const STATE_SEND_SUCCESS = 1;
+
+    /** Статус ошибка */
+    const STATE_SEND_ERROR = 2;
+
+    /**
+     * @inheritdoc
+     */
+    public static function tableName(): string
+    {
+        return 'order_notif';
+    }
+
+    /**
+     * @return ActiveQuery
+     */
+    public function getOrderPay(): ActiveQuery
+    {
+        return $this->hasOne(OrderPay::class, ['ID' => 'IdOrder']);
+    }
+
+    /**
+     * @param OrderPay $orderPay
+     */
+    public function SendNotif(OrderPay $orderPay)
+    {
+        if (!empty($orderPay->EmailTo)) {
+            self::addOrderNotif($orderPay, self::TYPE_SEND_EMAIL);
+
+            $orderPay->EmailSended = time();
+            $orderPay->save(false);
         }
 
-        if (!empty($order->SmsTo)) {
-            Yii::$app->db->createCommand()->insert('order_notif', [
-                'IdOrder' => $order->ID,
-                'DateAdd' => time(),
-                'DateSended' => 0,
-                'TypeSend' => 1,
-                'StateSend' => 0
-            ])->execute();
+        if (!empty($orderPay->SmsTo)) {
+            self::addOrderNotif($orderPay, self::TYPE_SEND_SMS);
 
-            Yii::$app->db->createCommand()->update('order_pay', [
-                'SmsSended' => time(),
-            ], ['ID' => $order->ID])->execute();
+            $orderPay->SmsSended = time();
+            $orderPay->save(false);
         }
     }
 
     public function SendEmails()
     {
-        $res = Yii::$app->db->createCommand("
-            SELECT
-                onf.`ID`,
-                o.EmailTo,
-                onf.IdOrder,
-                o.Comment,
-                o.SumOrder,
-                o.OrderTo
-            FROM
-                `order_notif` AS onf
-                LEFT JOIN `order_pay` AS o ON o.ID = onf.IdOrder
-            WHERE
-                o.StateOrder = 0
-                AND onf.DateSended = 0
-                AND onf.TypeSend = 0
-        ")->query();
+        $orderNotifList = OrderNotif::find()
+            ->alias('orderNotifyAlias')
+            ->joinWith('orderPay orderPayAlias')
+            ->where([
+                'orderPayAlias.StateOrder' => self::STATE_SEND_WAIT,
+                'orderNotifyAlias.DateSended' => 0,
+                'orderNotifyAlias.TypeSend' => self::TYPE_SEND_EMAIL
+            ])
+            ->all();
 
-        while ($row = $res->read()) {
+        /** @var OrderNotif $orderNotif */
+        foreach ($orderNotifList as $orderNotif) {
+            $orderPay = $orderNotif->orderPay;
 
-            $subject = "Счет на оплату";
-            $content = "Счет № ".$row['IdOrder']." на сумму ".($row['SumOrder']/100.0)." руб.<br>".
-                $row['Comment']."<br>";
-            if($row['OrderTo'] && $orderTo = json_decode($row['OrderTo'])) {
-                $table = "<table><thead><tr><td>№</td><td>Наименование товара</td><td>Кол-во</td><td>сумма</td></tr></thead>";
-                $tbody = "<tbody>";
-                foreach($orderTo as $key => $ord) {
-                    $tbody .= "<tr>";
-                    $tbody .= "<td>" . ($key + 1) . "</td>";
-                    $tbody .= "<td>" . $ord->name . "</td>";
-                    $tbody .= "<td>" . $ord->qnt . "</td>";
-                    $tbody .= "<td>" . $ord->sum . "</td>";
-                    $tbody .= "</tr>";
-                }
-                $tbody .= "</tbody>";
+            $subject = 'Счет на оплату';
+            $content = Yii::$app->controller->renderPartial('@app/mail/order_notif', [
+                'orderNotif' => $orderNotif,
+                'orderPay' => $orderPay,
+                'orderTo' => $orderPay->OrderTo ? Json::decode($orderPay->OrderTo) : null,
+            ]);
 
-                $content .= $table . $tbody . "</table>";
-            }
-            $content .= "<a href='https://api.vepay.online/widget/order/".$row['IdOrder']."'>Оплатить</a>";
+            $sendEmail = new SendEmail();
+            $sendEmail->send($orderPay->EmailTo, null, $subject, $content);
 
-            $mail = new SendEmail();
-            $mail->send($row['EmailTo'], null, $subject, $content);
-
-            Yii::$app->db->createCommand()->update('order_notif', [
-                'DateSended' => time(),
-                'StateSend' => 1,
-            ], ['ID' => $row['ID']])->execute();
+            $orderNotif->DateSended = time();
+            $orderNotif->StateSend = self::STATE_SEND_SUCCESS;
+            $orderNotif->save(false);
         }
+    }
+
+    private static function addOrderNotif(OrderPay $orderPay, int $typeSend)
+    {
+        $orderNotif = new OrderNotif();
+        $orderNotif->IdOrder = $orderPay->ID;
+        $orderNotif->DateAdd = time();
+        $orderNotif->DateSended = 0;
+        $orderNotif->TypeSend = $typeSend;
+        $orderNotif->StateSend = self::STATE_SEND_WAIT;
+        $orderNotif->save(false);
     }
 }

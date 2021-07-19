@@ -35,6 +35,13 @@ class ContactForm extends Model
         'pr' => 'Обсудить PR и маркетинг'
     ];
 
+    public function GetError()
+    {
+        $err = $this->firstErrors;
+        $err = array_pop($err);
+        return $err;
+    }
+
     /**
      * @return array the validation rules.
      */

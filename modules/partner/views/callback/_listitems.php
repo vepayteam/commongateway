@@ -45,16 +45,16 @@
                 <li class="footable-page-arrow <?= 1 == $payLoad['page'] ? 'disabled' : '' ?>">
                     <a data-page="prev" <?= $payLoad['page'] > 1 ? 'onclick="lk.notiflist(' . ($payLoad['page'] - 1 > 0 ? $payLoad['page'] - 1 : 0) . ');"' : '' ?>>‹</a>
                 </li>
-                <?php for ($i = 1; $i < $maxPage; $i++) : ?>
+                <?php for ($i = 1; $i <= $maxPage; $i++) : ?>
                     <li class="footable-page <?= $i == $payLoad['page'] ? 'active' : '' ?>">
                         <a data-page="<?= $i ?>" <?= $payLoad['page'] != $i ? 'onclick="lk.notiflist(' . $i . ');"' : '' ?>><?= ($i ) ?></a>
                     </li>
                 <?php endfor; ?>
-                <li class="footable-page-arrow <?= $maxPage - 1 == $payLoad['page'] ? 'disabled' : '' ?>">
-                    <a data-page="next" <?= $maxPage - 1 != $payLoad['page'] ? 'onclick="lk.notiflist(' . ($payLoad['page'] ) . ');"' : '' ?>>›</a>
+                <li class="footable-page-arrow <?= $maxPage == $payLoad['page'] ? 'disabled' : '' ?>">
+                    <a data-page="next" <?= $maxPage != $payLoad['page'] ? 'onclick="lk.notiflist(' . ($payLoad['page'] + 1) . ');"' : '' ?>>›</a>
                 </li>
-                <li class="footable-page-arrow <?= $maxPage - 1 == $payLoad['page'] ? 'disabled' : '' ?>">
-                    <a data-page="last" <?= $maxPage - 1 != $payLoad['page'] ? 'onclick="lk.notiflist(' . ($maxPage - 1) . ');"' : '' ?>>»</a>
+                <li class="footable-page-arrow <?= $maxPage == $payLoad['page'] ? 'disabled' : '' ?>">
+                    <a data-page="last" <?= $maxPage != $payLoad['page'] ? 'onclick="lk.notiflist(' . ($maxPage) . ');"' : '' ?>>»</a>
                 </li>
             </ul>
         </td>

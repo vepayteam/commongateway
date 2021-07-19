@@ -2,9 +2,7 @@
 
 use yii\web\View;
 
-/* @var array $config */
-/* @var yii\web\View $this */
-/* @var \app\models\site\ContactForm $model */
+/* @var View $this */
 
 $this->title = 'VEPAY v 1.0.7';
 

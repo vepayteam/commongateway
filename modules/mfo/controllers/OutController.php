@@ -15,7 +15,6 @@ use app\models\kfapi\KfOut;
 use app\models\mfo\MfoReq;
 use app\models\mfo\MfoTestError;
 use app\models\payonline\Cards;
-use app\models\payonline\CreatePay;
 use app\models\payonline\Partner;
 use app\models\Payschets;
 use app\models\TU;
@@ -190,6 +189,7 @@ class OutController extends Controller
      * @throws \yii\db\Exception
      * @throws \yii\web\UnauthorizedHttpException
      * @throws \Exception
+     * @todo Исправить/удалить: Нерабочий метод - отсутсвует инициализация переменной $pay.
      */
     public function actionPayul()
     {
