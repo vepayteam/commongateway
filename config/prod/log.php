@@ -20,7 +20,7 @@ return [
     'traceLevel' => 0,
     'targets' => [
         [
-            'class' => 'app\services\logs\targets\ReqMaskFileTarget',
+            'class' => 'app\services\logs\targets\SecurityFileTarget',
             'levels' => ['warning', 'info'],
             'maskVars' => $maskVars,
             'maxFileSize' => 1024 * 50,

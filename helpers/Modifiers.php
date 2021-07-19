@@ -8,17 +8,17 @@ class Modifiers
 {
     public static function searchAndReplacePan(string $input): string
     {
-        if (preg_match('/[23456]\d{15,17}/xu', $input, $cards)) {
-            foreach ($cards as $card) {
-                if (Validators::checkByLuhnAlgorithm($card)) {
-                    $panToBeMasked = substr($card, 6, strlen($card) - 10);
-                    $masked = str_replace(
-                        $panToBeMasked,
-                        str_pad('', strlen($panToBeMasked), '*'),
-                        $card
-                    );
-                    return str_replace($card, $masked, $input);
-                }
+        preg_match_all('/(?<pan>[23456]\d{15,17})/xu', $input, $cards);
+        foreach ($cards['pan'] as $card) {
+            if (Validators::checkByLuhnAlgorithm($card)) {
+                $panMaskedLen = strlen($card) - 10;
+                $masked = substr_replace(
+                    $card,
+                    str_pad('', $panMaskedLen, '*'),
+                    6,
+                    $panMaskedLen
+                );
+                $input = str_replace($card, $masked, $input);
             }
         }
         return $input;
