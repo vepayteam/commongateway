@@ -175,6 +175,7 @@ class StatController extends Controller
                         'data' => $list['data'],
                         'cntpage' => $list['cntpage'],
                         'cnt' => $list['cnt'],
+                        'pagination' => $list['pagination'],
                         'sumpay' => $list['sumpay'],
                         'sumcomis' => $list['sumcomis'],
                         'bankcomis' => $list['bankcomis'],

@@ -111,6 +111,10 @@
                     $('#statlistform').closest('.ibox-content').toggleClass('sk-loading');
                     if (data.status == 1) {
                         $('#statlistresult').html(data.data);
+                        $('.pagination a').each(function(){
+                            $(this).removeAttr('href');
+                            $(this).attr('onclick', 'lk.statlistreq('+(parseInt($(this).attr('data-page'))+1)+');');
+                        });
                     } else {
                         $('#statlistresult').html("<p class='text-center'>" + data.message + "</p>");
                     }
@@ -155,7 +159,7 @@
             });
 
             $('#statlistform').on('submit', function () {
-                lk.statlistreq(0);
+                lk.statlistreq(1);
                 return false;
             });
 

@@ -8,6 +8,7 @@ use app\services\payment\models\repositories\CurrencyRepository;
 use Yii;
 use yii\base\Model;
 use yii\db\Expression;
+use yii\data\Pagination;
 use yii\db\Query;
 use yii\helpers\VarDumper;
 
@@ -307,7 +308,7 @@ class PayShetStat extends Model
 
         if (!$nolimit) {
             if ($page > 0) {
-                $query->offset($CNTPAGE * $page);
+                $query->offset($CNTPAGE * ($page-1));
             }
             $query->orderBy('ID DESC')->limit($CNTPAGE);
         }
@@ -329,7 +330,12 @@ class PayShetStat extends Model
             }
         }
 
-        return ['data' => $data, 'cnt' => $cnt, 'cntpage' => $CNTPAGE, 'sumpay' => $sumPay, 'sumcomis' => $sumComis, 'bankcomis' => $bankcomis, 'voznagps' => $voznagps];
+        $pagination = new Pagination([
+            'totalCount' => (clone $query)->count(),
+            'pageSize' => $CNTPAGE,
+        ]);
+
+        return ['data' => $data, 'pagination' => $pagination, 'cnt' => $cnt, 'cntpage' => $CNTPAGE, 'sumpay' => $sumPay, 'sumcomis' => $sumComis, 'bankcomis' => $bankcomis, 'voznagps' => $voznagps];
     }
 
     /**
