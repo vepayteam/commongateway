@@ -37,6 +37,8 @@ use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use Vepay\Cauri\Client\Request\UserResolveRequest;
+use Vepay\Cauri\Client\Request\PayoutCreateRequest;
+use Vepay\Cauri\Resource\Balance;
 use Vepay\Cauri\Resource\Payout;
 use Vepay\Gateway\Config;
 use Vepay\Gateway\Logger\LoggerInterface;
@@ -216,7 +218,7 @@ class CauriAdapter implements IBankAdapter
         $createPayRequest->user = $user;
         $createPayRequest->order_id = $paySchet->ID;
         $createPayRequest->description = 'Счет №' . $paySchet->ID ?? '';
-        $createPayRequest->price = PaymentHelper::convertToRub($paySchet->getSummFull());
+        $createPayRequest->price = PaymentHelper::convertToFullAmount($paySchet->getSummFull());
         $createPayRequest->acs_return_url = $createPayForm->getReturnUrl();
         //card details
         $createPayRequest->card = [
@@ -251,7 +253,7 @@ class CauriAdapter implements IBankAdapter
         $recurrentPayRequest = new RecurrentPayRequest();
         $recurrentPayRequest->order_id = $paySchet->ID; // Order ID will be returned back in a callback
         $recurrentPayRequest->user = $userId;
-        $recurrentPayRequest->price = PaymentHelper::convertToRub($paySchet->getSummFull());
+        $recurrentPayRequest->price = PaymentHelper::convertToFullAmount($paySchet->getSummFull());
         $recurrentPayRequest->description = 'Оплата по счету №' . $paySchet->ID;
         return $recurrentPayRequest;
     }
@@ -404,7 +406,7 @@ class CauriAdapter implements IBankAdapter
     {
         $refundPayRequest = new RefundPayRequest();
         $refundPayRequest->id = $refundPayForm->paySchet->ExtBillNumber; // Banks transaction ID
-        $refundPayRequest->amount = PaymentHelper::convertToRub($refundPayForm->paySchet->getSummFull());
+        $refundPayRequest->amount = PaymentHelper::convertToFullAmount($refundPayForm->paySchet->getSummFull());
         $refundPayResponse = new RefundPayResponse();
 
         try {
@@ -497,13 +499,29 @@ class CauriAdapter implements IBankAdapter
         return self::AFT_MIN_SUMM;
     }
 
-
     /**
      * @inheritDoc
+     * @throws BankAdapterResponseException
      */
-    public function getBalance(GetBalanceRequest $getBalanceRequest)
+    public function getBalance(GetBalanceRequest $getBalanceRequest): GetBalanceResponse
     {
-        throw new GateException('Метод недоступен');
+        $getBalanceResponse = new GetBalanceResponse();
+        try {
+            $api = new CauriApiFacade($this->gate);
+            $responseData = $api->getBalance($getBalanceRequest->getAttributes());
+        } catch (\Exception $e) {
+            throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
+        }
+        $response = $responseData->getContent();
+        if (!isset($response['amount']) || empty($response['amount'])) {
+            Yii::warning("Balance service:: Cauri request failed for currency: $getBalanceRequest->currency");
+            return $getBalanceResponse;
+        }
+        $getBalanceResponse->bank_name = $getBalanceRequest->bankName;
+        $getBalanceResponse->amount = round((float)$response['amount'], 2);
+        $getBalanceResponse->currency = $response['currency'];
+        $getBalanceResponse->account_type = $getBalanceRequest->accountType;
+        return $getBalanceResponse;
     }
 
     /**

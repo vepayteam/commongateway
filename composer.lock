@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "01a3419c56be9947807d955fe84916a5",
+    "content-hash": "0fa2151ffcc790f6045d2119e56ed751",
     "packages": [
         {
             "name": "2amigos/qrcode-library",
@@ -124,7 +124,7 @@
             "version": "v3.4.1",
             "source": {
                 "type": "git",
-                "url": "git@github.com:twbs/bootstrap.git",
+                "url": "https://github.com/twbs/bootstrap.git",
                 "reference": "68b0d231a13201eb14acd3dc84e51543d16e5f7e"
             },
             "dist": {
@@ -581,12 +581,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/kartik-v/yii2-mpdf.git",
-                "reference": "7ea3a5f9bcf5bcf6d681bd82cbe843c356d1428c"
+                "reference": "941daa73572370556710e003fae9342dd6429232"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/kartik-v/yii2-mpdf/zipball/7ea3a5f9bcf5bcf6d681bd82cbe843c356d1428c",
-                "reference": "7ea3a5f9bcf5bcf6d681bd82cbe843c356d1428c",
+                "url": "https://api.github.com/repos/kartik-v/yii2-mpdf/zipball/941daa73572370556710e003fae9342dd6429232",
+                "reference": "941daa73572370556710e003fae9342dd6429232",
                 "shasum": ""
             },
             "require": {
@@ -625,7 +625,13 @@
                 "utf8",
                 "yii2"
             ],
-            "time": "2020-04-14T08:55:18+00:00"
+            "funding": [
+                {
+                    "url": "https://opencollective.com/yii2-mpdf",
+                    "type": "open_collective"
+                }
+            ],
+            "time": "2020-09-21T05:05:23+00:00"
         },
         {
             "name": "khanamiryan/qrcode-detector-decoder",
@@ -1744,12 +1750,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/qfsx/yii2-curl.git",
-                "reference": "c8a2ddecf8f3c28c2bbb353d2202db8fda48ff27"
+                "reference": "bdbc3555e8020f7140d130c3a1dd070cb3a53f1b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/qfsx/yii2-curl/zipball/c8a2ddecf8f3c28c2bbb353d2202db8fda48ff27",
-                "reference": "c8a2ddecf8f3c28c2bbb353d2202db8fda48ff27",
+                "url": "https://api.github.com/repos/qfsx/yii2-curl/zipball/bdbc3555e8020f7140d130c3a1dd070cb3a53f1b",
+                "reference": "bdbc3555e8020f7140d130c3a1dd070cb3a53f1b",
                 "shasum": ""
             },
             "require": {
@@ -1781,7 +1787,7 @@
                 "restful",
                 "yii2"
             ],
-            "time": "2020-05-13T10:55:10+00:00"
+            "time": "2020-09-25T21:42:01+00:00"
         },
         {
             "name": "rmccue/requests",
@@ -2604,11 +2610,11 @@
         },
         {
             "name": "vepay/cauri",
-            "version": "1.0.1",
+            "version": "1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://git.vepay.cf/backend/cauri.git",
-                "reference": "70c60372f441394309d04936e4331a81c3e71167"
+                "reference": "d059e3348d80382056ef63f6193f8ebb13f007c2"
             },
             "require": {
                 "php": "^7.2",
@@ -2644,7 +2650,7 @@
             ],
             "description": "PHP library gateway for payment system Cauri",
             "homepage": "https://cauri.com/",
-            "time": "2021-03-05T15:10:38+00:00"
+            "time": "2021-04-26T08:24:37+00:00"
         },
         {
             "name": "vepay/commongateway",
@@ -3983,6 +3989,7 @@
                 }
             ],
             "description": "JSONPath implementation for parsing, searching and flattening arrays",
+            "abandoned": "softcreatr/jsonpath",
             "time": "2019-07-15T17:23:22+00:00"
         },
         {
@@ -4033,6 +4040,7 @@
                 "faker",
                 "fixtures"
             ],
+            "abandoned": true,
             "time": "2019-12-12T13:22:17+00:00"
         },
         {
@@ -4404,10 +4412,6 @@
                 }
             ],
             "description": "Component for reading phar.io manifest information from a PHP Archive (PHAR)",
-            "support": {
-                "issues": "https://github.com/phar-io/manifest/issues",
-                "source": "https://github.com/phar-io/manifest/tree/master"
-            },
             "time": "2018-07-08T19:23:20+00:00"
         },
         {
@@ -4455,10 +4459,6 @@
                 }
             ],
             "description": "Library for handling version information and constraints",
-            "support": {
-                "issues": "https://github.com/phar-io/version/issues",
-                "source": "https://github.com/phar-io/version/tree/master"
-            },
             "time": "2018-07-08T19:19:57+00:00"
         },
         {
@@ -4961,10 +4961,6 @@
             "keywords": [
                 "template"
             ],
-            "support": {
-                "issues": "https://github.com/sebastianbergmann/php-text-template/issues",
-                "source": "https://github.com/sebastianbergmann/php-text-template/tree/1.2.1"
-            },
             "time": "2015-06-21T13:50:34+00:00"
         },
         {
@@ -5230,10 +5226,6 @@
                 "container-interop",
                 "psr"
             ],
-            "support": {
-                "issues": "https://github.com/php-fig/container/issues",
-                "source": "https://github.com/php-fig/container/tree/master"
-            },
             "time": "2017-02-14T16:28:37+00:00"
         },
         {
@@ -5280,10 +5272,6 @@
                 "psr",
                 "psr-14"
             ],
-            "support": {
-                "issues": "https://github.com/php-fig/event-dispatcher/issues",
-                "source": "https://github.com/php-fig/event-dispatcher/tree/1.0.0"
-            },
             "time": "2019-01-08T18:20:26+00:00"
         },
         {
@@ -5324,10 +5312,6 @@
                 }
             ],
             "description": "A polyfill for getallheaders.",
-            "support": {
-                "issues": "https://github.com/ralouphie/getallheaders/issues",
-                "source": "https://github.com/ralouphie/getallheaders/tree/develop"
-            },
             "time": "2019-03-08T08:55:37+00:00"
         },
         {
@@ -6053,10 +6037,6 @@
             ],
             "description": "Library that helps with managing the version number of Git-hosted PHP projects",
             "homepage": "https://github.com/sebastianbergmann/version",
-            "support": {
-                "issues": "https://github.com/sebastianbergmann/version/issues",
-                "source": "https://github.com/sebastianbergmann/version/tree/master"
-            },
             "time": "2016-10-03T07:35:21+00:00"
         },
         {
@@ -7486,5 +7466,5 @@
         "ext-gd": "*"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.0.0"
+    "plugin-api-version": "1.1.0"
 }

@@ -12,7 +12,6 @@ use app\models\kfapi\KfFormPay;
 use app\models\kfapi\KfPay;
 use app\models\kfapi\KfPayParts;
 use app\models\mfo\MfoReq;
-use app\models\payonline\CreatePay;
 use app\models\payonline\Partner;
 use app\models\PayschetPart;
 use app\models\Payschets;
@@ -27,6 +26,7 @@ use app\services\payment\payment_strategies\CreateFormMfoEcomPartsStrategy;
 use app\services\payment\payment_strategies\IMfoStrategy;
 use app\services\payment\payment_strategies\mfo\MfoAutoPayStrategy;
 use app\services\payment\payment_strategies\mfo\MfoPayLkCreateStrategy;
+use app\services\PaySchetService;
 use Yii;
 use yii\base\Exception;
 use yii\helpers\VarDumper;
@@ -41,6 +41,21 @@ use yii\web\Response;
 class PayController extends Controller
 {
     use CorsTrait;
+
+    /**
+     * @var PaySchetService
+     */
+    private $paySchetService;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function init()
+    {
+        parent::init();
+
+        $this->paySchetService = \Yii::$app->get(PaySchetService::class);
+    }
 
     public function behaviors()
     {
@@ -97,10 +112,18 @@ class PayController extends Controller
 
         // рубли в копейки
         // TODO: in model validation
+        // TODO: in other currency conversation
         $form->amount *= 100;
         $form->client = $mfo->getRequestData('client');
 
-        Yii::warning('/pay/lk mfo='. $mfo->mfo . " sum=" . $form->amount . " extid=" . $form->extid, 'mfo');
+        $message = sprintf(
+            '/pay/lk mfo=%d sum=%d currency=%s extid=%d',
+            $mfo->mfo,
+            $form->amount,
+            $form->currency,
+            $form->extid
+        );
+        Yii::warning($message, 'mfo');
         $paymentStrategy = new MfoPayLkCreateStrategy($form);
         try {
             $payschet = $paymentStrategy->exec();
@@ -204,6 +227,15 @@ class PayController extends Controller
     }
 
     // TODO: refact to strategies
+
+    /**
+     * @throws \yii\web\UnauthorizedHttpException
+     * @throws ForbiddenHttpException
+     * @throws BadRequestHttpException
+     * @throws \yii\db\Exception
+     * @throws CreatePayException
+     * @throws Exception
+     */
     public function actionAutoParts()
     {
         $mfo = new MfoReq();
@@ -241,14 +273,13 @@ class PayController extends Controller
 
         Yii::warning('/pay/auto mfo='. $mfo->mfo . " sum=".$kfPay->amount . " extid=".$kfPay->extid, 'mfo');
 
-        $pay = new CreatePay();
         $mutex = new FileMutex();
         if (!empty($kfPay->extid)) {
             //проверка на повторный запрос
             if (!$mutex->acquire('getPaySchetExt' . $kfPay->extid, 30)) {
                 throw new Exception('getPaySchetExt: error lock!');
             }
-            $paramsExist = $pay->getPaySchetExt($kfPay->extid, $usl, $mfo->mfo);
+            $paramsExist = $this->paySchetService->getPaySchetExt($kfPay->extid, $usl, $mfo->mfo);
             if ($paramsExist) {
                 if ($kfPay->amount == $paramsExist['sumin']) {
                     return ['status' => 1, 'message' => '', 'id' => (int)$paramsExist['IdPay']];
@@ -275,7 +306,15 @@ class PayController extends Controller
         }
 
         $kfPay->timeout = 30;
-        $params = $pay->payToMfo($kfCard->user, [$kfPay->extid, $Card->ID, $TcbGate->AutoPayIdGate], $kfPay, $usl, TCBank::$bank, $mfo->mfo, $TcbGate->AutoPayIdGate);
+        $params = $this->paySchetService->payToMfo(
+            $kfCard->user,
+            [$kfPay->extid, $Card->ID, $TcbGate->AutoPayIdGate],
+            $kfPay,
+            $usl,
+            TCBank::$bank,
+            $mfo->mfo,
+            $TcbGate->AutoPayIdGate
+        );
 
         foreach ($mfo->Req()['parts'] as $part) {
             $payschetPart = new PayschetPart();
@@ -295,7 +334,7 @@ class PayController extends Controller
         $params['card']['month'] = $Card->getMonth();
 
         $payschets = new Payschets();
-        $pay->setKardToPaySchet($params['IdPay'], $Card->ID);
+        $this->paySchetService->setKardToPaySchet($params['IdPay'], $Card->ID);
 
         //данные карты
         $payschets->SetCardPay($params['IdPay'], [
@@ -318,7 +357,7 @@ class PayController extends Controller
             ]);
 
         } else {
-            $pay->CancelReq($params['IdPay'],'Платеж не проведен');
+            $this->paySchetService->cancelReq($params['IdPay'],'Платеж не проведен');
         }
 
         return ['status' => 1, 'message' => '', 'id' => (int)$params['IdPay']];

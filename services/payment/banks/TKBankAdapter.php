@@ -58,6 +58,7 @@ use app\services\payment\models\PaySchet;
 use app\services\payment\exceptions\reRequestingStatusException;
 use app\services\payment\exceptions\reRequestingStatusOkException;
 use Carbon\Carbon;
+use Faker\Provider\Base;
 use qfsx\yii2\curl\Curl;
 use SimpleXMLElement;
 use Yii;
@@ -1251,6 +1252,9 @@ class TKBankAdapter implements IBankAdapter
         $paySchet = $donePayForm->getPaySchet();
 
         if($paySchet->IsNeed3DSVerif) {
+            Yii::warning('TKBankAdapter confirmBy3DSv2: ID=' . $paySchet->ID
+                . ' IsNeed3DSVerif=' . $paySchet->IsNeed3DSVerif
+            );
             $this->validateBy3DSv2($donePayForm);
         }
         return $this->finishBy3DSv2($donePayForm);
@@ -1275,6 +1279,14 @@ class TKBankAdapter implements IBankAdapter
         $confirm3DSv2Request->CardInfo = [
             'CardRefId' => $cardRefId,
         ];
+
+        Yii::warning('TKBankAdapter get cardRefId cache: paySchet.ID=' . $donePayForm->getPaySchet()->ID
+            . ' paySchet.Extid=' . $donePayForm->getPaySchet()->Extid
+            . ' cardRefId=' . $cardRefId
+        );
+        Yii::warning('TKBankAdapter get paySchet: paySchet.ID=' . $donePayForm->getPaySchet()->ID
+            . ' cardRefId=' . $donePayForm->getPaySchet()->CardRefId3DS
+        );
 
         $queryData = Json::encode($confirm3DSv2Request->getAttributes());
         $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
@@ -1369,6 +1381,11 @@ class TKBankAdapter implements IBankAdapter
                 if(!in_array($status, BaseResponse::STATUSES)) {
                     throw new BankAdapterResponseException('Ошибка преобразования статусов');
                 }
+
+                if($status == BaseResponse::STATUS_DONE && isset($xml['orderinfo']['orderid'])) {
+                    $checkStatusPayResponse->transId = $xml['orderinfo']['orderid'];
+                }
+
                 $checkStatusPayResponse->status = $status;
                 $checkStatusPayResponse->xml = $xml;
                 $checkStatusPayResponse->rrn = $xml['orderadditionalinfo']['rrn'] ?? '';
@@ -1496,7 +1513,6 @@ class TKBankAdapter implements IBankAdapter
     /**
      * @param GetBalanceRequest $getBalanceRequest
      * @return GetBalanceResponse
-     * @throws BankAdapterResponseException
      */
     public function getBalance(GetBalanceRequest $getBalanceRequest): GetBalanceResponse
     {
@@ -1511,9 +1527,7 @@ class TKBankAdapter implements IBankAdapter
         $request['account'] = $getBalanceRequest->accountNumber;
         $response = $this->getBalanceAcc($request);
         if (!isset($response['amount']) && $response['status'] === 0) {
-            throw new BankAdapterResponseException(
-                "Balance service:: TKB request failed for type: $type message: " . $response['message']
-            );
+            Yii::warning("Balance service:: TKB request failed for type: $type message: " . $response['message']);
         }
         $getBalanceResponse->amount = (float)$response['amount'];
         $getBalanceResponse->currency = 'RUB';

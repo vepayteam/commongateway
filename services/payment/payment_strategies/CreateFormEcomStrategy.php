@@ -10,6 +10,7 @@ use app\models\kfapi\KfPay;
 use app\models\kfapi\KfRequest;
 use app\models\TU;
 use app\services\payment\payment_strategies\traits\PaymentFormTrait;
+use app\services\PaySchetService;
 use Yii;
 use yii\db\Exception;
 use yii\mutex\FileMutex;
@@ -28,8 +29,16 @@ class CreateFormEcomStrategy implements IPaymentStrategy
         $this->request = $kfRequest;
     }
 
+    /**
+     * @throws \app\services\payment\exceptions\CreatePayException
+     * @throws Exception
+     * @throws \yii\base\InvalidConfigException
+     */
     public function exec()
     {
+        /** @var PaySchetService $paySchetService */
+        $paySchetService = \Yii::$app->get(PaySchetService::class);
+
         $kfPay = new KfPay();
         $kfPay->scenario = KfPay::SCENARIO_FORM;
         $kfPay->load($this->request->req, '');
@@ -45,15 +54,13 @@ class CreateFormEcomStrategy implements IPaymentStrategy
         }
         Yii::warning('/merchant/pay id='. $this->request->IdPartner . " sum=".$kfPay->amount . " extid=".$kfPay->extid, 'mfo');
 
-        $pay = $this->createPay();
-
         $mutex = new FileMutex();
         if (!empty($kfPay->extid)) {
             //проверка на повторный запрос
             if (!$mutex->acquire('getPaySchetExt' . $kfPay->extid, 30)) {
                 throw new Exception('getPaySchetExt: error lock!');
             }
-            $paramsExist = $pay->getPaySchetExt($kfPay->extid, $usl, $this->request->IdPartner);
+            $paramsExist = $paySchetService->getPaySchetExt($kfPay->extid, $usl, $this->request->IdPartner);
             if ($paramsExist) {
                 if ($kfPay->amount == $paramsExist['sumin']) {
                     return ['status' => 1, 'id' => (int)$paramsExist['IdPay'], 'url' => $kfPay->GetPayForm($paramsExist['IdPay']), 'message' => ''];
@@ -63,7 +70,7 @@ class CreateFormEcomStrategy implements IPaymentStrategy
             }
         }
 
-        $params = $pay->payToMfo($this->getUser(), [$kfPay->descript], $kfPay, $usl, TCBank::$bank, $this->request->IdPartner, 0);
+        $params = $paySchetService->payToMfo($this->getUser(), [$kfPay->descript], $kfPay, $usl, TCBank::$bank, $this->request->IdPartner, 0);
         if (!empty($kfPay->extid)) {
             $mutex->release('getPaySchetExt' . $kfPay->extid);
         }

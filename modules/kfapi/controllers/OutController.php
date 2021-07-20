@@ -11,8 +11,8 @@ use app\models\kfapi\KfOut;
 use app\models\kfapi\KfRequest;
 use app\models\mfo\MfoTestError;
 use app\models\payonline\Cards;
-use app\models\payonline\CreatePay;
 use app\models\Payschets;
+use app\services\PaySchetService;
 use Yii;
 use yii\base\Exception;
 use yii\helpers\VarDumper;
@@ -27,6 +27,21 @@ use yii\web\Response;
 class OutController extends Controller
 {
     use CorsTrait;
+
+    /**
+     * @var PaySchetService
+     */
+    private $paySchetService;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function init()
+    {
+        parent::init();
+
+        $this->paySchetService = \Yii::$app->get(PaySchetService::class);
+    }
 
     public function behaviors()
     {
@@ -87,7 +102,6 @@ class OutController extends Controller
             return ['status' => 0, 'message' => 'Услуга не найдена'];
         }
 
-        $pay = new CreatePay();
         $mutex = new FileMutex();
         if (!empty($kfOut->extid)) {
             if (!$mutex->acquire('getPaySchetExt' . $kfOut->extid, 30)) {
@@ -95,7 +109,7 @@ class OutController extends Controller
             }
 
             //проверка на повторный запрос
-            $params = $pay->getPaySchetExt($kfOut->extid, $usl, $kf->IdPartner);
+            $params = $this->paySchetService->getPaySchetExt($kfOut->extid, $usl, $kf->IdPartner);
             if ($params) {
                 if ($kfOut->amount == $params['sumin']) {
                     return ['status' => 1, 'id' => (int)$params['IdPay'], 'message' => ''];
@@ -115,7 +129,7 @@ class OutController extends Controller
             return ['status' => 0, 'message' => 'Ошибка формирования платежа'];
         }
         //здесь происходит сохранение платежа в бд.
-        $params = $pay->payToCard(null, [Cards::MaskCard($kfOut->cardnum), $token, $kfOut->document_id, $kfOut->fullname], $kfOut, $usl, TCBank::$bank, $kf->IdPartner, $kfOut->sms);
+        $params = $this->paySchetService->payToCard(null, [Cards::MaskCard($kfOut->cardnum), $token, $kfOut->document_id, $kfOut->fullname], $kfOut, $usl, TCBank::$bank, $kf->IdPartner, $kfOut->sms);
         if (!empty($kfOut->extid)) {
             $mutex->release('getPaySchetExt' . $kfOut->extid);
         }
@@ -134,7 +148,7 @@ class OutController extends Controller
         //антифрод должен рабоатть после записи в базу.
         $anti_fraud = new AntiFraudRefund($params['IdPay'], $kf->IdPartner, Cards::MaskCard($kfOut->cardnum));
         if (!$anti_fraud->validate()) {
-            $pay->CancelReq($params['IdPay'], 'Повторный платеж');
+            $this->paySchetService->cancelReq($params['IdPay'], 'Повторный платеж');
             Yii::warning("out/paycard: Повторный платеж", 'mfo');
             return ['status' => 0, 'id' => 0, 'message' => 'Повторный платеж'];
         }
@@ -160,7 +174,7 @@ class OutController extends Controller
                 ]);
 
             } else {
-                $pay->CancelReq($params['IdPay'],'Платеж не проведен');
+                $this->paySchetService->cancelReq($params['IdPay'],'Платеж не проведен');
             }
         }
 
@@ -194,14 +208,13 @@ class OutController extends Controller
 
         $kfOut->descript = str_replace(" ", " ", $kfOut->descript); //0xA0 пробел на 0x20
 
-        $pay = new CreatePay();
         $mutex = new FileMutex();
         if (!empty($kfOut->extid)) {
             //проверка на повторный запрос
             if (!$mutex->acquire('getPaySchetExt' . $kfOut->extid, 30)) {
                 throw new Exception('getPaySchetExt: error lock!');
             }
-            $params = $pay->getPaySchetExt($kfOut->extid, $usl, $kf->IdPartner);
+            $params = $this->paySchetService->getPaySchetExt($kfOut->extid, $usl, $kf->IdPartner);
             if ($params) {
                 if ($kfOut->amount == $params['sumin']) {
                     return ['status' => 1, 'id' => (int)$params['IdPay'], 'message' => ''];
@@ -213,7 +226,15 @@ class OutController extends Controller
 
         Yii::warning('/out/ul kfmfo='. $kf->IdPartner . " sum=".$kfOut->amount . " extid=".$kfOut->extid, 'mfo');
 
-        $params = $pay->payToCard(null, [$kfOut->account, $kfOut->bic, $kfOut->name, $kfOut->inn, $kfOut->kpp, $kfOut->descript], $kfOut, $usl, TCBank::$bank, $kf->IdPartner, $kfOut->sms);
+        $params = $this->paySchetService->payToCard(
+            null,
+            [$kfOut->account, $kfOut->bic, $kfOut->name, $kfOut->inn, $kfOut->kpp, $kfOut->descript],
+            $kfOut,
+            $usl,
+            TCBank::$bank,
+            $kf->IdPartner,
+            $kfOut->sms
+        );
         if (!empty($kfOut->extid)) {
             $mutex->release('getPaySchetExt' . $kfOut->extid);
         }
@@ -246,7 +267,7 @@ class OutController extends Controller
                 ]);
 
             } else {
-                $pay->CancelReq($params['IdPay'],'Платеж не проведен');
+                $this->paySchetService->cancelReq($params['IdPay'],'Платеж не проведен');
             }
         }
 
@@ -281,14 +302,13 @@ class OutController extends Controller
 
         $kfOut->descript = str_replace(" ", " ", $kfOut->descript); //0xA0 пробел на 0x20
 
-        $pay = new CreatePay();
         $mutex = new FileMutex();
         if (!empty($kfOut->extid)) {
             //проверка на повторный запрос
             if (!$mutex->acquire('getPaySchetExt' . $kfOut->extid, 30)) {
                 throw new Exception('getPaySchetExt: error lock!');
             }
-            $params = $pay->getPaySchetExt($kfOut->extid, $usl, $kf->IdPartner);
+            $params = $this->paySchetService->getPaySchetExt($kfOut->extid, $usl, $kf->IdPartner);
             if ($params) {
                 if ($kfOut->amount == $params['sumin']) {
                     return ['status' => 1, 'id' => (int)$params['IdPay'], 'message' => ''];
@@ -300,7 +320,15 @@ class OutController extends Controller
 
         Yii::warning('/out/fl kfmfo='. $kf->IdPartner . " sum=".$kfOut->amount . " extid=".$kfOut->extid, 'mfo');
 
-        $params = $pay->payToCard(null, [$kfOut->account, $kfOut->bic, $kfOut->fio, $kfOut->descript], $kfOut, $usl, TCBank::$bank, $kf->IdPartner, $kfOut->sms);
+        $params = $this->paySchetService->payToCard(
+            null,
+            [$kfOut->account, $kfOut->bic, $kfOut->fio, $kfOut->descript],
+            $kfOut,
+            $usl,
+            TCBank::$bank,
+            $kf->IdPartner,
+            $kfOut->sms
+        );
         if (!empty($kfOut->extid)) {
             $mutex->release('getPaySchetExt' . $kfOut->extid);
         }
@@ -331,7 +359,7 @@ class OutController extends Controller
                 ]);
 
             } else {
-                $pay->CancelReq($params['IdPay'],'Платеж не проведен');
+                $this->paySchetService->cancelReq($params['IdPay'],'Платеж не проведен');
             }
 
         }
@@ -366,14 +394,13 @@ class OutController extends Controller
 
         $kfOut->descript = str_replace(" ", " ", $kfOut->descript); //0xA0 пробел на 0x20
 
-        $pay = new CreatePay();
         $mutex = new FileMutex();
         if (!empty($kfOut->extid)) {
             //проверка на повторный запрос
             if (!$mutex->acquire('getPaySchetExt' . $kfOut->extid, 30)) {
                 throw new Exception('getPaySchetExt: error lock!');
             }
-            $params = $pay->getPaySchetExt($kfOut->extid, $usl, $kf->IdPartner);
+            $params = $this->paySchetService->getPaySchetExt($kfOut->extid, $usl, $kf->IdPartner);
             if ($params) {
                 if ($kfOut->amount == $params['sumin']) {
                     return ['status' => 1, 'id' => (int)$params['IdPay'], 'message' => ''];
@@ -385,7 +412,15 @@ class OutController extends Controller
 
         Yii::warning('/out/ndfl kfmfo='. $kf->IdPartner . " sum=".$kfOut->amount . " extid=".$kfOut->extid, 'mfo');
 
-        $params = $pay->payToCard(null, [$kfOut->account, $kfOut->bic, $kfOut->name, $kfOut->inn, $kfOut->kpp, $kfOut->descript], $kfOut, $usl, TCBank::$bank, $kf->IdPartner, $kfOut->sms);
+        $params = $this->paySchetService->payToCard(
+            null,
+            [$kfOut->account, $kfOut->bic, $kfOut->name, $kfOut->inn, $kfOut->kpp, $kfOut->descript],
+            $kfOut,
+            $usl,
+            TCBank::$bank,
+            $kf->IdPartner,
+            $kfOut->sms
+        );
         if (!empty($kfOut->extid)) {
             $mutex->release('getPaySchetExt' . $kfOut->extid);
         }
@@ -412,7 +447,7 @@ class OutController extends Controller
                 ]);
 
             } else {
-                $pay->CancelReq($params['IdPay'], $ret['message']);
+                $this->paySchetService->cancelReq($params['IdPay'], $ret['message']);
             }
         }
 
@@ -447,14 +482,13 @@ class OutController extends Controller
 
         $kfOut->descript = str_replace(" ", " ", $kfOut->descript); //0xA0 пробел на 0x20
 
-        $pay = new CreatePay();
         $mutex = new FileMutex();
         if (!empty($kfOut->extid)) {
             //проверка на повторный запрос
             if (!$mutex->acquire('getPaySchetExt' . $kfOut->extid, 30)) {
                 throw new Exception('getPaySchetExt: error lock!');
             }
-            $params = $pay->getPaySchetExt($kfOut->extid, $usl, $kf->IdPartner);
+            $params = $this->paySchetService->getPaySchetExt($kfOut->extid, $usl, $kf->IdPartner);
             if ($params) {
                 if ($kfOut->amount == $params['sumin']) {
                     return ['status' => 1, 'id' => (int)$params['IdPay'], 'message' => ''];
@@ -465,7 +499,14 @@ class OutController extends Controller
         }
 
         $kfOut->bic = TCBank::BIC;
-        $params = $pay->payToCard(null, [$kfOut->account, $kfOut->bic, $kfOut->name, $kfOut->inn, $kfOut->kpp, $kfOut->descript], $kfOut, $usl, TCBank::$bank, $kf->IdPartner);
+        $params = $this->paySchetService->payToCard(
+            null,
+            [$kfOut->account, $kfOut->bic, $kfOut->name, $kfOut->inn, $kfOut->kpp, $kfOut->descript],
+            $kfOut,
+            $usl,
+            TCBank::$bank,
+            $kf->IdPartner
+        );
         if (!empty($kfOut->extid)) {
             $mutex->release('getPaySchetExt' . $kfOut->extid);
         }
@@ -488,7 +529,7 @@ class OutController extends Controller
             ]);
 
         } else {
-            $pay->CancelReq($params['IdPay'],'Платеж не проведен');
+            $this->paySchetService->cancelReq($params['IdPay'],'Платеж не проведен');
         }
 
         return ['status' => 1, 'id' => (int)$params['IdPay'], 'message' => ''];

@@ -76,11 +76,11 @@ abstract class AbstractClient
             RequestOptions::HEADERS => [],
         ];
 
-        if (!empty($parameters) and $method === self::METHOD_POST) {
+        if (!empty($parameters) and in_array($method, [self::METHOD_POST, self::METHOD_PUT])) {
             $options[RequestOptions::JSON] = $parameters;
         }
 
-        if (!empty($parameters) and in_array($method, [self::METHOD_GET, self::METHOD_PUT])) {
+        if (!empty($parameters) and in_array($method, [self::METHOD_GET])) {
             $options[RequestOptions::QUERY] = $parameters;
         }
 

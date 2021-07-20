@@ -6,7 +6,6 @@ namespace app\models\planner;
 
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
-use app\models\payonline\CreatePay;
 use app\models\payonline\Provparams;
 use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
@@ -234,9 +233,9 @@ class ReturnComisMfo
             'Inn' => "7728487400",
             'Kpp' => "772801001",
             'Account' => $schet,
-            'Bic' => "044525388",
-            'Bank' => "ТКБ БАНК ПАО",
-            'BankAccount' => "30101810800000000388"
+            'Bic' => "044525999",
+            'Bank' => "ТОЧКА ПАО БАНКА \"ФК ОТКРЫТИЕ\"",
+            'BankAccount' => "30101810845250000999"
         ])->execute();
 
         $tr->commit();

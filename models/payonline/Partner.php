@@ -9,14 +9,11 @@ use app\models\partner\admin\structures\VyvodSystemFilterParams;
 use app\models\partner\admin\VoznagStat;
 use app\models\partner\UserLk;
 use app\models\sms\tables\AccessSms;
-use app\models\TU;
 use app\services\partners\models\PartnerOption;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
-use Yii;
 use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
-use yii\web\UploadedFile;
 
 /**
  * This is the model class for table "partner".
@@ -145,11 +142,10 @@ class Partner extends ActiveRecord
     public const SCENARIO_SELFREG = 'selfreg';
     public const VEPAY_ID = 1;
 
-
     public static $TypeContrag = ['Мерчант', 'Партнер'];
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public static function tableName()
     {
@@ -157,7 +153,8 @@ class Partner extends ActiveRecord
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
+     * @todo Легаси. Убрать из ActiveRecord в отдельную форму
      */
     public function rules()
     {
@@ -170,6 +167,7 @@ class Partner extends ActiveRecord
             [['UrAdres', 'PostAdres', 'Apple_PayProcCert'], 'string', 'max' => 1000],
             [['Name', 'UrLico'], 'string', 'max' => 250],
             [[
+                /* @todo Удалить */
                 'MtsLoginParts', 'MtsPasswordParts', 'MtsTokenParts',
                 'MtsLoginAft', 'MtsPasswordAft', 'MtsTokenAft',
                 'MtsLoginJkh', 'MtsPasswordJkh', 'MtsTokenJkh',
@@ -181,7 +179,7 @@ class Partner extends ActiveRecord
                 'MtsLoginPerevod', 'MtsPasswordPerevod', 'MtsTokenPerevod',
                 'MtsLoginOctVyvod', 'MtsPasswordOctVyvod', 'MtsTokenOctVyvod',
                 'MtsLoginOctPerevod', 'MtsPasswordOctPerevod', 'MtsTokenOctPerevod',
-                ], 'string', 'max' => 500
+            ], 'string', 'max' => 500
             ],
             [['URLSite', 'PodpisantFull', 'PodpDoljpost', 'PodpDoljpostRod', 'PodpOsnovan', 'PodpOsnovanRod',
                 'KontTehFio', 'KontFinansFio', 'BankName', 'PaaswordApi', 'MtsLogin', 'MtsPassword', 'MtsToken',
@@ -200,10 +198,10 @@ class Partner extends ActiveRecord
             [['Email', 'KontTehEmail', 'KontFinansEmail', 'EmailNotif'], '\app\models\EmailListValidator'],
             [['INN', 'KPP', 'BikBank', 'OGRN', 'NumDogovor', 'DateDogovor', 'SchetTcb', 'SchetTcbTransit', 'SchetTcbNominal', 'SchetTcbParts', 'SchetTCBUnreserve'], 'string', 'max' => 20],
             [['Name', 'UrLico', 'UrAdres', 'PostAdres', 'Phone'], 'required', 'on' => self::SCENARIO_SELFREG],
-            [['INN', 'OGRN', 'PodpisantShort', 'PodpisantFull', 'PodpOsnovan', 'PodpOsnovanRod'], 'required', 'on' => self::SCENARIO_SELFREG, 'when' => function($model) {
+            [['INN', 'OGRN', 'PodpisantShort', 'PodpisantFull', 'PodpOsnovan', 'PodpOsnovanRod'], 'required', 'on' => self::SCENARIO_SELFREG, 'when' => function ($model) {
                 return in_array($model->UrState, [0, 1]);
             }],
-            [['KPP', 'PodpDoljpost', 'PodpDoljpostRod', 'BikBank', 'BankName', 'RSchet', 'KSchet'], 'required', 'on' => self::SCENARIO_SELFREG, 'when' => function($model) {
+            [['KPP', 'PodpDoljpost', 'PodpDoljpostRod', 'BikBank', 'BankName', 'RSchet', 'KSchet'], 'required', 'on' => self::SCENARIO_SELFREG, 'when' => function ($model) {
                 return $model->UrState == 0;
             }],
             [['OrangeDataSingKey', 'OrangeDataConKey', 'OrangeDataConCert', 'Apple_MerchIdentKey', 'Apple_MerchIdentCert'], 'file', 'skipOnEmpty' => true, 'extensions' => 'key,crt,cer']
@@ -211,7 +209,8 @@ class Partner extends ActiveRecord
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
+     * @todo Легаси. Убрать из ActiveRecord в отдельную форму
      */
     public function attributeLabels()
     {
@@ -349,6 +348,10 @@ class Partner extends ActiveRecord
         ];
     }
 
+    /**
+     * {@inheritdoc}
+     * @todo Легаси. Убрать из ActiveRecord в отдельную форму
+     */
     public function attributeHints()
     {
         return [
@@ -356,333 +359,42 @@ class Partner extends ActiveRecord
         ];
     }
 
-    public function GetError()
-    {
-        $err = $this->firstErrors;
-        $err = array_pop($err);
-        return $err;
-    }
-
-    /**
-     * @param bool $insert
-     * @return bool
-     */
-    public function beforeSave($insert)
-    {
-        if ($insert) {
-            $this->DateRegister = time();
-        }
-
-        return parent::beforeSave($insert);
-    }
-
-    /**
-     * @param $IdPart
-     * @return null|Partner
-     */
-    public static function getPartner($IdPart)
-    {
-        if (!UserLk::IsAdmin(\Yii::$app->user)) {
-            $IdPart = UserLk::getPartnerId(\Yii::$app->user);
-        }
-
-        return Partner::findOne($IdPart);
-    }
-
-    /**
-     * @return ActiveQuery
-     */
-    public function getPartner_bank_rekviz()
+    public function getPartner_bank_rekviz(): ActiveQuery
     {
         return $this->hasMany(PartnerBankRekviz::class, ['IdPartner' => 'ID']);
     }
 
-    /**
-     * @return ActiveQuery
-     */
-    public function getPartnerDogovor()
+    public function getPartnerDogovor(): ActiveQuery
     {
         return $this->hasMany(PartnerDogovor::class, ['IdPartner' => 'ID']);
     }
 
-    /**
-     * @return ActiveQuery
-     */
-    public function getPaySchets()
+    public function getPaySchets(): ActiveQuery
     {
         return $this->hasMany(PaySchet::class, ['IdOrg' => 'ID']);
     }
 
-    public function CreateUslug()
+    public function getAccessSms(): ActiveQuery
     {
-        $usluga = new Uslugatovar();
-        $usluga->IDPartner = $this->ID;
-        $usluga->IsCustom = TU::$ECOM;
-        $usluga->NameUsluga = "Оплата.".$this->Name;
-        $usluga->PcComission = 2.2;
-        $usluga->ProvComisPC = 1.85;
-        $usluga->ProvComisMin = 0;
-        $usluga->TypeExport = 1;
-        $usluga->save(false);
-
-        $usluga = new Uslugatovar();
-        $usluga->IDPartner = $this->ID;
-        $usluga->IsCustom = TU::$AVTOPLATECOM;
-        $usluga->NameUsluga = "Автоплатеж.".$this->Name;
-        $usluga->PcComission = 2.2;
-        $usluga->ProvComisPC = 2.0;
-        $usluga->ProvComisMin = 0.60;
-        $usluga->TypeExport = 1;
-        $usluga->save(false);
-
-        $usluga = new Uslugatovar();
-        $usluga->IDPartner = 1;
-        $usluga->ExtReestrIDUsluga = $this->ID;
-        $usluga->IsCustom = TU::$VYVODPAYS;
-        $usluga->NameUsluga = "Перечисление." . $this->Name;
-        $usluga->PcComission = 0;
-        $usluga->ProvComisPC = 0;
-        $usluga->ProvComisMin = 25;
-        $usluga->TypeExport = 1;
-        $usluga->save(false);
+        return $this->hasOne(AccessSms::class, ['partner_id' => 'ID']);
     }
 
-    /**
-     * Создание услуг МФО при регистрации
-     * @param Partner $partner
-     */
-    public function CreateUslugMfo()
+    public function getDistribution(): ActiveQuery
     {
-        $usluga = new Uslugatovar();
-        $usluga->IDPartner = $this->ID;
-        $usluga->IsCustom = TU::$TOSCHET;
-        $usluga->NameUsluga = "Выдача займа на счет." . $this->Name;
-        $usluga->PcComission = 0;
-        $usluga->TypeExport = 1;
-        $usluga->ProvComisPC = 0.2;
-        $usluga->ProvComisMin = 25;
-        $usluga->ProvVoznagPC = 0.4;
-        $usluga->ProvVoznagMin = 35;
-        $usluga->save(false);
-
-        $usluga = new Uslugatovar();
-        $usluga->IDPartner = $this->ID;
-        $usluga->IsCustom = TU::$TOCARD;
-        $usluga->NameUsluga = "Выдача займа на карту." . $this->Name;
-        $usluga->PcComission = 0;
-        $usluga->TypeExport = 1;
-        $usluga->ProvComisPC = 0.25;
-        $usluga->ProvComisMin = 25;
-        $usluga->ProvVoznagPC = 0.5;
-        $usluga->ProvVoznagMin = 45;
-        $usluga->save(false);
-
-        $usluga = new Uslugatovar();
-        $usluga->IDPartner = $this->ID;
-        $usluga->IsCustom = TU::$POGASHATF;
-        $usluga->NameUsluga = "Погашение займа AFT." . $this->Name;
-        $usluga->PcComission = 2.2;
-        $usluga->MinsumComiss = 0.01;
-        $usluga->ProvComisPC = 0.5;
-        $usluga->ProvComisMin = 25;
-        $usluga->TypeExport = 1;
-        $usluga->save(false);
-
-        /*$usluga = new Uslugatovar();
-        $usluga->IDPartner = $partner->ID;
-        $usluga->IsCustom = TU::$AVTOPLATATF;
-        $usluga->NameUsluga = "Автоплатеж по займу AFT.".$partner->Name;
-        $usluga->PcComission = 2.2;
-        $usluga->MinsumComiss = 0.60;
-        $usluga->ProvComisPC = 0.7;
-        $usluga->ProvComisMin = 40;
-        $usluga->TypeExport = 1;
-        $usluga->save(false);*/
-
-        $usluga = new Uslugatovar();
-        $usluga->IDPartner = $this->ID;
-        $usluga->IsCustom = TU::$POGASHECOM;
-        $usluga->NameUsluga = "Погашение займа ECOM." . $this->Name;
-        $usluga->PcComission = 2.2;
-        $usluga->MinsumComiss = 0.01;
-        $usluga->ProvComisPC = 1.85;
-        $usluga->ProvComisMin = 0;
-        $usluga->TypeExport = 1;
-        $usluga->save(false);
-
-        $usluga = new Uslugatovar();
-        $usluga->IDPartner = $this->ID;
-        $usluga->IsCustom = TU::$AVTOPLATECOM;
-        $usluga->NameUsluga = "Автоплатеж по займу ECOM." . $this->Name;
-        $usluga->PcComission = 2.2;
-        $usluga->MinsumComiss = 0.60;
-        $usluga->ProvComisPC = 2;
-        $usluga->ProvComisMin = 0.60;
-        $usluga->TypeExport = 1;
-        $usluga->save(false);
-
-        $usluga = new Uslugatovar();
-        $usluga->IDPartner = 1;
-        $usluga->ExtReestrIDUsluga = $this->ID;
-        $usluga->IsCustom = TU::$VYPLATVOZN;
-        $usluga->NameUsluga = "Комиссия." . $this->Name;
-        $usluga->PcComission = 0;
-        $usluga->ProvComisPC = 0;
-        $usluga->ProvComisMin = 25;
-        $usluga->TypeExport = 1;
-        $usluga->save(false);
-
-        $usluga = new Uslugatovar();
-        $usluga->IDPartner = 1;
-        $usluga->ExtReestrIDUsluga = $this->ID;
-        $usluga->IsCustom = TU::$VYVODPAYS;
-        $usluga->NameUsluga = "Перечисление." . $this->Name;
-        $usluga->PcComission = 0;
-        $usluga->ProvComisPC = 0;
-        $usluga->ProvComisMin = 25;
-        $usluga->TypeExport = 1;
-        $usluga->save(false);
-
-        $usluga = new Uslugatovar();
-        $usluga->IDPartner = 1;
-        $usluga->ExtReestrIDUsluga = $this->ID;
-        $usluga->IsCustom = TU::$REVERSCOMIS;
-        $usluga->NameUsluga = "Возмещение комиссии." . $this->Name;
-        $usluga->PcComission = 0;
-        $usluga->ProvComisPC = 0;
-        $usluga->ProvComisMin = 0;
-        $usluga->TypeExport = 1;
-        $usluga->save(false);
-
-        $usluga = new Uslugatovar();
-        $usluga->IDPartner = 1;
-        $usluga->ExtReestrIDUsluga = $this->ID;
-        $usluga->IsCustom = TU::$PEREVPAYS;
-        $usluga->NameUsluga = "Перечисление на выдачу." . $this->Name;
-        $usluga->PcComission = 0;
-        $usluga->ProvComisPC = 0;
-        $usluga->ProvComisMin = 0;
-        $usluga->TypeExport = 1;
-        $usluga->save(false);
-
-
+        return $this->hasOne(DistributionReports::class, ['partner_id' => 'ID']);
     }
 
-    public function getAccessSms(){
-        return $this->hasOne(AccessSms::class, ['partner_id'=>'ID']);
-    }
-
-    /**
-     * задает связь с моделью - DistributionReports
-    */
-    public function getDistribution()
-    {
-        return $this->hasOne(DistributionReports::class, ['partner_id'=>'ID']);
-    }
-
-    public function uploadKeysKkm()
-    {
-        $res1 = $res2 = $res3 = 1;
-        $path = Yii::$app->basePath . '/config/kassaclients/';
-        if (!file_exists($path)) {
-            if (!mkdir($path) && !is_dir($path)) {
-                throw new \RuntimeException(sprintf('Directory "%s" was not created', $path));
-            }
-        }
-        $uploadOrangeDataSingKey = UploadedFile::getInstance($this, 'OrangeDataSingKey');
-        if ($uploadOrangeDataSingKey) {
-            if (file_exists($path . $this->oldAttributes['OrangeDataSingKey'])) {
-                @unlink($path . $this->oldAttributes['OrangeDataSingKey']);
-            }
-            $res1 = $uploadOrangeDataSingKey->saveAs($path . $this->ID."_".$uploadOrangeDataSingKey->baseName . '.' . $uploadOrangeDataSingKey->extension);
-            $this->OrangeDataSingKey = $this->ID."_".$uploadOrangeDataSingKey->baseName . '.' . $uploadOrangeDataSingKey->extension;
-        } else {
-            $this->setAttribute('OrangeDataSingKey', $this->oldAttributes['OrangeDataSingKey']);
-        }
-
-        $uploadOrangeDataConKey = UploadedFile::getInstance($this, 'OrangeDataConKey');
-        if ($uploadOrangeDataConKey) {
-            if (file_exists($path . $this->oldAttributes['OrangeDataConKey'])) {
-                @unlink($path . $this->oldAttributes['OrangeDataConKey']);
-            }
-            $res2 = $uploadOrangeDataConKey->saveAs($path . $this->ID."_".$uploadOrangeDataConKey->baseName . '.' . $uploadOrangeDataConKey->extension);
-            $this->OrangeDataConKey = $this->ID."_".$uploadOrangeDataConKey->baseName . '.' . $uploadOrangeDataConKey->extension;
-        } else {
-            $this->setAttribute('OrangeDataConKey', $this->oldAttributes['OrangeDataConKey']);
-        }
-
-        $uploadOrangeDataConCert = UploadedFile::getInstance($this, 'OrangeDataConCert');
-        if ($uploadOrangeDataConCert) {
-            if (file_exists($path . $this->oldAttributes['OrangeDataConCert'])) {
-                @unlink($path . $this->oldAttributes['OrangeDataConCert']);
-            }
-            $res3 = $uploadOrangeDataConCert->saveAs($path . $this->ID."_".$uploadOrangeDataConCert->baseName . '.' . $uploadOrangeDataConCert->extension);
-            $this->OrangeDataConCert = $this->ID."_".$uploadOrangeDataConCert->baseName . '.' . $uploadOrangeDataConCert->extension;
-        } else {
-            $this->setAttribute('OrangeDataConCert', $this->oldAttributes['OrangeDataConCert']);
-        }
-
-        $this->save(false);
-
-        if (!$res1 || !$res2 || !$res3) {
-            return ['status' => 0, 'message' => 'Ошибка сохранения файла'];
-        }
-
-        return ['status' => 1];
-    }
-
-    public function uploadKeysApplepay()
-    {
-        $res1 = $res2 = 1;
-        $path = Yii::$app->basePath . '/config/applepayclients/';
-        if (!file_exists($path)) {
-            if (!mkdir($path) && !is_dir($path)) {
-                throw new \RuntimeException(sprintf('Directory "%s" was not created', $path));
-            }
-        }
-        $uploadApple_MerchIdentKey = UploadedFile::getInstance($this, 'Apple_MerchIdentKey');
-        if ($uploadApple_MerchIdentKey) {
-            if (file_exists($path . $this->oldAttributes['Apple_MerchIdentKey'])) {
-                @unlink($path . $this->oldAttributes['Apple_MerchIdentKey']);
-            }
-            $res1 = $uploadApple_MerchIdentKey->saveAs($path . $this->ID."_".$uploadApple_MerchIdentKey->baseName . '.' . $uploadApple_MerchIdentKey->extension);
-            $this->Apple_MerchIdentKey = $this->ID."_".$uploadApple_MerchIdentKey->baseName . '.' . $uploadApple_MerchIdentKey->extension;
-        } else {
-            $this->setAttribute('Apple_MerchIdentKey', $this->oldAttributes['Apple_MerchIdentKey']);
-        }
-
-        $uploadApple_MerchIdentCert = UploadedFile::getInstance($this, 'Apple_MerchIdentCert');
-        if ($uploadApple_MerchIdentCert) {
-            if (file_exists($path . $this->oldAttributes['Apple_MerchIdentCert'])) {
-                @unlink($path . $this->oldAttributes['Apple_MerchIdentCert']);
-            }
-            $res2 = $uploadApple_MerchIdentCert->saveAs($path . $this->ID."_".$uploadApple_MerchIdentCert->baseName . '.' . $uploadApple_MerchIdentCert->extension);
-            $this->Apple_MerchIdentCert = $this->ID."_".$uploadApple_MerchIdentCert->baseName . '.' . $uploadApple_MerchIdentCert->extension;
-        } else {
-            $this->setAttribute('Apple_MerchIdentCert', $this->oldAttributes['Apple_MerchIdentCert']);
-        }
-
-        $this->save(false);
-
-        if (!$res1 || !$res2) {
-            return ['status' => 0, 'message' => 'Ошибка сохранения файла'];
-        }
-
-        return ['status' => 1];
-
-    }
-
-    public function getUslugatovars()
+    public function getUslugatovars(): ActiveQuery
     {
         return $this->hasMany(Uslugatovar::class, ['IDPartner' => 'ID']);
     }
 
-    public function getOptions()
+    public function getOptions(): ActiveQuery
     {
         return $this->hasMany(PartnerOption::class, ['PartnerId' => 'ID']);
     }
 
-    public function getBankGates()
+    public function getBankGates(): ActiveQuery
     {
         return $this->hasMany(PartnerBankGate::class, ['PartnerId' => 'ID']);
     }
@@ -692,12 +404,12 @@ class Partner extends ActiveRecord
         return $this->getBankGates()->where(['Enabled' => 1]);
     }
 
-    public function getVyvodSystem()
+    public function getVyvodSystem(): ActiveQuery
     {
         return $this->hasMany(VyvodSystem::class, ['IdPartner' => 'ID']);
     }
 
-    public function getVyvodReestr()
+    public function getVyvodReestr(): ActiveQuery
     {
         return $this->hasMany(VyvodReestr::class, ['IdPartner' => 'ID']);
     }
