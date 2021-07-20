@@ -384,7 +384,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: "#/components/schemas/StatusChannel"
         default:
           description: Error (40X,500)
           content:
