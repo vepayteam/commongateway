@@ -40,7 +40,7 @@ class   KfPayParts extends KfPay
             [['document_id'], 'string', 'max' => 40, 'on' => [self::SCENARIO_FORM]],
             [['fullname'], 'string', 'max' => 80, 'on' => [self::SCENARIO_FORM]],
             [['successurl', 'failurl', 'cancelurl', 'postbackurl'], 'url', 'on' => [self::SCENARIO_FORM]],
-            [['successurl', 'failurl', 'cancelurl'], 'string', 'max' => 300, 'on' => [self::SCENARIO_FORM]],
+            [['successurl', 'failurl', 'cancelurl'], 'string', 'max' => 1000, 'on' => [self::SCENARIO_FORM]],
             [['descript'], 'string', 'max' => 200, 'on' => [self::SCENARIO_FORM]],
             [['card'], 'integer', 'on' => self::SCENARIO_AUTO],
             [['timeout'], 'integer', 'min' => 10, 'max' => 59, 'on' => [self::SCENARIO_FORM]],

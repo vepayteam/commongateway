@@ -16,8 +16,8 @@ return [
     'traceLevel' => YII_DEBUG ? 3 : 0,
     'targets' => [
         [
-            'class' => 'app\services\logs\targets\ReqMaskStdOutTarget',
-            'levels' => ['warning'],
+            'class' => 'app\services\logs\targets\SecurityStdOutTarget',
+            'levels' => ['warning', 'info'],
             'maskVars' => $maskVars
         ],
         [

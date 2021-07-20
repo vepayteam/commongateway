@@ -10,6 +10,7 @@ use app\models\partner\UserLk;
 use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
 use app\models\TU;
+use app\services\PartnerService;
 use app\services\payment\models\PaySchet;
 use Carbon\Carbon;
 use Yii;
@@ -112,6 +113,9 @@ class VoznagStatNew extends Model
      */
     private function mapReport(array $queryData, Partner $partner): array
     {
+        /** @var PartnerService $partnerService */
+        $partnerService = \Yii::$app->get(PartnerService::class);
+
         $result = array_map(static function(PaySchet $serviceSum) use ($partner): MiddleMapResult {
 
             $uslugatovar = $serviceSum->uslugatovar;
@@ -158,15 +162,15 @@ class VoznagStatNew extends Model
 
                 $filterParams = new VyvodSystemFilterParams(['dateFrom' => $dateFrom, 'dateTo' => $dateTo, 'filterByStateOp' => true, 'typeVyvyod' => $typeVyvyod]);
 
-                $row->SetSummVyveden($partner->getSummVyveden($filterParams)->scalar());
-                $row->SetDataVyveden($partner->getDataVyveden($filterParams)->scalar());
+                $row->SetSummVyveden($partnerService->getSummVyveden($partner, $filterParams));
+                $row->SetDataVyveden($partnerService->getDataVyveden($partner, $filterParams));
 
                 if ( in_array($row->getIsCustom(), [TU::$TOSCHET, TU::$TOCARD], true) ) {
                     $row->setSummPerechisl(0);
                     $row->setDataPerechisl(0);
                 } else {
-                    $row->setSummPerechisl($partner->getSummPerechisl($filterParams)->scalar());
-                    $row->setDataPerechisl($partner->getDataPerechisl($filterParams)->scalar());
+                    $row->setSummPerechisl($partnerService->getSummPerechisl($partner, $filterParams));
+                    $row->setDataPerechisl($partnerService->getDataPerechisl($partner, $filterParams));
                 }
 
                 $ret[$indx] = $row;

@@ -1,4 +1,5 @@
 <?php
+
 /* @var \yii\web\View $this */
 /* @var array $params */
 /* @var array $apple */
@@ -7,10 +8,12 @@
 /* @var \app\models\payonline\PayForm $payform */
 
 use app\services\partners\models\PartnerOption;
+use app\services\payment\helpers\PaymentHelper;
+use app\services\payment\models\Currency;
 use yii\bootstrap\ActiveForm;
 use yii\bootstrap\Html;
 ?>
-<div class="middle">
+<div id="middle-wrapper" class="middle middle-background">
 <section class="container">
     <div class="row margin-top24 rowlogo">
         <div class="col-xs-12">
@@ -27,7 +30,7 @@ use yii\bootstrap\Html;
             </div>
         <?php else: ?>
             <div class="infotop">
-                Cписанная cумма, списанная с карты, при успешном списании, вернется обратно на вашу банковскую карту.
+                Для проверки банковской карты с нее будет списано 11 р, затем будет произведен возврат
             </div>
         <?php endif; ?>
     <?php else: ?>
@@ -40,8 +43,20 @@ use yii\bootstrap\Html;
     <?php if ($params['IdUsluga'] != 1) : ?>
         <div class="row nopadding">
             <div class="col-xs-12">
-                <div class="info"><span>Сумма</span> <span class="pull-right blacksumm"><?=number_format($params['SummPay']/100.0, 2, ',', '')?> ₽</span></div>
-                <div class="info"><span>Комиссия</span> <span class="pull-right blacksumm"><?=number_format($params['ComissSumm']/100.0, 2, ',', '')?> ₽</span></div>
+                <div class="info">
+                    <span>Сумма </span>
+                    <span class="pull-right blacksumm">
+                        <?= PaymentHelper::formatSum($params['amountPay']) ?>
+                        <?= Currency::SYMBOLS[$params['currency']] ?>
+                    </span>
+                </div>
+                <div class="info">
+                    <span>Комиссия </span>
+                    <span class="pull-right blacksumm">
+                        <?= PaymentHelper::formatSum($params['amountCommission']) ?>
+                        <?= Currency::SYMBOLS[$params['currency']] ?>
+                    </span>
+                </div>
             </div>
         </div>
     <?php endif; ?>
@@ -246,6 +261,7 @@ use yii\bootstrap\Html;
 <noscript><div><img src="https://mc.yandex.ru/watch/66552382" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <?php
 $this->registerJs('payform.init();');
+$this->registerJs('payform.checkIframe();');
 if (isset($apple['IsUseApplepay']) && $apple['IsUseApplepay'] && isset($apple['Apple_MerchantID']) && !empty($apple['Apple_MerchantID'])) {
     $this->registerJs('payform.applepay("' . $apple['Apple_MerchantID'] . '", "' . ($params['SummFull'] / 100.0) . '", "' . $params['NamePartner'] . '");');
 }

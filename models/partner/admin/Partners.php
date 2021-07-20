@@ -4,6 +4,7 @@ namespace app\models\partner\admin;
 
 use app\models\payonline\Partner;
 use app\models\payonline\PartnerBankRekviz;
+use app\services\PartnerService;
 use yii\base\DynamicModel;
 
 class Partners
@@ -32,7 +33,10 @@ class Partners
      */
     public function updateContPartner($request)
     {
-        $partner = Partner::getPartner($request->post('IdPartner', 0));
+        /** @var PartnerService $partnerService */
+        $partnerService = \Yii::$app->get(PartnerService::class);
+
+        $partner = $partnerService->getPartner($request->post('IdPartner', 0));
         if (!$partner) {
             $this->loadError = true;
             $this->loadErrorMesg = ['Не найден'];

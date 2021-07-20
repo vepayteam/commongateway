@@ -2,19 +2,22 @@
 
 namespace app\controllers;
 
-use app\models\bank\TCBank;
-use app\models\bank\TcbGate;
-use app\models\kfapi\KfPay;
-use app\models\payonline\CreatePay;
 use app\models\payonline\OrderPay;
-use app\models\payonline\Partner;
-use app\models\payonline\PayForm;
-use app\models\payonline\RefererPoint;
-use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
-use app\models\TU;
+use app\services\payment\banks\bank_adapter_responses\BaseResponse;
+use app\services\payment\exceptions\GateException;
+use app\services\payment\forms\CreatePayForm;
+use app\services\payment\forms\DonePayForm;
+use app\services\payment\forms\OkPayForm;
+use app\services\payment\models\PaySchet;
+use app\services\payment\payment_strategies\CreatePayStrategy;
+use app\services\payment\payment_strategies\DonePayStrategy;
+use app\services\payment\payment_strategies\OkPayStrategy;
+use app\services\payment\WidgetService;
+use Exception;
 use Yii;
-use yii\db\Exception;
+use yii\helpers\Json;
+use yii\helpers\Url;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -24,9 +27,7 @@ class WidgetController extends Controller
 {
     public $layout = 'widgetlayout';
 
-    private $bank = 2; //0 - РСБ , 1 - Россия 2 - ТКБ
-
-    public function actions()
+    public function actions(): array
     {
         return [
             'error' => [
@@ -40,7 +41,7 @@ class WidgetController extends Controller
      * @return bool
      * @throws BadRequestHttpException
      */
-    public function beforeAction($action)
+    public function beforeAction($action): bool
     {
         if (in_array($action->id, [
             'form',
@@ -54,278 +55,245 @@ class WidgetController extends Controller
         return parent::beforeAction($action);
     }
 
-
     /**
      * Виджет для оплаты
      * @param $id
      * @return string
      * @throws NotFoundHttpException
      */
-    public function actionOrder($id)
+    public function actionOrder($id): string
     {
-        $order = OrderPay::findOne($id);
-        if (!$order || $order->IdDeleted == 1) {
+        $orderPay = OrderPay::findOne(['ID' => $id, 'IdDeleted' => 0]);
+        if (!$orderPay) {
             throw new NotFoundHttpException("Счет не найден");
         }
-        if ($order && $order->StateOrder != 0) {
+        if ($orderPay->StateOrder !== 0) { // Статус должен быть установлен в 0 (ожидает оплаты)
+            Yii::warning('WidgetController id ' .
+                $id .
+                ' статус не установлен в 0 (ожидание оплаты) текущий статус ' .
+                $orderPay->StateOrder
+            );
             throw new NotFoundHttpException("Счет не может быть оплачен");
         }
 
-        $uslug = Uslugatovar::findOne(['IDPartner' => $order->IdPartner, 'IsCustom' => 2, 'IsDeleted' => 0]);
-        if (!$uslug) {
+        $widgetService = new WidgetService($orderPay->IdPartner);
+        $partner = $widgetService->getPartner();
+        if (!$partner) {
             throw new NotFoundHttpException('Магазин не найден');
         }
 
-        $payform = new PayForm();
+        $uslugatovar = $widgetService->getUslugatovar();
+        if (!$uslugatovar) {
+            return $this->render('serviceunavailable', [
+                'partner' => $partner
+            ]);
+        }
+
+        $payForm = new CreatePayForm();
 
         return $this->render('index', [
-            'order' => $order,
+            'order' => $orderPay,
             'isorder' => 1,
-            'payform' => $payform,
-            'bank' => $this->bank
+            'payform' => $payForm,
         ]);
     }
 
-    public function actionPay()
+    /**
+     * @return string
+     * @throws NotFoundHttpException
+     */
+    public function actionPay(): string
     {
         $prov = Yii::$app->request->get('prov', 0);
         $id = Yii::$app->request->get('id', 0);
         $sum = Yii::$app->request->get('sum', 0);
         $info = htmlspecialchars(Yii::$app->request->get('info', ''));
-        $refer = Yii::$app->request->get('refer');
 
-        $partner = Partner::findOne(['ID' => $prov, 'IsDeleted' => 0]);
-        $uslug = Uslugatovar::findOne(['IDPartner' => $prov, 'IsCustom' => 2, 'IsDeleted' => 0]);
-        if (!$uslug || !$partner) {
+        $widgetService = new WidgetService($prov);
+        $partner = $widgetService->getPartner();
+        if (!$partner) {
             throw new NotFoundHttpException('Магазин не найден');
         }
+
+        $uslugatovar = $widgetService->getUslugatovar();
+        if (!$uslugatovar) {
+            return $this->render('serviceunavailable', [
+                'partner' => $partner
+            ]);
+        }
+
         if ($sum <= 0) {
             throw new NotFoundHttpException('Неверная сумма платежа');
         }
-        $order = new OrderPay();
-        $order->IdPartner = $partner->ID;
-        $order->SumOrder = $sum;
-        $order->Comment = 'Заказ '.$id.". ".$info;
-        if ($refer) {
-            $refererAgent = new RefererPoint();
-            $agent = $refererAgent->getAgentBySite($refer);
-        }
 
-        /*Yii::$app->view->params['colors'] = '';
-        if (!empty($uslug->ColorWdtMain)) {
-            Yii::$app->view->params['colors'] = [$uslug->ColorWdtMain, $uslug->ColorWdtActive];
-        }*/
-        $payform = new PayForm();
+        $orderPay = new OrderPay();
+        $orderPay->IdPartner = $partner->ID;
+        $orderPay->SumOrder = $sum;
+        $orderPay->Comment = 'Заказ ' . $id . '. ' . $info;
+
+        $payForm = new CreatePayForm();
+
         return $this->render('index', [
-            'order' => $order,
+            'order' => $orderPay,
             'isorder' => 0,
-            'payform' => $payform,
-            'bank' => $this->bank,
+            'payform' => $payForm,
         ]);
     }
 
     /**
-     * Форма оплаты своя (PCI DSS)
      * @return array|Response
      * @throws NotFoundHttpException
-     * @throws \yii\db\Exception
      */
     public function actionCreatepay()
     {
-        // TODO: переписать под стратегии
-        if (Yii::$app->request->isAjax) {
-            Yii::$app->response->format = Response::FORMAT_JSON;
+        if (!Yii::$app->request->isAjax) {
+            throw new NotFoundHttpException();
+        }
 
-            if (Yii::$app->request->post('isorder', 1) == 1) {
-                $order = OrderPay::findOne(['ID' => (int)Yii::$app->request->post('IdOrder')]);
-            } else {
-                //без счета
-                $order = new OrderPay();
-                if (!($order->load(Yii::$app->request->post(), 'Order') && $order->validate())) {
-                    return ['status' => 0, 'message' => 'Ошибка данных заказа'];
-                }
-            }
-            if (!$order) {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        if (intval(Yii::$app->request->post('isorder', 1)) === 1) {
+            $orderPay = OrderPay::findOne(['ID' => Yii::$app->request->post('IdOrder')]);
+            if (!$orderPay) {
+                Yii::warning('WidgetController не найден orderPay idOrder: ' . Yii::$app->request->post('IdOrder'));
                 return ['status' => 0, 'message' => 'Счет не найден'];
             }
-
-            if (!$order->IdPaySchet) {
-                $uslug = Uslugatovar::findOne(['IDPartner' => $order->IdPartner, 'IsCustom' => 2, 'IsDeleted' => 0]);
-
-                if (!$uslug) {
-                    return ['status' => 0, 'message' => 'Магазин не найден'];
-                }
-
-                $kfPay = new KfPay();
-                $kfPay->scenario = KfPay::SCENARIO_FORM;
-                $kfPay->setAttributes([
-                    'amount' => $order->SumOrder / 100.00,
-                    'descript' => $order->Comment,
-                    'successurl' => $uslug->UrlReturn,
-                    'failurl' => $uslug->UrlReturnFail
-                ]);
-
-                $pay = new CreatePay();
-                $data = $pay->payToMfo(null, [$order->ID, $order->Comment], $kfPay, $uslug->ID, $this->bank, $order->IdPartner, 0);
-                if ($data) {
-                    $order->IdPaySchet = $data['IdPay'];
-                    if ($order->ID) {
-                        $pay->setIdOrder($order->ID, $data);
-                    }
-                } else {
-                    return ['status' => 0, 'message' => 'Ошибка создания заказа'];
-                }
-            }
-
-            $payform = new PayForm();
-            $payform->load(Yii::$app->request->post(), 'PayForm');
-            $payform->IdPay = $order->IdPaySchet;
-            if (!$payform->validate()) {
-                return ['status' => 0, 'message' => $payform->GetError()];
-            }
-
-            Yii::warning("widgetCreatepay create id=" . $payform->IdPay);
-            //данные счета для оплаты
-            $payschets = new Payschets();
-            $params = $payschets->getSchetData($payform->IdPay,null);
-            if ($params && $params['DateCreate'] + $params['TimeElapsed'] > time()) {
-
-                Yii::$app->session->set('IdWidgetPay', $params['ID']);
-
-                if ($params['Status'] != 0 || $params['UserClickPay'] != 0 || !TU::IsInPay($params['IsCustom'])) {
-                    //нельзя оплачивать
-                    return $this->redirect(\yii\helpers\Url::to('/pay/orderok?id='.$params['ID']));
-                }
-
-                $params['card']['number'] = $payform->CardNumber;
-                $params['card']['holder'] = $payform->CardHolder;
-                $params['card']['year'] = $payform->CardYear;
-                $params['card']['month'] = $payform->CardMonth;
-                $params['card']['cvc'] = $payform->CardCVC;
-
-                //занести данные карты
-                $payschets->SetCardPay($params['ID'], $params['card']);
-
-                //$params['Bank'] == 2
-                $TcbGate = new TcbGate($params['IDPartner'],null, $params['IsCustom']);
-                $tcBank = new TCBank($TcbGate);
-                $ret = $tcBank->PayXml($params);
-
-                if ($ret['status'] == 1) {
-                    $payschets->SetStartPay($params['ID'], $ret['transac'], $payform->Email);
-                    //отправить запрос адреса формы 3ds
-                    return [
-                        'status' => 1,
-                        'url' => $ret['url'],
-                        'pa' => $ret['pa'],
-                        'md' => $ret['md'],
-                        'creq' => '',
-                        'termurl' => $payform->GetWidgetRetUrl($params['ID']),
-                    ];
-                } elseif ($ret['status'] == 2) {
-                    //отменить счет
-                    $payschets->confirmPay([
-                        'idpay' => $params['ID'],
-                        'result_code' => 2,
-                        'trx_id' => 0,
-                        'ApprovalCode' => '',
-                        'RRN' => '',
-                        'message' => $ret['message']
-                    ]);
-                    return $this->redirect(\yii\helpers\Url::to('/widget/orderok?id='.$params['ID']));
-
-                } else {
-                    return $ret;
-                }
-            } else {
-                return ['status' => 0, 'message' => 'Время для оплаты истекло'];
-            }
-
         } else {
-            throw new NotFoundHttpException();
+            //без счета
+            $orderPay = new OrderPay();
+            if (!$orderPay->load(Yii::$app->request->post(), 'Order') || !$orderPay->validate()) {
+                Yii::warning('WidgetController не удалось загрузить orderPay: ' . $orderPay->GetError());
+                return ['status' => 0, 'message' => 'Ошибка данных заказа'];
+            }
+        }
+
+        $widgetService = new WidgetService($orderPay->IdPartner);
+        $partner = $widgetService->getPartner();
+        $uslugatovar = $widgetService->getUslugatovar();
+        if (!$partner || !$uslugatovar) {
+            throw new NotFoundHttpException('Магазин не найден');
+        }
+
+        if (!$orderPay->IdPaySchet) {
+            $idPaySchet = $widgetService->createPaySchet($orderPay, $uslugatovar);
+            if ($idPaySchet === null) {
+                return ['status' => 0, 'message' => 'Ошибка создания заказа'];
+            }
+
+            $orderPay->IdPaySchet = $idPaySchet;
+        }
+
+        $createPayForm = new CreatePayForm();
+        $createPayForm->load(Yii::$app->request->post(), 'CreatePayForm');
+        $createPayForm->IdPay = $orderPay->IdPaySchet;
+        if (!$createPayForm->validate()) {
+            Yii::warning('WidgetController не удалось загрузить createPayForm: ' . $createPayForm->GetError());
+            return ['status' => 0, 'message' => $createPayForm->GetError()];
+        }
+
+        $paySchet = PaySchet::findOne(['ID' => $orderPay->IdPaySchet]);
+        if ($widgetService->isExpired($paySchet)) {
+            return ['status' => 0, 'message' => 'Время для оплаты истекло'];
+        }
+
+        $createPayStrategy = new CreatePayStrategy($createPayForm);
+        try {
+            $createPayStrategy->exec();
+        } catch (Exception $e) {
+            Yii::warning('WidgetController createPayStrategy exception: ' . $e->getMessage());
+            return ['status' => 0, 'message' => $e->getMessage()];
+        }
+
+        $createPayResponse = $createPayStrategy->getCreatePayResponse();
+        $createPayResponse->termurl = $createPayForm->GetWidgetRetUrl($orderPay->IdPaySchet);
+        switch ($createPayResponse->status) {
+            case BaseResponse::STATUS_DONE:
+                //отправить запрос адреса формы 3ds
+                Yii::warning('WidgetController createPayResponse data: ' . Json::encode($createPayResponse->getAttributes()));
+                return $createPayResponse->getAttributes();
+            case BaseResponse::STATUS_ERROR:
+                //отменить счет
+                return $this->redirect(Url::to('/pay/orderok?id=' . $orderPay->IdPaySchet));
+            case BaseResponse::STATUS_CREATED:
+                $createPayResponse->termurl = $createPayResponse->getStep2Url($orderPay->IdPaySchet);
+                return $createPayStrategy->getCreatePayResponse()->getAttributes();
+            default:
+                return $createPayStrategy->getCreatePayResponse()->getAttributes();
         }
     }
 
     /**
      * Завершение оплаты после 3DS(PCI DSS)
      * @param $id
-     * @return string
-     * @throws Exception
+     * @return Response
      * @throws NotFoundHttpException
      */
-    public function actionOrderdone($id)
+    public function actionOrderdone($id): Response
     {
-        $payschets = new Payschets();
-        //данные счета для оплаты
-        $params = $payschets->getSchetData($id, null);
-
-        Yii::warning("WidgetPay done id=".$id);
-
-        if ($params) {
-
-            if ($params['Status'] == 0) {
-                //завершить платеж
-                $TcbGate = new TcbGate($params['IDPartner'], null, $params['IsCustom']);
-                $tcBank = new TCBank($TcbGate);
-                $ret = $tcBank->ConfirmXml([
-                    'ID' => $params['ID'],
-                    'MD' => Yii::$app->request->post('MD'),
-                    'PaRes' => Yii::$app->request->post('PaRes')
-                ]);
-                //ret статус проверить?
-            }
-            return $this->redirect(\yii\helpers\Url::to('/widget/orderok?id='.$id));
-
-        } else {
+        $paySchet = PaySchet::findOne(['ID' => $id]);
+        if (!$paySchet) {
             throw new NotFoundHttpException();
         }
+
+        Yii::warning('WidgetController orderDone id=' . $id);
+
+        if ($paySchet->Status === PaySchet::STATUS_WAITING) {
+            $donePayForm = new DonePayForm([
+                'IdPay' => $paySchet->ID,
+                'md' => Yii::$app->request->post('MD'),
+                'paRes' => Yii::$app->request->post('PaRes'),
+
+            ]);
+            $donePayStrategy = new DonePayStrategy($donePayForm);
+            $donePayStrategy->exec();
+        }
+
+        return $this->redirect(Url::to('/widget/orderok?id=' . $id));
     }
 
     /**
      * Статус оплаты (PCI DSS)
      * @param $id
-     * @return string
+     * @return string|Response
      * @throws Exception
      * @throws NotFoundHttpException
+     * @throws GateException
      */
     public function actionOrderok($id)
     {
-        Yii::warning("WidgetPay orderok id=".$id);
-        if (true) {
-            //завершение оплаты + в колбэк приходит + в планировщике проверяется статус
-            sleep(5); //подождать завершения оплаты
-            $tcBank = new TCBank();
-            $res = $tcBank->confirmPay($id);
-            $params = $res['Params'];
-            if (!$params) {
-                throw new NotFoundHttpException();
-            }
-            if (in_array($res['status'], [1, 3])) {
-                if (!empty($params['SuccessUrl'])) {
-                    //перевод на ok
-                    return $this->redirect(Payschets::RedirectUrl($params['SuccessUrl'],$params['Extid']));
-                } else {
-                    return $this->render('paydone', [
-                        'message' => 'Оплата прошла успешно.'
-                    ]);
-                }
+        $paySchet = PaySchet::findOne(['ID' => $id]);
+        if (!$paySchet) {
+            throw new NotFoundHttpException();
+        }
 
-            } elseif (in_array($res['status'], [2])) {
-                if (!empty($params['FailedUrl'])) {
-                    //перевод на fail
-                    if (mb_stripos($res['message'], 'Отказ от оплаты') === false) {
-                        return $this->redirect(Payschets::RedirectUrl($params['FailedUrl'], $params['Extid']));
-                    } else {
-                        return $this->redirect(Payschets::RedirectUrl($params['CancelUrl'], $params['Extid']));
-                    }
-                } else {
-                    return $this->render('paycancel', ['message' => $res['message']]);
-                }
+        Yii::warning('WidgetController orderOk id=' . $id);
+
+        $okPayForm = new OkPayForm(['IdPay' => $paySchet->ID]);
+        $okPayStrategy = new OkPayStrategy($okPayForm);
+        $paySchet = $okPayStrategy->exec();
+
+        if (in_array($paySchet->Status, [PaySchet::STATUS_DONE, PaySchet::STATUS_CANCEL])) {
+            if (!empty($paySchet->SuccessUrl)) {
+                //перевод на ok
+                return $this->redirect(Payschets::RedirectUrl($paySchet->SuccessUrl, $paySchet->ID, $paySchet->Extid));
             } else {
-                return $this->render('paywait');
+                return $this->render('paydone', [
+                    'message' => 'Оплата прошла успешно.'
+                ]);
+            }
+
+        } elseif (in_array($paySchet->Status, [PaySchet::STATUS_ERROR])) {
+            if (!empty($paySchet->FailedUrl)) {
+                $redirectUrl = mb_stripos($paySchet->ErrorInfo, 'Отказ от оплаты') === false
+                    ? $paySchet->FailedUrl
+                    : $paySchet->CancelUrl;
+
+                return $this->redirect(Payschets::RedirectUrl($redirectUrl, $paySchet->ID, $paySchet->Extid));
+            } else {
+                return $this->render('paycancel', ['message' => $paySchet->ErrorInfo]);
             }
         } else {
-            throw new NotFoundHttpException();
+            return $this->render('paywait');
         }
     }
 }

@@ -2,6 +2,7 @@
 
 use app\models\bank\Banks;
 use app\models\payonline\Partner;
+use app\services\payment\models\repositories\CurrencyRepository;
 use app\services\payment\models\UslugatovarType;
 use app\services\payment\types\AccountTypes;
 
@@ -32,6 +33,7 @@ $bankGates = $partner->getBankGates()->orderBy('TU ASC, Priority DESC')->all();
         <th>Банк</th>
         <th>Приоритет</th>
         <th>Активно</th>
+        <th>Тип счета</th>
         <th>Номер счета</th>
         <th>Логин</th>
         <th></th>
@@ -47,6 +49,7 @@ $bankGates = $partner->getBankGates()->orderBy('TU ASC, Priority DESC')->all();
             <td><?= $bankGate->bank->Name ?></td>
             <td><?= $bankGate->Priority ?></td>
             <td><?= $bankGate->Enable ?></td>
+            <td><?= AccountTypes::ALL_TYPES[$bankGate->SchetType] ?></td>
             <td><?= $bankGate->SchetNumber ?></td>
             <td><?= $bankGate->Login ?></td>
             <td>
@@ -111,11 +114,24 @@ $bankGates = $partner->getBankGates()->orderBy('TU ASC, Priority DESC')->all();
                     </div>
 
                     <div class="form-group">
+                        <label>Валюта</label>
+                        <select class="form-control" name="CurrencyId">
+                            <?php
+                            /** @var CurrencyRepository */
+                            foreach (CurrencyRepository::getAll() as $currency) : ?>
+                                <option value="<?= $currency->Id ?>">
+                                    <?= $currency->Name ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
                         <label>Тип счета</label>
                         <select class="form-control" name="SchetType">
                             <?php
                             /** @var AccountTypes */
-                            foreach (AccountTypes::ALL_TYPES as $key => $type): ?>
+                            foreach (AccountTypes::ALL_TYPES as $key => $type) : ?>
                                 <option value="<?= $key ?>">
                                     <?= $type ?>
                                 </option>
