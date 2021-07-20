@@ -394,7 +394,7 @@ class XlsActs
         $GapXLS++;
         $GapXLS++;
         $this->sheet->setCellValue("B" . $GapXLS, $this->partner->PodpisantShort);
-        $this->sheet->setCellValue("I" . $GapXLS, "Колобов Е. В.");
+        $this->sheet->setCellValue("I" . $GapXLS, "Никонов Г.Б.");
         $this->sheet->getStyle("B" . $GapXLS . ":C" . $GapXLS)->getBorders()->getBottom()->setBorderStyle(Border::BORDER_MEDIUM);
         $this->sheet->getStyle("I" . $GapXLS . ":J" . $GapXLS)->getBorders()->getBottom()->setBorderStyle(Border::BORDER_MEDIUM);
     }
