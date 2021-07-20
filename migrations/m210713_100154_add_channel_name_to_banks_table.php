@@ -9,7 +9,6 @@ use app\services\payment\banks\FortaTechAdapter;
 use app\services\payment\banks\RunaBankAdapter;
 use app\services\payment\banks\TKBankAdapter;
 use app\services\payment\banks\WalletoBankAdapter;
-use app\services\payment\models\Bank;
 use yii\db\Migration;
 
 /**
@@ -24,17 +23,17 @@ class m210713_100154_add_channel_name_to_banks_table extends Migration
     {
         $this->addColumn('banks', 'ChannelName', $this->string(250)->after('Name'));
 
-        Bank::updateAll(['ChannelName' => 'vepay'], ['ID' => 0]);
-        Bank::updateAll(['ChannelName' => 'Russia'], ['ID' => 1]);
-        Bank::updateAll(['ChannelName' => 'TKB'], ['ID' => TKBankAdapter::$bank]);
-        Bank::updateAll(['ChannelName' => 'MTS Bank'], ['ID' => MTSBank::$bank]);
-        Bank::updateAll(['ChannelName' => 'AD Group Bank'], ['ID' => ADGBank::$bank]);
-        Bank::updateAll(['ChannelName' => 'AD Group'], ['ID' => ADGroupBankAdapter::$bank]);
-        Bank::updateAll(['ChannelName' => 'BRS'], ['ID' => BRSAdapter::$bank]);
-        Bank::updateAll(['ChannelName' => 'Cauri'], ['ID' => CauriAdapter::$bank]);
-        Bank::updateAll(['ChannelName' => 'FortaTech'], ['ID' => FortaTechAdapter::$bank]);
-        Bank::updateAll(['ChannelName' => 'Walleto'], ['ID' => WalletoBankAdapter::$bank]);
-        Bank::updateAll(['ChannelName' => 'Runa'], ['ID' => RunaBankAdapter::$bank]);
+        $this->update('banks', ['ChannelName' => 'vepay'], ['ID' => 0]);
+        $this->update('banks', ['ChannelName' => 'Russia'], ['ID' => 1]);
+        $this->update('banks', ['ChannelName' => 'TKB'], ['ID' => TKBankAdapter::$bank]);
+        $this->update('banks', ['ChannelName' => 'MTS Bank'], ['ID' => MTSBank::$bank]);
+        $this->update('banks', ['ChannelName' => 'AD Group Bank'], ['ID' => ADGBank::$bank]);
+        $this->update('banks', ['ChannelName' => 'AD Group'], ['ID' => ADGroupBankAdapter::$bank]);
+        $this->update('banks', ['ChannelName' => 'BRS'], ['ID' => BRSAdapter::$bank]);
+        $this->update('banks', ['ChannelName' => 'Cauri'], ['ID' => CauriAdapter::$bank]);
+        $this->update('banks', ['ChannelName' => 'FortaTech'], ['ID' => FortaTechAdapter::$bank]);
+        $this->update('banks', ['ChannelName' => 'Walleto'], ['ID' => WalletoBankAdapter::$bank]);
+        $this->update('banks', ['ChannelName' => 'Runa'], ['ID' => RunaBankAdapter::$bank]);
     }
 
     /**
