@@ -4,6 +4,7 @@ namespace app\services\logs\traits;
 
 use Exception;
 use Yii;
+use yii\helpers\Json;
 use yii\helpers\VarDumper;
 use yii\log\Logger;
 use yii\web\Request;
@@ -15,11 +16,11 @@ trait JSONFormatterTrait
      * Formats a log message for display as a string.
      * @param array $message the log message to be formatted.
      * The message structure follows that in [[Logger::messages]].
-     * @return array the formatted message
+     * @return string the formatted message
      * @throws \Throwable
      * @throws \yii\base\InvalidConfigException
      */
-    public function formatMessage($message)
+    public function formatMessage($message): string
     {
         list($text, $level, $category, $timestamp) = $message;
         $level = Logger::getLevelName($level);
@@ -38,7 +39,7 @@ trait JSONFormatterTrait
             }
         }
 
-        return array_merge(
+        return Json::encode(array_merge(
             $this->getMessagePrefix($message),
             [
                 'timestamp' => $this->getTime($timestamp),
@@ -46,7 +47,7 @@ trait JSONFormatterTrait
                 'category' => $category,
                 'message' => "$text" . (empty($traces) ? '' : "\n    " . implode("\n    ", $traces))
             ]
-        );
+        )) . "\n";
     }
 
     /**
