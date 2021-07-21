@@ -56,12 +56,14 @@ class MfoSettings extends Model
             $this->UrlCheckReq = $usl->UrlCheckReq;
         }
 
-        $partnerCallbackSettings = PartnerCallbackSettings::getByPartnerId($this->IdPartner);
-        $this->CallbackSendExtId = $partnerCallbackSettings->SendExtId;
-        $this->CallbackSendId = $partnerCallbackSettings->SendId;
-        $this->CallbackSendSum = $partnerCallbackSettings->SendSum;
-        $this->CallbackSendStatus = $partnerCallbackSettings->SendStatus;
-        $this->CallbackSendChannel = $partnerCallbackSettings->SendChannel;
+        if ($this->IdPartner) {
+            $partnerCallbackSettings = PartnerCallbackSettings::getByPartnerId($this->IdPartner);
+            $this->CallbackSendExtId = $partnerCallbackSettings->SendExtId;
+            $this->CallbackSendId = $partnerCallbackSettings->SendId;
+            $this->CallbackSendSum = $partnerCallbackSettings->SendSum;
+            $this->CallbackSendStatus = $partnerCallbackSettings->SendStatus;
+            $this->CallbackSendChannel = $partnerCallbackSettings->SendChannel;
+        }
     }
 
     /**
@@ -141,13 +143,15 @@ class MfoSettings extends Model
             $usl->save(false);
         }
 
-        $partnerCallbackSettings = PartnerCallbackSettings::getByPartnerId($this->IdPartner);
-        $partnerCallbackSettings->SendExtId = $this->CallbackSendExtId;
-        $partnerCallbackSettings->SendId = $this->CallbackSendId;
-        $partnerCallbackSettings->SendSum = $this->CallbackSendSum;
-        $partnerCallbackSettings->SendStatus = $this->CallbackSendStatus;
-        $partnerCallbackSettings->SendChannel = $this->CallbackSendChannel;
-        $partnerCallbackSettings->save(false);
+        if ($this->IdPartner) {
+            $partnerCallbackSettings = PartnerCallbackSettings::getByPartnerId($this->IdPartner);
+            $partnerCallbackSettings->SendExtId = $this->CallbackSendExtId;
+            $partnerCallbackSettings->SendId = $this->CallbackSendId;
+            $partnerCallbackSettings->SendSum = $this->CallbackSendSum;
+            $partnerCallbackSettings->SendStatus = $this->CallbackSendStatus;
+            $partnerCallbackSettings->SendChannel = $this->CallbackSendChannel;
+            $partnerCallbackSettings->save(false);
+        }
 
         return 1;
     }
