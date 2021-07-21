@@ -45,6 +45,9 @@ return [
     'testParams' => [],
 
     'components' => [
+        'assetManager' => [
+            'forceCopy' => true,
+        ],
         'redis' => [
             'class' => 'yii\redis\Connection',
             'hostname' => '127.0.0.1',
