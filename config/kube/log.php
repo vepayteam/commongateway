@@ -40,7 +40,7 @@ return [
     'traceLevel' => YII_DEBUG ? 3 : 0,
     'targets' => [
         [
-            'class' => 'app\services\logs\targets\ReqMaskJSONStdOutTarget',
+            'class' => 'app\services\logs\targets\SecurityStdOutJSONTarget',
             'levels' => array_filter(['warning', 'info', YII_DEBUG ? 'trace' : '']),
             'except' => [
                 'yii\web\HttpException:401',
@@ -50,7 +50,7 @@ return [
             'logVars' => $logVars
         ],
         [
-            'class' => 'app\services\logs\targets\SecurityJSONStdErrTarget',
+            'class' => 'app\services\logs\targets\SecurityStdErrJSONTarget',
             'levels' => ['error'],
             'except' => [
                 'yii\web\HttpException:401',

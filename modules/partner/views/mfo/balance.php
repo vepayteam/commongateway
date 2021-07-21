@@ -118,7 +118,10 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                     <div class="inline">
                                         <?php foreach ($balances as $balance): ?>
                                             <div class="full-width">
+                                                <?php if ($balance->account_type !== AccountTypes::TYPE_DEFAULT): ?>
                                                 <span style="margin-right: 5px;"><?= AccountTypes::ALL_TYPES[$balance->account_type] ?>:</span>
+                                                <?php endif; ?>
+
                                                 <b class="pull-right">
                                                     <?= PaymentHelper::formatSum($balance->amount) ?>
                                                     <?= $balance->currency ?>
