@@ -284,6 +284,7 @@ class OutController extends Controller
                 'status' => $status,
                 'message' => $message,
                 'rc' => $paySchet->RCCode,
+                'channel' => $paySchet->bank->ChannelName,
             ];
         }
     }
