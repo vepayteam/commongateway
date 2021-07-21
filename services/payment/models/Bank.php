@@ -9,6 +9,7 @@ use Yii;
  *
  * @property int $ID
  * @property string $Name
+ * @property string $ChannelName
  * @property float $JkhComis
  * @property float $JkhComisMin
  * @property float $EcomComis
@@ -49,10 +50,10 @@ class Bank extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['ID', 'Name'], 'required'],
+            [['ID', 'Name', 'ChannelName'], 'required'],
             [['ID', 'LastWorkIn', 'LastInPay', 'LastInCheck', 'UsePayIn', 'UseApplePay', 'UseGooglePay', 'UseSamsungPay', 'SortOrder'], 'integer'],
             [['JkhComis', 'JkhComisMin', 'EcomComis', 'EcomComisMin', 'AFTComis', 'AFTComisMin', 'OCTComis', 'OCTComisMin', 'OCTVozn', 'OCTVoznMin', 'FreepayComis', 'FreepayComisMin', 'FreepayVozn', 'FreepayVoznMin', 'VyvodBankComis'], 'number'],
-            [['Name'], 'string', 'max' => 250],
+            [['Name', 'ChannelName'], 'string', 'max' => 250],
             [['ID'], 'unique'],
         ];
     }
@@ -65,6 +66,7 @@ class Bank extends \yii\db\ActiveRecord
         return [
             'ID' => 'ID',
             'Name' => 'Name',
+            'ChannelName' => 'ChannelName',
             'JkhComis' => 'Jkh Comis',
             'JkhComisMin' => 'Jkh Comis Min',
             'EcomComis' => 'Ecom Comis',
@@ -90,6 +92,7 @@ class Bank extends \yii\db\ActiveRecord
             'SortOrder' => 'Sort Order',
         ];
     }
+
     public function getName(): string
     {
         return $this->Name;
