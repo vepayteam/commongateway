@@ -566,6 +566,11 @@ class BRSAdapter implements IBankAdapter
         $outCardPayCheckRequest->tr_date = Carbon::now()->format('YmdHis');
 
         $answer = $this->sendXmlRequest($outCardPayCheckRequest);
+        Yii::warning('BRSAdapter getBalance: PartnerId=' . $this->gate->PartnerId
+            . ' GateId=' . $this->gate->Id
+            . ' Request=' . Json::encode($outCardPayCheckRequest->getAttributes())
+            . ' Response=' . Json::encode($answer)
+        );
         if (array_key_exists('error', $answer)) {
             $error = $answer['error']['code'] . ': ' . $answer['error']['description'];
 
