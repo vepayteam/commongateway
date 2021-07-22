@@ -68,7 +68,7 @@ class Balance extends Model
         $bankResponse = [];
         foreach ($enabledBankGates as $activeGate) {
             $bank = BankRepository::getBankById($activeGate->BankId);
-            $bankAdapter = $this->buildAdapter($activeGate);
+            $bankAdapter = $this->buildAdapter($bank);
             $getBalanceRequest = $this->formatRequest($activeGate, $bank);
             try {
                 /** @var GetBalanceResponse */
@@ -90,13 +90,13 @@ class Balance extends Model
     }
 
     /**
-     * @param $bankGate
+     * @param $bank
      * @return IBankAdapter
      */
-    protected function buildAdapter($bankGate): IBankAdapter
+    protected function buildAdapter($bank): IBankAdapter
     {
         $bankAdapterBuilder = new BankAdapterBuilder();
-        $bankAdapterBuilder->buildByPartnerBankGate($this->partner, $bankGate);
+        $bankAdapterBuilder->buildByBankId($this->partner, $bank);
         return $bankAdapterBuilder->getBankAdapter();
     }
 }
