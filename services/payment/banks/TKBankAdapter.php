@@ -565,7 +565,7 @@ class TKBankAdapter implements IBankAdapter
         $queryData = Json::encode($queryData);
 
         $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
-        Yii::warning('TKBankAdapter getBalanceAcc: PartnerId=' . $this->gate->PartnerId
+        Yii::warning('TKBankAdapter getBalance: PartnerId=' . $this->gate->PartnerId
             . ' GateId=' . $this->gate->Id
             . ' Request=' . $queryData
             . ' Response=' . Json::encode($ans)
