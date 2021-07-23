@@ -108,7 +108,7 @@ class NotificationPay extends \yii\db\ActiveRecord
         }
 
         if ($settings->SendChannel) {
-            $params['channel'] = $this->paySchet->bank->Name;
+            $params['channel'] = $this->paySchet->bank->ChannelName;
         }
 
         $params['key'] = $this->buildKey($settings);
