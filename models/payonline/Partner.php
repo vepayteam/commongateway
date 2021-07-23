@@ -423,13 +423,13 @@ class Partner extends ActiveRecord
     {
         $query = $this->getVyvodSystem()
                       ->select(['SUM(`Summ`)'])
-                      ->where([
+                      ->andWhere([
                           'or',
                           ['and', ['>=', 'DateFrom', $params->getDateFrom()], ['<=', 'DateTo', $params->getDateTo()]],
                           ['between', 'DateFrom', $params->getDateFrom(), $params->getDateTo()],
                           ['between', 'DateTo', $params->getDateFrom(), $params->getDateTo()],
                       ])
-                      ->andWhere(['TypeVyvod' => $params->getTypeVyvyod()]);
+                      ->andWhere(['TypeVyvod' => $params->getTypeVyvod()]);
 
         return (($params->getFilterByStateOp() === true)
             ? $query->andWhere(['SatateOp' => [VoznagStat::OPERATION_STATE_IN_PROGRESS, VoznagStat::OPERATION_STATE_READY]])->cache(60 * 60)
@@ -446,14 +446,14 @@ class Partner extends ActiveRecord
         $whereParams = [
             'and',
             ['<=', 'DateTo', $params->getDateTo()],
-            ['TypeVyvod' => $params->getTypeVyvyod()],
+            ['TypeVyvod' => $params->getTypeVyvod()],
         ];
 
         if ($params->getFilterByStateOp() === true) {
             $whereParams[] = ['SatateOp' => [VoznagStat::OPERATION_STATE_IN_PROGRESS, VoznagStat::OPERATION_STATE_READY]];
         }
 
-        $query = $this->getVyvodSystem()->select(['DateTo'])->where($whereParams)->orderBy(['DateTo' => SORT_DESC]);
+        $query = $this->getVyvodSystem()->select(['DateTo'])->andWhere($whereParams)->orderBy(['DateTo' => SORT_DESC]);
 
         return $query->cache(60 * 60);
     }
@@ -467,7 +467,7 @@ class Partner extends ActiveRecord
     {
         $query = $this->getVyvodReestr()
                       ->select(['SUM(`SumOp`)'])
-                      ->where([
+                      ->andWhere([
                           'or',
                           ['and', ['>=', 'DateFrom', $params->getDateFrom()], ['<=', 'DateTo', $params->getDateTo()]],
                           ['between', 'DateFrom', $params->getDateFrom(), $params->getDateTo()],
@@ -495,7 +495,7 @@ class Partner extends ActiveRecord
             $whereParams[] = ['StateOp' => [VoznagStat::OPERATION_STATE_IN_PROGRESS, VoznagStat::OPERATION_STATE_READY]];
         }
 
-        $query = $this->getVyvodReestr()->select(['DateTo'])->where($whereParams)->orderBy(['DateTo' => SORT_DESC]);
+        $query = $this->getVyvodReestr()->select(['DateTo'])->andWhere($whereParams)->orderBy(['DateTo' => SORT_DESC]);
 
         return $query->cache(60 * 60);
     }

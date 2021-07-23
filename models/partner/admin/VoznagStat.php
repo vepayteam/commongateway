@@ -21,10 +21,17 @@ class VoznagStat extends Model
 {
     const STAT_DAY_CACHE_PREFIX = 'VoznagStat_ForDay_';
     const STAT_DAY_TAG_PREFIX = 'VoznagStat_ForDay_';
-
-    //0 - все 1 - погашение 2 - выдача
+    /**
+     * @const TYPE_SERVICE_ALL - все
+     */
     const TYPE_SERVICE_ALL = 0;
+    /**
+     * @const TYPE_SERVICE_POGAS - погашение
+     */
     const TYPE_SERVICE_POGAS = 1;
+    /**
+     * @const TYPE_SERVICE_ALL - выдача
+     */
     const TYPE_SERVICE_VYDACHA = 2;
 
     const TYPE_VYVOD_POGASHENIE = 0;
@@ -37,7 +44,10 @@ class VoznagStat extends Model
     public $datefrom;
     public $dateto;
     public $IdPart;
-    public $TypeUslug = 0; //0 - все 1 - погашение 2 - выдача
+    /**
+     * @var int $TypeUslug (0 - все, 1 - погашение, 2 - выдача)
+     */
+    public $TypeUslug = 0;
 
     private $partner;
 
@@ -105,7 +115,7 @@ class VoznagStat extends Model
 
     /**
      * @param array|PaySchet[] $queryData
-     * @param Partner          $partner
+     * @param Partner $partner
      *
      * @return array|MiddleMapResult[]
      */
@@ -117,13 +127,13 @@ class VoznagStat extends Model
 
             return new MiddleMapResult([
                 'NamePartner' => $partner->Name,
-                'IDPartner'   => $partner->ID,
+                'IDPartner' => $partner->ID,
 
                 'SummPay' => $serviceSum->SummPay,
                 'ComissSumm' => $serviceSum->ComissSumm,
-                'MerchVozn'  => $serviceSum->MerchVozn,
-                'BankComis'  => $serviceSum->BankComis,
-                'CntPays'    => $serviceSum->CntPays,
+                'MerchVozn' => $serviceSum->MerchVozn,
+                'BankComis' => $serviceSum->BankComis,
+                'CntPays' => $serviceSum->CntPays,
 
                 'IdUsluga' => $serviceSum->IdUsluga,
                 'IsCustom' => $uslugatovar->IsCustom,
@@ -150,12 +160,12 @@ class VoznagStat extends Model
             $indx = $row->getIDPartner();
 
             if ( !isset($ret[$indx]) ) {
-                $typeVyvyod = self::TYPE_VYVOD_POGASHENIE;
+                $typeVyvod = self::TYPE_VYVOD_POGASHENIE;
                 if ( in_array($row->getIsCustom(), [TU::$TOSCHET, TU::$TOCARD], true) ) {
-                    $typeVyvyod = self::TYPE_VYVOD_VYPLATY;
+                    $typeVyvod = self::TYPE_VYVOD_VYPLATY;
                 }
 
-                $filterParams = new VyvodSystemFilterParams(['dateFrom' => $dateFrom, 'dateTo' => $dateTo, 'filterByStateOp' => true, 'typeVyvyod' => $typeVyvyod]);
+                $filterParams = new VyvodSystemFilterParams(['dateFrom' => $dateFrom, 'dateTo' => $dateTo, 'filterByStateOp' => true, 'typeVyvod' => $typeVyvod]);
 
                 $row->SetSummVyveden($partner->getSummVyveden($filterParams)->scalar());
                 $row->SetDataVyveden($partner->getDataVyveden($filterParams)->scalar());
