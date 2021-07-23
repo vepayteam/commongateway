@@ -45,6 +45,7 @@ use app\services\payment\forms\brs\CreatePayRequest;
 use app\services\payment\forms\brs\CheckStatusPayRequest;
 use app\services\payment\forms\brs\RecurrentPayRequest;
 use app\services\payment\forms\brs\RefundPayRequest;
+use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
@@ -57,6 +58,9 @@ class BRSAdapter implements IBankAdapter
 {
     const AFT_MIN_SUMM = 180000;
     const KEYS_PATH = '@app/config/brs/';
+
+    const BALANCE_CARD_NUM = '5100476090795931'; // Карта используется для запроса баланса TODO: переместить в другое место?
+    const BALANCE_FAKE_AMOUNT = 1000;
 
     public static $bank = 7;
 
@@ -551,11 +555,32 @@ class BRSAdapter implements IBankAdapter
     }
 
     /**
-     * @inheritDoc
+     * Для запроса баланса используется outCardPayCheck запрос, тк у них нету отдельного эндпоинта для получения баланса
+     * По логике outCardPayCheck запрос проверяет возможность перевода на карту и по своместитульству в ответе возвращает баланс партнера
      */
-    public function getBalance(GetBalanceRequest $getBalanceRequest)
+    public function getBalance(GetBalanceRequest $getBalanceRequest): GetBalanceResponse
     {
-        throw new GateException('Метод недоступен');
+        $outCardPayCheckRequest = new OutCardPayCheckRequest();
+        $outCardPayCheckRequest->card = self::BALANCE_CARD_NUM;
+        $outCardPayCheckRequest->amount = self::BALANCE_FAKE_AMOUNT;
+        $outCardPayCheckRequest->tr_date = Carbon::now()->format('YmdHis');
+
+        $answer = $this->sendXmlRequest($outCardPayCheckRequest);
+        if (array_key_exists('error', $answer)) {
+            $error = $answer['error']['code'] . ': ' . $answer['error']['description'];
+
+            throw new BankAdapterResponseException(
+                BankAdapterResponseException::setErrorMsg($error)
+            );
+        }
+
+        $balanceResponse = new GetBalanceResponse();
+        $balanceResponse->bank_name = $getBalanceRequest->bankName;
+        $balanceResponse->amount = PaymentHelper::convertToFullAmount(intval($answer['container']['partner_available_amount']));
+        $balanceResponse->currency = $getBalanceRequest->currency;
+        $balanceResponse->account_type = $getBalanceRequest->accountType;
+
+        return $balanceResponse;
     }
 
     /**
