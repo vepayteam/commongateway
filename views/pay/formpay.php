@@ -143,7 +143,7 @@ $paymentFormWithoutVepay = PartnerOption::findOne(['PartnerId' => $params['IdOrg
                     'type' => 'email',
                     'class' => 'form-control notrequired',
                     'value' => '',
-                    'placeholder' => 'info@vepay.online'
+                    'placeholder' => 'info@example.com'
                 ]); ?>
             </div>
         </div>
