@@ -3,12 +3,12 @@
 namespace app\services\payment;
 
 use app\models\kfapi\KfPay;
-use app\models\payonline\CreatePay;
 use app\models\payonline\OrderPay;
 use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
 use app\models\TU;
 use app\services\payment\models\PaySchet;
+use app\services\PaySchetService;
 use Yii;
 use yii\db\Exception;
 
@@ -19,9 +19,15 @@ class WidgetService
      */
     private $idPartner;
 
-    public function __construct(int $idPartner)
+    /**
+     * @var PaySchetService
+     */
+    private $paySchetService;
+
+    public function __construct(int $idPartner, PaySchetService $paySchetService)
     {
         $this->idPartner = $idPartner;
+        $this->paySchetService = $paySchetService;
     }
 
     /**
@@ -56,9 +62,8 @@ class WidgetService
             'failurl' => $uslugatovar->UrlReturnFail
         ]);
 
-        $pay = new CreatePay();
         try {
-            $data = $pay->payToMfo(null, [$orderPay->ID, $orderPay->Comment], $formPay, $uslugatovar->ID, 0, $orderPay->IdPartner, 0);
+            $data = $this->paySchetService->payToMfo(null, [$orderPay->ID, $orderPay->Comment], $formPay, $uslugatovar->ID, 0, $orderPay->IdPartner, 0);
         } catch (Exception $e) {
             Yii::warning('WidgetService db exception: ' . $e->getMessage());
             return null;
@@ -67,7 +72,7 @@ class WidgetService
         if ($data) {
             $orderPay->IdPaySchet = $data['IdPay'];
             if ($orderPay->ID) {
-                $pay->setIdOrder($orderPay->ID, $data);
+                $this->paySchetService->setIdOrder($orderPay->ID, $data);
             }
 
             return $orderPay->IdPaySchet;
