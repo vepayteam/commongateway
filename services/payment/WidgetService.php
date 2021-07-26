@@ -56,6 +56,7 @@ class WidgetService
             'failurl' => $uslugatovar->UrlReturnFail
         ]);
 
+        /** @var PaySchetService $paySchetService */
         $paySchetService = Yii::$app->get(PaySchetService::class);
 
         try {
