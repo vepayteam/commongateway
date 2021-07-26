@@ -26,6 +26,14 @@ $form = ActiveForm::begin([
         <div class="col-sm-8">
             <?php if ($optionVariable['type'] === 'textarea'): ?>
                 <textarea class="form-control partner-options__input" name="<?= $k ?>" rows="5"><?= $partnerOption ? $partnerOption->Value : PartnerOption::LIST[$k]['default'] ?></textarea>
+            <?php elseif ($optionVariable['type'] === 'checkbox'): ?>
+                <input type="hidden" name="<?= $k ?>" value="false">
+                <input type="checkbox" id="partner-kpp" class="form-check-input"
+                       name="<?= $k ?>"
+                       <?=($partnerOption && $partnerOption->Value === 'true') ? 'checked="checked"' : ''?>
+                       value="true"
+                       aria-invalid="false"
+                >
             <?php else: ?>
                 <input type="<?=$optionVariable['type']?>" id="partner-kpp" class="form-control partner-options__input"
                        name="<?= $k ?>"

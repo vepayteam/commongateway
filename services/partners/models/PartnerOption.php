@@ -20,6 +20,8 @@ class PartnerOption extends \yii\db\ActiveRecord
     const EMAILS_BY_SEND_LATE_UPDATE_PAY_SCHETS_NAME = 'payment__emails_by_send_late_update_payschet';
     const DELTA_TIME_LATE_UPDATE_PAY_SCHETS_NAME = 'payment__delta_time_late_update_payschet';
 
+    const PAYMENT_FORM_WITHOUT_VEPAY = 'payment_form_without_vepay';
+
     const LIST = [
         self::CARD_REG_TEXT_HEADER_NAME => [
             'title' => 'Текст сообщения при регистрации карты',
@@ -35,6 +37,11 @@ class PartnerOption extends \yii\db\ActiveRecord
             'title' => 'Время, после которого обновление статуса считать поздним, в секундах',
             'type' => 'number',
             'default' => '18000',
+        ],
+        self::PAYMENT_FORM_WITHOUT_VEPAY => [
+            'title' => 'Включить платежную форму без логотипов и ссылок Vepay',
+            'type' => 'checkbox',
+            'default' => 'false',
         ],
     ];
 
