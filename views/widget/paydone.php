@@ -1,14 +1,24 @@
 <?php
+
+use app\services\partners\models\PartnerOption;
+use app\services\payment\models\PaySchet;
+use yii\web\View;
+
 /* @var null|string $message */
 /* @var null|string $returl */
-/* @var \yii\web\View $this */
+/* @var PaySchet $paySchet */
+/* @var View $this */
+
 ?>
 
 <section class="container">
 
-    <div class="row">
-        <div class="col-xs-12 text-center"><img src="/imgs/logo_vepay.svg" alt="vepay" class="logoend"></div>
-    </div>
+    <?php $paymentFormWithoutVepay = PartnerOption::findOne(['PartnerId' => $paySchet->ID, 'Name' => PartnerOption::PAYMENT_FORM_WITHOUT_VEPAY]) ?>
+    <?php if (!$paymentFormWithoutVepay || $paymentFormWithoutVepay->Value === 'false'): ?>
+        <div class="row">
+            <div class="col-xs-12 text-center"><img src="/imgs/logo_vepay.svg" alt="vepay" class="logoend"></div>
+        </div>
+    <?php endif; ?>
 
     <div class="row">
         <div class="col-xs-12 text-center"><h2 class="zagend">Платёж прошёл успешно</h2></div>

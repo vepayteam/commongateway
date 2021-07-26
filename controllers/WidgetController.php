@@ -278,7 +278,8 @@ class WidgetController extends Controller
                 return $this->redirect(Payschets::RedirectUrl($paySchet->SuccessUrl, $paySchet->ID, $paySchet->Extid));
             } else {
                 return $this->render('paydone', [
-                    'message' => 'Оплата прошла успешно.'
+                    'message' => 'Оплата прошла успешно.',
+                    'paySchet' => $paySchet,
                 ]);
             }
 
