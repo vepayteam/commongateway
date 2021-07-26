@@ -12,10 +12,12 @@ use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\Currency;
 use yii\bootstrap\ActiveForm;
 use yii\bootstrap\Html;
+
+$partnerCardRegTextHeaderOption = PartnerOption::findOne(['PartnerId' => $params['IdOrg'], 'Name' => PartnerOption::CARD_REG_TEXT_HEADER_NAME]);
+$paymentFormWithoutVepay = PartnerOption::findOne(['PartnerId' => $params['IdOrg'], 'Name' => PartnerOption::PAYMENT_FORM_WITHOUT_VEPAY]);
 ?>
 <div id="middle-wrapper" class="middle middle-background">
 <section class="container">
-    <?php $paymentFormWithoutVepay = PartnerOption::findOne(['PartnerId' => $params['IdOrg'], 'Name' => PartnerOption::PAYMENT_FORM_WITHOUT_VEPAY]) ?>
     <?php if (!$paymentFormWithoutVepay || $paymentFormWithoutVepay->Value === 'false'): ?>
         <div class="row margin-top24 rowlogo">
             <div class="col-xs-12">
@@ -26,7 +28,6 @@ use yii\bootstrap\Html;
         </div>
     <?php endif; ?>
     <?php if ($params['IdUsluga'] == 1) : ?>
-        <?php $partnerCardRegTextHeaderOption = PartnerOption::findOne(['PartnerId' => $params['IdOrg'], 'Name' => PartnerOption::CARD_REG_TEXT_HEADER_NAME]) ?>
         <?php if($partnerCardRegTextHeaderOption): ?>
             <div class="infotop">
                 <?= $partnerCardRegTextHeaderOption['Value'] ?>
