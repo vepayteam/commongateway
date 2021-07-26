@@ -12,18 +12,22 @@ use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\Currency;
 use yii\bootstrap\ActiveForm;
 use yii\bootstrap\Html;
+
+$partnerCardRegTextHeaderOption = PartnerOption::findOne(['PartnerId' => $params['IdOrg'], 'Name' => PartnerOption::CARD_REG_TEXT_HEADER_NAME]);
+$paymentFormWithoutVepay = PartnerOption::findOne(['PartnerId' => $params['IdOrg'], 'Name' => PartnerOption::PAYMENT_FORM_WITHOUT_VEPAY]);
 ?>
 <div id="middle-wrapper" class="middle middle-background">
 <section class="container">
-    <div class="row margin-top24 rowlogo">
-        <div class="col-xs-12">
-            <img src="/imgs/logo_vepay.svg" alt="vepay" class="logo">
-            <span class="logotext">ТЕХНОЛОГИИ В&nbsp;ДЕЙСТВИИ</span>
-            <img src="/imgs/close.svg" class="closebtn" alt="close" id="closeform">
+    <?php if (!$paymentFormWithoutVepay || $paymentFormWithoutVepay->Value === 'false'): ?>
+        <div class="row margin-top24 rowlogo">
+            <div class="col-xs-12">
+                <img src="/imgs/logo_vepay.svg" alt="vepay" class="logo">
+                <span class="logotext">ТЕХНОЛОГИИ В&nbsp;ДЕЙСТВИИ</span>
+                <img src="/imgs/close.svg" class="closebtn" alt="close" id="closeform">
+            </div>
         </div>
-    </div>
+    <?php endif; ?>
     <?php if ($params['IdUsluga'] == 1) : ?>
-        <?php $partnerCardRegTextHeaderOption = PartnerOption::findOne(['PartnerId' => $params['IdOrg'], 'Name' => PartnerOption::CARD_REG_TEXT_HEADER_NAME]) ?>
         <?php if($partnerCardRegTextHeaderOption): ?>
             <div class="infotop">
                 <?= $partnerCardRegTextHeaderOption['Value'] ?>
@@ -139,7 +143,7 @@ use yii\bootstrap\Html;
                     'type' => 'email',
                     'class' => 'form-control notrequired',
                     'value' => '',
-                    'placeholder' => 'info@vepay.online'
+                    'placeholder' => 'info@example.com'
                 ]); ?>
             </div>
         </div>
@@ -211,11 +215,13 @@ use yii\bootstrap\Html;
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-xs-12 text-center">
-            <div class="footcopyr">ООО «ПРОЦЕССИНГОВАЯ КОМПАНИЯ БЫСТРЫХ ПЛАТЕЖЕЙ»</div>
+    <?php if (!$paymentFormWithoutVepay || $paymentFormWithoutVepay->Value === 'false'): ?>
+        <div class="row">
+            <div class="col-xs-12 text-center">
+                <div class="footcopyr">ООО «ПРОЦЕССИНГОВАЯ КОМПАНИЯ БЫСТРЫХ ПЛАТЕЖЕЙ»</div>
+            </div>
         </div>
-    </div>
+    <?php endif; ?>
 
     <?php ActiveForm::end(); ?>
 

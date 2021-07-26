@@ -75,11 +75,6 @@ return [
             'superuserPassword' => '',
             'canRegUserRole' => 'php_account_admin',
         ],
-        'ident' => [
-            'runaDomain' => 'https://ecommerce.runabank.ru/pc4x4',
-            'runaLogin' => '784',
-            'runaMode' => 'verify_docs'
-        ],
         'payments' => [
             'BRS' => [
                 'url' => 'https://securepay.rsb.ru:9443',
