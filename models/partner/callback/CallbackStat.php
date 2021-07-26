@@ -58,7 +58,7 @@ class CallbackStat
 
         $data = self::getDataGenerator($list['data']);
 
-        $head = (($IsAdmin === true) ? self::HEAD_ADMIN : self::HEAD_USER);
+        $head = $IsAdmin === true ? self::HEAD_ADMIN : self::HEAD_USER;
 
         $ExportExcel = new ExportExcel();
         $ExportExcel->CreateXlsRaw("Экспорт", $head, $data, []);

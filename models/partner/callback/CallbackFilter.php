@@ -11,21 +11,19 @@ class CallbackFilter
      * Список контрагентов
      * @param $onlymfo boolean
      * @param bool $notehpartner
-     * @return Partner[]|array|\yii\db\ActiveRecord[]
+     * @return Partner[]
      */
     public function getPartnersList($onlymfo = false, $notehpartner = false)
     {
-        $partners = Partner::find()->where(
-            '`IsDeleted` = 0'
-        );
+        $query = Partner::find()->where(['IsDeleted' => 0]);
         if ($onlymfo) {
-            $partners = $partners->andWhere(['IsMfo' => $onlymfo]);
+            $query->andWhere(['IsMfo' => $onlymfo]);
         }
         if ($notehpartner) {
-            $partners = $partners->andWhere('ID <> 1');
+            $query->andWhere('ID <> 1');
         }
 
-        return $partners->all();
+        return $query->all();
     }
 
     /**

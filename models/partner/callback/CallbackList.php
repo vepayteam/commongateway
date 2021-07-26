@@ -77,18 +77,17 @@ class CallbackList extends Model
         }
 
         if ($this->id > 0) {
-            $query->andWhere('n.IdPay = :ID', [':ID' => $this->id]);
+            $query->andWhere(['n.IdPay' => $this->id]);
         }
         if (!empty($this->Extid)) {
-            $query->andWhere('ps.Extid = :EXTID', [':EXTID' => $this->Extid]);
+            $query->andWhere(['ps.Extid' => $this->Extid]);
         }
 
         if (!empty($this->httpCode) && $this->httpCode > 0) {
-            $query->andWhere('n.HttpCode = :HTTPCODE', [':HTTPCODE' => $this->httpCode]);
+            $query->andWhere(['n.HttpCode' => $this->httpCode]);
         }
 
-        $totalCountResult = (clone $query)->select(['COUNT(*) as cnt'])->all();
-        $totalCount = (int) reset($totalCountResult)['cnt'];
+        $totalCount = (int) (clone $query)->select(['COUNT(*) as cnt'])->scalar();
 
         $select = [
             'n.ID',
@@ -125,7 +124,7 @@ class CallbackList extends Model
         }
 
         return [
-            'data'    => (($isGeneratorResult === true) ? self::mapQueryPaymentResult($query) : $query->all()),
+            'data'    => $isGeneratorResult ? self::mapQueryPaymentResult($query) : $query->all(),
             'payLoad' => new PaginationPayLoad([
                 'totalCount' => $totalCount,
                 'page'       => $page,

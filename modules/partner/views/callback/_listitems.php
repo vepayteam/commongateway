@@ -9,26 +9,8 @@
 
 <?php
 
-$queryLink = 'datefrom='. $reqdata['datefrom'];
-$queryLink .= '&dateto=' . $reqdata['dateto'];
-$queryLink .= '&id=' . $reqdata['id'];
-$queryLink .= '&Extid=' . $reqdata['Extid'];
-$queryLink .= '&httpCode=' . $reqdata['httpCode'];
-$queryLink .= '&partner=' . $reqdata['partner'];
-$queryLink .= '&notifstate=' . $reqdata['notifstate'];
-if (isset($reqdata['IdPart'])) {
-    $queryLink .= '&IdPart=' . $reqdata['IdPart'];
-}
-if (isset($reqdata['status']) && count($reqdata['status']) > 0) {
-    foreach ($reqdata['status'] as $status) {
-        $queryLink .= '&status[]=' . $status;
-    }
-}
-if (isset($reqdata['params']) && count($reqdata['params']) > 0) {
-    foreach ($reqdata['params'] as $param){
-        $queryLink .= '&params[]='.$param;
-    }
-}
+$queryLink = http_build_query($reqdata);
+
 ?>
 <?php if (count($data) > 0) : ?>
 <input class='btn btn-white btn-xs' data-action="repeatnotif-batch" data-params="<?=$queryLink?>" type='button' value='Массово повторить запрос'>
