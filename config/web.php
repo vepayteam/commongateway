@@ -30,6 +30,27 @@ $config = [
             //'application/json' => 'yii\web\JsonParser',
             //],
         ],
+        'response' => [
+            'on beforeSend' => function ($event) {
+                $request = Yii::$app->request;
+                $routesXFrameOptionsNone = [
+                    '/widget/',
+                    '/pay/'
+                ];
+
+                $sendXFrame = true;
+                foreach ($routesXFrameOptionsNone as $url) {
+                    if (str_starts_with($request->url, $url)) {
+                        $sendXFrame = false;
+                        break;
+                    }
+                }
+
+                if ($sendXFrame) {
+                    $event->sender->headers->add('X-Frame-Options', 'SAMEORIGIN');
+                }
+            },
+        ],
         'session' => [
             'class' => 'yii\web\DbSession',
         ],
