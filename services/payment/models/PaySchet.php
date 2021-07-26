@@ -258,6 +258,7 @@ class PaySchet extends \yii\db\ActiveRecord
      * @param float $minFee
      *
      * @return int
+     * @todo Удалить - легаси, не используется.
      */
     public static function calcClientFeeStatic(int $sumPay, float $clientFeeCoefficient, float $minFee): int
     {
@@ -274,6 +275,7 @@ class PaySchet extends \yii\db\ActiveRecord
      * Комиссия с клиента
      *
      * @return int
+     * @todo Удалить - легаси, не используется.
      */
     public function calcClientFee(): int
     {
@@ -284,22 +286,25 @@ class PaySchet extends \yii\db\ActiveRecord
      * Комиссия c мерчанта (вознаграждеие)
      *
      * @return int
+     * @todo Удалить - легаси.
      */
     public function calcReward(): int
     {
-        $reward = round($this->SummPay * $this->uslugatovar->ProvVoznagPC / 100.0, 0);
-
-        if ($reward < $this->uslugatovar->ProvVoznagMin * 100.0) {
-            $reward = $this->uslugatovar->ProvVoznagMin * 100.0;
-        }
-
-        return $reward;
+        return $this->MerchVozn;
+//        $reward = round($this->SummPay * $this->uslugatovar->ProvVoznagPC / 100.0, 0);
+//
+//        if ($reward < $this->uslugatovar->ProvVoznagMin * 100.0) {
+//            $reward = $this->uslugatovar->ProvVoznagMin * 100.0;
+//        }
+//
+//        return $reward;
     }
 
     /**
      * Комиссия банка (в коп)
      *
      * @return int
+     * @todo Удалить - легаси, не используется.
      */
     public function calcBankFee(): int
     {
@@ -346,11 +351,14 @@ class PaySchet extends \yii\db\ActiveRecord
     {
         $this->DateLastUpdate = time();
 
-        if ((int)($this->oldAttributes['SummPay'] ?? 0) !== (int)$this->SummPay) {
-            $this->ComissSumm = $this->calcClientFee();
-            $this->BankComis = $this->calcBankFee();
-            $this->MerchVozn = $this->calcReward();
-        }
+        /**
+         * @todo Удалить закомментированный блок и связанный с ним код.
+         */
+//        if ((int)($this->oldAttributes['SummPay'] ?? 0) !== (int)$this->SummPay) {
+//            $this->ComissSumm = $this->calcClientFee();
+//            $this->BankComis = $this->calcBankFee();
+//            $this->MerchVozn = $this->calcReward();
+//        }
 
         return (parent::save($runValidation, $attributeNames));
     }

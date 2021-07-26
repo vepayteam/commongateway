@@ -9,7 +9,7 @@ use yii\db\Query;
 class CurrencyRepository
 {
     /**
-     * @return array
+     * @return Currency[]
      */
     public static function getAll(): array
     {
