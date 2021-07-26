@@ -19,15 +19,9 @@ class WidgetService
      */
     private $idPartner;
 
-    /**
-     * @var PaySchetService
-     */
-    private $paySchetService;
-
-    public function __construct(int $idPartner, PaySchetService $paySchetService)
+    public function __construct(int $idPartner)
     {
         $this->idPartner = $idPartner;
-        $this->paySchetService = $paySchetService;
     }
 
     /**
@@ -62,8 +56,10 @@ class WidgetService
             'failurl' => $uslugatovar->UrlReturnFail
         ]);
 
+        $paySchetService = Yii::$app->get(PaySchetService::class);
+
         try {
-            $data = $this->paySchetService->payToMfo(null, [$orderPay->ID, $orderPay->Comment], $formPay, $uslugatovar->ID, 0, $orderPay->IdPartner, 0);
+            $data = $paySchetService->payToMfo(null, [$orderPay->ID, $orderPay->Comment], $formPay, $uslugatovar->ID, 0, $orderPay->IdPartner, 0);
         } catch (Exception $e) {
             Yii::warning('WidgetService db exception: ' . $e->getMessage());
             return null;
@@ -72,7 +68,7 @@ class WidgetService
         if ($data) {
             $orderPay->IdPaySchet = $data['IdPay'];
             if ($orderPay->ID) {
-                $this->paySchetService->setIdOrder($orderPay->ID, $data);
+                $paySchetService->setIdOrder($orderPay->ID, $data);
             }
 
             return $orderPay->IdPaySchet;

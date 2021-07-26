@@ -29,18 +29,11 @@ class WidgetController extends Controller
     public $layout = 'widgetlayout';
 
     /**
-     * @var PaySchetService
-     */
-    private $paySchetService;
-
-    /**
      * {@inheritDoc}
      */
     public function init()
     {
         parent::init();
-
-        $this->paySchetService = \Yii::$app->get(PaySchetService::class);
     }
 
     public function actions(): array
@@ -92,7 +85,7 @@ class WidgetController extends Controller
             throw new NotFoundHttpException("Счет не может быть оплачен");
         }
 
-        $widgetService = new WidgetService($orderPay->IdPartner, $this->paySchetService);
+        $widgetService = new WidgetService($orderPay->IdPartner);
         $partner = $widgetService->getPartner();
         if (!$partner) {
             throw new NotFoundHttpException('Магазин не найден');
@@ -125,7 +118,7 @@ class WidgetController extends Controller
         $sum = Yii::$app->request->get('sum', 0);
         $info = htmlspecialchars(Yii::$app->request->get('info', ''));
 
-        $widgetService = new WidgetService($prov, $this->paySchetService);
+        $widgetService = new WidgetService($prov);
         $partner = $widgetService->getPartner();
         if (!$partner) {
             throw new NotFoundHttpException('Магазин не найден');
@@ -183,7 +176,7 @@ class WidgetController extends Controller
             }
         }
 
-        $widgetService = new WidgetService($orderPay->IdPartner, $this->paySchetService);
+        $widgetService = new WidgetService($orderPay->IdPartner);
         $partner = $widgetService->getPartner();
         $uslugatovar = $widgetService->getUslugatovar();
         if (!$partner || !$uslugatovar) {
