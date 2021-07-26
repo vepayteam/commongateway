@@ -176,7 +176,7 @@ class XlsActs
     private function WriteHeader()
     {
         $header = 'Общество с ограниченной ответственностью «Процессинговая компания быстрых платежей», именуемое «Оператор»,' .
-            'в лице генерального директора в Колобова Е. В., действующего на основании Устава, составил, а '.$this->partner->UrLico.
+            'в лице генерального директора Никонова Г.Б., действующего на основании Устава, составил, а '.$this->partner->UrLico.
             ', именуемое «Контрагент», в лице '.$this->partner->PodpDoljpostRod.' '.$this->partner->PodpisantShort.
             ', действующего на основании '.$this->partner->PodpOsnovanRod.
             ', утвердил настоящий Акт о том, что Оператор надлежащим образом исполнил обязательства по Договору в соответствии с нижеприведенными данными:';
@@ -394,7 +394,7 @@ class XlsActs
         $GapXLS++;
         $GapXLS++;
         $this->sheet->setCellValue("B" . $GapXLS, $this->partner->PodpisantShort);
-        $this->sheet->setCellValue("I" . $GapXLS, "Колобов Е. В.");
+        $this->sheet->setCellValue("I" . $GapXLS, "Никонов Г.Б.");
         $this->sheet->getStyle("B" . $GapXLS . ":C" . $GapXLS)->getBorders()->getBottom()->setBorderStyle(Border::BORDER_MEDIUM);
         $this->sheet->getStyle("I" . $GapXLS . ":J" . $GapXLS)->getBorders()->getBottom()->setBorderStyle(Border::BORDER_MEDIUM);
     }
