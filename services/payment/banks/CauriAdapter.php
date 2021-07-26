@@ -43,6 +43,7 @@ use Vepay\Cauri\Resource\Payout;
 use Vepay\Gateway\Config;
 use Vepay\Gateway\Logger\LoggerInterface;
 use Yii;
+use yii\helpers\Json;
 
 class CauriAdapter implements IBankAdapter
 {
@@ -509,7 +510,14 @@ class CauriAdapter implements IBankAdapter
         try {
             $api = new CauriApiFacade($this->gate);
             $responseData = $api->getBalance($getBalanceRequest->getAttributes());
+
+            Yii::warning('CauriAdapter getBalance: PartnerId=' . $this->gate->PartnerId
+                . ' GateId=' . $this->gate->Id
+                . ' Response=' . Json::encode($responseData->getContent())
+            );
         } catch (\Exception $e) {
+            Yii::warning('CauriAdapter getBalance exception: ' . $e->getMessage());
+
             throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
         }
         $response = $responseData->getContent();

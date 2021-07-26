@@ -694,10 +694,17 @@ class FortaTechAdapter implements IBankAdapter
                 $endpoint
             );
         } catch (GuzzleException $e) {
+            Yii::warning('FortaTechAdapter getBalance exception: ' . $e->getMessage());
+
             throw new BankAdapterResponseException(
                 BankAdapterResponseException::REQUEST_ERROR_MSG . ' : ' . $e->getMessage()
             );
         }
+
+        Yii::warning('FortaTechAdapter getBalance: PartnerId=' . $this->gate->PartnerId
+            . ' GateId=' . $this->gate->Id
+            . ' Response=' . Json::encode($response->getBody())
+        );
 
         if (!$response->isSuccess()) {
             $errorMsg = 'Balance service:: FortaTech request failed for type: ' . $type;
