@@ -45,7 +45,7 @@ class PartnerOption extends \yii\db\ActiveRecord
             'default' => 'false',
         ],
         self::PAYMENT_FORM_ADDITIONAL_COMMISSION => [
-            'title' => 'Дополнительная комиссия с клиента',
+            'title' => 'Добавить на платежную страницу уведомление о дополнительной комиссии с клиента банком-эмитентом',
             'type' => 'checkbox',
             'default' => 'false',
         ],
