@@ -33,7 +33,6 @@ use app\services\payment\payment_strategies\CreatePayStrategy;
 use app\services\payment\payment_strategies\DonePayStrategy;
 use app\services\payment\payment_strategies\OkPayStrategy;
 use kartik\mpdf\Pdf;
-use NumberFormatter;
 use Yii;
 use yii\db\Exception;
 use yii\helpers\Json;
@@ -235,11 +234,6 @@ class PayController extends Controller
 
     public function actionCreatepaySecondStep($id)
     {
-        // TODO: DRY
-        if (Yii::$app->request->isPost) {
-            return $this->redirect(Url::to('/pay/orderdone/' . $id));
-        }
-
         // TODO: refact
         $createPaySecondStepForm = new CreatePaySecondStepForm();
         $createPaySecondStepForm->IdPay = $id;
@@ -261,9 +255,17 @@ class PayController extends Controller
         $paySchet->save(false);
 
         if ($createPayResponse->isNeed3DSVerif) {
-            return $this->render('createpay-second-step', ['createPayResponse' => $createPayResponse]);
+            return $this->render('client-submit-form', [
+                'method' => 'POST',
+                'url' => $createPayResponse->url,
+                'fields' => [
+                    'creq' => $createPayResponse->creq,
+                ],
+            ]);
         } else {
-            return $this->redirect(Url::to('/pay/orderdone/' . $paySchet->ID));
+            return $this->render('redirect-frame-parent', [
+                'redirectUrl' => Url::to('/pay/orderdone/' . $paySchet->ID),
+            ]);
         }
     }
 

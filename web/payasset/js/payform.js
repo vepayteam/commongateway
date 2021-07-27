@@ -339,9 +339,9 @@
             } else if (data.status == 0 && data.threeDSMethodURL && data.isNeedSendTransIdTKB) {
                 payform.confirm3dsV2TKB(data.threeDSMethodURL, data.threeDSServerTransID, data.termurl);
 
-                setTimeout(function() {
-                    window.location = data.termurl;
-                }, 5000);
+                // setTimeout(function() {
+                //     window.location = data.termurl;
+                // }, 5000);
             } else if (data.status == 1 && data.url && data.isNeed3DSRedirect) {
                 window.location = data.url;
             } else if (data.status == 2 && data.url) {
@@ -370,6 +370,26 @@
                     middleWrapper.classList.remove('middle-background');
                 }
             }
+        },
+        /**
+         * @param method String
+         * @param url String
+         * @param fields Object
+         */
+        submitForm: function (method, url, fields) {
+            let $form = $('<form></form>')
+                .hide()
+                .attr('method', method)
+                .attr('action', url);
+            for(let key in fields){
+                $('<input type="hidden"/>')
+                    .attr('name', key)
+                    .attr('value', fields[key])
+                    .appendTo($form);
+            }
+            $form
+                .appendTo($('html'))
+                .submit();
         }
     };
 
