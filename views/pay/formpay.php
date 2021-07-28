@@ -14,11 +14,13 @@ use yii\bootstrap\ActiveForm;
 use yii\bootstrap\Html;
 
 $partnerCardRegTextHeaderOption = PartnerOption::findOne(['PartnerId' => $params['IdOrg'], 'Name' => PartnerOption::CARD_REG_TEXT_HEADER_NAME]);
-$paymentFormWithoutVepay = PartnerOption::findOne(['PartnerId' => $params['IdOrg'], 'Name' => PartnerOption::PAYMENT_FORM_WITHOUT_VEPAY]);
+
+$paymentFormWithoutVepay = PartnerOption::getBool($params['IdOrg'], PartnerOption::PAYMENT_FORM_WITHOUT_VEPAY);
+$paymentFormAdditionalCommission = PartnerOption::getBool($params['IdOrg'], PartnerOption::PAYMENT_FORM_ADDITIONAL_COMMISSION);
 ?>
 <div id="middle-wrapper" class="middle middle-background">
 <section class="container">
-    <?php if (!$paymentFormWithoutVepay || $paymentFormWithoutVepay->Value === 'false'): ?>
+    <?php if (!$paymentFormWithoutVepay): ?>
         <div class="row margin-top24 rowlogo">
             <div class="col-xs-12">
                 <img src="/imgs/logo_vepay.svg" alt="vepay" class="logo">
@@ -55,12 +57,18 @@ $paymentFormWithoutVepay = PartnerOption::findOne(['PartnerId' => $params['IdOrg
                     </span>
                 </div>
                 <div class="info">
-                    <span>Комиссия </span>
+                    <span>Комиссия<?=$paymentFormAdditionalCommission ? '* ' : ' '?></span>
                     <span class="pull-right blacksumm">
                         <?= PaymentHelper::formatSum($params['amountCommission']) ?>
                         <?= Currency::SYMBOLS[$params['currency']] ?>
                     </span>
                 </div>
+
+                <?php if ($paymentFormAdditionalCommission): ?>
+                    <div class="info margin-top16" style="font-weight: normal; font-size: 12px;">
+                        Информируем Вас, что банк-эмитент может взимать дополнительную комиссию.
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     <?php endif; ?>
@@ -215,7 +223,7 @@ $paymentFormWithoutVepay = PartnerOption::findOne(['PartnerId' => $params['IdOrg
         </div>
     </div>
 
-    <?php if (!$paymentFormWithoutVepay || $paymentFormWithoutVepay->Value === 'false'): ?>
+    <?php if (!$paymentFormWithoutVepay): ?>
         <div class="row">
             <div class="col-xs-12 text-center">
                 <div class="footcopyr">ООО «ПРОЦЕССИНГОВАЯ КОМПАНИЯ БЫСТРЫХ ПЛАТЕЖЕЙ»</div>
