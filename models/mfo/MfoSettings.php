@@ -2,6 +2,7 @@
 
 namespace app\models\mfo;
 
+use app\models\partner\PartnerCallbackSettings;
 use app\models\payonline\Uslugatovar;
 use app\models\TU;
 use yii\base\Model;
@@ -16,13 +17,20 @@ class MfoSettings extends Model
     public $UrlReturnCancel = '';
     public $UrlCheckReq = '';
 
+    public $CallbackSendExtId = false;
+    public $CallbackSendId = false;
+    public $CallbackSendSum = false;
+    public $CallbackSendStatus = false;
+    public $CallbackSendChannel = false;
+
     public function rules()
     {
         return [
             [['IdPartner'], 'integer'],
             [['url', 'UrlReturn', 'UrlReturnFail', 'UrlCheckReq', 'UrlReturnCancel'], 'url'],
             [['url', 'UrlReturn', 'UrlReturnFail', 'UrlCheckReq', 'UrlReturnCancel'], 'string', 'max' => 300],
-            ['key', 'string', 'max' => 20]
+            ['key', 'string', 'max' => 20],
+            [['CallbackSendExtId', 'CallbackSendId', 'CallbackSendSum', 'CallbackSendStatus', 'CallbackSendChannel'], 'boolean'],
         ];
     }
 
@@ -46,6 +54,15 @@ class MfoSettings extends Model
             $this->UrlReturnFail = $usl->UrlReturnFail;
             $this->UrlReturnCancel = $usl->UrlReturnCancel;
             $this->UrlCheckReq = $usl->UrlCheckReq;
+        }
+
+        if ($this->IdPartner) {
+            $partnerCallbackSettings = PartnerCallbackSettings::getByPartnerId($this->IdPartner);
+            $this->CallbackSendExtId = $partnerCallbackSettings->SendExtId;
+            $this->CallbackSendId = $partnerCallbackSettings->SendId;
+            $this->CallbackSendSum = $partnerCallbackSettings->SendSum;
+            $this->CallbackSendStatus = $partnerCallbackSettings->SendStatus;
+            $this->CallbackSendChannel = $partnerCallbackSettings->SendChannel;
         }
     }
 
@@ -124,6 +141,16 @@ class MfoSettings extends Model
             $usl->UrlReturnFail = $this->UrlReturnFail;
             $usl->UrlReturnCancel = $this->UrlReturnCancel;
             $usl->save(false);
+        }
+
+        if ($this->IdPartner) {
+            $partnerCallbackSettings = PartnerCallbackSettings::getByPartnerId($this->IdPartner);
+            $partnerCallbackSettings->SendExtId = $this->CallbackSendExtId;
+            $partnerCallbackSettings->SendId = $this->CallbackSendId;
+            $partnerCallbackSettings->SendSum = $this->CallbackSendSum;
+            $partnerCallbackSettings->SendStatus = $this->CallbackSendStatus;
+            $partnerCallbackSettings->SendChannel = $this->CallbackSendChannel;
+            $partnerCallbackSettings->save(false);
         }
 
         return 1;

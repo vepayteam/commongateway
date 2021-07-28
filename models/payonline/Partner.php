@@ -297,7 +297,7 @@ class Partner extends ActiveRecord
             'OrangeDataSingKey' => 'Ключ для подписи',
             'OrangeDataConKey' => 'Ключ для подключения',
             'OrangeDataConCert' => 'Сертификат для подключения',
-            'IsUseKKmPrint' => 'Использование ККМ',
+            'IsUseKKmPrint' => 'Отправлять чек на Email',
 
             'MtsLogin' => 'Логин МТС Банк',
             'MtsPassword' => 'Пароль МТС Банк',
