@@ -9,12 +9,12 @@ use yii\web\View;
 /* @var PaySchet $paySchet */
 /* @var View $this */
 
-$paymentFormWithoutVepay = PartnerOption::findOne(['PartnerId' => $paySchet->ID, 'Name' => PartnerOption::PAYMENT_FORM_WITHOUT_VEPAY]);
+$paymentFormWithoutVepay = PartnerOption::getBool($paySchet->ID, PartnerOption::PAYMENT_FORM_WITHOUT_VEPAY);
 ?>
 
 <section class="container">
 
-    <?php if (!$paymentFormWithoutVepay || $paymentFormWithoutVepay->Value === 'false'): ?>
+    <?php if (!$paymentFormWithoutVepay): ?>
         <div class="row">
             <div class="col-xs-12 text-center"><img src="/imgs/logo_vepay.svg" alt="vepay" class="logoend"></div>
         </div>

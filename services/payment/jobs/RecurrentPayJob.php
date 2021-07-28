@@ -21,6 +21,8 @@ use yii\queue\Queue;
 
 class RecurrentPayJob extends BaseObject implements \yii\queue\JobInterface
 {
+    private const RECURRENT_STATUS_PAY_JOB_DELAY = 30;
+
     public $paySchetId;
 
     /**
@@ -54,9 +56,11 @@ class RecurrentPayJob extends BaseObject implements \yii\queue\JobInterface
             Yii::warning('RecurrentPayJob errorResponse autoPay=' . $paySchet->ID . $autoPayForm->extid, 'mfo');
         }
 
-        Yii::$app->queue->push(new RefreshStatusPayJob([
-            'paySchetId' => $paySchet->ID,
-        ]));
+        Yii::$app->queue
+            ->delay(self::RECURRENT_STATUS_PAY_JOB_DELAY)
+            ->push(new RefreshStatusPayJob([
+                'paySchetId' => $paySchet->ID,
+            ]));
 
         $paySchet->save(false);
         return $paySchet;
