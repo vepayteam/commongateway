@@ -88,25 +88,33 @@ class VoznagStat extends Model
         $dateFrom = Carbon::createFromFormat('d.m.Y H:i:s', $this->datefrom . ":00")->getTimestamp();
         $dateTo = Carbon::createFromFormat('d.m.Y H:i:s', $this->dateto . ":59")->getTimestamp();
 
-        $query = PaySchet::find()
-                         ->with('uslugatovar')
-                         ->from(['ps FORCE INDEX(DateCreate_idx)' => PaySchet::tableName()])
-                         ->select([
-                             'ps.IdUsluga',
-                             'SUM(ps.SummPay) AS SummPay',
-                             'SUM(ps.ComissSumm) AS ComissSumm',
-                             'SUM(ps.MerchVozn) AS MerchVozn',
-                             'SUM(ps.BankComis) AS BankComis',
-                             'COUNT(*) AS CntPays',
-                             'ut.*',
-                         ])
-                         ->innerJoin('`uslugatovar` AS ut', 'ps.IdUsluga = ut.ID')
-                         ->andWhere(['BETWEEN', 'ps.DateCreate', $dateFrom, $dateTo])
-                         ->andWhere(['=', 'ps.Status', '1'])
-                         ->andWhere(['in', 'ut.IsCustom', $tuList])
-                         ->andWhere(['ut.IDPartner' => $partner->ID])
-                         ->groupBy(['ps.IdUsluga', 'ut.*'])
-                         ->indexBy('IdUsluga');
+        try {
+            $query = PaySchet::find()
+                             ->with('uslugatovar')
+                             ->from(['ps FORCE INDEX(DateCreate_idx)' => PaySchet::tableName()])
+                             ->select([
+                                 'ps.IdUsluga',
+                                 'SUM(ps.SummPay) AS SummPay',
+                                 'SUM(ps.ComissSumm) AS ComissSumm',
+                                 'SUM(ps.MerchVozn) AS MerchVozn',
+                                 'SUM(ps.BankComis) AS BankComis',
+                                 'COUNT(*) AS CntPays',
+                                 'ut.*',
+                             ])
+                             ->innerJoin('`uslugatovar` AS ut', 'ps.IdUsluga = ut.ID')
+                             ->andWhere(['BETWEEN', 'ps.DateCreate', $dateFrom, $dateTo])
+                             ->andWhere(['=', 'ps.Status', '1'])
+                             ->andWhere(['in', 'ut.IsCustom', $tuList])
+                             ->andWhere(['ut.IDPartner' => $partner->ID])
+                             ->groupBy(['ps.IdUsluga', 'ut.ID'])
+                             ->indexBy('IdUsluga');
+        } catch (\Throwable $e) {
+            Yii::error(sprintf(
+                    'VoznagStat error. Message: %s. Trace: %s',
+                    $e->getMessage(),$e->getTraceAsString()
+                )
+            );
+        }
 
         $serviceSums = $query->all();
 
