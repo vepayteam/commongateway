@@ -105,7 +105,7 @@ class VoznagStat extends Model
                          ->andWhere(['=', 'ps.Status', '1'])
                          ->andWhere(['in', 'ut.IsCustom', $tuList])
                          ->andWhere(['ut.IDPartner' => $partner->ID])
-                         ->groupBy('ps.IdUsluga')
+                         ->groupBy(['ps.IdUsluga', 'ut.*'])
                          ->indexBy('IdUsluga');
 
         $serviceSums = $query->all();
