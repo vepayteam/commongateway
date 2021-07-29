@@ -1,10 +1,20 @@
 <?php
 
 /* @var yii\web\View $this */
+/* @var array $reqdata */
 /* @var array $data */
 /* @var $IsAdmin bool */
 
 ?>
+
+<?php
+
+$queryLink = http_build_query($reqdata);
+
+?>
+<?php if (count($data) > 0) : ?>
+<input class='btn btn-white btn-xs' data-action="repeatnotif-batch" data-params="<?=$queryLink?>" type='button' value='Массово повторить запрос'>
+<?php endif; ?>
 
 <table class="table table-striped tabledata" style="font-size: 0.9em">
     <thead>
@@ -33,7 +43,19 @@
             </tr>
         <?php endforeach; ?>
     </tbody>
+
 <tfoot>
+
+    <tr>
+        <th colspan='6'>
+
+            <a class="btn btn-white btn-xs" target="_blank"
+               href="/partner/callback/listexport?<?=$queryLink?>">
+                <i class="fa fa-share"></i>&nbsp;Экспорт xls
+            </a>
+        </th>
+    </tr>
+
 <?php if ($payLoad['totalCount'] > $payLoad['pageLimit']) : ?>
     <?php $maxPage = ceil($payLoad['totalCount'] / $payLoad['pageLimit']); ?>
     <tr>
