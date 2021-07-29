@@ -5,7 +5,9 @@ namespace app\services\payment\models;
 use app\models\payonline\Partner;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
+use app\services\CompensationService;
 use app\services\notifications\models\NotificationPay;
+use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\Banks;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\models\active_query\PaySchetQuery;
@@ -347,20 +349,39 @@ class PaySchet extends \yii\db\ActiveRecord
         return $this->hasMany(NotificationPay::class, ['IdPay' => 'ID']);
     }
 
-    public function save($runValidation = true, $attributeNames = null)
+    /**
+     * {@inheritDoc}
+     * @throws \Exception
+     */
+    public function beforeSave($insert): bool
     {
+        if (!parent::beforeSave($insert)) {
+            return false;
+        }
+
         $this->DateLastUpdate = time();
 
-        /**
-         * @todo Удалить закомментированный блок и связанный с ним код.
-         */
-//        if ((int)($this->oldAttributes['SummPay'] ?? 0) !== (int)$this->SummPay) {
-//            $this->ComissSumm = $this->calcClientFee();
-//            $this->BankComis = $this->calcBankFee();
-//            $this->MerchVozn = $this->calcReward();
-//        }
+        if ($insert) {
+            // Считаем отчисления (комиссии) для платежа.
+            /** @var CompensationService $compensationService */
+            $compensationService = \Yii::$app->get(CompensationService::class);
+            $gate = (new BankAdapterBuilder())
+                ->build($this->partner, $this->uslugatovar, $this->currency)
+                ->getPartnerBankGate();
+            $this->ComissSumm = round($compensationService->calculateForClient($this, $gate));
+            $this->BankComis = round($compensationService->calculateForBank($this, $gate));
+            $this->MerchVozn = round($compensationService->calculateForPartner($this, $gate));
+        }
 
-        return (parent::save($runValidation, $attributeNames));
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function save($runValidation = true, $attributeNames = null): bool
+    {
+        return parent::save($runValidation, $attributeNames);
     }
 
     /**

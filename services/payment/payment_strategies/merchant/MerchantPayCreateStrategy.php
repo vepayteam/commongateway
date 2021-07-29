@@ -154,13 +154,6 @@ class MerchantPayCreateStrategy
             }
         }
 
-        /** @var CompensationService $compensationService */
-        $compensationService = \Yii::$app->get(CompensationService::class);
-        $gate = $bankAdapterBuilder->getPartnerBankGate();
-        $paySchet->ComissSumm = round($compensationService->calculateForClient($paySchet, $gate));
-        $paySchet->BankComis = round($compensationService->calculateForBank($paySchet, $gate));
-        $paySchet->MerchVozn = round($compensationService->calculateForPartner($paySchet, $gate));
-
         if (!$paySchet->save()) {
             throw new CreatePayException('Не удалось создать счет');
         }

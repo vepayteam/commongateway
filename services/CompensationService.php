@@ -3,10 +3,12 @@
 namespace app\services;
 
 use app\models\bank\Banks;
+use app\services\compensationService\CompensationException;
 use app\services\payment\models\Currency;
 use app\services\payment\models\CurrencyExchange;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
+use Carbon\Carbon;
 use yii\base\Component;
 
 /**
@@ -21,6 +23,7 @@ class CompensationService extends Component
      * @param Currency $currencyTo
      * @return float
      * @throws \Exception
+     * @todo Убрать в отдельный сервис.
      */
     private function getCurrencyRate(Banks $bank, Currency $currencyFrom, Currency $currencyTo): float
     {
@@ -35,10 +38,14 @@ class CompensationService extends Component
                 'From' => $currencyFrom->Code,
                 'To' => $currencyTo->Code,
             ])
+            ->andWhere(['=', 'DATE(RateFrom)', (new Carbon())->format('Y-m-d')])
             ->orderBy('CreatedAt DESC')
             ->one();
+
         if ($currencyExchange === null) {
-            throw new \Exception('Currency exchange rate not found.');
+            $message = "Currency exchange rate not found (bank={$bank->ID}, {$currencyFrom->Code} => {$currencyTo->Code}).";
+            \Yii::error(__CLASS__ . ': ' . $message);
+            throw new CompensationException($message, CompensationException::NO_EXCHANGE_RATE);
         }
 
         return $currencyExchange->Rate;

@@ -3,19 +3,16 @@
 namespace app\modules\mfo\controllers;
 
 use app\models\api\CorsTrait;
-use app\models\bank\BankMerchant;
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\crypt\CardToken;
 use app\models\kfapi\KfCard;
 use app\models\kfapi\KfFormPay;
-use app\models\kfapi\KfPay;
 use app\models\kfapi\KfPayParts;
 use app\models\mfo\MfoReq;
-use app\models\payonline\Partner;
 use app\models\PayschetPart;
 use app\models\Payschets;
-use app\models\TU;
+use app\services\compensationService\CompensationException;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
@@ -29,12 +26,10 @@ use app\services\payment\payment_strategies\mfo\MfoPayLkCreateStrategy;
 use app\services\PaySchetService;
 use Yii;
 use yii\base\Exception;
-use yii\helpers\VarDumper;
 use yii\mutex\FileMutex;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\web\ForbiddenHttpException;
-use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
 
@@ -125,12 +120,21 @@ class PayController extends Controller
         );
         Yii::warning($message, 'mfo');
         $paymentStrategy = new MfoPayLkCreateStrategy($form);
+
         try {
+
             $payschet = $paymentStrategy->exec();
+
         } catch (CreatePayException $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
         } catch (GateException $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
+        } catch (CompensationException $e) {
+            $message = 'Ошибка расчета комисси.';
+            if ($e->getCode() === CompensationException::NO_EXCHANGE_RATE) {
+                $message = 'Обменный курс для расчета комисси не найден.';
+            }
+            return ['status' => 0, 'message' => $message];
         }
 
         $urlForm = Yii::$app->params['domain'] . '/pay/form/' . $payschet->ID;
