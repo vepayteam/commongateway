@@ -61,6 +61,9 @@ $paymentFormWithoutVepay = PartnerOption::findOne(['PartnerId' => $params['IdOrg
                         <?= Currency::SYMBOLS[$params['currency']] ?>
                     </span>
                 </div>
+                <div class="info" id="error-message" style="display: none">
+                    <p class="errmessage js-message-container"></p>
+                </div>
             </div>
         </div>
     <?php endif; ?>

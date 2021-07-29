@@ -352,7 +352,7 @@
                 $('input[data-inputmask-mask]', '#payform').inputmask();
                 $('#error_message').html(data.message);
                 $('#error_message_xs').html(data.message);
-                $('.errmessage').show();
+                $('#payform .errmessage').show();
             }
         },
 
@@ -390,6 +390,19 @@
             $form
                 .appendTo($('html'))
                 .submit();
+        },
+
+        /**
+         * Показывает ошибку.
+         * @param message
+         */
+        error: function (message) {
+            $("#loader").hide();
+            $('#error-message')
+                .show()
+                .find('.js-message-container')
+                .show()
+                .text(message);
         }
     };
 
