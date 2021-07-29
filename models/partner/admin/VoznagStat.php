@@ -114,7 +114,7 @@ class VoznagStat extends Model
         } catch (\Throwable $e) {
             Yii::error(sprintf(
                     'VoznagStat error. Message: %s. Query: %s. Trace: %s.',
-                    $e->getMessage(), $query->createCommand()->getRawSql(), $e->getTraceAsString(),
+                    $e->getMessage(), $query->createCommand()->getRawSql(), $e->getTraceAsString()
                 )
             );
         }
