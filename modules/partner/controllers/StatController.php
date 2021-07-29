@@ -42,6 +42,7 @@ use kartik\mpdf\Pdf;
 use Yii;
 use yii\base\DynamicModel;
 use yii\filters\AccessControl;
+use yii\filters\VerbFilter;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
 use yii\helpers\VarDumper;
@@ -89,6 +90,12 @@ class StatController extends Controller
                     ],
                 ],
             ],
+            'verbs' => [
+                'class' => VerbFilter::class,
+                'actions' => [
+                    'diffdata' => ['POST'],
+                ],
+            ],
         ];
     }
 
@@ -99,10 +106,6 @@ class StatController extends Controller
 
     public function actionDiffdata()
     {
-        if (!Yii::$app->request->isPost) {
-            throw new MethodNotAllowedHttpException();
-        }
-
         $registryFile = UploadedFile::getInstanceByName('registryFile');
 
         try {
