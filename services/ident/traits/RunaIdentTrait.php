@@ -90,49 +90,6 @@ trait RunaIdentTrait
      */
     protected function sendRunaRequest($method, Model $model, $mode)
     {
-        $certPath = Yii::getAlias('@app/config/runacert');
-        $url = sprintf(
-            '%s/%s/%s/%s',
-            Yii::$app->params['services']['ident']['runaDomain'],
-            $mode,
-            Yii::$app->params['services']['ident']['runaLogin'],
-            $method
-        );
-
-        $data = $model->getAttributes();
-
-        $curl = curl_init($url);
-
-        Yii::warning('RunaBank req: ' . $url . ' ' . json_encode($data));
-        curl_setopt_array($curl, array(
-            CURLOPT_SSLVERSION => CURL_SSLVERSION_TLSv1_2,
-            CURLOPT_SSLCERT => $certPath . '/vepay.crt',
-            CURLOPT_SSLKEY => $certPath . '/vepay.key',
-            CURLOPT_CERTINFO => true,
-            CURLOPT_POST => true,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_SSL_VERIFYHOST => 2,
-            CURLOPT_SSL_VERIFYPEER => true,
-
-            CURLOPT_HTTPHEADER => array(
-                'Accept: application/json',
-                'Content-Type: application/json'
-            ),
-            CURLOPT_POSTFIELDS => json_encode($data)
-        ));
-
-        try {
-            $response = curl_exec($curl);
-            $error = curl_error($curl);
-
-            if(!empty($error)) {
-                throw new RunaIdentException($error);
-            }
-            curl_close($curl);
-            Yii::warning('RunaBank res: ' . $response);
-            return json_decode($response, true);
-        } catch (\Exception $e) {
-            throw $e;
-        }
+        return array();
     }
 }

@@ -2,8 +2,8 @@
 
 namespace app\services\notifications\models;
 
+use app\models\partner\PartnerCallbackSettings;
 use app\services\payment\models\PaySchet;
-use Yii;
 
 /**
  * This is the model class for table "notification_pay".
@@ -86,15 +86,34 @@ class NotificationPay extends \yii\db\ActiveRecord
     /**
      * @return array
      */
-    public function getQuery()
+    public function getQuery(): array
     {
-        return [
-            'extid' => $this->paySchet->Extid,
-            'id' => $this->paySchet->ID,
-            'sum' => $this->paySchet->getFormatSummPay(),
-            'status' => $this->paySchet->Status,
-            'key' => $this->buildKey(),
-        ];
+        $params = [];
+
+        $settings = PartnerCallbackSettings::getByPartnerId($this->paySchet->partner->ID);
+        if ($settings->SendExtId) {
+            $params['extid'] = $this->paySchet->Extid;
+        }
+
+        if ($settings->SendId) {
+            $params['id'] = $this->paySchet->ID;
+        }
+
+        if ($settings->SendSum) {
+            $params['sum'] = $this->paySchet->getFormatSummPay();
+        }
+
+        if ($settings->SendStatus) {
+            $params['status'] = $this->paySchet->Status;
+        }
+
+        if ($settings->SendChannel) {
+            $params['channel'] = $this->paySchet->bank->ChannelName;
+        }
+
+        $params['key'] = $this->buildKey($settings);
+
+        return $params;
     }
 
     /**
@@ -114,18 +133,36 @@ class NotificationPay extends \yii\db\ActiveRecord
     }
 
     /**
-     * @param NotificationPay $notificationPay
+     * @param PartnerCallbackSettings $settings
      * @return string
      */
-    public function buildKey()
+    public function buildKey(PartnerCallbackSettings $settings): string
     {
-        return md5(
-            $this->paySchet->Extid
-            . $this->paySchet->ID
-            . $this->paySchet->getFormatSummPay()
-            . $this->paySchet->Status
-            . $this->paySchet->uslugatovar->KeyInform
-        );
+        $params = [];
+        if ($settings->SendExtId) {
+            $params[] = $this->paySchet->Extid;
+        }
+
+        if ($settings->SendId) {
+            $params[] = $this->paySchet->ID;
+        }
+
+        if ($settings->SendSum) {
+            $params[] = $this->paySchet->getFormatSummPay();
+        }
+
+        if ($settings->SendStatus) {
+            $params[] = $this->paySchet->Status;
+        }
+
+        if ($settings->SendChannel) {
+            $params[] = $this->paySchet->bank->Name;
+        }
+
+        $params[] = $this->paySchet->uslugatovar->KeyInform;
+        $key = join('', $params);
+
+        return md5($key);
     }
 
     /**

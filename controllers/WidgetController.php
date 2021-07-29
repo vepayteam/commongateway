@@ -14,6 +14,7 @@ use app\services\payment\payment_strategies\CreatePayStrategy;
 use app\services\payment\payment_strategies\DonePayStrategy;
 use app\services\payment\payment_strategies\OkPayStrategy;
 use app\services\payment\WidgetService;
+use app\services\PaySchetService;
 use Exception;
 use Yii;
 use yii\helpers\Json;
@@ -26,6 +27,14 @@ use yii\web\Response;
 class WidgetController extends Controller
 {
     public $layout = 'widgetlayout';
+
+    /**
+     * {@inheritDoc}
+     */
+    public function init()
+    {
+        parent::init();
+    }
 
     public function actions(): array
     {
@@ -278,7 +287,8 @@ class WidgetController extends Controller
                 return $this->redirect(Payschets::RedirectUrl($paySchet->SuccessUrl, $paySchet->ID, $paySchet->Extid));
             } else {
                 return $this->render('paydone', [
-                    'message' => 'Оплата прошла успешно.'
+                    'message' => 'Оплата прошла успешно.',
+                    'paySchet' => $paySchet,
                 ]);
             }
 

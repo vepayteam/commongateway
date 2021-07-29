@@ -74,11 +74,6 @@ return [
             'superuserPassword' => 'Default12345',
             'canRegUserRole' => 'php_account_admin',
         ],
-        'ident' => [
-            'runaDomain' => 'https://ecommerce.runabank.ru/pc4x4_test',
-            'runaLogin' => '784',
-            'runaMode' => 'verify_docs'
-        ],
         'payments' => [
             'BRS' => [
                 'url' => getenv('PARAMS_PAYMENTS_BRS_URL', true),
