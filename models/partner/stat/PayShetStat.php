@@ -331,7 +331,7 @@ class PayShetStat extends Model
         }
 
         $pagination = new Pagination([
-            'totalCount' => (clone $query)->count(),
+            'totalCount' => $query->count(),
             'pageSize' => $CNTPAGE,
         ]);
 
