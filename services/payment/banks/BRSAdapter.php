@@ -527,6 +527,7 @@ class BRSAdapter implements IBankAdapter
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_USERPWD => $this->gate->Token . ':' . $this->gate->Password,
             CURLOPT_POSTFIELDS => $xml,
             CURLOPT_HTTPHEADER => array(
                 'Content-Type: text/xml',
@@ -536,7 +537,7 @@ class BRSAdapter implements IBankAdapter
                 'User-Agent: Mozilla/4.0',
                 'Cache-Control: no-cache',
                 'Expect: 100-continue',
-                'Authorization: Basic ' . base64_encode($this->gate->Token . ':' . $this->gate->Password)
+                'Authorization: Basic R0g6SjhoZ15nbDJkUw=='
             ),
         ));
 
