@@ -2,6 +2,7 @@
 
 namespace app\models\partner\stat;
 
+use app\models\partner\stat\exceptions\ExportExcelRawException;
 use app\models\partner\stat\export\phpExportData\ExportDataExcel;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -14,50 +15,71 @@ class ExportExcel
      * @param array      $head
      * @param \Generator $data
      * @param array      $totalRules
+     *
+     * @throws ExportExcelRawException
      */
     public function CreateXlsRaw(string $title, array $head, \Generator $data, array $totalRules = []): void
     {
-        $totals = ['ИТОГО:'];
+        try {
 
-        // инициируем класс для "низкоуровневой" записи в XLS-файл
-        $exporter = new ExportDataExcel('browser', 'export.xls');
-        $exporter->title = $title;
-        $exporter->initialize();
+            $totals = ((count($totalRules) > 0) ? ['ИТОГО:'] : []);
 
-        // шапка
-        $exporter->addRow($head);
+            // инициируем класс для "низкоуровневой" записи в XLS-файл
+            $exporter = new ExportDataExcel('browser', 'export.xls');
+            $exporter->title = $title;
+            $exporter->initialize();
 
-        $rowCellCount = null;
+            // шапка
+            $exporter->addRow($head);
 
-        // данные
-        foreach ($data as $row) {
+            $rowCellCount = null;
 
-            if ($rowCellCount === null) {
-                $rowCellCount = count($row);
-            }
+           try {
+                // данные
+                foreach ($data as $row) {
 
-            $exporter->addRow($row);
+                    if ( $rowCellCount === null ) {
+                        $rowCellCount = count($row);
+                    }
 
-            foreach ($row as $i => $item) {
-                if (isset($totalRules[$i])) {
-                    @$totals[$i] += $item;
+                    $exporter->addRow($row);
+
+                    if ( count($totalRules) > 0 ) {
+
+                        foreach ($row as $i => $item) {
+                            if ( isset($totalRules[$i]) ) {
+                                @$totals[$i] += $item;
+                            }
+                        }
+                    }
                 }
+            } catch (\Throwable $e) { }
+
+            //итого
+            if ($rowCellCount !== null && count($totalRules) > 0) {
+
+                for ($i = 1; $i < $rowCellCount; $i++) {
+                    $totals[$i] = (array_key_exists($i, $totals) ? $totals[$i] : '');
+                }
+
+                ksort($totals);
+
+                $exporter->addRow($totals);
             }
+
+            $exporter->finalize();
+
+        } catch (\Throwable $e) {
+
+            Yii::error(
+                'Message: ' . $e->getMessage() . "\n"
+                . 'File: ' . $e->getFile() . "\n"
+                . 'Line: ' . $e->getLine() . "\n"
+                . 'StackTrace: ' . $e->getTraceAsString() . "\n"
+            );
+
+            throw new ExportExcelRawException($e->getMessage(), $e->getCode(), $e->getPrevious());
         }
-
-        //итого
-        if (count($totals) > 0) {
-
-            for ($i = 1; $i < $rowCellCount; $i++) {
-                $totals[$i] = (array_key_exists($i, $totals) ? $totals[$i] : '');
-            }
-
-            ksort($totals);
-
-            $exporter->addRow($totals);
-        }
-
-        $exporter->finalize();
 
         exit;
     }
@@ -112,7 +134,7 @@ class ExportExcel
                 'tmp',
             ]);
 
-            if(!file_exists($tmpdir)) {
+            if (!file_exists($tmpdir)) {
                 mkdir($tmpdir, 0777, true);
             }
 
@@ -128,7 +150,7 @@ class ExportExcel
 
             return $data;
 
-        } catch(\PhpOffice\PhpSpreadsheet\Exception $e){
+        } catch (\PhpOffice\PhpSpreadsheet\Exception $e) {
             echo $e->__toString();
         }
 
