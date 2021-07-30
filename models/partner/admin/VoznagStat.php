@@ -98,7 +98,7 @@ class VoznagStat extends Model
                              'SUM(ps.MerchVozn) AS MerchVozn',
                              'SUM(ps.BankComis) AS BankComis',
                              'COUNT(*) AS CntPays',
-                             'ut.*',
+                             'ut.ID',
                          ])
                          ->innerJoin('`uslugatovar` AS ut', 'ps.IdUsluga = ut.ID')
                          ->andWhere(['BETWEEN', 'ps.DateCreate', $dateFrom, $dateTo])
