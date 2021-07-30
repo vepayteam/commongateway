@@ -531,6 +531,17 @@ class BRSAdapter implements IBankAdapter
             $response = $this->parseXmlResponse($response);
             return $response;
         } else {
+            $errMsg = [];
+            $errMsg[] = 'request=' . $xml;
+            $errMsg[] = 'login=' . $this->gate->Login;
+            $errMsg[] = 'token=' . $this->gate->Token;
+            $errMsg[] = 'curlError=' . $curlError;
+            if ($response) {
+                $errMsg[] = 'response=' . $response;
+            }
+
+            Yii::warning('BRSAdapter bad response: ' . join(' ', $errMsg));
+
             throw new BankAdapterResponseException('Ошибка запроса: ' . $curlError);
         }
     }
