@@ -92,7 +92,6 @@ class Balance extends Model
     /**
      * @param $bank
      * @return IBankAdapter
-     * @throws GateException
      */
     protected function buildAdapter($bank): IBankAdapter
     {

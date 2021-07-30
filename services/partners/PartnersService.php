@@ -24,7 +24,7 @@ class PartnersService
         }
 
         foreach ($postData as $k => $v) {
-            if(!array_key_exists($k, PartnerOption::LIST) || !$v) {
+            if(!array_key_exists($k, PartnerOption::LIST)) {
                 continue;
             }
 

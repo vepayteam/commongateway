@@ -68,6 +68,13 @@ class BankAdapterBuilder
         return $this->buildAdapter();
     }
 
+    public function buildByPartnerBankGate(Partner $partner, PartnerBankGate $partnerBankGate) {
+        $this->partner = $partner;
+        $this->partnerBankGate = $partnerBankGate;
+
+        return $this->buildAdapter();
+    }
+
     /**
      * @param Partner $partner
      * @param Uslugatovar $uslugatovar

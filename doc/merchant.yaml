@@ -198,11 +198,17 @@ paths:
           description: статус завершения (1 – успешно 2 - ошибка 3 - возврат)
           schema:
             type: integer
+        - name: channel
+          in: query
+          required: true
+          description: банк-эквайер, через который была совершена транзакция
+          schema:
+            type: integer
         - name: key
           in: query
           required: true
           description: Ключ, формируется как хеш суммы строк параметров md5(id + sum +
-            status + Ключ обратного запроса).
+            status + channel + Ключ обратного запроса).
           schema:
             type: string
       responses:
@@ -416,6 +422,9 @@ components:
           $ref: "#/components/schemas/PayInfo"
         card:
           $ref: "#/components/schemas/CardInfo"
+        channel:
+          type: string
+          description: Банк-эквайер, через который была совершена транзакция
     StatusId:
       type: object
       properties:

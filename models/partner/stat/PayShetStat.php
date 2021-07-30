@@ -393,15 +393,25 @@ class PayShetStat extends Model
         }
         if (is_numeric($this->summpayFrom) && is_numeric($this->summpayTo)) {
             $query->andWhere(['between', 'ps.SummPay', round($this->summpayFrom * 100.0), round($this->summpayTo * 100.0)]);
+        } elseif (is_numeric($this->summpayFrom)) {
+            $query->andWhere(['>=', 'ps.SummPay', round($this->summpayFrom * 100.0)]);
+        } elseif (is_numeric($this->summpayTo)) {
+            $query->andWhere(['<=', 'ps.SummPay', round($this->summpayTo * 100.0)]);
         }
         if (count($this->params) > 0) {
             if (!empty($this->params[0])) $query->andWhere(['like', 'ps.Dogovor', $this->params[0]]);
-            if (array_key_exists('fullSummpayFrom', $this->params) && is_numeric($this->params['fullSummpayFrom'])
-            && array_key_exists('fullSummpayTo', $this->params) && is_numeric($this->params['fullSummpayTo'])) {
+            if (isset($this->params['fullSummpayFrom']) && isset($this->params['fullSummpayTo'])
+                && is_numeric($this->params['fullSummpayFrom']) && is_numeric($this->params['fullSummpayTo'])) {
                 $query->andWhere([
                     'between', new Expression('(`ps`.`SummPay` + `ps`.`ComissSumm`)'),
                     round($this->params['fullSummpayFrom'] * 100.0), round($this->params['fullSummpayTo'] * 100.0)
                 ]);
+            } elseif (isset($this->params['fullSummpayFrom'])&& is_numeric($this->params['fullSummpayFrom'])) {
+                $query->andWhere(['>=', new Expression('(`ps`.`SummPay` + `ps`.`ComissSumm`)'),
+                                  round($this->params['fullSummpayFrom'] * 100.0)]);
+            } elseif (isset($this->params['fullSummpayTo'])&& is_numeric($this->params['fullSummpayTo'])) {
+                $query->andWhere(['<=', new Expression('(`ps`.`SummPay` + `ps`.`ComissSumm`)'),
+                                  round($this->params['fullSummpayTo'] * 100.0)]);
             }
             if (array_key_exists('cardMask', $this->params) && $this->params['cardMask'] !== '') {
                 if (strpos($this->params['cardMask'], '*') !== false) {

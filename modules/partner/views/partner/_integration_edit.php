@@ -451,6 +451,41 @@ ActiveForm::end();
     </div>
 
     <div class="form-group">
+        <label class="col-sm-3 text-right">Отправлять ExtId</label>
+        <div class="col-sm-8 col-md-6">
+            <input type="checkbox" name="Settings[CallbackSendExtId]" <?=$settings->CallbackSendExtId ? 'checked':''?> value="1" class="form-check-input">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-3 text-right">Отправлять Id</label>
+        <div class="col-sm-8 col-md-6">
+            <input type="checkbox" name="Settings[CallbackSendId]" <?=$settings->CallbackSendId ? 'checked':''?> value="1" class="form-check-input">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-3 text-right">Отправлять Sum</label>
+        <div class="col-sm-8 col-md-6">
+            <input type="checkbox" name="Settings[CallbackSendSum]" <?=$settings->CallbackSendSum ? 'checked':''?> value="1" class="form-check-input">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-3 text-right">Отправлять Status</label>
+        <div class="col-sm-8 col-md-6">
+            <input type="checkbox" name="Settings[CallbackSendStatus]" <?=$settings->CallbackSendStatus ? 'checked':''?> value="1" class="form-check-input">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-3 text-right">Отправлять Channel</label>
+        <div class="col-sm-8 col-md-6">
+            <input type="checkbox" name="Settings[CallbackSendChannel]" <?=$settings->CallbackSendChannel ? 'checked':''?> value="1" class="form-check-input">
+        </div>
+    </div>
+
+    <div class="form-group">
         <div class="col-sm-12">
             <h4>Адрес возврата:</h4>
         </div>
