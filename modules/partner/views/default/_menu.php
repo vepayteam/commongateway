@@ -137,7 +137,7 @@ $partsBalanceAccess = PartUserAccess::checkPartsBalanceAccess();
 
             <?php if ($IsAdmin || $IsMfo || (!$IsMfo && (count($razdels) == 0 || isset($razdels[7])))) : ?>
                 <li class="<?= $act[7] ?>"><a href="/partner/callback/list"><i class="fa fa-bell-o"></i> <span
-                                class="nav-label">Колбэки</span></a></li>
+                                class="nav-label">Коллбэки</span></a></li>
             <?php endif; ?>
 
             <?php if ($IsAdmin) : ?>

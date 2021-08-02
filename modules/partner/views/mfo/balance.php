@@ -60,10 +60,6 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                     <?php if (!empty($Partner->SchetTcbNominal)): ?>
                                         <option value="2">Номинальный счет</option>
                                     <?php endif; ?>
-                                    <?php if ($IsAdmin) : ?>
-                                        <option value="10">Выписка по выдаче</option>
-                                        <option value="11">Выписка по погашению</option>
-                                    <?php endif; ?>
                                 </select>
                             </div>
                             <?php if (!empty($Partner->SchetTcbNominal)): ?>
