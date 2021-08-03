@@ -5,7 +5,9 @@ namespace app\services\payment\models;
 use app\models\payonline\Partner;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
+use app\services\CompensationService;
 use app\services\notifications\models\NotificationPay;
+use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\Banks;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\models\active_query\PaySchetQuery;
@@ -258,6 +260,7 @@ class PaySchet extends \yii\db\ActiveRecord
      * @param float $minFee
      *
      * @return int
+     * @todo Удалить - легаси, не используется.
      */
     public static function calcClientFeeStatic(int $sumPay, float $clientFeeCoefficient, float $minFee): int
     {
@@ -274,6 +277,7 @@ class PaySchet extends \yii\db\ActiveRecord
      * Комиссия с клиента
      *
      * @return int
+     * @todo Удалить - легаси, не используется.
      */
     public function calcClientFee(): int
     {
@@ -284,22 +288,25 @@ class PaySchet extends \yii\db\ActiveRecord
      * Комиссия c мерчанта (вознаграждеие)
      *
      * @return int
+     * @todo Удалить - легаси.
      */
     public function calcReward(): int
     {
-        $reward = round($this->SummPay * $this->uslugatovar->ProvVoznagPC / 100.0, 0);
-
-        if ($reward < $this->uslugatovar->ProvVoznagMin * 100.0) {
-            $reward = $this->uslugatovar->ProvVoznagMin * 100.0;
-        }
-
-        return $reward;
+        return $this->MerchVozn;
+//        $reward = round($this->SummPay * $this->uslugatovar->ProvVoznagPC / 100.0, 0);
+//
+//        if ($reward < $this->uslugatovar->ProvVoznagMin * 100.0) {
+//            $reward = $this->uslugatovar->ProvVoznagMin * 100.0;
+//        }
+//
+//        return $reward;
     }
 
     /**
      * Комиссия банка (в коп)
      *
      * @return int
+     * @todo Удалить - легаси, не используется.
      */
     public function calcBankFee(): int
     {
@@ -342,17 +349,39 @@ class PaySchet extends \yii\db\ActiveRecord
         return $this->hasMany(NotificationPay::class, ['IdPay' => 'ID']);
     }
 
-    public function save($runValidation = true, $attributeNames = null)
+    /**
+     * {@inheritDoc}
+     * @throws \Exception
+     */
+    public function beforeSave($insert): bool
     {
-        $this->DateLastUpdate = time();
-
-        if ((int)($this->oldAttributes['SummPay'] ?? 0) !== (int)$this->SummPay) {
-            $this->ComissSumm = $this->calcClientFee();
-            $this->BankComis = $this->calcBankFee();
-            $this->MerchVozn = $this->calcReward();
+        if (!parent::beforeSave($insert)) {
+            return false;
         }
 
-        return (parent::save($runValidation, $attributeNames));
+        $this->DateLastUpdate = time();
+
+        if ($insert) {
+            // Считаем отчисления (комиссии) для платежа.
+            /** @var CompensationService $compensationService */
+            $compensationService = \Yii::$app->get(CompensationService::class);
+            $gate = (new BankAdapterBuilder())
+                ->build($this->partner, $this->uslugatovar, $this->currency)
+                ->getPartnerBankGate();
+            $this->ComissSumm = round($compensationService->calculateForClient($this, $gate));
+            $this->BankComis = round($compensationService->calculateForBank($this, $gate));
+            $this->MerchVozn = round($compensationService->calculateForPartner($this, $gate));
+        }
+
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function save($runValidation = true, $attributeNames = null): bool
+    {
+        return parent::save($runValidation, $attributeNames);
     }
 
     /**
