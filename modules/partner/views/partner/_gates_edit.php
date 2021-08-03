@@ -5,12 +5,14 @@ use app\models\payonline\Partner;
 use app\services\payment\models\repositories\CurrencyRepository;
 use app\services\payment\models\UslugatovarType;
 use app\services\payment\types\AccountTypes;
+use yii\helpers\ArrayHelper;
 
 /**
  * @var Partner $partner
  */
 
 $bankGates = $partner->getBankGates()->orderBy('TU ASC, Priority DESC')->all();
+$currencyList = ArrayHelper::merge(['' => ''], ArrayHelper::map(CurrencyRepository::getAll(), 'Id', 'Code'));
 ?>
 
 <div class="row">
@@ -177,11 +179,78 @@ $bankGates = $partner->getBankGates()->orderBy('TU ASC, Priority DESC')->all();
                         <label for="exampleInputFile">Доп параметр №4</label>
                         <input name="AdvParam_4" class="form-control" type="text" maxlength="1000">
                     </div>
+
+                    <div class="form-group">
+                        <input name="UseGateCompensation" type="checkbox"/> Использовать комиссию шлюза
+                    </div>
+
+                    <!-- Валюта комиссии -->
+                    <div class="form-group">
+                        <label>Валюта фиксированной комиссии</label>
+                        <select class="form-control" name="FeeCurrencyId">
+                            <?php foreach ($currencyList as $id => $code) : ?>
+                                <option value="<?= $id ?>"><?= $code ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Валюта минимальной комиссии</label>
+                        <select class="form-control" name="MinimalFeeCurrencyId">
+                            <?php foreach ($currencyList as $id => $code) : ?>
+                                <option value="<?= $id ?>"><?= $code ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <!-- Комиссия от клиента -->
+                    <div class="form-group">
+                        <label>Процентная комиссия от клиента</label>
+                        <input name="ClientCommission" class="form-control" type="number" step="0.01"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Фиксированная комиссия от клиента</label>
+                        <input name="ClientFee" class="form-control" type="number" step="0.01"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Минимальная комиссия от клиента</label>
+                        <input name="ClientMinimalFee" class="form-control" type="number" step="0.01"/>
+                    </div>
+
+                    <!-- Комиссия от контрагента (партнера/мерчанта) -->
+                    <div class="form-group">
+                        <label>Процентная комиссия от контрагента</label>
+                        <input name="PartnerCommission" class="form-control" type="number" step="0.01"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Фиксированная комиссия от контрагента</label>
+                        <input name="PartnerFee" class="form-control" type="number" step="0.01"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Минимальная комиссия от контрагента</label>
+                        <input name="PartnerMinimalFee" class="form-control" type="number" step="0.01"/>
+                    </div>
+
+                    <!-- Комиссия банку -->
+                    <div class="form-group">
+                        <label>Процентная комиссия банку</label>
+                        <input name="BankCommission" class="form-control" type="number" step="0.01"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Фиксированная комиссия банку</label>
+                        <input name="BankFee" class="form-control" type="number" step="0.01"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Минимальная комиссия банку</label>
+                        <input name="BankMinimalFee" class="form-control" type="number" step="0.01"/>
+                    </div>
+
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Отмена</button>
-                <button id="partner-edit__bank-gates-edit-modal__save-button" type="button" class="btn btn-primary">Сохранить</button>
+                <button id="partner-edit__bank-gates-edit-modal__save-button" type="button" class="btn btn-primary">
+                    Сохранить
+                </button>
             </div>
         </div>
     </div>
