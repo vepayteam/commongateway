@@ -7,7 +7,7 @@ $act = PartUserAccess::getSelRazdel(\Yii::$app->controller->action);
 
 <ul class="nav nav-pills nav-fill">
     <li class="nav-item">
-        <a class="nav-link <?= !empty($act[52]) ? 'active' : '' ?>" href="/partner/settings/index">Колбэки</a>
+        <a class="nav-link <?= !empty($act[52]) ? 'active' : '' ?>" href="/partner/settings/index">Коллбэки</a>
     </li>
     <li class="nav-item">
         <a class="nav-link <?= !empty($act[53]) ? 'active' : '' ?>" href="/partner/settings/distribution">Рассылка реестров</a>

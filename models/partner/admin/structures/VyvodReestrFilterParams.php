@@ -18,7 +18,7 @@ class VyvodReestrFilterParams
     private $dateFrom;
     private $dateTo;
     private $filterByStateOp;
-    private $typeVyvyod;
+    private $typeVyvod;
 
     /**
      * VyvodSystemFilterParams constructor.

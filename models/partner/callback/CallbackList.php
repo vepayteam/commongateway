@@ -15,13 +15,19 @@ class CallbackList extends Model
     public $dateto;
     public $notifstate;
     public $partner;
+    public $id = 0;
+    public $Extid = '';
+    public $httpCode = 0;
+    public $testMode = false;
 
     public function rules()
     {
         return [
-            [['partner', 'notifstate'], 'integer'],
-            [['datefrom', 'dateto'], 'date', 'format' => 'php:d.m.Y'],
+            [['partner', 'notifstate', 'id', 'httpCode'], 'integer'],
+            [['Extid'], 'string', 'max' => 40],
+            [['datefrom', 'dateto'], 'date', 'format' => 'php:d.m.Y H:i'],
             [['datefrom', 'dateto'], 'required'],
+            [['testMode'], 'boolean'],
         ];
     }
 
@@ -37,20 +43,18 @@ class CallbackList extends Model
      * @param      $IsAdmin
      * @param int  $page
      * @param bool $noLimit
+     * @param bool $isGeneratorResult
      *
      * @return array
      */
-    public function GetList($IsAdmin, int $page = 0, bool $noLimit = false)
+    public function GetList($IsAdmin, int $page = 0, bool $noLimit = false, bool $isGeneratorResult = false)
     {
         $pageLimit = 100;
 
         $idpartner = $IsAdmin ? $this->partner : UserLk::getPartnerId(Yii::$app->user);
 
-        $datefrom = strtotime($this->datefrom . " 00:00:00");
-        $dateto = strtotime($this->dateto . " 23:59:59");
-        if ($datefrom < $dateto - 365 * 86400) {
-            $datefrom = $dateto - 365 * 86400;
-        }
+        $datefrom = strtotime($this->datefrom);
+        $dateto = strtotime($this->dateto);
 
         $query = new Query();
 
@@ -72,9 +76,20 @@ class CallbackList extends Model
             $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $idpartner]);
         }
 
-        $totalCount = $query->count();
+        if ($this->id > 0) {
+            $query->andWhere(['n.IdPay' => $this->id]);
+        }
+        if (!empty($this->Extid)) {
+            $query->andWhere(['ps.Extid' => $this->Extid]);
+        }
 
-        $query->select([
+        if (!empty($this->httpCode) && $this->httpCode > 0) {
+            $query->andWhere(['n.HttpCode' => $this->httpCode]);
+        }
+
+        $totalCount = (int) (clone $query)->select(['COUNT(*) as cnt'])->scalar();
+
+        $select = [
             'n.ID',
             'n.IdPay',
             'n.DateCreate',
@@ -83,9 +98,15 @@ class CallbackList extends Model
             'n.HttpCode',
             'n.HttpAns',
             'n.FullReq',
-        ]);
+        ];
 
-        if ( $noLimit === false ) {
+        if ($this->testMode === true) {
+            $select = array_merge($select, ['ps.IdOrg', 'ps.Extid']);
+        }
+
+        $query->select($select);
+
+        if ($noLimit === false) {
             if ( $page > 0 ) {
                 $query->offset($pageLimit * ($page - 1));
             }
@@ -103,13 +124,25 @@ class CallbackList extends Model
         }
 
         return [
-            'data'    => $query->all(),
+            'data'    => $isGeneratorResult ? self::mapQueryPaymentResult($query) : $query->all(),
             'payLoad' => new PaginationPayLoad([
                 'totalCount' => $totalCount,
                 'page'       => $page,
                 'pageLimit'  => $pageLimit,
             ]),
         ];
+    }
+
+    /**
+     * @param Query $query
+     *
+     * @return \Generator
+     */
+    private static function mapQueryPaymentResult(Query $query): \Generator
+    {
+        foreach ($query->each() as $row) {
+            yield $row;
+        }
     }
 
     public function GetError()
