@@ -51,6 +51,7 @@ return [
         // Сервисы
         \app\services\PartnerService::class => \app\services\PartnerService::class,
         \app\services\PaySchetService::class => \app\services\PaySchetService::class,
+        \app\services\CompensationService::class => \app\services\CompensationService::class,
     ],
     'params' => $params,
     'container' => [

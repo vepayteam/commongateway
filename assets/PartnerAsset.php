@@ -126,7 +126,7 @@ class PartnerAsset extends AssetBundle
 
         'aassets/plugins/jquery.json.min.js',
         'aassets/js/points.js',
-        'aassets/js/partner.js?v=384ef33427cdff15ee09ca6a696c385c',
+        'aassets/js/partner.js',
         'aassets/js/uslugi.js',
         'aassets/js/partner_usl_add_templates.js',
         'aassets/js/partner_usl.js',
