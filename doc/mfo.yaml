@@ -1127,12 +1127,25 @@ components:
     CheckSbpOutF:
       type: object
       properties:
-        fio:
-          type: string
-          description: ФИО получателя
+        client:
+          type: object
+          properties:
+            firstName:
+              type: string
+              maxLength: 32
+            middleName:
+              type: string
+              maxLength: 32
+            lastName:
+              type: string
+              maxLength: 100
+          description: Данные клиента (опциональный параметр)
         account:
           type: string
           description: Счет в банке
+        phone:
+          type: string
+          description: Номер телефона в формате 79123456789
         bic:
           type: string
           description: БИК банка

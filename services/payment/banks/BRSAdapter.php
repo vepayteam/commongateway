@@ -698,9 +698,10 @@ class BRSAdapter implements IBankAdapter
         $transferToAccountRequest->merchantId = $this->gate->Token;
         $transferToAccountRequest->firstName = $outPayaccForm->getFirstName();
         $transferToAccountRequest->lastName = $outPayaccForm->getLastName();
-        $transferToAccountRequest->middleName = $outPayaccForm->getLastName();
+        $transferToAccountRequest->middleName = $outPayaccForm->getMiddleName();
         $transferToAccountRequest->amount = $outPayaccForm->amount;
         $transferToAccountRequest->account = (string)$outPayaccForm->account;
+        $transferToAccountRequest->phone = $outPayaccForm->getPhoneToSend();
         $transferToAccountRequest->sourceId = (string)$outPayaccForm->paySchet->ID;
 
         if(Yii::$app->params['TESTMODE'] == 'Y') {
@@ -799,9 +800,10 @@ class BRSAdapter implements IBankAdapter
         $transferToAccountRequest->merchantId = $this->gate->Token;
         $transferToAccountRequest->firstName = $outPayaccForm->getFirstName();
         $transferToAccountRequest->lastName = $outPayaccForm->getLastName();
-        $transferToAccountRequest->middleName = $outPayaccForm->getLastName();
+        $transferToAccountRequest->middleName = $outPayaccForm->getMiddleName();
         $transferToAccountRequest->amount = $outPayaccForm->amount;
         $transferToAccountRequest->account = $outPayaccForm->account;
+        $transferToAccountRequest->phone = $outPayaccForm->getPhoneToSend();
         $transferToAccountRequest->sourceId = $id;
 
         if(Yii::$app->params['TESTMODE'] == 'Y') {

@@ -23,6 +23,7 @@ class TransferToAccountRequest extends Model
     public $firstName;
     public $lastName;
     public $middleName;
+    public $phone;
     public $amount;
     public $account;
     public $receiverIdType = 'MTEL';
@@ -54,6 +55,7 @@ class TransferToAccountRequest extends Model
             'bic',
             'firstName',
             'lastName',
+            'phone',
             'middleName',
             'amount',
             'currency',
