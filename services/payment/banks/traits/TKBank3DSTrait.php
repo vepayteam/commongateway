@@ -14,7 +14,6 @@ use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\tkb\Authenticate3DSv2Request;
 use app\services\payment\forms\tkb\Check3DSVersionRequest;
-use app\services\payment\forms\tkb\CreatePay3DS2Request;
 use app\services\payment\interfaces\Cache3DSv2Interface;
 use app\services\payment\interfaces\Issuer3DSVersionInterface;
 use app\services\payment\models\PaySchet;
@@ -163,21 +162,25 @@ trait TKBank3DSTrait
             );
             Yii::warning('TKBank3DSTrait get paySchet: paySchet.ID=' . $paySchet->ID . ' cardRefId=' . $paySchet->CardRefId3DS);
 
-            if(array_key_exists('ChallengeData', $ans['xml'])) {
+            if (array_key_exists('ChallengeData', $ans['xml'])) {
                 // если нужна авторизация 3ds через форму
                 $payResponse->url = $ans['xml']['ChallengeData']['AcsURL'];
                 $payResponse->creq = $ans['xml']['ChallengeData']['Creq'];
             } elseif (array_key_exists('AuthenticationData', $ans['xml'])) {
 
-                // Поддерживается только определенные ECI
-                if(
-                    $ans['xml']['AuthenticationData']['Status'] == 'NOK' ||
-                    !in_array(
-                        (int)$ans['xml']['AuthenticationData']['Eci'],
-                        Issuer3DSVersionInterface::CURRENT_ECI_ARRAY
-                    )
-                ) {
-                    throw new Check3DSv2Exception('Карта не поддерживается, обратитесь в банк');
+                if ($ans['xml']['AuthenticationData']['Status'] == 'NOK') {
+                    $message = 'Response status is NOK.';
+                    $paySchet->setError($message);
+                    $this->logError($message, $paySchet->ID, $queryData, $ans);
+                    throw new Check3DSv2Exception($message, Check3DSv2Exception::NOK);
+                }
+
+                $eci = (int)$ans['xml']['AuthenticationData']['Eci'];
+                if (!in_array($eci, Issuer3DSVersionInterface::CURRENT_ECI_ARRAY)) {
+                    $message = "Incorrect ECI: {$eci}.";
+                    $paySchet->setError($message);
+                    $this->logError($message, $paySchet->ID, $queryData, $ans);
+                    throw new Check3DSv2Exception($message, Check3DSv2Exception::INCORRECT_ECI);
                 }
 
                 Yii::$app->cache->set(
@@ -196,6 +199,18 @@ trait TKBank3DSTrait
 
             return $payResponse;
         });
+    }
+
+    private function logError($message, $paySchetId, $queryData, $ans): void
+    {
+        \Yii::warning(
+            __CLASS__ . ": {$message}. "
+            . Json::encode([
+                'paySchet' => $paySchetId,
+                'queryData' => $queryData,
+                'answer' => $ans,
+            ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)
+        );
     }
 
 }
