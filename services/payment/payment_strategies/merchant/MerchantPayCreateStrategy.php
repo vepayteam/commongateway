@@ -5,6 +5,7 @@ namespace app\services\payment\payment_strategies\merchant;
 
 
 use app\models\payonline\Uslugatovar;
+use app\services\CompensationService;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\IBankAdapter;
 use app\services\payment\exceptions\CreatePayException;
@@ -100,6 +101,7 @@ class MerchantPayCreateStrategy
      *
      * @return PaySchet
      * @throws CreatePayException
+     * @throws \Exception
      */
     protected function createPaySchet(BankAdapterBuilder $bankAdapterBuilder): PaySchet
     {
@@ -151,6 +153,7 @@ class MerchantPayCreateStrategy
                 $paySchet->ZipUser = $this->payForm->client['zip'];
             }
         }
+
         if (!$paySchet->save()) {
             throw new CreatePayException('Не удалось создать счет');
         }
