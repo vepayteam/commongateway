@@ -11,11 +11,14 @@
 /* @var int $bankcomis */
 /* @var int $voznagps  */
 /* @var bool $IsAdmin */
+/* @var Pagination $pagination */
 
 use app\models\payonline\Uslugatovar;
 use app\models\payonline\User;
 use app\models\TU;
 use app\services\payment\models\PaySchet;
+use yii\data\Pagination;
+use yii\widgets\LinkPager;
 
 ?>
 
@@ -165,32 +168,6 @@ use app\services\payment\models\PaySchet;
                 <i class="fa fa-share"></i>&nbsp;Экспорт xlsx
             </a></th>
     </tr>
-    <?php if ($cnt > $cntpage) : ?>
-        <?php $maxpage = ceil($cnt / $cntpage); ?>
-        <tr>
-            <td colspan="15" class="footable-visible">
-                <ul class="pagination pull-right">
-                    <li class="footable-page-arrow <?= 0 == $page ? 'disabled' : '' ?>">
-                        <a data-page="first" <?= $page > 0 ? 'onclick="lk.statlistreq(0);"' : '' ?>>«</a>
-                    </li>
-                    <li class="footable-page-arrow <?= 0 == $page ? 'disabled' : '' ?>">
-                        <a data-page="prev" <?= $page > 0 ? 'onclick="lk.statlistreq(' . ($page - 1 > 0 ? $page - 1 : 0) . ');"' : '' ?>>‹</a>
-                    </li>
-                    <?php for ($i = 0; $i < $maxpage; $i++) : ?>
-                        <li class="footable-page <?= $i == $page ? 'active' : '' ?>">
-                            <a data-page="<?= $i ?>" <?= $page != $i ? 'onclick="lk.statlistreq(' . $i . ');"' : '' ?>><?= ($i + 1) ?></a>
-                        </li>
-                    <?php endfor; ?>
-                    <li class="footable-page-arrow <?= $maxpage - 1 == $page ? 'disabled' : '' ?>">
-                        <a data-page="next" <?= $maxpage - 1 != $page ? 'onclick="lk.statlistreq(' . ($page + 1) . ');"' : '' ?>>›</a>
-                    </li>
-                    <li class="footable-page-arrow <?= $maxpage - 1 == $page ? 'disabled' : '' ?>">
-                        <a data-page="last" <?= $maxpage - 1 != $page ? 'onclick="lk.statlistreq(' . ($maxpage - 1) . ');"' : '' ?>>»</a>
-                    </li>
-                </ul>
-            </td>
-        </tr>
-    <?php endif; ?>
     </tfoot>
     <?php else : ?>
         <tr>
@@ -198,3 +175,14 @@ use app\services\payment\models\PaySchet;
         </tr></tbody>
     <?php endif; ?>
 </table>
+
+<?php
+echo LinkPager::widget([
+    'pagination' => $pagination,
+    'hideOnSinglePage' => true,
+    'prevPageLabel' => '‹',
+    'nextPageLabel' => '›',
+    'firstPageLabel' => '«',
+    'lastPageLabel' => '»',
+]);
+?>

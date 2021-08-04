@@ -111,6 +111,10 @@
                     $('#statlistform').closest('.ibox-content').toggleClass('sk-loading');
                     if (data.status == 1) {
                         $('#statlistresult').html(data.data);
+                        $('.pagination a').each(function(){
+                            $(this).removeAttr('href');
+                            $(this).attr('onclick', 'lk.statlistreq('+(parseInt($(this).attr('data-page'))+1)+');');
+                        });
                     } else {
                         $('#statlistresult').html("<p class='text-center'>" + data.message + "</p>");
                     }
@@ -155,7 +159,7 @@
             });
 
             $('#statlistform').on('submit', function () {
-                lk.statlistreq(0);
+                lk.statlistreq(1);
                 return false;
             });
 
@@ -1783,6 +1787,25 @@
                 $form.find('input[name=AdvParam_3]').val(gate.AdvParam_3);
                 $form.find('input[name=AdvParam_4]').val(gate.AdvParam_4);
                 $form.find('select[name=CurrencyId]').val(gate.CurrencyId);
+
+
+                $form.find('input[name=UseGateCompensation]').attr('checked', gate.UseGateCompensation === 1);
+
+                // $form.find('input[name=UseGateCompensation]').val(gate.UseGateCompensation);
+                $form.find('select[name=FeeCurrencyId]').val(gate.FeeCurrencyId).change();
+                $form.find('select[name=MinimalFeeCurrencyId]').val(gate.MinimalFeeCurrencyId).change();
+
+                $form.find('input[name=ClientCommission]').val(gate.ClientCommission);
+                $form.find('input[name=ClientFee]').val(gate.ClientFee);
+                $form.find('input[name=ClientMinimalFee]').val(gate.ClientMinimalFee);
+
+                $form.find('input[name=PartnerCommission]').val(gate.PartnerCommission);
+                $form.find('input[name=PartnerFee]').val(gate.PartnerFee);
+                $form.find('input[name=PartnerMinimalFee]').val(gate.PartnerMinimalFee);
+
+                $form.find('input[name=BankCommission]').val(gate.BankCommission);
+                $form.find('input[name=BankFee]').val(gate.BankFee);
+                $form.find('input[name=BankMinimalFee]').val(gate.BankMinimalFee);
 
                 $('#partner-edit__bank-gates-edit-modal').modal('show');
                 return false;

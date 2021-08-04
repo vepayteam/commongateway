@@ -590,6 +590,9 @@ class PartnerController extends Controller
             $post['Enable'] = 0;
         }
 
+        /** @todo Использовать ActiveForm на клиенте, чтобы убрать это. */
+        $post['UseGateCompensation'] = (int)(isset($post['UseGateCompensation']) && $post['UseGateCompensation'] === 'on');
+
         if($post['Id']) {
             $partnerBankGate = PartnerBankGate::findOne(['Id' => $post['Id']]);
             if (!$partnerBankGate) {
