@@ -2,12 +2,14 @@
 
 namespace app\services\logs\targets;
 
-use app\helpers\EnvHelper;
 use app\helpers\Modifiers;
+use app\services\logs\traits\TraceLogTrait;
 use yii\log\FileTarget;
 
 class SecurityFileTarget extends FileTarget
 {
+    use TraceLogTrait;
+
     public function formatMessage($message): string
     {
         $message = parent::formatMessage($message);
@@ -19,12 +21,6 @@ class SecurityFileTarget extends FileTarget
      */
     public function getMessagePrefix($message): string
     {
-        $traceId = EnvHelper::getParam(EnvHelper::UNIQUE_ID, '-');
-        $paySchetId = EnvHelper::getParam(EnvHelper::PAYSCHET_ID, '-');
-        $paySchetExtId = EnvHelper::getParam(EnvHelper::PAYSCHET_EXTID, '-');
-
-        return '[' . $traceId . ']'
-            . '[' . $paySchetId . ']'
-            . '[' . $paySchetExtId . ']';
+        return $this->formatMessagePrefix();
     }
 }

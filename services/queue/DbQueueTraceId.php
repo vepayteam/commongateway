@@ -5,6 +5,7 @@ namespace app\services\queue;
 use app\helpers\EnvHelper;
 use yii\queue\db\Queue;
 
+// TODO del class
 class DbQueueTraceId extends Queue
 {
     protected function pushMessage($message, $ttr, $delay, $priority)
