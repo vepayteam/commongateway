@@ -747,10 +747,12 @@ components:
           type: string
           required: false
           description: Страна клиента (формат ISO 3166-1 alpha-3)
+          deprecated: true
         city:
           type: string
           required: false
           description: Город клиента
+          deprecated: true
         address:
           type: string
           required: false
