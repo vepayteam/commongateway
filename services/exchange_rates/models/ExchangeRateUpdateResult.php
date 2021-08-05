@@ -9,19 +9,27 @@ class ExchangeRateUpdateResult extends Model
     const STATUS_ERROR = 1;
     const STATUS_DONE = 2;
 
-    public int $status;
+    /**
+     * @var int
+     */
+    public $status;
 
-    public string $error;
+    /**
+     * @var string
+     */
+    public $error;
 
     /**
      * Количество курсов, добавленных в базу
+     * @var int
      */
-    public int $inserted;
+    public $inserted;
 
     /**
      * Количество полученных курсов
+     * @var int
      */
-    public int $rateCount;
+    public $rateCount;
 
     public static function setError(string $error): ExchangeRateUpdateResult
     {
