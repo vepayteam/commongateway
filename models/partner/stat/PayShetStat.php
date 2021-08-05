@@ -4,6 +4,7 @@ namespace app\models\partner\stat;
 
 use app\models\partner\UserLk;
 use app\models\TU;
+use app\services\payment\models\PaySchet;
 use app\services\payment\models\repositories\CurrencyRepository;
 use Yii;
 use yii\base\Model;
@@ -377,6 +378,11 @@ class PayShetStat extends Model
             $query->andWhere('qp.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
         if (count($this->status) > 0) {
+            if (in_array(PaySchet::STATUS_WAITING, $this->status, true)) {
+                $this->status = array_unique(
+                    array_merge($this->status, [PaySchet::STATUS_NOT_EXEC, PaySchet::STATUS_WAITING_CHECK_STATUS])
+                );
+            }
             $query->andWhere(['in', 'ps.Status', $this->status]);
         }
         if (count($this->usluga) > 0) {
