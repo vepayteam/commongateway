@@ -6,7 +6,10 @@ use app\helpers\EnvHelper;
 
 trait TraceLogTrait
 {
-    private function formatMessagePrefix(): string
+    /**
+     * @inheritdoc
+     */
+    public function getMessagePrefix($message)
     {
         $traceId = EnvHelper::getParam(EnvHelper::UNIQUE_ID, '-');
         $paySchetId = EnvHelper::getParam(EnvHelper::PAYSCHET_ID, '-');

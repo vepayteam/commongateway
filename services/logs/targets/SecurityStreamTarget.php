@@ -32,12 +32,4 @@ abstract class SecurityStreamTarget extends Target
         $text = Modifiers::searchAndReplaceSecurity($text);
         fwrite($this->_stream, $text);
     }
-
-    /**
-     * @inheritdoc
-     */
-    public function getMessagePrefix($message): string
-    {
-        return $this->formatMessagePrefix();
-    }
 }
