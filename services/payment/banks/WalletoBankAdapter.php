@@ -7,12 +7,9 @@ use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
-use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CurrencyExchangeRatesResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
-use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
-use app\services\payment\banks\bank_adapter_responses\IdentInitResponse;
 use app\services\payment\banks\traits\WalletoRequestTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CreatePayException;
@@ -39,11 +36,10 @@ class WalletoBankAdapter implements IBankAdapter
     protected $gate;
     /** @var Client $api */
     protected $api;
-    /** @var String $bankUrl */
-    protected $bankUrl;
 
     public static $bank = 10;
-    private const BANK_URL = 'https://api.sandbox.walletto.eu';
+    private const BANK_URL = 'https://api.walletto.eu';
+    private const BANK_TEST_URL = 'https://api.sandbox.walletto.eu';
     private const KEY_ROOT_PATH = '@app/config/walleto/';
 
     // Walleto bank statuses
@@ -58,10 +54,21 @@ class WalletoBankAdapter implements IBankAdapter
 
     public const BANK_TIMEZONE = 'Europe/Vilnius';
 
+    /**
+     * @return string
+     */
+    protected function bankUrl(): string
+    {
+        if (Yii::$app->params['DEVMODE'] === 'Y' || Yii::$app->params['TESTMODE'] === 'Y') {
+            return self::BANK_TEST_URL;
+        } else {
+            return self::BANK_URL;
+        }
+    }
+
     public function setGate(PartnerBankGate $partnerBankGate)
     {
         $this->gate = $partnerBankGate;
-        $this->bankUrl = self::BANK_URL;
         $apiClientHeader = [
             'Authorization' => $partnerBankGate->Token,
         ];
@@ -99,7 +106,7 @@ class WalletoBankAdapter implements IBankAdapter
     public function createPay(CreatePayForm $createPayForm): CreatePayResponse
     {
         $action = 'orders/authorize';
-        $url = self::BANK_URL . '/' . $action;
+        $url = $this->bankUrl() . '/' . $action;
         $request = $this->formatCreatePayRequest($createPayForm);
         $createPayResponse = new CreatePayResponse();
         try {
@@ -139,7 +146,7 @@ class WalletoBankAdapter implements IBankAdapter
     {
         $checkStatusPayResponse = new CheckStatusPayResponse();
         $transactionId = $okPayForm->getPaySchet()->ExtBillNumber;
-        $url = self::BANK_URL . '/orders/' . $transactionId;
+        $url = $this->bankUrl() . '/orders/' . $transactionId;
         try {
             $response = $this->api->request(
                 Client::METHOD_GET,
@@ -187,7 +194,7 @@ class WalletoBankAdapter implements IBankAdapter
         try {
             $response = $this->api->request(
                 Client::METHOD_PUT,
-                self::BANK_URL . $uri,
+                $this->bankUrl() . $uri,
                 [
                     'amount' => $refundPayForm->paySchet->getSummFull() / 100,
                 ]
@@ -279,7 +286,7 @@ class WalletoBankAdapter implements IBankAdapter
      */
     public function currencyExchangeRates(): CurrencyExchangeRatesResponse
     {
-        $url = self::BANK_URL . '/exchange_rates/';
+        $url = $this->bankUrl() . '/exchange_rates/';
         $date = Carbon::now(self::BANK_TIMEZONE)->format('Y-m-d'); // сегодняшняя дата в формате 2021-06-30
 
         $currencyExchangeRatesResponse = new CurrencyExchangeRatesResponse();
