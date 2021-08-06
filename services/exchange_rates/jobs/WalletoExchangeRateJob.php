@@ -9,7 +9,10 @@ use yii\queue\JobInterface;
 
 class WalletoExchangeRateJob extends BaseObject implements JobInterface
 {
-    public int $tryCount;
+    /**
+     * @var int
+     */
+    public $tryCount;
 
     public function execute($queue)
     {

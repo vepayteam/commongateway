@@ -14,6 +14,7 @@ use app\services\payment\models\Bank;
 use app\services\payment\models\Currency;
 use app\services\payment\models\CurrencyExchange;
 use Carbon\Carbon;
+use Exception;
 use Yii;
 
 class WalletoExchangeRateService
@@ -29,7 +30,14 @@ class WalletoExchangeRateService
 
         Yii::warning('WalletoExchangeRateService: загружаем курсы валют попытка ' . $tryCount);
 
-        $result = $this->loadRates();
+        try {
+            $result = $this->loadRates();
+        } catch (Exception $e) {
+            Yii::warning('WalletoExchangeRateService err: ' . $e->getMessage());
+            $this->pushToQueue($tryCount);
+
+            return;
+        }
 
         if ($result->status !== ExchangeRateUpdateResult::STATUS_DONE) {
             Yii::warning($result->error);
@@ -61,7 +69,7 @@ class WalletoExchangeRateService
         $adapter = $this->getAdapter($bank);
         $rates = $adapter->currencyExchangeRates();
         if ($rates->status != BaseResponse::STATUS_DONE) {
-            return ExchangeRateUpdateResult::setError($rates->message);
+            return ExchangeRateUpdateResult::setError('WalletoExchangeRateService: ' . $rates->message);
         }
 
         return $this->insertRates($bank, $rates);
