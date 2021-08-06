@@ -1,7 +1,5 @@
 <?php
 
-use app\services\payment\banks\DectaAdapter;
-use app\services\payment\models\Bank;
 use yii\db\Migration;
 
 /**
@@ -10,14 +8,16 @@ use yii\db\Migration;
 class m210616_041307_add_decta_to_banks_table extends Migration
 {
     /**
+     * @var int $bankId
+     */
+    private $bankId = 12;
+
+    /**
      * {@inheritdoc}
      */
     public function safeUp()
     {
-        $bank = new Bank();
-        $bank->ID = DectaAdapter::$bank;
-        $bank->Name = 'Decta';
-        $bank->save(false);
+        $this->db->createCommand("INSERT INTO `banks` SET `ID`=$this->bankId,`Name`='Decta'")->execute();
     }
 
     /**
@@ -25,7 +25,8 @@ class m210616_041307_add_decta_to_banks_table extends Migration
      */
     public function safeDown()
     {
-        Bank::deleteAll(['ID' => DectaAdapter::$bank]);
+        $this->db->createCommand("DELETE FROM `banks` WHERE `ID`=$this->bankId")->execute();
+
         return true;
     }
 }

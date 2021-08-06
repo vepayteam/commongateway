@@ -11,7 +11,7 @@ trait Fillable
      */
     public function fill(array $data = []): void
     {
-        if (empty($data) === false) {
+        if (!empty($data)) {
             foreach ($data as $key => $field) {
                 if (!is_string($key) || !property_exists($this, $key)) {
                     throw new InvalidInputParamException('Unknown property: '.$key);

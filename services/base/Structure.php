@@ -11,7 +11,7 @@ use yii\base\Arrayable;
  *
  * Class Structure
  *
- * @package app\services\base
+ * DTO, инстанциирующийся из ассоциативного массива
  */
 class Structure implements Arrayable
 {
@@ -37,7 +37,7 @@ class Structure implements Arrayable
      */
     public function fields(): array
     {
-        return $this->toArray();
+        return array_keys(get_class_vars(static::class));
     }
 
     /**

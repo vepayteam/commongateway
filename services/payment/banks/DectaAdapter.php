@@ -107,7 +107,7 @@ class DectaAdapter implements IBankAdapter
             $response = $this->api->request(
                 Client::METHOD_POST,
                 $url,
-                DectaHelper::handlePayRequest($createPayForm)->fields()
+                DectaHelper::handlePayRequest($createPayForm)->toArray()
             );
         } catch (GuzzleException $e) {
             Yii::error('Decta create pay error: '.$e->getMessage());
@@ -161,7 +161,7 @@ class DectaAdapter implements IBankAdapter
             $response = $this->api->request(
                 Client::METHOD_POST,
                 $url,
-                DectaHelper::handleRefundPayRequest($refundPayForm)->fields()
+                DectaHelper::handleRefundPayRequest($refundPayForm)->toArray()
             );
         } catch (Exception $e) {
             Yii::error('Decta refund pay error: '.$e->getMessage());
@@ -186,7 +186,7 @@ class DectaAdapter implements IBankAdapter
             $response = $this->api->request(
                 Client::METHOD_POST,
                 $url,
-                DectaHelper::handleOutCardPayRequest($outCardPayForm)->fields()
+                DectaHelper::handleOutCardPayRequest($outCardPayForm)->toArray()
             );
         } catch (GuzzleException $e) {
             Yii::error('Decta out card pay error: '.$e->getMessage());
@@ -246,7 +246,7 @@ class DectaAdapter implements IBankAdapter
     {
         $outCardPayResponse = new OutCardPayResponse();
 
-        if ($response->isSuccess() === false) {
+        if (!$response->isSuccess()) {
             $errorMessage = DectaHelper::getErrorMessage($response);
             Yii::error('Decta payout error: '.$errorMessage);
             $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
@@ -255,7 +255,7 @@ class DectaAdapter implements IBankAdapter
             return $outCardPayResponse;
         }
 
-        if((is_string($outCardPayResponse->api_do_url) && $outCardPayResponse->api_do_url !== '') === false) {
+        if (!is_string($outCardPayResponse->api_do_url) || $outCardPayResponse->api_do_url === '') {
             throw new DectaApiUrlException(self::INVALID_DECTA_API_URL);
         }
 
@@ -280,7 +280,7 @@ class DectaAdapter implements IBankAdapter
             $response = $this->api->request(
                 Client::METHOD_POST,
                 $apiDoUrl,
-                DectaHelper::handleOutCardTransactionRequest($outCardPayForm)->fields()
+                DectaHelper::handleOutCardTransactionRequest($outCardPayForm)->toArray()
             );
         } catch (GuzzleException $e) {
             Yii::error('Decta create pay error: '.$e->getMessage());
