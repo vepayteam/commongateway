@@ -33,7 +33,6 @@ use app\services\payment\payment_strategies\CreatePayStrategy;
 use app\services\payment\payment_strategies\DonePayStrategy;
 use app\services\payment\payment_strategies\OkPayStrategy;
 use kartik\mpdf\Pdf;
-use NumberFormatter;
 use Yii;
 use yii\db\Exception;
 use yii\helpers\Json;
@@ -210,7 +209,7 @@ class PayController extends Controller
         } catch (BankAdapterResponseException $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
         } catch (Check3DSv2Exception $e) {
-            return ['status' => 0, 'message' => $e->getMessage()];
+            return ['status' => 0, 'message' => 'Карта не поддерживается, обратитесь в банк'];
         } catch (Exception $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
         }
@@ -235,11 +234,6 @@ class PayController extends Controller
 
     public function actionCreatepaySecondStep($id)
     {
-        // TODO: DRY
-        if (Yii::$app->request->isPost) {
-            return $this->redirect(Url::to('/pay/orderdone/' . $id));
-        }
-
         // TODO: refact
         $createPaySecondStepForm = new CreatePaySecondStepForm();
         $createPaySecondStepForm->IdPay = $id;
@@ -253,17 +247,31 @@ class PayController extends Controller
         try {
             $createPayResponse = $tkbAdapter->createPayStep2($createPaySecondStepForm);
         } catch (Check3DSv2Exception $e) {
-            Yii::$app->errorHandler->logException($e);
-            return $this->redirect(Url::to('/pay/orderdone/' . $id));
+            $errorMessage = 'Карта не поддерживается, обратитесь в банк';
+            if ($e->getCode() === Check3DSv2Exception::INCORRECT_ECI) {
+                $errorMessage = 'Операция по карте запрещена. Обратитесь в банк эмитент.';
+            }
+            return $this->render('client-error', [
+                'message' => $errorMessage,
+                'failUrl' => $paySchet->FailedUrl,
+            ]);
         }
 
         $paySchet->IsNeed3DSVerif = $createPayResponse->isNeed3DSVerif;
         $paySchet->save(false);
 
         if ($createPayResponse->isNeed3DSVerif) {
-            return $this->render('createpay-second-step', ['createPayResponse' => $createPayResponse]);
+            return $this->render('client-submit-form', [
+                'method' => 'POST',
+                'url' => $createPayResponse->url,
+                'fields' => [
+                    'creq' => $createPayResponse->creq,
+                ],
+            ]);
         } else {
-            return $this->redirect(Url::to('/pay/orderdone/' . $paySchet->ID));
+            return $this->render('client-redirect', [
+                'redirectUrl' => Url::to('/pay/orderdone/' . $paySchet->ID),
+            ]);
         }
     }
 

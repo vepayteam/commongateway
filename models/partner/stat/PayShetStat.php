@@ -4,10 +4,12 @@ namespace app\models\partner\stat;
 
 use app\models\partner\UserLk;
 use app\models\TU;
+use app\services\payment\models\PaySchet;
 use app\services\payment\models\repositories\CurrencyRepository;
 use Yii;
 use yii\base\Model;
 use yii\db\Expression;
+use yii\data\Pagination;
 use yii\db\Query;
 use yii\helpers\VarDumper;
 
@@ -307,7 +309,7 @@ class PayShetStat extends Model
 
         if (!$nolimit) {
             if ($page > 0) {
-                $query->offset($CNTPAGE * $page);
+                $query->offset($CNTPAGE * ($page-1));
             }
             $query->orderBy('ID DESC')->limit($CNTPAGE);
         }
@@ -329,7 +331,12 @@ class PayShetStat extends Model
             }
         }
 
-        return ['data' => $data, 'cnt' => $cnt, 'cntpage' => $CNTPAGE, 'sumpay' => $sumPay, 'sumcomis' => $sumComis, 'bankcomis' => $bankcomis, 'voznagps' => $voznagps];
+        $pagination = new Pagination([
+            'totalCount' => $query->count(),
+            'pageSize' => $CNTPAGE,
+        ]);
+
+        return ['data' => $data, 'pagination' => $pagination, 'cnt' => $cnt, 'cntpage' => $CNTPAGE, 'sumpay' => $sumPay, 'sumcomis' => $sumComis, 'bankcomis' => $bankcomis, 'voznagps' => $voznagps];
     }
 
     /**
@@ -371,6 +378,11 @@ class PayShetStat extends Model
             $query->andWhere('qp.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
         if (count($this->status) > 0) {
+            if (in_array(PaySchet::STATUS_WAITING, $this->status, true)) {
+                $this->status = array_unique(
+                    array_merge($this->status, [PaySchet::STATUS_NOT_EXEC, PaySchet::STATUS_WAITING_CHECK_STATUS])
+                );
+            }
             $query->andWhere(['in', 'ps.Status', $this->status]);
         }
         if (count($this->usluga) > 0) {

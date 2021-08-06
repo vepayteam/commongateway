@@ -1090,6 +1090,7 @@ class TKBankAdapter implements IBankAdapter
         if(in_array($check3DSVersionResponse->version, Issuer3DSVersionInterface::V_2)) {
             // TODO: add strategy 3ds v2
             $payResponse = new CreatePayResponse();
+            $payResponse->vesion3DS = $check3DSVersionResponse->version;
             $payResponse->status = BaseResponse::STATUS_CREATED;
             $payResponse->isNeedSendTransIdTKB = true;
             $payResponse->threeDSServerTransID = $check3DSVersionResponse->threeDSServerTransID;

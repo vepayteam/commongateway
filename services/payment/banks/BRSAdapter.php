@@ -50,6 +50,7 @@ use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
 use Carbon\Carbon;
+use Exception;
 use Yii;
 use yii\base\Security;
 use yii\helpers\Json;
@@ -360,6 +361,7 @@ class BRSAdapter implements IBankAdapter
         $curl = curl_init();
 
         $url = $this->bankUrl . $uri;
+        $request = http_build_query($data);
         curl_setopt_array($curl, array(
             CURLOPT_URL => $url,
             CURLOPT_HEADER => false,
@@ -369,7 +371,7 @@ class BRSAdapter implements IBankAdapter
             CURLOPT_SSLCERT => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.pem'),
             CURLOPT_SSLKEY => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.key'),
             CURLOPT_CAINFO => Yii::getAlias(self::KEYS_PATH . 'chain-ecomm-ca-root-ca.crt'),
-            CURLOPT_POSTFIELDS => http_build_query($data),
+            CURLOPT_POSTFIELDS => $request,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => 120,
         ));
@@ -381,11 +383,30 @@ class BRSAdapter implements IBankAdapter
         $info = curl_getinfo($curl);
 
         if(empty($curlError) && $info['http_code'] == 200) {
-            $response = $this->parseResponse($response);
+            try {
+                $response = $this->parseResponse($response);
+            } catch (Exception $e) {
+                Yii::warning('BRSAdapter error while parsing response: response=' . $response
+                    . ' exception=' . $e->getMessage()
+                );
+            }
+
             Yii::warning('BRSAdapter ans uri=' . $uri .' : ' . Json::encode($response));
             return $response;
         } else {
             Yii::error('BRSAdapter error uri=' . $uri .' status=' . $info['http_code']);
+
+            $errMsg = [];
+            $errMsg[] = 'request=' . $request;
+            $errMsg[] = 'login=' . $this->gate->Login;
+            $errMsg[] = 'token=' . $this->gate->Token;
+            $errMsg[] = 'curlError=' . $curlError;
+            if ($response) {
+                $errMsg[] = 'response=' . $response;
+            }
+
+            Yii::warning('BRSAdapter bad xml response: ' . join(' ', $errMsg));
+
             throw new BankAdapterResponseException('Ошибка запроса: ' . $curlError);
         }
     }
@@ -506,7 +527,6 @@ class BRSAdapter implements IBankAdapter
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_USERPWD => $this->gate->Token . ':' . $this->gate->Password,
             CURLOPT_POSTFIELDS => $xml,
             CURLOPT_HTTPHEADER => array(
                 'Content-Type: text/xml',
@@ -516,7 +536,7 @@ class BRSAdapter implements IBankAdapter
                 'User-Agent: Mozilla/4.0',
                 'Cache-Control: no-cache',
                 'Expect: 100-continue',
-                'Authorization: Basic R0g6SjhoZ15nbDJkUw=='
+                'Authorization: Basic ' . base64_encode($this->gate->Token . ':' . $this->gate->Password)
             ),
         ));
 
@@ -528,9 +548,28 @@ class BRSAdapter implements IBankAdapter
 
         if(empty($curlError) && $info['http_code'] == 200) {
             Yii::warning('BRSAdapter xmlAns uri=' . $response);
-            $response = $this->parseXmlResponse($response);
+
+            try {
+                $response = $this->parseXmlResponse($response);
+            } catch (Exception $e) {
+                Yii::warning('BRSAdapter error while parsing xml response: response=' . $response
+                    . ' exception=' . $e->getMessage()
+                );
+            }
+
             return $response;
         } else {
+            $errMsg = [];
+            $errMsg[] = 'request=' . $xml;
+            $errMsg[] = 'login=' . $this->gate->Login;
+            $errMsg[] = 'token=' . $this->gate->Token;
+            $errMsg[] = 'curlError=' . $curlError;
+            if ($response) {
+                $errMsg[] = 'response=' . $response;
+            }
+
+            Yii::warning('BRSAdapter bad xml response: ' . join(' ', $errMsg));
+
             throw new BankAdapterResponseException('Ошибка запроса: ' . $curlError);
         }
     }
@@ -736,7 +775,7 @@ class BRSAdapter implements IBankAdapter
                 $response = Json::decode($response, true);
                 Yii::warning('BRSAdapter ans POST uri=' . $uri .' : ' . Json::encode($response) . '; data=' . Json::encode($data));
                 return $response;
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 throw new BankAdapterResponseException($e->getMessage());
             }
         } else {
