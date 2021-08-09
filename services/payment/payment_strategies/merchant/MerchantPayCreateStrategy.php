@@ -5,6 +5,7 @@ namespace app\services\payment\payment_strategies\merchant;
 
 
 use app\models\payonline\Uslugatovar;
+use app\services\CompensationService;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\IBankAdapter;
 use app\services\payment\exceptions\CreatePayException;
@@ -100,6 +101,7 @@ class MerchantPayCreateStrategy
      *
      * @return PaySchet
      * @throws CreatePayException
+     * @throws \Exception
      */
     protected function createPaySchet(BankAdapterBuilder $bankAdapterBuilder): PaySchet
     {
@@ -135,12 +137,6 @@ class MerchantPayCreateStrategy
             if (isset($this->payForm->client['address']) && $this->payForm->client['address']) {
                 $paySchet->AddressUser = $this->payForm->client['address'];
             }
-            if (isset($this->payForm->client['city']) && $this->payForm->client['city']) {
-                $paySchet->CityUser = $this->payForm->client['city'];
-            }
-            if (isset($this->payForm->client['country']) && $this->payForm->client['country']) {
-                $paySchet->CountryUser = $this->payForm->client['country'];
-            }
             if (isset($this->payForm->client['phone']) && $this->payForm->client['phone']) {
                 $paySchet->PhoneUser = $this->payForm->client['phone'];
             }
@@ -151,6 +147,7 @@ class MerchantPayCreateStrategy
                 $paySchet->ZipUser = $this->payForm->client['zip'];
             }
         }
+
         if (!$paySchet->save()) {
             throw new CreatePayException('Не удалось создать счет');
         }

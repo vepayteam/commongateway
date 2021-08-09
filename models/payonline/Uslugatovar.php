@@ -11,9 +11,11 @@ use yii\caching\TagDependency;
 /**
  * This is the model class for table "uslugatovar".
  *
+ * @todo переименовать IsCustom
+ *
  * @property string $ID
  * @property int $IDPartner [int(10) unsigned]  id partner
- * @property bool $IsCustom [tinyint(1) unsigned]  0 - obshaia 1 - kastomnaya
+ * @property bool $IsCustom [tinyint(1) unsigned]  Тип услуги
  * @property string $CustomData danuue customnogo
  * @property int $ExtReestrIDUsluga [int(10) unsigned]  id uslugi v reestrah
  * @property string $NameUsluga [varchar(200)]  naimenovanie uslugi
