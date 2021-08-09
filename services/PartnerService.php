@@ -373,7 +373,7 @@ class PartnerService extends Component
                 ['between', 'DateFrom', $params->getDateFrom(), $params->getDateTo()],
                 ['between', 'DateTo', $params->getDateFrom(), $params->getDateTo()],
             ])
-            ->andWhere(['TypeVyvod' => $params->getTypeVyvyod()])
+            ->andWhere(['TypeVyvod' => $params->getTypeVyvod()])
             ->cache(60 * 60);
 
         if ($params->getFilterByStateOp() === true) {
@@ -395,7 +395,7 @@ class PartnerService extends Component
         $query = $partner->getVyvodSystem()
             ->select(['DateTo'])
             ->andWhere(['<=', 'DateTo', $params->getDateTo()])
-            ->andWhere(['TypeVyvod' => $params->getTypeVyvyod()])
+            ->andWhere(['TypeVyvod' => $params->getTypeVyvod()])
             ->orderBy(['DateTo' => SORT_DESC])
             ->cache(60 * 60);
 

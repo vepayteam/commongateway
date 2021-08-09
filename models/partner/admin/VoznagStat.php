@@ -4,10 +4,13 @@
 namespace app\models\partner\admin;
 
 
+use app\models\partner\admin\structures\MiddleMapResult;
+use app\models\partner\admin\structures\VyvodSystemFilterParams;
 use app\models\partner\UserLk;
 use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
 use app\models\TU;
+use app\services\payment\models\PaySchet;
 use Carbon\Carbon;
 use Yii;
 use yii\base\Model;
@@ -18,11 +21,35 @@ class VoznagStat extends Model
 {
     const STAT_DAY_CACHE_PREFIX = 'VoznagStat_ForDay_';
     const STAT_DAY_TAG_PREFIX = 'VoznagStat_ForDay_';
+    /**
+     * @const TYPE_SERVICE_ALL - все
+     */
+    const TYPE_SERVICE_ALL = 0;
+    /**
+     * @const TYPE_SERVICE_POGAS - погашение
+     */
+    const TYPE_SERVICE_POGAS = 1;
+    /**
+     * @const TYPE_SERVICE_ALL - выдача
+     */
+    const TYPE_SERVICE_VYDACHA = 2;
+
+    const TYPE_VYVOD_POGASHENIE = 0;
+    const TYPE_VYVOD_VYPLATY = 1;
+
+    const OPERATION_STATE_IN_PROGRESS = 0;
+    const OPERATION_STATE_READY = 1;
+    const OPERATION_STATE_FAILED = 2;
 
     public $datefrom;
     public $dateto;
     public $IdPart;
-    public $TypeUslug = 0; //0 - все 1 - погашение 2 - выдача
+    /**
+     * @var int $TypeUslug (0 - все, 1 - погашение, 2 - выдача)
+     */
+    public $TypeUslug = 0;
+
+    private $partner;
 
     public function rules()
     {
@@ -44,214 +71,142 @@ class VoznagStat extends Model
     {
         $IdPart = $IsAdmin ? $this->IdPart : UserLk::getPartnerId(Yii::$app->user);
 
-        $partner = Partner::findOne(['ID' => $IdPart]);
+        $this->partner = Partner::findOne(['ID' => $IdPart]);
 
-        $result = [];
+        $partner = $this->partner;
+
+        // @TODO: Нужно решить момент со случаем, когда $partner === null. Узнать, каким путём исправить
+
         $tuList = [];
-        //0 - все 1 - погашение 2 - выдача
-        if ($this->TypeUslug == 1 || $this->TypeUslug == 0) {
+        if ($this->TypeUslug == self::TYPE_SERVICE_POGAS || $this->TypeUslug == self::TYPE_SERVICE_ALL) {
             $tuList = array_merge($tuList, TU::InAll());
         }
-        if ($this->TypeUslug == 2 || $this->TypeUslug == 0) {
+        if ($this->TypeUslug == self::TYPE_SERVICE_VYDACHA || $this->TypeUslug == self::TYPE_SERVICE_ALL) {
             $tuList = array_merge($tuList, TU::OutMfo());
         }
-        $uslugatovars = $partner->getUslugatovars()
-            ->andWhere(['in', 'IsCustom', $tuList])
-            ->all();
 
-        foreach ($uslugatovars as $uslugatovar) {
-            $data = $this->iterUslugatovar($uslugatovar);
-            $result[] = [
+        $dateFrom = Carbon::createFromFormat('d.m.Y H:i:s', $this->datefrom . ":00")->getTimestamp();
+        $dateTo = Carbon::createFromFormat('d.m.Y H:i:s', $this->dateto . ":59")->getTimestamp();
+
+        $query = PaySchet::find()
+                         ->with('uslugatovar')
+                         ->from(['ps FORCE INDEX(DateCreate_idx)' => PaySchet::tableName()])
+                         ->select([
+                             'ps.IdUsluga',
+                             'SUM(ps.SummPay) AS SummPay',
+                             'SUM(ps.ComissSumm) AS ComissSumm',
+                             'SUM(ps.MerchVozn) AS MerchVozn',
+                             'SUM(ps.BankComis) AS BankComis',
+                             'COUNT(*) AS CntPays',
+                         ])
+                         ->innerJoin('`uslugatovar` AS ut', 'ps.IdUsluga = ut.ID')
+                         ->andWhere(['BETWEEN', 'ps.DateCreate', $dateFrom, $dateTo])
+                         ->andWhere(['=', 'ps.Status', '1'])
+                         ->andWhere(['in', 'ut.IsCustom', $tuList])
+                         ->andWhere(['ut.IDPartner' => $partner->ID])
+                         ->groupBy(['ps.IdUsluga', 'ut.ID'])
+                         ->indexBy('IdUsluga');
+
+        try {
+            $serviceSums = $query->all();
+            return $this->mapReport($serviceSums, $partner);
+        } catch (\Throwable $e) {
+            Yii::error(sprintf(
+                    'VoznagStat error. Message: %s. Query: %s. Trace: %s.',
+                    $e->getMessage(), $query->createCommand()->getRawSql(), $e->getTraceAsString()
+                )
+            );
+        }
+    }
+
+    /**
+     * @param array|PaySchet[] $queryData
+     * @param Partner $partner
+     *
+     * @return array|MiddleMapResult[]
+     */
+    private function mapReport(array $queryData, Partner $partner): array
+    {
+        $result = array_map(static function(PaySchet $serviceSum) use ($partner): MiddleMapResult {
+
+            $uslugatovar = $serviceSum->uslugatovar;
+
+            return new MiddleMapResult([
                 'NamePartner' => $partner->Name,
                 'IDPartner' => $partner->ID,
 
-                'SummPay' => $data['SummPay'],
-                'ComissSumm' => $data['ComissSumm'],
-                'MerchVozn' => $data['MerchVozn'],
-                'BankComis' => $data['BankComis'],
-                'CntPays' => $data['CntPays'],
+                'SummPay' => $serviceSum->SummPay,
+                'ComissSumm' => $serviceSum->ComissSumm,
+                'MerchVozn' => $serviceSum->MerchVozn,
+                'BankComis' => $serviceSum->BankComis,
+                'CntPays' => $serviceSum->CntPays,
 
-                'IdUsluga' => $uslugatovar->ID,
+                'IdUsluga' => $serviceSum->IdUsluga,
                 'IsCustom' => $uslugatovar->IsCustom,
                 'ProvVoznagPC' => $uslugatovar->ProvVoznagPC,
                 'ProvVoznagMin' => $uslugatovar->ProvVoznagMin,
                 'ProvComisPC' => $uslugatovar->ProvComisPC,
                 'ProvComisMin' => $uslugatovar->ProvComisMin,
                 'VoznagVyplatDirect' => $partner->VoznagVyplatDirect,
-            ];
-        }
+                'UslugaTovarModel' => $uslugatovar,
+            ]);
+
+        }, $queryData);
+
+        $ret = [];
 
         $dateFrom = strtotime($this->datefrom.":00");
         $dateTo = strtotime($this->dateto.":59");
-        $ret = [];
+
+        /** @var MiddleMapResult $row */
         foreach ($result as $row) {
-            $row['VoznagSumm'] = $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
 
-            $indx = $row['IDPartner'];
-            if (!isset($ret[$indx])) {
-                $typeVyvyod = 0;
-                if (in_array($row['IsCustom'], [TU::$TOSCHET, TU::$TOCARD])) {
-                    $typeVyvyod = 1;
+            $row->setVoznagSumm($row->getMerchVozn());
+
+            $indx = $row->getIDPartner();
+
+            if ( !isset($ret[$indx]) ) {
+                $typeVyvod = self::TYPE_VYVOD_POGASHENIE;
+                if ( in_array($row->getIsCustom(), [TU::$TOSCHET, TU::$TOCARD], true) ) {
+                    $typeVyvod = self::TYPE_VYVOD_VYPLATY;
                 }
 
-                $row['SummVyveden'] = Yii::$app->db->createCommand('
-                    SELECT
-                        SUM(`Summ`)
-                    FROM
-                        `vyvod_system`
-                    WHERE
-                        `IdPartner` = :IDPART
-                        AND ((`DateFrom` >= :DATEFROM AND `DateTo` <= :DATETO)
-                                 OR (`DateFrom` BETWEEN :DATEFROM AND :DATETO) 
-                                 OR (`DateTo` BETWEEN :DATEFROM AND :DATETO)
-                            )
-                        AND `TypeVyvod` = :TYPEVYVOD
-                        AND `SatateOp` IN (0,1)
-                ', [':IDPART' => $row['IDPartner'], ':DATEFROM' => $dateFrom, ':DATETO' => $dateTo, ':TYPEVYVOD' => $typeVyvyod])
-                    ->cache(60*60)
-                    ->queryScalar();
+                $filterParams = new VyvodSystemFilterParams(['dateFrom' => $dateFrom, 'dateTo' => $dateTo, 'filterByStateOp' => true, 'typeVyvod' => $typeVyvod]);
 
-                $row['DataVyveden'] = Yii::$app->db->createCommand('
-                    SELECT
-                        `DateTo`
-                    FROM
-                        `vyvod_system`
-                    WHERE
-                        `IdPartner` = :IDPART
-                        AND `DateTo` <= :DATETO
-                        AND `TypeVyvod` = :TYPEVYVOD
-                        AND `SatateOp` IN (0,1)
-                    ORDER BY `DateTo` DESC
-                    LIMIT 1
-                ', [':IDPART' => $row['IDPartner'], ':DATETO' => $dateTo, ':TYPEVYVOD' => $typeVyvyod])
-                    ->cache(60*60)
-                    ->queryScalar();
+                $row->SetSummVyveden($partner->getSummVyveden($filterParams)->scalar());
+                $row->SetDataVyveden($partner->getDataVyveden($filterParams)->scalar());
 
-                if (!in_array($row['IsCustom'], [TU::$TOSCHET, TU::$TOCARD])) {
-                    $row['SummPerechisl'] = Yii::$app->db->createCommand('
-                        SELECT
-                            SUM(`SumOp`)
-                        FROM
-                            `vyvod_reestr`
-                        WHERE
-                            `IdPartner` = :IDPART
-                            AND ((`DateFrom` >= :DATEFROM AND `DateTo` <= :DATETO)
-                                 OR (`DateFrom` BETWEEN :DATEFROM AND :DATETO) 
-                                 OR (`DateTo` BETWEEN :DATEFROM AND :DATETO)
-                            )
-                            AND `StateOp` IN (0,1)
-                    ', [':IDPART' => $row['IDPartner'], ':DATEFROM' => $dateFrom, ':DATETO' => $dateTo])
-                        ->cache(60*60)
-                        ->queryScalar();
-
-                    $row['DataPerechisl'] = Yii::$app->db->createCommand('
-                        SELECT
-                            `DateTo`
-                        FROM
-                            `vyvod_reestr`
-                        WHERE
-                            `IdPartner` = :IDPART
-                            AND `DateTo` <= :DATETO
-                            AND `StateOp` IN (0,1)
-                        ORDER BY `DateTo` DESC
-                        LIMIT 1
-                    ', [':IDPART' => $row['IDPartner'], ':DATETO' => $dateTo])
-                        ->cache(60*60)
-                        ->queryScalar();
-
+                if ( in_array($row->getIsCustom(), [TU::$TOSCHET, TU::$TOCARD], true) ) {
+                    $row->setSummPerechisl(0);
+                    $row->setDataPerechisl(0);
                 } else {
-                    $row['SummPerechisl'] = 0;
-                    $row['DataPerechisl'] = 0;
+                    $row->setSummPerechisl($partner->getSummPerechisl($filterParams)->scalar());
+                    $row->setDataPerechisl($partner->getDataPerechisl($filterParams)->scalar());
                 }
-
 
                 $ret[$indx] = $row;
 
             } else {
-                $ret[$indx]['SummPay'] += $row['SummPay'];
-                $ret[$indx]['ComissSumm'] += $row['ComissSumm'];
-                $ret[$indx]['VoznagSumm'] += $row['VoznagSumm'];
-                $ret[$indx]['MerchVozn'] += $row['MerchVozn'];
-                $ret[$indx]['BankComis'] += $row['BankComis'];
-                $ret[$indx]['CntPays'] += $row['CntPays'];
+                /** @var MiddleMapResult $retItem */
+                $retItem = $ret[$indx];
+
+                $retItem->setSummPay(($retItem->getSummPay() + $row->getSummPay()));
+                $retItem->setComissSumm(($retItem->getComissSumm() + $retItem->getComissSumm()));
+                $retItem->setVoznagSumm(($retItem->getVoznagSumm() + $row->getVoznagSumm()));
+                $retItem->setMerchVozn(($retItem->getMerchVozn() + $row->getMerchVozn()));
+                $retItem->setBankComis(($retItem->getBankComis() + $row->getBankComis()));
+                $retItem->setCntPays(($retItem->getCntPays() + $row->getCntPays()));
+
+                $ret[$indx] = $retItem;
             }
         }
 
-        return $ret;
-    }
+        // @TODO: Пока здесь возвращается в виде многомерного массива в контроллер. Затем переделать на массив объектов. Incarnator | 2021-03-09
+        return array_map(static function(MiddleMapResult $item): array {
+            $item->setUslugaTovarModel(null);
 
-    private function iterUslugatovar(Uslugatovar $uslugatovar)
-    {
-        $result = [
-            'SummPay' => 0,
-            'ComissSumm' => 0,
-            'MerchVozn' => 0,
-            'BankComis' => 0,
-            'CntPays' => 0,
-        ];
-        $dateFrom = Carbon::createFromFormat('d.m.Y H:i:s', $this->datefrom.":00");
-        $dateTo = Carbon::createFromFormat('d.m.Y H:i:s', $this->dateto.":59");
-
-        $dateIterFrom = $dateFrom;
-        $dateIterTo = $dateFrom->clone()->addDays(1);
-        $isLastIter = false;
-        while(True) {
-            $cacheKey = self::STAT_DAY_CACHE_PREFIX
-                . $uslugatovar->ID . '|'
-                . $dateIterFrom->timestamp . '|'
-                . $dateIterTo->timestamp;
-
-            // Если дата итерации больше параметра, значит считаем текущий день
-            // Значит следует привести, посчитать и завершить функцию
-            if($dateIterTo->timestamp >= $dateTo->timestamp) {
-                $isLastIter = true;
-                $dateIterTo = $dateTo;
-            }
-
-            // Если считаем текущий или предыдущий день, не используем кэш
-            if($dateIterTo->timestamp >= $dateTo->clone()->startOfDay()->addDays(-1)->timestamp) {
-                $data = $this->iterDay($uslugatovar, $dateIterFrom, $dateIterTo);
-            } else {
-                $data = Yii::$app->cache->getOrSet($cacheKey, function() use ($uslugatovar, $dateIterFrom, $dateIterTo) {
-                    return $this->iterDay($uslugatovar, $dateIterFrom, $dateIterTo);
-                }, 60*60*24*30, new TagDependency(['tags' => self::STAT_DAY_TAG_PREFIX . $uslugatovar->ID]));
-            }
-
-            foreach ($data as $k => $v) {
-                $result[$k] += $v;
-            }
-
-            if($isLastIter) {
-                break;
-            }
-            $dateIterFrom->addDays(1);
-            $dateIterTo->addDays(1);
-        }
-
-        return $result;
-    }
-
-    private function iterDay(Uslugatovar $uslugatovar, Carbon $dateFrom, Carbon $dateTo)
-    {
-        $query = new Query();
-        $query
-            ->select([
-                'SUM(ps.SummPay) AS SummPay',
-                'SUM(ps.ComissSumm) AS ComissSumm',
-                'SUM(ps.MerchVozn) AS MerchVozn',
-                'SUM(ps.BankComis) AS BankComis',
-                'COUNT(*) AS CntPays',
-            ])
-            ->from('`pay_schet` AS ps FORCE INDEX(DateCreate_idx)')
-            ->where('ps.DateCreate BETWEEN :DATEFROM AND :DATETO', [
-                ':DATEFROM' => $dateFrom->timestamp,
-                ':DATETO' => $dateTo->timestamp
-            ])
-            ->andWhere('ps.IdUsluga = ' . $uslugatovar->ID)
-            ->andWhere('ps.Status = 1');
-
-        $result = $query->one();
-        return $result;
+            return $item->toArray();
+        }, $ret);
     }
 
     /**
