@@ -81,5 +81,4 @@ class PaymentController extends BaseController
 
         return $paymentObject;
     }
-
 }

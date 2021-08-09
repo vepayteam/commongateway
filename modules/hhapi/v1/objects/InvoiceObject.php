@@ -211,5 +211,4 @@ class InvoiceObject extends ApiObject
 
         return $this;
     }
-
 }

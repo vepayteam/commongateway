@@ -23,9 +23,9 @@ use yii\base\Component;
 class PaymentApiService extends Component
 {
     /**
-     * @param Partner $partner
      * @param PaySchet $paySchet
      * @param PaymentObject $paymentObject
+     * @return PaymentObject
      * @throws PaymentCreateException
      */
     public function create(PaySchet $paySchet, PaymentObject $paymentObject): PaymentObject

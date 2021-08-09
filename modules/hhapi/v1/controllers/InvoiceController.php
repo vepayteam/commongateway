@@ -86,5 +86,4 @@ class InvoiceController extends BaseController
 
         return $invoiceObject;
     }
-
 }

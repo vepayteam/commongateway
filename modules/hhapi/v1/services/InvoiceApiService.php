@@ -22,7 +22,6 @@ use yii\base\Component;
  */
 class InvoiceApiService extends Component
 {
-
     private const DEFAULT_TIMEOUT = 15 * 60;
 
     /**
@@ -153,5 +152,4 @@ class InvoiceApiService extends Component
 
         return false;
     }
-
 }

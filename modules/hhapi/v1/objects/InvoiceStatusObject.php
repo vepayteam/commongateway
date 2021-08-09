@@ -62,5 +62,4 @@ class InvoiceStatusObject extends Model
 
         return $this;
     }
-
 }

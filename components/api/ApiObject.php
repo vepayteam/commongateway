@@ -15,7 +15,6 @@ use yii\base\Model;
  */
 class ApiObject extends Model
 {
-
     /**
      * {@inheritDoc}
      * @throws ReflectionException

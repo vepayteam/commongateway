@@ -51,5 +51,4 @@ class PaymentObject extends ApiObject
 
         return $this;
     }
-
 }

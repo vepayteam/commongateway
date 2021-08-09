@@ -14,7 +14,6 @@ use app\services\payment\models\PaySchet;
  */
 class PaymentCardObject extends ApiObject
 {
-
     /**
      * @var string
      */
@@ -111,5 +110,4 @@ class PaymentCardObject extends ApiObject
 
         return $this;
     }
-
 }

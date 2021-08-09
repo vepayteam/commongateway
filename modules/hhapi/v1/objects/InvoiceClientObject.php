@@ -42,7 +42,7 @@ class InvoiceClientObject extends ApiObject
     {
         return [
             [['phone', 'login'], 'string', 'max' => 32],
-            [['fullName'], 'string', 'max' => 8],
+            [['fullName'], 'string', 'max' => 80],
             [['email'], 'email'],
             [['address'], 'string', 'max' => 255],
             [['zip'], 'string', 'max' => 16],
@@ -79,5 +79,4 @@ class InvoiceClientObject extends ApiObject
 
         return $this;
     }
-
 }

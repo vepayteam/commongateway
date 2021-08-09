@@ -7,7 +7,6 @@ use yii\web\Response;
 
 class ApiControllerSerializer extends Serializer
 {
-
     /**
      * Упрощенный вывод ошибок.
      */
@@ -23,5 +22,4 @@ class ApiControllerSerializer extends Serializer
 
         return $model->getFirstErrors();
     }
-
 }
