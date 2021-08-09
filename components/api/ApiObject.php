@@ -13,7 +13,7 @@ use yii\base\Model;
  * Добавляет: обработку вложенных форм, валидацию значений атрибутов в соответствии с phpDoc,
  * специальный вывод ошибок для API.
  */
-class ApiObject extends Model
+abstract class ApiObject extends Model
 {
     /**
      * {@inheritDoc}

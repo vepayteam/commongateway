@@ -11,7 +11,7 @@ use app\services\payment\models\PaySchet;
 class PaymentObject extends ApiObject
 {
     /**
-     * @var string
+     * @var string URL для прохождения проверки 3DS.
      */
     public $acsUrl;
 

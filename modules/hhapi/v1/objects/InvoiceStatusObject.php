@@ -16,9 +16,14 @@ class InvoiceStatusObject extends Model
     public $id;
 
     /**
-     * @var string Статус.
+     * @var string Название статуса.
      */
-    public $message;
+    public $name;
+
+    /**
+     * @var string Ошибка (может отсутствовать).
+     */
+    public $errorInfo;
 
     /**
      * @var string Код ошибки банка (может отсутствовать).
@@ -37,7 +42,8 @@ class InvoiceStatusObject extends Model
     {
         return [
             'id',
-            'message',
+            'name',
+            'errorInfo',
             'bankErrorCode',
             'bank',
         ];
@@ -51,14 +57,9 @@ class InvoiceStatusObject extends Model
     {
         $this->id = $paySchet->Status;
         $this->bank = $paySchet->bank->ChannelName;
-
-        if ($paySchet->Status == PaySchet::STATUS_WAITING) {
-            $this->message = 'В обработке';
-            $this->bankErrorCode = null;
-        } else {
-            $this->message = (string)$paySchet->ErrorInfo;
-            $this->bankErrorCode = $paySchet->RCCode;
-        }
+        $this->name = PaySchet::STATUSES[$paySchet->Status] ?? null;
+        $this->bankErrorCode = !empty($paySchet->RCCode) ? $paySchet->RCCode : null;
+        $this->errorInfo = $paySchet->ErrorInfo;
 
         return $this;
     }

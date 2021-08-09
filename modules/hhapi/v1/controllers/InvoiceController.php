@@ -2,7 +2,7 @@
 
 namespace app\modules\hhapi\v1\controllers;
 
-use app\modules\hhapi\v1\components\BaseController;
+use app\modules\hhapi\v1\components\BaseApiController;
 use app\modules\hhapi\v1\objects\InvoiceObject;
 use app\modules\hhapi\v1\services\InvoiceApiService;
 use app\modules\hhapi\v1\services\invoiceApiService\InvoiceCreateException;
@@ -14,7 +14,7 @@ use yii\web\NotFoundHttpException;
 /**
  * REST API Счета.
  */
-class InvoiceController extends BaseController
+class InvoiceController extends BaseApiController
 {
     /**
      * @var InvoiceApiService

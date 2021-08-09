@@ -14,7 +14,7 @@ use yii\web\NotFoundHttpException;
 use yii\web\Response;
 use yii\web\UnauthorizedHttpException;
 
-class BaseController extends Controller
+abstract class BaseApiController extends Controller
 {
     /**
      * @var Partner

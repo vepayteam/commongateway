@@ -25,7 +25,6 @@ class InvoiceObject extends ApiObject
      * @var int
      */
     public $id;
-
     /**
      * @var int Сумма платежа в копейках.
      */
@@ -35,11 +34,15 @@ class InvoiceObject extends ApiObject
      */
     public $currencyCode;
     /**
+     * @var string IP клиента.
+     */
+    public $ip;
+    /**
      * @var string Номер договора.
      */
     public $documentId;
     /**
-     * @var string Внешний идентификатор запроса.
+     * @var string Внешний идентификатор Счета.
      */
     public $externalId;
     /**
@@ -51,15 +54,15 @@ class InvoiceObject extends ApiObject
      */
     public $timeoutSeconds;
     /**
-     * @var string Адрес для URL для возврата после завершения платежа (успех).
+     * @var string URL для возврата после завершения платежа (успех).
      */
     public $successUrl;
     /**
-     * @var string Адрес для URL для возврата после завершения платежа (ошибка).
+     * @var string URL для возврата после завершения платежа (ошибка).
      */
     public $failUrl;
     /**
-     * @var string Адрес для URL для возврата после отказа от оплаты.
+     * @var string URL для возврата после отказа от оплаты.
      */
     public $cancelUrl;
     /**
@@ -71,14 +74,9 @@ class InvoiceObject extends ApiObject
      */
     public $postbackUrlV2;
     /**
-     * @var string
-     */
-    public $ip;
-    /**
      * @var InvoiceClientObject
      */
     public $client;
-
     /**
      * @var InvoiceStatusObject
      */
@@ -110,7 +108,7 @@ class InvoiceObject extends ApiObject
             [['postbackUrl', 'postbackUrlV2'], 'string', 'max' => 255],
 
             [['description'], 'string', 'max' => 200],
-            [['amountFractional'], 'integer', 'min' => 1, 'max' => 1000000 * 100],
+            [['amountFractional'], 'integer', 'min' => 100, 'max' => 1000000 * 100],
             [['timeoutSeconds'], 'integer', 'min' => 10 * 60, 'max' => 59 * 60],
             [['ip'], 'ip'],
             [

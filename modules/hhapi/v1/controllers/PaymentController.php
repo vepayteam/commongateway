@@ -2,7 +2,7 @@
 
 namespace app\modules\hhapi\v1\controllers;
 
-use app\modules\hhapi\v1\components\BaseController;
+use app\modules\hhapi\v1\components\BaseApiController;
 use app\modules\hhapi\v1\objects\PaymentObject;
 use app\modules\hhapi\v1\services\PaymentApiService;
 use app\modules\hhapi\v1\services\paymentApiService\PaymentCreateException;
@@ -14,7 +14,7 @@ use yii\web\ServerErrorHttpException;
 /**
  * REST API оплаты.
  */
-class PaymentController extends BaseController
+class PaymentController extends BaseApiController
 {
     /**
      * @var PaymentApiService
