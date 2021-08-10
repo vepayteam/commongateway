@@ -37,6 +37,8 @@ use Yii;
  */
 class DectaAdapter implements IBankAdapter
 {
+    const AFT_MIN_SUMM = 120000;
+
     /** @var PartnerBankGate $gate */
     protected $gate;
     /** @var Client $api */
@@ -315,11 +317,11 @@ class DectaAdapter implements IBankAdapter
     }
 
     /**
-     * @throws GateException
+     * @return int
      */
-    public function getAftMinSum()
+    public function getAftMinSum(): int
     {
-        $this->throwGateException();
+        return self::AFT_MIN_SUMM;
     }
 
     /**
