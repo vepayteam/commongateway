@@ -1,6 +1,6 @@
 <?php
 
-namespace app\modules\hhapi\v1\components;
+namespace app\modules\h2hapi\v1\components;
 
 use app\components\api\ApiControllerSerializer;
 use app\models\kfapi\CheckIP;

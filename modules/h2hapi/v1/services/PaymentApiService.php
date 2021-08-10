@@ -1,11 +1,10 @@
 <?php
 
-namespace app\modules\hhapi\v1\services;
+namespace app\modules\h2hapi\v1\services;
 
 use app\models\payonline\Cards;
-use app\models\payonline\Partner;
-use app\modules\hhapi\v1\objects\PaymentObject;
-use app\modules\hhapi\v1\services\paymentApiService\PaymentCreateException;
+use app\modules\h2hapi\v1\objects\PaymentObject;
+use app\modules\h2hapi\v1\services\paymentApiService\PaymentCreateException;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\BankAdapterResponseException;

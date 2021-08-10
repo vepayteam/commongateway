@@ -1,6 +1,6 @@
 <?php
 
-namespace app\modules\hhapi\v1\services\invoiceApiService;
+namespace app\modules\h2hapi\v1\services\invoiceApiService;
 
 class InvoiceCreateException extends \Exception
 {

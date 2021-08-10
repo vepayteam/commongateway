@@ -1,11 +1,11 @@
 <?php
 
-namespace app\modules\hhapi\v1\controllers;
+namespace app\modules\h2hapi\v1\controllers;
 
-use app\modules\hhapi\v1\components\BaseApiController;
-use app\modules\hhapi\v1\objects\PaymentObject;
-use app\modules\hhapi\v1\services\PaymentApiService;
-use app\modules\hhapi\v1\services\paymentApiService\PaymentCreateException;
+use app\modules\h2hapi\v1\components\BaseApiController;
+use app\modules\h2hapi\v1\objects\PaymentObject;
+use app\modules\h2hapi\v1\services\PaymentApiService;
+use app\modules\h2hapi\v1\services\paymentApiService\PaymentCreateException;
 use yii\base\InvalidConfigException;
 use yii\web\ConflictHttpException;
 use yii\web\NotFoundHttpException;

@@ -1,11 +1,11 @@
 <?php
 
-namespace app\modules\hhapi\v1\controllers;
+namespace app\modules\h2hapi\v1\controllers;
 
-use app\modules\hhapi\v1\components\BaseApiController;
-use app\modules\hhapi\v1\objects\InvoiceObject;
-use app\modules\hhapi\v1\services\InvoiceApiService;
-use app\modules\hhapi\v1\services\invoiceApiService\InvoiceCreateException;
+use app\modules\h2hapi\v1\components\BaseApiController;
+use app\modules\h2hapi\v1\objects\InvoiceObject;
+use app\modules\h2hapi\v1\services\InvoiceApiService;
+use app\modules\h2hapi\v1\services\invoiceApiService\InvoiceCreateException;
 use yii\base\InvalidConfigException;
 use yii\helpers\Url;
 use yii\web\ConflictHttpException;

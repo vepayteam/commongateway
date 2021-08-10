@@ -1,6 +1,6 @@
 <?php
 
-namespace app\modules\hhapi\v1\objects;
+namespace app\modules\h2hapi\v1\objects;
 
 use app\components\api\ApiObject;
 use app\models\payonline\Cards;

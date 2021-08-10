@@ -1,6 +1,6 @@
 <?php
 
-namespace app\modules\hhapi\v1\services\paymentApiService;
+namespace app\modules\h2hapi\v1\services\paymentApiService;
 
 class PaymentCreateException extends \Exception
 {

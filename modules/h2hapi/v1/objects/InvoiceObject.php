@@ -1,11 +1,11 @@
 <?php
 
-namespace app\modules\hhapi\v1\objects;
+namespace app\modules\h2hapi\v1\objects;
 
 use app\components\api\ApiObject;
 use app\models\payonline\Partner;
-use app\modules\hhapi\v1\services\InvoiceApiService;
-use app\modules\hhapi\v1\services\invoiceApiService\InvoiceCreateException;
+use app\modules\h2hapi\v1\services\InvoiceApiService;
+use app\modules\h2hapi\v1\services\invoiceApiService\InvoiceCreateException;
 use app\services\payment\models\Currency;
 use app\services\payment\models\PaySchet;
 use yii\base\InvalidConfigException;

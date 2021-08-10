@@ -1,9 +1,9 @@
 <?php
 
-namespace app\modules\hhapi\v1;
+namespace app\modules\h2hapi\v1;
 
-use app\modules\hhapi\v1\services\InvoiceApiService;
-use app\modules\hhapi\v1\services\PaymentApiService;
+use app\modules\h2hapi\v1\services\InvoiceApiService;
+use app\modules\h2hapi\v1\services\PaymentApiService;
 use yii\base\InvalidConfigException;
 
 /**

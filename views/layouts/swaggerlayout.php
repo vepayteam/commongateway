@@ -6,6 +6,8 @@
 use yii\helpers\Html;
 use app\assets\SwaggerAsset;
 
+$title = $this->params['title'] ?? 'Vepay API';
+
 SwaggerAsset::register($this);
 ?>
 
@@ -16,7 +18,7 @@ SwaggerAsset::register($this);
         <meta charset="<?= Yii::$app->charset ?>">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <?= Html::csrfMetaTags() ?>
-        <title>Vepay API</title>
+        <title><?= Html::encode($title) ?></title>
         <?php $this->head() ?>
     </head>
     <body>

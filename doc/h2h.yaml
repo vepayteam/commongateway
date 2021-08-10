@@ -6,8 +6,8 @@ security:
   - Mfo: [ ]
     Token: [ ]
 servers:
-  - url: https://api.vepay.online/hhapi/v1
-  - url: https://test.vepay.online/hhapi/v1
+  - url: https://api.vepay.online/h2hapi/v1
+  - url: https://test.vepay.online/h2hapi/v1
 paths:
   /invoices:
     post:

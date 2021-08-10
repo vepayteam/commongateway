@@ -100,9 +100,9 @@ $config = [
                 '/admin/syncbalance/<id:\d+>' => 'admin/syncbalance',
                 '/mfo/getsbpbankreceiver' => 'mfo/default/getsbpbankreceiver',
 
-                'POST /hhapi/v1/invoices' => '/hhapi/v1/invoice/post',
-                'GET /hhapi/v1/invoices/<id:\d+>' => '/hhapi/v1/invoice/get',
-                'PUT /hhapi/v1/invoices/<paySchetId:\d+>/payment' => '/hhapi/v1/payment/put',
+                'POST /h2hapi/v1/invoices' => '/h2hapi/v1/invoice/post',
+                'GET /h2hapi/v1/invoices/<id:\d+>' => '/h2hapi/v1/invoice/get',
+                'PUT /h2hapi/v1/invoices/<paySchetId:\d+>/payment' => '/h2hapi/v1/payment/put',
 
                 '<controller>/<id:\d+>' => '<controller>/index',
                 '<controller>/<action>' => '<controller>/<action>',
@@ -187,8 +187,8 @@ $config = [
         'lk' => [
             'class' => 'app\modules\lk\Module',
         ],
-        'hhapi' => [
-            'class' => 'app\modules\hhapi\Module',
+        'h2hapi' => [
+            'class' => 'app\modules\h2hapi\Module',
         ],
     ],
 ];

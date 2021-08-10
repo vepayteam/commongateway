@@ -1,11 +1,11 @@
 <?php
 
-namespace app\modules\hhapi\v1\services;
+namespace app\modules\h2hapi\v1\services;
 
 use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
-use app\modules\hhapi\v1\objects\InvoiceObject;
-use app\modules\hhapi\v1\services\invoiceApiService\InvoiceCreateException;
+use app\modules\h2hapi\v1\objects\InvoiceObject;
+use app\modules\h2hapi\v1\services\invoiceApiService\InvoiceCreateException;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\Banks;
 use app\services\payment\exceptions\GateException;
