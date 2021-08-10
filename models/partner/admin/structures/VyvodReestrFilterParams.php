@@ -9,7 +9,7 @@ namespace app\models\partner\admin\structures;
  * @property string $dateFrom
  * @property string $dateTo
  * @property bool $filterByStateOp
- * @property int $typeVyvyod
+ * @property int $typeVyvod
  *
  * @package app\models\partner\admin\structures
  */
@@ -85,16 +85,16 @@ class VyvodReestrFilterParams
     /**
      * @return int
      */
-    public function getTypeVyvyod(): int
+    public function getTypeVyvod(): int
     {
-        return $this->typeVyvyod;
+        return $this->typeVyvod;
     }
 
     /**
-     * @param mixed $typeVyvyod
+     * @param int $typeVyvod
      */
-    public function setTypeVyvyod(int $typeVyvyod): void
+    public function setTypeVyvod(int $typeVyvod): void
     {
-        $this->typeVyvyod = $typeVyvyod;
+        $this->typeVyvod = $typeVyvod;
     }
 }

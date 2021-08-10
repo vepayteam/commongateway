@@ -68,7 +68,7 @@ class TKBankAdapter implements IBankAdapter
 {
     use TKBank3DSTrait;
 
-    const AFT_MIN_SUMM = 120000;
+    const AFT_MIN_SUMM = 185000;
 
     public const BIC = '044525388';
     const BANK_URL = 'https://pay.tkbbank.ru';

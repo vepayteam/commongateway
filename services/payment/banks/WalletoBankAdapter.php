@@ -70,7 +70,7 @@ class WalletoBankAdapter implements IBankAdapter
     {
         $this->gate = $partnerBankGate;
         $apiClientHeader = [
-            'Authorization' => $partnerBankGate->Token,
+            'Authorization' => 'Basic ' . base64_encode($partnerBankGate->Login . ':' . $partnerBankGate->Password),
         ];
 
         $verify = Yii::getAlias(self::KEY_ROOT_PATH . $partnerBankGate->Login . '.pem');
