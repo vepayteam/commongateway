@@ -226,32 +226,32 @@ class MfoController extends Controller
             $MfoBalance = new MfoBalance($partner);
 
             if ($istransit == 10 || $istransit == 11) {
-                return [
-                    'status' => 1,
-                    'ostbeg' => number_format($MfoBalance->GetOstBeg($dateFrom, $dateTo,$istransit - 10)/100.0, 2, '.', ' '),
-                    'ostend' => number_format($MfoBalance->GetOstEnd($dateTo, $istransit - 10)/100.0, 2, '.', ' '),
-                    'data' => $this->renderPartial('_balanceorderlocal', [
-                        'listorder' => $MfoBalance->GetOrdersLocal($istransit - 10, $dateFrom, $dateTo, $sort),
-                        'IsAdmin' => $IsAdmin,
-                        'sort' => $sort
-                    ])
-                ];
-            } else {
-                return [
-                    'status' => 1,
-                    'ostbeg' => number_format($MfoBalance->GetOstBeg($dateFrom, $dateTo, $istransit)/100.0, 2, '.', ' '),
-                    'ostend' => number_format($MfoBalance->GetOstEnd($dateTo, $istransit)/100.0, 2, '.', ' '),
-                    'data' => $this->renderPartial('_balanceorder', [
-                        'listorder' => $MfoBalance->GetBankStatemets($istransit, $dateFrom, $dateTo, $sort),
-                        'IsAdmin' => $IsAdmin,
-                        'sort' => $sort,
-                        'dateFrom' => $dateFrom,
-                        'dateTo' => $dateTo,
-                        'istransit' => $istransit,
-                        'IdPartner' => $idpartner
-                    ])
-                ];
+                $istransit -= 10;
             }
+            $ostBeg = number_format($MfoBalance->GetOstBeg($dateFrom, $dateTo,$istransit)/100.0, 2, '.', ' ');
+            $ostEnd = number_format($MfoBalance->GetOstBeg($dateFrom, $dateTo,$istransit)/100.0, 2, '.', ' ');
+            $data = ($istransit == 10 || $istransit == 11)
+                ? $this->renderPartial('_balanceorderlocal', [
+                    'listorder' => $MfoBalance->GetOrdersLocal($istransit - 10, $dateFrom, $dateTo, $sort),
+                    'IsAdmin' => $IsAdmin,
+                    'sort' => $sort
+                ])
+                : $this->renderPartial('_balanceorder', [
+                    'listorder' => $MfoBalance->GetBankStatemets($istransit, $dateFrom, $dateTo, $sort),
+                    'IsAdmin' => $IsAdmin,
+                    'sort' => $sort,
+                    'dateFrom' => $dateFrom,
+                    'dateTo' => $dateTo,
+                    'istransit' => $istransit,
+                    'IdPartner' => $idpartner
+                ]);
+
+            return [
+                'status' => 1,
+                'ostbeg' => $ostBeg,
+                'ostend' => $ostEnd,
+                'data' => $data
+            ];
         } else {
             return $this->redirect('/partner');
         }
