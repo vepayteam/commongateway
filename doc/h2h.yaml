@@ -3,7 +3,7 @@ info:
   title: Host to Host API v.1
   version: 1.0.0
 security:
-  - Mfo: [ ]
+  - User: [ ]
     Token: [ ]
 servers:
   - url: https://api.vepay.online/h2hapi/v1
@@ -104,11 +104,11 @@ paths:
 
 components:
   securitySchemes:
-    Mfo:
+    User:
       type: apiKey
       in: header
-      name: X-Mfo
-      description: Логин
+      name: X-User
+      description: ID Партнера (МФО/Мерчанта)
     Token:
       type: apiKey
       in: header

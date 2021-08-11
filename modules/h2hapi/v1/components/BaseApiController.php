@@ -66,7 +66,7 @@ abstract class BaseApiController extends Controller
 
     private function checkAccess(&$partner): bool
     {
-        $login = \Yii::$app->request->headers->get('X-Mfo');
+        $partnerId = \Yii::$app->request->headers->get('X-User');
         $token = \Yii::$app->request->headers->get('X-Token');
 
         /** @var Partner $partner */
@@ -74,8 +74,7 @@ abstract class BaseApiController extends Controller
             ->andWhere([
                 'IsDeleted' => 0,
                 'IsBlocked' => 0,
-                'IsMfo' => 1,
-                'ID' => $login,
+                'ID' => $partnerId,
             ])
             ->one();
         if ($partner === null) {

@@ -102,11 +102,17 @@ class InvoiceApiService extends Component
      */
     public function findUslugatovar(Partner $partner, int $amountFractional): Uslugatovar
     {
+        if ($partner->IsMfo) {
+            $uslugatovarTypeId = $this->getMfoUslugatovarTypeId($partner, $amountFractional);
+        } else {
+            $uslugatovarTypeId = UslugatovarType::H2H_ECOM;
+        }
+
         /** @var Uslugatovar $uslugatovar */
         $uslugatovar = $partner
             ->getUslugatovars()
             ->andWhere([
-                'IsCustom' => $this->isAftGate($partner, $amountFractional) ? UslugatovarType::POGASHATF : UslugatovarType::POGASHECOM,
+                'IsCustom' => $uslugatovarTypeId,
                 'IsDeleted' => 0,
             ])
             ->one();
@@ -121,21 +127,28 @@ class InvoiceApiService extends Component
     /**
      * @param Partner $partner
      * @param $amountFractional
-     * @return bool
+     * @return int
      * @throws InvoiceCreateException
-     * @todo Логика из легаси. Добавить пояснение к блокам кода внутри метода что там происходит и зачем.
+     * @todo Логика из легаси. Оптимизировать алгоритм.
      * @see MfoPayLkCreateStrategy::isAftGate()
      */
-    protected function isAftGate(Partner $partner, $amountFractional): bool
+    protected function getMfoUslugatovarTypeId(Partner $partner, $amountFractional): int
     {
+        /**
+         * - Ищется приоритетный шлюз для ECOM. Если не найден - ошибка отсутствия шлюза.
+         * - Создается BankAdapter для банка шлюза. Если сумма счета меньше минимальной суммы для AFT в этом банке,
+         * то используем ECOM.
+         * - Иначе ищем шлюз для AFT и, если находим, - используем AFT.
+         */
+
         if ($partner->IsAftOnly) {
-            return true;
+            return UslugatovarType::H2H_POGASH_AFT;
         }
 
         /** @var PartnerBankGate $gate */
         $gate = $partner
             ->getBankGates()
-            ->andWhere(['TU' => UslugatovarType::POGASHECOM, 'Enable' => 1])
+            ->andWhere(['TU' => UslugatovarType::H2H_POGASH_ECOM, 'Enable' => 1])
             ->orderBy('Priority DESC')
             ->one();
         if (!$gate) {
@@ -143,13 +156,13 @@ class InvoiceApiService extends Component
         }
         $aftMinSum = Banks::getBankAdapter($gate->BankId)->getAftMinSum();
         if ($amountFractional < $aftMinSum) {
-            return false;
+            return UslugatovarType::H2H_POGASH_ECOM;
         }
 
-        if ($partner->getBankGates()->andWhere(['TU' => UslugatovarType::POGASHATF, 'Enable' => 1])->exists()) {
-            return true;
+        if ($partner->getBankGates()->andWhere(['TU' => UslugatovarType::H2H_POGASH_AFT, 'Enable' => 1])->exists()) {
+            return UslugatovarType::H2H_POGASH_AFT;
         }
 
-        return false;
+        return UslugatovarType::H2H_POGASH_ECOM;
     }
 }
