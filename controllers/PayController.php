@@ -113,11 +113,12 @@ class PayController extends Controller
      * Форма оплаты своя (PCI DSS)
      *
      * @param $id
+     * @param null $cardNumber
      * @return string|Response
      * @throws Exception
      * @throws NotFoundHttpException
      */
-    public function actionForm($id)
+    public function actionForm($id, $cardNumber = null)
     {
         Yii::warning("PayForm open id={$id}");
         $payschets = new Payschets();
@@ -126,6 +127,10 @@ class PayController extends Controller
         //данные счета для оплаты
         $params = $payschets->getSchetData($id, null);
         $payform = new PayForm();
+        if ($cardNumber !== null) {
+            $payform->CardNumber = $cardNumber;
+        }
+
         if ($params && TU::IsInPay($params['IsCustom'])) {
             if (
                 $params['Status'] == 0
