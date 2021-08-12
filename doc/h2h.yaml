@@ -68,7 +68,7 @@ paths:
         description: ID Счета
     put:
       summary: Оплата Счета
-      description: Создает Счет с указанными данными и возвращает его в ответе
+      description: Проводит оплату Счета и возвращает объект с URL страницы для прохождения проверки 3DS
       requestBody:
         content:
           application/json:
@@ -254,7 +254,7 @@ components:
         acsUrl:
           type: string
           readOnly: true
-          description: URL страницы проверки 3DS. Если отсутствует, проверка не требуется.
+          description: URL страницы проверки 3DS. Если null, проверка не требуется.
           example: "https://pay1time.com/api/processingResult?payId=188636&status=succes&url=dfgdfgdfgdfdfgfdg=="
         card:
           type: object
@@ -277,13 +277,13 @@ components:
               minLength: 4
               example: "0122"
             cvc:
-              type: integer
+              type: string
               required: true
               writeOnly: true
               description: CVC
               maxLength: 3
               minLength: 3
-              example: 123
+              example: "123"
 
     ConflictError:
       type: object

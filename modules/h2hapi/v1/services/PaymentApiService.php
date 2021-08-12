@@ -63,11 +63,14 @@ class PaymentApiService extends Component
         try {
             $createPayResponse = $bankAdapterBuilder->getBankAdapter()->createPay($createPayForm);
         } catch (BankAdapterResponseException $e) {
+            \Yii::$app->errorHandler->logException($e);
             throw new PaymentCreateException('Bank adapter error.', PaymentCreateException::BANK_ADAPTER_ERROR, $e->getMessage());
         } catch (CreatePayException $e) {
+            \Yii::$app->errorHandler->logException($e);
             throw new PaymentCreateException('Create pay error.', PaymentCreateException::CREATE_PAY_ERROR, $e->getMessage());
         } catch (Check3DSv2Exception | MerchantRequestAlreadyExistsException $e) {
             /** @todo Реализовать корректную обработку ошибок ТКБ */
+            \Yii::$app->errorHandler->logException($e);
             throw new PaymentCreateException('TKB Error', PaymentCreateException::TKB_ERROR, $e->getMessage());
         }
 

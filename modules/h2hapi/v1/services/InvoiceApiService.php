@@ -52,6 +52,7 @@ class InvoiceApiService extends Component
         try {
             $bankAdapterBuilder->build($partner, $uslugatovar, $currency);
         } catch (GateException $e) {
+            \Yii::$app->errorHandler->logException($e);
             throw new InvoiceCreateException('Gate not found.', InvoiceCreateException::NO_GATE);
         }
 

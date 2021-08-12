@@ -27,7 +27,7 @@ class PaymentCardObject extends ApiObject
      */
     public $expires;
     /**
-     * @var int
+     * @var string
      */
     public $cvc;
 
