@@ -16,6 +16,11 @@ class PaymentObject extends ApiObject
     public $acsUrl;
 
     /**
+     * @var string IP клиента.
+     */
+    public $ip;
+
+    /**
      * @var PaymentCardObject
      */
     public $card;
@@ -26,7 +31,8 @@ class PaymentObject extends ApiObject
     public function rules(): array
     {
         return [
-            [['card'], 'required'],
+            [['card', 'ip'], 'required'],
+            [['ip'], 'ip'],
         ];
     }
 

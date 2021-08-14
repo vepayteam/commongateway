@@ -2,6 +2,7 @@
 
 namespace app\modules\h2hapi\v1\services;
 
+use app\controllers\PayController;
 use app\models\payonline\Cards;
 use app\modules\h2hapi\v1\objects\PaymentObject;
 use app\modules\h2hapi\v1\services\paymentApiService\PaymentCreateException;
@@ -13,7 +14,10 @@ use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
 use app\services\payment\forms\CreatePayForm;
+use app\services\payment\forms\DonePayForm;
+use app\services\payment\forms\OkPayForm;
 use app\services\payment\models\PaySchet;
+use app\services\payment\payment_strategies\OkPayStrategy;
 use yii\base\Component;
 
 /**
@@ -29,39 +33,39 @@ class PaymentApiService extends Component
      */
     public function create(PaySchet $paySchet, PaymentObject $paymentObject): PaymentObject
     {
-        $cardObject = $paymentObject->card;
-
         if ($paySchet->isOld()) {
             throw new PaymentCreateException('Invoice expired.', PaymentCreateException::INVOICE_EXPIRED);
         }
 
+        // Получаем bank adapter
         $bankAdapterBuilder = new BankAdapterBuilder();
         try {
             $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar, $paySchet->currency);
         } catch (GateException $e) {
             throw new PaymentCreateException('Gate not found.', PaymentCreateException::NO_GATE);
         }
+        $bankAdapter = $bankAdapterBuilder->getBankAdapter();
 
-        $paySchet->CardNum = Cards::MaskCard($cardObject->number);
-        $paySchet->CardType = Cards::GetCardBrand(Cards::GetTypeCard($cardObject->number));
-        $paySchet->CardHolder = mb_substr($cardObject->holder, 0, 99);
+        $paySchet->IPAddressUser = $paymentObject->ip;
+        $cardObject = $paymentObject->card;
+        $paySchet->CardNum = Cards::MaskCard($cardObject->cardNumber);
+        $paySchet->CardType = Cards::GetCardBrand(Cards::GetTypeCard($cardObject->cardNumber));
+        $paySchet->CardHolder = mb_substr($cardObject->cardHolder, 0, 99);
         $paySchet->CardExp = $cardObject->expires;
-
         $paySchet->save(false);
 
-        /**
-         * @todo Легаси. Удалить CreatePayForm.
-         */
+        /** @todo Легаси. Удалить CreatePayForm. */
         $createPayForm = new CreatePayForm();
-        $createPayForm->CardNumber = $cardObject->number;
+        $createPayForm->CardNumber = $cardObject->cardNumber;
         $createPayForm->CardExp = $cardObject->expires;
-        $createPayForm->CardHolder = $cardObject->holder;
+        $createPayForm->CardHolder = $cardObject->cardHolder;
         $createPayForm->CardCVC = $cardObject->cvc;
         $createPayForm->IdPay = $paySchet->ID;
         $createPayForm->afterValidate();
 
+        // Запрос к банку
         try {
-            $createPayResponse = $bankAdapterBuilder->getBankAdapter()->createPay($createPayForm);
+            $createPayResponse = $bankAdapter->createPay($createPayForm);
         } catch (BankAdapterResponseException $e) {
             \Yii::$app->errorHandler->logException($e);
             throw new PaymentCreateException('Bank adapter error.', PaymentCreateException::BANK_ADAPTER_ERROR, $e->getMessage());
@@ -85,12 +89,27 @@ class PaymentApiService extends Component
             $paySchet->DsTransId = $createPayResponse->dsTransId;
             $paySchet->Eci = $createPayResponse->eci;
             $paySchet->CardRefId3DS = $createPayResponse->cardRefId;
+
+            // Если 3DS не требуется, завершаем все операции по оплате.
+            if (!$paySchet->IsNeed3DSVerif) {
+                /** @todo Зарефактроить confirm(), чтобы он принимал только те данные, которые ему нужны. */
+                $donePayForm = new DonePayForm();
+                $donePayForm->IdPay = $paySchet->ID;
+                $bankAdapter->confirm($donePayForm);
+
+                /** @todo Легаси */
+                /** @see PayController::actionOrderok() */
+                $okPayForm = new OkPayForm();
+                $okPayForm->IdPay = $paySchet->ID;
+                $okPayStrategy = new OkPayStrategy($okPayForm);
+                $okPayStrategy->exec();
+            }
         }
         $paySchet->save(false);
 
         $paySchet->refresh();
         $paymentObject = (new PaymentObject())->mapPaySchet($paySchet);
-        $paymentObject->acsUrl = $createPayResponse->url;
+        $paymentObject->acsUrl = $paySchet->IsNeed3DSVerif ? $createPayResponse->url : null;
 
         return $paymentObject;
     }

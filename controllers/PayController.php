@@ -312,12 +312,20 @@ class PayController extends Controller
      * Завершение оплаты после 3DS(PCI DSS)
      *
      * @param $id
-     * @return string
+     * @return Response
      * @throws BadRequestHttpException
      * @throws NotFoundHttpException
      */
     public function actionOrderdone($id = null)
     {
+        $paySchet = PaySchet::findOne($id);
+        if ($paySchet === null) {
+            throw new NotFoundHttpException('Счет не найден.');
+        }
+        if ($paySchet->Status == PaySchet::STATUS_DONE) {
+            return $this->redirect(['orderok', 'id' => $id]);
+        }
+
         $donePayForm = new DonePayForm();
         $donePayForm->IdPay = $id;
         $donePayForm->trans = Yii::$app->request->post('trans_id', null);

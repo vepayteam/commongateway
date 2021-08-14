@@ -17,11 +17,11 @@ class PaymentCardObject extends ApiObject
     /**
      * @var string
      */
-    public $number;
+    public $cardNumber;
     /**
      * @var string
      */
-    public $holder;
+    public $cardHolder;
     /**
      * @var string
      */
@@ -37,33 +37,33 @@ class PaymentCardObject extends ApiObject
     public function rules(): array
     {
         return [
-            [['number', 'holder', 'expires', 'cvc'], 'required'],
-            [['number'], 'match', 'pattern' => '/^\d{16}|\d{18}$/'],
-            [['holder'], 'match', 'pattern' => '/^[\w\s]{3,80}$/'],
+            [['cardNumber', 'cardHolder', 'expires', 'cvc'], 'required'],
+            [['cardNumber'], 'match', 'pattern' => '/^\d{16}|\d{18}$/'],
+            [['cardHolder'], 'match', 'pattern' => '/^[\w\s]{3,80}$/'],
             [['expires'], 'match', 'pattern' => '/^[01]\d{3}$/'],
             [['cvc'], 'match', 'pattern' => '/^\d{3}$/'],
 
-            /** @see validateNumber() */
-            [['number'], 'validateNumber'],
+            /** @see validateCardNumber() */
+            [['cardNumber'], 'validateCardNumber'],
             /** @see validateExpires() */
             [['expires'], 'validateExpires'],
         ];
     }
 
-    public function validateNumber()
+    public function validateCardNumber()
     {
-        if ($this->hasErrors('number')) {
+        if ($this->hasErrors('cardNumber')) {
             return;
         }
 
         // На тестовом контуре проверяем является ли карта тестовой.
-        if (\Yii::$app->params['TESTMODE'] === 'Y' && !in_array($this->number, \Yii::$app->params['testCards'])) {
-            $this->addError('number', 'На тестовом контуре допускается использовать только тестовые карты');
+        if (\Yii::$app->params['TESTMODE'] === 'Y' && !in_array($this->cardNumber, \Yii::$app->params['testCards'])) {
+            $this->addError('cardNumber', 'На тестовом контуре допускается использовать только тестовые карты');
         }
 
         // Валидация по алгоритму Луна.
-        if (!Cards::CheckValidCard($this->number)) {
-            $this->addError('number', 'Неверный номер карты.');
+        if (!Cards::CheckValidCard($this->cardNumber)) {
+            $this->addError('cardNumber', 'Неверный номер карты.');
         }
     }
 
@@ -92,8 +92,8 @@ class PaymentCardObject extends ApiObject
     public function fields(): array
     {
         return [
-            'number',
-            'holder',
+            'cardNumber',
+            'cardHolder',
             'expires',
         ];
     }
@@ -104,8 +104,8 @@ class PaymentCardObject extends ApiObject
      */
     public function mapPaySchet(PaySchet $paySchet): PaymentCardObject
     {
-        $this->number = $paySchet->CardNum;
-        $this->holder = $paySchet->CardHolder;
+        $this->cardNumber = $paySchet->CardNum;
+        $this->cardHolder = $paySchet->CardHolder;
         $this->expires = $paySchet->CardExp;
 
         return $this;

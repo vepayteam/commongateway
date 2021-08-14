@@ -137,14 +137,9 @@ components:
           required: true
           enum: [ RUB, USD, EUR ]
           example: "RUB"
-        ip:
-          type: string
-          description: IP Клиента
-          required: true
-          example: "108.177.16.21"
         documentId:
           type: string
-          description: Номер договора
+          description: Номер договора / номер заказа
           minLength: 1
           maxLength: 40
           example: "КА-123/12121212"
@@ -154,6 +149,7 @@ components:
           minLength: 1
           maxLength: 40
           example: "18a2f5e5-6548-4879-88db-b272c7d6b473"
+          required: true
         description:
           type: string
           description: Описание
@@ -177,12 +173,6 @@ components:
         cancelUrl:
           type: string
           description: URL для возврата после отказа от оплаты
-          example: "https://www.site.com/example.html"
-        postbackUrl:
-          type: string
-          example: "https://www.site.com/example.html"
-        postbackUrlV2:
-          type: string
           example: "https://www.site.com/example.html"
         client:
           $ref: "#/components/schemas/InvoiceClient"
@@ -251,6 +241,12 @@ components:
     Payment:
       type: object
       properties:
+        ip:
+          type: string
+          description: IP Клиента
+          required: true
+          example: "108.177.16.21"
+          writeOnly: true
         acsUrl:
           type: string
           readOnly: true
@@ -259,12 +255,12 @@ components:
         card:
           type: object
           properties:
-            number:
+            cardNumber:
               type: string
               required: true
               description: Номер карты. В ответе замаскирован.
               example: "4111111111111111"
-            holder:
+            cardHolder:
               type: string
               required: true
               description: Держатель карты

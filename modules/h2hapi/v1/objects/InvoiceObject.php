@@ -34,10 +34,6 @@ class InvoiceObject extends ApiObject
      */
     public $currencyCode;
     /**
-     * @var string IP клиента.
-     */
-    public $ip;
-    /**
      * @var string Номер договора.
      */
     public $documentId;
@@ -101,16 +97,14 @@ class InvoiceObject extends ApiObject
     {
         return [
             // Простые поля
-            [['amountFractional', 'currencyCode', 'ip'], 'required'],
+            [['amountFractional', 'currencyCode'], 'required'],
             [['documentId', 'externalId'], 'string', 'min' => 1, 'max' => 40],
-            [['successUrl', 'failUrl', 'cancelUrl', 'postbackUrl', 'postbackUrlV2'], 'url'],
+            [['successUrl', 'failUrl', 'cancelUrl'], 'url'],
             [['successUrl', 'failUrl', 'cancelUrl'], 'string', 'max' => 1000],
-            [['postbackUrl', 'postbackUrlV2'], 'string', 'max' => 255],
 
             [['description'], 'string', 'max' => 200],
             [['amountFractional'], 'integer', 'min' => 100, 'max' => 1000000 * 100],
             [['timeoutSeconds'], 'integer', 'min' => 10 * 60, 'max' => 59 * 60],
-            [['ip'], 'ip'],
             [
                 ['currencyCode'], 'exist',
                 'targetClass' => Currency::class, 'targetAttribute' => 'Code',
@@ -173,9 +167,6 @@ class InvoiceObject extends ApiObject
             'successUrl',
             'failUrl',
             'cancelUrl',
-            'postbackUrl',
-            'postbackUrlV2',
-            'ip',
 
             'client',
 
@@ -200,9 +191,6 @@ class InvoiceObject extends ApiObject
         $this->successUrl = $paySchet->SuccessUrl;
         $this->failUrl = $paySchet->FailedUrl;
         $this->cancelUrl = $paySchet->CancelUrl;
-        $this->postbackUrl = $paySchet->PostbackUrl;
-        $this->postbackUrlV2 = $paySchet->PostbackUrl_v2;
-        $this->ip = $paySchet->IPAddressUser;
 
         $this->client = (new InvoiceClientObject())->mapPaySchet($paySchet);
         $this->status = (new InvoiceStatusObject())->mapPaySchet($paySchet);

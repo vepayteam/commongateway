@@ -72,13 +72,10 @@ class InvoiceApiService extends Component
         $paySchet->SuccessUrl = $invoiceObject->successUrl;
         $paySchet->FailedUrl = $invoiceObject->failUrl;
         $paySchet->CancelUrl = $invoiceObject->cancelUrl;
-        $paySchet->PostbackUrl = $invoiceObject->postbackUrl;
-        $paySchet->PostbackUrl_v2 = $invoiceObject->postbackUrlV2;
 
         $paySchet->sms_accept = 1;
         $paySchet->Dogovor = $invoiceObject->documentId;
         $paySchet->TimeElapsed = $invoiceObject->timeoutSeconds ?? self::DEFAULT_TIMEOUT;
-        $paySchet->IPAddressUser = $invoiceObject->ip;
 
         if ($invoiceObject->client !== null) {
             $paySchet->FIO = $invoiceObject->client->fullName;
