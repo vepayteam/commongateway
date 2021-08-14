@@ -318,14 +318,6 @@ class PayController extends Controller
      */
     public function actionOrderdone($id = null)
     {
-        $paySchet = PaySchet::findOne($id);
-        if ($paySchet === null) {
-            throw new NotFoundHttpException('Счет не найден.');
-        }
-        if ($paySchet->Status == PaySchet::STATUS_DONE) {
-            return $this->redirect(['orderok', 'id' => $id]);
-        }
-
         $donePayForm = new DonePayForm();
         $donePayForm->IdPay = $id;
         $donePayForm->trans = Yii::$app->request->post('trans_id', null);
@@ -348,6 +340,10 @@ class PayController extends Controller
         if (!$donePayForm->validate()) {
             Yii::warning('Orderdone validate fail ' . $id);
             throw new BadRequestHttpException();
+        }
+
+        if ($donePayForm->getPaySchet()->Status == PaySchet::STATUS_DONE) {
+            return $this->redirect(['orderok', 'id' => $id]);
         }
 
         Yii::warning("PayForm done id={$id}");
