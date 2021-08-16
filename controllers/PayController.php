@@ -312,7 +312,7 @@ class PayController extends Controller
      * Завершение оплаты после 3DS(PCI DSS)
      *
      * @param $id
-     * @return string
+     * @return Response
      * @throws BadRequestHttpException
      * @throws NotFoundHttpException
      */
@@ -340,6 +340,10 @@ class PayController extends Controller
         if (!$donePayForm->validate()) {
             Yii::warning('Orderdone validate fail ' . $id);
             throw new BadRequestHttpException();
+        }
+
+        if ($donePayForm->getPaySchet()->Status == PaySchet::STATUS_DONE) {
+            return $this->redirect(['orderok', 'id' => $id]);
         }
 
         Yii::warning("PayForm done id={$id}");
