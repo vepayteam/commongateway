@@ -61,18 +61,19 @@ class DefaultController extends Controller
     /**
      * Регистрация карт для выплат
      * @param $id
+     * @param string|null $cardNumber
      * @return string
      * @throws NotFoundHttpException
      * @throws \yii\db\Exception
      */
-    public function actionOutcard($id)
+    public function actionOutcard($id, $cardNumber = null)
     {
         $payschets = new Payschets();
         //данные счета для оплаты
         $params = $payschets->getSchetData($id, null);
         $user = User::find()->where(['ID' => $params['IdUser'], 'IsDeleted' => 0])->one();
         if ($params && isset($params['ID']) && $params['Status'] == 0) {
-            return $this->render('outcard', ['user' => $user, 'IdPay' => $params['ID']]);
+            return $this->render('outcard', ['user' => $user, 'IdPay' => $params['ID'], 'cardNumber' => $cardNumber]);
         } else {
             throw new NotFoundHttpException("Идентификатор не найден");
         }

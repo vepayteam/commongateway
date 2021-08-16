@@ -5,6 +5,7 @@ use app\models\payonline\PartnerBankRekviz;
 use app\models\payonline\QrGroup;
 use app\models\payonline\Uslugatovar;
 use app\models\payonline\UslugiRegions;
+use app\services\payment\models\UslugatovarType;
 use yii\bootstrap\ActiveForm;
 use yii\helpers\ArrayHelper;
 use yii\web\View;
@@ -71,7 +72,7 @@ $rekviz = ArrayHelper::map($rekviz, 'ID', 'NamePoluchat');
                     <?= $form->field($usl, 'QrcodeExportFormat')->textInput(['class' => 'form-control']); ?>
                     <hr>
                     <h3>Группа:</h3>
-                    <?= $form->field($usl, 'IsCustom')->dropDownList(Uslugatovar::$TypeCustom_str, ['class' => 'form-control']); ?>
+                    <?= $form->field($usl, 'IsCustom')->dropDownList(UslugatovarType::getAll(), ['class' => 'form-control']); ?>
                     <div class="col-sm-8 col-sm-offset-3">
                         <?php
                         echo $form->field($usl, 'HideFromList')->checkbox([

@@ -1,0 +1,338 @@
+openapi: 3.0.0
+info:
+  title: Host to Host API v.1
+  version: 1.0.0
+security:
+  - User: [ ]
+    Token: [ ]
+servers:
+  - url: https://api.vepay.online/h2hapi/v1
+  - url: https://test.vepay.online/h2hapi/v1
+paths:
+  /invoices:
+    post:
+      summary: Создание Счета
+      description: Создает Счет с указанными данными и возвращает его в ответе
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Invoice"
+      responses:
+        "201":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+        "409":
+          description: Услуга не найдена / Шлюз не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConflictError"
+        "422":
+          description: Ошибки валидации. JSON-структура аналогичная запросу, где текст ошибки в значениях атрибутов объекта
+
+  /invoices/{id}:
+    parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: ID Счета
+    get:
+      summary: Возвращает Счет
+      description: Объект Счет со статусом
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+        "404":
+          description: Счет не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotFoundError"
+  /invoices/{id}/payment:
+    parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: ID Счета
+    put:
+      summary: Оплата Счета
+      description: Проводит оплату Счета и возвращает объект с URL страницы для прохождения проверки 3DS
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Payment"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+        "409":
+          description: Время ожидания оплаты вышло / Шлюз не найден / Ошибка проведения платежа...
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConflictError"
+        "500":
+          description: Ошибка подключения к банку...
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalServerError"
+        "404":
+          description: Счет не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotFoundError"
+        "422":
+          description: Ошибки валидации. JSON-структура аналогичная запросу, где текст ошибки в значениях атрибутов объекта
+
+components:
+  securitySchemes:
+    User:
+      type: apiKey
+      in: header
+      name: X-User
+      description: ID Партнера (МФО/Мерчанта)
+    Token:
+      type: apiKey
+      in: header
+      name: X-Token
+      description: Токен, формируется по алгоритму sha1(sha1(ключ) + sha1(тело запроса))
+  schemas:
+    Invoice:
+      description: Счет
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+          description: ID Счета
+          example: 2735093
+        amountFractional:
+          type: integer
+          description: Сумма платежа в копейках (центах)
+          required: true
+          minimum: 100
+          maximum: 100000000
+          example: 50000
+        currencyCode:
+          type: string
+          description: Валюта Счета
+          required: true
+          enum: [ RUB, USD, EUR ]
+          example: "RUB"
+        documentId:
+          type: string
+          description: Номер договора / номер заказа
+          minLength: 1
+          maxLength: 40
+          example: "КА-123/12121212"
+        externalId:
+          type: string
+          description: Внешний идентификатор Счета. Уникальный для Мерчанта.
+          minLength: 1
+          maxLength: 40
+          example: "18a2f5e5-6548-4879-88db-b272c7d6b473"
+          required: true
+        description:
+          type: string
+          description: Описание
+          maxLength: 200
+          example: "Счет №1457"
+        timeoutSeconds:
+          type: integer
+          description: Тайм-аут ожидания оплаты в секундах. От 10 до 59 минут. По умолчанию 15 минут.
+          minimum: 600 # 10 * 60
+          maximum: 3540
+          default: 15 * 60
+          example: 3000
+        successUrl:
+          type: string
+          description: URL для возврата после завершения платежа (успех)
+          example: "https://www.site.com/example.html"
+        failUrl:
+          type: string
+          description: URL для возврата после завершения платежа (ошибка)
+          example: "https://www.site.com/example.html"
+        cancelUrl:
+          type: string
+          description: URL для возврата после отказа от оплаты
+          example: "https://www.site.com/example.html"
+        client:
+          $ref: "#/components/schemas/InvoiceClient"
+        status:
+          type: object
+          readOnly: true
+          properties:
+            id:
+              type: integer
+              enum: [ 0, 1, 2, 3, 4, 5 ]
+              description: >
+                Статус оплаты Счета:
+                * 0 - В обработке
+                * 1 - Оплачен
+                * 2 - Отмена (Ошибка)
+                * 3 - Возврат
+                * 4 - Ожидается обработка
+                * 5 - Ожидается запрос статуса
+              example: 1
+            name:
+              type: string
+              description: Название статуса
+              example: "Оплачен"
+            bank:
+              type: string
+              description: Банк-эквайер, через который была совершена транзакция
+              example: "FortaTech"
+            errorInfo:
+              type: string
+              description: Ошибка, если есть
+              nullable: true
+            bankErrorCode:
+              type: string
+              description: Код ошибки от банка, если есть
+              nullable: true
+
+    InvoiceClient:
+      type: object
+      properties:
+        fullName:
+          type: string
+          description: ФИО клиента
+          maxLength: 80
+          example: "Терентьев Михаил Павлович"
+        address:
+          type: string
+          description: Адрес клиента
+          maxLength: 255
+          example: "г. Москва, дом 5"
+        email:
+          type: string
+          example: "user@mail.com"
+        login:
+          type: string
+          maxLength: 32
+          example: "ExampleLogin"
+        phone:
+          type: string
+          maxLength: 32
+          example: "+7999123456"
+        zip:
+          type: string
+          maxLength: 16
+          example: "234234234"
+
+    Payment:
+      type: object
+      properties:
+        ip:
+          type: string
+          description: IP Клиента
+          required: true
+          example: "108.177.16.21"
+          writeOnly: true
+        acsUrl:
+          type: string
+          readOnly: true
+          description: URL страницы проверки 3DS. Если null, проверка не требуется.
+          example: "https://pay1time.com/api/processingResult?payId=188636&status=succes&url=dfgdfgdfgdfdfgfdg=="
+        card:
+          type: object
+          properties:
+            cardNumber:
+              type: string
+              required: true
+              description: Номер карты. В ответе замаскирован.
+              example: "4111111111111111"
+            cardHolder:
+              type: string
+              required: true
+              description: Держатель карты
+              example: "Terentiev Mihail"
+            expires:
+              type: string
+              required: true
+              description: Месяц/год карты
+              maxLength: 4
+              minLength: 4
+              example: "0122"
+            cvc:
+              type: string
+              required: true
+              writeOnly: true
+              description: CVC
+              maxLength: 3
+              minLength: 3
+              example: "123"
+
+    ConflictError:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Conflict
+          example: "Conflict"
+        message:
+          type: string
+          description: Сообщение об ошибке
+          example: "Ошибка."
+        code:
+          type: integer
+          example: 0
+        status:
+          type: integer
+          description: "409"
+          example: 409
+    NotFoundError:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Not Found
+          example: Not Found
+        message:
+          type: string
+          description: Сообщение об ошибке
+          example: "Объект не найден."
+        code:
+          type: integer
+          example: 0
+        status:
+          type: integer
+          description: "404"
+          example: 404
+
+    InternalServerError:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Internal Server Error
+          example: "Internal Server Error"
+        message:
+          type: string
+          description: Сообщение об ошибке
+          example: "Ошибка подключения к банку."
+        code:
+          type: integer
+          example: 0
+        status:
+          type: integer
+          description: "500"
+          example: 500

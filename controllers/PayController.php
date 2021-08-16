@@ -113,11 +113,12 @@ class PayController extends Controller
      * Форма оплаты своя (PCI DSS)
      *
      * @param $id
+     * @param string|null $cardNumber
      * @return string|Response
      * @throws Exception
      * @throws NotFoundHttpException
      */
-    public function actionForm($id)
+    public function actionForm($id, $cardNumber = null)
     {
         Yii::warning("PayForm open id={$id}");
         $payschets = new Payschets();
@@ -126,6 +127,10 @@ class PayController extends Controller
         //данные счета для оплаты
         $params = $payschets->getSchetData($id, null);
         $payform = new PayForm();
+        if ($cardNumber !== null) {
+            $payform->CardNumber = $cardNumber;
+        }
+
         if ($params && TU::IsInPay($params['IsCustom'])) {
             if (
                 $params['Status'] == 0
@@ -312,7 +317,7 @@ class PayController extends Controller
      * Завершение оплаты после 3DS(PCI DSS)
      *
      * @param $id
-     * @return string
+     * @return Response
      * @throws BadRequestHttpException
      * @throws NotFoundHttpException
      */
@@ -340,6 +345,10 @@ class PayController extends Controller
         if (!$donePayForm->validate()) {
             Yii::warning('Orderdone validate fail ' . $id);
             throw new BadRequestHttpException();
+        }
+
+        if ($donePayForm->getPaySchet()->Status == PaySchet::STATUS_DONE) {
+            return $this->redirect(['orderok', 'id' => $id]);
         }
 
         Yii::warning("PayForm done id={$id}");
