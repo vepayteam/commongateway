@@ -8,15 +8,17 @@ trait Fillable
 {
     /**
      * @param array $data
+     * @param bool  $throwException
      */
-    public function fill(array $data = []): void
+    public function fill(array $data = [], bool $throwException = false): void
     {
         if (!empty($data)) {
             foreach ($data as $key => $field) {
-                if (!is_string($key) || !property_exists($this, $key)) {
+                if ($throwException && (!is_string($key) || !property_exists($this, $key))) {
                     throw new InvalidInputParamException('Unknown property: '.$key);
+                } elseif (property_exists($this, $key)) {
+                    $this->{$key} = $field;
                 }
-                $this->{$key} = $field;
             }
         }
     }
