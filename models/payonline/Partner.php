@@ -5,6 +5,9 @@ namespace app\models\payonline;
 use app\models\mfo\DistributionReports;
 use app\models\mfo\VyvodReestr;
 use app\models\mfo\VyvodSystem;
+use app\models\partner\admin\structures\VyvodSystemFilterParams;
+use app\models\partner\admin\VoznagStat;
+use app\models\partner\UserLk;
 use app\models\sms\tables\AccessSms;
 use app\services\partners\models\PartnerOption;
 use app\services\payment\models\PartnerBankGate;
@@ -411,4 +414,89 @@ class Partner extends ActiveRecord
         return $this->hasMany(VyvodReestr::class, ['IdPartner' => 'ID']);
     }
 
+    /**
+     * @param VyvodSystemFilterParams $params
+     *
+     * @return ActiveQuery
+     */
+    public function getSummVyveden(VyvodSystemFilterParams $params)
+    {
+        $query = $this->getVyvodSystem()
+                      ->select(['SUM(`Summ`)'])
+                      ->andWhere([
+                          'or',
+                          ['and', ['>=', 'DateFrom', $params->getDateFrom()], ['<=', 'DateTo', $params->getDateTo()]],
+                          ['between', 'DateFrom', $params->getDateFrom(), $params->getDateTo()],
+                          ['between', 'DateTo', $params->getDateFrom(), $params->getDateTo()],
+                      ])
+                      ->andWhere(['TypeVyvod' => $params->getTypeVyvod()]);
+
+        return (($params->getFilterByStateOp() === true)
+            ? $query->andWhere(['SatateOp' => [VoznagStat::OPERATION_STATE_IN_PROGRESS, VoznagStat::OPERATION_STATE_READY]])->cache(60 * 60)
+            : $query->cache(60 * 60));
+    }
+
+    /**
+     * @param VyvodSystemFilterParams $params
+     *
+     * @return ActiveQuery
+     */
+    public function getDataVyveden(VyvodSystemFilterParams $params)
+    {
+        $whereParams = [
+            'and',
+            ['<=', 'DateTo', $params->getDateTo()],
+            ['TypeVyvod' => $params->getTypeVyvod()],
+        ];
+
+        if ($params->getFilterByStateOp() === true) {
+            $whereParams[] = ['SatateOp' => [VoznagStat::OPERATION_STATE_IN_PROGRESS, VoznagStat::OPERATION_STATE_READY]];
+        }
+
+        $query = $this->getVyvodSystem()->select(['DateTo'])->andWhere($whereParams)->orderBy(['DateTo' => SORT_DESC]);
+
+        return $query->cache(60 * 60);
+    }
+
+    /**
+     * @param VyvodSystemFilterParams $params
+     *
+     * @return ActiveQuery
+     */
+    public function getSummPerechisl(VyvodSystemFilterParams $params)
+    {
+        $query = $this->getVyvodReestr()
+                      ->select(['SUM(`SumOp`)'])
+                      ->andWhere([
+                          'or',
+                          ['and', ['>=', 'DateFrom', $params->getDateFrom()], ['<=', 'DateTo', $params->getDateTo()]],
+                          ['between', 'DateFrom', $params->getDateFrom(), $params->getDateTo()],
+                          ['between', 'DateTo', $params->getDateFrom(), $params->getDateTo()],
+                      ]);
+
+        return (($params->getFilterByStateOp() === true)
+            ? $query->andWhere(['StateOp' => [VoznagStat::OPERATION_STATE_IN_PROGRESS, VoznagStat::OPERATION_STATE_READY]])->cache(60 * 60)
+            : $query->cache(60 * 60));
+    }
+
+    /**
+     * @param VyvodSystemFilterParams $params
+     *
+     * @return ActiveQuery
+     */
+    public function getDataPerechisl(VyvodSystemFilterParams $params)
+    {
+        $whereParams = [
+            'and',
+            ['<=', 'DateTo', $params->getDateTo()],
+        ];
+
+        if ($params->getFilterByStateOp() === true) {
+            $whereParams[] = ['StateOp' => [VoznagStat::OPERATION_STATE_IN_PROGRESS, VoznagStat::OPERATION_STATE_READY]];
+        }
+
+        $query = $this->getVyvodReestr()->select(['DateTo'])->andWhere($whereParams)->orderBy(['DateTo' => SORT_DESC]);
+
+        return $query->cache(60 * 60);
+    }
 }
