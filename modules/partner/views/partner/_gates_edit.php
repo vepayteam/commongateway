@@ -37,6 +37,7 @@ $currencyList = ArrayHelper::merge(['' => ''], ArrayHelper::map(CurrencyReposito
         <th>Активно</th>
         <th>Тип счета</th>
         <th>Номер счета</th>
+        <th>Валюта</th>
         <th>Логин</th>
         <th></th>
     </tr>
@@ -53,6 +54,7 @@ $currencyList = ArrayHelper::merge(['' => ''], ArrayHelper::map(CurrencyReposito
             <td><?= $bankGate->Enable ?></td>
             <td><?= AccountTypes::ALL_TYPES[$bankGate->SchetType] ?></td>
             <td><?= $bankGate->SchetNumber ?></td>
+            <td><?= $bankGate->currency->Code ?></td>
             <td><?= $bankGate->Login ?></td>
             <td>
                 <button class="btn btn-primary partner-edit__bank-gates-table__edit-button">

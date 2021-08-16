@@ -83,7 +83,9 @@ class Uslugatovar extends \yii\db\ActiveRecord
         0 => 'Vepay',
     ];
 
-    // TODO: use TU
+    /**
+     * @todo Удалить.
+     */
     public static $TypeCustom_str = [
         self::TYPE_REG_CARD => 'Регистрация карты',
         11 => 'Выплата на счет',
@@ -108,6 +110,9 @@ class Uslugatovar extends \yii\db\ActiveRecord
         100 => 'Оплата ЖКХ с разбивкой',
         119 => 'Перечисление по разбивке',
 
+        UslugatovarType::H2H_POGASH_AFT => 'H2H Погашение займа AFT',
+        UslugatovarType::H2H_POGASH_ECOM => 'H2H погашение займа ECOM',
+        UslugatovarType::H2H_ECOM => 'H2H оплата товаров и услуг',
     ];
 
     /**
