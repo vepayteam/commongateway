@@ -441,9 +441,9 @@ class PaySchet extends \yii\db\ActiveRecord
             $url = Yii::$app->params['domain'] . '/mfo/default/outcard/' . $this->ID;
         } else {
             $url = Yii::$app->params['domain'] . '/pay/form/' . $this->ID;
-            if ($cardNumber !== null) {
-                $url .= "?cardNumber={$cardNumber}";
-            }
+        }
+        if ($cardNumber !== null) {
+            $url .= "?cardNumber={$cardNumber}";
         }
 
         return $url;

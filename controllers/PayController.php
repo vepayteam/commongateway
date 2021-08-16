@@ -113,7 +113,7 @@ class PayController extends Controller
      * Форма оплаты своя (PCI DSS)
      *
      * @param $id
-     * @param null $cardNumber
+     * @param string|null $cardNumber
      * @return string|Response
      * @throws Exception
      * @throws NotFoundHttpException
