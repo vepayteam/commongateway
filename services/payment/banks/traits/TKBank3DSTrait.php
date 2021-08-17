@@ -69,6 +69,8 @@ trait TKBank3DSTrait
                 $paySchet->setError($message);
                 throw new Check3DSv2DuplicatedException($message);
             }
+
+            throw new BankAdapterResponseException('Сервис временно недоступен. Попробуйте позже.');
         }
 
         if(!isset($ans['xml']['CardEnrolled'])) {
