@@ -62,7 +62,7 @@ class OkPayStrategy
         $paySchet = $this->okPayForm->getPaySchet();
 
         $bankAdapterBuilder = new BankAdapterBuilder();
-        $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar, $paySchet->currency);
+        $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank, $paySchet->currency);
 
         if($paySchet->Status == PaySchet::STATUS_WAITING && $paySchet->sms_accept == 1) {
             /** @var CheckStatusPayResponse $checkStatusPayResponse */
