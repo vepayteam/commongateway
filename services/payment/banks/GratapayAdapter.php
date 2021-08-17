@@ -52,7 +52,7 @@ class GratapayAdapter implements IBankAdapter
     const BANK_URL = 'https://psp.kiparisdmcc.ae/api';
     const AFT_MIN_SUMM = 185000;
 
-    public static $bank = 12;
+    public static $bank = 13;
     protected $bankUrl;
 
     /** @var PartnerBankGate */
