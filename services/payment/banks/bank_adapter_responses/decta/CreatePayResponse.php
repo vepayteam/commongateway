@@ -3,9 +3,9 @@
 namespace app\services\payment\banks\bank_adapter_responses\decta;
 
 use app\services\base\traits\Fillable;
-use app\services\payment\banks\bank_adapter_responses\BaseResponse;
+use app\services\payment\banks\bank_adapter_responses\CreatePayResponse as BaseCreatePayResponse;
 
-class CreatePayResponse extends BaseResponse
+class CreatePayResponse extends BaseCreatePayResponse
 {
     use Fillable;
 
