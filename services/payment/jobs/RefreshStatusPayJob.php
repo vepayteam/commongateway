@@ -24,11 +24,11 @@ class RefreshStatusPayJob extends BaseObject implements \yii\queue\JobInterface
      */
     public function execute($queue)
     {
-        Yii::warning('RefreshStatusPayJob execute: ID='.$this->paySchetId);
+        Yii::warning('RefreshStatusPayJob execute: ID='.$this->paySchetId, 'RefreshStatusPayJob');
         $paySchet = PaySchet::findOne(['ID' => $this->paySchetId]);
 
-        Yii::warning('RefreshStatusPayJob execute isHavePayschet=' . !empty($paySchet));
-        Yii::warning('RefreshStatusPayJob execute paySchetId=' . $paySchet->ID);
+        Yii::warning('RefreshStatusPayJob execute isHavePayschet=' . !empty($paySchet), 'RefreshStatusPayJob');
+        Yii::warning('RefreshStatusPayJob execute paySchetId=' . $paySchet->ID, 'RefreshStatusPayJob');
 
         $okPayForm = new OkPayForm();
         $okPayForm->IdPay = $this->paySchetId;
@@ -53,7 +53,7 @@ class RefreshStatusPayJob extends BaseObject implements \yii\queue\JobInterface
                 'RefreshStatusPayJob result: ID=%s',
                 $this->paySchetId
             ),
-            'RefundPayJob'
+            'RefreshStatusPayJob'
         );
     }
 
