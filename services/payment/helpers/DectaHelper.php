@@ -117,11 +117,11 @@ class DectaHelper
 
         $responseData = $response->json();
 
-        $payResponse->fill(array_merge([
+        $payResponse->fill(array_merge($responseData, [
             'status' => BaseResponse::STATUS_DONE,
             'transac' => $responseData['id'],
             'url' => $responseData['link'],
-        ], $responseData));
+        ]));
 
         return $payResponse;
     }
