@@ -415,6 +415,8 @@ class PayController extends Controller
      */
     public function actionOrderfail($id)
     {
+        Yii::warning("PayForm orderfail id={$id}");
+
         return $this->render('paycancel');
     }
 
