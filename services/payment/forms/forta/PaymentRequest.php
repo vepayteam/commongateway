@@ -11,7 +11,7 @@ class PaymentRequest extends Model
     public $order_id;
     public $amount;
     public $processing_url;
-    public $return_url;
+    public $callback_url;
     public $fail_url;
     public $payer_name = 'NONAME';
     public $payer_phone = '123456789';
