@@ -407,6 +407,19 @@ class PayController extends Controller
         }
     }
 
+    /**
+     * Страница неуспешной оплаты
+     *
+     * @param $id
+     * @return string
+     */
+    public function actionOrderfail($id)
+    {
+        Yii::warning("PayForm orderfail id={$id}");
+
+        return $this->render('paycancel');
+    }
+
     public function actionOrderPrint($id)
     {
         // TODO: DRY
