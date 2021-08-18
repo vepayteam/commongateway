@@ -2,7 +2,7 @@
 
 namespace app\commands;
 
-use app\services\exchange_rates\WalletoExchangeRateService;
+use app\services\exchange_rates\WallettoExchangeRateService;
 use Yii;
 use yii\console\Controller;
 
@@ -10,8 +10,8 @@ class ExchangeController extends Controller
 {
     public function actionUpdate()
     {
-        /** @var WalletoExchangeRateService $walletoExchangeRateService */
-        $walletoExchangeRateService = Yii::$container->get('WalletoExchangeRateService');
-        $walletoExchangeRateService->update();
+        /** @var WallettoExchangeRateService $wallettoExchangeRateService */
+        $wallettoExchangeRateService = Yii::$container->get('WallettoExchangeRateService');
+        $wallettoExchangeRateService->update();
     }
 }

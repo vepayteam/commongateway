@@ -1215,6 +1215,7 @@ class TKBankAdapter implements IBankAdapter
     {
         $action = '/api/tcbpay/gate/registerorderfromcardfinish';
 
+        $paySchet = $donePayForm->getPaySchet();
         $donePayRequest = new DonePayRequest();
         $donePayRequest->OrderId = $donePayForm->IdPay;
         $donePayRequest->MD = $donePayForm->md;
@@ -1232,6 +1233,9 @@ class TKBankAdapter implements IBankAdapter
                 $confirmPayResponse->status = BaseResponse::STATUS_DONE;
                 $confirmPayResponse->message = 'OK';
                 $confirmPayResponse->transac = $xml['ordernumber'];
+
+                $paySchet->ExtBillNumber = $confirmPayResponse->transac;
+                $paySchet->save(false);
             } else {
                 $confirmPayResponse->status = BaseResponse::STATUS_ERROR;
                 $confirmPayResponse->message = $xml['errorinfo']['errormessage'];

@@ -4,6 +4,7 @@
 namespace app\services\payment\forms;
 
 
+use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\traits\ValidateFormTrait;
 use yii\base\Model;
@@ -31,6 +32,11 @@ class CardRegForm extends Model
     public $postbackurl = '';
     public $postbackurl_v2 = '';
 
+    /**
+     * @var string
+     */
+    public $card;
+
     /** @var Partner */
     public $partner;
 
@@ -44,6 +50,8 @@ class CardRegForm extends Model
             [['successurl', 'failurl', 'cancelurl'], 'string', 'max' => 1000],
             [['postbackurl', 'postbackurl_v2'], 'string', 'max' => 255],
             [['timeout'], 'integer', 'min' => 10, 'max' => 59],
+            [['card'], 'match', 'pattern' => '/^\d{16}|\d{18}$/'],
+            [['card'], 'validateCard'], /** @see validateCard() */
         ];
     }
 
@@ -51,6 +59,23 @@ class CardRegForm extends Model
     {
         if($this->type !== self::CARD_REG_TYPE_BY_PAY && $this->type !== self::CARD_REG_TYPE_BY_OUT) {
             $this->addError('type', 'Тип регистрации не корректный');
+        }
+    }
+
+    public function validateCard()
+    {
+        if ($this->hasErrors('card')) {
+            return;
+        }
+
+        // На тестовом контуре проверяем является ли карта тестовой.
+        if (\Yii::$app->params['TESTMODE'] === 'Y' && !in_array($this->card, \Yii::$app->params['testCards'])) {
+            $this->addError('card', 'На тестовом контуре допускается использовать только тестовые карты');
+        }
+
+        // Валидация по алгоритму Луна.
+        if (!Cards::CheckValidCard($this->card)) {
+            $this->addError('card', 'Неверный номер карты.');
         }
     }
 

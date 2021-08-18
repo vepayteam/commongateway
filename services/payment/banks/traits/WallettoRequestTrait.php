@@ -3,11 +3,11 @@
 namespace app\services\payment\banks\traits;
 
 use app\services\payment\forms\CreatePayForm;
-use app\services\payment\forms\walleto\CreatePayRequest;
+use app\services\payment\forms\walletto\CreatePayRequest;
 use app\services\payment\helpers\PaymentHelper;
 use Yii;
 
-trait WalletoRequestTrait
+trait WallettoRequestTrait
 {
     /**
      * @param CreatePayForm $createPayForm
