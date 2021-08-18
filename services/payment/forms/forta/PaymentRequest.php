@@ -13,6 +13,7 @@ class PaymentRequest extends Model
     public $processing_url;
     public $callback_url;
     public $fail_url;
+    public $return_url = '';
     public $payer_name = 'NONAME';
     public $payer_phone = '123456789';
     public $payer_email = 'payer@vepay.online';
