@@ -94,10 +94,17 @@ class FortaTechAdapter implements IBankAdapter
 
     /**
      * @inheritDoc
+     * @throws BankAdapterResponseException
      */
     public function confirm(DonePayForm $donePayForm)
     {
-        // TODO: Implement confirm() method.
+        $checkStatusPayResponse = $this->getCommonStatusPay($donePayForm->getPaySchet());
+
+        $confirmPayResponse = new ConfirmPayResponse();
+        $confirmPayResponse->status = $checkStatusPayResponse->status;
+        $confirmPayResponse->message = $checkStatusPayResponse->message;
+
+        return $confirmPayResponse;
     }
 
     /**
@@ -128,6 +135,8 @@ class FortaTechAdapter implements IBankAdapter
         $paymentRequest->amount = $paySchet->getSummFull();
         $paymentRequest->processing_url = $paySchet->getOrderdoneUrl();
         $paymentRequest->return_url = $paySchet->getOrderdoneUrl();
+        $paymentRequest->fail_url = $paySchet->getOrderfailUrl();
+        $paymentRequest->callback_url = $paySchet->getOrderdoneUrl();
 
         $ans = $this->sendRequest($action, $paymentRequest->getAttributes());
         if(!array_key_exists('id', $ans) || empty($ans['id'])) {
@@ -212,27 +221,36 @@ class FortaTechAdapter implements IBankAdapter
      */
     public function checkStatusPay(OkPayForm $okPayForm)
     {
+        return $this->getCommonStatusPay($okPayForm->getPaySchet());
+    }
+
+    /**
+     * @param PaySchet $paySchet
+     * @return CheckStatusPayResponse
+     * @throws BankAdapterResponseException
+     */
+    protected function getCommonStatusPay(PaySchet $paySchet): CheckStatusPayResponse
+    {
         /** @var CheckStatusPayResponse $checkStatusPayResponse */
-        $checkStatusPayResponse = null;
-        if(Yii::$app->cache->exists(self::REFUND_ID_CACHE_PREFIX . $okPayForm->getPaySchet()->ID)) {
-            $checkStatusPayResponse = $this->checkStatusPayRefund($okPayForm);
-        } elseif ($okPayForm->getPaySchet()->uslugatovar->IsCustom == TU::$TOCARD) {
-            $checkStatusPayResponse = $this->checkStatusPayOut($okPayForm);
+        if(Yii::$app->cache->exists(self::REFUND_ID_CACHE_PREFIX . $paySchet->ID)) {
+            $checkStatusPayResponse = $this->checkStatusPayRefund($paySchet);
+        } elseif ($paySchet->uslugatovar->IsCustom == TU::$TOCARD) {
+            $checkStatusPayResponse = $this->checkStatusPayOut($paySchet);
         } else {
-            $checkStatusPayResponse = $this->checkStatusPayDefault($okPayForm);
+            $checkStatusPayResponse = $this->checkStatusPayDefault($paySchet);
         }
 
         return $checkStatusPayResponse;
     }
 
     /**
-     * @param OkPayForm $okPayForm
+     * @param PaySchet $paySchet
      * @return CheckStatusPayResponse
      * @throws BankAdapterResponseException
      */
-    protected function checkStatusPayDefault(OkPayForm $okPayForm)
+    protected function checkStatusPayDefault(PaySchet $paySchet)
     {
-        $ans = $this->sendGetStatusRequest($okPayForm->getPaySchet());
+        $ans = $this->sendGetStatusRequest($paySchet);
 
         $checkStatusPayResponse = new CheckStatusPayResponse();
         if(!array_key_exists('status', $ans) || empty($ans['status'])) {
@@ -255,13 +273,13 @@ class FortaTechAdapter implements IBankAdapter
     }
 
     /**
-     * @param OkPayForm $okPayForm
+     * @param PaySchet $paySchet
      * @return CheckStatusPayResponse
      * @throws BankAdapterResponseException
      */
-    protected function checkStatusPayOut(OkPayForm $okPayForm)
+    protected function checkStatusPayOut(PaySchet $paySchet)
     {
-        $ans = $this->sendGetStatusOutRequest($okPayForm->getPaySchet());
+        $ans = $this->sendGetStatusOutRequest($paySchet);
 
         $checkStatusPayResponse = new CheckStatusPayResponse();
 
@@ -304,13 +322,13 @@ class FortaTechAdapter implements IBankAdapter
     }
 
     /**
-     * @param OkPayForm $okPayForm
+     * @param PaySchet $paySchet
      * @return CheckStatusPayResponse
      */
-    protected function checkStatusPayRefund(OkPayForm $okPayForm)
+    protected function checkStatusPayRefund(PaySchet $paySchet)
     {
         $refundIds = Yii::$app->cache->get(
-            self::REFUND_ID_CACHE_PREFIX . $okPayForm->getPaySchet()->ID
+            self::REFUND_ID_CACHE_PREFIX . $paySchet->ID
         );
 
         $checkStatusPayResponse = new CheckStatusPayResponse();

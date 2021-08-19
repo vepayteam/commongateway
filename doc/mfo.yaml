@@ -836,6 +836,9 @@ components:
           type: string
           format: url
           description: Дополнительный адрес Url для обратного вызова
+        card:
+          type: string
+          description: Номер карты, 16 или 18 цифр
     CardRegAns:
       type: object
       properties:

@@ -1,6 +1,6 @@
 <?php
 
-namespace app\services\payment\forms\walleto;
+namespace app\services\payment\forms\walletto;
 
 use yii\base\Model;
 

@@ -1,6 +1,6 @@
 <?php
 
-use app\services\payment\banks\WalletoBankAdapter;
+use app\services\payment\banks\WallettoBankAdapter;
 use app\services\payment\models\Bank;
 use yii\db\Migration;
 
@@ -15,7 +15,7 @@ class m210506_111724_add_walleto_bank_to_banks_table extends Migration
     public function safeUp()
     {
         $bank = new Bank();
-        $bank->ID = WalletoBankAdapter::$bank;
+        $bank->ID = WallettoBankAdapter::$bank;
         $bank->Name = 'Walleto';
         $bank->save(false);
     }
@@ -25,7 +25,7 @@ class m210506_111724_add_walleto_bank_to_banks_table extends Migration
      */
     public function safeDown()
     {
-        Bank::deleteAll(['ID' => WalletoBankAdapter::$bank]);
+        Bank::deleteAll(['ID' => WallettoBankAdapter::$bank]);
         return true;
     }
 }
