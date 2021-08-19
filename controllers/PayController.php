@@ -347,7 +347,7 @@ class PayController extends Controller
             throw new BadRequestHttpException();
         }
 
-        if ($donePayForm->getPaySchet()->Status == PaySchet::STATUS_DONE) {
+        if (!empty($donePayForm->IdPay) && $donePayForm->getPaySchet()->Status == PaySchet::STATUS_DONE) {
             return $this->redirect(['orderok', 'id' => $id]);
         }
 
