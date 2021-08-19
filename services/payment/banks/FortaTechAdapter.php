@@ -137,6 +137,8 @@ class FortaTechAdapter implements IBankAdapter
         $paymentRequest->amount = $paySchet->getSummFull();
         $paymentRequest->processing_url = $paySchet->getOrderdoneUrl();
         $paymentRequest->return_url = $paySchet->getOrderdoneUrl();
+        $paymentRequest->fail_url = $paySchet->getOrderfailUrl();
+        $paymentRequest->callback_url = $paySchet->getOrderdoneUrl();
 
         $ans = $this->sendRequest($action, $paymentRequest->getAttributes());
         if(!array_key_exists('id', $ans) || empty($ans['id'])) {
