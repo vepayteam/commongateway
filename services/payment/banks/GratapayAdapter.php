@@ -250,6 +250,8 @@ class GratapayAdapter implements IBankAdapter
             }
             $getBalanceResponse->amount = $summ;
             $getBalanceResponse->account_type = AccountTypes::TYPE_TRANSIT_PAY_IN;
+            $getBalanceResponse->currency = $getBalanceRequest->currency;
+            $getBalanceResponse->bank_name = Bank::findOne(['ID' => $this->getBankId()])->Name;
         } catch (\Exception $e) {
             $getBalanceResponse->status = BaseResponse::STATUS_ERROR;
             $getBalanceResponse->message = substr($e->getMessage(), 0, 255);
