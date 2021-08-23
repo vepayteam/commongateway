@@ -98,7 +98,7 @@ class GratapayAdapter implements IBankAdapter
         $createPayRequest->currency = $paySchet->currency->Code;
         $createPayRequest->url = $createPayRequest->getUrls($paySchet);
         $createPayRequest->system_fields = $createPayRequest->getSystemFields($createPayForm);
-        $createPayRequest->system_fields = $createPayRequest->getThreeDsV2();
+        $createPayRequest->three_ds_v2 = $createPayRequest->getThreeDsV2();
 
         if(Yii::$app->params['TESTMODE'] == 'Y') {
             $createPayRequest->payment_system = self::TEST_IN_S2S_PAYMENT_SYSTEM;
