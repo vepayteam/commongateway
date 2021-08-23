@@ -21,9 +21,11 @@ use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\MfoLkPayForm;
+use app\services\payment\forms\pay_parts\CreatePayPartsForm;
 use app\services\payment\models\PaySchet;
 use app\services\payment\payment_strategies\CreateFormMfoAftPartsStrategy;
 use app\services\payment\payment_strategies\CreateFormMfoEcomPartsStrategy;
+use app\services\payment\payment_strategies\CreatePayPartsStrategy;
 use app\services\payment\payment_strategies\IMfoStrategy;
 use app\services\payment\payment_strategies\mfo\MfoAutoPayStrategy;
 use app\services\payment\payment_strategies\mfo\MfoPayLkCreateStrategy;
@@ -143,6 +145,17 @@ class PayController extends Controller
     {
         $mfoReq = new MfoReq();
         $mfoReq->LoadData(Yii::$app->request->getRawBody());
+
+        $createPayPartsForm = new CreatePayPartsForm();
+        $createPayPartsForm->load($mfoReq->Req(), '');
+        if(!$createPayPartsForm->validate()) {
+            Yii::error("pay/lk: " . $createPayPartsForm->GetError());
+            return ['status' => 0, 'message' => $createPayPartsForm->GetError()];
+        }
+        Yii::warning('/pay/lk mfo=' . $mfoReq->mfo . " sum=" . $createPayPartsForm->amount . " extid=" . $createPayPartsForm->extid, 'mfo');
+
+        $createPayPartsStrategy = new CreatePayPartsStrategy($createPayPartsForm);
+
 
         // TODO: refact
         $kfPay = new KfPayParts();
