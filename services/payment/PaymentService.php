@@ -384,14 +384,5 @@ class PaymentService
         $paySchet->ErrorInfo = 'Возврат платежа';
         $paySchet->CountSendOK = 0;
         $paySchet->save(false);
-
-        if($paySchet->IdUsluga != Uslugatovar::TYPE_REG_CARD) {
-            $BalanceIn = new BalancePartner(BalancePartner::IN, $paySchet->IdOrg);
-            $BalanceIn->Dec($paySchet->SummPay, 'Возврат платежа ' . $paySchet->ID, 7, $paySchet->ID, 0);
-            $comis = $paySchet->uslugatovar->calcComissOrg($paySchet->SummPay);
-            if ($comis) {
-                $BalanceIn->Inc($comis, 'Возврат комиссии ' . $paySchet->ID, 8, $paySchet->ID, 0);
-            }
-        }
     }
 }
