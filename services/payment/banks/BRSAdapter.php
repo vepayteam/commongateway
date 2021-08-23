@@ -806,15 +806,6 @@ class BRSAdapter implements IBankAdapter
         $transferToAccountRequest->phone = $outPayaccForm->getPhoneToSend();
         $transferToAccountRequest->sourceId = $id;
 
-        if(Yii::$app->params['TESTMODE'] == 'Y') {
-            $transferToAccountRequest->account = '40702810200000007194';
-            $transferToAccountRequest->bic = '044525151';
-            $transferToAccountRequest->receiverId = '0079167932356';
-            $transferToAccountRequest->firstName = 'Максим';
-            $transferToAccountRequest->lastName = 'Филин';
-            $transferToAccountRequest->middleName = 'Сергеевич';
-        }
-
         $requestData = $transferToAccountRequest->getAttributes();
         $requestData['msgSign'] = $transferToAccountRequest->getMsgSign($this->gate);
 
