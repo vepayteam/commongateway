@@ -44,10 +44,8 @@ use yii\helpers\Json;
 
 class GratapayAdapter implements IBankAdapter
 {
-    const PROD_IN_PAYMENT_SYSTEM = 'CardGate';
-    const TEST_IN_PAYMENT_SYSTEM = 'CardGateTest';
-    const TEST_IN_S2S_PAYMENT_SYSTEM = 'CardGateTestS2S';
-    const TEST_OUT_PAYMENT_SYSTEM = 'TestCard';
+    private const PROD_IN_PAYMENT_SYSTEM = 'CardGate';
+    private const TEST_IN_S2S_PAYMENT_SYSTEM = 'CardGateTestS2S';
 
     const BANK_URL = 'https://psp.kiparisdmcc.ae/api';
     const AFT_MIN_SUMM = 185000;
@@ -83,7 +81,9 @@ class GratapayAdapter implements IBankAdapter
      */
     public function confirm(DonePayForm $donePayForm)
     {
-        // TODO: Implement confirm() method.
+        $confirmPayResponse = new ConfirmPayResponse();
+        $confirmPayResponse->status = BaseResponse::STATUS_DONE;
+        return $confirmPayResponse;
     }
 
     /**
@@ -97,18 +97,8 @@ class GratapayAdapter implements IBankAdapter
         $createPayRequest->amount = $paySchet->getSummFull() / 100;
         $createPayRequest->currency = $paySchet->currency->Code;
         $createPayRequest->url = $createPayRequest->getUrls($paySchet);
-        $createPayRequest->system_fields = [
-            'client_id' => $paySchet->ID,
-            'card_number' => $createPayForm->CardNumber,
-            'card_month' => (int)$createPayForm->CardMonth,
-            'card_year' => (int)('20' . $createPayForm->CardYear),
-            'cardholder_name' => $createPayForm->CardHolder,
-            'card_cvv' => $createPayForm->CardCVC,
-            'client_ip' => Yii::$app->request->remoteIP,
-            'client_user_agent' => Yii::$app->request->userAgent,
-        ];
-        $createPayRequest->three_ds_v2['user_agent'] = Yii::$app->request->userAgent;
-        $createPayRequest->three_ds_v2['ip'] = Yii::$app->request->remoteIP;
+        $createPayRequest->system_fields = $createPayRequest->getSystemFields($createPayForm);
+        $createPayRequest->system_fields = $createPayRequest->getThreeDsV2();
 
         if(Yii::$app->params['TESTMODE'] == 'Y') {
             $createPayRequest->payment_system = self::TEST_IN_S2S_PAYMENT_SYSTEM;
@@ -175,7 +165,7 @@ class GratapayAdapter implements IBankAdapter
      */
     public function recurrentPay(AutoPayForm $autoPayForm)
     {
-
+        throw new GateException('Метод недоступен');
     }
 
     /**
@@ -216,7 +206,7 @@ class GratapayAdapter implements IBankAdapter
      */
     public function outCardPay(OutCardPayForm $outCardPayForm)
     {
-        // TODO: Implement outCardPay() method.
+        throw new GateException('Метод недоступен');
     }
 
     /**
@@ -342,20 +332,12 @@ class GratapayAdapter implements IBankAdapter
      */
     private function buildRequestHeaders(string $bodyJson)
     {
+        $sign = md5($bodyJson . $this->gate->Token);
         return [
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
             'Auth' => $this->gate->Login,
-            'Sign' => $this->calcSign($bodyJson),
+            'Sign' => $sign,
         ];
-    }
-
-    /**
-     * @param string $bodyJson
-     * @return string
-     */
-    private function calcSign(string $bodyJson)
-    {
-        return md5($bodyJson . $this->gate->Token);
     }
 }

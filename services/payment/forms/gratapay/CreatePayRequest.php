@@ -4,7 +4,9 @@
 namespace app\services\payment\forms\gratapay;
 
 
+use app\services\payment\forms\CreatePayForm;
 use app\services\payment\models\PaySchet;
+use Yii;
 use yii\base\Model;
 
 class CreatePayRequest extends Model
@@ -30,7 +32,10 @@ class CreatePayRequest extends Model
 
     ];
 
-
+    /**
+     * @param PaySchet $paySchet
+     * @return array
+     */
     public function getUrls(PaySchet $paySchet)
     {
         return [
@@ -41,4 +46,32 @@ class CreatePayRequest extends Model
         ];
     }
 
+    /**
+     * @param CreatePayForm $createPayForm
+     * @return array
+     */
+    public function getSystemFields(CreatePayForm $createPayForm)
+    {
+        return [
+            'client_id' => $createPayForm->getPaySchet()->ID,
+            'card_number' => $createPayForm->CardNumber,
+            'card_month' => (int)$createPayForm->CardMonth,
+            'card_year' => (int)('20' . $createPayForm->CardYear),
+            'cardholder_name' => $createPayForm->CardHolder,
+            'card_cvv' => $createPayForm->CardCVC,
+            'client_ip' => Yii::$app->request->remoteIP,
+            'client_user_agent' => Yii::$app->request->userAgent,
+        ];
+    }
+
+    /**
+     * @return array
+     */
+    public function getThreeDsV2()
+    {
+        return [
+            'user_agent' => Yii::$app->request->userAgent,
+            'ip' => Yii::$app->request->remoteIP,
+        ];
+    }
 }
