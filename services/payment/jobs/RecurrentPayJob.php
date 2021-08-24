@@ -109,7 +109,7 @@ class RecurrentPayJob extends BaseObject implements \yii\queue\JobInterface
     public function buildAdapter(PaySchet $paySchet)
     {
         $bankAdapterBuilder = new BankAdapterBuilder();
-        $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank);
+        $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank, $paySchet->currency);
         return $bankAdapterBuilder->getBankAdapter();
     }
 }
