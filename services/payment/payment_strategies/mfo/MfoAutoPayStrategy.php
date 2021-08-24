@@ -68,7 +68,7 @@ class MfoAutoPayStrategy
 
         Yii::warning('Create BankAdapterBuilder autoPay=' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid, 'mfo');
         $bankAdapterBuilder = new BankAdapterBuilder();
-        $bankAdapterBuilder->buildByBank($this->autoPayForm->partner, $uslugatovar, $card->bank, $this->autoPayForm->paySchet->currency);
+        $bankAdapterBuilder->buildByBank($this->autoPayForm->partner, $uslugatovar, $card->bank);
 
         Yii::warning('getReplyRequest autoPay=' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid, 'mfo');
 
