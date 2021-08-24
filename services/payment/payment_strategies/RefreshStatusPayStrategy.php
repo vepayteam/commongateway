@@ -82,7 +82,7 @@ class RefreshStatusPayStrategy extends OkPayStrategy
 
         $paySchet->Status = $checkStatusPayResponse->status;
         $paySchet->ErrorInfo = $checkStatusPayResponse->message;
-        $paySchet->RRN = $checkStatusPayResponse->xml['orderadditionalinfo']['rrn'] ?? '';
+        $paySchet->RRN = $checkStatusPayResponse->rrn;
         $paySchet->RCCode = $checkStatusPayResponse->xml['orderadditionalinfo']['rc'] ?? '';
         $paySchet->Operations = Json::encode($checkStatusPayResponse->operations ?? []);
         $paySchet->save(false);
