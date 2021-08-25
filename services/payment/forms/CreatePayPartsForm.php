@@ -1,7 +1,7 @@
 <?php
 
 
-namespace app\services\payment\forms\pay_parts;
+namespace app\services\payment\forms;
 
 
 use app\models\traits\ValidateFormTrait;
