@@ -31,7 +31,7 @@ class ReverspayJob extends BaseObject implements \yii\queue\JobInterface
         $paySchet = PaySchet::findOne(['ID' => $this->idpay]);
 
         $bankAdapterBuilder = new BankAdapterBuilder();
-        $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank);
+        $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank, $paySchet->currency);
 
         $refundPayForm = new RefundPayForm();
         $refundPayForm->paySchet = $paySchet;

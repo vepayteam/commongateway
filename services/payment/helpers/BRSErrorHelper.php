@@ -469,7 +469,7 @@ class BRSErrorHelper
 
     public static function getMessage($brsResponse)
     {
-        $resultCode = $brsResponse['RESULT_CODE'];
+        $resultCode = $brsResponse['RESULT_CODE'] ?? null;
         if ($resultCode && isset(self::$errorCodes[$resultCode])) {
             return $resultCode . ' - ' . self::$errorCodes[$resultCode]['desc_rus'];
         }

@@ -4,7 +4,7 @@
 namespace app\services\payment\exceptions;
 
 
-class GateException extends \Exception
+class GateException extends \yii\base\NotSupportedException
 {
 
 }
