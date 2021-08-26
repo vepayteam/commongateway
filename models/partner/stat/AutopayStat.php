@@ -9,7 +9,6 @@ use app\models\payonline\Uslugatovar;
 use app\models\TU;
 use Yii;
 use yii\base\Model;
-use yii\db\Expression;
 use yii\db\Query;
 
 class AutopayStat extends Model
@@ -35,31 +34,14 @@ class AutopayStat extends Model
         $err = array_pop($err);
         return $err;
     }
-
-    public function GetData($IsAdmin)
-    {
-        // это для будущей миграции
-//
-//ALTER TABLE cards
-//	ADD CONSTRAINT cards_user_id_fk
-//		FOREIGN KEY (iduser) REFERENCES user(id);
-//SET FOREIGN_KEY_CHECKS = 0;
-//ALTER TABLE pay_schet
-//	ADD CONSTRAINT pay_schet_uslugatovar_id_fk
-//		FOREIGN KEY (idusluga) REFERENCES uslugatovar(id);
-//ALTER TABLE pay_schet
-//	ADD CONSTRAINT pay_schet_card_id_fk
-//		FOREIGN KEY (idkard) REFERENCES card(id);
-//ALTER TABLE pay_schet
-//	ADD CONSTRAINT pay_schet_user_id_fk
-//		FOREIGN KEY (iduser) REFERENCES user(id);
-//        alter table pay_schet
-//	add constraint pay_schet_uslugatovar_ID_fk_2
-//		foreign key (IdUsluga) references uslugatovar (ID);
-//        alter table pay_schet
-//	add constraint pay_schet_cards_ID_fk
-//		foreign key (IdKard) references cards (ID);
     
+    /**
+     * @param $IsAdmin
+     *
+     * @return int[]
+     */
+    public function GetData($IsAdmin): array
+    {
         $IdPart = $IsAdmin ? $this->IdPart : UserLk::getPartnerId(Yii::$app->user);
     
         $datefrom = strtotime($this->datefrom . ' 00:00:00');
@@ -89,9 +71,9 @@ class AutopayStat extends Model
             ->select('cards.ID')
             ->distinct()
             ->joinWith('cards')
-            ->andWhere(['{{uslugatovar}}.[[iscustom]]' => TU::AutoPay()])
-            ->andWhere(['{{cards}}.[[Typecard]]' => 0])
-            ->andWhere(['between', '{{pay_schet}}.[[DateCreate]]', $datefrom, $dateto])
+            ->andWhere(['uslugatovar.iscustom' => TU::AutoPay()])
+            ->andWhere(['cards.Typecard' => 0])
+            ->andWhere(['between', 'pay_schet.DateCreate', $datefrom, $dateto])
             ->andFilterWhere(['IDPartner' => $IdPart > 0 ? $IdPart : null]);
     
         $ret['activecards'] = $queryAciveCards->cache(30)->count();
@@ -111,7 +93,6 @@ class AutopayStat extends Model
         }
 
         //Сколько успешных запросов
-    
         $query = PaySchet::find()
             ->joinWith(['cards', 'uslugatovar'])
             ->andWhere(['cards.TypeCard' => 0])
