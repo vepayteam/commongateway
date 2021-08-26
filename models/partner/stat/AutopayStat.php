@@ -4,6 +4,7 @@ namespace app\models\partner\stat;
 
 use app\models\partner\UserLk;
 use app\models\payonline\Cards;
+use app\models\payonline\PaySchet;
 use app\models\payonline\Uslugatovar;
 use app\models\TU;
 use Yii;
@@ -94,23 +95,16 @@ class AutopayStat extends Model
             ->andFilterWhere(['IDPartner' => $IdPart > 0 ? $IdPart : null]);
     
         $ret['activecards'] = $queryAciveCards->cache(30)->count();
-  
-        //Количество запросов на одну карту
-        $query = new Query();
-        $query
-            ->select(['ps.ID'])
-            ->from('`pay_schet` AS ps')
-            ->leftJoin('`cards` AS c', 'ps.IdKard = c.ID')
-            ->leftJoin('`uslugatovar` AS u', 'u.ID = ps.IdUsluga')
-            ->where(['between', 'ps.DateCreate', $datefrom, $dateto])
-            ->andWhere(['c.TypeCard' => 0])
-            ->andWhere(['in', 'u.IsCustom', TU::AutoPay()]);
-        if ($IdPart > 0) {
-            $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $IdPart]);
-        }
     
-        $countResult = (new Query())->select(['count' => 'COUNT(ID)'])->from('pay_schet')->where(['in', 'ID', $query])->cache(30)->one();
-        $ret['reqcards'] = $countResult['count'];
+        //Количество запросов на одну карту
+        $queryPayShet = PaySchet::find()
+            ->joinWith(['cards', 'uslugatovar'])
+            ->andWhere(['cards.TypeCard' => 0])
+            ->andWhere(['in', 'uslugatovar.IsCustom', TU::AutoPay()])
+            ->andWhere(['between', 'DateCreate', $datefrom, $dateto])
+            ->andFilterWhere(['IDPartner' => $IdPart > 0 ? $IdPart : null]);
+    
+        $ret['reqcards'] = $queryPayShet->cache(30)->count();
     
         if ($ret['activecards'] > 0) {
             $ret['reqonecard'] = $ret['reqcards'] / $ret['activecards'] / ceil(($dateto + 1 - $datefrom) / (60 * 60 * 24));
