@@ -220,36 +220,6 @@ class OutController extends Controller
         } catch (GateException $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
         }
-
-        Yii::warning('/out/payul mfo=' . $mfo->mfo . " sum=" . $kfOut->amount . " extid=" . $kfOut->extid, 'mfo');
-
-        $params = $pay->payToCard(null, [$kfOut->account, $kfOut->bic, $kfOut->name, $kfOut->inn, $kfOut->kpp, $kfOut->descript], $kfOut, $usl, TCBank::$bank, $mfo->mfo);
-        if (!empty($kfOut->extid)) {
-            $mutex->release('getPaySchetExt' . $kfOut->extid);
-        }
-        $params['name'] = $kfOut->name;
-        $params['inn'] = trim($kfOut->inn);
-        $params['kpp'] = $kfOut->kpp;
-        $params['bic'] = $kfOut->bic;
-        $params['account'] = $kfOut->account;
-        $params['descript'] = $kfOut->descript;
-
-        $merchBank = BankMerchant::Get($bank, $bankGate);
-        $ret = $merchBank->transferToAccount($params);
-        if ($ret && $ret['status'] == 1) {
-            //сохранение номера транзакции
-            $payschets = new Payschets();
-            $payschets->SetBankTransact([
-                'idpay' => $params['IdPay'],
-                'trx_id' => $ret['transac'],
-                'url' => ''
-            ]);
-
-        } else {
-            $pay->CancelReq($params['IdPay'],'Платеж не проведен');
-        }
-
-        return ['status' => 1, 'id' => (int)$params['IdPay'], 'message' => ''];
     }
 
     /**
