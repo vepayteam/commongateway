@@ -241,3 +241,25 @@ class AutopayStat extends Model
         return ['status' => 1, 'data' => $dataJ, 'label' => $label];
     }
 }
+
+// это для будущей миграции
+//
+//ALTER TABLE cards
+//	ADD CONSTRAINT cards_user_id_fk
+//		FOREIGN KEY (iduser) REFERENCES user(id);
+//SET FOREIGN_KEY_CHECKS = 0;
+//ALTER TABLE pay_schet
+//	ADD CONSTRAINT pay_schet_uslugatovar_id_fk
+//		FOREIGN KEY (idusluga) REFERENCES uslugatovar(id);
+//ALTER TABLE pay_schet
+//	ADD CONSTRAINT pay_schet_card_id_fk
+//		FOREIGN KEY (idkard) REFERENCES card(id);
+//ALTER TABLE pay_schet
+//	ADD CONSTRAINT pay_schet_user_id_fk
+//		FOREIGN KEY (iduser) REFERENCES user(id);
+//        alter table pay_schet
+//	add constraint pay_schet_uslugatovar_ID_fk_2
+//		foreign key (IdUsluga) references uslugatovar (ID);
+//        alter table pay_schet
+//	add constraint pay_schet_cards_ID_fk
+//		foreign key (IdKard) references cards (ID);
