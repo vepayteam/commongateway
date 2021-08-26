@@ -340,13 +340,20 @@ class FortaTechAdapter implements IBankAdapter
             $ans = $this->sendGetStatusRefundRequest($refundId);
             if($ans['status'] == 'STATUS_REFUND') {
                 continue;
+            } elseif ($ans['status'] == 'STATUS_INIT') {
+                Yii::$app->queue
+                    ->delay(self::REFUND_REFRESH_STATUS_JOB_DELAY)
+                    ->push(new RefreshStatusPayJob([
+                        'paySchetId' => $paySchet->ID,
+                    ]));
+                break;
             } elseif ($ans['status'] == 'STATUS_ERROR' && isset($ans['message'])) {
                 $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
                 $checkStatusPayResponse->message = $ans['message'];
                 break;
             } else {
-                $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
-                $checkStatusPayResponse->message = '';
+                $checkStatusPayResponse->status = BaseResponse::STATUS_DONE;
+                $checkStatusPayResponse->message = 'Возврат завершен с ошибкой';
                 break;
             }
         }
