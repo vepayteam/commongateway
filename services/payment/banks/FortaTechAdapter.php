@@ -35,6 +35,7 @@ use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
+use app\services\payment\jobs\RefreshStatusPayJob;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use Faker\Provider\Base;
@@ -51,6 +52,7 @@ class FortaTechAdapter implements IBankAdapter
     const BANK_URL_TEST = 'https://pay1time.com';
 
     const REFUND_ID_CACHE_PREFIX = 'Forta__RefundIds__';
+    const REFUND_REFRESH_STATUS_JOB_DELAY = 30;
 
     public static $bank = 9;
     protected $bankUrl;
@@ -392,17 +394,17 @@ class FortaTechAdapter implements IBankAdapter
                     $refundPayResponse->status = BaseResponse::STATUS_ERROR;
                     $refundPayResponse->message = isset($ans['message']) ? $ans['message'] : 'Ошибка запроса';
                 }
-
             }
 
+            Yii::$app->queue
+                ->delay(self::REFUND_REFRESH_STATUS_JOB_DELAY)
+                ->push(new RefreshStatusPayJob([
+                    'paySchetId' => $refundPayForm->paySchet->ID,
+                ]));
         } catch (\Exception $e) {
             $refundPayResponse->status = BaseResponse::STATUS_ERROR;
             $refundPayResponse->message = $e->getMessage();
         }
-
-
-
-
 
         return $refundPayResponse;
     }
