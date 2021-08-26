@@ -127,6 +127,14 @@ class Cards extends ActiveRecord
         return parent::beforeSave($insert);
     }
 
+    /**
+     * Gets query for [[PaySchets]].
+     */
+    public function getPaySchets(): ActiveQuery
+    {
+        return $this->hasMany(PaySchet::className(), ['IdKard' => 'ID']);
+    }
+    
     public function getUser(): ActiveQuery
     {
         return $this->hasOne(User::class, ['ID' => 'IdUser']);
