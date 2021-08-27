@@ -39,3 +39,5 @@ key/key.txt
 Vagrantfile
 *.log
 .version
+vendor/bin/*
+web/assets/*
