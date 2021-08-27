@@ -65,11 +65,6 @@ class AutoPayForm extends Model implements Serializable, AmountFormInterface
         if($card && empty($card->panToken->EncryptedPAN)) {
             $this->addError('card', 'Карта просрочена');
         }
-    
-        if ($card && !$card->ExtCardIDP) {
-            $this->addError('card', 'Карта не зарегистрирована');
-        }
-    
     }
 
     /**
