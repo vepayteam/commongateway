@@ -71,7 +71,6 @@ class UslugatovarType extends \yii\db\ActiveRecord
             self::REVERSCOMIS => 'Возмещение комисии',
             self::PEREVPAYS => 'Внутренний перевод между счетами',
             self::IDENT => 'Упрощенная идентификация пользователей',
-
             self::POGASHATFPARTS => 'Погашение займа AFT с разбивкой',
             self::POGASHECOMPARTS => 'Погашение займа ECOM с разбивкой',
             self::AVTOPLATECOMPARTS => 'Автоплатеж по займу ECOM с разбивкой',
@@ -79,7 +78,6 @@ class UslugatovarType extends \yii\db\ActiveRecord
             self::ECOMPARTS => 'Оплата товара/услуги с разбивкой',
             self::JKHPARTS => 'Оплата ЖКХ с разбивкой',
             self::VYVODPAYSPARTS => 'Перечисление по разбивке',
-
             self::H2H_POGASH_AFT => 'H2H Погашение займа AFT',
             self::H2H_POGASH_ECOM => 'H2H погашение займа ECOM',
             self::H2H_ECOM => 'H2H оплата товаров и услуг',

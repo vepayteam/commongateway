@@ -2,6 +2,7 @@
 
 namespace app\services\payment\models;
 
+use app\models\payonline\Banks as Bank;
 use app\models\payonline\Partner;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
@@ -86,8 +87,7 @@ use Yii;
  * @property Currency $currency
  * @property PaySchetLog[] $log
  * @property User $user
- * @property Bank $bank
- *
+ * @property \app\services\payment\models\Bank $bank
  * @property string $Version3DS
  * @property int $IsNeed3DSVerif
  * @property string $DsTransId
