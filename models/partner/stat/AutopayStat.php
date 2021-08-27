@@ -64,7 +64,7 @@ class AutopayStat extends Model
             ->joinWith('user')
             ->andWhere(['TypeCard' => 0])
             ->andWhere(['!=', 'ExtCardIDP', 0])
-            ->andWhere(['between', 'DateCreate', $datefrom, $dateto])
+            ->andWhere(['between', 'DateAdd', $datefrom, $dateto])
             ->andFilterWhere(['ExtOrg' => $idPart]);
         
         $ret['cntnewcards'] = $queryNewCards->count();
