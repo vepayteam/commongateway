@@ -68,15 +68,18 @@ class AutopayStat extends Model
     
         //сколько активных привязанных карт
         $queryAciveCards = Uslugatovar::find()
-            ->select('cards.ID')
-            ->distinct()
             ->joinWith('cards')
             ->andWhere(['uslugatovar.iscustom' => TU::AutoPay()])
             ->andWhere(['cards.Typecard' => 0])
             ->andWhere(['between', 'pay_schet.DateCreate', $datefrom, $dateto])
             ->andFilterWhere(['IDPartner' => $IdPart > 0 ? $IdPart : null]);
     
-        $ret['activecards'] = $queryAciveCards->cache(30)->count();
+        $ret['activecards'] = $queryAciveCards->cache(30)->count('DISTINCT `cards`.`ID`');
+        
+        $query = Cards::find()
+            ->joinWith('uslugatovar');
+        
+        
     
         //Количество запросов на одну карту
         $queryPayShet = PaySchet::find()

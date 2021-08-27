@@ -135,6 +135,11 @@ class Cards extends ActiveRecord
         return $this->hasMany(PaySchet::className(), ['IdKard' => 'ID']);
     }
     
+    public function getUslugatovar(): ActiveQuery
+    {
+        return $this->hasMany(Uslugatovar::class, ['ID' => 'IdUsluga'])->via('paySchets');
+    }
+    
     public function getUser(): ActiveQuery
     {
         return $this->hasOne(User::class, ['ID' => 'IdUser']);
