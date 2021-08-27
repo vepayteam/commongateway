@@ -188,8 +188,8 @@ class CardController extends Controller
 
         Yii::warning('/card/get mfo='. $mfo->mfo . ' IdPay=' . $kfCard->id . ' type=' .$type, 'mfo');
         
-        $paySchet = PaySchet::findOne([$kfCard->id]);
-        if (!$paySchet->ID) {
+        $paySchet = PaySchet::findOne($kfCard->id);
+        if (!$paySchet) {
             return ['status' => 0, 'message' => 'Ошибка запроса'];
         }
     
