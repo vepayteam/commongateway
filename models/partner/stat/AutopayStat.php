@@ -13,12 +13,13 @@ use yii\db\Query;
 
 class AutopayStat extends Model
 {
+    
     public $IdPart;
     public $datefrom;
     public $dateto;
     public $datetype = 0;
     public $graphtype = 0;
-
+    
     public function rules()
     {
         return [
@@ -27,26 +28,28 @@ class AutopayStat extends Model
             [['datefrom', 'dateto'], 'required']
         ];
     }
-
+    
     public function GetError()
     {
         $err = $this->firstErrors;
         $err = array_pop($err);
+        
         return $err;
     }
     
     /**
-     * @param $IsAdmin
+     * @param $isAdmin
      *
      * @return int[]
      */
-    public function GetData($IsAdmin): array
+    public function getData($isAdmin): array
     {
-        $IdPart = $IsAdmin ? $this->IdPart : UserLk::getPartnerId(Yii::$app->user);
-    
+        $IdPart = ($isAdmin ? $this->IdPart : UserLk::getPartnerId(Yii::$app->user));
+        $idPart = $IdPart > 0 ? $IdPart : null;
+        
         $datefrom = strtotime($this->datefrom . ' 00:00:00');
         $dateto = strtotime($this->dateto . ' 23:59:59');
-    
+        
         $ret = [
             'cntnewcards' => 0,
             'activecards' => 0,
@@ -55,106 +58,102 @@ class AutopayStat extends Model
             'payscards' => 0,
             'sumpayscards ' => 0
         ];
-    
+        
         //Количество новых карт
         $queryNewCards = Cards::find()
             ->joinWith('user')
-            ->withBetween($datefrom, $dateto)
             ->andWhere(['TypeCard' => 0])
             ->andWhere(['!=', 'ExtCardIDP', 0])
-            ->andFilterWhere(['ExtOrg' => $IdPart > 0 ? $IdPart : null]);
-    
-        $ret['cntnewcards'] = $queryNewCards->cache(30)->count();
-    
+            ->andWhere(['between', 'DateCreate', $datefrom, $dateto])
+            ->andFilterWhere(['ExtOrg' => $idPart]);
+        
+        $ret['cntnewcards'] = $queryNewCards->count();
+        
         //сколько активных привязанных карт
         $queryAciveCards = Uslugatovar::find()
             ->joinWith('cards')
             ->andWhere(['uslugatovar.iscustom' => TU::AutoPay()])
             ->andWhere(['cards.Typecard' => 0])
-            ->andWhere(['between', 'pay_schet.DateCreate', $datefrom, $dateto])
-            ->andFilterWhere(['IDPartner' => $IdPart > 0 ? $IdPart : null]);
-    
-        $ret['activecards'] = $queryAciveCards->cache(30)->count('DISTINCT `cards`.`ID`');
+            ->andWhere(['between', 'DateCreate', $datefrom, $dateto])
+            ->andFilterWhere(['IDPartner' => $idPart]);
         
-        $query = Cards::find()
-            ->joinWith('uslugatovar');
+        $ret['activecards'] = $queryAciveCards->count('DISTINCT `cards`.`ID`');
         
-        
-    
         //Количество запросов на одну карту
         $queryPayShet = PaySchet::find()
             ->joinWith(['cards', 'uslugatovar'])
             ->andWhere(['cards.TypeCard' => 0])
-            ->andWhere(['in', 'uslugatovar.IsCustom', TU::AutoPay()])
+            ->andWhere(['uslugatovar.IsCustom' => TU::AutoPay()])
             ->andWhere(['between', 'DateCreate', $datefrom, $dateto])
-            ->andFilterWhere(['IDPartner' => $IdPart > 0 ? $IdPart : null]);
-    
-        $ret['reqcards'] = $queryPayShet->cache(30)->count();
-    
+            ->andFilterWhere(['IDPartner' => $idPart]);
+        
+        $ret['reqcards'] = $queryPayShet->count();
+        
         if ($ret['activecards'] > 0) {
             $ret['reqonecard'] = $ret['reqcards'] / $ret['activecards'] / ceil(($dateto + 1 - $datefrom) / (60 * 60 * 24));
         }
-
+        
         //Сколько успешных запросов
-        $query = PaySchet::find()
+        $querySuccess = PaySchet::find()
             ->joinWith(['cards', 'uslugatovar'])
             ->andWhere(['cards.TypeCard' => 0])
             ->andWhere(['pay_schet.Status' => 1])
-            ->andWhere(['in', 'uslugatovar.IsCustom', TU::AutoPay()])
+            ->andWhere(['uslugatovar.IsCustom' => TU::AutoPay()])
             ->andWhere(['between', 'DateCreate', $datefrom, $dateto])
-            ->andFilterWhere(['IDPartner' => $IdPart > 0 ? $IdPart : null]);
+            ->andFilterWhere(['IDPartner' => $idPart]);
         
-        $ret['payscards'] = $query->cache(30)->count();
-        $ret['sumpayscards'] = $query->cache(30)->sum('SummPay');
-
+        $ret['payscards'] = $querySuccess->count();
+        $ret['sumpayscards'] = $querySuccess->sum('SummPay');
+        
         return $ret;
     }
-
+    
     /**
-     * @deprecated
-     * Рекуррентные платежи
      * @return array
      * @throws \Throwable
+     * @deprecated
+     * Рекуррентные платежи
      */
     public function GetRecurrentData()
     {
         $IdPart = UserLk::IsAdmin(Yii::$app->user) ? $this->IdPart : UserLk::getPartnerId(Yii::$app->user);
-
+        
         $datefrom = strtotime($this->datefrom . " 00:00:00");
         $dateto = strtotime($this->dateto . " 23:59:59");
         if ($datefrom < $dateto - 365 * 86400) {
             $datefrom = $dateto - 365 * 86400 - 86399;
         }
-
+        
         $data = [];
         $xkey = 'x';
         $ykey = 'a';
-
+        
         $rows = Yii::$app->db->cache(function () use ($IdPart, $datefrom, $dateto) {
-
+            
             $query = new Query();
             $query
                 ->select(['SummPay', 'ComissSumm', 'DateCreate'])
                 ->from('`pay_schet` AS ps')
                 ->leftJoin('`uslugatovar` AS qp', 'ps.IdUsluga = qp.ID')
                 ->where('ps.DateCreate BETWEEN :DATEFROM AND :DATETO', [
-                    ':DATEFROM' => $datefrom, ':DATETO' => $dateto
+                    ':DATEFROM' => $datefrom,
+                    ':DATETO' => $dateto
                 ])
                 ->andWhere('ps.Status = 1 AND ps.IsAutoPay = 1')
                 ->andWhere(['qp.IsCustom' => TU::AutoPay()]);
-
+            
             if ($IdPart > 0) {
                 $query->andWhere('qp.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);
             }
-
+            
             return $query->all();
         }, 60);
-
+        
         $groupDate = 'd.m.Y';
         if ($this->datetype == 1) {
             $groupDate = 'm.Y';
         }
-
+        
         foreach ($rows as $row) {
             if ($this->graphtype == 0) {
                 //График изменения суммы ежемесячных регулярных платежей
@@ -175,7 +174,7 @@ class AutopayStat extends Model
                 } else {
                     $data[$DatePay] = ['sum' => $ComissSumm, 'cnt' => 1, $xkey => $DatePay];
                 }
-
+                
             } elseif ($this->graphtype == 2) {
                 //График изменение средней суммы платежей, полученных с одного плательщика за весь период сотрудничества
                 $SummPay = $row['SummPay'] / 100.0;
@@ -197,7 +196,7 @@ class AutopayStat extends Model
                 }
             }
         }
-
+        
         $dataJ = [];
         if (!empty($data)) {
             $prev = 0;
@@ -229,7 +228,7 @@ class AutopayStat extends Model
         } else {
             $dataJ[] = [$xkey => 0, $ykey => 0];
         }
-
+        
         $label = '';
         if ($this->graphtype == 0) {
             $label = "Платежи";
@@ -240,29 +239,7 @@ class AutopayStat extends Model
         } elseif ($this->graphtype == 3) {
             $label = "Процент оттока";
         }
-
+        
         return ['status' => 1, 'data' => $dataJ, 'label' => $label];
     }
 }
-
-// это для будущей миграции
-//
-//ALTER TABLE cards
-//	ADD CONSTRAINT cards_user_id_fk
-//		FOREIGN KEY (iduser) REFERENCES user(id);
-//SET FOREIGN_KEY_CHECKS = 0;
-//ALTER TABLE pay_schet
-//	ADD CONSTRAINT pay_schet_uslugatovar_id_fk
-//		FOREIGN KEY (idusluga) REFERENCES uslugatovar(id);
-//ALTER TABLE pay_schet
-//	ADD CONSTRAINT pay_schet_card_id_fk
-//		FOREIGN KEY (idkard) REFERENCES card(id);
-//ALTER TABLE pay_schet
-//	ADD CONSTRAINT pay_schet_user_id_fk
-//		FOREIGN KEY (iduser) REFERENCES user(id);
-//        alter table pay_schet
-//	add constraint pay_schet_uslugatovar_ID_fk_2
-//		foreign key (IdUsluga) references uslugatovar (ID);
-//        alter table pay_schet
-//	add constraint pay_schet_cards_ID_fk
-//		foreign key (IdKard) references cards (ID);
