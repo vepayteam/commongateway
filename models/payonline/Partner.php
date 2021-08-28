@@ -12,6 +12,7 @@ use app\models\sms\tables\AccessSms;
 use app\services\partners\models\PartnerOption;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
+use app\services\statements\models\StatementsPlanner;
 use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
 
@@ -412,6 +413,11 @@ class Partner extends ActiveRecord
     public function getVyvodReestr(): ActiveQuery
     {
         return $this->hasMany(VyvodReestr::class, ['IdPartner' => 'ID']);
+    }
+
+    public function getStatementsPlanners(): ActiveQuery
+    {
+        return $this->hasMany(StatementsPlanner::class, ['IdPartner' => 'ID']);
     }
 
     /**
