@@ -10,7 +10,10 @@ use app\models\kfapi\KfCard;
 use app\models\kfapi\KfFormPay;
 use app\models\kfapi\KfPay;
 use app\models\kfapi\KfRequest;
+use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
+use app\services\payment\banks\BankAdapterBuilder;
+use app\services\payment\exceptions\GateException;
 use app\services\payment\models\PaySchet;
 use app\services\payment\payment_strategies\CreateFormEcomPartsStrategy;
 use app\services\payment\payment_strategies\CreateFormJkhPartsStrategy;
@@ -160,13 +163,10 @@ class MerchantController extends Controller
         }
 
         if ($kf->GetReq('type', 0) == 1) {
-            $gate = TCBank::$JKHGATE;
             $usl = $kfPay->GetUslugJkh($kf->IdPartner);
         } else {
-            $gate = TCBank::$ECOMGATE;
             $usl = $kfPay->GetUslugEcom($kf->IdPartner);
         }
-        $TcbGate = new TcbGate($kf->IdPartner, $gate);
         if (!$usl) {
             return ['status' => 0, 'message' => 'Услуга не найдена'];
         }
@@ -194,7 +194,19 @@ class MerchantController extends Controller
             }
         }
         Yii::warning("merchant/pay payToMfo id=$id", 'merchant');
-        $params = $this->paySchetService->payToMfo($user, [$kfPay->descript], $kfPay, $usl, 2, $kf->IdPartner, 0);
+
+        $uslugatovar = Uslugatovar::findOne(['ID' => $usl]);
+
+        try {
+            $bankAdapterBuilder = new BankAdapterBuilder();
+            $bankAdapterBuilder->build($kf->partner, $uslugatovar);
+        } catch (GateException $e) {
+            return ['status' => 0, 'message' => $e->getMessage()];
+        }
+
+        $partnerBankGate = $bankAdapterBuilder->getPartnerBankGate();
+
+        $params = $this->paySchetService->payToMfo($user, [$kfPay->descript], $kfPay, $usl, $partnerBankGate->BankId, $kf->IdPartner, 0);
         if (!empty($kfPay->extid)) {
             $mutex->release('getPaySchetExt' . $kfPay->extid);
         }

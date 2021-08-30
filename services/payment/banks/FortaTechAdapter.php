@@ -35,6 +35,7 @@ use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
+use app\services\payment\jobs\RefreshStatusPayJob;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use Faker\Provider\Base;
@@ -51,6 +52,7 @@ class FortaTechAdapter implements IBankAdapter
     const BANK_URL_TEST = 'https://pay1time.com';
 
     const REFUND_ID_CACHE_PREFIX = 'Forta__RefundIds__';
+    const REFUND_REFRESH_STATUS_JOB_DELAY = 30;
 
     public static $bank = 9;
     protected $bankUrl;
@@ -135,6 +137,8 @@ class FortaTechAdapter implements IBankAdapter
         $paymentRequest->amount = $paySchet->getSummFull();
         $paymentRequest->processing_url = $paySchet->getOrderdoneUrl();
         $paymentRequest->return_url = $paySchet->getOrderdoneUrl();
+        $paymentRequest->fail_url = $paySchet->getOrderfailUrl();
+        $paymentRequest->callback_url = $paySchet->getOrderdoneUrl();
 
         $ans = $this->sendRequest($action, $paymentRequest->getAttributes());
         if(!array_key_exists('id', $ans) || empty($ans['id'])) {
@@ -336,13 +340,20 @@ class FortaTechAdapter implements IBankAdapter
             $ans = $this->sendGetStatusRefundRequest($refundId);
             if($ans['status'] == 'STATUS_REFUND') {
                 continue;
+            } elseif ($ans['status'] == 'STATUS_INIT') {
+                Yii::$app->queue
+                    ->delay(self::REFUND_REFRESH_STATUS_JOB_DELAY)
+                    ->push(new RefreshStatusPayJob([
+                        'paySchetId' => $paySchet->ID,
+                    ]));
+                break;
             } elseif ($ans['status'] == 'STATUS_ERROR' && isset($ans['message'])) {
                 $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
                 $checkStatusPayResponse->message = $ans['message'];
                 break;
             } else {
-                $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
-                $checkStatusPayResponse->message = '';
+                $checkStatusPayResponse->status = BaseResponse::STATUS_DONE;
+                $checkStatusPayResponse->message = 'Возврат завершен с ошибкой';
                 break;
             }
         }
@@ -390,17 +401,17 @@ class FortaTechAdapter implements IBankAdapter
                     $refundPayResponse->status = BaseResponse::STATUS_ERROR;
                     $refundPayResponse->message = isset($ans['message']) ? $ans['message'] : 'Ошибка запроса';
                 }
-
             }
 
+            Yii::$app->queue
+                ->delay(self::REFUND_REFRESH_STATUS_JOB_DELAY)
+                ->push(new RefreshStatusPayJob([
+                    'paySchetId' => $refundPayForm->paySchet->ID,
+                ]));
         } catch (\Exception $e) {
             $refundPayResponse->status = BaseResponse::STATUS_ERROR;
             $refundPayResponse->message = $e->getMessage();
         }
-
-
-
-
 
         return $refundPayResponse;
     }

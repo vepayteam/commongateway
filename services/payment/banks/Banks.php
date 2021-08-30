@@ -32,6 +32,8 @@ class Banks
                 return new DectaAdapter();
             case RunaBankAdapter::$bank:
                 return new RunaBankAdapter();
+            case GratapayAdapter::$bank:
+                return new GratapayAdapter();
             default:
                 throw new \Exception('Ошибка выбора банка');
         }

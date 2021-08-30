@@ -440,6 +440,14 @@ class PaySchet extends \yii\db\ActiveRecord
     }
 
     /**
+     * @return string
+     */
+    public function getOrderfailUrl()
+    {
+        return Yii::$app->params['domain'] . '/pay/orderfail/' . $this->ID;
+    }
+
+    /**
      * @param string|null $cardNumber
      * @return string
      */

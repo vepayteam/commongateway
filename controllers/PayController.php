@@ -245,7 +245,7 @@ class PayController extends Controller
 
         $paySchet = $createPaySecondStepForm->getPaySchet();
         $bankAdapterBuilder = new BankAdapterBuilder();
-        $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank);
+        $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank, $paySchet->currency);
 
         /** @var TKBankAdapter $tkbAdapter */
         $tkbAdapter = $bankAdapterBuilder->getBankAdapter();
@@ -347,7 +347,7 @@ class PayController extends Controller
             throw new BadRequestHttpException();
         }
 
-        if ($donePayForm->getPaySchet()->Status == PaySchet::STATUS_DONE) {
+        if (!empty($donePayForm->IdPay) && $donePayForm->getPaySchet()->Status == PaySchet::STATUS_DONE) {
             return $this->redirect(['orderok', 'id' => $id]);
         }
 
@@ -405,6 +405,19 @@ class PayController extends Controller
         } else {
             return $this->render('paywait');
         }
+    }
+
+    /**
+     * Страница неуспешной оплаты
+     *
+     * @param $id
+     * @return string
+     */
+    public function actionOrderfail($id)
+    {
+        Yii::warning("PayForm orderfail id={$id}");
+
+        return $this->render('paycancel');
     }
 
     public function actionOrderPrint($id)
