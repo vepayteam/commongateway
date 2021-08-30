@@ -8,7 +8,7 @@ use app\services\payment\banks\CauriAdapter;
 use app\services\payment\banks\FortaTechAdapter;
 use app\services\payment\banks\RunaBankAdapter;
 use app\services\payment\banks\TKBankAdapter;
-use app\services\payment\banks\WalletoBankAdapter;
+use app\services\payment\banks\WallettoBankAdapter;
 use yii\db\Migration;
 
 /**
@@ -32,7 +32,7 @@ class m210713_100154_add_channel_name_to_banks_table extends Migration
         $this->update('banks', ['ChannelName' => 'BRS'], ['ID' => BRSAdapter::$bank]);
         $this->update('banks', ['ChannelName' => 'Cauri'], ['ID' => CauriAdapter::$bank]);
         $this->update('banks', ['ChannelName' => 'FortaTech'], ['ID' => FortaTechAdapter::$bank]);
-        $this->update('banks', ['ChannelName' => 'Walleto'], ['ID' => WalletoBankAdapter::$bank]);
+        $this->update('banks', ['ChannelName' => 'Walleto'], ['ID' => WallettoBankAdapter::$bank]);
         $this->update('banks', ['ChannelName' => 'Runa'], ['ID' => RunaBankAdapter::$bank]);
     }
 

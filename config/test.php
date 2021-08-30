@@ -63,7 +63,7 @@ return [
             'PartnersService' => ['class' => 'app\services\partners\PartnersService'],
             'AuthService' => ['class' => 'app\services\auth\AuthService'],
             'NotificationsService' => ['class' => 'app\services\notifications\NotificationsService'],
-            'WalletoExchangeRateService' => ['class' => 'app\services\exchange_rates\WalletoExchangeRateService'],
+            'WallettoExchangeRateService' => ['class' => 'app\services\exchange_rates\WallettoExchangeRateService'],
         ],
     ],
     'modules' => [

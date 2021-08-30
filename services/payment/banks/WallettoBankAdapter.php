@@ -10,7 +10,7 @@ use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CurrencyExchangeRatesResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
-use app\services\payment\banks\traits\WalletoRequestTrait;
+use app\services\payment\banks\traits\WallettoRequestTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\RefundPayException;
@@ -28,9 +28,9 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
 use Yii;
 
-class WalletoBankAdapter implements IBankAdapter
+class WallettoBankAdapter implements IBankAdapter
 {
-    use WalletoRequestTrait;
+    use WallettoRequestTrait;
 
     /** @var PartnerBankGate */
     protected $gate;
@@ -40,9 +40,9 @@ class WalletoBankAdapter implements IBankAdapter
     public static $bank = 10;
     private const BANK_URL = 'https://api.walletto.eu';
     private const BANK_TEST_URL = 'https://api.sandbox.walletto.eu';
-    private const KEY_ROOT_PATH = '@app/config/walleto/';
+    private const KEY_ROOT_PATH = '@app/config/walletto/';
 
-    // Walleto bank statuses
+    // Walletto bank statuses
     private const STATUS_NEW = 'new';
     private const STATUS_PREPARED = 'prepared';
     private const STATUS_SUCCESS = 'success';
@@ -116,13 +116,13 @@ class WalletoBankAdapter implements IBankAdapter
                 $request->getAttributes()
             );
         } catch (GuzzleException $e) {
-            Yii::error('Walleto payInCreate err: ' . $e->getMessage());
+            Yii::error('Walletto payInCreate err: ' . $e->getMessage());
             throw new CreatePayException(
                 BankAdapterResponseException::REQUEST_ERROR_MSG . ' : ' .  $e->getMessage()
             );
         }
         if (!$response->isSuccess()) {
-            Yii::error('Walleto payInCreate err: ' . $response->json('failure_message'));
+            Yii::error('Walletto payInCreate err: ' . $response->json('failure_message'));
             $errorMessage = $response->json('failure_message') ?? '';
             $createPayResponse->status = BaseResponse::STATUS_ERROR;
             $createPayResponse->message = BankAdapterResponseException::setErrorMsg($errorMessage);
@@ -154,7 +154,7 @@ class WalletoBankAdapter implements IBankAdapter
                 []
             );
             if (!$response->isSuccess()) {
-                Yii::error('Walleto checkStatusPay err: ' . $response->json('failure_message'));
+                Yii::error('Walletto checkStatusPay err: ' . $response->json('failure_message'));
                 $errorMessage = $response->json('failure_message') ?? self::ERROR_STATUS_MSG;
                 $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
                 $checkStatusPayResponse->message = BankAdapterResponseException::setErrorMsg($errorMessage);
@@ -164,7 +164,7 @@ class WalletoBankAdapter implements IBankAdapter
             $checkStatusPayResponse->status = $this->convertStatus($responseData[0]['status']);
             $checkStatusPayResponse->message = '';
         } catch (GuzzleException $e) {
-            Yii::error(' Walleto checkStatusPay err:' . $e->getMessage());
+            Yii::error(' Walletto checkStatusPay err:' . $e->getMessage());
             throw new BankAdapterResponseException(
                 BankAdapterResponseException::REQUEST_ERROR_MSG . ' : ' . $e->getMessage()
             );
@@ -215,7 +215,7 @@ class WalletoBankAdapter implements IBankAdapter
 
             $refundPayResponse->message = '';
         } catch (GuzzleException $e) {
-            Yii::error(' Walleto refundPay err:' . $e->getMessage());
+            Yii::error(' Walletto refundPay err:' . $e->getMessage());
             throw new BankAdapterResponseException(
                 BankAdapterResponseException::REQUEST_ERROR_MSG . ' : ' . $e->getMessage()
             );
@@ -298,14 +298,14 @@ class WalletoBankAdapter implements IBankAdapter
                 ['date' => $date]
             );
         } catch (GuzzleException $e) {
-            Yii::error('Walleto currencyExchangeRates err: ' . $e->getMessage());
+            Yii::error('Walletto currencyExchangeRates err: ' . $e->getMessage());
             throw new BankAdapterResponseException(
                 BankAdapterResponseException::setErrorMsg($e->getMessage())
             );
         }
 
         if (!$response->isSuccess()) {
-            Yii::error('Walleto currencyExchangeRates err: ' . $response->json());
+            Yii::error('Walletto currencyExchangeRates err: ' . $response->json());
             $errorMessage = $response->json();
             $currencyExchangeRatesResponse->status = BaseResponse::STATUS_ERROR;
             $currencyExchangeRatesResponse->message = BankAdapterResponseException::setErrorMsg($errorMessage);

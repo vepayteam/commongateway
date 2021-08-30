@@ -151,7 +151,7 @@ class CardController extends Controller
                 'status' => 1,
                 'message' => '',
                 'id' => $paySchet->ID,
-                'url' => $paySchet->getFromUrl(),
+                'url' => $paySchet->getFromUrl(!empty($cardRegForm->card) ? $cardRegForm->card : null),
             ];
         } catch (CreatePayException $e) {
             $mutex->release($cardRegForm->getMutexKey());
