@@ -4,9 +4,9 @@ namespace app\services\payment\helpers;
 
 use app\Api\Client\ClientResponse;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
-use app\services\payment\banks\bank_adapter_responses\decta\CancelPayResponse;
-use app\services\payment\banks\bank_adapter_responses\decta\CheckStatusPayResponse;
-use app\services\payment\banks\bank_adapter_responses\decta\CreatePayResponse;
+use app\services\payment\banks\bank_adapter_responses\CancelPayResponse;
+use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
+use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\decta\OutCardTransactionResponse;
 use app\services\payment\banks\bank_adapter_responses\decta\RefundPayResponse;
 use app\services\payment\banks\DectaAdapter;
@@ -14,19 +14,18 @@ use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\decta\CreatePayRequest;
+use app\services\payment\forms\decta\CreatePaySecondStepRequest;
 use app\services\payment\forms\decta\OutCardPayRequest;
 use app\services\payment\forms\decta\OutCardTransactionRequest;
+use app\services\payment\forms\decta\payin\Client as CreatePayClient;
+use app\services\payment\forms\decta\payout\Client as OutCardPayClient;
 use app\services\payment\forms\decta\RefundPayRequest;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\RefundPayForm;
-use app\services\payment\forms\decta\payin\Client as CreatePayClient;
-use app\services\payment\forms\decta\payout\Client as OutCardPayClient;
 use Yii;
 
 /**
  * Class DectaHelper
- *
- * @package app\services\payment\helpers
  */
 class DectaHelper
 {
@@ -58,9 +57,34 @@ class DectaHelper
         ];
         $paymentRequest->response_type = 'minimal';
         $paymentRequest->success_redirect = $paySchet->getOrderdoneUrl();
-        $paymentRequest->failure_redirect = $paySchet->getOrderdoneUrl();
+        $paymentRequest->failure_redirect = $paySchet->getOrderfailUrl();
 
         return $paymentRequest;
+    }
+
+    /**
+     * @param CreatePayForm $createPayForm
+     *
+     * @return CreatePaySecondStepRequest
+     * @throws CreatePayException
+     */
+    public static function handlePaySecondStepRequest(CreatePayForm $createPayForm): CreatePaySecondStepRequest
+    {
+        $paySchet = $createPayForm->getPaySchet();
+
+        if ($paySchet === null) {
+            throw new CreatePayException('Invalid paySchet');
+        }
+
+        $paymentSecondStepRequest = new CreatePaySecondStepRequest();
+
+        $paymentSecondStepRequest->cardholder_name = $createPayForm->CardHolder;
+        $paymentSecondStepRequest->card_number = $createPayForm->CardNumber;
+        $paymentSecondStepRequest->exp_month = (int) $createPayForm->CardMonth;
+        $paymentSecondStepRequest->exp_year = (int) $createPayForm->CardYear;
+        $paymentSecondStepRequest->csc = $createPayForm->CardCVC;
+
+        return $paymentSecondStepRequest;
     }
 
     /**
@@ -71,7 +95,7 @@ class DectaHelper
     public static function handleRefundPayRequest(RefundPayForm $refundPayForm): RefundPayRequest
     {
         $refundPayRequest = new RefundPayRequest();
-        $refundPayRequest->amount = PaymentHelper::convertToRub($refundPayForm->paySchet->getSummFull());
+        $refundPayRequest->amount = $refundPayForm->paySchet->getSummFull();
 
         return $refundPayRequest;
     }
@@ -104,24 +128,25 @@ class DectaHelper
     {
         $payResponse = new CreatePayResponse();
 
-        if ($response->isSuccess() === false) {
+        if (!$response->isSuccess()) {
             $errorMessage = self::getErrorMessage($response);
-            Yii::error('Decta create pay error: '.$errorMessage);
-            $payResponse->fill([
-                'status'  => BaseResponse::STATUS_ERROR,
-                'message' => BankAdapterResponseException::setErrorMsg($errorMessage),
-            ]);
+            Yii::error(DectaAdapter::ERROR_CREATE_PAY_MSG.': '.$errorMessage);
+            $payResponse->status = BaseResponse::STATUS_ERROR;
+            $payResponse->message = BankAdapterResponseException::setErrorMsg($errorMessage);
 
             return $payResponse;
         }
 
         $responseData = $response->json();
 
-        $payResponse->fill(array_merge($responseData, [
-            'status' => BaseResponse::STATUS_DONE,
-            'transac' => $responseData['id'],
-            'url' => $responseData['link'],
-        ]));
+        $result = [];
+        $result['status'] = BaseResponse::STATUS_DONE;
+        if (array_key_exists('threed_check_url', $responseData)) {
+            $result['isNeed3DSRedirect'] = true;
+            $result['url'] = $responseData['threed_check_url'];
+        }
+
+        $payResponse->fill(array_merge($responseData, $result));
 
         return $payResponse;
     }
@@ -135,9 +160,9 @@ class DectaHelper
     {
         $checkStatusPayResponse = new CheckStatusPayResponse();
 
-        if ($response->isSuccess() === false) {
+        if (!$response->isSuccess()) {
             $errorMessage = self::getErrorMessage($response);
-            Yii::error('Decta checkStatusPay error: '.$errorMessage);
+            Yii::error(DectaAdapter::ERROR_STATUS_MSG.': '.$errorMessage);
             $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
             $checkStatusPayResponse->message = BankAdapterResponseException::setErrorMsg($errorMessage);
 
@@ -180,11 +205,11 @@ class DectaHelper
     {
         $refundPayResponse = new RefundPayResponse();
 
-        if ($response->isSuccess() === false) {
+        if (!$response->isSuccess()) {
 
             $errorMessage = self::getErrorMessage($response);
 
-            Yii::error('Decta refund error: '.$errorMessage);
+            Yii::error(DectaAdapter::ERROR_REFUND_MSG.': '.$errorMessage);
 
             $refundPayResponse->status = BaseResponse::STATUS_ERROR;
             $refundPayResponse->message = BankAdapterResponseException::setErrorMsg($errorMessage);
@@ -207,11 +232,11 @@ class DectaHelper
     {
         $cancelPayResponse = new CancelPayResponse();
 
-        if ($response->isSuccess() === false) {
+        if (!$response->isSuccess()) {
 
             $errorMessage = self::getErrorMessage($response);
 
-            Yii::error('Decta cancel pay error: '.$errorMessage);
+            Yii::error(DectaAdapter::ERROR_CANCEL_MSG.': '.$errorMessage);
 
             $cancelPayResponse->status = BaseResponse::STATUS_ERROR;
             $cancelPayResponse->message = BankAdapterResponseException::setErrorMsg($errorMessage);
@@ -234,11 +259,11 @@ class DectaHelper
     {
         $outCardTransactionResponse = new OutCardTransactionResponse();
 
-        if ($response->isSuccess() === false) {
+        if (!$response->isSuccess()) {
 
             $errorMessage = self::getErrorMessage($response);
 
-            Yii::error('Decta refund error: '.$errorMessage);
+            Yii::error(DectaAdapter::ERROR_REFUND_MSG.': '.$errorMessage);
 
             $outCardTransactionResponse->status = BaseResponse::STATUS_ERROR;
             $outCardTransactionResponse->message = BankAdapterResponseException::setErrorMsg($errorMessage);

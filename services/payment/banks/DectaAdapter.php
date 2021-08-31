@@ -2,21 +2,25 @@
 
 namespace app\services\payment\banks;
 
+use app\Api\Client\AbstractClient;
 use app\Api\Client\Client;
 use app\Api\Client\ClientResponse;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
-use app\services\payment\banks\bank_adapter_responses\decta\CheckStatusPayResponse;
-use app\services\payment\banks\bank_adapter_responses\decta\CreatePayResponse;
+use app\services\payment\banks\bank_adapter_responses\CancelPayResponse;
+use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
+use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\decta\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\decta\OutCardTransactionResponse;
 use app\services\payment\banks\bank_adapter_responses\decta\RefundPayResponse;
 use app\services\payment\banks\exceptions\DectaApiUrlException;
 use app\services\payment\banks\exceptions\InvalidBankActionException;
 use app\services\payment\exceptions\BankAdapterResponseException;
+use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
+use app\services\payment\forms\CancelPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\OkPayForm;
@@ -32,12 +36,10 @@ use Yii;
 
 /**
  * Class DectaAdapter
- *
- * @package app\services\payment\banks
  */
 class DectaAdapter implements IBankAdapter
 {
-    const AFT_MIN_SUMM = 120000;
+    public const AFT_MIN_SUM = 120000;
 
     /** @var PartnerBankGate $gate */
     protected $gate;
@@ -55,9 +57,11 @@ class DectaAdapter implements IBankAdapter
     public const STATUS_REFUNDED = 'refunded';
     public const STATUS_PAID = 'paid';
     public const PRODUCT_TITLE = 'Payment';
-    public const ERROR_STATUS_MSG = 'Check status error'; //TODO: create global error handler
-    public const ERROR_REFUND_MSG = 'Refund pay error';
-    public const ERROR_CANCEL_MSG = 'Cancel pay error';
+    public const ERROR_CREATE_PAY_MSG = 'Decta create pay error'; //TODO: create global error handler
+    public const ERROR_STATUS_MSG = 'Decta check pay status error';
+    public const ERROR_REFUND_MSG = 'Decta refund pay error';
+    public const ERROR_CANCEL_MSG = 'Decta cancel pay error';
+    public const ERROR_OUT_CARD_PAY_MSG = 'Decta out card pay error';
     public const ERROR_METHOD_NOT_ALLOWED_MSG = 'Method not allowed';
     public const INVALID_DECTA_API_URL = 'Invalid Decta response API URL';
 
@@ -100,6 +104,7 @@ class DectaAdapter implements IBankAdapter
      *
      * @return CreatePayResponse
      * @throws BankAdapterResponseException
+     * @throws CreatePayException
      */
     public function createPay(CreatePayForm $createPayForm): CreatePayResponse
     {
@@ -107,18 +112,45 @@ class DectaAdapter implements IBankAdapter
 
         try {
             $response = $this->api->request(
-                Client::METHOD_POST,
+                AbstractClient::METHOD_POST,
                 $url,
                 DectaHelper::handlePayRequest($createPayForm)->toArray()
             );
+            if (!$response->isSuccess()) {
+                $this->handleError(new BankAdapterResponseException('response is not success'), self::ERROR_CREATE_PAY_MSG);
+            }
+            return $this->createPaySecondStep($createPayForm, $response);
         } catch (GuzzleException $e) {
-            Yii::error('Decta create pay error: '.$e->getMessage());
-            throw new BankAdapterResponseException(
-                BankAdapterResponseException::setErrorMsg($e->getMessage())
-            );
+            $this->handleError(new BankAdapterResponseException('response is not success'), self::ERROR_CREATE_PAY_MSG);
+        }
+    }
+
+    /**
+     * @param CreatePayForm $createPayForm
+     * @param ClientResponse $createPayResponse
+     *
+     * @return CreatePayResponse
+     * @throws CreatePayException
+     * @throws BankAdapterResponseException
+     */
+    public function createPaySecondStep(CreatePayForm $createPayForm, ClientResponse $createPayResponse): CreatePayResponse
+    {
+        $createPaySecondStepUrl = $this->getCreatePaySecondStepUrl($createPayResponse);
+
+        if ($createPaySecondStepUrl === null) {
+            $this->handleError(new BankAdapterResponseException('api_do_url not found'), self::ERROR_CREATE_PAY_MSG);
         }
 
-        return DectaHelper::handlePayResponse($response);
+        try {
+            $response = $this->api->request(
+                AbstractClient::METHOD_POST,
+                $createPaySecondStepUrl,
+                DectaHelper::handlePaySecondStepRequest($createPayForm)->toArray()
+            );
+            return DectaHelper::handlePayResponse($response);
+        } catch (GuzzleException $e) {
+            $this->handleError(new BankAdapterResponseException($e->getMessage()), self::ERROR_CREATE_PAY_MSG);
+        }
     }
 
     /**
@@ -134,16 +166,11 @@ class DectaAdapter implements IBankAdapter
         ]);
 
         try {
-            $response = $this->api->request(Client::METHOD_GET, $url, []);
-            $checkStatusPayResponse = DectaHelper::handleCheckStatusPayResponse($response);
+            $response = $this->api->request(AbstractClient::METHOD_GET, $url, []);
+            return DectaHelper::handleCheckStatusPayResponse($response);
         } catch (GuzzleException $e) {
-            Yii::error('Decta check status pay error: '.$e->getMessage());
-            throw new BankAdapterResponseException(
-                self::ERROR_STATUS_MSG.' : '.$e->getMessage()
-            );
+            $this->handleError(new BankAdapterResponseException($e->getMessage()), self::ERROR_STATUS_MSG);
         }
-
-        return $checkStatusPayResponse;
     }
 
     /**
@@ -151,7 +178,6 @@ class DectaAdapter implements IBankAdapter
      *
      * @return RefundPayResponse
      * @throws BankAdapterResponseException
-     * @throws GuzzleException
      */
     public function refundPay(RefundPayForm $refundPayForm): RefundPayResponse
     {
@@ -161,16 +187,14 @@ class DectaAdapter implements IBankAdapter
 
         try {
             $response = $this->api->request(
-                Client::METHOD_POST,
+                AbstractClient::METHOD_POST,
                 $url,
                 DectaHelper::handleRefundPayRequest($refundPayForm)->toArray()
             );
-        } catch (Exception $e) {
-            Yii::error('Decta refund pay error: '.$e->getMessage());
-            throw new BankAdapterResponseException(self::ERROR_REFUND_MSG.': '.$e->getMessage());
+            return DectaHelper::handleRefundPayResponse($response);
+        } catch (GuzzleException $e) {
+            $this->handleError(new BankAdapterResponseException($e->getMessage()), self::ERROR_REFUND_MSG);
         }
-
-        return DectaHelper::handleRefundPayResponse($response);
     }
 
     /**
@@ -186,29 +210,45 @@ class DectaAdapter implements IBankAdapter
 
         try {
             $response = $this->api->request(
-                Client::METHOD_POST,
+                AbstractClient::METHOD_POST,
                 $url,
                 DectaHelper::handleOutCardPayRequest($outCardPayForm)->toArray()
             );
+            return $this->handleOutCardPayResponse($response, $outCardPayForm);
         } catch (GuzzleException $e) {
-            Yii::error('Decta out card pay error: '.$e->getMessage());
-            throw new BankAdapterResponseException(
-                BankAdapterResponseException::setErrorMsg($e->getMessage())
-            );
+            $this->handleError(new BankAdapterResponseException($e->getMessage()), self::ERROR_OUT_CARD_PAY_MSG);
         }
+    }
 
-        return $this->handleOutCardPayResponse($response, $outCardPayForm);
+    /**
+     * @param CancelPayForm $cancelPayForm
+     *
+     * @return CancelPayResponse
+     * @throws BankAdapterResponseException
+     */
+    public function cancelPay(CancelPayForm $cancelPayForm): CancelPayResponse
+    {
+        $url = $this->getRequestUrl('cancel_pay', [
+            'payment_id' => $cancelPayForm->getPaySchet()->ExtBillNumber
+        ]);
+
+        try {
+            $response = $this->api->request(AbstractClient::METHOD_POST, $url, []);
+            return DectaHelper::handleCancelPayResponse($response);
+        } catch (GuzzleException $e) {
+            $this->handleError(new BankAdapterResponseException($e->getMessage()), self::ERROR_CANCEL_MSG);
+        }
     }
 
     /**
      * @param string $action
-     * @param array  $placeholders
+     * @param array $placeholders
      *
      * @return string
      */
     protected function getRequestUrl(string $action, array $placeholders = []): string
     {
-        if (array_key_exists($action, self::ACTIONS) === false) {
+        if (!array_key_exists($action, self::ACTIONS)) {
             throw new InvalidBankActionException(
                 'Invalid action. Allowed: '.implode(', ', array_keys(self::ACTIONS))
             );
@@ -216,7 +256,7 @@ class DectaAdapter implements IBankAdapter
 
         $action = self::ACTIONS[$action];
 
-        if (empty($placeholders) === false) {
+        if (!empty($placeholders)) {
 
             $placeholderKeys = array_keys($placeholders);
 
@@ -250,7 +290,7 @@ class DectaAdapter implements IBankAdapter
 
         if (!$response->isSuccess()) {
             $errorMessage = DectaHelper::getErrorMessage($response);
-            Yii::error('Decta payout error: '.$errorMessage);
+            Yii::error(self::ERROR_OUT_CARD_PAY_MSG.': '.$errorMessage);
             $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
             $outCardPayResponse->message = BankAdapterResponseException::setErrorMsg($errorMessage);
 
@@ -264,7 +304,7 @@ class DectaAdapter implements IBankAdapter
         $outCardPayResponse->status = BaseResponse::STATUS_DONE;
         $outCardPayResponse->data = $response->json();
         $outCardPayResponse->transaction_data =
-            $this->processOutCardTransaction($outCardPayResponse->api_do_url, $outCardPayForm)->fields();
+            $this->processOutCardTransaction($outCardPayResponse->api_do_url, $outCardPayForm)->toArray();
 
         return $outCardPayResponse;
     }
@@ -280,18 +320,38 @@ class DectaAdapter implements IBankAdapter
     {
         try {
             $response = $this->api->request(
-                Client::METHOD_POST,
+                AbstractClient::METHOD_POST,
                 $apiDoUrl,
                 DectaHelper::handleOutCardTransactionRequest($outCardPayForm)->toArray()
             );
+            return DectaHelper::handleOutCardTransactionResponse($response);
         } catch (GuzzleException $e) {
-            Yii::error('Decta create pay error: '.$e->getMessage());
-            throw new BankAdapterResponseException(
-                BankAdapterResponseException::setErrorMsg($e->getMessage())
-            );
+            $this->handleError(new BankAdapterResponseException($e->getMessage()), self::ERROR_OUT_CARD_PAY_MSG);
         }
+    }
 
-        return DectaHelper::handleOutCardTransactionResponse($response);
+    /**
+     * @param ClientResponse $createPayResponse
+     *
+     * @return string|null
+     */
+    protected function getCreatePaySecondStepUrl(ClientResponse $createPayResponse): ?string
+    {
+        return $createPayResponse->json('api_do_url');
+    }
+
+    /**
+     * @param Exception $e
+     * @param string $title
+     *
+     * @throws BankAdapterResponseException
+     */
+    protected function handleError(Exception $e, string $title = 'Unknown error'): void
+    {
+        Yii::error($title.': '.$e->getMessage());
+        throw new BankAdapterResponseException(
+            BankAdapterResponseException::setErrorMsg($e->getMessage())
+        );
     }
 
     /**
@@ -321,7 +381,7 @@ class DectaAdapter implements IBankAdapter
      */
     public function getAftMinSum(): int
     {
-        return self::AFT_MIN_SUMM;
+        return self::AFT_MIN_SUM;
     }
 
     /**
@@ -372,25 +432,5 @@ class DectaAdapter implements IBankAdapter
     private function throwGateException(): void
     {
         throw new GateException(self::ERROR_METHOD_NOT_ALLOWED_MSG);
-    }
-
-    /**
-     * @inheritDoc
-     * @throws BankAdapterResponseException|GuzzleException
-     */
-    public function cancelPay(CancelPayForm $cancelPayForm): CancelPayResponse
-    {
-        $url = $this->getRequestUrl('cancel_pay', [
-            'payment_id' => $cancelPayForm->paySchet->ExtBillNumber
-        ]);
-
-        try {
-            $response = $this->api->request(Client::METHOD_POST, $url, []);
-        } catch (Exception $e) {
-            Yii::error('Decta cancel pay error: '.$e->getMessage());
-            throw new BankAdapterResponseException(self::ERROR_CANCEL_MSG.': '.$e->getMessage());
-        }
-
-        return DectaHelper::handleCancelPayResponse($response);
     }
 }
