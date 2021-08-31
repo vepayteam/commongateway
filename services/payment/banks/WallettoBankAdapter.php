@@ -165,7 +165,7 @@ class WallettoBankAdapter implements IBankAdapter
             }
             $responseData = $response->json('orders');
             $checkStatusPayResponse->status = $this->convertStatus($responseData[0]['status']);
-            $checkStatusPayResponse->message = '';
+            $checkStatusPayResponse->message = $responseData[0]['failure_message'] ?? '';
         } catch (GuzzleException $e) {
             Yii::error(' Walletto checkStatusPay err:' . $e->getMessage());
             throw new BankAdapterResponseException(
