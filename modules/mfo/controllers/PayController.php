@@ -17,9 +17,11 @@ use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\MfoLkPayForm;
+use app\services\payment\forms\CreatePayPartsForm;
 use app\services\payment\models\PaySchet;
 use app\services\payment\payment_strategies\CreateFormMfoAftPartsStrategy;
 use app\services\payment\payment_strategies\CreateFormMfoEcomPartsStrategy;
+use app\services\payment\payment_strategies\CreatePayPartsStrategy;
 use app\services\payment\payment_strategies\IMfoStrategy;
 use app\services\payment\payment_strategies\mfo\MfoAutoPayStrategy;
 use app\services\payment\payment_strategies\mfo\MfoPayLkCreateStrategy;
@@ -171,27 +173,31 @@ class PayController extends Controller
         $mfoReq = new MfoReq();
         $mfoReq->LoadData(Yii::$app->request->getRawBody());
 
-        // TODO: refact
-        $kfPay = new KfPayParts();
-        $kfPay->scenario = KfPayParts::SCENARIO_FORM;
-        $kfPay->load($mfoReq->Req(), '');
-        if (!$kfPay->validate()) {
-            Yii::warning("pay/lk: " . $kfPay->GetError());
-            return ['status' => 0, 'message' => $kfPay->GetError()];
+        $createPayPartsForm = new CreatePayPartsForm();
+        $createPayPartsForm->partner = $mfoReq->getPartner();
+        $createPayPartsForm->load($mfoReq->Req(), '');
+        if(!$createPayPartsForm->validate()) {
+            Yii::error("pay/lk: " . $createPayPartsForm->GetError());
+            return ['status' => 0, 'message' => $createPayPartsForm->GetError()];
         }
+        Yii::warning('/pay/lk mfo=' . $mfoReq->mfo . " sum=" . $createPayPartsForm->amount . " extid=" . $createPayPartsForm->extid, 'mfo');
 
-        Yii::warning('/pay/lk mfo=' . $mfoReq->mfo . " sum=" . $kfPay->amount . " extid=" . $kfPay->extid, 'mfo');
-
-        $gate = $kfPay->IsAftGate($mfoReq->mfo) ? TCBank::$AFTGATE : TCBank::$ECOMGATE;
-
-        /** @var IMfoStrategy $mfoStrategy */
-        $mfoStrategy = null;
-        if ($kfPay->IsAftGate($mfoReq->mfo)) {
-            $mfoStrategy = new CreateFormMfoAftPartsStrategy($mfoReq);
-        } else {
-            $mfoStrategy = new CreateFormMfoEcomPartsStrategy($mfoReq);
+        $createPayPartsStrategy = new CreatePayPartsStrategy($createPayPartsForm);
+        try {
+            $paySchet = $createPayPartsStrategy->exec();
+            $urlForm = Yii::$app->params['domain'] . '/pay/form/' . $paySchet->ID;
+            return [
+                'status' => 1,
+                'message' => '',
+                'id' => $paySchet->ID,
+                'url' => $urlForm,
+            ];
+        } catch (CreatePayException |GateException $e) {
+            return [
+                'status' => 2,
+                'message' => $e->getMessage(),
+            ];
         }
-        return $mfoStrategy->exec();
     }
 
         /**

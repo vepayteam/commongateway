@@ -10,11 +10,11 @@ use yii\db\ActiveRecord;
  * Class PaySchetPart
  * @package app\models
  *
- * @param int $id
- * @param int $PayschetId
- * @param int $PartnerId
- * @param int $Amount
- * @param int $VyvodId
+ * @property int $id
+ * @property int $PayschetId
+ * @property int $PartnerId
+ * @property int $Amount
+ * @property int $VyvodId
  */
 class PayschetPart extends ActiveRecord
 {
