@@ -19,6 +19,7 @@ use app\services\PartnerService;
 use app\services\payment\models\PartnerBankGate;
 use Yii;
 use yii\base\Model;
+use yii\db\StaleObjectException;
 use yii\filters\AccessControl;
 use yii\helpers\Url;
 use yii\web\BadRequestHttpException;
@@ -610,6 +611,43 @@ class PartnerController extends Controller
             return $this->asJson(['status' => 2]);
         }
 
+    }
+
+    /**
+     * @return Response
+     * @throws BadRequestHttpException
+     * @throws ForbiddenHttpException
+     */
+    public function actionDeleteGate(): Response
+    {
+        if(!UserLk::IsAdmin(Yii::$app->user)) {
+            throw new ForbiddenHttpException();
+        }
+        if (!Yii::$app->request->isAjax) {
+            throw new BadRequestHttpException();
+        }
+
+        $post = Yii::$app->request->post();
+
+        /** @var PartnerBankGate $partnerBankGate */
+        $partnerBankGate = null;
+
+        if ($post['id']) {
+            $partnerBankGate = PartnerBankGate::findOne(['Id' => $post['id']]);
+        }
+
+        if ($partnerBankGate === null) {
+            throw new BadRequestHttpException('Invalid bank gate');
+        }
+
+        try {
+            $partnerBankGate->delete();
+            return $this->asJson(['status' => 1]);
+        } catch (StaleObjectException $e) {
+            return $this->asJson(['status' => 0, 'message' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            return $this->asJson(['status' => 0, 'message' => $e->getMessage()]);
+        }
     }
 
     /**

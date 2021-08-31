@@ -142,7 +142,7 @@ class CallbackController extends Controller
             $notificationPayId = Yii::$app->request->post('id', null);
             $notificationPay = NotificationPay::findOne(['ID' => $notificationPayId]);
 
-            if(!$notificationPay || !$IsAdmin && $notificationPay->paySchet->IdOrg != Yii::$app->user->id) {
+            if(!$notificationPay || !$IsAdmin && $notificationPay->paySchet->IdOrg != Yii::$app->user->getIdentity()->getPartner()) {
                 return ['status' => 0, 'message' => 'Ошибка запроса повтора операции'];
             } else {
                 $this->repeatIteration($notificationPay);
