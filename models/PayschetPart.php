@@ -10,7 +10,7 @@ use yii\db\ActiveRecord;
  * Class PaySchetPart
  * @package app\models
  *
- * @property int $id
+ * @property int $Id
  * @property int $PayschetId
  * @property int $PartnerId
  * @property int $Amount
