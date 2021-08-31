@@ -9,11 +9,18 @@ use app\models\bank\TcbGate;
 use app\models\partner\admin\VyvodParts;
 use app\models\payonline\CreatePay;
 use app\models\payonline\Partner;
+use app\models\payonline\PartnerBankRekviz;
 use app\models\payonline\Provparams;
 use app\models\payonline\Uslugatovar;
 use app\models\PayschetPart;
 use app\models\Payschets;
 use app\models\TU;
+use app\services\payment\banks\bank_adapter_responses\BaseResponse;
+use app\services\payment\banks\BankAdapterBuilder;
+use app\services\payment\exceptions\CreatePayException;
+use app\services\payment\forms\CreatePartsOutPayForm;
+use app\services\payment\forms\OutPayAccountForm;
+use app\services\payment\models\PaySchet;
 use Carbon\Carbon;
 use Yii;
 use yii\db\Query;
@@ -83,12 +90,12 @@ trait PayPartsTrait
                 $vyvodParts->Amount += $payschetPart->Amount;
             }
 
-            $usl = Uslugatovar::findOne([
+            $uslugatovar = Uslugatovar::findOne([
                 'IDPartner' => $senderPartner->ID,
                 'IsCustom' => TU::$VYVODPAYSPARTS,
             ]);
 
-            if(!$usl) {
+            if(!$uslugatovar) {
                 Yii::warning("VyvodParts: error mfo=" . $senderPartner->ID . " У получателя нет услуги перечисления разбивки ", 'pay-parts');
                 $transaction->rollBack();
                 return false;
@@ -101,77 +108,41 @@ trait PayPartsTrait
                 $recipientPartner->ID,
                 $dateFrom->locale('ru')->format('d-m-Y')
             );
-            $pay = new CreatePay();
-            $Provparams = new Provparams;
-            $Provparams->prov = $usl;
 
-            if(!$recipientPartner->partner_bank_rekviz) {
-                $transaction->rollBack();
-                throw new \Exception('У партнера-получателя нет реквизитов');
-            }
+            $bankAdapterBuilder = new BankAdapterBuilder();
+            $bankAdapterBuilder->build($senderPartner, $uslugatovar);
 
-            $Provparams->param = [
-                $recipientPartner->partner_bank_rekviz[0]->RaschShetPolushat,
-                $recipientPartner->partner_bank_rekviz[0]->BIKPoluchat,
-                $recipientPartner->partner_bank_rekviz[0]->NamePoluchat,
-                $recipientPartner->partner_bank_rekviz[0]->INNPolushat,
-                $recipientPartner->partner_bank_rekviz[0]->KPPPoluchat,
-                $descript,
-            ];
-            $Provparams->summ = $vyvodParts->Amount;
-            $Provparams->Usluga = $usl;
+            $bankAdapter = $bankAdapterBuilder->getBankAdapter();
+            $createPartsOutPayForm = new CreatePartsOutPayForm();
+            $createPartsOutPayForm->partnerBankGate = $bankAdapterBuilder->getPartnerBankGate();
+            $createPartsOutPayForm->uslugatovar = $uslugatovar;
+            $createPartsOutPayForm->amount = $vyvodParts->Amount;
+            $createPartsOutPayForm->partnerBankRekviz = $recipientPartner->partner_bank_rekviz[0];
 
-            $idpay = $pay->createPay($Provparams,0, 3, TCBank::$bank, $senderPartner->ID, 'vozparts '. $vyvodParts->Id, 0);
-            if (!$idpay) {
-                Yii::warning("VyvodParts: error mfo=" . $senderPartner->ID . " idpay=" . $idpay, 'pay-parts');
-                $transaction->rollBack();
-                return false;
-            }
+            $paySchet = $this->createPartsOutPay($createPartsOutPayForm);
 
-            $vyvodParts->PayschetId = $idpay['IdPay'];
-            $transactionOk &= $vyvodParts->save(false);
+            $outPayAccountForm = new OutPayAccountForm();
+            $outPayAccountForm->scenario = OutPayAccountForm::SCENARIO_UL;
+            $outPayAccountForm->paySchet = $paySchet;
+            $outPayAccountForm->partner = $senderPartner;
+            $outPayAccountForm->extid = '';
+            $outPayAccountForm->name = $recipientPartner->partner_bank_rekviz[0]->NamePoluchat;
+            $outPayAccountForm->account = $recipientPartner->partner_bank_rekviz[0]->RaschShetPolushat;
+            $outPayAccountForm->bic = $recipientPartner->partner_bank_rekviz[0]->BIKPoluchat;
+            $outPayAccountForm->descript = $descript;
+            $outPayAccountForm->amount = $vyvodParts->Amount;
 
-            Yii::warning("VyvodVoznag: mfo=" . $senderPartner->ID . " idpay=" . $idpay, 'pay-parts');
+            $transferToAccountResponse = $bankAdapter->transferToAccount($outPayAccountForm);
+            if($transferToAccountResponse->status == BaseResponse::STATUS_DONE) {
+                $paySchet->ExtBillNumber = $transferToAccountResponse->trans;
+                $paySchet->save(false);
 
-            $TcbGate = new TcbGate($senderPartner->ID,TCBank::$PARTSGATE);
-            $bank = new TCBank($TcbGate);
-            $ret = $bank->transferToAccount([
-                'IdPay' => $vyvodParts->PayschetId,
-                'account' => $recipientPartner->partner_bank_rekviz[0]->RaschShetPolushat,
-                'bic' => $recipientPartner->partner_bank_rekviz[0]->BIKPoluchat,
-                'summ' => $vyvodParts->Amount,
-                'name' => $recipientPartner->partner_bank_rekviz[0]->NamePoluchat,
-                'inn' => $recipientPartner->partner_bank_rekviz[0]->INNPolushat,
-                'descript' => $descript
-            ]);
-
-            if ($ret && $ret['status'] == 1) {
-                //сохранение номера транзакции
-                $payschets = new Payschets();
-                $payschets->SetBankTransact([
-                    'idpay' => $vyvodParts->PayschetId,
-                    'trx_id' => $ret['transac'],
-                    'url' => ''
-                ]);
-
-                Yii::warning("VyvodParts: mfo=" . $senderPartner->ID . ", transac=" . $ret['transac'], 'pay-parts');
-
-                $payschets->confirmPay([
-                    'idpay' => $vyvodParts->PayschetId,
-                    'result_code' => 1,
-                    'trx_id' => $ret['transac'],
-                    'ApprovalCode' => '',
-                    'RRN' => '',
-                    'message' => ''
-                ]);
-
+                $vyvodParts->PayschetId = $paySchet->ID;
                 $vyvodParts->Status = VyvodParts::STATUS_COMPLETED;
-                $transactionOk &= $vyvodParts->save(false);
             } else {
-                //не вывелось
                 $vyvodParts->Status = VyvodParts::STATUS_ERROR;
-                $transactionOk &= $vyvodParts->save(false);
             }
+            $vyvodParts->save();
 
             /** @var PayschetPart $row */
             foreach ($data as $payschetPart) {
@@ -184,7 +155,6 @@ trait PayPartsTrait
             } else {
                 $transaction->rollBack();
             }
-
         } catch (\Exception $e) {
             $transaction->rollBack();
             throw $e;
@@ -250,6 +220,45 @@ trait PayPartsTrait
 
         $result = Partner::find()->where(['in', 'ID', $partnerRecipientIds])->all();
         return $result;
+    }
+
+    /**
+     * @param CreatePartsOutPayForm $createPartsOutPayForm
+     * @return PaySchet
+     * @throws CreatePayException
+     */
+    protected function createPartsOutPay(CreatePartsOutPayForm $createPartsOutPayForm)
+    {
+        $paySchet = new PaySchet();
+
+        $paySchet->IdUsluga       = $createPartsOutPayForm->uslugatovar->ID;
+        $paySchet->IdUser         = 0;
+        $paySchet->SummPay        = $createPartsOutPayForm->amount;
+        $paySchet->UserClickPay   = 0;
+        $paySchet->DateCreate     = time();
+        $paySchet->Status         = 0;
+        $paySchet->DateOplat      = 0;
+        $paySchet->DateLastUpdate = time();
+        $paySchet->PayType        = 0;
+        $paySchet->TimeElapsed    = 86400;
+        $paySchet->ExtKeyAcces    = 0;
+        $paySchet->CountSendOK    = 0;
+        $paySchet->Period         = 0;
+
+        $paySchet->Schetcheks     = '';
+        $paySchet->IdAgent        = 0;
+        $paySchet->IsAutoPay      = 0;
+        $paySchet->AutoPayIdGate  = 0;
+        $paySchet->TypeWidget     = 0;
+        $paySchet->Bank           = $createPartsOutPayForm->partnerBankGate->BankId;
+        $paySchet->IdOrg          = $createPartsOutPayForm->partnerBankGate->PartnerId;
+        $paySchet->sms_accept     = 1;
+
+        if(!$paySchet->save()) {
+            throw new CreatePayException('Не удалось создать счет');
+        }
+
+        return $paySchet;
     }
 
 }
