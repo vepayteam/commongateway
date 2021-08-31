@@ -3,6 +3,7 @@
 namespace app\services\payment\banks;
 
 use app\Api\Client\Client;
+use app\Api\Client\ClientResponse;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
@@ -27,6 +28,7 @@ use Carbon\Carbon;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
 use Yii;
+use yii\helpers\Json;
 
 class WallettoBankAdapter implements IBankAdapter
 {
@@ -50,6 +52,7 @@ class WallettoBankAdapter implements IBankAdapter
     private const STATUS_REFUNDED = 'refunded';
     private const STATUS_AUTHORIZED = 'authorized';
     private const STATUS_REVERSED = 'reversed';
+
     public const ERROR_STATUS_MSG = 'Ошибка проверки статуса'; //TODO: create global error handler
 
     public const BANK_TIMEZONE = 'Europe/Vilnius';
@@ -118,14 +121,14 @@ class WallettoBankAdapter implements IBankAdapter
         } catch (GuzzleException $e) {
             Yii::error('Walletto payInCreate err: ' . $e->getMessage());
             throw new CreatePayException(
-                BankAdapterResponseException::REQUEST_ERROR_MSG . ' : ' .  $e->getMessage()
+                BankAdapterResponseException::REQUEST_ERROR_MSG . ' : ' . $e->getMessage()
             );
         }
         if (!$response->isSuccess()) {
-            Yii::error('Walletto payInCreate err: ' . $response->json('failure_message'));
-            $errorMessage = $response->json('failure_message') ?? '';
+            $failureMessage = self::getFailureMessage($response);
+            Yii::error('Walletto payInCreate err: ' . $failureMessage);
             $createPayResponse->status = BaseResponse::STATUS_ERROR;
-            $createPayResponse->message = BankAdapterResponseException::setErrorMsg($errorMessage);
+            $createPayResponse->message = BankAdapterResponseException::setErrorMsg($failureMessage);
             return $createPayResponse;
         }
         $responseData = $response->json('orders')[0];
@@ -154,10 +157,10 @@ class WallettoBankAdapter implements IBankAdapter
                 []
             );
             if (!$response->isSuccess()) {
-                Yii::error('Walletto checkStatusPay err: ' . $response->json('failure_message'));
-                $errorMessage = $response->json('failure_message') ?? self::ERROR_STATUS_MSG;
+                $failureMessage = self::getFailureMessage($response);
+                Yii::error('Walletto checkStatusPay err: ' . $failureMessage);
                 $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
-                $checkStatusPayResponse->message = BankAdapterResponseException::setErrorMsg($errorMessage);
+                $checkStatusPayResponse->message = BankAdapterResponseException::setErrorMsg($failureMessage);
                 return $checkStatusPayResponse;
             }
             $responseData = $response->json('orders');
@@ -182,12 +185,12 @@ class WallettoBankAdapter implements IBankAdapter
         $refundPayResponse = new RefundPayResponse();
 
         $paySchet = $refundPayForm->paySchet;
-        if($paySchet->Status != PaySchet::STATUS_DONE) {
+        if ($paySchet->Status != PaySchet::STATUS_DONE) {
             throw new RefundPayException('Невозможно отменить незавершенный платеж');
         }
 
         $uri = '/orders/' . $paySchet->ExtBillNumber . '/cancel';
-        if($paySchet->DateCreate < Carbon::now()->startOfDay()->timestamp) {
+        if ($paySchet->DateCreate < Carbon::now()->startOfDay()->timestamp) {
             $uri = '/orders/' . $paySchet->ExtBillNumber . '/refund';
         }
 
@@ -200,14 +203,13 @@ class WallettoBankAdapter implements IBankAdapter
                 ]
             );
             if (!$response->isSuccess()) {
-                $errorMessage = $response->json('failure_message') ?? self::ERROR_STATUS_MSG;
                 $refundPayResponse->status = BaseResponse::STATUS_ERROR;
-                $refundPayResponse->message = BankAdapterResponseException::setErrorMsg($errorMessage);
+                $refundPayResponse->message = BankAdapterResponseException::setErrorMsg(self::getFailureMessage($response));
                 return $refundPayResponse;
             }
             $responseData = $response->json('orders');
             $requestStatus = $this->convertStatus($responseData[0]['status']);
-            if($requestStatus == BaseResponse::STATUS_CANCEL) {
+            if ($requestStatus == BaseResponse::STATUS_CANCEL) {
                 $refundPayResponse->status = BaseResponse::STATUS_DONE;
             } else {
                 $refundPayResponse->status = $this->convertStatus($responseData[0]['status']);
@@ -315,5 +317,43 @@ class WallettoBankAdapter implements IBankAdapter
         $currencyExchangeRatesResponse->status = BaseResponse::STATUS_DONE;
         $currencyExchangeRatesResponse->exchangeRates = $response->json('exchange_rates');
         return $currencyExchangeRatesResponse;
+    }
+
+    private static function getFailureMessage(ClientResponse $clientResponse): string
+    {
+        $json = $clientResponse->json();
+
+        $failureMessage = $json['failure_message'] ?? null;
+        if ($failureMessage) {
+            return $failureMessage;
+        }
+
+        $orders = $json['orders'] ?? null;
+        if ($orders && is_array($orders)) {
+            return self::getOrdersFailureMessages($orders);
+        }
+
+        Yii::warning('WallettoBankAdapter failure message not found: ' . Json::encode($json));
+
+        return self::ERROR_STATUS_MSG;
+    }
+
+    private static function getOrdersFailureMessages(array $orders): string
+    {
+        $messages = [];
+        foreach ($orders as $order) {
+            $msg = $order['failure_message'] ?? null;
+            if ($msg) {
+                $messages[] = $msg;
+            }
+        }
+
+        if (count($messages) === 0) {
+            Yii::warning('WallettoBankAdapter orders failure messages not found: ' . Json::encode($orders));
+
+            return self::ERROR_STATUS_MSG;
+        }
+
+        return join(PHP_EOL, $messages);
     }
 }
