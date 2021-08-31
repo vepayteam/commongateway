@@ -12,6 +12,7 @@ class CreatePayPartsForm extends MerchantPayForm
     use ValidateFormTrait;
 
     public $parts = [];
+    public $currency = 'RUB';
 
     public function rules(): array
     {
