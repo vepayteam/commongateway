@@ -75,10 +75,13 @@ return [
             'superuserPassword' => '',
             'canRegUserRole' => 'php_account_admin',
         ],
-        'ident' => [
-            'runaDomain' => 'https://ecommerce.runabank.ru/pc4x4',
-            'runaLogin' => '784',
-            'runaMode' => 'verify_docs'
+        'payments' => [
+            'BRS' => [
+                'url' => 'https://securepay.rsb.ru:9443',
+                'url_3ds' => 'https://securepay.rsb.ru/ecomm2/ClientHandler',
+                'url_xml' => 'https://194.67.29.215:8443',
+                'url_b2c' => 'https://212.46.217.150:7603',
+            ],
         ],
     ],
     'login_user_token_valid_time' => 60*60,

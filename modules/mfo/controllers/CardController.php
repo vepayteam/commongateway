@@ -9,7 +9,6 @@ use app\models\bank\TcbGate;
 use app\models\kfapi\KfCard;
 use app\models\kfapi\KfPay;
 use app\models\mfo\MfoReq;
-use app\models\payonline\CreatePay;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\CardRegForm;
@@ -152,7 +151,7 @@ class CardController extends Controller
                 'status' => 1,
                 'message' => '',
                 'id' => $paySchet->ID,
-                'url' => $paySchet->getFromUrl(),
+                'url' => $paySchet->getFromUrl(!empty($cardRegForm->card) ? $cardRegForm->card : null),
             ];
         } catch (CreatePayException $e) {
             $mutex->release($cardRegForm->getMutexKey());

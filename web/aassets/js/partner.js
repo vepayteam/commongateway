@@ -111,6 +111,10 @@
                     $('#statlistform').closest('.ibox-content').toggleClass('sk-loading');
                     if (data.status == 1) {
                         $('#statlistresult').html(data.data);
+                        $('.pagination a').each(function(){
+                            $(this).removeAttr('href');
+                            $(this).attr('onclick', 'lk.statlistreq('+(parseInt($(this).attr('data-page'))+1)+');');
+                        });
                     } else {
                         $('#statlistresult').html("<p class='text-center'>" + data.message + "</p>");
                     }
@@ -155,7 +159,7 @@
             });
 
             $('#statlistform').on('submit', function () {
-                lk.statlistreq(0);
+                lk.statlistreq(1);
                 return false;
             });
 
@@ -786,11 +790,7 @@
             $('#recurrentpaytabs a').on('click', function () {
                 let id = $(this).attr('href');
                 $('input[name="graphtype"]').val(id[5]);
-                if (id == '#auto') {
-                    lk.recurrentcardformload();
-                } else {
-                    lk.statrekurrentload();
-                }
+                lk.recurrentcardformload();
             });
         },
 
@@ -816,44 +816,6 @@
                     }
                 },
                 error: function (data) {
-                    $('#recurrentcardform').closest('.ibox-content').toggleClass('sk-loading');
-                    $('#recurrentcardresult').html("Ошибка запроса");
-                }
-            });
-        },
-
-        statrekurrentload: function () {
-            if (linklink) {
-                linklink.abort();
-            }
-            linklink = $.ajax({
-                type: "POST",
-                url: '/partner/stat/recurrentpaysdata',
-                data: $('#recurrentcardform').serialize(),
-                beforeSend: function () {
-                    $("#recurrentcardresult").empty();
-                    $('#recurrentcardresult').parent().attr('style', 'background-color: #fff;')
-                    $('#recurrentcardform').closest('.ibox-content').toggleClass('sk-loading');
-                },
-                success: function (data) {
-                    $('#recurrentcardform').closest('.ibox-content').toggleClass('sk-loading');
-                    if (data.status == 1) {
-                        Morris.Line({
-                            element: 'recurrentcardresult',
-                            data: data.data,
-                            xkey: 'x',
-                            ykeys: ['a'],
-                            labels: [data.label],
-                            lineColors: ['#f46f2a'],
-                            hideHover: 'auto',
-                            parseTime: false,
-                            resize: true
-                        });
-                    } else {
-                        $('#recurrentcardresult').html(data.message);
-                    }
-                },
-                error: function () {
                     $('#recurrentcardform').closest('.ibox-content').toggleClass('sk-loading');
                     $('#recurrentcardresult').html("Ошибка запроса");
                 }
@@ -1138,34 +1100,10 @@
 
         notiflist: function (page) {
             $('[name="datefrom"],[name="dateto"]').datetimepicker({
-                format: 'DD.MM.YYYY'
+                format: 'DD.MM.YYYY HH:mm'
             });
 
             page = page || $('#notiflistform').find('[name="callback-page"]').val();
-
-            if (linklink) {
-                linklink.abort();
-            }
-            linklink = $.ajax({
-                type: "POST",
-                url: '/partner/callback/listitems?page='+page,
-                data: $('#notiflistform').serialize(),
-                beforeSend: function () {
-                    $('#notiflistform').closest('.ibox-content').toggleClass('sk-loading');
-                },
-                success: function (data) {
-                    $('#notiflistform').closest('.ibox-content').toggleClass('sk-loading');
-                    if (data.status == 1) {
-                        $('#notiflistresult').html(data.data);
-                    } else {
-                        $('#notiflistresult').html("<p class='text-center'>" + data.message + "</p>");
-                    }
-                },
-                error: function () {
-                    $('#notiflistform').closest('.ibox-content').toggleClass('sk-loading');
-                    $('#notiflistresult').html("<p class='text-center'>Ошибка</p>");
-                }
-            });
 
             $('#notiflistform').on('submit', function () {
                 if (linklink) {
@@ -1203,6 +1141,36 @@
                     type: "POST",
                     url: '/partner/callback/repeat',
                     data: {'id': idnotif},
+                    beforeSend: function () {
+                        $('#notiflistform').closest('.ibox-content').toggleClass('sk-loading');
+                    },
+                    success: function (data) {
+                        $('#notiflistform').closest('.ibox-content').toggleClass('sk-loading');
+                        if (data.status == 1) {
+                            toastr.success("OK", data.message);
+                            $('#notiflistform').trigger('submit');
+                        } else {
+                            toastr.error("Ошибка", data.message);
+                        }
+                    },
+                    error: function () {
+                        $('#notiflistform').closest('.ibox-content').toggleClass('sk-loading');
+                        toastr.error("Ошибка запроса", "Ошибка");
+                    }
+                });
+                return false;
+            });
+
+            $('#notiflistresult').on('click', '[data-action="repeatnotif-batch"]', function () {
+
+                if (linklink) {
+                    linklink.abort();
+                }
+
+                linklink = $.ajax({
+                    type: "POST",
+                    url: '/partner/callback/repeatbatch',
+                    data: $('#notiflistform').serialize(),
                     beforeSend: function () {
                         $('#notiflistform').closest('.ibox-content').toggleClass('sk-loading');
                     },
@@ -1818,9 +1786,53 @@
                 $form.find('input[name=AdvParam_2]').val(gate.AdvParam_2);
                 $form.find('input[name=AdvParam_3]').val(gate.AdvParam_3);
                 $form.find('input[name=AdvParam_4]').val(gate.AdvParam_4);
+                $form.find('select[name=CurrencyId]').val(gate.CurrencyId);
+
+
+                $form.find('input[name=UseGateCompensation]').attr('checked', gate.UseGateCompensation === 1);
+
+                // $form.find('input[name=UseGateCompensation]').val(gate.UseGateCompensation);
+                $form.find('select[name=FeeCurrencyId]').val(gate.FeeCurrencyId).change();
+                $form.find('select[name=MinimalFeeCurrencyId]').val(gate.MinimalFeeCurrencyId).change();
+
+                $form.find('input[name=ClientCommission]').val(gate.ClientCommission);
+                $form.find('input[name=ClientFee]').val(gate.ClientFee);
+                $form.find('input[name=ClientMinimalFee]').val(gate.ClientMinimalFee);
+
+                $form.find('input[name=PartnerCommission]').val(gate.PartnerCommission);
+                $form.find('input[name=PartnerFee]').val(gate.PartnerFee);
+                $form.find('input[name=PartnerMinimalFee]').val(gate.PartnerMinimalFee);
+
+                $form.find('input[name=BankCommission]').val(gate.BankCommission);
+                $form.find('input[name=BankFee]').val(gate.BankFee);
+                $form.find('input[name=BankMinimalFee]').val(gate.BankMinimalFee);
 
                 $('#partner-edit__bank-gates-edit-modal').modal('show');
                 return false;
+            })
+
+            $('.partner-edit__bank-gates-table__delete-button').on('click', function(e) {
+                if(confirm('Вы действительно хотите удалить этот элемент?')) {
+                    let th = $(this);
+                    $.ajax({
+                        url: '/partner/partner/delete-gate',
+                        method: 'POST',
+                        data: {
+                            id: th.attr('data-id')
+                        },
+                        success: function (data) {
+                            if (data.status == 0) {
+                                toastr.error(data.message, "Ошибка");
+                            } else {
+                                th.closest('tr').remove();
+                                toastr.success("OK", "Шлюз удалён");
+                            }
+                        },
+                        error: function () {
+                            toastr.error("Ошибка");
+                        }
+                    });
+                }
             })
 
             $('#partner-edit__bank-gates-edit-modal__save-button').on('click', function(e) {

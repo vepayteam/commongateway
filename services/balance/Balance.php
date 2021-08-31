@@ -77,7 +77,7 @@ class Balance extends Model
                 Yii::warning('Balance service: ' . $exception->getMessage() . ' - PartnerId: ' . $this->partner->ID);
                 continue;
             }
-            if (isset($getBalanceResponse) && !empty($getBalanceResponse->amount)) {
+            if (isset($getBalanceResponse) && is_float($getBalanceResponse->amount)) {
                 $bankResponse[] = $getBalanceResponse;
             }
         }
@@ -92,7 +92,6 @@ class Balance extends Model
     /**
      * @param $bank
      * @return IBankAdapter
-     * @throws GateException
      */
     protected function buildAdapter($bank): IBankAdapter
     {

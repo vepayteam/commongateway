@@ -9,11 +9,12 @@ Easy working cURL extension for Yii2, including RESTful support:
  - PUT
  - PATCH
  - DELETE
+ - OPTIONS
 
 Requirements
 ------------
 - Yii2
-- PHP >=7.1.3
+- PHP >=7.0
 - ext-curl, ext-json, and php-curl installed
 
 
@@ -177,6 +178,9 @@ Testing
 
 - Run codeception tests with `vendor/bin/codecept run` in repository root dir. 
   On windows run `vendor\bin\codecept.bat run`. 
+
+##### Release 1.0.1 - Changelog
+- Add OPTIONS request
 
 ##### Release 1.0 - Changelog
 - Official stable release

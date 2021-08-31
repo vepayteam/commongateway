@@ -74,10 +74,13 @@ return [
             'superuserPassword' => 'Default12345',
             'canRegUserRole' => 'php_account_admin',
         ],
-        'ident' => [
-            'runaDomain' => 'https://ecommerce.runabank.ru/pc4x4_test',
-            'runaLogin' => '784',
-            'runaMode' => 'verify_docs'
+        'payments' => [
+            'BRS' => [
+                'url' => getenv('PARAMS_PAYMENTS_BRS_URL', true),
+                'url_3ds' => getenv('PARAMS_PAYMENTS_BRS_URL_3DS', true),
+                'url_xml' => getenv('PARAMS_PAYMENTS_BRS_URL_XML', true),
+                'url_b2c' => getenv('PARAMS_PAYMENTS_BRS_URL_B2C', true),
+            ],
         ],
     ],
     'login_user_token_valid_time' => 60*60,

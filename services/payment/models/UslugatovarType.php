@@ -37,6 +37,13 @@ class UslugatovarType extends \yii\db\ActiveRecord
     const AVTOPLATECOMPARTS = 116; //автоплатеж еком с разбивкой
     const VYVODPAYSPARTS = 119; //перечисление по разбивке
 
+    /** H2H Погашение займа AFT  */
+    public const H2H_POGASH_AFT = 200;
+    /** H2H погашение займа ECOM */
+    public const H2H_POGASH_ECOM = 201;
+    /** H2H оплата товаров и услуг */
+    public const H2H_ECOM = 202;
+
     const OUT_TYPES = [
         self::TOSCHET,
         self::TOCARD,
@@ -63,7 +70,7 @@ class UslugatovarType extends \yii\db\ActiveRecord
             self::VYVODPAYS => 'Вывод средств',
             self::REVERSCOMIS => 'Возмещение комисии',
             self::PEREVPAYS => 'Внутренний перевод между счетами',
-            self::IDENT => 'Упращенная идентификация пользователей',
+            self::IDENT => 'Упрощенная идентификация пользователей',
 
             self::POGASHATFPARTS => 'Погашение займа AFT с разбивкой',
             self::POGASHECOMPARTS => 'Погашение займа ECOM с разбивкой',
@@ -72,6 +79,10 @@ class UslugatovarType extends \yii\db\ActiveRecord
             self::ECOMPARTS => 'Оплата товара/услуги с разбивкой',
             self::JKHPARTS => 'Оплата ЖКХ с разбивкой',
             self::VYVODPAYSPARTS => 'Перечисление по разбивке',
+
+            self::H2H_POGASH_AFT => 'H2H Погашение займа AFT',
+            self::H2H_POGASH_ECOM => 'H2H погашение займа ECOM',
+            self::H2H_ECOM => 'H2H оплата товаров и услуг',
         ];
     }
 

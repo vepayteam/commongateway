@@ -4,17 +4,10 @@ namespace app\modules\partner\controllers;
 
 use app\models\api\Reguser;
 use app\models\bank\Banks;
-use app\models\bank\TCBank;
-use app\models\bank\TcbGate;
-use app\models\crypt\UserKeyLk;
-use app\models\mfo\MfoReq;
 use app\models\mfo\statements\ReceiveStatemets;
-use app\models\Options;
 use app\models\partner\admin\PerevodToPartner;
 use app\models\partner\admin\SystemVoznagList;
-use app\models\partner\admin\Uslugi;
 use app\models\partner\admin\VoznagStat;
-use app\models\partner\admin\VoznagStatNew;
 use app\models\partner\admin\VyvodList;
 use app\models\partner\admin\VyvodVoznag;
 use app\models\partner\stat\StatFilter;
@@ -22,14 +15,15 @@ use app\models\partner\UserLk;
 use app\models\payonline\BalancePartner;
 use app\models\payonline\Cards;
 use app\models\payonline\Partner;
-use app\models\payonline\Uslugatovar;
 use app\models\SendEmail;
 use app\models\sms\api\SingleMainSms;
 use app\models\sms\tables\AccessSms;
+use app\services\files\FileService;
 use app\services\payment\forms\VoznagStatForm;
 use toriphes\console\Runner;
 use Yii;
 use yii\base\DynamicModel;
+use yii\data\ArrayDataProvider;
 use yii\db\Exception;
 use yii\db\Expression;
 use yii\db\Query;
@@ -39,11 +33,8 @@ use yii\helpers\Json;
 use yii\helpers\Url;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
-use yii\web\HttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
-use yii\data\ArrayDataProvider;
-use app\services\files\FileService;
 
 class AdminController extends Controller
 {
@@ -219,7 +210,7 @@ class AdminController extends Controller
             $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
             switch (Yii::$app->request->post('TypeOtch')) {
                 case VoznagStatForm::TYPE_REPORT:
-                    $payShetList = new VoznagStatNew();
+                    $payShetList = new VoznagStat();
                     //@todo DRY!!!
                     if (!$payShetList->load($post, '') || !$payShetList->validate()) {
                         return ['status' => 0, 'message' => 'Ошибка запроса'];
@@ -251,9 +242,9 @@ class AdminController extends Controller
             }
 
             if (Yii::$app->request->post('TypeOtch') == VoznagStatForm::TYPE_REPORT) {
-                $payShetList->TypeUslug = VoznagStatNew::TYPE_SERVICE_POGAS;
+                $payShetList->TypeUslug = VoznagStat::TYPE_SERVICE_POGAS;
                 $dataIn = $payShetList->GetOtchMerchant($IsAdmin);
-                $payShetList->TypeUslug = VoznagStatNew::TYPE_SERVICE_VYDACHA;
+                $payShetList->TypeUslug = VoznagStat::TYPE_SERVICE_VYDACHA;
                 $dataOut = $payShetList->GetOtchMerchant($IsAdmin);
                 $view = '_comisotchetdata';
                 $params = [
@@ -312,7 +303,7 @@ class AdminController extends Controller
             $recviz = $Partner->getPartner_bank_rekviz()->one();
 
             return ['status' => 1, 'data' => [
-                'balance' => ($Partner->IsCommonSchetVydacha ? $Partner->BalanceOut/100.0 : $Partner->BalanceIn/100.0),
+                'balance' => ($Partner->IsCommonSchetVydacha ? $Partner->BalanceOut / 100.0 : $Partner->BalanceIn / 100.0),
                 'schettcb' => ($Partner->IsCommonSchetVydacha ? '' : (string)$Partner->SchetTcb),
                 'schetfrom' => ($Partner->IsCommonSchetVydacha ? (string)$Partner->SchetTcb : (string)$Partner->SchetTcbTransit),
                 'urlico' => (string)$Partner->UrLico,
@@ -366,34 +357,7 @@ class AdminController extends Controller
         if ($id == 0) {
             FileService::send(Yii::$app->basePath . "/runtime/logs/app.log");
         } else {
-            FileService::send(Yii::$app->basePath . "/runtime/logs/app.log.".intval($id));
-        }
-    }
-
-    public function actionTestmfolog($id = 0)
-    {
-        if ($id == 0) {
-            FileService::send(Yii::$app->basePath . "/runtime/logs/mfo.log");
-        } else {
-            FileService::send(Yii::$app->basePath . "/runtime/logs/mfo.log.".intval($id));
-        }
-    }
-
-    public function actionTestmerchantlog($id = 0)
-    {
-        if ($id == 0) {
-            FileService::send(Yii::$app->basePath . "/runtime/logs/console/merchant.log");
-        } else {
-            FileService::send(Yii::$app->basePath . "/runtime/logs/console/merchant.log.".intval($id));
-        }
-    }
-
-    public function actionTestrsbcronlog($id = 0)
-    {
-        if ($id == 0) {
-            FileService::send(Yii::$app->basePath . "/runtime/logs/console/rsbcron.log");
-        } else {
-            FileService::send(Yii::$app->basePath . "/runtime/logs/console/rsbcron.log.".intval($id));
+            FileService::send(Yii::$app->basePath . "/runtime/logs/app.log." . intval($id));
         }
     }
 
@@ -401,7 +365,7 @@ class AdminController extends Controller
     {
         $mfo = Yii::$app->request->get('mfo');
         $reguser = new Reguser();
-        $user = $reguser->findUser('0', $mfo.'-'.time(), md5($mfo.'-'.time()), $mfo, false);
+        $user = $reguser->findUser('0', $mfo . '-' . time(), md5($mfo . '-' . time()), $mfo, false);
 
         Yii::$app->db->createCommand()->insert('cards', [
             'IdUser' => $user->ID,
@@ -416,7 +380,7 @@ class AdminController extends Controller
             'IdBank' => Yii::$app->request->get('bank')
         ])->execute();
 
-        echo "card=".Yii::$app->db->lastInsertID;
+        echo "card=" . Yii::$app->db->lastInsertID;
 
         $card = Cards::findOne(['ID' => Yii::$app->db->lastInsertID]);
         print_r($card->toArray());
@@ -581,7 +545,7 @@ class AdminController extends Controller
 
     public function actionTestmainsms()
     {
-        $access = AccessSms::find()->where(['partner_id' => 5, 'description'=>'MainSms.ru'])->one();
+        $access = AccessSms::find()->where(['partner_id' => 5, 'description' => 'MainSms.ru'])->one();
         if (!$access) {
             return "0";
         }
@@ -709,7 +673,7 @@ class AdminController extends Controller
         foreach ($res as $row) {
             $ret .= "<tr>";
             foreach ($row as $k => $r) {
-                $ret .= "<td>".$k."<td>";
+                $ret .= "<td>" . $k . "<td>";
             }
             $ret .= "</tr>";
             break;
@@ -717,7 +681,7 @@ class AdminController extends Controller
         foreach ($res as $row) {
             $ret .= "<tr>";
             foreach ($row as $r) {
-                $ret .= "<td>".$r."<td>";
+                $ret .= "<td>" . $r . "<td>";
             }
             $ret .= "</tr>";
         }
@@ -769,15 +733,15 @@ class AdminController extends Controller
         $list = ArrayHelper::index($list, 'id');
 
 
-        $appendListWithInternalData = function ($balanceType,  &$list) use ($id, $dateFrom, $dateTo) {
+        $appendListWithInternalData = function ($balanceType, &$list) use ($id, $dateFrom, $dateTo) {
             $data = (new Query())
                 ->select('orders.*, sa.BnkId, sa.TypeAccount')
-                ->from($balanceType .' orders')
+                ->from($balanceType . ' orders')
                 ->leftJoin('statements_account sa', 'orders.IdStatm = sa.ID')
                 ->where(['orders.IdPartner' => $id])
                 ->andWhere('orders.DateOp BETWEEN :DATEFROM AND :DATETO', [
-                    ':DATEFROM' => $dateFrom,
-                    ':DATETO' => $dateTo]
+                        ':DATEFROM' => $dateFrom,
+                        ':DATETO' => $dateTo]
                 )->indexBy('BnkId')
                 ->all();
 
@@ -813,45 +777,6 @@ class AdminController extends Controller
         $this->syncBalanceInternal($partner, BalancePartner::IN);
         $this->syncBalanceInternal($partner, BalancePartner::OUT);
     }
-
-    public function actionExec()
-    {
-        if(Yii::$app->request->isPost) {
-            $post = Yii::$app->request->post();
-            $oldApp = \Yii::$app;
-            $config = require(Yii::getAlias('@app/config/console.php'));
-            new \yii\console\Application($config);
-
-            try {
-                \Yii::$app->runAction($post['name'], [$post['param1'], $post['param2'], $post['param3']]);
-            } catch (\Exception $e) {
-                echo 'Ошибка выполнения';
-            }
-            \Yii::$app = $oldApp;
-        } else {
-            return $this->render('exec');
-        }
-    }
-
-    public function actionExecRedis()
-    {
-        if(Yii::$app->request->isPost) {
-            $post = Yii::$app->request->post();
-            try {
-                $redis = Yii::$app->redis;
-                $params = explode("\n", $post['params']);
-                $result = $redis->executeCommand($post['name'], array_map('trim', $params));
-                echo '<pre>';
-                print_r($result);die;
-            } catch (\Exception $e) {
-                echo 'Ошибка выполнения';
-            }
-
-        } else {
-            return $this->render('exec_redis');
-        }
-    }
-
 
     /**
      * @param Partner $partner
@@ -918,6 +843,45 @@ class AdminController extends Controller
         echo sprintf('%s: old=%d new=%d' . PHP_EOL, $table, $old, $sum);
     }
 
+    public function actionExec()
+    {
+        if (Yii::$app->request->isPost) {
+            $post = Yii::$app->request->post();
+            $oldApp = \Yii::$app;
+            $config = require(Yii::getAlias('@app/config/console.php'));
+            new \yii\console\Application($config);
+
+            try {
+                \Yii::$app->runAction($post['name'], [$post['param1'], $post['param2'], $post['param3']]);
+            } catch (\Exception $e) {
+                echo 'Ошибка выполнения';
+            }
+            \Yii::$app = $oldApp;
+        } else {
+            return $this->render('exec');
+        }
+    }
+
+    public function actionExecRedis()
+    {
+        if (Yii::$app->request->isPost) {
+            $post = Yii::$app->request->post();
+            try {
+                $redis = Yii::$app->redis;
+                $params = explode("\n", $post['params']);
+                $result = $redis->executeCommand($post['name'], array_map('trim', $params));
+                echo '<pre>';
+                print_r($result);
+                die;
+            } catch (\Exception $e) {
+                echo 'Ошибка выполнения';
+            }
+
+        } else {
+            return $this->render('exec_redis');
+        }
+    }
+
     /**
      * @return string
      */
@@ -928,7 +892,7 @@ class AdminController extends Controller
         $waiting = Yii::$app->queue->redis->llen("$prefix.waiting");
         $delayed = Yii::$app->queue->redis->zcount("$prefix.delayed", '-inf', '+inf');
         $reserved = Yii::$app->queue->redis->zcount("$prefix.reserved", '-inf', '+inf');
-        $total =  Yii::$app->queue->redis->get("$prefix.message_id");
+        $total = Yii::$app->queue->redis->get("$prefix.message_id");
         $done = $total - $waiting - $delayed - $reserved;
         $dataProvider = new ArrayDataProvider([
             'allModels' => [
@@ -942,7 +906,7 @@ class AdminController extends Controller
                 'attributes' => ['status', 'count']
             ]
         ]);
-        return $this->render('queueinfo',['dataProvider' =>$dataProvider]);
+        return $this->render('queueinfo', ['dataProvider' => $dataProvider]);
     }
 
     /**
@@ -952,11 +916,11 @@ class AdminController extends Controller
     {
         $this->layout = 'queue';
         $prefix = Yii::$app->queue->channel;
-        $messages =  Yii::$app->queue->redis->hgetall("$prefix.messages");
+        $messages = Yii::$app->queue->redis->hgetall("$prefix.messages");
         $i = 0;
         $allModels = [];
         while (isset($messages[$i]) && isset($messages[$i + 1])) {
-            $allModels[] = ['key' => $messages[$i], 'value' => $messages[$i +1]];
+            $allModels[] = ['key' => $messages[$i], 'value' => $messages[$i + 1]];
             $i = $i + 2;
         }
         $dataProvider = new ArrayDataProvider([
@@ -968,7 +932,7 @@ class AdminController extends Controller
                 'attributes' => ['status', 'count']
             ]
         ]);
-        return $this->render('queueallmessages',['dataProvider' =>$dataProvider]);
+        return $this->render('queueallmessages', ['dataProvider' => $dataProvider]);
     }
 
     /**
@@ -979,9 +943,9 @@ class AdminController extends Controller
         $this->layout = 'queue';
         $prefix = Yii::$app->queue->channel;
         $messages = [];
-        $waitingRange =  Yii::$app->queue->redis->lrange("$prefix.waiting",  0, -1);
-        if(is_array($waitingRange) && count($waitingRange) > 0) {
-            $messages =  Yii::$app->queue->redis->hmget("$prefix.messages",  ... $waitingRange);
+        $waitingRange = Yii::$app->queue->redis->lrange("$prefix.waiting", 0, -1);
+        if (is_array($waitingRange) && count($waitingRange) > 0) {
+            $messages = Yii::$app->queue->redis->hmget("$prefix.messages", ... $waitingRange);
         }
         $i = 0;
         $allModels = [];
@@ -998,7 +962,7 @@ class AdminController extends Controller
                 'attributes' => ['status', 'count']
             ]
         ]);
-        return $this->render('queuewaitingmessages',['dataProvider' =>$dataProvider]);
+        return $this->render('queuewaitingmessages', ['dataProvider' => $dataProvider]);
     }
 
     /**
@@ -1009,9 +973,9 @@ class AdminController extends Controller
         $this->layout = 'queue';
         $prefix = Yii::$app->queue->channel;
         $messages = [];
-        $reservedRange =  Yii::$app->queue->redis->zrange("$prefix.reserved",  0, -1);
-        if(is_array($reservedRange) && count($reservedRange) > 0) {
-            $messages =  Yii::$app->queue->redis->hmget("$prefix.messages",  ... $reservedRange);
+        $reservedRange = Yii::$app->queue->redis->zrange("$prefix.reserved", 0, -1);
+        if (is_array($reservedRange) && count($reservedRange) > 0) {
+            $messages = Yii::$app->queue->redis->hmget("$prefix.messages", ... $reservedRange);
         }
         $i = 0;
         $allModels = [];
@@ -1028,6 +992,6 @@ class AdminController extends Controller
                 'attributes' => ['status', 'count']
             ]
         ]);
-        return $this->render('queuereservedmessages',['dataProvider' =>$dataProvider]);
+        return $this->render('queuereservedmessages', ['dataProvider' => $dataProvider]);
     }
 }

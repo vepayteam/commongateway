@@ -9,6 +9,7 @@
 use app\models\partner\PartUserAccess;
 
 $act = PartUserAccess::getSelRazdel(\Yii::$app->controller->action);
+$partsBalanceAccess = PartUserAccess::checkPartsBalanceAccess();
 //\yii\helpers\VarDumper::dump($act);
 ?>
 
@@ -40,24 +41,26 @@ $act = PartUserAccess::getSelRazdel(\Yii::$app->controller->action);
                 </li>
             <?php endif; ?>
 
-            <li class="">
-                <a href="/partner/mfo/parts-balance"
-                   aria-expanded="<?= in_array($_SERVER['REQUEST_URI'], ['/partner/mfo/parts-balance', '/partner/mfo/parts-balance-partner']) ? 'true' : 'false' ?>"
-                >
-                    <i class="fa fa-list"></i>
-                    <span class="nav-label"> Баланс по разбивке</span>
-                    <span class="fa arrow"></span>
-                </a>
-                <ul class="nav nav-second-level collapse <?= in_array($_SERVER['REQUEST_URI'], ['/partner/mfo/parts-balance', '/partner/mfo/parts-balance-partner']) ? 'in' : '' ?>"
-                    aria-expanded="true" style="">
-                    <li class="<?= $_SERVER['REQUEST_URI'] == '/partner/mfo/parts-balance' ? 'active' : '' ?>">
-                        <a href="/partner/mfo/parts-balance">Платформа</a>
-                    </li>
-                    <li class="<?= $_SERVER['REQUEST_URI'] == '/partner/mfo/parts-balance-partner' ? 'active' : '' ?>">
-                        <a href="/partner/mfo/parts-balance-partner">Партнер</a>
-                    </li>
-                </ul>
-            </li>
+            <?php if ($IsAdmin || $partsBalanceAccess) : ?>
+                <li class="">
+                    <a href="/partner/mfo/parts-balance"
+                       aria-expanded="<?= in_array($_SERVER['REQUEST_URI'], ['/partner/mfo/parts-balance', '/partner/mfo/parts-balance-partner']) ? 'true' : 'false' ?>"
+                    >
+                        <i class="fa fa-list"></i>
+                        <span class="nav-label"> Баланс по разбивке</span>
+                        <span class="fa arrow"></span>
+                    </a>
+                    <ul class="nav nav-second-level collapse <?= in_array($_SERVER['REQUEST_URI'], ['/partner/mfo/parts-balance', '/partner/mfo/parts-balance-partner']) ? 'in' : '' ?>"
+                        aria-expanded="true" style="">
+                        <li class="<?= $_SERVER['REQUEST_URI'] == '/partner/mfo/parts-balance' ? 'active' : '' ?>">
+                            <a href="/partner/mfo/parts-balance">Платформа</a>
+                        </li>
+                        <li class="<?= $_SERVER['REQUEST_URI'] == '/partner/mfo/parts-balance-partner' ? 'active' : '' ?>">
+                            <a href="/partner/mfo/parts-balance-partner">Партнер</a>
+                        </li>
+                    </ul>
+                </li>
+            <?php endif; ?>
 
             <?php if ($IsAdmin || $IsMfo || ((count($razdels) == 0 || isset($razdels[1]) || isset($razdels[18])))) : ?>
                 <li class="<?= !empty($act[1]) || !empty($act[21])? "active": ''?>">
@@ -134,7 +137,7 @@ $act = PartUserAccess::getSelRazdel(\Yii::$app->controller->action);
 
             <?php if ($IsAdmin || $IsMfo || (!$IsMfo && (count($razdels) == 0 || isset($razdels[7])))) : ?>
                 <li class="<?= $act[7] ?>"><a href="/partner/callback/list"><i class="fa fa-bell-o"></i> <span
-                                class="nav-label">Колбэки</span></a></li>
+                                class="nav-label">Коллбэки</span></a></li>
             <?php endif; ?>
 
             <?php if ($IsAdmin) : ?>

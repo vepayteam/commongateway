@@ -4,8 +4,12 @@ namespace app\models\partner\stat;
 
 use app\models\partner\UserLk;
 use app\models\TU;
+use app\services\payment\models\PaySchet;
+use app\services\payment\models\repositories\CurrencyRepository;
 use Yii;
 use yii\base\Model;
+use yii\db\Expression;
+use yii\data\Pagination;
 use yii\db\Query;
 use yii\helpers\VarDumper;
 
@@ -16,7 +20,8 @@ class PayShetStat extends Model
     public $TypeUslug = [];
     public $Extid = '';
     public $id = 0;
-    public $summpay = 0;
+    public $summpayFrom = 0;
+    public $summpayTo = 0;
     public $status = [];
     public $params = [];
     public $datefrom = '';
@@ -26,13 +31,33 @@ class PayShetStat extends Model
     {
         return [
             [['IdPart', 'id'], 'integer'],
-            [['summpay'], 'number'],
+            [['summpayFrom','summpayTo'], 'number'],
             [['Extid'], 'string', 'max' => 40],
             [['datefrom', 'dateto'], 'date', 'format' => 'php:d.m.Y H:i'],
             [['datefrom', 'dateto'], 'required'],
             [['usluga', 'status', 'TypeUslug'], 'each', 'rule' => ['integer']],
-            [['params'], 'each', 'rule' => ['string']]
+            [['params'], 'each', 'rule' => ['string']],
         ];
+    }
+
+    public function validateParams()
+    {
+        foreach ($this->params as $key => $value) {
+            if (in_array($key, [0, 'bankName', 'operationNumber','cardMask',], true) === true) {
+                if(is_string($value) === false) {
+                    $this->addError('params', $key.' value is incorrect.');
+                    return;
+                }
+            } elseif (in_array($key, ['fullSummpayFrom','fullSummpayTo'], true) === true) {
+                if(is_numeric($value) === false) {
+                    $this->addError('params', $key.' value is incorrect.');
+                    return;
+                }
+            }
+
+            $this->addError('params', $key.'value is incorrect');
+            return;
+        }
     }
 
     //после валидации - преобразуем данные в int - для запроса в бд.
@@ -55,9 +80,10 @@ class PayShetStat extends Model
         return [
             'datefrom' => 'Период',
             'dateto' => 'Период',
-            'summpay' => 'Сумма платежа',
+            'summpayFrom' => 'Сумма платежа (от)',
+            'summpayTo' => 'Сумма платежа (до)',
             'id' => 'Идентификатор',
-            'usluga' => 'Услуга'
+            'usluga' => 'Услуга',
         ];
     }
 
@@ -92,6 +118,7 @@ class PayShetStat extends Model
                 'ps.IdKard',//
                 'qp.NameUsluga',
                 'ps.SummPay',
+                'ps.CurrencyId',
                 'ps.ComissSumm',
                 'ps.MerchVozn',
                 'ps.BankComis',
@@ -225,7 +252,9 @@ class PayShetStat extends Model
         $query = $this->buildQuery($select, $IdPart);
 
         $cnt = $sumPay = $sumComis = $voznagps = $bankcomis = 0;
-        $res = $query->cache(10)->one();
+
+        // @TODO: костыль, без него ругается на invalid parameter number, но запрос в консоли БД выполняется нормально
+        $res = Yii::$app->db->createCommand($query->createCommand()->getRawSql())->cache(10)->queryOne();
 
         $sumPay = $res['SummPay'];
         $sumComis = $res['ComissSumm'];
@@ -246,6 +275,7 @@ class PayShetStat extends Model
             'ps.IdKard',//
             'qp.NameUsluga',
             'ps.SummPay',
+            'ps.CurrencyId',
             'ps.ComissSumm',
             'ps.MerchVozn',
             'ps.BankComis',
@@ -279,26 +309,34 @@ class PayShetStat extends Model
 
         if (!$nolimit) {
             if ($page > 0) {
-                $query->offset($CNTPAGE * $page);
+                $query->offset($CNTPAGE * ($page-1));
             }
             $query->orderBy('ID DESC')->limit($CNTPAGE);
         }
 
+        // @TODO: костыль, без него ругается на invalid parameter number, но запрос в консоли БД выполняется нормально
+        $res = Yii::$app->db->createCommand($query->createCommand()->getRawSql())->cache(10)->queryAll();
+
         if($nolimit) {
 
-            $data = self::mapQueryPaymentResult($query);
+            $data = self::mapQueryPaymentResult($res);
 
         } else {
-
             $data = [];
 
-            foreach ($query->each() as $row) {
+            foreach ($res as $row) {
                 $row['VoznagSumm'] = $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
+                $row['Currency'] = CurrencyRepository::getCurrencyCodeById($row['CurrencyId'])->Code;
                 $data[] = $row;
             }
         }
 
-        return ['data' => $data, 'cnt' => $cnt, 'cntpage' => $CNTPAGE, 'sumpay' => $sumPay, 'sumcomis' => $sumComis, 'bankcomis' => $bankcomis, 'voznagps' => $voznagps];
+        $pagination = new Pagination([
+            'totalCount' => $query->count(),
+            'pageSize' => $CNTPAGE,
+        ]);
+
+        return ['data' => $data, 'pagination' => $pagination, 'cnt' => $cnt, 'cntpage' => $CNTPAGE, 'sumpay' => $sumPay, 'sumcomis' => $sumComis, 'bankcomis' => $bankcomis, 'voznagps' => $voznagps];
     }
 
     /**
@@ -306,12 +344,12 @@ class PayShetStat extends Model
      *
      * @return \Generator
      */
-    private static function mapQueryPaymentResult(Query $query): \Generator
+    private static function mapQueryPaymentResult(array $res): \Generator
     {
-        foreach ($query->each() as $row) {
+        foreach ($res as $row) {
 
             $row['VoznagSumm'] = $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
-
+            $row['Currency'] = CurrencyRepository::getCurrencyCodeById($row['CurrencyId'])->Code;
             yield $row;
         }
     }
@@ -328,6 +366,7 @@ class PayShetStat extends Model
             ->select($select)
             ->from('pay_schet AS ps FORCE INDEX(DateCreate_idx)')
             ->leftJoin('banks AS b', 'ps.Bank = b.ID')
+            ->leftJoin('cards AS c', 'ps.IdKard = c.ID')
             ->leftJoin('uslugatovar AS qp', 'ps.IdUsluga = qp.ID')
             ->leftJoin('user AS u', 'u.ID = ps.IdUser')
             ->where('ps.DateCreate BETWEEN :DATEFROM AND :DATETO', [
@@ -339,6 +378,11 @@ class PayShetStat extends Model
             $query->andWhere('qp.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
         if (count($this->status) > 0) {
+            if (in_array(PaySchet::STATUS_WAITING, $this->status, true)) {
+                $this->status = array_unique(
+                    array_merge($this->status, [PaySchet::STATUS_NOT_EXEC, PaySchet::STATUS_WAITING_CHECK_STATUS])
+                );
+            }
             $query->andWhere(['in', 'ps.Status', $this->status]);
         }
         if (count($this->usluga) > 0) {
@@ -353,11 +397,42 @@ class PayShetStat extends Model
         if (!empty($this->Extid)) {
             $query->andWhere('ps.Extid = :EXTID', [':EXTID' => $this->Extid]);
         }
-        if ($this->summpay > 0) {
-            $query->andWhere('ps.SummPay = :SUMPAY', [':SUMPAY' => round($this->summpay * 100.0)]);
+        if (is_numeric($this->summpayFrom) && is_numeric($this->summpayTo)) {
+            $query->andWhere(['between', 'ps.SummPay', round($this->summpayFrom * 100.0), round($this->summpayTo * 100.0)]);
+        } elseif (is_numeric($this->summpayFrom)) {
+            $query->andWhere(['>=', 'ps.SummPay', round($this->summpayFrom * 100.0)]);
+        } elseif (is_numeric($this->summpayTo)) {
+            $query->andWhere(['<=', 'ps.SummPay', round($this->summpayTo * 100.0)]);
         }
         if (count($this->params) > 0) {
             if (!empty($this->params[0])) $query->andWhere(['like', 'ps.Dogovor', $this->params[0]]);
+            if (isset($this->params['fullSummpayFrom']) && isset($this->params['fullSummpayTo'])
+                && is_numeric($this->params['fullSummpayFrom']) && is_numeric($this->params['fullSummpayTo'])) {
+                $query->andWhere([
+                    'between', new Expression('(`ps`.`SummPay` + `ps`.`ComissSumm`)'),
+                    round($this->params['fullSummpayFrom'] * 100.0), round($this->params['fullSummpayTo'] * 100.0)
+                ]);
+            } elseif (isset($this->params['fullSummpayFrom'])&& is_numeric($this->params['fullSummpayFrom'])) {
+                $query->andWhere(['>=', new Expression('(`ps`.`SummPay` + `ps`.`ComissSumm`)'),
+                                  round($this->params['fullSummpayFrom'] * 100.0)]);
+            } elseif (isset($this->params['fullSummpayTo'])&& is_numeric($this->params['fullSummpayTo'])) {
+                $query->andWhere(['<=', new Expression('(`ps`.`SummPay` + `ps`.`ComissSumm`)'),
+                                  round($this->params['fullSummpayTo'] * 100.0)]);
+            }
+            if (array_key_exists('cardMask', $this->params) && $this->params['cardMask'] !== '') {
+                if (strpos($this->params['cardMask'], '*') !== false) {
+                    $regexp = str_replace('*', '(\d|\*)', $this->params['cardMask']);
+                    $query->andWhere(['REGEXP','c.CardNumber', $regexp]);
+                } else {
+                    $query->andWhere(['like', 'c.CardNumber', $this->params['cardMask'].'%', false]);
+                }
+            }
+            if (array_key_exists('cardMask', $this->params) && $this->params['bankName'] !== '') {
+                $query->andWhere(['like', 'b.Name',  $this->params['bankName']]);
+            }
+            if (array_key_exists('operationNumber', $this->params) && $this->params['operationNumber'] !== '') {
+                $query->andWhere('ps.ExtBillNumber = :EXTBILLNUMBER', [':EXTBILLNUMBER' => $this->params['operationNumber']]);
+            }
         }
         return $query;
     }

@@ -1,6 +1,6 @@
 <?php
 
-/* @var yii\web\View $this */
+/* @var View $this */
 /* @var MfoSettings $settings */
 /* @var integer $IdPartner */
 /* @var bool $IsAdmin */
@@ -9,9 +9,9 @@ use app\models\mfo\MfoSettings;
 use yii\bootstrap\Html;
 use yii\web\View;
 
-$this->title = "настройки колбэков";
+$this->title = "настройки коллбэков";
 
-$this->params['breadtitle'] = "Настройки: колбэки";
+$this->params['breadtitle'] = "Настройки: коллбэки";
 $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 ?>
 
@@ -19,7 +19,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
             <div class="col-sm-12">
                 <div class="ibox float-e-margins">
                     <div class="ibox-title">
-                        <h4>Настройки: колбэки</h4>
+                        <h4>Настройки: коллбэки</h4>
                         <?php if ($IsAdmin) {
                             echo $this->render('_tabs');
                         } ?>
@@ -44,6 +44,41 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                             <label class="col-sm-2 control-label">Ключ обратного запроса</label>
                             <div class="col-sm-10 col-md-6">
                                 <input type="text" name="Settings[key]" value="<?=Html::encode($settings->key)?>" maxlength="20" class="form-control">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-sm-2 text-right">Отправлять ExtId</label>
+                            <div class="col-sm-10 col-md-6">
+                                <input type="checkbox" name="Settings[CallbackSendExtId]" <?=$settings->CallbackSendExtId ? 'checked':''?> value="1" class="form-check-input">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-sm-2 text-right">Отправлять Id</label>
+                            <div class="col-sm-10 col-md-6">
+                                <input type="checkbox" name="Settings[CallbackSendId]" <?=$settings->CallbackSendId ? 'checked':''?> value="1" class="form-check-input">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-sm-2 text-right">Отправлять Sum</label>
+                            <div class="col-sm-10 col-md-6">
+                                <input type="checkbox" name="Settings[CallbackSendSum]" <?=$settings->CallbackSendSum ? 'checked':''?> value="1" class="form-check-input">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-sm-2 text-right">Отправлять Status</label>
+                            <div class="col-sm-10 col-md-6">
+                                <input type="checkbox" name="Settings[CallbackSendStatus]" <?=$settings->CallbackSendStatus ? 'checked':''?> value="1" class="form-check-input">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-sm-2 text-right">Отправлять Channel</label>
+                            <div class="col-sm-10 col-md-6">
+                                <input type="checkbox" name="Settings[CallbackSendChannel]" <?=$settings->CallbackSendChannel ? 'checked':''?> value="1" class="form-check-input">
                             </div>
                         </div>
 
@@ -109,6 +144,5 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                 </div>
             </div>
         </div>
-
 
 <?php $this->registerJs('lk.mfosettings()'); ?>

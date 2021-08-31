@@ -5,10 +5,13 @@ namespace app\services\payment\models;
 use app\models\payonline\Partner;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
+use app\services\CompensationService;
 use app\services\notifications\models\NotificationPay;
+use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\Banks;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\models\active_query\PaySchetQuery;
+use Carbon\Carbon;
 use Yii;
 
 /**
@@ -19,6 +22,7 @@ use Yii;
  * @property int $IdKard id kard, esli privaizanoi kartoi oplata
  * @property int $IdUsluga id usluga
  * @property int $IdShablon id shablon
+ * @property int $CurrencyId id currency
  * @property int $IdOrder id order_pay
  * @property int $IdOrg custom id partner
  * @property string|null $Extid custom partner vneshnii id
@@ -50,6 +54,10 @@ use Yii;
  * @property string|null $IPAddressUser ip adres platelshika
  * @property string|null $CountryUser strana platelshika
  * @property string|null $CityUser gorod platelshika
+ * @property string|null $AddressUser Adress platelshika
+ * @property string|null $ZipUser Zip kod platelshika
+ * @property string|null $LoginUser Login platelshika
+ * @property string|null $PhoneUser Telefon platelshika
  * @property int $UserClickPay 0 - ne klikal oplatu 1 - klikal oplatu
  * @property int $CountSendOK kollichestvo poslanyh zaprosov v magazin ob uspeshnoi oplate
  * @property int $SendKvitMail otpravit kvitanciuu ob oplate na pochtu
@@ -72,8 +80,10 @@ use Yii;
  * @property string|null $FIO
  * @property string|null $UserEmail
  * @property string|null $RCCode
+ * @property string|null $Operations
  * @property Uslugatovar $uslugatovar
  * @property Partner $partner
+ * @property Currency $currency
  * @property PaySchetLog[] $log
  * @property User $user
  * @property Bank $bank
@@ -138,7 +148,7 @@ class PaySchet extends \yii\db\ActiveRecord
             [['IdUser', 'IdKard', 'IdUsluga', 'IdShablon', 'IdOrder', 'IdOrg', 'IdGroupOplat', 'Period', 'IdQrProv',
                 'SummPay', 'ComissSumm', 'MerchVozn', 'BankComis', 'Status', 'DateCreate', 'DateOplat', 'DateLastUpdate',
                 'PayType', 'TimeElapsed', 'ExtKeyAcces', 'CardExp', 'UserClickPay', 'CountSendOK', 'SendKvitMail',
-                'IdAgent', 'TypeWidget', 'Bank', 'IsAutoPay', 'AutoPayIdGate', 'sms_accept'
+                'IdAgent', 'TypeWidget', 'Bank', 'IsAutoPay', 'AutoPayIdGate', 'sms_accept', 'CurrencyId'
                 ],
                 'integer'
             ],
@@ -169,6 +179,7 @@ class PaySchet extends \yii\db\ActiveRecord
             'IdShablon' => 'Id Shablon',
             'IdOrder' => 'Id Order',
             'IdOrg' => 'Id Org',
+            'CurrencyId' => 'Id Currency',
             'Extid' => 'Extid',
             'IdGroupOplat' => 'Id Group Oplat',
             'Period' => 'Period',
@@ -198,6 +209,10 @@ class PaySchet extends \yii\db\ActiveRecord
             'IPAddressUser' => 'Ip Address User',
             'CountryUser' => 'Country User',
             'CityUser' => 'City User',
+            'AddressUser' => 'Address User',
+            'LoginUser' => 'Login User',
+            'PhoneUser' => 'Phone User',
+            'ZipUser' => 'Zip code User',
             'UserClickPay' => 'User Click Pay',
             'CountSendOK' => 'Count Send Ok',
             'SendKvitMail' => 'Send Kvit Mail',
@@ -245,6 +260,7 @@ class PaySchet extends \yii\db\ActiveRecord
      * @param float $minFee
      *
      * @return int
+     * @todo Удалить - легаси, не используется.
      */
     public static function calcClientFeeStatic(int $sumPay, float $clientFeeCoefficient, float $minFee): int
     {
@@ -261,6 +277,7 @@ class PaySchet extends \yii\db\ActiveRecord
      * Комиссия с клиента
      *
      * @return int
+     * @todo Удалить - легаси, не используется.
      */
     public function calcClientFee(): int
     {
@@ -271,22 +288,25 @@ class PaySchet extends \yii\db\ActiveRecord
      * Комиссия c мерчанта (вознаграждеие)
      *
      * @return int
+     * @todo Удалить - легаси.
      */
     public function calcReward(): int
     {
-        $reward = round($this->SummPay * $this->uslugatovar->ProvVoznagPC / 100.0, 0);
-
-        if ($reward < $this->uslugatovar->ProvVoznagMin * 100.0) {
-            $reward = $this->uslugatovar->ProvVoznagMin * 100.0;
-        }
-
-        return $reward;
+        return $this->MerchVozn;
+//        $reward = round($this->SummPay * $this->uslugatovar->ProvVoznagPC / 100.0, 0);
+//
+//        if ($reward < $this->uslugatovar->ProvVoznagMin * 100.0) {
+//            $reward = $this->uslugatovar->ProvVoznagMin * 100.0;
+//        }
+//
+//        return $reward;
     }
 
     /**
      * Комиссия банка (в коп)
      *
      * @return int
+     * @todo Удалить - легаси, не используется.
      */
     public function calcBankFee(): int
     {
@@ -314,6 +334,11 @@ class PaySchet extends \yii\db\ActiveRecord
         return $this->hasOne(Bank::class, ['ID' => 'Bank']);
     }
 
+    public function getCurrency()
+    {
+        return $this->hasOne(Currency::class, ['Id' => 'CurrencyId'])->one();
+    }
+
     public function getLog()
     {
         return $this->hasMany(PaySchetLog::class, ['PaySchetId' => 'ID']);
@@ -324,17 +349,39 @@ class PaySchet extends \yii\db\ActiveRecord
         return $this->hasMany(NotificationPay::class, ['IdPay' => 'ID']);
     }
 
-    public function save($runValidation = true, $attributeNames = null)
+    /**
+     * {@inheritDoc}
+     * @throws \Exception
+     */
+    public function beforeSave($insert): bool
     {
-        $this->DateLastUpdate = time();
-
-        if ((int)($this->oldAttributes['SummPay'] ?? 0) !== (int)$this->SummPay) {
-            $this->ComissSumm = $this->calcClientFee();
-            $this->BankComis = $this->calcBankFee();
-            $this->MerchVozn = $this->calcReward();
+        if (!parent::beforeSave($insert)) {
+            return false;
         }
 
-        return (parent::save($runValidation, $attributeNames));
+        $this->DateLastUpdate = time();
+
+        if ($insert) {
+            // Считаем отчисления (комиссии) для платежа.
+            /** @var CompensationService $compensationService */
+            $compensationService = \Yii::$app->get(CompensationService::class);
+            $gate = (new BankAdapterBuilder())
+                ->build($this->partner, $this->uslugatovar, $this->currency)
+                ->getPartnerBankGate();
+            $this->ComissSumm = round($compensationService->calculateForClient($this, $gate));
+            $this->BankComis = round($compensationService->calculateForBank($this, $gate));
+            $this->MerchVozn = round($compensationService->calculateForPartner($this, $gate));
+        }
+
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function save($runValidation = true, $attributeNames = null): bool
+    {
+        return parent::save($runValidation, $attributeNames);
     }
 
     /**
@@ -387,14 +434,27 @@ class PaySchet extends \yii\db\ActiveRecord
     /**
      * @return string
      */
-    public function getFromUrl()
+    public function getOrderfailUrl()
+    {
+        return Yii::$app->params['domain'] . '/pay/orderfail/' . $this->ID;
+    }
+
+    /**
+     * @param string|null $cardNumber
+     * @return string
+     */
+    public function getFromUrl(?string $cardNumber = null): string
     {
         if($this->Bank == Banks::REG_CARD_BY_OUT_ID) {
-            return Yii::$app->params['domain'] . '/mfo/default/outcard/' . $this->ID;
+            $url = Yii::$app->params['domain'] . '/mfo/default/outcard/' . $this->ID;
         } else {
-            return Yii::$app->params['domain'] . '/pay/form/' . $this->ID;
+            $url = Yii::$app->params['domain'] . '/pay/form/' . $this->ID;
+        }
+        if ($cardNumber !== null) {
+            $url .= "?cardNumber={$cardNumber}";
         }
 
+        return $url;
     }
 
     /**
@@ -413,5 +473,16 @@ class PaySchet extends \yii\db\ActiveRecord
     public function getFormatSummPay()
     {
         return sprintf("%02.2f", $this->SummPay / 100.0);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isNeedContinueRefreshStatus()
+    {
+        $now = Carbon::now();
+        $dateCreate = Carbon::createFromTimestamp($this->DateCreate);
+
+        return $now < $dateCreate->addDays(3);
     }
 }

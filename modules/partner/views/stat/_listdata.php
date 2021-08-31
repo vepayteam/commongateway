@@ -11,11 +11,14 @@
 /* @var int $bankcomis */
 /* @var int $voznagps  */
 /* @var bool $IsAdmin */
+/* @var Pagination $pagination */
 
 use app\models\payonline\Uslugatovar;
 use app\models\payonline\User;
 use app\models\TU;
 use app\services\payment\models\PaySchet;
+use yii\data\Pagination;
+use yii\widgets\LinkPager;
 
 ?>
 
@@ -27,11 +30,12 @@ use app\services\payment\models\PaySchet;
         <th>Услуга</th>
         <th>Реквизиты</th>
         <th class="text-right">Сумма</th>
-        <th class="text-right">Комиссия</th>
+        <th class="text-right">Комиссия с клиента</th>
         <th class="text-right">К оплате</th>
+        <th class="text-right">Валюта </th>
         <?php if ($IsAdmin) : ?>
             <th class="text-right">
-                Комисия банка
+                Комиссия банка
             </th>
             <th class="text-right">
                 Возн. Vepay
@@ -48,7 +52,7 @@ use app\services\payment\models\PaySchet;
         <th>Держатель карты</th>
         <th>RRN</th>
         <th>Хэш от номера карты</th>
-        <th>Наименование банка-эквайера</th>
+        <th>Провайдер</th>
         <th>Действия</th>
     </tr>
     </thead>
@@ -68,6 +72,7 @@ use app\services\payment\models\PaySchet;
                 <td class="text-right"><?= number_format($row['SummPay'] / 100.0,2,'.','&nbsp;') ?></td>
                 <td class="text-right"><?= number_format($row['ComissSumm'] / 100.0,2,'.','&nbsp;') ?></td>
                 <td class="text-right"><?= number_format(($row['SummPay']+$row['ComissSumm']) / 100.0,2,'.','&nbsp;') ?></td>
+                <td class="text-right"><?= $row['Currency'] ?></td>
                 <?php if ($IsAdmin) : ?>
                     <td class="text-right">
                         <?= number_format($row['BankComis'] / 100.0,2,'.','&nbsp;') ?>
@@ -102,7 +107,7 @@ use app\services\payment\models\PaySchet;
                 <td><?= $row['BankName'] ?></td>
                 <td>
                     <input class='btn btn-white btn-xs' data-action="logpay" data-id='<?= $row['ID'] ?>' type='button' value='Лог'>
-                    <?php if ($row['Status'] == 1 && TU::IsInPay($row['IsCustom'])): ?>
+                    <?php if ($row['Status'] == 1 && (TU::IsInPay($row['IsCustom']) || TU::IsInAutoAll($row['IsCustom']))): ?>
                         <input class='btn btn-white btn-xs' data-action="cancelpay" data-id='<?= $row['ID'] ?>' type='button' value='Отменить'>
                     <?php endif; ?>
                         <input class="btn btn-white btn-xs excerpt" data-id="<?=$row['ID']?>" type="button" value="Выписка">
@@ -131,7 +136,8 @@ use app\services\payment\models\PaySchet;
             $exportLink = 'datefrom='. $reqdata['datefrom'];
             $exportLink .= '&dateto=' . $reqdata['dateto'];
             $exportLink .= '&id=' . $reqdata['id'];
-            $exportLink .= '&summpay=' . $reqdata['summpay'];
+            $exportLink .= '&summpayFrom=' . $reqdata['summpayFrom'];
+            $exportLink .= '&summpayTo=' . $reqdata['summpayTo'];
             $exportLink .= '&Extid=' . $reqdata['Extid'];
             if (isset($reqdata['IdPart'])) {
                 $exportLink .= '&IdPart=' . $reqdata['IdPart'];
@@ -147,8 +153,8 @@ use app\services\payment\models\PaySchet;
                 }
             }
             if (isset($reqdata['params']) && count($reqdata['params']) > 0) {
-                foreach ($reqdata['params'] as $param){
-                    $exportLink .= '&params[]='.$param;
+                foreach ($reqdata['params'] as $k => $param) {
+                    $exportLink .= '&params['.$k.']='.$param;
                 }
             }
             ?>
@@ -162,32 +168,6 @@ use app\services\payment\models\PaySchet;
                 <i class="fa fa-share"></i>&nbsp;Экспорт xlsx
             </a></th>
     </tr>
-    <?php if ($cnt > $cntpage) : ?>
-        <?php $maxpage = ceil($cnt / $cntpage); ?>
-        <tr>
-            <td colspan="15" class="footable-visible">
-                <ul class="pagination pull-right">
-                    <li class="footable-page-arrow <?= 0 == $page ? 'disabled' : '' ?>">
-                        <a data-page="first" <?= $page > 0 ? 'onclick="lk.statlistreq(0);"' : '' ?>>«</a>
-                    </li>
-                    <li class="footable-page-arrow <?= 0 == $page ? 'disabled' : '' ?>">
-                        <a data-page="prev" <?= $page > 0 ? 'onclick="lk.statlistreq(' . ($page - 1 > 0 ? $page - 1 : 0) . ');"' : '' ?>>‹</a>
-                    </li>
-                    <?php for ($i = 0; $i < $maxpage; $i++) : ?>
-                        <li class="footable-page <?= $i == $page ? 'active' : '' ?>">
-                            <a data-page="<?= $i ?>" <?= $page != $i ? 'onclick="lk.statlistreq(' . $i . ');"' : '' ?>><?= ($i + 1) ?></a>
-                        </li>
-                    <?php endfor; ?>
-                    <li class="footable-page-arrow <?= $maxpage - 1 == $page ? 'disabled' : '' ?>">
-                        <a data-page="next" <?= $maxpage - 1 != $page ? 'onclick="lk.statlistreq(' . ($page + 1) . ');"' : '' ?>>›</a>
-                    </li>
-                    <li class="footable-page-arrow <?= $maxpage - 1 == $page ? 'disabled' : '' ?>">
-                        <a data-page="last" <?= $maxpage - 1 != $page ? 'onclick="lk.statlistreq(' . ($maxpage - 1) . ');"' : '' ?>>»</a>
-                    </li>
-                </ul>
-            </td>
-        </tr>
-    <?php endif; ?>
     </tfoot>
     <?php else : ?>
         <tr>
@@ -195,3 +175,14 @@ use app\services\payment\models\PaySchet;
         </tr></tbody>
     <?php endif; ?>
 </table>
+
+<?php
+echo LinkPager::widget([
+    'pagination' => $pagination,
+    'hideOnSinglePage' => true,
+    'prevPageLabel' => '‹',
+    'nextPageLabel' => '›',
+    'firstPageLabel' => '«',
+    'lastPageLabel' => '»',
+]);
+?>

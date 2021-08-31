@@ -3,6 +3,7 @@
 namespace app\models\payonline;
 
 use app\models\partner\admin\VoznagStat;
+use app\models\TU;
 use app\services\payment\models\UslugatovarType;
 use Yii;
 use yii\caching\TagDependency;
@@ -10,9 +11,11 @@ use yii\caching\TagDependency;
 /**
  * This is the model class for table "uslugatovar".
  *
+ * @todo переименовать IsCustom
+ *
  * @property string $ID
  * @property int $IDPartner [int(10) unsigned]  id partner
- * @property bool $IsCustom [tinyint(1) unsigned]  0 - obshaia 1 - kastomnaya
+ * @property bool $IsCustom [tinyint(1) unsigned]  Тип услуги
  * @property string $CustomData danuue customnogo
  * @property int $ExtReestrIDUsluga [int(10) unsigned]  id uslugi v reestrah
  * @property string $NameUsluga [varchar(200)]  naimenovanie uslugi
@@ -80,7 +83,9 @@ class Uslugatovar extends \yii\db\ActiveRecord
         0 => 'Vepay',
     ];
 
-    // TODO: use TU
+    /**
+     * @todo Удалить.
+     */
     public static $TypeCustom_str = [
         self::TYPE_REG_CARD => 'Регистрация карты',
         11 => 'Выплата на счет',
@@ -95,6 +100,7 @@ class Uslugatovar extends \yii\db\ActiveRecord
         19 => 'Вывод средств',
         21 => 'Возмещение комисии',
         23 => 'Внутренний перевод между счетами',
+        24 => 'Упрощенная идентификация пользователей',
 
         110 => 'Погашение займа AFT с разбивкой',
         114 => 'Погашение займа ECOM с разбивкой',
@@ -104,6 +110,9 @@ class Uslugatovar extends \yii\db\ActiveRecord
         100 => 'Оплата ЖКХ с разбивкой',
         119 => 'Перечисление по разбивке',
 
+        UslugatovarType::H2H_POGASH_AFT => 'H2H Погашение займа AFT',
+        UslugatovarType::H2H_POGASH_ECOM => 'H2H погашение займа ECOM',
+        UslugatovarType::H2H_ECOM => 'H2H оплата товаров и услуг',
     ];
 
     /**
@@ -248,5 +257,19 @@ class Uslugatovar extends \yii\db\ActiveRecord
             TagDependency::invalidate(Yii::$app->cache, VoznagStat::STAT_DAY_TAG_PREFIX . $this->ID);
         }
         return parent::save($runValidation, $attributeNames);
+    }
+
+    public static function getPartsBalanceAccessCustoms(): array
+    {
+        // ID типов услуг с разбивкой
+        return [
+            TU::$POGASHATFPARTS,
+            TU::$POGASHECOMPARTS,
+            TU::$AVTOPLATECOMPARTS,
+            TU::$AVTOPLATATFPARTS,
+            TU::$ECOMPARTS,
+            TU::$JKHPARTS,
+            TU::$VYVODPAYSPARTS,
+        ];
     }
 }

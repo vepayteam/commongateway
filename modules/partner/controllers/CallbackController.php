@@ -2,8 +2,9 @@
 
 namespace app\modules\partner\controllers;
 
-use app\models\mfo\MfoBalance;
+use app\models\partner\callback\CallbackFilter;
 use app\models\partner\callback\CallbackList;
+use app\models\partner\callback\CallbackStat;
 use app\models\partner\PartUserAccess;
 use app\models\partner\UserLk;
 use app\models\queue\JobPriorityInterface;
@@ -69,16 +70,23 @@ class CallbackController extends Controller
     }
 
     /**
-     * Список колбэков МФО
+     * Список коллбэков МФО
      * @return string
      * @throws \yii\db\Exception
      */
     public function actionList()
     {
+        $fltr = new CallbackFilter();
+
         if (UserLk::IsAdmin(Yii::$app->user)) {
             $sel = $this->selectPartner($idpartner, false, false);
             if (empty($sel)) {
-                return $this->render('list', ['idpartner' => $idpartner]);
+                return $this->render('list', [
+                    'idpartner' => $idpartner,
+                    'httpCodeList' => $fltr->getCallbackHTTPResponseStatusList(),
+                    'IsAdmin' => true,
+                    'partnerlist' => $fltr->getPartnersList(),
+                ]);
             } else {
                 return $sel;
             }
@@ -86,7 +94,12 @@ class CallbackController extends Controller
 
             $idpartner = UserLk::getPartnerId(Yii::$app->user);
 
-            return $this->render('list', ['idpartner' => $idpartner]);
+            return $this->render('list', [
+                'idpartner' => $idpartner,
+                'httpCodeList' => $fltr->getCallbackHTTPResponseStatusList(),
+                'IsAdmin' => false,
+                'partnerlist' => $fltr->getPartnersList(),
+            ]);
         }
     }
 
@@ -95,6 +108,8 @@ class CallbackController extends Controller
         if (Yii::$app->request->isAjax) {
             Yii::$app->response->format = Response::FORMAT_JSON;
 
+            $reqData = Yii::$app->request->post();
+
             $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
             $page = (int) Yii::$app->request->get('page', 1);
 
@@ -102,7 +117,12 @@ class CallbackController extends Controller
             if ($CallbackList->load(Yii::$app->request->post(), '') && $CallbackList->validate()) {
                 $data = $CallbackList->GetList($IsAdmin, $page);
 
-                return ['status' => 1, 'data' => $this->renderPartial('_listitems', ['data' => $data['data'], 'payLoad' => $data['payLoad']->toArray(), 'IsAdmin' => $IsAdmin])];
+                return ['status' => 1, 'data' => $this->renderPartial('_listitems', [
+                    'reqdata' => $reqData,
+                    'data' => $data['data'],
+                    'payLoad' => $data['payLoad']->toArray(),
+                    'IsAdmin' => $IsAdmin
+                ])];
             } else {
                 return ['status' => 0, 'message' => $CallbackList->GetError()];
             }
@@ -122,22 +142,69 @@ class CallbackController extends Controller
             $notificationPayId = Yii::$app->request->post('id', null);
             $notificationPay = NotificationPay::findOne(['ID' => $notificationPayId]);
 
-            if(!$notificationPay || !$IsAdmin && $notificationPay->paySchet->IdOrg != Yii::$app->user->id) {
+            if(!$notificationPay || !$IsAdmin && $notificationPay->paySchet->IdOrg != Yii::$app->user->getIdentity()->getPartner()) {
                 return ['status' => 0, 'message' => 'Ошибка запроса повтора операции'];
             } else {
-                $notificationPay->HttpCode = 0;
-                $notificationPay->DateLastReq = 0;
-                $notificationPay->DateSend = 0;
-                $notificationPay->HttpAns = null;
-                $notificationPay->save(false);
-
-                \Yii::$app->queue->push(new CallbackSendJob([
-                    'notificationPayId' => $notificationPayId,
-                ]));
+                $this->repeatIteration($notificationPay);
                 return ['status' => 1, 'message' => 'Запрос колбэка возвращен в очередь'];
             }
         } else {
             return $this->redirect('/partner');
         }
+    }
+
+    public function actionRepeatbatch()
+    {
+        if (Yii::$app->request->isAjax) {
+
+            Yii::$app->response->format = Response::FORMAT_JSON;
+            $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+
+            $CallbackList = new CallbackList();
+
+            if ($CallbackList->load(Yii::$app->request->post(), '') && $CallbackList->validate()) {
+
+                $data = $CallbackList->GetList($IsAdmin, 0, true);
+                $notificationPayIdList = array_column($data['data'], 'ID');
+
+                if (count($notificationPayIdList) > 0) {
+
+                    $notificationPayList = NotificationPay::findAll($notificationPayIdList);
+
+                    foreach ($notificationPayList as $notificationPay) {
+                        if (!$IsAdmin && $notificationPay->paySchet->IdOrg != Yii::$app->user->id) {
+                            continue;
+                        }
+                        $this->repeatIteration($notificationPay);
+                    }
+                }
+
+                return ['status' => 1, 'message' => 'Запросы колбэка возвращены в очередь'];
+            }
+
+            return ['status' => 0, 'message' => $CallbackList->GetError()];
+        }
+
+        return $this->redirect('/partner');
+    }
+
+    public function actionListexport()
+    {
+        ini_set('memory_limit', '1024M');
+        $callbackStat = new CallbackStat();
+        $callbackStat->ExportOpListRaw(Yii::$app->request->get());
+    }
+
+    private function repeatIteration(NotificationPay $notificationPay): void
+    {
+        $notificationPay->HttpCode = 0;
+        $notificationPay->DateLastReq = 0;
+        $notificationPay->DateSend = 0;
+        $notificationPay->HttpAns = null;
+        $notificationPay->save(false);
+
+        \Yii::$app->queue->push(new CallbackSendJob([
+            'notificationPayId' => $notificationPay->ID,
+        ]));
     }
 }

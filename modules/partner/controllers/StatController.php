@@ -37,10 +37,12 @@ use app\services\ident\IdentService;
 use app\services\payment\jobs\RefundPayJob;
 use app\services\payment\models\PaySchet;
 use app\services\payment\PaymentService;
+use Exception;
 use kartik\mpdf\Pdf;
 use Yii;
 use yii\base\DynamicModel;
 use yii\filters\AccessControl;
+use yii\filters\VerbFilter;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
 use yii\helpers\VarDumper;
@@ -88,6 +90,12 @@ class StatController extends Controller
                     ],
                 ],
             ],
+            'verbs' => [
+                'class' => VerbFilter::class,
+                'actions' => [
+                    'diffdata' => ['POST'],
+                ],
+            ],
         ];
     }
 
@@ -98,24 +106,28 @@ class StatController extends Controller
 
     public function actionDiffdata()
     {
-        if (Yii::$app->request->isPost) {
-            $registryFile = UploadedFile::getInstanceByName('registryFile');
+        $registryFile = UploadedFile::getInstanceByName('registryFile');
 
+        try {
             $diffData = new DiffData();
             $diffData->read($registryFile->tempName);
 
             [$badStatus, $notFound] = $diffData->execute();
-
-            return $this->asJson([
-                'status' => 1,
-                'data' => $this->renderPartial('_diffdata', [
-                    'badStatus' => $badStatus,
-                    'notFound' => $notFound,
-                ]),
-            ]);
+        } catch (Exception $e) {
+            Yii::warning('Stat diffData exception '
+                . $registryFile->tempName
+                . ': ' . $e->getMessage()
+            );
+            throw new BadRequestHttpException();
         }
 
-        throw new MethodNotAllowedHttpException();
+        return $this->asJson([
+            'status' => 1,
+            'data' => $this->renderPartial('_diffdata', [
+                'badStatus' => $badStatus,
+                'notFound' => $notFound,
+            ]),
+        ]);
     }
 
     public function actionDiffexport()
@@ -175,6 +187,7 @@ class StatController extends Controller
                         'data' => $list['data'],
                         'cntpage' => $list['cntpage'],
                         'cnt' => $list['cnt'],
+                        'pagination' => $list['pagination'],
                         'sumpay' => $list['sumpay'],
                         'sumcomis' => $list['sumcomis'],
                         'bankcomis' => $list['bankcomis'],
@@ -552,25 +565,6 @@ class StatController extends Controller
             return ['status' => 0, 'message' => $AutopayStat->GetError()];
         }
         return $this->redirect('/partner');
-    }
-
-    /**
-     * @return array|Response
-     * @throws \Throwable
-     */
-    public function actionRecurrentpaysdata()
-    {
-        if (Yii::$app->request->isAjax) {
-            Yii::$app->response->format = Response::FORMAT_JSON;
-            $StatGraph = new AutopayStat();
-            $StatGraph->load(Yii::$app->request->post(), '');
-            if ($StatGraph->validate()) {
-                return $StatGraph->GetRecurrentData();
-            }
-            return ['status' => 0, 'message' => $StatGraph->GetError()];
-        } else {
-            return $this->redirect('/partner');
-        }
     }
 
     /**

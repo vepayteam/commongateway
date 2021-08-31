@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: API Vepay
-  version: 1.0.7
+  version: 1.0.8
 security:
   - Mfo: []
     Token: []
@@ -254,7 +254,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: "#/components/schemas/StatusChannel"
         default:
           description: Error (40X,500)
           content:
@@ -339,6 +339,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /out/check-sbp-can-transfer:
+    post:
+      tags:
+        - Out
+      summary: СБП. Проверка возможности выдачи займа на счет физлица
+      description: Проверка возможности выдачи займа на счет физлица
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckSbpOutF"
+        description: Параметры перевода
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusId"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /out/state:
     post:
       tags:
@@ -358,7 +384,29 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: "#/components/schemas/StatusChannel"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /getsbpbankreceiver:
+    post:
+      tags:
+        - Out
+      summary: Список банк-участинков банка СПБ БРС
+      description: Запрос возвращает список банк-участников банка Русский стандарт, сервис быстрых платежей
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type:
+                  array
+                items:
+                  $ref: "#/components/schemas/BrsSpbReceiver"
         default:
           description: Error (40X,500)
           content:
@@ -399,7 +447,7 @@ paths:
       tags:
         - Ident
       summary: Статус идентификации
-      description: Запрос результата идентификации. 
+      description: Запрос результата идентификации.
       requestBody:
         content:
           application/json:
@@ -468,6 +516,59 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/IdentRunaStateResponse"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /ident/request-init:
+    post:
+      tags:
+        - Ident
+      summary: Упрощенная идентификация пользователя
+      description: Отправляется запрос идентификации, в ответе на который возвращается id
+        операции.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IdentRequestInit"
+        description: Параметры перевода
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusId"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /ident/request-state:
+    post:
+      tags:
+        - Ident
+      summary: Статус упрощенной идентификации
+      description: Запрос результата упрощенной идентификации
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IdState"
+        description: ID запрса
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentRequestStatus"
         default:
           description: Error (40X,500)
           content:
@@ -543,11 +644,17 @@ paths:
           description: статус завершения (1 – успешно 2,3 - ошибка)
           schema:
             type: integer
+        - name: channel
+          in: query
+          required: true
+          description: банк-эквайер, через который была совершена транзакция
+          schema:
+            type: integer
         - name: key
           in: query
           required: true
           description: Ключ, формируется как хеш суммы строк параметров md5(id + sum +
-            status + Ключ обратного запроса).
+            status + channel + Ключ обратного запроса).
           schema:
             type: string
       responses:
@@ -626,10 +733,38 @@ components:
           description: Идентификатор документа
     Client:
       type: object
+      required: false
       properties:
         email:
           type: string
+          required: true
           description: Email клиента
+        phone:
+          type: string
+          required: false
+          description: Телефон клиента
+        country:
+          type: string
+          required: false
+          description: Страна клиента (формат ISO 3166-1 alpha-3)
+          deprecated: true
+        city:
+          type: string
+          required: false
+          description: Город клиента
+          deprecated: true
+        address:
+          type: string
+          required: false
+          description: Адресс клиента
+        zip:
+          type: string
+          required: false
+          description: Zip код клиента адреса
+        login:
+          type: string
+          required: false
+          description: Логин авторизации клиента
     CardInfo:
       type: object
       properties:
@@ -701,6 +836,9 @@ components:
           type: string
           format: url
           description: Дополнительный адрес Url для обратного вызова
+        card:
+          type: string
+          description: Номер карты, 16 или 18 цифр
     CardRegAns:
       type: object
       properties:
@@ -742,7 +880,11 @@ components:
       properties:
         amount:
           type: number
-          description: Cумма платежа, руб
+          description: Cумма платежа
+        currency:
+          type: string
+          required: false
+          description: Валюта платежа (По умолчанию RUB)
         type:
           type: number
           description: Тип шлюза
@@ -987,6 +1129,21 @@ components:
         extid:
           type: string
           description: Внешний идентификатор запроса
+    CheckSbpOutF:
+      type: object
+      properties:
+        fio:
+          type: string
+          description: ФИО получателя
+        account:
+          type: string
+          description: Счет в банке
+        bic:
+          type: string
+          description: БИК банка
+        amount:
+          type: number
+          description: Cумма платежа
     Status:
       type: object
       properties:
@@ -999,6 +1156,21 @@ components:
         rc:
           type: string
           description: Код ошибки банка (может отсутствовать)
+    StatusChannel:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Статус (0 - в обработке, 1 - успешно, 2 - ошибка, 3 - отменен)
+        message:
+          type: string
+          description: Сообщение ошибки
+        rc:
+          type: string
+          description: Код ошибки банка (может отсутствовать)
+        channel:
+          type: string
+          description: Банк-эквайер, через который была совершена транзакция
     StatusResult:
       type: object
       properties:
@@ -1113,6 +1285,47 @@ components:
         snils:
           type: string
           description: СНИЛС (при необходимости проверки)
+    IdentRequestInit:
+      type: object
+      properties:
+        LastName:
+          type: string
+          description: Фамилия
+        FirstName:
+          type: string
+          description: Имя
+        Patronymic:
+          type: string
+          description: Отчество
+        Series:
+          type: string
+          description: Серия паспорта
+        Number:
+          type: string
+          description: Номер паспорта
+        IssueDate:
+          type: string
+          description: Дата выдачи паспорта
+        IssueCode:
+          type: string
+          description: Код подразделения паспорта
+        Inn:
+          type: string
+          description: ИНН (при необходимости проверки)
+        Snils:
+          type: string
+          description: СНИЛС (при необходимости проверки)
+    IdentRequestStatus:
+      type: object
+      properties:
+        status:
+          type: integer
+          description:
+            Статус обработки. 0 - заявка создана, 1 - ожидается результат, 2- ошибка запроса, 3 - успешная идентификация, 4 - неуспешная идентификация, 5 - превышен интервал времени на обработку запроса
+        info:
+          type: string
+          description:
+            JSON, подробная информация
     IdentRunaInit:
       type: object
       properties:
@@ -1175,4 +1388,12 @@ components:
         status:
           description: 0 - успешно, или код ошибки.
           type: string
-
+    BrsSpbReceiver:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Название банка
+        bic:
+          type: string
+          description: БИК

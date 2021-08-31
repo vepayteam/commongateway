@@ -425,6 +425,7 @@ class MfoBalance
      * Остаток на начало
      *
      * @param int $date
+     * @param int $dateTo
      * @param int $TypeAcc
      * @return int
      * @throws \yii\db\Exception
@@ -445,24 +446,25 @@ class MfoBalance
 
         $MerchVozn = 0;
         if ($TypeAcc != 2) {
-            $datefrom = Yii::$app->db->createCommand("
-                SELECT
-                    `DateTo`
-                FROM
-                    `vyvod_system`
-                WHERE
-                    `IdPartner` = :IDMFO
-                    AND `TypeVyvod` = :TYPEVYVOD
-                    AND `DateOp` < :DATETO
-                ORDER BY `ID` DESC
-                LIMIT 1
-            ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeAcc == 0 ? 1 : 0, ':DATETO' => $date])->queryScalar();
+            // TODO: непонятно, почему datefrom вычисляется, ещё и по полю `DateTo`, пока заменю на приходящий из параметров
+//            $datefrom = Yii::$app->db->createCommand("
+//                SELECT
+//                    `DateTo`
+//                FROM
+//                    `vyvod_system`
+//                WHERE
+//                    `IdPartner` = :IDMFO
+//                    AND `TypeVyvod` = :TYPEVYVOD
+//                    AND `DateOp` < :DATETO
+//                ORDER BY `ID` DESC
+//                LIMIT 1
+//            ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeAcc == 0 ? 1 : 0, ':DATETO' => $date])->queryScalar();
 
             $vs = new VoznagStat();
             $vs->setAttributes([
                 'IdPart' => $this->Partner->ID,
-                'datefrom' => date('d.m.Y H:i', $datefrom),
-                'dateto' => date('d.m.Y H:i', $date),
+                'datefrom' => date('d.m.Y H:i', $date),
+                'dateto' => date('d.m.Y H:i', $dateTo),
                 'TypeUslug' => 0
             ]);
             $otch = $vs->GetOtchMerchant(true);
@@ -478,11 +480,12 @@ class MfoBalance
      * Остаток на конец
      *
      * @param int $date
+     * @param int $dateTo
      * @param int $TypeAcc
      * @return int
      * @throws \yii\db\Exception
      */
-    public function GetOstEnd($date, $TypeAcc)
+    public function GetOstEnd($date, $dateTo, $TypeAcc)
     {
         $tabl = $TypeAcc == 0 ? 'partner_orderout' : 'partner_orderin';
 
@@ -498,24 +501,26 @@ class MfoBalance
 
         $MerchVozn = 0;
         if ($TypeAcc != 2) {
-            $datefrom = Yii::$app->db->createCommand("
-                SELECT
-                    `DateTo`
-                FROM
-                    `vyvod_system`
-                WHERE
-                    `IdPartner` = :IDMFO
-                    AND `TypeVyvod` = :TYPEVYVOD
-                    AND `DateOp` < :DATETO
-                ORDER BY `ID` DESC
-                LIMIT 1
-            ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeAcc == 0 ? 1 : 0, ':DATETO' => $date])->queryScalar();
+
+            // TODO: непонятно, почему datefrom вычисляется, ещё и по полю `DateTo`, пока заменю на приходящий из параметров
+//            $datefrom = Yii::$app->db->createCommand("
+//                SELECT
+//                    `DateTo`
+//                FROM
+//                    `vyvod_system`
+//                WHERE
+//                    `IdPartner` = :IDMFO
+//                    AND `TypeVyvod` = :TYPEVYVOD
+//                    AND `DateOp` < :DATETO
+//                ORDER BY `ID` DESC
+//                LIMIT 1
+//            ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeAcc == 0 ? 1 : 0, ':DATETO' => $date])->queryScalar();
 
             $vs = new VoznagStat();
             $vs->setAttributes([
                 'IdPart' => $this->Partner->ID,
-                'datefrom' => date('d.m.Y H:i', $datefrom),
-                'dateto' => date('d.m.Y H:i', $date),
+                'datefrom' => date('d.m.Y H:i', $date),
+                'dateto' => date('d.m.Y H:i', $dateTo),
                 'TypeUslug' => 0
             ]);
             $otch = $vs->GetOtchMerchant(true);

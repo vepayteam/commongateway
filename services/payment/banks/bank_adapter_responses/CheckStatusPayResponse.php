@@ -6,12 +6,14 @@ class CheckStatusPayResponse extends BaseResponse
 {
     public $xml;
     public $rrn = '';
+    public $transId;
 
     public $cardNumber;
     public $cardRefId;
     public $expYear;
     public $expMonth;
     public $cardHolder;
+    public $operations;
 
     /**
      * проверка полученного внешнего идентификатора карты

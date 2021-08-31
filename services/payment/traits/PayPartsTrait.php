@@ -21,6 +21,7 @@ use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\forms\CreatePartsOutPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\models\PaySchet;
+use app\services\PaySchetService;
 use Carbon\Carbon;
 use Yii;
 use yii\db\Query;
@@ -58,6 +59,9 @@ trait PayPartsTrait
      */
     private function payPartsSenderToRecipient(Partner $senderPartner, Partner $recipientPartner, Carbon $dateFrom, Carbon $dateTo)
     {
+        /** @var PaySchetService $paySchetService */
+        $paySchetService = \Yii::$app->get(PaySchetService::class);
+
         $transaction = Yii::$app->db->beginTransaction();
 
         $transactionOk = true;

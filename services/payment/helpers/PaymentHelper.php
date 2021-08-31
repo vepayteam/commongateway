@@ -6,19 +6,19 @@ class PaymentHelper
 {
 
     /**
-     * Ковертирования суммы в рубли
+     * Ковертирования суммы в рубли/долары/евро
      */
-    public static function convertToRub(int $penny): float
+    public static function convertToFullAmount(int $amount): float
     {
-        return round($penny / 100, 2);
+        return round($amount / 100, 2);
     }
 
     /**
-     * Ковертирования суммы в копейки
+     * Ковертирования суммы в копейки/центы
      */
-    public static function convertToPenny(float $rubles): int
+    public static function convertToPenny(float $amount): int
     {
-        return round($rubles * 100);
+        return round($amount * 100);
     }
 
     /**

@@ -2,14 +2,17 @@
 
 use app\models\bank\Banks;
 use app\models\payonline\Partner;
+use app\services\payment\models\repositories\CurrencyRepository;
 use app\services\payment\models\UslugatovarType;
 use app\services\payment\types\AccountTypes;
+use yii\helpers\ArrayHelper;
 
 /**
  * @var Partner $partner
  */
 
 $bankGates = $partner->getBankGates()->orderBy('TU ASC, Priority DESC')->all();
+$currencyList = ArrayHelper::merge(['' => ''], ArrayHelper::map(CurrencyRepository::getAll(), 'Id', 'Code'));
 ?>
 
 <div class="row">
@@ -32,7 +35,9 @@ $bankGates = $partner->getBankGates()->orderBy('TU ASC, Priority DESC')->all();
         <th>Банк</th>
         <th>Приоритет</th>
         <th>Активно</th>
+        <th>Тип счета</th>
         <th>Номер счета</th>
+        <th>Валюта</th>
         <th>Логин</th>
         <th></th>
     </tr>
@@ -47,11 +52,18 @@ $bankGates = $partner->getBankGates()->orderBy('TU ASC, Priority DESC')->all();
             <td><?= $bankGate->bank->Name ?></td>
             <td><?= $bankGate->Priority ?></td>
             <td><?= $bankGate->Enable ?></td>
+            <td><?= AccountTypes::ALL_TYPES[$bankGate->SchetType] ?></td>
             <td><?= $bankGate->SchetNumber ?></td>
+            <td><?= $bankGate->currency->Code ?></td>
             <td><?= $bankGate->Login ?></td>
             <td>
                 <button class="btn btn-primary partner-edit__bank-gates-table__edit-button">
                     <i class="glyphicon glyphicon-edit"></i>
+                </button>
+            </td>
+            <td>
+                <button class="btn btn-danger partner-edit__bank-gates-table__delete-button" data-id="<?=$bankGate->Id?>">
+                    <i class="glyphicon glyphicon-remove"></i>
                 </button>
             </td>
 
@@ -111,11 +123,24 @@ $bankGates = $partner->getBankGates()->orderBy('TU ASC, Priority DESC')->all();
                     </div>
 
                     <div class="form-group">
+                        <label>Валюта</label>
+                        <select class="form-control" name="CurrencyId">
+                            <?php
+                            /** @var CurrencyRepository */
+                            foreach (CurrencyRepository::getAll() as $currency) : ?>
+                                <option value="<?= $currency->Id ?>">
+                                    <?= $currency->Name ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
                         <label>Тип счета</label>
                         <select class="form-control" name="SchetType">
                             <?php
                             /** @var AccountTypes */
-                            foreach (AccountTypes::ALL_TYPES as $key => $type): ?>
+                            foreach (AccountTypes::ALL_TYPES as $key => $type) : ?>
                                 <option value="<?= $key ?>">
                                     <?= $type ?>
                                 </option>
@@ -161,11 +186,78 @@ $bankGates = $partner->getBankGates()->orderBy('TU ASC, Priority DESC')->all();
                         <label for="exampleInputFile">Доп параметр №4</label>
                         <input name="AdvParam_4" class="form-control" type="text" maxlength="1000">
                     </div>
+
+                    <div class="form-group">
+                        <input name="UseGateCompensation" type="checkbox"/> Использовать комиссию шлюза
+                    </div>
+
+                    <!-- Валюта комиссии -->
+                    <div class="form-group">
+                        <label>Валюта фиксированной комиссии</label>
+                        <select class="form-control" name="FeeCurrencyId">
+                            <?php foreach ($currencyList as $id => $code) : ?>
+                                <option value="<?= $id ?>"><?= $code ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Валюта минимальной комиссии</label>
+                        <select class="form-control" name="MinimalFeeCurrencyId">
+                            <?php foreach ($currencyList as $id => $code) : ?>
+                                <option value="<?= $id ?>"><?= $code ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <!-- Комиссия от клиента -->
+                    <div class="form-group">
+                        <label>Процентная комиссия от клиента</label>
+                        <input name="ClientCommission" class="form-control" type="number" step="0.01"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Фиксированная комиссия от клиента</label>
+                        <input name="ClientFee" class="form-control" type="number" step="0.01"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Минимальная комиссия от клиента</label>
+                        <input name="ClientMinimalFee" class="form-control" type="number" step="0.01"/>
+                    </div>
+
+                    <!-- Комиссия от контрагента (партнера/мерчанта) -->
+                    <div class="form-group">
+                        <label>Процентная комиссия от контрагента</label>
+                        <input name="PartnerCommission" class="form-control" type="number" step="0.01"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Фиксированная комиссия от контрагента</label>
+                        <input name="PartnerFee" class="form-control" type="number" step="0.01"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Минимальная комиссия от контрагента</label>
+                        <input name="PartnerMinimalFee" class="form-control" type="number" step="0.01"/>
+                    </div>
+
+                    <!-- Комиссия банку -->
+                    <div class="form-group">
+                        <label>Процентная комиссия банку</label>
+                        <input name="BankCommission" class="form-control" type="number" step="0.01"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Фиксированная комиссия банку</label>
+                        <input name="BankFee" class="form-control" type="number" step="0.01"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Минимальная комиссия банку</label>
+                        <input name="BankMinimalFee" class="form-control" type="number" step="0.01"/>
+                    </div>
+
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Отмена</button>
-                <button id="partner-edit__bank-gates-edit-modal__save-button" type="button" class="btn btn-primary">Сохранить</button>
+                <button id="partner-edit__bank-gates-edit-modal__save-button" type="button" class="btn btn-primary">
+                    Сохранить
+                </button>
             </div>
         </div>
     </div>

@@ -20,20 +20,30 @@ return [
     'traceLevel' => 0,
     'targets' => [
         [
-            'class' => 'app\services\logs\targets\ReqMaskFileTarget',
-            'levels' => ['warning'],
+            'class' => 'app\services\logs\targets\SecurityFileTarget',
+            'levels' => ['warning', 'info'],
             'maskVars' => $maskVars,
             'maxFileSize' => 1024 * 50,
-            'maxLogFiles' => 20,
+            'maxLogFiles' => 50,
             'rotateByCopy' => false,
+            'microtime' => true,
+            'except' => [
+                'yii\web\HttpException:401',
+                'yii\web\HttpException:404',
+            ]
         ],
         [
             'class' => 'app\services\logs\targets\SecurityFileTarget',
             'levels' => ['error'],
             'maskVars' => $maskVars,
             'maxFileSize' => 1024 * 50,
-            'maxLogFiles' => 20,
+            'maxLogFiles' => 50,
             'rotateByCopy' => false,
+            'microtime' => true,
+            'except' => [
+                'yii\web\HttpException:401',
+                'yii\web\HttpException:404',
+            ]
         ],
     ],
 ];

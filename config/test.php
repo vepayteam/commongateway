@@ -3,16 +3,20 @@ $params = require(__DIR__ . '/params.php');
 $db = require(__DIR__ . '/test_db.php');
 
 /**
+ * @TODO Слить с основным конфигом (web.php)!
+ */
+
+/**
  * Application configuration shared by all test types
  */
 return [
     'id' => 'basic-tests',
-    'basePath' => dirname(__DIR__),    
+    'basePath' => dirname(__DIR__),
     'language' => 'en-US',
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
         '@npm'   => '@vendor/npm-asset',
-    ],	
+    ],
     'components' => [
         'db' => $db,
         'mailer' => [
@@ -21,7 +25,7 @@ return [
         'cache' => [
             'class' => 'yii\caching\FileCache',
         ],
-        'assetManager' => [            
+        'assetManager' => [
             'basePath' => __DIR__ . '/../web/assets',
         ],
         'urlManager' => [
@@ -29,7 +33,7 @@ return [
         ],
         'user' => [
             'identityClass' => 'app\models\UserWgt',
-        ],        
+        ],
         'request' => [
             'cookieValidationKey' => 'test',
             'enableCsrfValidation' => false,
@@ -43,6 +47,11 @@ return [
         'cache' => $params['components']['cache'],
         'redis' => $params['components']['redis'],
         'queue' => $params['components']['queue'],
+
+        // Сервисы
+        \app\services\PartnerService::class => \app\services\PartnerService::class,
+        \app\services\PaySchetService::class => \app\services\PaySchetService::class,
+        \app\services\CompensationService::class => \app\services\CompensationService::class,
     ],
     'params' => $params,
     'container' => [
@@ -53,6 +62,7 @@ return [
             'PartnersService' => ['class' => 'app\services\partners\PartnersService'],
             'AuthService' => ['class' => 'app\services\auth\AuthService'],
             'NotificationsService' => ['class' => 'app\services\notifications\NotificationsService'],
+            'WallettoExchangeRateService' => ['class' => 'app\services\exchange_rates\WallettoExchangeRateService'],
         ],
     ],
     'modules' => [

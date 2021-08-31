@@ -10,14 +10,17 @@ use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\queue\BinBDInfoJob;
 use app\models\TU;
+use app\services\ident\IdentService;
+use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
-use app\services\ident\forms\IdentForm;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\Check3DSVersionResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
+use app\services\payment\banks\bank_adapter_responses\IdentInitResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
@@ -55,6 +58,7 @@ use app\services\payment\models\PaySchet;
 use app\services\payment\exceptions\reRequestingStatusException;
 use app\services\payment\exceptions\reRequestingStatusOkException;
 use Carbon\Carbon;
+use Faker\Provider\Base;
 use qfsx\yii2\curl\Curl;
 use SimpleXMLElement;
 use Yii;
@@ -64,7 +68,7 @@ class TKBankAdapter implements IBankAdapter
 {
     use TKBank3DSTrait;
 
-    const AFT_MIN_SUMM = 120000;
+    const AFT_MIN_SUMM = 185000;
 
     public const BIC = '044525388';
     const BANK_URL = 'https://pay.tkbbank.ru';
@@ -561,6 +565,11 @@ class TKBankAdapter implements IBankAdapter
         $queryData = Json::encode($queryData);
 
         $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+        Yii::warning('TKBankAdapter getBalance: PartnerId=' . $this->gate->PartnerId
+            . ' GateId=' . $this->gate->Id
+            . ' Request=' . $queryData
+            . ' Response=' . Json::encode($ans)
+        );
 
         if (isset($ans['xml']) && !empty($ans['xml'])) {
             $xml = $this->parseAns($ans['xml']);
@@ -1081,6 +1090,7 @@ class TKBankAdapter implements IBankAdapter
         if(in_array($check3DSVersionResponse->version, Issuer3DSVersionInterface::V_2)) {
             // TODO: add strategy 3ds v2
             $payResponse = new CreatePayResponse();
+            $payResponse->vesion3DS = $check3DSVersionResponse->version;
             $payResponse->status = BaseResponse::STATUS_CREATED;
             $payResponse->isNeedSendTransIdTKB = true;
             $payResponse->threeDSServerTransID = $check3DSVersionResponse->threeDSServerTransID;
@@ -1205,6 +1215,7 @@ class TKBankAdapter implements IBankAdapter
     {
         $action = '/api/tcbpay/gate/registerorderfromcardfinish';
 
+        $paySchet = $donePayForm->getPaySchet();
         $donePayRequest = new DonePayRequest();
         $donePayRequest->OrderId = $donePayForm->IdPay;
         $donePayRequest->MD = $donePayForm->md;
@@ -1222,6 +1233,9 @@ class TKBankAdapter implements IBankAdapter
                 $confirmPayResponse->status = BaseResponse::STATUS_DONE;
                 $confirmPayResponse->message = 'OK';
                 $confirmPayResponse->transac = $xml['ordernumber'];
+
+                $paySchet->ExtBillNumber = $confirmPayResponse->transac;
+                $paySchet->save(false);
             } else {
                 $confirmPayResponse->status = BaseResponse::STATUS_ERROR;
                 $confirmPayResponse->message = $xml['errorinfo']['errormessage'];
@@ -1248,6 +1262,9 @@ class TKBankAdapter implements IBankAdapter
         $paySchet = $donePayForm->getPaySchet();
 
         if($paySchet->IsNeed3DSVerif) {
+            Yii::warning('TKBankAdapter confirmBy3DSv2: ID=' . $paySchet->ID
+                . ' IsNeed3DSVerif=' . $paySchet->IsNeed3DSVerif
+            );
             $this->validateBy3DSv2($donePayForm);
         }
         return $this->finishBy3DSv2($donePayForm);
@@ -1272,6 +1289,14 @@ class TKBankAdapter implements IBankAdapter
         $confirm3DSv2Request->CardInfo = [
             'CardRefId' => $cardRefId,
         ];
+
+        Yii::warning('TKBankAdapter get cardRefId cache: paySchet.ID=' . $donePayForm->getPaySchet()->ID
+            . ' paySchet.Extid=' . $donePayForm->getPaySchet()->Extid
+            . ' cardRefId=' . $cardRefId
+        );
+        Yii::warning('TKBankAdapter get paySchet: paySchet.ID=' . $donePayForm->getPaySchet()->ID
+            . ' cardRefId=' . $donePayForm->getPaySchet()->CardRefId3DS
+        );
 
         $queryData = Json::encode($confirm3DSv2Request->getAttributes());
         $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
@@ -1366,6 +1391,11 @@ class TKBankAdapter implements IBankAdapter
                 if(!in_array($status, BaseResponse::STATUSES)) {
                     throw new BankAdapterResponseException('Ошибка преобразования статусов');
                 }
+
+                if($status == BaseResponse::STATUS_DONE && isset($xml['orderinfo']['orderid'])) {
+                    $checkStatusPayResponse->transId = $xml['orderinfo']['orderid'];
+                }
+
                 $checkStatusPayResponse->status = $status;
                 $checkStatusPayResponse->xml = $xml;
                 $checkStatusPayResponse->rrn = $xml['orderadditionalinfo']['rrn'] ?? '';
@@ -1493,7 +1523,6 @@ class TKBankAdapter implements IBankAdapter
     /**
      * @param GetBalanceRequest $getBalanceRequest
      * @return GetBalanceResponse
-     * @throws BankAdapterResponseException
      */
     public function getBalance(GetBalanceRequest $getBalanceRequest): GetBalanceResponse
     {
@@ -1508,9 +1537,7 @@ class TKBankAdapter implements IBankAdapter
         $request['account'] = $getBalanceRequest->accountNumber;
         $response = $this->getBalanceAcc($request);
         if (!isset($response['amount']) && $response['status'] === 0) {
-            throw new BankAdapterResponseException(
-                "Balance service:: TKB request failed for type: $type message: " . $response['message']
-            );
+            Yii::warning("Balance service:: TKB request failed for type: $type message: " . $response['message']);
         }
         $getBalanceResponse->amount = (float)$response['amount'];
         $getBalanceResponse->currency = 'RUB';
@@ -1556,7 +1583,106 @@ class TKBankAdapter implements IBankAdapter
         return $outAccountPayResponse;
     }
 
-    public function ident(IdentForm $identForm)
+    public function identInit(Ident $ident)
+    {
+        $action = "/api/government/identification/simplifiedpersonidentification";
+        $queryData = [];
+
+        foreach (Ident::getTkbRequestParams() as $key => $attributeName) {
+            if(!empty($ident->$attributeName)) {
+                $queryData[$key] = $ident->$attributeName;
+            }
+        }
+
+        $identResponse = new IdentInitResponse();
+        if(Yii::$app->params['TESTMODE'] == 'Y') {
+            $identResponse->status = BaseResponse::STATUS_DONE;
+            $identResponse->response = [];
+            return $identResponse;
+        }
+
+        $ans = $this->curlXmlReq(Json::encode($queryData), $this->bankUrl . $action);
+
+        if (isset($ans['xml']) && isset($ans['xml']['OrderId']) && !empty($ans['xml']['OrderId'])) {
+            $identResponse->status = BaseResponse::STATUS_DONE;
+        } else {
+            $identResponse->status = BaseResponse::STATUS_ERROR;
+        }
+
+        return $identResponse;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function identGetStatus(Ident $ident)
+    {
+        $action = "/api/government/identification/simplifiedpersonidentificationresult";
+        $queryData = [
+            'ExtId' => $ident->Id,
+        ];
+        $queryData = Json::encode($queryData);
+        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+
+        $identGetStatusResponse = new IdentGetStatusResponse();
+        if(Yii::$app->params['TESTMODE'] == 'Y') {
+            $identGetStatusResponse->status = BaseResponse::STATUS_DONE;
+            $identGetStatusResponse->identStatus = Ident::STATUS_SUCCESS;
+            $identGetStatusResponse->response = ['message' => 'На тестовой среде идентифиткация всегда успешна'];
+            return $identGetStatusResponse;
+        }
+
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            $identStatus = $this->convertIdentGetStatus($ident, $ans['xml']);
+            $identGetStatusResponse->status = ($identStatus == Ident::STATUS_WAITING ? BaseResponse::STATUS_CREATED : BaseResponse::STATUS_DONE);
+            $identGetStatusResponse->identStatus = $this->convertIdentGetStatus($ident, $ans['xml']);
+            $identGetStatusResponse->response = $ans['xml'];
+        } else {
+            $identGetStatusResponse->status = BaseResponse::STATUS_ERROR;
+            $identGetStatusResponse->response = $ans;
+        }
+
+        return $identGetStatusResponse;
+    }
+
+    /**
+     * @param Ident $ident
+     * @param array $ans
+     * @return int
+     */
+    protected function convertIdentGetStatus(Ident $ident, array $ans)
+    {
+        $status = Ident::STATUS_WAITING;
+        $maxTimeWithInnRequest = 60 * 30;
+        foreach (['Inn', 'Snils', 'Passport', 'PassportDeferred'] as $key) {
+            if(isset($ans[$key])) {
+                if(
+                    $ans[$key]['Status'] == 'Processing'
+                    && $key == 'Inn' && (time() - $ident->DateUpdated) < $maxTimeWithInnRequest
+                ) {
+                    continue;
+                } elseif (in_array($ans[$key]['Status'], ['Processing', 'NotValid']) && $key == 'Inn') {
+                    $status = Ident::STATUS_DENIED;
+                    break;
+                } elseif ($ans[$key]['Status'] == 'Error') {
+                    $status = Ident::STATUS_ERROR;
+                    break;
+                } elseif ($ans[$key]['Status'] == 'NotValid') {
+                    $status = Ident::STATUS_DENIED;
+                    break;
+                } elseif ($ans[$key]['Status'] == 'Valid') {
+                    $status = Ident::STATUS_SUCCESS;
+                    break;
+                }
+            }
+        }
+        return $status;
+    }
+
+    /**
+     * @throws GateException
+     */
+    public function currencyExchangeRates()
     {
         throw new GateException('Метод недоступен');
     }

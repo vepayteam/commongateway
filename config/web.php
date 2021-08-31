@@ -2,11 +2,11 @@
 $params = require(__DIR__ . '/params.php');
 
 date_default_timezone_set('Europe/Moscow');
-setlocale (LC_TIME, "RUS");
+setlocale(LC_TIME, "RUS");
 ini_set('max_execution_time', 120);
-ini_set('memory_limit','512M');
-ini_set('session.gc_maxlifetime',3600 * 24);
-ini_set('session.cookie_lifetime',0);
+ini_set('memory_limit', '512M');
+ini_set('session.gc_maxlifetime', 3600 * 24);
+ini_set('session.cookie_lifetime', 0);
 
 $config = [
     'id' => 'basic',
@@ -17,8 +17,8 @@ $config = [
     'bootstrap' => ['log', 'queue'],
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
-        '@npm'   => '@vendor/npm-asset',
-        '@runtime'=>'@app/runtime',
+        '@npm' => '@vendor/npm-asset',
+        '@runtime' => '@app/runtime',
         '@web' => $params['domain'],
     ],
     'components' => [
@@ -27,8 +27,32 @@ $config = [
             'cookieValidationKey' => 'm04W7J9wtXYYl5Hp4f51QbvERNbMgJgPq',
             'baseUrl' => '',
             //'parsers' => [
-                //'application/json' => 'yii\web\JsonParser',
+            //'application/json' => 'yii\web\JsonParser',
             //],
+            'parsers' => [
+                'application/json' => \yii\web\JsonParser::class,
+            ],
+        ],
+        'response' => [
+            'on beforeSend' => function ($event) {
+                $request = Yii::$app->request;
+                $routesXFrameOptionsNone = [
+                    '/widget/',
+                    '/pay/'
+                ];
+
+                $sendXFrame = true;
+                foreach ($routesXFrameOptionsNone as $url) {
+                    if (str_starts_with($request->url, $url)) {
+                        $sendXFrame = false;
+                        break;
+                    }
+                }
+
+                if ($sendXFrame) {
+                    $event->sender->headers->add('X-Frame-Options', 'SAMEORIGIN');
+                }
+            },
         ],
         'session' => [
             'class' => 'yii\web\DbSession',
@@ -76,6 +100,10 @@ $config = [
                 '/admin/syncbalance/<id:\d+>' => 'admin/syncbalance',
                 '/mfo/getsbpbankreceiver' => 'mfo/default/getsbpbankreceiver',
 
+                'POST /h2hapi/v1/invoices' => '/h2hapi/v1/invoice/post',
+                'GET /h2hapi/v1/invoices/<id:\d+>' => '/h2hapi/v1/invoice/get',
+                'PUT /h2hapi/v1/invoices/<paySchetId:\d+>/payment' => '/h2hapi/v1/payment/put',
+
                 '<controller>/<id:\d+>' => '<controller>/index',
                 '<controller>/<action>' => '<controller>/<action>',
                 '<controller>/<action>/<id:\d+>' => '<controller>/<action>',
@@ -122,6 +150,11 @@ $config = [
         'cache' => $params['components']['cache'],
         'redis' => $params['components']['redis'],
         'queue' => $params['components']['queue'],
+
+        // Сервисы
+        \app\services\PartnerService::class => \app\services\PartnerService::class,
+        \app\services\PaySchetService::class => \app\services\PaySchetService::class,
+        \app\services\CompensationService::class => \app\services\CompensationService::class,
     ],
     'params' => $params,
     'container' => [
@@ -132,6 +165,7 @@ $config = [
             'PartnersService' => ['class' => 'app\services\partners\PartnersService'],
             'AuthService' => ['class' => 'app\services\auth\AuthService'],
             'NotificationsService' => ['class' => 'app\services\notifications\NotificationsService'],
+            'WallettoExchangeRateService' => ['class' => 'app\services\exchange_rates\WallettoExchangeRateService'],
         ],
     ],
     'modules' => [
@@ -152,6 +186,9 @@ $config = [
         ],
         'lk' => [
             'class' => 'app\modules\lk\Module',
+        ],
+        'h2hapi' => [
+            'class' => 'app\modules\h2hapi\Module',
         ],
     ],
 ];
@@ -193,47 +230,5 @@ if (YII_ENV_DEV) {
         ];
     }
 }
-
-$config['components']['log']['targets'][] = [
-    'class' => 'yii\log\FileTarget',
-    'levels' => ['error', 'warning', 'info'],
-    'categories' => ['russrandart'],
-    'logFile' => '@app/runtime/logs/console/russrandart.log',
-    'maxFileSize' => 1024 * 2,
-    'maxLogFiles' => 20,
-    'logVars' => [],
-];
-
-$config['components']['log']['targets'][] = [
-    'class' => 'yii\log\FileTarget',
-    'levels' => ['error', 'warning', 'info'],
-    'categories' => ['rsbcron', 'queue'],
-    'logFile' => '@app/runtime/logs/console/rsbcron.log',
-    'maxFileSize' => 1024 * 30,
-    'maxLogFiles' => 20,
-    'rotateByCopy' => false,
-    'logVars' => [],
-];
-$config['components']['log']['targets'][] = [
-    'class' => 'yii\log\FileTarget',
-    'levels' => ['error', 'warning', 'info'],
-    'categories' => ['mfo'],
-    'logFile' => '@app/runtime/logs/mfo.log',
-    'maxFileSize' => 1024 * 10,
-    'maxLogFiles' => 20,
-    'rotateByCopy' => false,
-    'logVars' => [],
-];
-
-$config['components']['log']['targets'][] = [
-    'class' => 'yii\log\FileTarget',
-    'levels' => ['error', 'warning', 'info'],
-    'categories' => ['merchant'],
-    'logFile' => '@app/runtime/logs/console/merchant.log',
-    'maxFileSize' => 1024 * 30,
-    'maxLogFiles' => 20,
-    'rotateByCopy' => false,
-    'logVars' => [],
-];
 
 return $config;

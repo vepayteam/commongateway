@@ -109,11 +109,15 @@ class MfoController extends Controller
     /**
      * Балансы МФО
      *
-     * @return string
+     * @return string|Response
      * @throws \yii\db\Exception
      */
     public function actionPartsBalance()
     {
+        if (!UserLk::IsAdmin(Yii::$app->user) && !PartUserAccess::checkPartsBalanceAccess()) {
+            return $this->redirect('/partner');
+        }
+
         $partners = null;
         $data = null;
 
@@ -131,6 +135,10 @@ class MfoController extends Controller
 
     public function actionPartsBalanceProcessing()
     {
+        if (!UserLk::IsAdmin(Yii::$app->user) && !PartUserAccess::checkPartsBalanceAccess()) {
+            return $this->redirect('/partner');
+        }
+
         $this->enableCsrfValidation = false;
         $post = Yii::$app->request->post();
 
@@ -149,6 +157,10 @@ class MfoController extends Controller
 
     public function actionPartsBalancePartner()
     {
+        if (!UserLk::IsAdmin(Yii::$app->user) && !PartUserAccess::checkPartsBalanceAccess()) {
+            return $this->redirect('/partner');
+        }
+
         $partners = null;
         $data = null;
 
@@ -166,6 +178,10 @@ class MfoController extends Controller
 
     public function actionPartsBalancePartnerProcessing()
     {
+        if (!UserLk::IsAdmin(Yii::$app->user) && !PartUserAccess::checkPartsBalanceAccess()) {
+            return $this->redirect('/partner');
+        }
+
         $this->enableCsrfValidation = false;
         $post = Yii::$app->request->post();
 
@@ -206,37 +222,36 @@ class MfoController extends Controller
             $sort = (int)Yii::$app->request->post('sort', 0);
 
             Yii::$app->response->format = Response::FORMAT_JSON;
-
             $partner = Partner::findOne(['ID' => $idpartner]);
             $MfoBalance = new MfoBalance($partner);
 
             if ($istransit == 10 || $istransit == 11) {
-                return [
-                    'status' => 1,
-                    'ostbeg' => number_format($MfoBalance->GetOstBeg($dateFrom, $dateTo,$istransit - 10)/100.0, 2, '.', ' '),
-                    'ostend' => number_format($MfoBalance->GetOstEnd($dateTo, $istransit - 10)/100.0, 2, '.', ' '),
-                    'data' => $this->renderPartial('_balanceorderlocal', [
-                        'listorder' => $MfoBalance->GetOrdersLocal($istransit - 10, $dateFrom, $dateTo, $sort),
-                        'IsAdmin' => $IsAdmin,
-                        'sort' => $sort
-                    ])
-                ];
-            } else {
-                return [
-                    'status' => 1,
-                    'ostbeg' => number_format($MfoBalance->GetOstBeg($dateFrom, $dateTo, $istransit)/100.0, 2, '.', ' '),
-                    'ostend' => number_format($MfoBalance->GetOstEnd($dateTo, $istransit)/100.0, 2, '.', ' '),
-                    'data' => $this->renderPartial('_balanceorder', [
-                        'listorder' => $MfoBalance->GetBankStatemets($istransit, $dateFrom, $dateTo, $sort),
-                        'IsAdmin' => $IsAdmin,
-                        'sort' => $sort,
-                        'dateFrom' => $dateFrom,
-                        'dateTo' => $dateTo,
-                        'istransit' => $istransit,
-                        'IdPartner' => $idpartner
-                    ])
-                ];
+                $istransit -= 10;
             }
+            $ostBeg = number_format($MfoBalance->GetOstBeg($dateFrom, $dateTo,$istransit)/100.0, 2, '.', ' ');
+            $ostEnd = number_format($MfoBalance->GetOstBeg($dateFrom, $dateTo,$istransit)/100.0, 2, '.', ' ');
+            $data = ($istransit == 10 || $istransit == 11)
+                ? $this->renderPartial('_balanceorderlocal', [
+                    'listorder' => $MfoBalance->GetOrdersLocal($istransit - 10, $dateFrom, $dateTo, $sort),
+                    'IsAdmin' => $IsAdmin,
+                    'sort' => $sort
+                ])
+                : $this->renderPartial('_balanceorder', [
+                    'listorder' => $MfoBalance->GetBankStatemets($istransit, $dateFrom, $dateTo, $sort),
+                    'IsAdmin' => $IsAdmin,
+                    'sort' => $sort,
+                    'dateFrom' => $dateFrom,
+                    'dateTo' => $dateTo,
+                    'istransit' => $istransit,
+                    'IdPartner' => $idpartner
+                ]);
+
+            return [
+                'status' => 1,
+                'ostbeg' => $ostBeg,
+                'ostend' => $ostEnd,
+                'data' => $data
+            ];
         } else {
             return $this->redirect('/partner');
         }

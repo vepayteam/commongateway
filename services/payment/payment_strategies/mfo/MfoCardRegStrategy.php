@@ -15,6 +15,7 @@ use yii\mutex\FileMutex;
 
 class MfoCardRegStrategy
 {
+    const PAY_SUMM = 1100;
     private $cardRegByPayForm;
 
     public function __construct(CardRegForm $cardRegForm)
@@ -96,7 +97,7 @@ class MfoCardRegStrategy
      */
     public function createPaySchet(User $user, BankAdapterBuilder $bankAdapterBuilder)
     {
-        $summPay = random_int(100, 1000);
+        $summPay = self::PAY_SUMM;
 
         $paySchet = new PaySchet();
 

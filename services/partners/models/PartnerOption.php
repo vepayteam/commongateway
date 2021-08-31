@@ -20,11 +20,14 @@ class PartnerOption extends \yii\db\ActiveRecord
     const EMAILS_BY_SEND_LATE_UPDATE_PAY_SCHETS_NAME = 'payment__emails_by_send_late_update_payschet';
     const DELTA_TIME_LATE_UPDATE_PAY_SCHETS_NAME = 'payment__delta_time_late_update_payschet';
 
+    const PAYMENT_FORM_WITHOUT_VEPAY = 'payment_form_without_vepay';
+    const PAYMENT_FORM_ADDITIONAL_COMMISSION = 'payment_form_additional_commission';
+
     const LIST = [
         self::CARD_REG_TEXT_HEADER_NAME => [
             'title' => 'Текст сообщения при регистрации карты',
             'type' => 'textarea',
-            'default' => 'Cписанная cумма, списанная с карты, при успешном списании, вернется обратно на вашу банковскую карту.',
+            'default' => 'Для проверки банковской карты с нее будет списано 11 р, затем будет произведен возврат',
         ],
         self::EMAILS_BY_SEND_LATE_UPDATE_PAY_SCHETS_NAME => [
             'title' => 'Emails для отправки реестров с поздним обновлением статуса, через запятую',
@@ -32,9 +35,19 @@ class PartnerOption extends \yii\db\ActiveRecord
             'default' => '',
         ],
         self::DELTA_TIME_LATE_UPDATE_PAY_SCHETS_NAME => [
-            'title' => 'Время, после которого обнорвление статуса считать поздним, в секундах',
+            'title' => 'Время, после которого обновление статуса считать поздним, в секундах',
             'type' => 'number',
             'default' => '18000',
+        ],
+        self::PAYMENT_FORM_WITHOUT_VEPAY => [
+            'title' => 'Включить платежную форму без логотипов и ссылок Vepay',
+            'type' => 'checkbox',
+            'default' => 'false',
+        ],
+        self::PAYMENT_FORM_ADDITIONAL_COMMISSION => [
+            'title' => 'Добавить на платежную страницу уведомление о дополнительной комиссии с клиента банком-эмитентом',
+            'type' => 'checkbox',
+            'default' => 'false',
         ],
     ];
 
@@ -75,5 +88,12 @@ class PartnerOption extends \yii\db\ActiveRecord
     public function getPartner()
     {
         return $this->hasOne(Partner::class, ['ID' => 'PartnerId']);
+    }
+
+    public static function getBool($partnerId, $paramName): bool
+    {
+        $partnerOption = PartnerOption::findOne(['PartnerId' => $partnerId, 'Name' => $paramName]);
+
+        return $partnerOption && $partnerOption->Value === 'true';
     }
 }

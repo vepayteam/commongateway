@@ -63,7 +63,7 @@ class RefreshStatusPayStrategy extends OkPayStrategy
             $paySchet->bank->ID)
         );
 
-        $bankAdapterBuilder->buildByBank($partner, $paySchet->uslugatovar, $paySchet->bank);
+        $bankAdapterBuilder->buildByBank($partner, $paySchet->uslugatovar, $paySchet->bank, $paySchet->currency);
 
         /** @var CheckStatusPayResponse $checkStatusPayResponse */
         $checkStatusPayResponse = $bankAdapterBuilder->getBankAdapter()->checkStatusPay($this->okPayForm);
@@ -82,8 +82,9 @@ class RefreshStatusPayStrategy extends OkPayStrategy
 
         $paySchet->Status = $checkStatusPayResponse->status;
         $paySchet->ErrorInfo = $checkStatusPayResponse->message;
-        $paySchet->RRN = $checkStatusPayResponse->xml['orderadditionalinfo']['rrn'] ?? '';
+        $paySchet->RRN = $checkStatusPayResponse->rrn;
         $paySchet->RCCode = $checkStatusPayResponse->xml['orderadditionalinfo']['rc'] ?? '';
+        $paySchet->Operations = Json::encode($checkStatusPayResponse->operations ?? []);
         $paySchet->save(false);
 
         $this->getNotificationsService()->sendPostbacks($paySchet);

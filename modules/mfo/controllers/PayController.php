@@ -3,20 +3,16 @@
 namespace app\modules\mfo\controllers;
 
 use app\models\api\CorsTrait;
-use app\models\bank\BankMerchant;
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\crypt\CardToken;
 use app\models\kfapi\KfCard;
 use app\models\kfapi\KfFormPay;
-use app\models\kfapi\KfPay;
 use app\models\kfapi\KfPayParts;
 use app\models\mfo\MfoReq;
-use app\models\payonline\CreatePay;
-use app\models\payonline\Partner;
 use app\models\PayschetPart;
 use app\models\Payschets;
-use app\models\TU;
+use app\services\compensationService\CompensationException;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
@@ -29,20 +25,34 @@ use app\services\payment\payment_strategies\CreatePayPartsStrategy;
 use app\services\payment\payment_strategies\IMfoStrategy;
 use app\services\payment\payment_strategies\mfo\MfoAutoPayStrategy;
 use app\services\payment\payment_strategies\mfo\MfoPayLkCreateStrategy;
+use app\services\PaySchetService;
 use Yii;
 use yii\base\Exception;
-use yii\helpers\VarDumper;
 use yii\mutex\FileMutex;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\web\ForbiddenHttpException;
-use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
 
 class PayController extends Controller
 {
     use CorsTrait;
+
+    /**
+     * @var PaySchetService
+     */
+    private $paySchetService;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function init()
+    {
+        parent::init();
+
+        $this->paySchetService = \Yii::$app->get(PaySchetService::class);
+    }
 
     public function behaviors()
     {
@@ -99,17 +109,34 @@ class PayController extends Controller
 
         // рубли в копейки
         // TODO: in model validation
+        // TODO: in other currency conversation
         $form->amount *= 100;
         $form->client = $mfo->getRequestData('client');
 
-        Yii::warning('/pay/lk mfo='. $mfo->mfo . " sum=" . $form->amount . " extid=" . $form->extid, 'mfo');
+        $message = sprintf(
+            '/pay/lk mfo=%d sum=%d currency=%s extid=%d',
+            $mfo->mfo,
+            $form->amount,
+            $form->currency,
+            $form->extid
+        );
+        Yii::warning($message, 'mfo');
         $paymentStrategy = new MfoPayLkCreateStrategy($form);
+
         try {
+
             $payschet = $paymentStrategy->exec();
+
         } catch (CreatePayException $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
         } catch (GateException $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
+        } catch (CompensationException $e) {
+            $message = 'Ошибка расчета комисси.';
+            if ($e->getCode() === CompensationException::NO_EXCHANGE_RATE) {
+                $message = 'Обменный курс для расчета комисси не найден.';
+            }
+            return ['status' => 0, 'message' => $message];
         }
 
         $urlForm = Yii::$app->params['domain'] . '/pay/form/' . $payschet->ID;
@@ -210,6 +237,15 @@ class PayController extends Controller
     }
 
     // TODO: refact to strategies
+
+    /**
+     * @throws \yii\web\UnauthorizedHttpException
+     * @throws ForbiddenHttpException
+     * @throws BadRequestHttpException
+     * @throws \yii\db\Exception
+     * @throws CreatePayException
+     * @throws Exception
+     */
     public function actionAutoParts()
     {
         $mfo = new MfoReq();
@@ -247,14 +283,13 @@ class PayController extends Controller
 
         Yii::warning('/pay/auto mfo='. $mfo->mfo . " sum=".$kfPay->amount . " extid=".$kfPay->extid, 'mfo');
 
-        $pay = new CreatePay();
         $mutex = new FileMutex();
         if (!empty($kfPay->extid)) {
             //проверка на повторный запрос
             if (!$mutex->acquire('getPaySchetExt' . $kfPay->extid, 30)) {
                 throw new Exception('getPaySchetExt: error lock!');
             }
-            $paramsExist = $pay->getPaySchetExt($kfPay->extid, $usl, $mfo->mfo);
+            $paramsExist = $this->paySchetService->getPaySchetExt($kfPay->extid, $usl, $mfo->mfo);
             if ($paramsExist) {
                 if ($kfPay->amount == $paramsExist['sumin']) {
                     return ['status' => 1, 'message' => '', 'id' => (int)$paramsExist['IdPay']];
@@ -281,7 +316,15 @@ class PayController extends Controller
         }
 
         $kfPay->timeout = 30;
-        $params = $pay->payToMfo($kfCard->user, [$kfPay->extid, $Card->ID, $TcbGate->AutoPayIdGate], $kfPay, $usl, TCBank::$bank, $mfo->mfo, $TcbGate->AutoPayIdGate);
+        $params = $this->paySchetService->payToMfo(
+            $kfCard->user,
+            [$kfPay->extid, $Card->ID, $TcbGate->AutoPayIdGate],
+            $kfPay,
+            $usl,
+            TCBank::$bank,
+            $mfo->mfo,
+            $TcbGate->AutoPayIdGate
+        );
 
         foreach ($mfo->Req()['parts'] as $part) {
             $payschetPart = new PayschetPart();
@@ -301,7 +344,7 @@ class PayController extends Controller
         $params['card']['month'] = $Card->getMonth();
 
         $payschets = new Payschets();
-        $pay->setKardToPaySchet($params['IdPay'], $Card->ID);
+        $this->paySchetService->setKardToPaySchet($params['IdPay'], $Card->ID);
 
         //данные карты
         $payschets->SetCardPay($params['IdPay'], [
@@ -324,7 +367,7 @@ class PayController extends Controller
             ]);
 
         } else {
-            $pay->CancelReq($params['IdPay'],'Платеж не проведен');
+            $this->paySchetService->cancelReq($params['IdPay'],'Платеж не проведен');
         }
 
         return ['status' => 1, 'message' => '', 'id' => (int)$params['IdPay']];
@@ -343,22 +386,32 @@ class PayController extends Controller
         $mfo = new MfoReq();
         $mfo->LoadData(Yii::$app->request->getRawBody());
 
-        $IdPay = $mfo->GetReq('id');
+        $paySchetId = $mfo->GetReq('id');
 
-        $payschets = new Payschets();
-        $params = $payschets->getSchetData($IdPay,null, $mfo->mfo);
-        if ($params) {
-            if($params['Status'] == PaySchet::STATUS_NOT_EXEC) {
-                return ['status' => 0, 'message' => 'В обработке' , 'rc' => ''];
-            }
+        $paySchet = PaySchet::findOne([
+            'ID' => $paySchetId,
+            'IdOrg' => $mfo->mfo,
+        ]);
 
-            $merchBank = BankMerchant::Create($params);
-            $ret = $merchBank->confirmPay($IdPay, $mfo->mfo);
-            if ($ret && isset($ret['status']) && $ret['IdPay'] != 0) {
-                return ['status' => (int)$ret['status'], 'message' => (string)$ret['message'], 'rc' => isset($ret['rc']) ?(string)$ret['rc'] : ''];
-            }
+        if(!$paySchet) {
+            return ['status' => 0, 'message' => 'Счет не найден'];
         }
-        return ['status' => 0, 'message' => 'Счет не найден'];
+
+        if($paySchet->Status == PaySchet::STATUS_WAITING) {
+            return [
+                'status' => 0,
+                'message' => 'В обработке',
+                'rc' => '',
+                'channel' => $paySchet->bank->ChannelName,
+            ];
+        } else {
+            return [
+                'status' => (int)$paySchet->Status,
+                'message' => (string)$paySchet->ErrorInfo,
+                'rc' => $paySchet->RCCode,
+                'channel' => $paySchet->bank->ChannelName,
+            ];
+        }
     }
 
 }

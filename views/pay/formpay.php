@@ -1,4 +1,5 @@
 <?php
+
 /* @var \yii\web\View $this */
 /* @var array $params */
 /* @var array $apple */
@@ -7,27 +8,35 @@
 /* @var \app\models\payonline\PayForm $payform */
 
 use app\services\partners\models\PartnerOption;
+use app\services\payment\helpers\PaymentHelper;
+use app\services\payment\models\Currency;
 use yii\bootstrap\ActiveForm;
 use yii\bootstrap\Html;
+
+$partnerCardRegTextHeaderOption = PartnerOption::findOne(['PartnerId' => $params['IdOrg'], 'Name' => PartnerOption::CARD_REG_TEXT_HEADER_NAME]);
+
+$paymentFormWithoutVepay = PartnerOption::getBool($params['IdOrg'], PartnerOption::PAYMENT_FORM_WITHOUT_VEPAY);
+$paymentFormAdditionalCommission = PartnerOption::getBool($params['IdOrg'], PartnerOption::PAYMENT_FORM_ADDITIONAL_COMMISSION);
 ?>
-<div class="middle">
+<div id="middle-wrapper" class="middle middle-background">
 <section class="container">
-    <div class="row margin-top24 rowlogo">
-        <div class="col-xs-12">
-            <img src="/imgs/logo_vepay.svg" alt="vepay" class="logo">
-            <span class="logotext">ТЕХНОЛОГИИ В&nbsp;ДЕЙСТВИИ</span>
-            <img src="/imgs/close.svg" class="closebtn" alt="close" id="closeform">
+    <?php if (!$paymentFormWithoutVepay): ?>
+        <div class="row margin-top24 rowlogo">
+            <div class="col-xs-12">
+                <img src="/imgs/logo_vepay.svg" alt="vepay" class="logo">
+                <span class="logotext">ТЕХНОЛОГИИ В&nbsp;ДЕЙСТВИИ</span>
+                <img src="/imgs/close.svg" class="closebtn" alt="close" id="closeform">
+            </div>
         </div>
-    </div>
+    <?php endif; ?>
     <?php if ($params['IdUsluga'] == 1) : ?>
-        <?php $partnerCardRegTextHeaderOption = PartnerOption::findOne(['PartnerId' => $params['IdOrg'], 'Name' => PartnerOption::CARD_REG_TEXT_HEADER_NAME]) ?>
         <?php if($partnerCardRegTextHeaderOption): ?>
             <div class="infotop">
                 <?= $partnerCardRegTextHeaderOption['Value'] ?>
             </div>
         <?php else: ?>
             <div class="infotop">
-                Cписанная cумма, списанная с карты, при успешном списании, вернется обратно на вашу банковскую карту.
+                Для проверки банковской карты с нее будет списано 11 р, затем будет произведен возврат
             </div>
         <?php endif; ?>
     <?php else: ?>
@@ -40,8 +49,30 @@ use yii\bootstrap\Html;
     <?php if ($params['IdUsluga'] != 1) : ?>
         <div class="row nopadding">
             <div class="col-xs-12">
-                <div class="info"><span>Сумма</span> <span class="pull-right blacksumm"><?=number_format($params['SummPay']/100.0, 2, ',', '')?> ₽</span></div>
-                <div class="info"><span>Комиссия</span> <span class="pull-right blacksumm"><?=number_format($params['ComissSumm']/100.0, 2, ',', '')?> ₽</span></div>
+                <div class="info">
+                    <span>Сумма </span>
+                    <span class="pull-right blacksumm">
+                        <?= PaymentHelper::formatSum($params['amountPay']) ?>
+                        <?= Currency::SYMBOLS[$params['currency']] ?>
+                    </span>
+                </div>
+                <div class="info">
+                    <span>Комиссия </span>
+                    <span class="pull-right blacksumm">
+                        <?= PaymentHelper::formatSum($params['amountCommission']) ?>
+                        <?= Currency::SYMBOLS[$params['currency']] ?>
+                    </span>
+                </div>
+
+                <?php if ($paymentFormAdditionalCommission): ?>
+                    <div class="info margin-top16" style="font-weight: normal; font-size: 12px;">
+                        Информируем Вас, что банк-эмитент может взимать дополнительную комиссию.
+                    </div>
+                <?php endif; ?>
+
+                <div class="info" id="error-message" style="display: none">
+                    <p class="errmessage js-message-container"></p>
+                </div>
             </div>
         </div>
     <?php endif; ?>
@@ -73,7 +104,6 @@ use yii\bootstrap\Html;
                     'data-inputmask-mask' => '9{4} 9{4} 9{4} 9{4,6}',
                     'data-inputmask-regex' => '\d{16,18}',
                     'class' => 'form-control',
-                    'value' => '',
                     'placeholder' => '**** **** **** ****',
                     'autocomplete' => 'off'
                 ]); ?>
@@ -124,7 +154,7 @@ use yii\bootstrap\Html;
                     'type' => 'email',
                     'class' => 'form-control notrequired',
                     'value' => '',
-                    'placeholder' => 'info@vepay.online'
+                    'placeholder' => 'info@example.com'
                 ]); ?>
             </div>
         </div>
@@ -196,11 +226,13 @@ use yii\bootstrap\Html;
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-xs-12 text-center">
-            <div class="footcopyr">ООО «ПРОЦЕССИНГОВАЯ КОМПАНИЯ БЫСТРЫХ ПЛАТЕЖЕЙ»</div>
+    <?php if (!$paymentFormWithoutVepay): ?>
+        <div class="row">
+            <div class="col-xs-12 text-center">
+                <div class="footcopyr">ООО «ПРОЦЕССИНГОВАЯ КОМПАНИЯ БЫСТРЫХ ПЛАТЕЖЕЙ»</div>
+            </div>
         </div>
-    </div>
+    <?php endif; ?>
 
     <?php ActiveForm::end(); ?>
 
@@ -246,6 +278,7 @@ use yii\bootstrap\Html;
 <noscript><div><img src="https://mc.yandex.ru/watch/66552382" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <?php
 $this->registerJs('payform.init();');
+$this->registerJs('payform.checkIframe();');
 if (isset($apple['IsUseApplepay']) && $apple['IsUseApplepay'] && isset($apple['Apple_MerchantID']) && !empty($apple['Apple_MerchantID'])) {
     $this->registerJs('payform.applepay("' . $apple['Apple_MerchantID'] . '", "' . ($params['SummFull'] / 100.0) . '", "' . $params['NamePartner'] . '");');
 }
