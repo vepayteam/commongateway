@@ -144,6 +144,9 @@ class DectaHelper
         if (array_key_exists('threed_check_url', $responseData)) {
             $result['isNeed3DSRedirect'] = true;
             $result['url'] = $responseData['threed_check_url'];
+        } elseif (Yii::$app->params['DEVMODE'] === 'Y') {
+            $result['isNeed3DSRedirect'] = false;
+            $result['isNeed3DSVerif'] = false;
         }
 
         $payResponse->fill(array_merge($responseData, $result));
