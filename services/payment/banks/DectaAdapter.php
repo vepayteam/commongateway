@@ -10,6 +10,7 @@ use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CancelPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
+use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\decta\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\decta\OutCardTransactionResponse;
@@ -241,6 +242,18 @@ class DectaAdapter implements IBankAdapter
     }
 
     /**
+     * @param DonePayForm $donePayForm
+     *
+     * @return ConfirmPayResponse
+     */
+    public function confirm(DonePayForm $donePayForm): ConfirmPayResponse
+    {
+        $confirmPayResponse = new ConfirmPayResponse();
+        $confirmPayResponse->status = BaseResponse::STATUS_DONE;
+        return $confirmPayResponse;
+    }
+
+    /**
      * @param string $action
      * @param array $placeholders
      *
@@ -352,17 +365,6 @@ class DectaAdapter implements IBankAdapter
         throw new BankAdapterResponseException(
             BankAdapterResponseException::setErrorMsg($e->getMessage())
         );
-    }
-
-    /**
-     * @param DonePayForm $donePayForm
-     *
-     * @return void
-     * @throws GateException
-     */
-    public function confirm(DonePayForm $donePayForm)
-    {
-        $this->throwGateException();
     }
 
     /**
