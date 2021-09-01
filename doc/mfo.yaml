@@ -202,7 +202,24 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StatusId"
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    description: |
+                      Статус
+                      * 0 - Ошибка валидации или условий
+                      * 1 - Оплата принята в обработку
+                      * 2 - Внутренняя ошибка в процессе выполнения
+                    example: 1
+                  message:
+                    type: string
+                    description: Описание ошибки
+                    example: ""
+                  id:
+                    type: integer
+                    description: ID платежа. Присутствует, если операция прошла успешно
+                    example: 12345
         default:
           description: Error (40X,500)
           content:
@@ -727,10 +744,14 @@ components:
       properties:
         merchant_id:
           type: number
+          required: true
           description: Идентификатор партнера (поставщика услуг)
+          example: 123
         amount:
           type: number
-          description: Идентификатор документа
+          required: true
+          description: Сумма в целых частях валюты - рублях, долларах. Может содержать дробную часть для копеек или центов (до двух знаков после запятой).
+          example: 1500.45
     Client:
       type: object
       required: false
@@ -973,13 +994,10 @@ components:
         card:
           type: integer
           description: Идентификатор карты
+          example: 12345
         extid:
           type: string
-          description: Внешний идентификатор запроса
-        postbackurl:
-          type: string
-          format: url
-          description: Адрес Url для обратного вызова
+          description: Внешний уникальный идентификатор оплаты.
         fullname:
           type: string
           maxLength: 80
