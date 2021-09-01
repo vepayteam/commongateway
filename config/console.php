@@ -41,6 +41,9 @@ return [
         'db' => require(__DIR__ . '/db.php'),
         'redis' => $params['components']['redis'],
         'queue' => $params['components']['queue'],
+
+        // Сервисы
+        \app\services\RecurrentPaymentPartsService::class => \app\services\RecurrentPaymentPartsService::class,
     ],
     'params' => $params,
     'container' => [
