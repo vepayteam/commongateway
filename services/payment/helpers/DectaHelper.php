@@ -120,16 +120,17 @@ class DectaHelper
     }
 
     /**
-     * @param ClientResponse $response
+     * @param ClientResponse $firstStepResponse
+     * @param ClientResponse $secondStepResponse
      *
      * @return CreatePayResponse
      */
-    public static function handlePayResponse(ClientResponse $response): CreatePayResponse
+    public static function handlePayResponse(ClientResponse $firstStepResponse, ClientResponse $secondStepResponse): CreatePayResponse
     {
         $payResponse = new CreatePayResponse();
 
-        if (!$response->isSuccess()) {
-            $errorMessage = self::getErrorMessage($response);
+        if (!$secondStepResponse->isSuccess()) {
+            $errorMessage = self::getErrorMessage($secondStepResponse);
             Yii::error(DectaAdapter::ERROR_CREATE_PAY_MSG.': '.$errorMessage);
             $payResponse->status = BaseResponse::STATUS_ERROR;
             $payResponse->message = BankAdapterResponseException::setErrorMsg($errorMessage);
@@ -137,7 +138,7 @@ class DectaHelper
             return $payResponse;
         }
 
-        $responseData = $response->json();
+        $responseData = $secondStepResponse->json();
 
         $result = [];
         $result['status'] = BaseResponse::STATUS_DONE;
@@ -150,6 +151,7 @@ class DectaHelper
         }
 
         $payResponse->fill(array_merge($responseData, $result));
+        $payResponse->transac = $firstStepResponse->json()['id'];
 
         return $payResponse;
     }

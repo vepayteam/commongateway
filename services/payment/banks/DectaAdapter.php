@@ -143,12 +143,12 @@ class DectaAdapter implements IBankAdapter
         }
 
         try {
-            $response = $this->api->request(
+            $createPaySecondStepResponse = $this->api->request(
                 AbstractClient::METHOD_POST,
                 $createPaySecondStepUrl,
                 DectaHelper::handlePaySecondStepRequest($createPayForm)->toArray()
             );
-            return DectaHelper::handlePayResponse($response);
+            return DectaHelper::handlePayResponse($createPayResponse, $createPaySecondStepResponse);
         } catch (GuzzleException $e) {
             $this->handleError(new BankAdapterResponseException($e->getMessage()), self::ERROR_CREATE_PAY_MSG);
         }
