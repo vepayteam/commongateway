@@ -111,7 +111,7 @@ class DectaHelper
     {
         $request = new OutCardPayRequest();
 
-        $request->amount = $outCardPayForm->amount;
+        $request->amount = PaymentHelper::convertToFullAmount($outCardPayForm->amount);
 
         $request->client = new OutCardPayClient();
         $request->client->phone = $outCardPayForm->phone;
