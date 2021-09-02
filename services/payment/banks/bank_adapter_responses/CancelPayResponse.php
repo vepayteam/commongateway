@@ -7,4 +7,6 @@ use app\services\base\traits\Fillable;
 class CancelPayResponse extends BaseResponse
 {
     use Fillable;
+
+    public $orderData;
 }
