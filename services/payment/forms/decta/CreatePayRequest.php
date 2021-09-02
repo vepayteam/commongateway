@@ -16,6 +16,10 @@ class CreatePayRequest extends Structure
      */
     public $products;
     /**
+     * @var string $currency
+     */
+    public $currency = 'RUB';
+    /**
      * @var int $total
      */
     public $total;

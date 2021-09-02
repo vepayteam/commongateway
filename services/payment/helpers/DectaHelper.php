@@ -48,10 +48,10 @@ class DectaHelper
         $paymentRequest = new CreatePayRequest();
         $paymentRequest->client = new CreatePayClient();
         $paymentRequest->client->email = $paySchet->getUserEmail();
-        $paymentRequest->total = $paySchet->getSummFull();
+        $paymentRequest->total = $paySchet->getSummFull() / 100;
         $paymentRequest->products = [
             [
-                'price' => $paySchet->getSummFull(),
+                'price' => $paySchet->getSummFull() / 100,
                 'title' => DectaAdapter::PRODUCT_TITLE,
             ],
         ];
@@ -95,7 +95,7 @@ class DectaHelper
     public static function handleRefundPayRequest(RefundPayForm $refundPayForm): RefundPayRequest
     {
         $refundPayRequest = new RefundPayRequest();
-        $refundPayRequest->amount = $refundPayForm->paySchet->getSummFull();
+        $refundPayRequest->amount = $refundPayForm->paySchet->getSummFull() / 100;
 
         return $refundPayRequest;
     }
