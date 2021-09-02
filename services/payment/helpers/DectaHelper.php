@@ -45,13 +45,15 @@ class DectaHelper
             throw new CreatePayException('Invalid paySchet');
         }
 
+        $amount = PaymentHelper::convertToFullAmount($paySchet->getSummFull());
+
         $paymentRequest = new CreatePayRequest();
         $paymentRequest->client = new CreatePayClient();
         $paymentRequest->client->email = $paySchet->getUserEmail();
-        $paymentRequest->total = $paySchet->getSummFull() / 100;
+        $paymentRequest->total = $amount;
         $paymentRequest->products = [
             [
-                'price' => $paySchet->getSummFull() / 100,
+                'price' => $amount,
                 'title' => DectaAdapter::PRODUCT_TITLE,
             ],
         ];
@@ -95,7 +97,7 @@ class DectaHelper
     public static function handleRefundPayRequest(RefundPayForm $refundPayForm): RefundPayRequest
     {
         $refundPayRequest = new RefundPayRequest();
-        $refundPayRequest->amount = $refundPayForm->paySchet->getSummFull() / 100;
+        $refundPayRequest->amount = PaymentHelper::convertToFullAmount($refundPayForm->paySchet->getSummFull());
 
         return $refundPayRequest;
     }
