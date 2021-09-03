@@ -113,6 +113,7 @@ class DectaAdapter implements IBankAdapter
 
         try {
             $requestData = DectaHelper::handlePayRequest($createPayForm)->toArray();
+            $requestData['terminal_processing_id'] = $this->gate->AdvParam_1;
             $requestData['currency'] = $this->gate->currency->Code;
 
             $response = $this->api->request(AbstractClient::METHOD_POST, $url, $requestData);
