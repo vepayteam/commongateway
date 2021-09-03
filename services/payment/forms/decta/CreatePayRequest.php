@@ -20,6 +20,10 @@ class CreatePayRequest extends Structure
      */
     public $currency = 'RUB';
     /**
+     * @var string $terminal_processing_id
+     */
+    public $terminal_processing_id;
+    /**
      * @var int $total
      */
     public $total;

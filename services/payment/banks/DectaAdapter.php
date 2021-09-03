@@ -118,11 +118,11 @@ class DectaAdapter implements IBankAdapter
 
             $response = $this->api->request(AbstractClient::METHOD_POST, $url, $requestData);
             if (!$response->isSuccess()) {
-                $this->handleError(new BankAdapterResponseException('response is not success'), self::ERROR_CREATE_PAY_MSG);
+                $this->handleError(new BankAdapterResponseException('response is not success. Data: '.json_encode($requestData)), self::ERROR_CREATE_PAY_MSG);
             }
             return $this->createPaySecondStep($createPayForm, $response);
         } catch (GuzzleException $e) {
-            $this->handleError(new BankAdapterResponseException('response is not success'), self::ERROR_CREATE_PAY_MSG);
+            $this->handleError(new BankAdapterResponseException('response is not success. Message: '.$e->getMessage()), self::ERROR_CREATE_PAY_MSG);
         }
     }
 
