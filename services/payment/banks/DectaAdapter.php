@@ -112,11 +112,10 @@ class DectaAdapter implements IBankAdapter
         $url = $this->getRequestUrl('pay');
 
         try {
-            $response = $this->api->request(
-                AbstractClient::METHOD_POST,
-                $url,
-                DectaHelper::handlePayRequest($createPayForm)->toArray()
-            );
+            $requestData = DectaHelper::handlePayRequest($createPayForm)->toArray();
+            $requestData['currency'] = $this->gate->currency->Code;
+
+            $response = $this->api->request(AbstractClient::METHOD_POST, $url, $requestData);
             if (!$response->isSuccess()) {
                 $this->handleError(new BankAdapterResponseException('response is not success'), self::ERROR_CREATE_PAY_MSG);
             }
