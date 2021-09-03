@@ -15,6 +15,7 @@ use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\models\PaySchet;
+use app\services\payment\PaymentService;
 use Yii;
 use yii\base\BaseObject;
 use yii\db\Exception;
@@ -37,12 +38,20 @@ class ReverspayJob extends BaseObject implements \yii\queue\JobInterface
         $refundPayForm->paySchet = $paySchet;
         $refundResponse = $bankAdapterBuilder->getBankAdapter()->refundPay($refundPayForm);
 
-        // TODO: перписать на сервисы
         if($refundResponse->status == BaseResponse::STATUS_DONE) {
-            $payschets = new Payschets();
-            $payschets->SetReversPay($paySchet->ID);
+            $this->getPaymentService()->doneReversPay($paySchet);
         } else {
             throw new \Exception('ReverspayJob Ошибка возврата ID=' . $paySchet->ID);
         }
+    }
+
+    /**
+     * @return PaymentService
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\di\NotInstantiableException
+     */
+    protected function getPaymentService()
+    {
+        return Yii::$container->get('PaymentService');
     }
 }
