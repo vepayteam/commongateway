@@ -46,7 +46,7 @@ class DectaAdapterTest extends \Codeception\Test\Unit
         $tKBankAdapterReflectionClass = new ReflectionClass(DectaAdapter::class);
         $checkStatusPay = $tKBankAdapterReflectionClass->getMethod('createPay');
         $checkStatusPay->setAccessible(true);
-        $this->expectException(Error::class);
+        $this->expectException(\Exception::class);
         $this->assertEquals(null, $checkStatusPay->invoke($tKBankAdapter, $createPayForm));
     }
 
