@@ -3,8 +3,9 @@
 
 namespace app\services\payment\exceptions;
 
+use Error;
 
-class CreatePayException extends \Exception
+class CreatePayException extends Error
 {
 
 }
