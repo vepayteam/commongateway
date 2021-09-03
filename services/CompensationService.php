@@ -22,7 +22,7 @@ class CompensationService extends Component
      * @param Currency $currencyFrom
      * @param Currency $currencyTo
      * @return float
-     * @throws \Exception
+     * @throws CompensationException
      * @todo Убрать в отдельный сервис.
      */
     private function getCurrencyRate(Banks $bank, Currency $currencyFrom, Currency $currencyTo): float
@@ -57,9 +57,9 @@ class CompensationService extends Component
      * @param PaySchet $paySchet
      * @param PartnerBankGate $gate
      * @return float
-     * @throws \Exception
+     * @throws CompensationException
      */
-    public function calculateForPartner(PaySchet $paySchet, PartnerBankGate $gate)
+    public function calculateForPartner(PaySchet $paySchet, PartnerBankGate $gate): float
     {
         $amount = $paySchet->SummPay;
 
@@ -89,9 +89,9 @@ class CompensationService extends Component
      * @param PaySchet $paySchet
      * @param PartnerBankGate $gate
      * @return float
-     * @throws \Exception
+     * @throws CompensationException
      */
-    public function calculateForClient(PaySchet $paySchet, PartnerBankGate $gate)
+    public function calculateForClient(PaySchet $paySchet, PartnerBankGate $gate): float
     {
         $amount = $paySchet->SummPay;
 
@@ -121,7 +121,7 @@ class CompensationService extends Component
      * @param PaySchet $paySchet
      * @param PartnerBankGate $gate
      * @return float
-     * @throws \Exception
+     * @throws CompensationException
      */
     public function calculateForBank(PaySchet $paySchet, PartnerBankGate $gate): float
     {
@@ -166,5 +166,4 @@ class CompensationService extends Component
 
         return $result;
     }
-
 }
