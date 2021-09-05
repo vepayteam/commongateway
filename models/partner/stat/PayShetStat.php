@@ -494,6 +494,7 @@ class PayShetStat extends Model
         $query = new Query();
         $query->select([
             '`ut`.`NameUsluga`',
+            '`b`.`Name`',
             '`ut`.`ProvVoznagPC`',
             '`ut`.`ProvVoznagMin`',
             '`ps`.`IdUsluga`',
@@ -514,7 +515,9 @@ class PayShetStat extends Model
                 ':DATETO' => strtotime($this->dateto . ":59")
             ])
             ->andWhere('ps.Status = 1')
-            ->groupBy('idusluga');
+            ->groupBy('idusluga, bank')
+            ->orderBy('bank')
+        ;
 
         if ($IdPart > 0) {
             $query->andWhere('ut.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);

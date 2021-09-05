@@ -13,7 +13,7 @@ function renderRow($row, $IsAdmin)
 ?>
     <tr>
         <td><?= ($i++) ?></td>
-        <td><?= $row['NameUsluga'] ?></td>
+        <td>- <?= $row['NameUsluga'] ?></td>
         <td class="text-right"><?= number_format($row['SummPay'] / 100.0,2,'.','&nbsp;') ?></td>
         <td class="text-right"><?= number_format($row['ComissSumm'] / 100.0,2,'.','&nbsp;') ?></td>
         <td class="text-right"><?= number_format(($row['SummPay'] + $row['ComissSumm']) / 100.0,2,'.','&nbsp;') ?></td>
@@ -25,6 +25,29 @@ function renderRow($row, $IsAdmin)
             <td class="text-right"><?= number_format($row['MerchVozn'] / 100.0,2,'.','&nbsp;') ?></td>
         <?php endif; ?>
         <td class="text-right"><?= number_format($row['CntPays'],0,'.','&nbsp;') ?></td>
+        <td></td>
+    </tr>
+<?php
+}
+
+function renderProv($row, $IsAdmin)
+{
+    static $i = 1;
+?>
+    <tr>
+        <td></td>
+        <td><?= $row['Name'] ?></td>
+        <td class="text-right"></td>
+        <td class="text-right"></td>
+        <td class="text-right"></td>
+        <?php if ($IsAdmin) : ?>
+            <td class="text-right"></td>
+            <td class="text-right"></td>
+            <td class="text-right"></td>
+        <?php else : ?>
+            <td class="text-right"></td>
+        <?php endif; ?>
+        <td class="text-right"></td>
         <td></td>
     </tr>
 <?php
@@ -55,12 +78,12 @@ function renderItog($itog, $IsAdmin)
     <thead>
     <tr>
         <th>#</th>
-        <th>Услуга</th>
+        <th>Провайдер / Услуга</th>
         <th class="text-right">К зачислению</th>
         <th class="text-right">Комиссия с клиента</th>
         <th class="text-right">К оплате</th>
         <?php if ($IsAdmin) : ?>
-            <th class="text-right">Комиссия банка</th>
+            <th class="text-right">Комиссия провайдера</th>
             <th class="text-right">Комиссия с мерчанта</th>
             <th class="text-right">Возн. Vepay</th>
         <?php else : ?>
@@ -86,7 +109,18 @@ function renderItog($itog, $IsAdmin)
     }
 
     if (count($dataIn) > 0) {
+        $provider = '';
         foreach ($dataIn as $row) {
+
+            if ($provider != $row['Name']) {
+                if ($provider != '') {
+                    renderItog($itog1, $IsAdmin);
+                }
+                $itog1 = ['summ' => 0, 'comiss' => 0, 'cnt' => 0, 'bankcomis' => 0, 'merchvozn' => 0, 'voznagsum' => 0];
+                renderProv($row, $IsAdmin);
+            }
+            $provider = $row['Name'];
+
             $itog1['summ'] += $row['SummPay'];
             $itog1['comiss'] += $row['ComissSumm'];
             $itog1['cnt'] += $row['CntPays'];
@@ -94,9 +128,11 @@ function renderItog($itog, $IsAdmin)
             $itog1['merchvozn'] += $row['MerchVozn'];
             $itog1['voznagsum'] += $row['VoznagSumm'];
 
+
+
             renderRow($row, $IsAdmin);
         }
-        renderItog($itog1, $IsAdmin);
+
     }
     if (count($dataOut) > 0) {
         foreach ($dataOut as $row) {
