@@ -35,7 +35,7 @@ function renderProv($row, $IsAdmin)
 ?>
     <tr>
         <td></td>
-        <td><strong><?= $row['Name'] ?? '' ?></strong></td>
+        <td><strong><?= $row['bankName'] ?? '' ?></strong></td>
         <td class="text-right"></td>
         <td class="text-right"></td>
         <td class="text-right"></td>
@@ -111,7 +111,7 @@ function renderItog($itog, $IsAdmin)
     if (count($dataIn) > 0) {
         $provider = '';
         foreach ($dataIn as $row) {
-            if ($provider != $row['Name']) {
+            if ($provider != $row['bankName']) {
                 if ($provider != '') {
                     renderItog($itogProm, $IsAdmin);
                 }
@@ -119,7 +119,7 @@ function renderItog($itog, $IsAdmin)
                 renderProv($row, $IsAdmin);
             }
 
-            $provider = $row['Name'];
+            $provider = $row['bankName'];
 
             $itog1['summ'] += $row['SummPay'];
             $itog1['comiss'] += $row['ComissSumm'];

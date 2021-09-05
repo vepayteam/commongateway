@@ -495,7 +495,7 @@ class PayShetStat extends Model
         $query = new Query();
         $query->select([
             '`ut`.`NameUsluga`',
-            '`b`.`Name`',
+            '`b`.`Name` as bankName',
             '`ut`.`ProvVoznagPC`',
             '`ut`.`ProvVoznagMin`',
             '`ps`.`IdUsluga`',
