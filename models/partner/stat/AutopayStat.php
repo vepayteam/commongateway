@@ -13,13 +13,12 @@ use yii\db\Query;
 
 class AutopayStat extends Model
 {
-    
     public $IdPart;
     public $datefrom;
     public $dateto;
     public $datetype = 0;
     public $graphtype = 0;
-    
+
     public function rules()
     {
         return [
@@ -28,7 +27,7 @@ class AutopayStat extends Model
             [['datefrom', 'dateto'], 'required']
         ];
     }
-    
+
     public function GetError()
     {
         $err = $this->firstErrors;
@@ -58,7 +57,7 @@ class AutopayStat extends Model
             'payscards' => 0,
             'sumpayscards ' => 0
         ];
-        
+
         //Количество новых карт
         $queryNewCards = Cards::find()
             ->joinWith('user')
@@ -92,7 +91,7 @@ class AutopayStat extends Model
         if ($ret['activecards'] > 0) {
             $ret['reqonecard'] = $ret['reqcards'] / $ret['activecards'] / ceil(($dateto + 1 - $datefrom) / (60 * 60 * 24));
         }
-        
+
         //Сколько успешных запросов
         $querySuccess = PaySchet::find()
             ->joinWith(['cards', 'uslugatovar'])
@@ -107,17 +106,17 @@ class AutopayStat extends Model
         
         return $ret;
     }
-    
+
     /**
+     * Рекуррентные платежи
      * @return array
      * @throws \Throwable
      * @deprecated
-     * Рекуррентные платежи
      */
     public function GetRecurrentData()
     {
         $IdPart = UserLk::IsAdmin(Yii::$app->user) ? $this->IdPart : UserLk::getPartnerId(Yii::$app->user);
-        
+
         $datefrom = strtotime($this->datefrom . " 00:00:00");
         $dateto = strtotime($this->dateto . " 23:59:59");
         if ($datefrom < $dateto - 365 * 86400) {
@@ -127,9 +126,9 @@ class AutopayStat extends Model
         $data = [];
         $xkey = 'x';
         $ykey = 'a';
-        
+
         $rows = Yii::$app->db->cache(function () use ($IdPart, $datefrom, $dateto) {
-            
+    
             $query = new Query();
             $query
                 ->select(['SummPay', 'ComissSumm', 'DateCreate'])
@@ -141,19 +140,19 @@ class AutopayStat extends Model
                 ])
                 ->andWhere('ps.Status = 1 AND ps.IsAutoPay = 1')
                 ->andWhere(['qp.IsCustom' => TU::AutoPay()]);
-            
+
             if ($IdPart > 0) {
                 $query->andWhere('qp.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);
             }
-            
+
             return $query->all();
         }, 60);
-        
+
         $groupDate = 'd.m.Y';
         if ($this->datetype == 1) {
             $groupDate = 'm.Y';
         }
-        
+
         foreach ($rows as $row) {
             if ($this->graphtype == 0) {
                 //График изменения суммы ежемесячных регулярных платежей
@@ -174,7 +173,7 @@ class AutopayStat extends Model
                 } else {
                     $data[$DatePay] = ['sum' => $ComissSumm, 'cnt' => 1, $xkey => $DatePay];
                 }
-                
+
             } elseif ($this->graphtype == 2) {
                 //График изменение средней суммы платежей, полученных с одного плательщика за весь период сотрудничества
                 $SummPay = $row['SummPay'] / 100.0;
@@ -196,7 +195,7 @@ class AutopayStat extends Model
                 }
             }
         }
-        
+
         $dataJ = [];
         if (!empty($data)) {
             $prev = 0;
@@ -228,7 +227,7 @@ class AutopayStat extends Model
         } else {
             $dataJ[] = [$xkey => 0, $ykey => 0];
         }
-        
+
         $label = '';
         if ($this->graphtype == 0) {
             $label = "Платежи";
@@ -239,7 +238,7 @@ class AutopayStat extends Model
         } elseif ($this->graphtype == 3) {
             $label = "Процент оттока";
         }
-        
+
         return ['status' => 1, 'data' => $dataJ, 'label' => $label];
     }
 }
