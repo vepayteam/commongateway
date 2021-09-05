@@ -215,8 +215,9 @@ class PayController extends Controller
             return ['status' => 0, 'message' => $autoPayForm->getError()];
         }
     
-        if ($autoPayForm->getCard() && $autoPayForm->getCard()->ExtCardIDP) {
+        if ($autoPayForm->getCard() && (!$autoPayForm->getCard()->ExtCardIDP || $autoPayForm->getCard()->ExtCardIDP == '0')) {
             Yii::warning("mfo/pay/auto: у карты нет ExtCardIDP");
+            $autoPayForm->addError('card', 'Карта не зарегистрирована');
             return ['status' => 0, 'message' => $autoPayForm->getError()];
         }
         
