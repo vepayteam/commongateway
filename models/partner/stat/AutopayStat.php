@@ -4,7 +4,7 @@ namespace app\models\partner\stat;
 
 use app\models\partner\UserLk;
 use app\models\payonline\Cards;
-use app\models\payonline\PaySchet;
+use app\services\payment\models\PaySchet;
 use app\models\payonline\Uslugatovar;
 use app\models\TU;
 use Yii;

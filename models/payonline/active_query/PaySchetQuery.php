@@ -3,9 +3,9 @@
 namespace app\models\payonline\active_query;
 
 /**
- * This is the ActiveQuery class for [[\app\models\payonline\PaySchet]].
+ * This is the ActiveQuery class for [[\app\services\payment\models\PaySchet]].
  *
- * @see \app\models\payonline\PaySchet
+ * @see \app\services\payment\models\PaySchet
  */
 class PaySchetQuery extends \yii\db\ActiveQuery
 {
@@ -16,7 +16,7 @@ class PaySchetQuery extends \yii\db\ActiveQuery
 
     /**
      * {@inheritdoc}
-     * @return \app\models\payonline\PaySchet[]|array
+     * @return \app\services\payment\models\PaySchet[]|array
      */
     public function all($db = null)
     {
@@ -25,7 +25,7 @@ class PaySchetQuery extends \yii\db\ActiveQuery
 
     /**
      * {@inheritdoc}
-     * @return \app\models\payonline\PaySchet|array|null
+     * @return \app\services\payment\models\PaySchet|array|null
      */
     public function one($db = null)
     {
