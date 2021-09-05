@@ -138,6 +138,8 @@ function renderItog($itog, $IsAdmin)
             renderRow($row, $IsAdmin);
         }
 
+        renderItog($itogProm, $IsAdmin);
+
     }
     if (count($dataOut) > 0) {
         foreach ($dataOut as $row) {
