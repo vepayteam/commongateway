@@ -18,6 +18,7 @@ class PayShetStat extends Model
     public $IdPart = 0;
     public $usluga = [];
     public $TypeUslug = [];
+    public $idBank = [];
     public $Extid = '';
     public $id = 0;
     public $summpayFrom = 0;
@@ -35,7 +36,7 @@ class PayShetStat extends Model
             [['Extid'], 'string', 'max' => 40],
             [['datefrom', 'dateto'], 'date', 'format' => 'php:d.m.Y H:i'],
             [['datefrom', 'dateto'], 'required'],
-            [['usluga', 'status', 'TypeUslug'], 'each', 'rule' => ['integer']],
+            [['usluga', 'status', 'TypeUslug', 'idBank'], 'each', 'rule' => ['integer']],
             [['params'], 'each', 'rule' => ['string']],
         ];
     }
@@ -529,6 +530,8 @@ class PayShetStat extends Model
         if (count($this->TypeUslug) > 0) {
             $query->andWhere(['in', 'ut.IsCustom', $this->TypeUslug]);
         }
+
+        $query->andFilterWhere(['bank' => $this->idBank]);
 
         $res = $query->all();
 
