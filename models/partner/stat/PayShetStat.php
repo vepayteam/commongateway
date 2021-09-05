@@ -12,10 +12,11 @@ use yii\db\Expression;
 use yii\data\Pagination;
 use yii\db\Query;
 use yii\helpers\VarDumper;
+use function is_array;
 
 class PayShetStat extends Model
 {
-    public $IdPart = 0;
+    public $IdPart = [];
     public $usluga = [];
     public $TypeUslug = [];
     public $Extid = '';
@@ -30,7 +31,7 @@ class PayShetStat extends Model
     public function rules()
     {
         return [
-            [['IdPart', 'id'], 'integer'],
+            [['IdPart', 'id'], 'safe'],
             [['summpayFrom','summpayTo'], 'number'],
             [['Extid'], 'string', 'max' => 40],
             [['datefrom', 'dateto'], 'date', 'format' => 'php:d.m.Y H:i'],
@@ -163,8 +164,10 @@ class PayShetStat extends Model
                 ':DATEFROM' => strtotime($this->datefrom . ":00"),
                 ':DATETO' => strtotime($this->dateto . ":59")
             ]);
-
-        if ($IdPart > 0) {
+    
+        if (is_array($IdPart)) {
+            $query->andFilterWhere(['qp.IDPartner' => $IdPart]);
+        } elseif ($IdPart > 0) {
             $query->andWhere('qp.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
         if (count($this->status) > 0) {
@@ -373,10 +376,13 @@ class PayShetStat extends Model
                 ':DATEFROM' => strtotime($this->datefrom . ":00"),
                 ':DATETO' => strtotime($this->dateto . ":59")
             ]);
-
-        if ($IdPart > 0) {
+    
+        if (is_array($IdPart)) {
+            $query->andFilterWhere(['qp.IDPartner' => $IdPart]);
+        } elseif ($IdPart > 0) {
             $query->andWhere('qp.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
+        
         if (count($this->status) > 0) {
             if (in_array(PaySchet::STATUS_WAITING, $this->status, true)) {
                 $this->status = array_unique(

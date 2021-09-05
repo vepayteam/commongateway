@@ -140,7 +140,7 @@ use yii\widgets\LinkPager;
             $exportLink .= '&summpayTo=' . $reqdata['summpayTo'];
             $exportLink .= '&Extid=' . $reqdata['Extid'];
             if (isset($reqdata['IdPart'])) {
-                $exportLink .= '&IdPart=' . $reqdata['IdPart'];
+                $exportLink .= '&IdPart=' . implode(',', $reqdata['IdPart']);
             }
             if (isset($reqdata['status']) && count($reqdata['status']) > 0) {
                 foreach ($reqdata['status'] as $status) {
