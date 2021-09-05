@@ -32,11 +32,10 @@ function renderRow($row, $IsAdmin)
 
 function renderProv($row, $IsAdmin)
 {
-    static $i = 1;
 ?>
     <tr>
         <td></td>
-        <td><?= $row['Name'] ?></td>
+        <td><strong><?= $row['Name'] ?? '' ?></strong></td>
         <td class="text-right"></td>
         <td class="text-right"></td>
         <td class="text-right"></td>
@@ -69,6 +68,7 @@ function renderItog($itog, $IsAdmin)
             <th class="text-right"><?= number_format(round($itog['merchvozn'] / 100.0, 2),2,'.','&nbsp;') ?></th>
         <?php endif; ?>
         <th class="text-right"><?= number_format($itog['cnt'],0,'.','&nbsp;') ?></th>
+        <th></th>
     </tr>
 <?php
 }
@@ -97,7 +97,7 @@ function renderItog($itog, $IsAdmin)
     <?php
 
     $dataIn = $dataOut = $dataVyvod = [];
-    $itog1 = $itog2 = $itog3 = ['summ' => 0, 'comiss' => 0, 'cnt' => 0, 'bankcomis' => 0, 'merchvozn' => 0, 'voznagsum' => 0];
+    $itog1 = $itog2 = $itog3 = $itogProm = ['summ' => 0, 'comiss' => 0, 'cnt' => 0, 'bankcomis' => 0, 'merchvozn' => 0, 'voznagsum' => 0];
     foreach ($data as $d) {
         if (TU::IsOutMfo($d['IsCustom'])) {
             $dataOut[] = $d;
@@ -111,14 +111,14 @@ function renderItog($itog, $IsAdmin)
     if (count($dataIn) > 0) {
         $provider = '';
         foreach ($dataIn as $row) {
-
             if ($provider != $row['Name']) {
                 if ($provider != '') {
-                    renderItog($itog1, $IsAdmin);
+                    renderItog($itogProm, $IsAdmin);
                 }
-                $itog1 = ['summ' => 0, 'comiss' => 0, 'cnt' => 0, 'bankcomis' => 0, 'merchvozn' => 0, 'voznagsum' => 0];
+                $itogProm = ['summ' => 0, 'comiss' => 0, 'cnt' => 0, 'bankcomis' => 0, 'merchvozn' => 0, 'voznagsum' => 0];
                 renderProv($row, $IsAdmin);
             }
+
             $provider = $row['Name'];
 
             $itog1['summ'] += $row['SummPay'];
@@ -128,7 +128,12 @@ function renderItog($itog, $IsAdmin)
             $itog1['merchvozn'] += $row['MerchVozn'];
             $itog1['voznagsum'] += $row['VoznagSumm'];
 
-
+            $itogProm['summ'] += $row['SummPay'];
+            $itogProm['comiss'] += $row['ComissSumm'];
+            $itogProm['cnt'] += $row['CntPays'];
+            $itogProm['bankcomis'] += $row['BankComis'];
+            $itogProm['merchvozn'] += $row['MerchVozn'];
+            $itogProm['voznagsum'] += $row['VoznagSumm'];
 
             renderRow($row, $IsAdmin);
         }
@@ -173,9 +178,10 @@ function renderItog($itog, $IsAdmin)
     <?php if (!count($dataIn) && !count($dataOut) && !count($dataVyvod)) : ?>
         <tr><td colspan='9' style='text-align:center;'>Операции не найдены</td></tr>
     <?php else: ?>
+        <?php renderProv([], $IsAdmin); ?>
         <?php renderItog($itog, $IsAdmin); ?>
         <tr>
-            <th colspan='9'>
+            <th colspan='10'>
                 <?php
                 $exportLink = 'datefrom='. $requestToExport['datefrom'];
                 $exportLink .= '&dateto=' . $requestToExport['dateto'];
