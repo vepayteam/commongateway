@@ -500,10 +500,10 @@ class PayShetStat extends Model
             '`ut`.`IsCustom`',
             '`ut`.`ProvComisPC`',
             '`ut`.`ProvComisMin`',
-            'ROUND(SUM(`ps`.`SummPay`) / 100, 2) AS `SummPay`',
-            'ROUND(SUM(`ps`.`ComissSumm`) / 100, 2) AS `ComissSumm`',
-            'ROUND(SUM(`ps`.`MerchVozn`) / 100, 2) AS `MerchVozn`',
-            'ROUND(SUM(`ps`.`BankComis`) / 100, 2) AS `BankComis`',
+            'SUM(`ps`.`SummPay`) AS `SummPay`',
+            'SUM(`ps`.`ComissSumm`) AS `ComissSumm`',
+            'SUM(`ps`.`MerchVozn`) AS `MerchVozn`',
+            'SUM(`ps`.`BankComis`) AS `BankComis`',
             'COUNT(*) AS CntPays'
         ])
             ->from('`pay_schet` AS ps')
