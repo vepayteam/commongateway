@@ -4,32 +4,30 @@ use app\models\payonline\Banks;
 /* @var yii\web\View $this */
 /* @var array $uslugilist */
 /* @var array $magazlist */
-/* @var $partnerlist */
+/* @var $partnerlist  */
 /* @var $IsAdmin bool */
 /* @var $bankList Banks[] */
 
+$this->title = "отчет по платежам";
 
-$this->title = 'отчет по платежам';
-
-$this->params['breadtitle'] = 'Отчет по платежам';
+$this->params['breadtitle'] = "Отчет по платежам";
 $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 ?>
 
-    <div class="row">
-        <div class="col-sm-12">
-            <div class="ibox float-e-margins">
-                <div class="ibox-title">
-                    <h5>Отчет по платежам</h5>
-                </div>
-                <div class="ibox-content">
-                    <form class="form-horizontal" id="otchlistform">
-                        <div class="form-group"><label class="col-sm-2 control-label">Дата</label>
-                            <div class="col-sm-4">
-                                <div class="input-daterange input-group">
-                                    <input type="text" name="datefrom" value="<?= date('d.m.Y') ?> 00:00" maxlength="10" class="form-control">
-                                    <span class="input-group-addon">по</span>
-                                    <input type="text" name="dateto" value="<?= date('d.m.Y') ?> 23:59" maxlength="10" class="form-control">
-                                </div>
+<div class="row">
+    <div class="col-sm-12">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">
+                <h5>Отчет по платежам</h5>
+            </div>
+            <div class="ibox-content">
+                <form class="form-horizontal" id="otchlistform">
+                    <div class="form-group"><label class="col-sm-2 control-label">Дата</label>
+                        <div class="col-sm-4">
+                            <div class="input-daterange input-group">
+                                <input type="text" name="datefrom" value="<?=date("d.m.Y")?> 00:00" maxlength="10" class="form-control">
+                                <span class="input-group-addon">по</span>
+                                <input type="text" name="dateto" value="<?=date("d.m.Y")?> 23:59" maxlength="10" class="form-control">
                             </div>
                         </div>
                         <div class="form-group">
@@ -77,20 +75,20 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         </div>
                     </form>
 
-                    <div class="sk-spinner sk-spinner-wave">
-                        <div class="sk-rect1"></div>
-                        <div class="sk-rect2"></div>
-                        <div class="sk-rect3"></div>
-                        <div class="sk-rect4"></div>
-                        <div class="sk-rect5"></div>
-                    </div>
-                    <div class="table-responsive" id="otchlistresult"></div>
+                <div class="sk-spinner sk-spinner-wave">
+                    <div class="sk-rect1"></div>
+                    <div class="sk-rect2"></div>
+                    <div class="sk-rect3"></div>
+                    <div class="sk-rect4"></div>
+                    <div class="sk-rect5"></div>
                 </div>
+                <div class="table-responsive" id="otchlistresult"></div>
             </div>
         </div>
     </div>
+</div>
 <?php
 $this->registerJs('
 lk.otchlist();
 multiselect.otch();
-') ?>
+')?>

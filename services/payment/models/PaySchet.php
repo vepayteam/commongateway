@@ -87,7 +87,7 @@ use Yii;
  * @property Currency $currency
  * @property PaySchetLog[] $log
  * @property User $user
- * @property \app\services\payment\models\Bank $bank
+ * @property Bank $bank
  * @property string $Version3DS
  * @property int $IsNeed3DSVerif
  * @property string $DsTransId
