@@ -122,13 +122,13 @@ class AutopayStat extends Model
         if ($datefrom < $dateto - 365 * 86400) {
             $datefrom = $dateto - 365 * 86400 - 86399;
         }
-        
+
         $data = [];
         $xkey = 'x';
         $ykey = 'a';
 
         $rows = Yii::$app->db->cache(function () use ($IdPart, $datefrom, $dateto) {
-    
+
             $query = new Query();
             $query
                 ->select(['SummPay', 'ComissSumm', 'DateCreate'])
