@@ -40,7 +40,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         <div class="form-group">
                             <label class="col-sm-2 control-label">Мерчант</label>
                             <div class="col-sm-4">
-                                <select class="form-control multiselect-field" multiple name="IdPart[]">
+                                <select class="form-control multiselect-field" multiple name="idParts[]">
                                     <?php foreach ($partnerlist as $partn) : ?>
                                         <option value="<?=$partn->ID?>" data-ismfo="<?= $partn->ID == 1 ? 2 : $partn->IsMfo?>"><?=$partn->ID?> | <?=$partn->Name?></option>
                                     <?php endforeach; ?>
