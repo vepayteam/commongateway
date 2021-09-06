@@ -7,7 +7,9 @@ namespace app\services\payment\forms;
 use app\models\payonline\Partner;
 use app\services\ident\traits\ErrorModelTrait;
 use app\services\payment\models\PaySchet;
+use yii\base\DynamicModel;
 use yii\base\Model;
+use yii\helpers\ArrayHelper;
 
 class OutPayAccountForm extends Model
 {
@@ -62,24 +64,20 @@ class OutPayAccountForm extends Model
 
     public function validateClient(): void
     {
-        $clientFields = [
-            'firstName' => ['maxSize' => 32],
-            'middleName' => ['maxSize' => 32],
-            'lastName' => ['maxSize' => 100]
-        ];
-        foreach (array_keys($clientFields) as $clientFieldName) {
-            if (array_key_exists($clientFieldName, $this->client)) {
-                if (!is_string($this->client[$clientFieldName])) {
-                    $this->addError('client',
-                        ucfirst($clientFieldName).' must be a string.');
-                    return;
-                }
-                if (mb_strlen($this->client[$clientFieldName]) > $clientFields[$clientFieldName]['maxSize']) {
-                    $this->addError('client',
-                        ucfirst($clientFieldName).' max size: '.$clientFields[$clientFieldName]['maxSize'].' symbols.');
-                    return;
-                }
-            }
+        if (!is_array($this->client)) {
+            $this->addError('client', 'Значение "client" должно быть массивом.');
+        }
+        $attributes = ArrayHelper::merge([
+            'firstName' => null,
+            'middleName' => null,
+            'lastName' => null,
+        ], $this->client);
+        $model = DynamicModel::validateData($attributes, [
+            [['firstName', 'middleName'], 'string', 'max' => 32],
+            [['lastName'], 'string', 'max' => 100],
+        ]);
+        foreach ($model->getFirstErrors() as $error) {
+            $this->addError('client', $error);
         }
     }
 
