@@ -6,6 +6,7 @@ namespace app\services\payment;
 
 use app\models\kfapi\KfRequest;
 use app\models\partner\stat\export\csv\ToCSV;
+use app\models\payonline\BalancePartner;
 use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
 use app\models\queue\JobPriorityInterface;
@@ -367,5 +368,21 @@ class PaymentService
         $brsAdapter = $bankAdapterBuilder->getBankAdapter();
 
         return $brsAdapter->checkTransfetB2C($outPayAccountForm);
+    }
+
+    /**
+     * @param PaySchet $paySchet
+     * @throws \Exception
+     */
+    public function doneReversPay(PaySchet $paySchet)
+    {
+        if($paySchet->Status != PaySchet::STATUS_DONE) {
+            throw new \Exception('Можно отменить только успешный платеж');
+        }
+
+        $paySchet->Status = PaySchet::STATUS_CANCEL;
+        $paySchet->ErrorInfo = 'Возврат платежа';
+        $paySchet->CountSendOK = 0;
+        $paySchet->save(false);
     }
 }
