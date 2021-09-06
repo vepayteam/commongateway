@@ -400,6 +400,14 @@ class PaySchet extends \yii\db\ActiveRecord
     }
 
     /**
+     * @return null|string
+     */
+    public function getUserEmail()
+    {
+        return $this->UserEmail;
+    }
+
+    /**
      * @return int
      */
     public function getSummFull()
