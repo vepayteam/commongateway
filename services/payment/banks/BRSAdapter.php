@@ -781,6 +781,7 @@ class BRSAdapter implements IBankAdapter
                 throw new BankAdapterResponseException($e->getMessage());
             }
         } else {
+            Yii::error('BRSAdapter curlError POST uri=' . $uri .'; info=' . json_encode($info) . '; curlError=' . $curlError);
             Yii::error('BRSAdapter error POST uri=' . $uri .'; status=' . $info['http_code'] . '; data=' . Json::encode($data));
             throw new BankAdapterResponseException('Ошибка запроса: ' . $curlError);
         }
