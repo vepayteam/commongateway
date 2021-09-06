@@ -3,6 +3,7 @@
 namespace app\services\payment\models;
 
 use Yii;
+use yii\db\ActiveQuery;
 
 /**
  * This is the model class for table "banks".
@@ -32,6 +33,8 @@ use Yii;
  * @property int $UseApplePay
  * @property int $UseGooglePay
  * @property int $UseSamsungPay
+ * @property \yii\db\ActiveQuery|PaySchet[] $paySchets
+ * @property string $name
  * @property int $SortOrder
  */
 class Bank extends \yii\db\ActiveRecord
@@ -96,5 +99,15 @@ class Bank extends \yii\db\ActiveRecord
     public function getName(): string
     {
         return $this->Name;
+    }
+
+    /**
+     * Gets query for [[PaySchets]].
+     *
+     * @return \yii\db\ActiveQuery|PaySchet[]
+     */
+    public function getPaySchets()
+    {
+        return $this->hasMany(PaySchet::className(), ['bank' => 'id']);
     }
 }

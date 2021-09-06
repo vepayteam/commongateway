@@ -3,7 +3,7 @@
 namespace app\models\partner\stat;
 
 
-use app\models\payonline\Banks;
+use app\services\payment\models\Bank;
 use app\models\payonline\Partner;
 use app\models\payonline\PartnerDogovor;
 use app\models\payonline\Uslugatovar;
@@ -106,11 +106,11 @@ class StatFilter
     }
 
     /**
-     * @return Banks[]
+     * @return Bank[]
      */
     public function getBankList(): array
     {
-        return Banks::find()->all();
+        return Bank::find()->all();
     }
 
 }

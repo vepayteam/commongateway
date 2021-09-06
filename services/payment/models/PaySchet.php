@@ -2,7 +2,6 @@
 
 namespace app\services\payment\models;
 
-use app\models\payonline\Banks as Bank;
 use app\models\payonline\Partner;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;

@@ -1,12 +1,12 @@
 <?php
-use app\models\payonline\Banks;
+use app\services\payment\models\Bank;
 
 /* @var yii\web\View $this */
 /* @var array $uslugilist */
 /* @var array $magazlist */
 /* @var $partnerlist  */
 /* @var $IsAdmin bool */
-/* @var $bankList Banks[] */
+/* @var $bankList Bank[] */
 
 $this->title = "отчет по платежам";
 
