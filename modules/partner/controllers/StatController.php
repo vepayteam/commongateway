@@ -319,7 +319,7 @@ class StatController extends Controller
                     ]);
                 }
             } catch (Throwable $e) {
-                Yii::warning('partner/stat/otchdata POST: ' . serialize($data) . '; Exeption: ' . $e->getMessage() . '; trace: ' . $e->getTraceAsString(), 'partner');
+                Yii::warning('partner/stat/otchdata POST: ' . serialize($data) . '; Exception: ' . $e->getMessage() . '; trace: ' . $e->getTraceAsString(), 'partner');
                 return '';
             }
         }
