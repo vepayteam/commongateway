@@ -61,6 +61,11 @@ $currencyList = ArrayHelper::merge(['' => ''], ArrayHelper::map(CurrencyReposito
                     <i class="glyphicon glyphicon-edit"></i>
                 </button>
             </td>
+            <td>
+                <button class="btn btn-danger partner-edit__bank-gates-table__delete-button" data-id="<?=$bankGate->Id?>">
+                    <i class="glyphicon glyphicon-remove"></i>
+                </button>
+            </td>
 
         </tr>
     <?php endforeach; ?>
