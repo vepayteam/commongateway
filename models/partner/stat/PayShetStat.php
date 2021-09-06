@@ -164,7 +164,7 @@ class PayShetStat extends Model
                 ':DATEFROM' => strtotime($this->datefrom . ":00"),
                 ':DATETO' => strtotime($this->dateto . ":59")
             ]);
-    
+
         if (is_array($IdPart)) {
             $query->andFilterWhere(['qp.IDPartner' => $IdPart]);
         } elseif ($IdPart > 0) {
@@ -376,13 +376,11 @@ class PayShetStat extends Model
                 ':DATEFROM' => strtotime($this->datefrom . ":00"),
                 ':DATETO' => strtotime($this->dateto . ":59")
             ]);
-    
-        if (is_array($IdPart)) {
-            $query->andFilterWhere(['qp.IDPartner' => $IdPart]);
-        } elseif ($IdPart > 0) {
-            $query->andWhere('qp.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);
-        }
-        
+
+        $IdPart = $IdPart ? (is_array($IdPart) ? $IdPart : explode(',', $IdPart)) : null;
+
+        $query->andFilterWhere(['qp.IDPartner' => $IdPart]);
+
         if (count($this->status) > 0) {
             if (in_array(PaySchet::STATUS_WAITING, $this->status, true)) {
                 $this->status = array_unique(
