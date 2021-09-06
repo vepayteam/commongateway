@@ -202,7 +202,24 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StatusId"
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    description: |
+                      Статус
+                      * 0 - Ошибка валидации или условий
+                      * 1 - Оплата принята в обработку
+                      * 2 - Внутренняя ошибка в процессе выполнения
+                    example: 1
+                  message:
+                    type: string
+                    description: Описание ошибки
+                    example: ""
+                  id:
+                    type: integer
+                    description: ID платежа. Присутствует, если операция прошла успешно
+                    example: 12345
         default:
           description: Error (40X,500)
           content:
@@ -468,113 +485,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /ident/runa-init:
-    post:
-      tags:
-        - Ident
-      summary: Идентификация пользователя в Руна Банке
-      description: Отправляется запрос идентификации, в ответе на который возвращается id
-        операции. По нему в дальнейшем необходимо уточнить статус выполнения
-        операции.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/IdentRunaInit"
-        description: Параметры перевода
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StatusId"
-        default:
-          description: Error (40X,500)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /ident/runa-state:
-    post:
-      tags:
-        - Ident
-      summary: Статус идентификации в Руна Банке
-      description: Запрос результата операции
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/IdentRunaState"
-        description: Параметры перевода
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/IdentRunaStateResponse"
-        default:
-          description: Error (40X,500)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /ident/request-init:
-    post:
-      tags:
-        - Ident
-      summary: Упрощенная идентификация пользователя
-      description: Отправляется запрос идентификации, в ответе на который возвращается id
-        операции.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/IdentRequestInit"
-        description: Параметры перевода
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StatusId"
-        default:
-          description: Error (40X,500)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /ident/request-state:
-    post:
-      tags:
-        - Ident
-      summary: Статус упрощенной идентификации
-      description: Запрос результата упрощенной идентификации
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/IdState"
-        description: ID запрса
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/IdentRequestStatus"
-        default:
-          description: Error (40X,500)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
   /сheck:
     post:
       tags:
@@ -727,10 +637,14 @@ components:
       properties:
         merchant_id:
           type: number
+          required: true
           description: Идентификатор партнера (поставщика услуг)
+          example: 123
         amount:
           type: number
-          description: Идентификатор документа
+          required: true
+          description: Сумма в целых частях валюты - рублях, долларах. Может содержать дробную часть для копеек или центов (до двух знаков после запятой).
+          example: 1500.45
     Client:
       type: object
       required: false
@@ -973,13 +887,10 @@ components:
         card:
           type: integer
           description: Идентификатор карты
+          example: 12345
         extid:
           type: string
-          description: Внешний идентификатор запроса
-        postbackurl:
-          type: string
-          format: url
-          description: Адрес Url для обратного вызова
+          description: Внешний уникальный идентификатор оплаты.
         fullname:
           type: string
           maxLength: 80
@@ -1285,93 +1196,6 @@ components:
         snils:
           type: string
           description: СНИЛС (при необходимости проверки)
-    IdentRequestInit:
-      type: object
-      properties:
-        LastName:
-          type: string
-          description: Фамилия
-        FirstName:
-          type: string
-          description: Имя
-        Patronymic:
-          type: string
-          description: Отчество
-        Series:
-          type: string
-          description: Серия паспорта
-        Number:
-          type: string
-          description: Номер паспорта
-        IssueDate:
-          type: string
-          description: Дата выдачи паспорта
-        IssueCode:
-          type: string
-          description: Код подразделения паспорта
-        Inn:
-          type: string
-          description: ИНН (при необходимости проверки)
-        Snils:
-          type: string
-          description: СНИЛС (при необходимости проверки)
-    IdentRequestStatus:
-      type: object
-      properties:
-        status:
-          type: integer
-          description:
-            Статус обработки. 0 - заявка создана, 1 - ожидается результат, 2- ошибка запроса, 3 - успешная идентификация, 4 - неуспешная идентификация, 5 - превышен интервал времени на обработку запроса
-        info:
-          type: string
-          description:
-            JSON, подробная информация
-    IdentRunaInit:
-      type: object
-      properties:
-        id:
-          type: integer
-          description: Идентификатор запроса (указывается повторном запросе, для проверки
-            кода отправленного на телефон)
-        passport_series:
-          type: string
-          description: Серия паспорта
-        passport_number:
-          type: string
-          description: Номер паспорта
-        name:
-          type: string
-          description: Имя
-        surname:
-          type: string
-          description: Фамилия
-        patronymic:
-          type: string
-          description: Отчество
-        inn:
-          type: string
-          description: ИНН, 12 знаков
-        snils:
-          type: string
-          description: СНИЛС, формата "000-000-000 00"
-    IdentRunaState:
-      type: object
-      properties:
-        id:
-          type: integer
-          description: Идентификатор запроса
-    IdentRunaStateResponse:
-      type: object
-      properties:
-        status:
-          type: integer
-          description: Статус ответа, где 0 - в обработке,  1 - успешная идентификация, 2 - неуспешная
-        message:
-          type: string
-          description: Сообщение системы
-        details:
-          type: object
-          description: Ответ от банка
 
     CheckReq:
       type: object
