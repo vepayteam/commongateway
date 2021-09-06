@@ -338,18 +338,34 @@ class FortaTechAdapter implements IBankAdapter
         $checkStatusPayResponse->message = 'Возврат';
         foreach ($refundIds as $refundId) {
             $ans = $this->sendGetStatusRefundRequest($refundId);
+            Yii::warning('FortaTechAdapter checkStatusPayRefund: paySchet.ID=' . $paySchet->ID . ' ans=' . $ans);
+
             if($ans['status'] == 'STATUS_REFUND') {
                 continue;
+            } elseif ($ans['status'] == 'STATUS_INIT') {
+                Yii::warning('FortaTechAdapter checkStatusPayRefund: queue refreshStatusPayJob ID=' . $paySchet->ID);
+                Yii::$app->queue
+                    ->delay(self::REFUND_REFRESH_STATUS_JOB_DELAY)
+                    ->push(new RefreshStatusPayJob([
+                        'paySchetId' => $paySchet->ID,
+                    ]));
+                break;
             } elseif ($ans['status'] == 'STATUS_ERROR' && isset($ans['message'])) {
                 $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
                 $checkStatusPayResponse->message = $ans['message'];
                 break;
             } else {
-                $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
-                $checkStatusPayResponse->message = '';
+                $checkStatusPayResponse->status = BaseResponse::STATUS_DONE;
+                $checkStatusPayResponse->message = 'Возврат завершен с ошибкой';
                 break;
             }
         }
+
+        Yii::warning('FortaTechAdapter checkStatusPayRefund: paySchet.ID=' . $paySchet->ID
+            . ' status=' . $checkStatusPayResponse->status
+            . ' message=' . $checkStatusPayResponse->message
+        );
+
         return $checkStatusPayResponse;
     }
 
@@ -383,6 +399,10 @@ class FortaTechAdapter implements IBankAdapter
                         }
                     );
                     $refundIds[] = $ans['refund_id'];
+                    Yii::warning('FortaTechAdapter refundPay: add refundId=' . $ans['refund_id']
+                        . ' paySchet.ID=' . $refundPayForm->paySchet->ID
+                    );
+
                     Yii::$app->cache->set(
                         self::REFUND_ID_CACHE_PREFIX . $refundPayForm->paySchet->ID,
                         $refundIds,
@@ -396,15 +416,26 @@ class FortaTechAdapter implements IBankAdapter
                 }
             }
 
+            Yii::warning('FortaTechAdapter refundPay: queue refreshStatusPayJob ID=' . $refundPayForm->paySchet->ID);
             Yii::$app->queue
                 ->delay(self::REFUND_REFRESH_STATUS_JOB_DELAY)
                 ->push(new RefreshStatusPayJob([
                     'paySchetId' => $refundPayForm->paySchet->ID,
                 ]));
         } catch (\Exception $e) {
+            Yii::warning('FortaTechAdapter refundPay: paySchet.ID=' . $refundPayForm->paySchet->ID
+                . ' exception=' . $e->getMessage()
+            );
+
             $refundPayResponse->status = BaseResponse::STATUS_ERROR;
             $refundPayResponse->message = $e->getMessage();
         }
+
+        Yii::warning('FortaTechAdapter refundPay: paySchet.ID='
+            . $refundPayForm->paySchet->ID
+            . ' status=' . $refundPayResponse->status
+            . ' message=' . $refundPayResponse->message
+        );
 
         return $refundPayResponse;
     }
@@ -579,7 +610,7 @@ class FortaTechAdapter implements IBankAdapter
         $curlError = curl_error($curl);
         $info = curl_getinfo($curl);
 
-        if(empty($curlError) && $info['http_code'] == 200) {
+        if(empty($curlError) && ($info['http_code'] == 200 || $info['http_code'] == 201)) {
             $response = $this->parseResponse($response);
             $maskedResponse = $this->maskResponseCardInfo($response);
             Yii::warning('FortaTechAdapter ans uri=' . $url .' : ' . Json::encode($maskedResponse));
@@ -618,7 +649,7 @@ class FortaTechAdapter implements IBankAdapter
         $curlError = curl_error($curl);
         $info = curl_getinfo($curl);
 
-        if(empty($curlError) && $info['http_code'] == 200) {
+        if(empty($curlError) && ($info['http_code'] == 200 || $info['http_code'] == 201)) {
             $response = $this->parseResponse($response);
             $maskedResponse = $this->maskResponseCardInfo($response);
             Yii::warning('FortaTechAdapter ans uri=' . $url .' : ' . Json::encode($maskedResponse));
@@ -657,7 +688,7 @@ class FortaTechAdapter implements IBankAdapter
         $curlError = curl_error($curl);
         $info = curl_getinfo($curl);
 
-        if (empty($curlError) && $info['http_code'] == 200) {
+        if (empty($curlError) && ($info['http_code'] == 200 || $info['http_code'] == 201)) {
             $response = $this->parseResponse($response);
             $maskedResponse = $this->maskResponseCardInfo($response);
             Yii::warning('FortaTechAdapter ans uri=' . $url . ' : ' . Json::encode($maskedResponse));

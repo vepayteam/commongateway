@@ -1811,6 +1811,30 @@
                 return false;
             })
 
+            $('.partner-edit__bank-gates-table__delete-button').on('click', function(e) {
+                if(confirm('Вы действительно хотите удалить этот элемент?')) {
+                    let th = $(this);
+                    $.ajax({
+                        url: '/partner/partner/delete-gate',
+                        method: 'POST',
+                        data: {
+                            id: th.attr('data-id')
+                        },
+                        success: function (data) {
+                            if (data.status == 0) {
+                                toastr.error(data.message, "Ошибка");
+                            } else {
+                                th.closest('tr').remove();
+                                toastr.success("OK", "Шлюз удалён");
+                            }
+                        },
+                        error: function () {
+                            toastr.error("Ошибка");
+                        }
+                    });
+                }
+            })
+
             $('#partner-edit__bank-gates-edit-modal__save-button').on('click', function(e) {
                 let data = $('#partner-edit__bank-gates-edit-modal__gate-form').serialize();
 
