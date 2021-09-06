@@ -31,6 +31,8 @@ class OutCardPayForm extends Model implements AmountFormInterface
 
     public $card = 0;
     public $cardnum;
+    // добавил имя владельца карты, требуется для Decta
+    public $cardHolderName;
 
     public $birthDate;
     public $countryOfCitizenship;
