@@ -3,11 +3,10 @@
 
 namespace app\models\geolocation;
 
-use app\models\payonline\UslugiRegions;
+use app\models\Country;
 use GeoIp2\Database\Reader;
 use GeoIp2\Exception\AddressNotFoundException;
 use MaxMind\Db\Reader\InvalidDatabaseException;
-use Yii;
 
 class GeoInfo
 {
@@ -15,48 +14,30 @@ class GeoInfo
      * @var null|Reader
      */
     private $gi;
+
     public function __construct()
     {
         try {
             $this->gi = new Reader(__dir__ . '/GeoLite2-City.mmdb');
         } catch (InvalidDatabaseException $e) {
+            \Yii::error('GeoInfo: Unable to instantiate the geo data reader.');
             $this->gi = null;
         }
     }
 
     /**
-     * Получить регион по IP
-     * @return UslugiRegions|array|null|\yii\db\ActiveRecord
-     * @throws \MaxMind\Db\Reader\InvalidDatabaseException
-     */
-    public function getSityId()
-    {
-        if ($this->gi) {
-            try {
-                $record = $this->gi->city(Yii::$app->request->userIP ?: Yii::$app->request->remoteIP);
-                return UslugiRegions::find()->where(
-                    'NameRegion LIKE :CITY', [
-                    ':CITY' => "%" . $record->city->names['ru'] . "%"
-                ])->one();
-            } catch (AddressNotFoundException $e) {
-            }
-        }
-        return null;
-    }
-
-    /**
      * Получить город по IP
-     * @return UslugiRegions|array|null|\yii\db\ActiveRecord
+     * @return string
      */
-    public function GetCity()
+    public function getCity(?string $ip): ?string
     {
-        $city = '';
+        $city = null;
         if ($this->gi) {
             try {
-                $record = $this->gi->city(Yii::$app->request->userIP ?: Yii::$app->request->remoteIP);
-                $city = isset($record->city->names['ru']) ? $record->city->names['ru'] : '';
-            } catch (AddressNotFoundException $e) {
-            } catch (InvalidDatabaseException $e) {
+                // Yii::$app->request->userIP ?: Yii::$app->request->remoteIP
+                $record = $this->gi->city($ip);
+                $city = $record->city->names['en'] ?? null;
+            } catch (AddressNotFoundException | InvalidDatabaseException $e) {
             }
         }
         return $city;
@@ -64,19 +45,27 @@ class GeoInfo
 
     /**
      * Получить страну по IP
-     * @return UslugiRegions|array|null|\yii\db\ActiveRecord
+     * @return string
      */
-    public function GetCountry()
+    public function getCountry(?string $ip): ?string
     {
-        $city = '';
+        $country = null;
         if ($this->gi) {
             try {
-                $record = $this->gi->city(Yii::$app->request->userIP ?: Yii::$app->request->remoteIP);
-                $city = isset($record->country->names['ru']) ? $record->country->names['ru'] : '';
-            } catch (AddressNotFoundException $e) {
-            } catch (InvalidDatabaseException $e) {
+                $record = $this->gi->city($ip);
+                $country = $record->country->isoCode ?? null;
+            } catch (AddressNotFoundException | InvalidDatabaseException $e) {
             }
         }
-        return $city;
+
+        // Преобразуем код страны из формата Alpha2 в Alpha3
+        if ($country !== null) {
+            $countryModel = Country::findOne(['Alpha2' => strtoupper($country)]);
+            if ($countryModel !== null) {
+                $country = $countryModel->Alpha3;
+            }
+        }
+
+        return $country;
     }
 }

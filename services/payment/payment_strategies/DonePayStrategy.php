@@ -40,7 +40,7 @@ class DonePayStrategy
 
         if($paySchet && $paySchet->Status == PaySchet::STATUS_WAITING) {
             $bankAdapterBuilder = new BankAdapterBuilder();
-            $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank);
+            $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank, $paySchet->currency);
 
             $this->donePayResponse = $bankAdapterBuilder->getBankAdapter()->confirm($this->donePayForm);
             return $paySchet;

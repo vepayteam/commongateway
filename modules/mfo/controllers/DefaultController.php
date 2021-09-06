@@ -61,18 +61,19 @@ class DefaultController extends Controller
     /**
      * Регистрация карт для выплат
      * @param $id
+     * @param string|null $cardNumber
      * @return string
      * @throws NotFoundHttpException
      * @throws \yii\db\Exception
      */
-    public function actionOutcard($id)
+    public function actionOutcard($id, $cardNumber = null)
     {
         $payschets = new Payschets();
         //данные счета для оплаты
         $params = $payschets->getSchetData($id, null);
         $user = User::find()->where(['ID' => $params['IdUser'], 'IsDeleted' => 0])->one();
         if ($params && isset($params['ID']) && $params['Status'] == 0) {
-            return $this->render('outcard', ['user' => $user, 'IdPay' => $params['ID']]);
+            return $this->render('outcard', ['user' => $user, 'IdPay' => $params['ID'], 'cardNumber' => $cardNumber]);
         } else {
             throw new NotFoundHttpException("Идентификатор не найден");
         }
@@ -125,14 +126,7 @@ class DefaultController extends Controller
         }
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        $response = [];
-        foreach ($data['fpsMembers'] as $member) {
-            $response[] = [
-                'name' => $member['bankName'],
-                'bic' => $member['bic'],
-            ];
-        }
-        return $response;
+        return $this->mapGetsbpbankreceiverResult($data);
     }
 
     /**
@@ -145,4 +139,27 @@ class DefaultController extends Controller
         return Yii::$container->get('PaymentService');
     }
 
+    /**
+     * @param array $data
+     * @return array
+     */
+    private function mapGetsbpbankreceiverResult(array $data): array
+    {
+        $filteredMembers = array_filter($data['fpsMembers'], static function($member) {
+            $b2COtherScenarioIndex = array_search('B2COther', array_column($member['scenarios'], 'name'), true);
+            // Если в массиве scenarios нет записи с name=B2COther, не включаем в результат
+            if ($b2COtherScenarioIndex === false) {
+                return false;
+            }
+            // Если в записи массива scenarios, где name=B2COther, в массиве roles есть значение Receiver, включаем его в результат
+            return in_array('Receiver', $member['scenarios'][$b2COtherScenarioIndex]['roles'], true);
+        });
+        return array_values(array_map(static function($member): array {
+            return [
+                'name' => $member['bankName'],
+                'bankNameRu' => $member['bankNameRu'],
+                'bic' => $member['bic'],
+            ];
+        }, $filteredMembers));
+    }
 }

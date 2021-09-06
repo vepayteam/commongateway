@@ -57,7 +57,7 @@ $paymentFormAdditionalCommission = PartnerOption::getBool($params['IdOrg'], Part
                     </span>
                 </div>
                 <div class="info">
-                    <span>Комиссия<?=$paymentFormAdditionalCommission ? '* ' : ' '?></span>
+                    <span>Комиссия </span>
                     <span class="pull-right blacksumm">
                         <?= PaymentHelper::formatSum($params['amountCommission']) ?>
                         <?= Currency::SYMBOLS[$params['currency']] ?>
@@ -69,6 +69,10 @@ $paymentFormAdditionalCommission = PartnerOption::getBool($params['IdOrg'], Part
                         Информируем Вас, что банк-эмитент может взимать дополнительную комиссию.
                     </div>
                 <?php endif; ?>
+
+                <div class="info" id="error-message" style="display: none">
+                    <p class="errmessage js-message-container"></p>
+                </div>
             </div>
         </div>
     <?php endif; ?>
@@ -100,7 +104,6 @@ $paymentFormAdditionalCommission = PartnerOption::getBool($params['IdOrg'], Part
                     'data-inputmask-mask' => '9{4} 9{4} 9{4} 9{4,6}',
                     'data-inputmask-regex' => '\d{16,18}',
                     'class' => 'form-control',
-                    'value' => '',
                     'placeholder' => '**** **** **** ****',
                     'autocomplete' => 'off'
                 ]); ?>

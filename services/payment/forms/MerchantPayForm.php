@@ -34,8 +34,6 @@ class MerchantPayForm extends BaseForm implements AmountFormInterface
     public const CLIENT_FIELDS = [
         'email' => 'required',
         'address' => '',
-        'city' => '',
-        'country' => '',
         'login' => '',
         'phone' => '',
         'zip' => ''
@@ -86,7 +84,6 @@ class MerchantPayForm extends BaseForm implements AmountFormInterface
         foreach ($this->client as $key => $clientData) {
             // check if not client attribute not exist
             if (!array_key_exists($key, self::CLIENT_FIELDS)) {
-                $this->setError($key, self::NOT_SUPPORTED);
                 return;
             }
             // check if attribute is required
@@ -120,17 +117,12 @@ class MerchantPayForm extends BaseForm implements AmountFormInterface
             case 'address':
                 $stringValidator->max = 255;
                 return $stringValidator;
-            case 'city':
             case 'phone':
             case 'login':
                 $stringValidator->max = 32;
                 return $stringValidator;
             case 'zip':
                 $stringValidator->max = 16;
-                return $stringValidator;
-            case 'country':
-                $stringValidator->min = 2;
-                $stringValidator->max = 3;
                 return $stringValidator;
             default:
                 return $stringValidator;

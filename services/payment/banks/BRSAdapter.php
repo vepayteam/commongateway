@@ -45,6 +45,7 @@ use app\services\payment\forms\brs\CreatePayRequest;
 use app\services\payment\forms\brs\CheckStatusPayRequest;
 use app\services\payment\forms\brs\RecurrentPayRequest;
 use app\services\payment\forms\brs\RefundPayRequest;
+use app\services\payment\helpers\BRSErrorHelper;
 use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
@@ -238,7 +239,7 @@ class BRSAdapter implements IBankAdapter
         $checkStatusPayResponse = new CheckStatusPayResponse();
         try {
             $ans = $this->sendRequest($uri, $checkStatusPayRequest->getAttributes());
-            $checkStatusPayResponse->message = $ans['RESULT'];
+            $checkStatusPayResponse->message = BRSErrorHelper::getMessage($ans);
             $checkStatusPayResponse->status = $this->getStatusResponse($ans['RESULT']);
             $this->checkStatusPayResponseFiller($checkStatusPayResponse, $ans);
             $checkStatusPayResponse->rrn = (array_key_exists('RRN', $ans) ? $ans['RRN'] : '');
@@ -312,7 +313,7 @@ class BRSAdapter implements IBankAdapter
         $createRecurrentPayResponse = new CreateRecurrentPayResponse;
         try {
             $ans = $this->sendRequest($uri, $recurrentPayRequest->getAttributes());
-            $createRecurrentPayResponse->message = $ans['RESULT'];
+            $createRecurrentPayResponse->message = BRSErrorHelper::getMessage($ans);
             $createRecurrentPayResponse->status = $this->getStatusResponse($ans['RESULT']);
             $createRecurrentPayResponse->transac = isset($ans['TRANSACTION_ID']) ? $ans['TRANSACTION_ID'] : '';
             $createRecurrentPayResponse->rrn = isset($ans['RRN']) ? $ans['RRN'] : '';
@@ -340,7 +341,7 @@ class BRSAdapter implements IBankAdapter
         $refundPayResponse = new RefundPayResponse();
         try {
             $ans = $this->sendRequest($uri, $refundPayRequest->getAttributes());
-            $refundPayResponse->message = $ans['RESULT'];
+            $refundPayResponse->message = BRSErrorHelper::getMessage($ans);
             $refundPayResponse->status = $this->getStatusResponse($ans['RESULT']);
         } catch (BRSAdapterExeception $e) {
             $refundPayResponse->message = $e->getMessage();

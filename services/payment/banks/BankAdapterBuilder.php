@@ -82,8 +82,12 @@ class BankAdapterBuilder
      * @return $this
      * @throws GateException
      */
-    public function buildByBank(Partner $partner, Uslugatovar $uslugatovar, Bank $bank)
+    public function buildByBank(Partner $partner, Uslugatovar $uslugatovar, Bank $bank, Currency $currency = null)
     {
+        if(is_null($currency)) {
+            $currency = Currency::findOne(['Code' => Currency::MAIN_CURRENCY]);
+        }
+
         $this->partner = $partner;
         $this->uslugatovar = $uslugatovar;
         $this->partnerBankGate = $partner
@@ -91,7 +95,8 @@ class BankAdapterBuilder
             ->where([
                 'BankId' => $bank->ID,
                 'TU' => $uslugatovar->IsCustom,
-                'Enable' => 1
+                'Enable' => 1,
+                'CurrencyId' => $currency->Id,
             ])->orderBy('Priority DESC')->one();
 
         if (!$this->partnerBankGate) {

@@ -4,22 +4,17 @@ namespace app\models;
 
 use app\models\antifraud\AntiFraud;
 use app\models\bank\BankCheck;
-use app\models\bank\MTSBank;
 use app\models\crypt\CardToken;
+use app\models\geolocation\GeoInfo;
 use app\models\payonline\BalancePartner;
 use app\models\payonline\Cards;
-use app\models\geolocation\GeoInfo;
-use app\models\payonline\OrderPay;
 use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
 use app\models\queue\DraftPrintJob;
-use app\models\queue\ExportpayJob;
-use app\models\queue\JobPriorityInterface;
 use app\models\queue\ReverspayJob;
 use app\services\payment\models\PaySchet;
 use Yii;
 use yii\db\Exception;
-use yii\helpers\VarDumper;
 use yii\mutex\FileMutex;
 
 /**
@@ -27,6 +22,8 @@ use yii\mutex\FileMutex;
  */
 class Payschets
 {
+    private const DEFAULT_COUNTRY = 'RUS';
+    private const DEFAULT_CITY = 'Moscow';
 
     /**
      * Данные счета для оплаты
@@ -1006,19 +1003,20 @@ class Payschets
     public function SetIpAddress($IdPay)
     {
         try {
-            $geoIp = new GeoInfo();
-            Yii::$app->db->createCommand()->update('pay_schet', [
-                'IPAddressUser' => Yii::$app->request->getUserIP(),
-            ], ['ID' => $IdPay])->execute();
+            $ip = Yii::$app->request->userIP;
+            $paySchet = PaySchet::findOne(['ID' => $IdPay]);
 
-            $country = $geoIp->GetCountry();
-            $city = $geoIp->GetCity();
-            if(!empty($country) && !empty($city))
-            Yii::$app->db->createCommand()->update('pay_schet', [
-                'CountryUser' => $country,
-                'CityUser' => $city
-            ], ['ID' => $IdPay])->execute();
+            $paySchet->IPAddressUser = $ip;
+            $paySchet->save(false);
+
+            $geoIp = new GeoInfo();
+            $paySchet->CountryUser = $geoIp->getCountry($ip) ?? self::DEFAULT_COUNTRY;
+            $paySchet->CityUser = $geoIp->getCity($ip) ?? self::DEFAULT_CITY;
+            $paySchet->save(false);
+
         } catch (Exception $e) {
+            /* @todo Легаси, протестировать и убрать пустой catch. */
+            Yii::$app->errorHandler->handleException($e);
         }
     }
 

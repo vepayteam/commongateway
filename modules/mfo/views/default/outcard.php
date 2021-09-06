@@ -2,6 +2,7 @@
 
 /* @var $user array */
 /* @var $IdPay int */
+/* @var $cardNumber string|null */
 
 use app\models\payonline\Provparams;
 use yii\bootstrap\ActiveForm;
@@ -55,7 +56,7 @@ $provData = new Provparams();
                 'data-inputmask-mask' => '9999 9999 9999 999999',
                 'data-inputmask-regex' => '\d{16,18}',
                 'class' => 'input-sm form-control',
-                'value' => '',
+                'value' => $cardNumber ?? '',
                 'placeholder' => '0000 0000 0000 0000'
             ])
             ->label('Номер карты', [

@@ -7,6 +7,7 @@ use app\models\payonline\Partner;
 use app\models\payonline\PartnerDogovor;
 use app\models\payonline\Uslugatovar;
 use app\models\TU;
+use app\services\payment\models\UslugatovarType;
 
 class StatFilter
 {
@@ -83,7 +84,7 @@ class StatFilter
     public function getTypeUslugLiust($filter = -1)
     {
         $ret = [];
-        foreach (Uslugatovar::$TypeCustom_str as $k => $val) {
+        foreach (UslugatovarType::getAll() as $k => $val) {
             $need = 1;
             if (is_array($filter) && !in_array($k, $filter)) {
                 $need = 0;
