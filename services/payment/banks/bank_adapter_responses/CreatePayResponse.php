@@ -4,12 +4,15 @@
 namespace app\services\payment\banks\bank_adapter_responses;
 
 
+use app\services\base\traits\Fillable;
 use app\services\payment\interfaces\Issuer3DSVersionInterface;
 use Yii;
 use yii\base\Model;
 
 class CreatePayResponse extends BaseResponse
 {
+    use Fillable;
+
     public $isNeed3DSRedirect = true;
 
     public $vesion3DS = Issuer3DSVersionInterface::V_1;
