@@ -89,6 +89,7 @@ class PaymentApiService extends Component
             $paySchet->DsTransId = $createPayResponse->dsTransId;
             $paySchet->Eci = $createPayResponse->eci;
             $paySchet->CardRefId3DS = $createPayResponse->cardRefId;
+            $paySchet->save(false);
 
             // Если 3DS не требуется, завершаем все операции по оплате.
             if (!$paySchet->IsNeed3DSVerif) {
