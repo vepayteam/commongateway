@@ -28,6 +28,8 @@ class Banks
                 return new FortaTechAdapter();
             case WallettoBankAdapter::$bank:
                 return new WallettoBankAdapter();
+            case DectaAdapter::$bank:
+                return new DectaAdapter();
             case RunaBankAdapter::$bank:
                 return new RunaBankAdapter();
             case GratapayAdapter::$bank:
