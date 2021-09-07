@@ -3,8 +3,6 @@
 namespace app\services\payment\models\repositories;
 
 use app\services\payment\models\Currency;
-use yii\db\ActiveRecord;
-use yii\db\Query;
 use yii\helpers\ArrayHelper;
 
 /**
@@ -86,7 +84,7 @@ class CurrencyRepository
         $code = $code ? self::getCurrencyByCode($code) : $code;
         $id = $id ? self::getCurrencyById($id) : $id;
 
-        return $code == $id ? $id : null;
+        return $code === $id ? $id : null;
     }
 
     public function getDefaultMainCurrency(): ?Currency
