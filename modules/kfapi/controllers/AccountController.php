@@ -117,6 +117,7 @@ class AccountController extends Controller
         $kf->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody());
 
         $kfStatm = new KfStatement();
+        $kfStatm->partner = $kf->partner;
         $kfStatm->load($kf->req, '');
         if (!$kfStatm->validate()) {
             return ['status' => 0, 'message' => $kfStatm->GetError()];
