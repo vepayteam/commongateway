@@ -1704,7 +1704,7 @@ class TKBankAdapter implements IBankAdapter
         }
 
         $queryData = Json::encode($getStatementRequest->getAttributes());
-        $ans = $this->curlXmlReq($queryData, $this->bankUrlXml . $action);
+        $ans = $this->curlXmlReq($queryData, $action);
 
         $getStatementsResponse = new GetStatementsResponse();
         if (isset($ans['xml']) && !empty($ans['xml'])) {
