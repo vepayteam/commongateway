@@ -1692,7 +1692,7 @@ class TKBankAdapter implements IBankAdapter
 
     public function getStatements(GetStatementsForm $getStatementsForm)
     {
-        $action = 'https://pay.tkbbank.ru/api/v1/banking/account/statement/document';
+        $action = '/api/v1/banking/account/statement/document';
 
         $getStatementRequest = new GetStatementRequest();
         $getStatementRequest->Account = $this->gate->SchetNumber;
@@ -1704,7 +1704,7 @@ class TKBankAdapter implements IBankAdapter
         }
 
         $queryData = Json::encode($getStatementRequest->getAttributes());
-        $ans = $this->curlXmlReq($queryData, $action);
+        $ans = $this->curlXmlReq($queryData, $this->bankUrlXml . $action);
 
         $getStatementsResponse = new GetStatementsResponse();
         if (isset($ans['xml']) && !empty($ans['xml'])) {
