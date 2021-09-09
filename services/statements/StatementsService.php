@@ -41,7 +41,7 @@ class StatementsService
                 ->exists();
 
 
-            if(!$isExistStatements) {
+            if(!$isExistStatements && !empty($gate->SchetNumber)) {
                 $jobParams = [
                     'IdPartner' => $kfStatement->partner->ID,
                     'bankId' => $gate->BankId,

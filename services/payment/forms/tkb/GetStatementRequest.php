@@ -8,14 +8,14 @@ use yii\base\Model;
 
 class GetStatementRequest extends Model
 {
-    public $accountNumber;
-    public $startDate;
-    public $endDate;
+    public $Account;
+    public $StartDate;
+    public $EndDate;
 
     public function rules()
     {
         return [
-            [['accountNumber', 'startDate', 'endDate'], 'required'],
+            [['Account', 'StartDate', 'EndDate'], 'required'],
         ];
     }
 
