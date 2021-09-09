@@ -371,7 +371,7 @@ class BRSAdapter implements IBankAdapter
             CURLOPT_SSL_VERIFYHOST => 0,
             CURLOPT_SSLCERT => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.pem'),
             CURLOPT_SSLKEY => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.key'),
-            CURLOPT_CAINFO => Yii::getAlias(self::KEYS_PATH . 'chain-ecomm-ca-root-ca.crt'),
+//            CURLOPT_CAINFO => Yii::getAlias(self::KEYS_PATH . 'chain-ecomm-ca-root-ca.crt'),
             CURLOPT_POSTFIELDS => $request,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => 120,
