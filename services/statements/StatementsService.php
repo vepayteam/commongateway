@@ -46,8 +46,8 @@ class StatementsService
                     'IdPartner' => $kfStatement->partner->ID,
                     'bankId' => $gate->BankId,
                     'TypeAcc' => $gate->SchetType,
-                    'datefrom' => $kfStatement->datefrom,
-                    'dateto' => $kfStatement->dateto,
+                    'datefrom' => $kfStatement->dayfrom,
+                    'dateto' => $kfStatement->dayto,
                 ];
                 $hash = md5(Json::encode($jobParams));
 

@@ -1692,12 +1692,12 @@ class TKBankAdapter implements IBankAdapter
 
     public function getStatements(GetStatementsForm $getStatementsForm)
     {
-        $action = '/api/v1/banking/account/statement/document';
+        $action = '/nominal/v2/getStatement';
 
         $getStatementRequest = new GetStatementRequest();
-        $getStatementRequest->Account = $this->gate->SchetNumber;
-        $getStatementRequest->StartDate = $getStatementsForm->dateFrom;
-        $getStatementRequest->EndDate = $getStatementsForm->dateTo;
+        $getStatementRequest->accountNumber = $this->gate->SchetNumber;
+        $getStatementRequest->startDate = $getStatementsForm->dateFrom;
+        $getStatementRequest->endDate = $getStatementsForm->dateTo;
 
         if(!$getStatementRequest->validate()) {
             throw new GateException('Некорректные данные запроса');
