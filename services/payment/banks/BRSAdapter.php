@@ -52,6 +52,7 @@ use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
 use Carbon\Carbon;
 use Exception;
+use \yii\helpers\Url;
 use Yii;
 use yii\base\Security;
 use yii\helpers\Json;
@@ -807,6 +808,17 @@ class BRSAdapter implements IBankAdapter
         $transferToAccountRequest->account = $outPayaccForm->account;
         $transferToAccountRequest->phone = $outPayaccForm->getPhoneToSend();
         $transferToAccountRequest->sourceId = $id;
+
+        if (strpos('processing.backend.vepay.cf', Url::base(true)) !== false) {
+            $transferToAccountRequest->account = '40702810700000007050';
+            $transferToAccountRequest->bic = '044525151';
+            $transferToAccountRequest->receiverId = '0079167932356';
+            $transferToAccountRequest->firstName = 'Максим';
+            $transferToAccountRequest->lastName = 'Филин';
+            $transferToAccountRequest->middleName = 'Сергеевич';
+            $transferToAccountRequest->merchantId = 'MA0000086553';
+            $transferToAccountRequest->receiverIdType = 'MTEL';
+        }
 
         $requestData = $transferToAccountRequest->getAttributes();
         $requestData['msgSign'] = $transferToAccountRequest->getMsgSign($this->gate);
