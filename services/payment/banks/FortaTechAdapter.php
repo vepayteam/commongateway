@@ -36,6 +36,7 @@ use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
+use app\services\payment\helpers\TimeHelper;
 use app\services\payment\jobs\RefreshStatusPayJob;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
@@ -140,6 +141,7 @@ class FortaTechAdapter implements IBankAdapter
         $paymentRequest->return_url = $paySchet->getOrderdoneUrl();
         $paymentRequest->fail_url = $paySchet->getOrderfailUrl();
         $paymentRequest->callback_url = $paySchet->getOrderdoneUrl();
+        $paymentRequest->ttl = TimeHelper::secondsToHoursCeil($paySchet->TimeElapsed);
 
         $ans = $this->sendRequest($action, $paymentRequest->getAttributes());
         if(!array_key_exists('id', $ans) || empty($ans['id'])) {

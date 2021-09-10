@@ -55,6 +55,7 @@ class WallettoBankAdapter implements IBankAdapter
     private const STATUS_AUTHORIZED = 'authorized';
     private const STATUS_REVERSED = 'reversed';
     public const ERROR_STATUS_MSG = 'Ошибка проверки статуса'; //TODO: create global error handler
+    public const ERROR_EXCEPTION_MSG = 'Не удалось связаться с провайдером';
 
     public const BANK_TIMEZONE = 'Europe/Vilnius';
 
@@ -122,7 +123,7 @@ class WallettoBankAdapter implements IBankAdapter
         } catch (GuzzleException $e) {
             Yii::error('Walletto payInCreate err: ' . $e->getMessage());
             throw new CreatePayException(
-                BankAdapterResponseException::REQUEST_ERROR_MSG . ' : ' . $e->getMessage()
+                BankAdapterResponseException::REQUEST_ERROR_MSG . ' : ' . self::ERROR_EXCEPTION_MSG
             );
         }
         if (!$response->isSuccess()) {
@@ -170,7 +171,7 @@ class WallettoBankAdapter implements IBankAdapter
         } catch (GuzzleException $e) {
             Yii::error(' Walletto checkStatusPay err:' . $e->getMessage());
             throw new BankAdapterResponseException(
-                BankAdapterResponseException::REQUEST_ERROR_MSG . ' : ' . $e->getMessage()
+                BankAdapterResponseException::REQUEST_ERROR_MSG . ' : ' . self::ERROR_EXCEPTION_MSG
             );
         }
         return $checkStatusPayResponse;
@@ -221,7 +222,7 @@ class WallettoBankAdapter implements IBankAdapter
         } catch (GuzzleException $e) {
             Yii::error(' Walletto refundPay err:' . $e->getMessage());
             throw new BankAdapterResponseException(
-                BankAdapterResponseException::REQUEST_ERROR_MSG . ' : ' . $e->getMessage()
+                BankAdapterResponseException::REQUEST_ERROR_MSG . ' : ' . self::ERROR_EXCEPTION_MSG
             );
         }
 
@@ -304,7 +305,7 @@ class WallettoBankAdapter implements IBankAdapter
         } catch (GuzzleException $e) {
             Yii::error('Walletto currencyExchangeRates err: ' . $e->getMessage());
             throw new BankAdapterResponseException(
-                BankAdapterResponseException::setErrorMsg($e->getMessage())
+                BankAdapterResponseException::REQUEST_ERROR_MSG . ' : ' . self::ERROR_EXCEPTION_MSG
             );
         }
 
