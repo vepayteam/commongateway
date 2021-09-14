@@ -8,7 +8,7 @@ class Modifiers
 {
     public static function searchAndReplaceCvv(string $input): string
     {
-        return preg_replace('/\\\"(\d{3,4})\\\"/', '"***"', $input);
+        return preg_replace('/\\\"(\d{3,4})\\\"/', '\"***\"', $input);
     }
 
     public static function searchAndReplacePan(string $input): string
