@@ -6,6 +6,11 @@ use Yii;
 
 class Modifiers
 {
+    public static function searchAndReplaceCvv(string $input): string
+    {
+        return preg_replace('/\\\"(\d{3,4})\\\"/', '"***"', $input);
+    }
+
     public static function searchAndReplacePan(string $input): string
     {
         preg_match_all('/(?<pan>[23456]\d{15,17})/xu', $input, $cards);
@@ -33,6 +38,7 @@ class Modifiers
 
     public static function searchAndReplaceSecurity(string $input): string
     {
+        $input = Modifiers::searchAndReplaceCvv($input);
         $input = Modifiers::searchAndReplacePan($input);
         return Modifiers::searchAndReplaceCredentials($input);
     }
