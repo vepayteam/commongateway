@@ -2,9 +2,6 @@
 
 namespace app\modules\partner\controllers;
 
-use app\models\bank\BankMerchant;
-use app\models\bank\TCBank;
-use app\models\bank\TcbGate;
 use app\models\kkt\OnlineKassa;
 use app\models\mfo\MfoStat;
 use app\models\partner\admin\VyvodVoznag;
@@ -24,17 +21,18 @@ use app\models\partner\stat\StatFilter;
 use app\models\partner\stat\StatGraph;
 use app\models\partner\UserLk;
 use app\models\payonline\Partner;
-use app\models\Payschets;
-use app\models\queue\JobPriorityInterface;
-use app\models\queue\SendMailJob;
 use app\models\SendEmail;
 use app\models\TU;
 use app\modules\partner\models\DiffData;
+use app\modules\partner\models\DiffDataForm;
 use app\modules\partner\models\DiffExport;
+use app\modules\partner\models\DiffReader;
 use app\modules\partner\models\PaySchetLogForm;
+use app\modules\partner\models\StatDiffSettings;
 use app\services\ident\forms\IdentStatisticForm;
 use app\services\ident\IdentService;
 use app\services\payment\jobs\RefundPayJob;
+use app\services\payment\models\Bank;
 use app\services\payment\models\PaySchet;
 use app\services\payment\PaymentService;
 use Exception;
@@ -45,11 +43,10 @@ use yii\base\DynamicModel;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\helpers\ArrayHelper;
+use yii\helpers\Json;
 use yii\helpers\Url;
-use yii\helpers\VarDumper;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
-use yii\web\MethodNotAllowedHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 use yii\web\UploadedFile;
@@ -104,25 +101,59 @@ class StatController extends Controller
 
     public function actionDiff()
     {
-        return $this->render('diff');
+        $banks = Bank::find()->all();
+
+        return $this->render('diff', [
+            'banks' => $banks,
+        ]);
     }
 
-    public function actionDiffdata()
+    public function actionDiffColumns()
     {
-        $registryFile = UploadedFile::getInstanceByName('registryFile');
+        $form = new DiffDataForm();
+        $form->load(Yii::$app->request->post(), '');
+        $form->registryFile = UploadedFile::getInstanceByName('registryFile');
+
+        $settings = StatDiffSettings::find()
+            ->where(['BankId' => $form->bank])
+            ->one();
+
+        $diffReader = new DiffReader($form->registryFile->tempName);
+        $registryColumns = $diffReader->getRegistryColumns();
+        $dbColumns = $diffReader->getDbColumns();
+
+        return $this->asJson([
+            'registryColumns' => $registryColumns,
+            'dbColumns' => $dbColumns,
+            'settings' => $settings,
+        ]);
+    }
+
+    public function actionDiffData()
+    {
+        $form = new DiffDataForm();
+        $form->load(Yii::$app->request->post(), '');
+        $form->registryFile = UploadedFile::getInstanceByName('registryFile');
+
+        if (!$form->validate()) {
+            return $this->asJson([
+                'status' => 0,
+                'errors' => $form->getErrors(),
+            ]);
+        }
 
         try {
-            $diffData = new DiffData();
-            $diffData->read($registryFile->tempName);
-
+            $diffData = new DiffData($form);
             [$badStatus, $notFound] = $diffData->execute();
         } catch (Exception $e) {
             Yii::warning('Stat diffData exception '
-                . $registryFile->tempName
+                . $form->registryFile->tempName
                 . ': ' . $e->getMessage()
             );
             throw new BadRequestHttpException();
         }
+
+        StatDiffSettings::saveByForm($form);
 
         return $this->asJson([
             'status' => 1,

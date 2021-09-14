@@ -317,38 +317,114 @@
             });
         },
 
-        diffdatareq: function () {
+        diffDataReq: function () {
             $.ajax({
                 type: 'POST',
                 enctype: 'multipart/form-data',
-                url: '/partner/stat/diffdata',
-                // data: $('#diffdataform').serialize(),
-                data: new FormData($('#diffdataform')[0]),
+                url: '/partner/stat/diff-data',
+                data: new FormData($('#diffForm')[0]),
                 processData: false,
                 contentType: false,
                 beforeSend: function () {
-                    $('#diffdataform').closest('.ibox-content').toggleClass('sk-loading');
+                    $('#diffForm').closest('.ibox-content').toggleClass('sk-loading');
                 },
                 success: function (data) {
-                    $('#diffdataform').closest('.ibox-content').toggleClass('sk-loading');
+                    $('#diffForm').closest('.ibox-content').toggleClass('sk-loading');
                     if (data.status === 1) {
-                        $('#diffdataresult').html(data.data)
+                        $('#diffDataResult').html(data.data)
                     } else {
-                        $('#diffdataresult').html("<p class='text-center'>" + data.message + "</p>")
+                        $('#diffDataResult').html("<p class='text-center'>" + data.message + "</p>")
                     }
                 },
                 error: function () {
-                    $('#diffdataform').closest('.ibox-content').toggleClass('sk-loading');
-                    $('#diffdataresult').html("<p class='text-center'>Ошибка</p>");
+                    $('#diffForm').closest('.ibox-content').toggleClass('sk-loading');
+                    $('#diffDataResult').html("<p class='text-center'>Ошибка</p>");
                 }
             })
         },
 
-        diffdata: function () {
-            $('#diffdataform').on('submit', function (e) {
+        diffColumns: function () {
+            $.ajax({
+                type: 'POST',
+                enctype: 'multipart/form-data',
+                url: '/partner/stat/diff-columns',
+                data: new FormData($('#diffForm')[0]),
+                processData: false,
+                contentType: false,
+                beforeSend: function () {
+                    $('#diffForm').closest('.ibox-content').toggleClass('sk-loading');
+                },
+                success: function (data) {
+                    const registryColumns = data.registryColumns
+                    const dbColumns = data.dbColumns
+                    const settings = data.settings
+
+                    const registrySelectColumn = $('#registrySelectColumn')
+                    const registryStatusColumn = $('#registryStatusColumn')
+                    const dbColumnElement = $('#dbColumn')
+                    for (let a = 0; a < registryColumns.length; a++) {
+                        const registrySelect = settings ? settings.RegistrySelectColumn : 0
+                        const registryStatus = settings ? settings.RegistryStatusColumn : 0
+
+                        registrySelectColumn.append($('<option>', {
+                            value: a,
+                            text: registryColumns[a],
+                            selected: a === registrySelect,
+                        }))
+                        registryStatusColumn.append($('<option>', {
+                            value: a,
+                            text: registryColumns[a],
+                            selected: a === registryStatus,
+                        }))
+                    }
+
+                    for (const dbColumnName of dbColumns) {
+                        const dbColumnSettings = settings ? settings.DbColumn : ''
+
+                        dbColumnElement.append($('<option>', {
+                            value: dbColumnName,
+                            text: dbColumnName,
+                            selected: dbColumnName === dbColumnSettings,
+                        }))
+                    }
+
+                    if (settings && settings.AllRegistryStatusSuccess) {
+                        $('#allRegistryStatusSuccess').prop('checked', true)
+                    }
+
+                    if (settings && settings.Statuses) {
+                        const statuses = JSON.parse(settings.Statuses)
+                        for (const key in statuses) {
+                            $('#status' + key).val(statuses[key])
+                        }
+                    }
+
+                    $('#registrySelectColumnGroup').css('display', 'block')
+                    $('#registryStatusColumnGroup').css('display', 'block')
+                    $('#dbColumnGroup').css('display', 'block')
+                    $('#registryStatuses').css('display', 'block')
+
+                    $('#diffForm').closest('.ibox-content').toggleClass('sk-loading');
+                },
+                error: function () {
+                    $('#diffForm').closest('.ibox-content').toggleClass('sk-loading');
+                }
+            })
+        },
+
+        diffFunc: function () {
+            $('#diffForm').on('submit', function (e) {
                 e.preventDefault();
 
-                lk.diffdatareq();
+                lk.diffDataReq();
+            })
+
+            $('#registryFile').change(function (e) {
+                if (!$(e.target).val()) {
+                    return
+                }
+
+                lk.diffColumns()
             })
         },
 
