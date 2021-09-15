@@ -229,6 +229,13 @@ class PayController extends Controller
             Yii::warning("mfo/pay/auto: ошибка валидации формы");
             return ['status' => 0, 'message' => $autoPayForm->getError()];
         }
+    
+        if ($autoPayForm->getCard() && (!$autoPayForm->getCard()->ExtCardIDP || $autoPayForm->getCard()->ExtCardIDP == '0')) {
+            Yii::warning("mfo/pay/auto: у карты нет ExtCardIDP");
+            $autoPayForm->addError('card', 'Карта не зарегистрирована');
+            return ['status' => 0, 'message' => $autoPayForm->getError()];
+        }
+        
         Yii::warning("mfo/pay/auto AutoPayForm extid=$autoPayForm->extid amount=$autoPayForm->amount", 'mfo');
         // рубли в копейки
         $autoPayForm->amount *= 100;
