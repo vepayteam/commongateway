@@ -353,7 +353,7 @@ class PaymentService
         // TODO: DRY
         $uslugatovar = Uslugatovar::findOne([
             'IDPartner' => $outPayAccountForm->partner->ID,
-            'IsCustom' => TU::$TOSCHET,
+            'IsCustom' => TU::$B2CSBP,
             'IsDeleted' => 0,
         ]);
         $brsBank = Bank::findOne([

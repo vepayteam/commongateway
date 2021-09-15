@@ -759,8 +759,9 @@ class BRSAdapter implements IBankAdapter
             CURLOPT_SSL_VERIFYHOST => 0,
             CURLOPT_SSLCERTTYPE => 'PEM',
             CURLOPT_SSLKEYTYPE => 'PEM',
+            CURLOPT_CAINFO => Yii::getAlias(self::KEYS_PATH . 'ca_' . $this->gate->Login . '.pem'),
             CURLOPT_SSLCERT => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.pem'),
-            CURLOPT_SSLKEY => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.key'),
+            CURLOPT_SSLKEY => Yii::getAlias(self::KEYS_PATH . 'key_' . $this->gate->Login . '.pem'),
             CURLOPT_POSTFIELDS => Json::encode($data),
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
@@ -791,11 +792,33 @@ class BRSAdapter implements IBankAdapter
     /**
      * @param OutPayAccountForm $outPayaccForm
      * @return bool
+     * @throws \yii\base\Exception
      */
-    public function checkTransfetB2C(OutPayAccountForm $outPayaccForm)
+    public function checkTransfetB2C(OutPayAccountForm $outPayaccForm): bool
     {
-        // TODO: DRY
         $uri = '/eis-app/eis-rs/businessPaymentService/checkTransferB2c';
+
+        $requestData = $this->getTransferB2cRequestData($outPayaccForm);
+
+        try {
+            $ans = $this->sendPostB2CRequest($uri, $requestData);
+            if(isset($ans['code']) && $ans['code'] == 0) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (BankAdapterResponseException $e) {
+            return false;
+        }
+    }
+
+    /**
+     * @param OutPayAccountForm $outPayaccForm
+     * @return array
+     * @throws \yii\base\Exception
+     */
+    private function getTransferB2cRequestData(OutPayAccountForm $outPayaccForm): array
+    {
         $id = Yii::$app->security->generateRandomString(16);
         $transferToAccountRequest = new TransferToAccountRequest();
         $transferToAccountRequest->bic = $outPayaccForm->bic;
@@ -810,29 +833,20 @@ class BRSAdapter implements IBankAdapter
         $transferToAccountRequest->sourceId = $id;
 
         if (strpos('processing.backend.vepay.cf', Url::base(true)) !== false) {
-            $transferToAccountRequest->account = '40702810700000007050';
-            $transferToAccountRequest->bic = '044525151';
-            $transferToAccountRequest->receiverId = '0079167932356';
-            $transferToAccountRequest->firstName = 'Максим';
-            $transferToAccountRequest->lastName = 'Филин';
-            $transferToAccountRequest->middleName = 'Сергеевич';
-            $transferToAccountRequest->merchantId = 'MA0000086553';
-            $transferToAccountRequest->receiverIdType = 'MTEL';
+            $transferToAccountRequest->account = BRSSbpTestData::ACCOUNT;
+            $transferToAccountRequest->bic = BRSSbpTestData::BIC;
+            $transferToAccountRequest->receiverId = BRSSbpTestData::RECEIVER_ID;
+            $transferToAccountRequest->firstName = BRSSbpTestData::FIRST_NAME;
+            $transferToAccountRequest->lastName = BRSSbpTestData::LAST_NAME;
+            $transferToAccountRequest->middleName = BRSSbpTestData::MIDDLE_NAME;
+            $transferToAccountRequest->merchantId = BRSSbpTestData::MERCHANT_ID;
+            $transferToAccountRequest->receiverIdType = BRSSbpTestData::RECEIVER_ID_TYPE;
         }
 
         $requestData = $transferToAccountRequest->getAttributes();
         $requestData['msgSign'] = $transferToAccountRequest->getMsgSign($this->gate);
 
-        try {
-            $ans = $this->sendPostB2CRequest($uri, $requestData);
-            if(isset($ans['code']) && $ans['code'] == 0) {
-                return true;
-            } else {
-                return false;
-            }
-        } catch (BankAdapterResponseException $e) {
-            return false;
-        }
+        return $requestData;
     }
 
     public function identInit(Ident $ident)

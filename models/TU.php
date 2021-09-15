@@ -30,7 +30,7 @@ class TU
     public static $POGASHECOMPARTS = 114; //погашение еком с разбивкой
     public static $AVTOPLATECOMPARTS = 116; //автоплатеж еком с разбивкой
     public static $VYVODPAYSPARTS = 119; //перечисление по разбивке
-
+    public static $B2CSBP = 203; //Перевод B2C СБП
 
     public static function IsOutMfo($type)
     {
