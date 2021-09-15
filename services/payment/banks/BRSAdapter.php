@@ -18,6 +18,7 @@ use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
+use app\services\payment\CurlSSLStructure;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
@@ -739,14 +740,31 @@ class BRSAdapter implements IBankAdapter
     /**
      * @param string $uri
      * @param array $data
+     * @param CurlSSLStructure|null $curlSSLStructure
      * @return mixed|null
      * @throws BankAdapterResponseException
      */
-    protected function sendPostB2CRequest(string $uri, array $data)
+    protected function sendPostB2CRequest(string $uri, array $data, ?CurlSSLStructure $curlSSLStructure = null)
     {
+        $xUserLogin = strpos('processing.backend.vepay.cf', Url::base(true)) !== false
+            ? BRSSbpTestData::X_USER_LOGIN : $this->gate->Login;
+
         $curl = curl_init();
 
-        curl_setopt_array($curl, array(
+        $sslData = $curlSSLStructure instanceof CurlSSLStructure ? [
+            CURLOPT_SSLCERTTYPE => $curlSSLStructure->sslcerttype,
+            CURLOPT_SSLKEYTYPE => $curlSSLStructure->sslkeytype,
+            CURLOPT_CAINFO => $curlSSLStructure->cainfo,
+            CURLOPT_SSLCERT => $curlSSLStructure->sslcert,
+            CURLOPT_SSLKEY => $curlSSLStructure->sslkey,
+        ] : [
+            CURLOPT_SSLCERTTYPE => 'PEM',
+            CURLOPT_SSLKEYTYPE => 'PEM',
+            CURLOPT_SSLCERT => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.pem'),
+            CURLOPT_SSLKEY => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.key'),
+        ];
+
+        curl_setopt_array($curl, array_merge([
             CURLOPT_URL => $this->bankUrlB2C . $uri,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
@@ -757,17 +775,12 @@ class BRSAdapter implements IBankAdapter
             CURLOPT_CUSTOMREQUEST => 'POST',
             CURLOPT_SSL_VERIFYPEER => 0,
             CURLOPT_SSL_VERIFYHOST => 0,
-            CURLOPT_SSLCERTTYPE => 'PEM',
-            CURLOPT_SSLKEYTYPE => 'PEM',
-            CURLOPT_CAINFO => Yii::getAlias(self::KEYS_PATH . 'ca_' . $this->gate->Login . '.pem'),
-            CURLOPT_SSLCERT => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.pem'),
-            CURLOPT_SSLKEY => Yii::getAlias(self::KEYS_PATH . 'key_' . $this->gate->Login . '.pem'),
             CURLOPT_POSTFIELDS => Json::encode($data),
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
-                'x-User-Login: ' . $this->gate->Login,
+                'x-User-Login: ' . $xUserLogin,
             ],
-        ));
+        ], $sslData));
 
         Yii::warning('BRSAdapter req POST uri=' . $uri . '; data=' . Json::encode($data));
         $response = curl_exec($curl);
@@ -790,6 +803,22 @@ class BRSAdapter implements IBankAdapter
     }
 
     /**
+     * @return CurlSSLStructure
+     */
+    private function getTransferB2CRequestSslStructure(): CurlSSLStructure
+    {
+        $sslData = new CurlSSLStructure();
+
+        $sslData->sslcerttype = 'PEM';
+        $sslData->sslkeytype = 'PEM';
+        $sslData->cainfo = Yii::getAlias(self::KEYS_PATH . 'ca_' . $this->gate->Login . '.pem');
+        $sslData->sslcert = Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.pem');
+        $sslData->sslkey = Yii::getAlias(self::KEYS_PATH . 'key_' . $this->gate->Login . '.pem');
+
+        return $sslData;
+    }
+
+    /**
      * @param OutPayAccountForm $outPayaccForm
      * @return bool
      * @throws \yii\base\Exception
@@ -801,7 +830,7 @@ class BRSAdapter implements IBankAdapter
         $requestData = $this->getTransferB2cRequestData($outPayaccForm);
 
         try {
-            $ans = $this->sendPostB2CRequest($uri, $requestData);
+            $ans = $this->sendPostB2CRequest($uri, $requestData, $this->getTransferB2CRequestSslStructure());
             if(isset($ans['code']) && $ans['code'] == 0) {
                 return true;
             } else {

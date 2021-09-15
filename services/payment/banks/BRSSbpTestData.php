@@ -12,4 +12,6 @@ class BRSSbpTestData
     public const MIDDLE_NAME = 'Сергеевич';
     public const MERCHANT_ID = 'MA0000086553';
     public const RECEIVER_ID_TYPE = 'MTEL';
+
+    public const X_USER_LOGIN = '136999';
 }
