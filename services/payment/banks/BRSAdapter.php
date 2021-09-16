@@ -751,20 +751,7 @@ class BRSAdapter implements IBankAdapter
 
         $curl = curl_init();
 
-        $sslData = $curlSSLStructure instanceof CurlSSLStructure ? [
-            CURLOPT_SSLCERTTYPE => $curlSSLStructure->sslcerttype,
-            CURLOPT_SSLKEYTYPE => $curlSSLStructure->sslkeytype,
-            CURLOPT_CAINFO => $curlSSLStructure->cainfo,
-            CURLOPT_SSLCERT => $curlSSLStructure->sslcert,
-            CURLOPT_SSLKEY => $curlSSLStructure->sslkey,
-        ] : [
-            CURLOPT_SSLCERTTYPE => 'PEM',
-            CURLOPT_SSLKEYTYPE => 'PEM',
-            CURLOPT_SSLCERT => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.pem'),
-            CURLOPT_SSLKEY => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.key'),
-        ];
-
-        curl_setopt_array($curl, array_merge([
+        $optArray = [
             CURLOPT_URL => $this->bankUrlB2C . $uri,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
@@ -780,8 +767,24 @@ class BRSAdapter implements IBankAdapter
                 'Content-Type: application/json',
                 'x-User-Login: ' . $xUserLogin,
             ],
-        ], $sslData));
+        ];
 
+        if($curlSSLStructure instanceof CurlSSLStructure) {
+            $optArray[CURLOPT_SSLCERTTYPE] = $curlSSLStructure->sslcerttype;
+            $optArray[CURLOPT_SSLKEYTYPE] = $curlSSLStructure->sslkeytype;
+            $optArray[CURLOPT_CAINFO] = $curlSSLStructure->cainfo;
+            $optArray[CURLOPT_SSLCERT] = $curlSSLStructure->sslcert;
+            $optArray[CURLOPT_SSLKEY] =$curlSSLStructure->sslkey;
+        } else {
+            $optArray[CURLOPT_SSLCERTTYPE] = 'PEM';
+            $optArray[CURLOPT_SSLKEYTYPE] = 'PEM';
+            $optArray[CURLOPT_SSLCERT] = Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.pem');
+            $optArray[CURLOPT_SSLKEY] = Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.key');
+        }
+
+        curl_setopt_array($curl, $optArray);
+
+        Yii::warning('selfurl=' . Url::base(true));
         Yii::warning('BRSAdapter req POST uri=' . $uri . '; data=' . Json::encode($data));
         $response = curl_exec($curl);
         $curlError = curl_error($curl);
@@ -851,7 +854,7 @@ class BRSAdapter implements IBankAdapter
         $id = Yii::$app->security->generateRandomString(16);
         $transferToAccountRequest = new TransferToAccountRequest();
         $transferToAccountRequest->bic = $outPayaccForm->bic;
-        $transferToAccountRequest->receiverId = $id;
+        $transferToAccountRequest->receiverId = $outPayaccForm->getPhoneToSend();
         $transferToAccountRequest->merchantId = $this->gate->Token;
         $transferToAccountRequest->firstName = $outPayaccForm->getFirstName();
         $transferToAccountRequest->lastName = $outPayaccForm->getLastName();
