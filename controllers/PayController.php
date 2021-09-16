@@ -113,11 +113,12 @@ class PayController extends Controller
      * Форма оплаты своя (PCI DSS)
      *
      * @param $id
+     * @param string|null $cardNumber
      * @return string|Response
      * @throws Exception
      * @throws NotFoundHttpException
      */
-    public function actionForm($id)
+    public function actionForm($id, $cardNumber = null)
     {
         Yii::warning("PayForm open id={$id}");
         $payschets = new Payschets();
@@ -126,6 +127,10 @@ class PayController extends Controller
         //данные счета для оплаты
         $params = $payschets->getSchetData($id, null);
         $payform = new PayForm();
+        if ($cardNumber !== null) {
+            $payform->CardNumber = $cardNumber;
+        }
+
         if ($params && TU::IsInPay($params['IsCustom'])) {
             if (
                 $params['Status'] == 0
@@ -240,7 +245,7 @@ class PayController extends Controller
 
         $paySchet = $createPaySecondStepForm->getPaySchet();
         $bankAdapterBuilder = new BankAdapterBuilder();
-        $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank);
+        $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank, $paySchet->currency);
 
         /** @var TKBankAdapter $tkbAdapter */
         $tkbAdapter = $bankAdapterBuilder->getBankAdapter();
@@ -312,7 +317,7 @@ class PayController extends Controller
      * Завершение оплаты после 3DS(PCI DSS)
      *
      * @param $id
-     * @return string
+     * @return Response
      * @throws BadRequestHttpException
      * @throws NotFoundHttpException
      */
@@ -340,6 +345,10 @@ class PayController extends Controller
         if (!$donePayForm->validate()) {
             Yii::warning('Orderdone validate fail ' . $id);
             throw new BadRequestHttpException();
+        }
+
+        if (!empty($donePayForm->IdPay) && $donePayForm->getPaySchet()->Status == PaySchet::STATUS_DONE) {
+            return $this->redirect(['orderok', 'id' => $id]);
         }
 
         Yii::warning("PayForm done id={$id}");
@@ -398,60 +407,17 @@ class PayController extends Controller
         }
     }
 
-    public function actionOrderPrint($id)
+    /**
+     * Страница неуспешной оплаты
+     *
+     * @param $id
+     * @return string
+     */
+    public function actionOrderfail($id)
     {
-        // TODO: DRY
-        Yii::warning("PayForm orderprint id=" . $id);
-        $SesIdPay = Yii::$app->session->get('IdPay');
-        if (!$id || $id != $SesIdPay) {
-            throw new NotFoundHttpException();
-        }
+        Yii::warning("PayForm orderfail id={$id}");
 
-        $payschets = new Payschets();
-        $params = $payschets->getSchetData($id, null);
-        if (!$params || $params['Status'] != 1) {
-            throw new NotFoundHttpException();
-        }
-
-        $this->layout = null;
-        return $this->render('order-print', [
-            'params' => $params,
-            'isPage' => true,
-        ]);
-    }
-
-    public function actionOrderInvoice($id)
-    {
-        // TODO: DRY
-        Yii::warning("PayForm orderinvoice id=" . $id);
-        $SesIdPay = Yii::$app->session->get('IdPay');
-        if (!$id || $id != $SesIdPay) {
-            throw new NotFoundHttpException();
-        }
-
-        $payschets = new Payschets();
-        $params = $payschets->getSchetData($id, null);
-        if (!$params || $params['Status'] != 1) {
-            throw new NotFoundHttpException();
-        }
-
-        $content = $this->renderPartial('order-print', [
-            'params' => $params,
-            'isPage' => false,
-        ]);
-
-        $pdf = new Pdf([
-            // 'mode' => Pdf::MODE_CORE,
-            'format' => Pdf::FORMAT_A4,
-            'orientation' => Pdf::ORIENT_PORTRAIT,
-            'destination' => Pdf::DEST_BROWSER,
-            'content' => $content,
-            'cssFile' => '@webroot/aassets/css/order-print.css',
-            // 'cssInline' => '.kv-heading-1{font-size:18px}',
-        ]);
-
-        // return the pdf output as per the destination setting
-        return $pdf->render();
+        return $this->render('paycancel');
     }
 
     public function actionApplepayvalidate()

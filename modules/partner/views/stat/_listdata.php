@@ -87,6 +87,7 @@ use yii\widgets\LinkPager;
                 </td>
                 <td><?= $row['ExtBillNumber'] ?></td>
                 <td>
+
                     <span class="label label-primary" style="background-color: <?=PaySchet::STATUS_COLORS[$row['Status']]?>">
                         <?= (!$row['sms_accept'] && $row['Status'] == 0) ? 'Создан' : PaySchet::STATUSES[$row['Status']] ?>
                     </span>
@@ -139,6 +140,9 @@ use yii\widgets\LinkPager;
             $exportLink .= '&summpayFrom=' . $reqdata['summpayFrom'];
             $exportLink .= '&summpayTo=' . $reqdata['summpayTo'];
             $exportLink .= '&Extid=' . $reqdata['Extid'];
+            foreach ($reqdata['idParts'] ?? [] as $partnerId) {
+                $exportLink .= '&idParts[]=' . $partnerId;
+            }
             if (isset($reqdata['IdPart'])) {
                 $exportLink .= '&IdPart=' . $reqdata['IdPart'];
             }

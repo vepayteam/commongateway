@@ -7,7 +7,9 @@ namespace app\services\payment\payment_strategies;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\interfaces\Issuer3DSVersionInterface;
+use app\services\payment\jobs\RefreshStatusPayJob;
 use app\services\payment\models\PaySchet;
+use Yii;
 use yii\web\NotFoundHttpException;
 
 class DonePayStrategy
@@ -40,9 +42,13 @@ class DonePayStrategy
 
         if($paySchet && $paySchet->Status == PaySchet::STATUS_WAITING) {
             $bankAdapterBuilder = new BankAdapterBuilder();
-            $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank);
+            $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank, $paySchet->currency);
 
             $this->donePayResponse = $bankAdapterBuilder->getBankAdapter()->confirm($this->donePayForm);
+
+            Yii::$app->queue->delay(30)->push(new RefreshStatusPayJob([
+                'paySchetId' =>  $paySchet->ID,
+            ]));
             return $paySchet;
         } else {
             throw new NotFoundHttpException();

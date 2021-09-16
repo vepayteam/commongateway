@@ -8,7 +8,6 @@ use app\models\mfo\statements\ReceiveStatemets;
 use app\models\partner\admin\PerevodToPartner;
 use app\models\partner\admin\SystemVoznagList;
 use app\models\partner\admin\VoznagStat;
-use app\models\partner\admin\VoznagStatNew;
 use app\models\partner\admin\VyvodList;
 use app\models\partner\admin\VyvodVoznag;
 use app\models\partner\stat\StatFilter;
@@ -211,7 +210,7 @@ class AdminController extends Controller
             $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
             switch (Yii::$app->request->post('TypeOtch')) {
                 case VoznagStatForm::TYPE_REPORT:
-                    $payShetList = new VoznagStatNew();
+                    $payShetList = new VoznagStat();
                     //@todo DRY!!!
                     if (!$payShetList->load($post, '') || !$payShetList->validate()) {
                         return ['status' => 0, 'message' => 'Ошибка запроса'];
@@ -243,9 +242,9 @@ class AdminController extends Controller
             }
 
             if (Yii::$app->request->post('TypeOtch') == VoznagStatForm::TYPE_REPORT) {
-                $payShetList->TypeUslug = VoznagStatNew::TYPE_SERVICE_POGAS;
+                $payShetList->TypeUslug = VoznagStat::TYPE_SERVICE_POGAS;
                 $dataIn = $payShetList->GetOtchMerchant($IsAdmin);
-                $payShetList->TypeUslug = VoznagStatNew::TYPE_SERVICE_VYDACHA;
+                $payShetList->TypeUslug = VoznagStat::TYPE_SERVICE_VYDACHA;
                 $dataOut = $payShetList->GetOtchMerchant($IsAdmin);
                 $view = '_comisotchetdata';
                 $params = [
@@ -761,87 +760,6 @@ class AdminController extends Controller
         $appendListWithInternalData('partner_orderout', $list);
 
         return Json::encode($list);
-    }
-
-    /**
-     * синхронизирует баланс партнера на основе таблицы выписок
-     * @param $id - ид партнера
-     * @throws BadRequestHttpException
-     * @throws Exception
-     */
-    public function actionSyncbalance($id)
-    {
-        $partner = Partner::findOne(['ID' => $id]);
-        if (!$partner) {
-            throw new BadRequestHttpException('Не указан партнёр');
-        }
-        $this->syncBalanceInternal($partner, BalancePartner::IN);
-        $this->syncBalanceInternal($partner, BalancePartner::OUT);
-    }
-
-    /**
-     * @param Partner $partner
-     * @param int $type - тип баланса
-     * @throws Exception
-     */
-    private function syncBalanceInternal($partner, $type)
-    {
-        $partnerId = $partner->ID;
-        if ($type == BalancePartner::IN) {
-            $table = 'partner_orderin';
-            $typeAccount = 2;
-            $balance = new BalancePartner(BalancePartner::IN, $partnerId);
-            $balanceField = 'BalanceIn';
-        } else {
-            $table = 'partner_orderout';
-            $typeAccount = 0;
-            $balance = new BalancePartner(BalancePartner::OUT, $partnerId);
-            $balanceField = 'BalanceOut';
-        }
-
-        $data = (new Query())
-            ->select('sa.ID as IdStatm, sa.SummPP, sa.Description, sa.IsCredit')
-            ->from('statements_account sa')
-            ->leftJoin("$table b", 'sa.ID = b.IdStatm')
-            ->where([
-                'sa.TypeAccount' => $typeAccount,
-                'sa.IdPartner' => $partnerId
-            ])
-            ->andWhere('b.ID IS NULL')
-            ->all();
-
-        if (!empty($data)) {
-            foreach ($data as $row) {
-                $description = mb_substr($row['Description'], 0, 250);
-                if ($row['IsCredit']) {
-                    $balance->Inc($row['SummPP'], $description, 0, 0, $row['IdStatm']);
-                } else {
-                    $balance->Dec($row['SummPP'], $description, 0, 0, $row['IdStatm']);
-                }
-            }
-        }
-
-        $query = (new Query())
-            ->select(new Expression('SUM(Summ) AS Summ'))
-            ->from($table)
-            ->where([
-                'IdPartner' => $partnerId
-            ])
-            //при пересчете суммы баланса мы опираемся строго на транзакции
-            //полученные через выписки. транзакции которые были созданы
-            //через платежи в рамках этой системы не учитываются (IdPay <> 0)
-            //связано с тем, что в выписке приходят эти же самые платежи
-            //и происходят задвоение данных. связать транзакцию из выписки
-            //и транзакцию из нашей системы не получается
-            //TODO: поискать решение, чтобы связать выписки и наши транзакции
-            ->andWhere('IdStatm <> 0');
-
-        $sum = $query->createCommand()->queryScalar();
-
-        $old = $partner[$balanceField];
-        $partner[$balanceField] = (int)$sum;
-        $partner->save(false);
-        echo sprintf('%s: old=%d new=%d' . PHP_EOL, $table, $old, $sum);
     }
 
     public function actionExec()

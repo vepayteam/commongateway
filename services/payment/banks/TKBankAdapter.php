@@ -68,7 +68,7 @@ class TKBankAdapter implements IBankAdapter
 {
     use TKBank3DSTrait;
 
-    const AFT_MIN_SUMM = 120000;
+    const AFT_MIN_SUMM = 185000;
 
     public const BIC = '044525388';
     const BANK_URL = 'https://pay.tkbbank.ru';
@@ -1215,6 +1215,7 @@ class TKBankAdapter implements IBankAdapter
     {
         $action = '/api/tcbpay/gate/registerorderfromcardfinish';
 
+        $paySchet = $donePayForm->getPaySchet();
         $donePayRequest = new DonePayRequest();
         $donePayRequest->OrderId = $donePayForm->IdPay;
         $donePayRequest->MD = $donePayForm->md;
@@ -1232,6 +1233,9 @@ class TKBankAdapter implements IBankAdapter
                 $confirmPayResponse->status = BaseResponse::STATUS_DONE;
                 $confirmPayResponse->message = 'OK';
                 $confirmPayResponse->transac = $xml['ordernumber'];
+
+                $paySchet->ExtBillNumber = $confirmPayResponse->transac;
+                $paySchet->save(false);
             } else {
                 $confirmPayResponse->status = BaseResponse::STATUS_ERROR;
                 $confirmPayResponse->message = $xml['errorinfo']['errormessage'];

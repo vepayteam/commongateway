@@ -2,34 +2,42 @@
 
 namespace app\services\exchange_rates;
 
-use app\services\exchange_rates\jobs\WalletoExchangeRateJob;
+use app\services\exchange_rates\jobs\WallettoExchangeRateJob;
 use app\services\exchange_rates\models\ExchangeRateUpdateResult;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CurrencyExchangeRatesResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\IBankAdapter;
-use app\services\payment\banks\WalletoBankAdapter;
+use app\services\payment\banks\WallettoBankAdapter;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\models\Bank;
 use app\services\payment\models\Currency;
 use app\services\payment\models\CurrencyExchange;
 use Carbon\Carbon;
+use Exception;
 use Yii;
 
-class WalletoExchangeRateService
+class WallettoExchangeRateService
 {
     const MAX_TRY_COUNT = 60;
 
     public function update(int $tryCount = 1)
     {
         if ($tryCount >= self::MAX_TRY_COUNT) {
-            Yii::warning('WalletoExchangeRateService: не удалось загрузить курсы валют');
+            Yii::warning('WallettoExchangeRateService: не удалось загрузить курсы валют');
             return;
         }
 
-        Yii::warning('WalletoExchangeRateService: загружаем курсы валют попытка ' . $tryCount);
+        Yii::warning('WallettoExchangeRateService: загружаем курсы валют попытка ' . $tryCount);
 
-        $result = $this->loadRates();
+        try {
+            $result = $this->loadRates();
+        } catch (Exception $e) {
+            Yii::warning('WallettoExchangeRateService err: ' . $e->getMessage());
+            $this->pushToQueue($tryCount);
+
+            return;
+        }
 
         if ($result->status !== ExchangeRateUpdateResult::STATUS_DONE) {
             Yii::warning($result->error);
@@ -39,14 +47,14 @@ class WalletoExchangeRateService
         }
 
         if ($result->rateCount === 0) {
-            Yii::warning('WalletoExchangeRateService: нет доступных курсов');
+            Yii::warning('WallettoExchangeRateService: нет доступных курсов');
             $this->pushToQueue($tryCount);
         }
     }
 
     private function pushToQueue(int $tryCount)
     {
-        Yii::$app->queue->delay(60)->push(new WalletoExchangeRateJob([
+        Yii::$app->queue->delay(60)->push(new WallettoExchangeRateJob([
             'tryCount' => $tryCount + 1,
         ]));
     }
@@ -55,13 +63,13 @@ class WalletoExchangeRateService
     {
         $bank = $this->getBank();
         if (!$bank) {
-            return ExchangeRateUpdateResult::setError('WalletoExchangeRateService: Банк ' . WalletoBankAdapter::$bank . ' не найден');
+            return ExchangeRateUpdateResult::setError('WallettoExchangeRateService: Банк ' . WallettoBankAdapter::$bank . ' не найден');
         }
 
         $adapter = $this->getAdapter($bank);
         $rates = $adapter->currencyExchangeRates();
         if ($rates->status != BaseResponse::STATUS_DONE) {
-            return ExchangeRateUpdateResult::setError($rates->message);
+            return ExchangeRateUpdateResult::setError('WallettoExchangeRateService: ' . $rates->message);
         }
 
         return $this->insertRates($bank, $rates);
@@ -84,7 +92,7 @@ class WalletoExchangeRateService
             $lastExchangeRate = CurrencyExchange::getLastRate($from, $to);
             if ($lastExchangeRate !== null && $lastExchangeRate->Rate === $rate) {
                 Yii::warning(
-                    'WalletoExchangeRateService: ' . $from . ' -> ' . $to . ' не поменялся с прошлого раза rate ' . $rate
+                    'WallettoExchangeRateService: ' . $from . ' -> ' . $to . ' не поменялся с прошлого раза rate ' . $rate
                 );
                 continue;
             }
@@ -101,7 +109,7 @@ class WalletoExchangeRateService
             $inserted++;
         }
 
-        Yii::warning('WalletoExchangeRateService: добавлено новых записей ' . $inserted);
+        Yii::warning('WallettoExchangeRateService: добавлено новых записей ' . $inserted);
 
         return ExchangeRateUpdateResult::setDone($inserted, count($rates->exchangeRates));
     }
@@ -112,7 +120,7 @@ class WalletoExchangeRateService
             $bankAdapterBuilder = new BankAdapterBuilder();
             return $bankAdapterBuilder->buildByBankOnly($bank)->getBankAdapter();
         } catch (GateException $e) {
-            Yii::warning('WalletoExchangeRateService: ' . $e->getMessage());
+            Yii::warning('WallettoExchangeRateService: ' . $e->getMessage());
         }
 
         return null;
@@ -122,7 +130,7 @@ class WalletoExchangeRateService
     {
         /** @var Bank $bank */
         $bank = Bank::find()
-            ->where(['ID' => WalletoBankAdapter::$bank])
+            ->where(['ID' => WallettoBankAdapter::$bank])
             ->one();
 
         return $bank;
@@ -130,6 +138,6 @@ class WalletoExchangeRateService
 
     private function getRateFrom(): Carbon
     {
-        return Carbon::now(WalletoBankAdapter::BANK_TIMEZONE)->startOfDay();
+        return Carbon::now(WallettoBankAdapter::BANK_TIMEZONE)->startOfDay();
     }
 }

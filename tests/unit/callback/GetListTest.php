@@ -98,7 +98,7 @@ class GetListTest extends Unit
         $extId = PaySchet::find()->select('Extid')
                          ->where(['<>', 'Extid', ''])
                          ->andWhere(['not', ['Extid' => null]])
-                         ->orderBy(new Expression('RAND()'))
+                         ->orderBy(new Expression('RAND()')) //@TODO: Вот это очень плохо. Часто тест не срабатывает
                          ->scalar();
 
         $this->callbackList->load([

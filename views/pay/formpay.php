@@ -104,7 +104,6 @@ $paymentFormAdditionalCommission = PartnerOption::getBool($params['IdOrg'], Part
                     'data-inputmask-mask' => '9{4} 9{4} 9{4} 9{4,6}',
                     'data-inputmask-regex' => '\d{16,18}',
                     'class' => 'form-control',
-                    'value' => '',
                     'placeholder' => '**** **** **** ****',
                     'autocomplete' => 'off'
                 ]); ?>

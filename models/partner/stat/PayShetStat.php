@@ -4,6 +4,7 @@ namespace app\models\partner\stat;
 
 use app\models\partner\UserLk;
 use app\models\TU;
+use app\services\payment\models\PaySchet;
 use app\services\payment\models\repositories\CurrencyRepository;
 use Yii;
 use yii\base\Model;
@@ -15,6 +16,7 @@ use yii\helpers\VarDumper;
 class PayShetStat extends Model
 {
     public $IdPart = 0;
+    public $idParts = [];
     public $usluga = [];
     public $TypeUslug = [];
     public $Extid = '';
@@ -30,6 +32,7 @@ class PayShetStat extends Model
     {
         return [
             [['IdPart', 'id'], 'integer'],
+            [['idParts', 'id'], 'each', 'rule' => ['integer']],
             [['summpayFrom','summpayTo'], 'number'],
             [['Extid'], 'string', 'max' => 40],
             [['datefrom', 'dateto'], 'date', 'format' => 'php:d.m.Y H:i'],
@@ -373,10 +376,17 @@ class PayShetStat extends Model
                 ':DATETO' => strtotime($this->dateto . ":59")
             ]);
 
+        $query->andFilterWhere(['qp.IDPartner' => $this->idParts]);
+
         if ($IdPart > 0) {
             $query->andWhere('qp.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
         if (count($this->status) > 0) {
+            if (in_array(PaySchet::STATUS_WAITING, $this->status, true)) {
+                $this->status = array_unique(
+                    array_merge($this->status, [PaySchet::STATUS_NOT_EXEC, PaySchet::STATUS_WAITING_CHECK_STATUS])
+                );
+            }
             $query->andWhere(['in', 'ps.Status', $this->status]);
         }
         if (count($this->usluga) > 0) {

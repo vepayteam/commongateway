@@ -26,10 +26,14 @@ class Banks
                 return new CauriAdapter();
             case FortaTechAdapter::$bank:
                 return new FortaTechAdapter();
-            case WalletoBankAdapter::$bank:
-                return new WalletoBankAdapter();
+            case WallettoBankAdapter::$bank:
+                return new WallettoBankAdapter();
+            case DectaAdapter::$bank:
+                return new DectaAdapter();
             case RunaBankAdapter::$bank:
                 return new RunaBankAdapter();
+            case GratapayAdapter::$bank:
+                return new GratapayAdapter();
             default:
                 throw new \Exception('Ошибка выбора банка');
         }

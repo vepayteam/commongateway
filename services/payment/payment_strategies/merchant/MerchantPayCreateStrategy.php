@@ -119,6 +119,7 @@ class MerchantPayCreateStrategy
         $paySchet->DateLastUpdate = time();
         $paySchet->IsAutoPay = 0;
         $paySchet->UserUrlInform = $bankAdapterBuilder->getUslugatovar()->UrlInform;
+        $paySchet->TimeElapsed = $this->payForm->timeout * 60;
 
         $paySchet->SuccessUrl = $this->payForm->successurl;
         $paySchet->FailedUrl = $this->payForm->failurl;
@@ -136,12 +137,6 @@ class MerchantPayCreateStrategy
             }
             if (isset($this->payForm->client['address']) && $this->payForm->client['address']) {
                 $paySchet->AddressUser = $this->payForm->client['address'];
-            }
-            if (isset($this->payForm->client['city']) && $this->payForm->client['city']) {
-                $paySchet->CityUser = $this->payForm->client['city'];
-            }
-            if (isset($this->payForm->client['country']) && $this->payForm->client['country']) {
-                $paySchet->CountryUser = $this->payForm->client['country'];
             }
             if (isset($this->payForm->client['phone']) && $this->payForm->client['phone']) {
                 $paySchet->PhoneUser = $this->payForm->client['phone'];
