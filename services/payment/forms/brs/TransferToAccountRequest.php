@@ -31,13 +31,14 @@ class TransferToAccountRequest extends Model
 
     /**
      * @param PartnerBankGate $partnerBankGate
+     * @param string|null $keyFileName
      * @return string
      */
-    public function getMsgSign(PartnerBankGate $partnerBankGate)
+    public function getMsgSign(PartnerBankGate $partnerBankGate, ?string $keyFileName = null)
     {
         $body = $this->buildBody();
         $bodyUtf8 = iconv(mb_detect_encoding($body), 'UTF-8', $body);
-        $sign = $this->buildSignature($bodyUtf8, $partnerBankGate);
+        $sign = $this->buildSignature($bodyUtf8, $partnerBankGate, $keyFileName);
         return $sign;
     }
 
@@ -73,7 +74,7 @@ class TransferToAccountRequest extends Model
      * @param string $body
      * @return string
      */
-    protected function buildSignature(string $body, PartnerBankGate $partnerBankGate)
+    protected function buildSignature(string $body, PartnerBankGate $partnerBankGate, ?string $keyFileName = null)
     {
         if(!file_exists(Yii::getAlias('@runtime/requests'))) {
             mkdir(Yii::getAlias('@runtime/requests'), 0777);
@@ -83,8 +84,12 @@ class TransferToAccountRequest extends Model
         $fileResponse = Yii::getAlias('@runtime/requests/' . Yii::$app->security->generateRandomString(32) . '.txt');
         file_put_contents($fileRequest, $body);
 
+        if (in_array($keyFileName, [null, ''], true)) {
+            $keyFileName = $partnerBankGate->Login;
+        }
+
         $cmd  = sprintf('openssl dgst -sha256 -sign "%s" "%s" > "%s"',
-            Yii::getAlias(BRSAdapter::KEYS_PATH . $partnerBankGate->Login . '.key'),
+            Yii::getAlias(BRSAdapter::KEYS_PATH . $keyFileName . '.key'),
             $fileRequest,
             $fileResponse
         );
