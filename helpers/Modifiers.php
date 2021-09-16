@@ -6,9 +6,18 @@ use Yii;
 
 class Modifiers
 {
+    private static $cvvReplaceRegexp = [
+        '/(cvv)(.+?)\\\"(\d{3,4})\\\"/',
+        '/(csc)(.+?)\\\"(\d{3,4})\\\"/',
+    ];
+
     public static function searchAndReplaceCvv(string $input): string
     {
-        return preg_replace('/(cvv)(.+?)\\\"(\d{3,4})\\\"/', '$1$2\"***\"', $input);
+        foreach (self::$cvvReplaceRegexp as $pattern) {
+            $input = preg_replace($pattern, '$1$2\"***\"', $input);
+        }
+
+        return $input;
     }
 
     public static function searchAndReplacePan(string $input): string
