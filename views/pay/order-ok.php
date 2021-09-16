@@ -15,14 +15,6 @@
         <?php if(!empty($paySchet->SuccessUrl)): ?>
             <a href="<?= $paySchet->SuccessUrl ?>" class="r-body-main-action-return">Вернуться на сайт</a>
         <?php endif; ?>
-        <div class="r-body-main-action-list">
-            <a class="r-body-main-action-list-print" href="/pay/order-print/<?= $paySchet->ID ?>" target="_blank">
-                Печать квитанции
-            </a>
-            <a class="r-body-main-action-list-download" href="/pay/order-invoice/<?= $paySchet->ID ?>" target="_blank">
-                Скачать квитанцию
-            </a>
-        </div>
     </div>
     <div class="r-body-info">
         <div class="r-body-info-row"><span>Компания:</span> <b><?= $paySchet->partner->Name ?></b></div>
