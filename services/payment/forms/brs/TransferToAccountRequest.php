@@ -7,6 +7,7 @@ namespace app\services\payment\forms\brs;
 use app\services\payment\banks\BRSAdapter;
 use app\services\payment\models\PartnerBankGate;
 use Yii;
+use yii\base\Exception;
 use yii\base\Model;
 use yii\helpers\Json;
 
@@ -72,7 +73,10 @@ class TransferToAccountRequest extends Model
 
     /**
      * @param string $body
+     * @param PartnerBankGate $partnerBankGate
+     * @param string|null $keyFileName
      * @return string
+     * @throws Exception
      */
     protected function buildSignature(string $body, PartnerBankGate $partnerBankGate, ?string $keyFileName = null)
     {
@@ -85,11 +89,11 @@ class TransferToAccountRequest extends Model
         file_put_contents($fileRequest, $body);
 
         if (in_array($keyFileName, [null, ''], true)) {
-            $keyFileName = $partnerBankGate->Login;
+            $keyFileName = $partnerBankGate->Login . '.key';
         }
 
         $cmd  = sprintf('openssl dgst -sha256 -sign "%s" "%s" > "%s"',
-            Yii::getAlias(BRSAdapter::KEYS_PATH . $keyFileName . '.key'),
+            Yii::getAlias(BRSAdapter::KEYS_PATH . $keyFileName),
             $fileRequest,
             $fileResponse
         );

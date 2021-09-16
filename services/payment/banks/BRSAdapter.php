@@ -876,7 +876,7 @@ class BRSAdapter implements IBankAdapter
         }
 
         $requestData = $transferToAccountRequest->getAttributes();
-        $requestData['msgSign'] = $transferToAccountRequest->getMsgSign($this->gate, 'key_'.$this->gate->Login);
+        $requestData['msgSign'] = $transferToAccountRequest->getMsgSign($this->gate, 'key_' . $this->gate->Login . '.pem');
 
         return $requestData;
     }
