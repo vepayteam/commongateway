@@ -746,7 +746,7 @@ class BRSAdapter implements IBankAdapter
      */
     protected function sendPostB2CRequest(string $uri, array $data, ?CurlSSLStructure $curlSSLStructure = null)
     {
-        $xUserLogin = strpos('processing.backend.vepay.cf', Url::base(true)) !== false
+        $xUserLogin = strpos(Url::base(true), 'processing.backend.vepay.cf') !== false
             ? BRSSbpTestData::X_USER_LOGIN : $this->gate->Login;
 
         $curl = curl_init();
@@ -769,7 +769,7 @@ class BRSAdapter implements IBankAdapter
             ],
         ];
 
-        if($curlSSLStructure instanceof CurlSSLStructure) {
+        if ($curlSSLStructure instanceof CurlSSLStructure) {
             $optArray[CURLOPT_SSLCERTTYPE] = $curlSSLStructure->sslcerttype;
             $optArray[CURLOPT_SSLKEYTYPE] = $curlSSLStructure->sslkeytype;
             $optArray[CURLOPT_CAINFO] = $curlSSLStructure->cainfo;
@@ -864,7 +864,7 @@ class BRSAdapter implements IBankAdapter
         $transferToAccountRequest->phone = $outPayaccForm->getPhoneToSend();
         $transferToAccountRequest->sourceId = $id;
 
-        if (strpos('processing.backend.vepay.cf', Url::base(true)) !== false) {
+        if (strpos(Url::base(true), 'processing.backend.vepay.cf') !== false) {
             $transferToAccountRequest->account = BRSSbpTestData::ACCOUNT;
             $transferToAccountRequest->bic = BRSSbpTestData::BIC;
             $transferToAccountRequest->receiverId = BRSSbpTestData::RECEIVER_ID;
