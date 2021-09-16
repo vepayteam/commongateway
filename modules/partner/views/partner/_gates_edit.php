@@ -228,7 +228,7 @@ $currencyList = ArrayHelper::merge(['' => ''], ArrayHelper::map(CurrencyReposito
 
                     <div id="comissionWrapper">
 
-                        <h3>Комиссия с кликента:</h3>
+                        <h3>Комиссия с клиента:</h3>
 
                         <div class="comissionBlock">
                             <div class="comissionBlockItem">
@@ -239,15 +239,15 @@ $currencyList = ArrayHelper::merge(['' => ''], ArrayHelper::map(CurrencyReposito
                                 <div class="form-group">
                                     <input name="ClientFee" class="form-control" type="number" step="0.01" value="0">
                                 </div>
-                                <span class="currencyWrapper"><span class="chosenCurrency fixedComissionCurrency">RUB</span>,</span>
+                                <span class="currencyWrapper"><span class="chosenCurrency fixedComissionCurrency"></span>,</span>
 
                             </div>
                             <div class="comissionBlockItem">
-                                <div class="plusPercent">min</div>
+                                <div class="plusPercent">мин</div>
                                 <div class="form-group">
                                     <input name="ClientMinimalFee" class="form-control" type="number" step="0.01" value="0">
                                 </div>
-                                <span class="chosenCurrency minimalComissionCurrency">RUB</span>
+                                <span class="chosenCurrency minimalComissionCurrency"></span>
                             </div>
                         </div>
 
@@ -262,15 +262,15 @@ $currencyList = ArrayHelper::merge(['' => ''], ArrayHelper::map(CurrencyReposito
                                 <div class="form-group">
                                     <input name="BankFee" class="form-control" type="number" step="0.01" value="0">
                                 </div>
-                                <span class="currencyWrapper"><span class="chosenCurrency  fixedComissionCurrency">RUB</span>,</span>
+                                <span class="currencyWrapper"><span class="chosenCurrency  fixedComissionCurrency"></span>,</span>
 
                             </div>
                             <div class="comissionBlockItem">
-                                <div class="plusPercent">min</div>
+                                <div class="plusPercent">мин</div>
                                 <div class="form-group">
                                     <input name="BankMinimalFee" class="form-control" type="number" step="0.01" value="0">
                                 </div>
-                                <span class="chosenCurrency  minimalComissionCurrency">RUB</span>
+                                <span class="chosenCurrency  minimalComissionCurrency"></span>
                             </div>
                         </div>
 
@@ -285,15 +285,15 @@ $currencyList = ArrayHelper::merge(['' => ''], ArrayHelper::map(CurrencyReposito
                                 <div class="form-group">
                                     <input name="PartnerFee" class="form-control" type="number" step="0.01" value="0">
                                 </div>
-                                <span class="currencyWrapper"><span class="chosenCurrency  fixedComissionCurrency">RUB</span>,</span>
+                                <span class="currencyWrapper"><span class="chosenCurrency  fixedComissionCurrency"></span>,</span>
 
                             </div>
                             <div class="comissionBlockItem">
-                                <div class="plusPercent">min</div>
+                                <div class="plusPercent">мин</div>
                                 <div class="form-group">
                                     <input name="PartnerMinimalFee" class="form-control" type="number" step="0.01" value="0">
                                 </div>
-                                <span class="chosenCurrency  minimalComissionCurrency">RUB</span>
+                                <span class="chosenCurrency  minimalComissionCurrency"></span>
                             </div>
                         </div>
                     </div>
