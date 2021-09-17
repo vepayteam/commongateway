@@ -355,7 +355,20 @@ class PaymentService
         /** @var BRSAdapter $brsBankAdapter */
         $brsAdapter = $this->processBankAdapter($outPayAccountForm, BRSAdapter::$bank, TU::$TOSCHET);
 
-        return $brsAdapter->checkTransfetB2C($outPayAccountForm);
+        return $brsAdapter->checkTransferB2C($outPayAccountForm);
+    }
+
+    /**
+     * @param OutPayAccountForm $outPayAccountForm
+     * @return array
+     * @throws GateException
+     */
+    public function sbpTransfer(OutPayAccountForm $outPayAccountForm): array
+    {
+        /** @var BRSAdapter $brsBankAdapter */
+        $brsAdapter = $this->processBankAdapter($outPayAccountForm, BRSAdapter::$bank, TU::$B2CSBP);
+
+        return $brsAdapter->transferB2C($outPayAccountForm);
     }
 
     /**
@@ -373,7 +386,6 @@ class PaymentService
         $paySchet->CountSendOK = 0;
         $paySchet->save(false);
     }
-
 
     /**
      * @param OutPayAccountForm $outPayAccountForm
