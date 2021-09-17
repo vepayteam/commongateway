@@ -397,7 +397,7 @@ class PayController extends Controller
         } elseif ($paySchet->Status == PaySchet::STATUS_ERROR) {
             if (!empty($paySchet->FailedUrl) && (mb_stripos($paySchet->ErrorInfo, 'Отказ от оплаты') === false || empty($paySchet->CancelUrl))) {
                 return $this->redirect(Payschets::RedirectUrl($paySchet->FailedUrl, $id, $paySchet->Extid));
-            } elseif (!empty($params['CancelUrl'])) {
+            } elseif (!empty($paySchet->CancelUrl)) {
                 return $this->redirect(Payschets::RedirectUrl($paySchet->CancelUrl, $id, $paySchet->Extid));
             } else {
                 return $this->render('paycancel', ['message' => $paySchet->ErrorInfo]);
