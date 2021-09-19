@@ -291,11 +291,10 @@ class StatController extends Controller
     {
         $fltr = new StatFilter();
         $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-        $partnerId = $IsAdmin ? -1 : UserLk::getPartnerId(Yii::$app->user);
         return $this->render('otch', [
             'IsAdmin' => $IsAdmin,
             'partnerlist' => $fltr->getPartnersList(),
-            'magazlist' => $fltr->getMagazList($partnerId),
+            'magazlist' => $IsAdmin ? $fltr->getMagazList(-1) : $fltr->getMagazList(UserLk::getPartnerId(Yii::$app->user)),
             'uslugilist' => $fltr->getTypeUslugLiust(),
             'bankList' => $fltr->getBankList(),
         ]);
