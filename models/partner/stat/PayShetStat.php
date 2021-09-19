@@ -36,9 +36,8 @@ class PayShetStat extends Model
             [['summpayFrom', 'summpayTo'], 'number'],
             [['Extid'], 'string', 'max' => 40],
             [['datefrom', 'dateto'], 'date', 'format' => 'php:d.m.Y H:i'],
-            [['datefrom', 'dateto'], 'required', 'idParts'],
-            [['usluga', 'status', 'TypeUslug', 'idBank'], 'each', 'rule' => ['integer']],
-            [['usluga', 'status', 'TypeUslug', 'idParts'], 'each', 'rule' => ['integer']],
+            [['datefrom', 'dateto'], 'required'],
+            [['usluga', 'status', 'TypeUslug', 'idBank', 'idParts'], 'each', 'rule' => ['integer']],
             [['params'], 'each', 'rule' => ['string']],
         ];
     }
