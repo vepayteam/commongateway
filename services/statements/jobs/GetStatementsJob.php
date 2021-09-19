@@ -62,8 +62,8 @@ class GetStatementsJob extends BaseObject implements \yii\queue\JobInterface
             $statementsPlanner = new StatementsPlanner();
             $statementsPlanner->IdPartner = $this->IdPartner;
             $statementsPlanner->IdTypeAcc = $this->TypeAcc;
-            $statementsPlanner->DateUpdateFrom = $this->datefrom;
-            $statementsPlanner->DateUpdateTo = min($this->dateto, time() - 60);
+            $statementsPlanner->DateUpdateFrom = strtotime($this->datefrom);
+            $statementsPlanner->DateUpdateTo = strtotime(min($this->dateto, time() - 60));
             $statementsPlanner->save(false);
 
             $tr->commit();

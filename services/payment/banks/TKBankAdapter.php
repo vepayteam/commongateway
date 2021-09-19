@@ -1699,6 +1699,9 @@ class TKBankAdapter implements IBankAdapter
         $getStatementRequest->startDate = $getStatementsForm->dateFrom;
         $getStatementRequest->endDate = $getStatementsForm->dateTo;
 
+        $this->UserCert = Yii::getAlias('@app/config/tcbcert/vepay.crt');
+        $this->UserKey = Yii::getAlias('@app/config/tcbcert/vepay.key');
+
         if(!$getStatementRequest->validate()) {
             throw new GateException('Некорректные данные запроса');
         }

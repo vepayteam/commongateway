@@ -35,8 +35,8 @@ class StatementsService
                     'BankId' => $gate->BankId,
                     'IdTypeAcc' => $gate->SchetType,
                 ])
-                ->andWhere(['<', 'DateUpdateFrom', $kfStatement->datefrom])
-                ->andWhere(['>', 'DateUpdateTo', $kfStatement->dateto])
+                ->andWhere(['<', 'DateUpdateFrom', strtotime($kfStatement->datefrom)])
+                ->andWhere(['>', 'DateUpdateTo', strtotime($kfStatement->dateto)])
                 ->andWhere(['<', 'DateUpdateTo', time() - 60 * 15])
                 ->exists();
 
@@ -63,8 +63,8 @@ class StatementsService
                 'IdPartner' => $kfStatement->partner->ID,
                 'TypeAccount' => $kfStatement->typeAcc,
             ])
-            ->andWhere(['>', 'DatePP', $kfStatement->datefrom])
-            ->andWhere(['<', 'DatePP', $kfStatement->dateto])
+            ->andWhere(['>', 'DatePP', strtotime($kfStatement->datefrom)])
+            ->andWhere(['<', 'DatePP', strtotime($kfStatement->dateto)])
             ->orderBy('DatePP ' . ($kfStatement->sort ? 'DESC' : 'ASC'))
             ->all();
 
