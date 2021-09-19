@@ -39,6 +39,7 @@ use app\services\payment\models\PaySchet;
 use app\services\payment\PaymentService;
 use Exception;
 use kartik\mpdf\Pdf;
+use Throwable;
 use Yii;
 use yii\base\DynamicModel;
 use yii\filters\AccessControl;
@@ -52,6 +53,8 @@ use yii\web\MethodNotAllowedHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 use yii\web\UploadedFile;
+
+use function serialize;
 
 class StatController extends Controller
 {
@@ -303,11 +306,11 @@ class StatController extends Controller
     public function actionOtchdata()
     {
         if (Yii::$app->request->isAjax) {
-
+            $data = Yii::$app->request->post();
+            $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+            $payShetList = new PayShetStat();
+            Yii::warning('partner/stat/otchdata POST: ' . serialize($data), 'partner');
             try {
-                $data = Yii::$app->request->post();
-                $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-                $payShetList = new PayShetStat();
                 if ($payShetList->load($data, '') && $payShetList->validate()) {
                     $data = $payShetList->getOtch($IsAdmin);
                     return $this->renderPartial('_otchdata', [
@@ -316,14 +319,10 @@ class StatController extends Controller
                         'requestToExport' => $payShetList->getAttributes()
                     ]);
                 }
-            } catch (\Exception $e) {
-                Yii::warning("Otchdata Error: " . $e->getMessage() . ' file: ' . $e->getFile(). ' line: ' . $e->getLine());
-            } catch (\Throwable $e) {
-                Yii::warning("Otchdata Error: " . $e->getMessage() . ' file: ' . $e->getFile(). ' line: ' . $e->getLine());
-            } finally {
-                Yii::warning("Otchdata Error FINALLY ");
+            } catch (Throwable $e) {
+                Yii::warning('partner/stat/otchdata POST: ' . serialize($data) . '; Exception: ' . $e->getMessage() . '; trace: ' . $e->getTraceAsString(), 'partner');
+                return '';
             }
-
         }
         return $this->redirect('/partner');
     }
