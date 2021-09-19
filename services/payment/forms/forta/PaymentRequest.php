@@ -17,4 +17,5 @@ class PaymentRequest extends Model
     public $payer_name = 'NONAME';
     public $payer_phone = '123456789';
     public $payer_email = 'payer@vepay.online';
+    public $ttl = 1;
 }

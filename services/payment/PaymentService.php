@@ -84,7 +84,6 @@ class PaymentService
         $paySchet = $setPayOkForm->paySchet;
         $paySchet->Status = 1;
         $paySchet->PayType = 0;
-        $paySchet->TimeElapsed = 1800;
         $paySchet->UserClickPay = 1;
         $paySchet->DateOplat = time();
         $paySchet->ExtBillNumber = $setPayOkForm->paySchet->ExtBillNumber;
