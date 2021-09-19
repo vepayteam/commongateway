@@ -304,17 +304,27 @@ class StatController extends Controller
     public function actionOtchdata()
     {
         if (Yii::$app->request->isAjax) {
-            $data = Yii::$app->request->post();
-            $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-            $payShetList = new PayShetStat();
-            if ($payShetList->load($data, '') && $payShetList->validate()) {
-                $data = $payShetList->getOtch($IsAdmin);
-                return $this->renderPartial('_otchdata', [
-                    'IsAdmin' => $IsAdmin,
-                    'data' => $data,
-                    'requestToExport' => $payShetList->getAttributes()
-                ]);
+
+            try {
+                $data = Yii::$app->request->post();
+                $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+                $payShetList = new PayShetStat();
+                if ($payShetList->load($data, '') && $payShetList->validate()) {
+                    $data = $payShetList->getOtch($IsAdmin);
+                    return $this->renderPartial('_otchdata', [
+                        'IsAdmin' => $IsAdmin,
+                        'data' => $data,
+                        'requestToExport' => $payShetList->getAttributes()
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Yii::warning("Otchdata Error: " . $e->getMessage() . ' file: ' . $e->getFile(). ' line: ' . $e->getLine());
+            } catch (\Throwable $e) {
+                Yii::warning("Otchdata Error: " . $e->getMessage() . ' file: ' . $e->getFile(). ' line: ' . $e->getLine());
+            } finally {
+                Yii::warning("Otchdata Error FINALLY ");
             }
+
         }
         return $this->redirect('/partner');
     }
