@@ -81,6 +81,9 @@ class Balance extends Model
                 $bankResponse[] = $getBalanceResponse;
             }
         }
+
+        $bankResponse = array_unique($bankResponse, SORT_STRING);
+
         if (!$bankResponse) {
             $this->response->setError(BalanceResponse::BALANCE_UNAVAILABLE_ERROR_MSG);
             return $this->response;

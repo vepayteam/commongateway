@@ -11,11 +11,12 @@ use yii\base\Model;
 use yii\data\Pagination;
 use yii\db\Expression;
 use yii\db\Query;
+use yii\helpers\VarDumper;
 
 class PayShetStat extends Model
 {
-
     public $IdPart = 0;
+    public $idParts = [];
     public $usluga = [];
     public $TypeUslug = [];
     public $idBank = [];
@@ -35,8 +36,9 @@ class PayShetStat extends Model
             [['summpayFrom', 'summpayTo'], 'number'],
             [['Extid'], 'string', 'max' => 40],
             [['datefrom', 'dateto'], 'date', 'format' => 'php:d.m.Y H:i'],
-            [['datefrom', 'dateto'], 'required'],
+            [['datefrom', 'dateto'], 'required', 'idParts'],
             [['usluga', 'status', 'TypeUslug', 'idBank'], 'each', 'rule' => ['integer']],
+            [['usluga', 'status', 'TypeUslug', 'idParts'], 'each', 'rule' => ['integer']],
             [['params'], 'each', 'rule' => ['string']],
         ];
     }
@@ -374,6 +376,8 @@ class PayShetStat extends Model
                 ':DATEFROM' => strtotime($this->datefrom . ":00"),
                 ':DATETO' => strtotime($this->dateto . ":59")
             ]);
+
+        $query->andFilterWhere(['qp.IDPartner' => $this->idParts]);
 
         if ($IdPart > 0) {
             $query->andWhere('qp.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);
