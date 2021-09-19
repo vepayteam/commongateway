@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 class PayControllerCest
 {
@@ -48,17 +48,4 @@ class PayControllerCest
         $I->amOnRoute('pay/orderok', ['id' => 0]);
         $I->see(' Not Found:');
     }
-
-    public function tryToOrderPrintTest(FunctionalTester $I)
-    {
-        $I->amOnRoute('pay/order-print', ['id' => 0]);
-        $I->see(' Not Found:');
-    }
-
-    public function tryToOrderInvoiceTest(FunctionalTester $I)
-    {
-        $I->amOnRoute('pay/order-invoice', ['id' => 0]);
-        $I->see(' Not Found:');
-    }
-
 }
