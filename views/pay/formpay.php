@@ -17,6 +17,8 @@ $partnerCardRegTextHeaderOption = PartnerOption::findOne(['PartnerId' => $params
 
 $paymentFormWithoutVepay = PartnerOption::getBool($params['IdOrg'], PartnerOption::PAYMENT_FORM_WITHOUT_VEPAY);
 $paymentFormAdditionalCommission = PartnerOption::getBool($params['IdOrg'], PartnerOption::PAYMENT_FORM_ADDITIONAL_COMMISSION);
+
+$sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
 ?>
 <div id="middle-wrapper" class="middle middle-background">
 <section class="container">
@@ -53,14 +55,14 @@ $paymentFormAdditionalCommission = PartnerOption::getBool($params['IdOrg'], Part
                     <span>Сумма </span>
                     <span class="pull-right blacksumm">
                         <?= PaymentHelper::formatSum($params['amountPay']) ?>
-                        <?= Currency::SYMBOLS[$params['currency']] ?>
+                        <?= $params['currencySymbol'] ?>
                     </span>
                 </div>
                 <div class="info">
                     <span>Комиссия </span>
                     <span class="pull-right blacksumm">
                         <?= PaymentHelper::formatSum($params['amountCommission']) ?>
-                        <?= Currency::SYMBOLS[$params['currency']] ?>
+                        <?= $params['currencySymbol'] ?>
                     </span>
                 </div>
 
@@ -164,15 +166,17 @@ $paymentFormAdditionalCommission = PartnerOption::getBool($params['IdOrg'], Part
         <div class="col-xs-12">
             <input type="hidden" class="idPay" name="PayForm[IdPay]" value="<?=$params['ID']?>">
             <input type="hidden" class="user_hash" name="user_hash" value="">
-            <?= Html::submitButton(
-                ($params['IdUsluga'] == 1 ? 'ОТПРАВИТЬ' :
-                    'ОПЛАТИТЬ ' . number_format($params['SummFull']/100.0, 2, ',', '').' ₽'
-                ), [
-                'class' => 'btn btn-success paybtn',
-                'name' => 'paysubmit',
-                'form' => 'payform',
-                'id' => 'addtopay'
-            ]) ?>
+            <?=
+                Html::submitButton(
+                    $params['IdUsluga'] == 1 ? 'ОТПРАВИТЬ' : "ОПЛАТИТЬ {$sumFormatted} {$params['currencySymbol']}",
+                    [
+                        'class' => 'btn btn-success paybtn',
+                        'name' => 'paysubmit',
+                        'form' => 'payform',
+                        'id' => 'addtopay',
+                    ]
+                )
+            ?>
         </div>
     </div>
 
