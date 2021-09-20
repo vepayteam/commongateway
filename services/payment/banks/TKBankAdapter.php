@@ -3,10 +3,14 @@
 
 namespace app\services\payment\banks;
 
+use app\models\mfo\MfoReq;
 use app\models\payonline\Cards;
 use app\models\payonline\User;
+use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
+use app\models\queue\BinBDInfoJob;
 use app\models\TU;
+use app\services\ident\IdentService;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
@@ -15,23 +19,22 @@ use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
-use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentInitResponse;
+use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
+use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
-use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\interfaces\ITKBankAdapterResponseErrors;
 use app\services\payment\banks\traits\TKBank3DSTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
-use app\services\payment\exceptions\Check3DSv2Exception;
-use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
+use app\services\payment\exceptions\Check3DSv2Exception;
+use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\RefundPayException;
-use app\services\payment\exceptions\reRequestingStatusException;
-use app\services\payment\exceptions\reRequestingStatusOkException;
 use app\services\payment\forms\AutoPayForm;
+use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\CreatePaySecondStepForm;
 use app\services\payment\forms\DonePayForm;
@@ -52,13 +55,14 @@ use app\services\payment\interfaces\Cache3DSv2Interface;
 use app\services\payment\interfaces\Issuer3DSVersionInterface;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
+use app\services\payment\exceptions\reRequestingStatusException;
+use app\services\payment\exceptions\reRequestingStatusOkException;
 use Carbon\Carbon;
+use Faker\Provider\Base;
 use qfsx\yii2\curl\Curl;
 use SimpleXMLElement;
 use Yii;
 use yii\helpers\Json;
-
-use function print_r;
 
 class TKBankAdapter implements IBankAdapter
 {
