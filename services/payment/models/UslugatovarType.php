@@ -44,6 +44,9 @@ class UslugatovarType extends \yii\db\ActiveRecord
     /** H2H оплата товаров и услуг */
     public const H2H_ECOM = 202;
 
+    /** Перевод B2C СБП  */
+    public const TRANSFER_B2C_SBP = 203;
+
     const OUT_TYPES = [
         self::TOSCHET,
         self::TOCARD,
