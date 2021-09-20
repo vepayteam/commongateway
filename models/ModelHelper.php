@@ -10,7 +10,7 @@ trait ModelHelper
     /**
      * @var
      */
-    public $isTrue;
+    public $isTrue = true;
 
     /**
      * @param $data
