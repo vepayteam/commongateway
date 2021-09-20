@@ -32,12 +32,11 @@ class PayShetStat extends Model
     {
         return [
             [['IdPart', 'id'], 'integer'],
-            [['idParts', 'id'], 'each', 'rule' => ['integer']],
             [['summpayFrom','summpayTo'], 'number'],
             [['Extid'], 'string', 'max' => 40],
             [['datefrom', 'dateto'], 'date', 'format' => 'php:d.m.Y H:i'],
             [['datefrom', 'dateto'], 'required'],
-            [['usluga', 'status', 'TypeUslug'], 'each', 'rule' => ['integer']],
+            [['usluga', 'status', 'TypeUslug', 'idParts'], 'each', 'rule' => ['integer']],
             [['params'], 'each', 'rule' => ['string']],
         ];
     }
