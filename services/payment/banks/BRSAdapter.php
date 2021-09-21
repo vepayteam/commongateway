@@ -634,7 +634,7 @@ class BRSAdapter implements IBankAdapter
     {
         $uri = '/eis-app/eis-rs/businessPaymentService/getFpsReference';
 
-        return $this->sendB2CRequest($uri, [], 'POST', $this->getTransferB2CRequestSslStructure());
+        return $this->sendB2CRequest($uri, [], 'GET', $this->getTransferB2CRequestSslStructure());
     }
 
     /**
@@ -790,7 +790,7 @@ class BRSAdapter implements IBankAdapter
         $requestData = $this->getTransferB2cRequestData($outPayaccForm);
 
         try {
-            $ans = $this->sendRequest($uri, $requestData,'POST', $this->getTransferB2CRequestSslStructure());
+            $ans = $this->sendB2CRequest($uri, $requestData,'POST', $this->getTransferB2CRequestSslStructure());
             return (isset($ans['code']) && $ans['code'] == 0);
         } catch (BankAdapterResponseException $e) {
             return false;
