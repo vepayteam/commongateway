@@ -139,8 +139,29 @@ class OutController extends Controller
         } catch (GateException | NotInstantiableException | InvalidConfigException $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
         }
+    }
 
+    public function actionSbpTransfer()
+    {
+        $mfo = new MfoReq();
+        $mfo->LoadData(Yii::$app->request->getRawBody());
 
+        $outPayaccForm = new OutPayAccountForm();
+        $outPayaccForm->scenario = OutPayAccountForm::SCENARIO_BRS_CHECK;
+        $outPayaccForm->load($mfo->Req(), '');
+
+        if (!$outPayaccForm->validate()) {
+            Yii::warning("out/b2c: " . $outPayaccForm->GetError(), 'mfo');
+            return ['status' => 0, 'message' => $outPayaccForm->GetError()];
+        }
+        $outPayaccForm->partner = $mfo->getPartner();
+
+        try {
+            $result = $this->getPaymentService()->sbpTransfer($outPayaccForm);
+            return ['status' => $result['status'], 'message' => $result['message'], 'id' => $result['id']];
+        } catch (GateException | NotInstantiableException | InvalidConfigException $e) {
+            return ['status' => 0, 'message' => $e->getMessage()];
+        }
     }
 
     /**
