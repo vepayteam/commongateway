@@ -28,6 +28,7 @@ class UslugatovarType extends \yii\db\ActiveRecord
     const REVERSCOMIS = 21; //возмещение комиссии
     const PEREVPAYS = 23; //перевод на выдачу
     const IDENT = 24; //идентификация
+    const REGISTRATION_BENIFIC = 25; //регистрация бенифициата
 
     const JKHPARTS = 100; //оплата жкх с разбивкой
     const ECOMPARTS = 102; //оплата еком с разбивкой
@@ -74,6 +75,7 @@ class UslugatovarType extends \yii\db\ActiveRecord
             self::REVERSCOMIS => 'Возмещение комисии',
             self::PEREVPAYS => 'Внутренний перевод между счетами',
             self::IDENT => 'Упрощенная идентификация пользователей',
+            self::REGISTRATION_BENIFIC => 'Регистрация бенифициата',
 
             self::POGASHATFPARTS => 'Погашение займа AFT с разбивкой',
             self::POGASHECOMPARTS => 'Погашение займа ECOM с разбивкой',

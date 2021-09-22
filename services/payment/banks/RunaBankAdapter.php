@@ -20,6 +20,7 @@ use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentInitResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
+use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
@@ -35,6 +36,7 @@ use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
+use app\services\payment\forms\RegistrationBenificForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use Vepay\Gateway\Client\Validator\ValidationException;
@@ -285,5 +287,13 @@ class RunaBankAdapter implements IBankAdapter
     public function currencyExchangeRates()
     {
         // TODO: Implement currencyExchangeRates() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function registrationBenific(RegistrationBenificForm $registrationBenificForm)
+    {
+        throw new GateException('Метод недоступен');
     }
 }

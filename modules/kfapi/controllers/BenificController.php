@@ -7,6 +7,12 @@ use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\kfapi\KfRequest;
 use app\models\kfapi\KfBenific;
+use app\services\payment\banks\bank_adapter_responses\BaseResponse;
+use app\services\payment\banks\BankAdapterBuilder;
+use app\services\payment\exceptions\BankAdapterResponseException;
+use app\services\payment\exceptions\GateException;
+use app\services\payment\forms\RegistrationBenificForm;
+use app\services\payment\payment_strategies\RegistrationBenificStrategy;
 use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
@@ -62,30 +68,25 @@ class BenificController extends Controller
         $kf = new KfRequest();
         $kf->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody());
 
-        $KfBenific = new KfBenific();
-        $KfBenific->load($kf->req, '');
-        if (!$KfBenific->validate()) {
-            return ['status' => 0, 'message' => $KfBenific->GetError()];
+        $registrationBenificForm = new RegistrationBenificForm();
+        $registrationBenificForm->load($kf->req, '');
+        $registrationBenificForm->partner = $kf->partner;
+        if(!$registrationBenificForm->validate()) {
+            return ['status' => 0, 'message' => $registrationBenificForm->GetError()];
         }
 
-        if (empty($kf->partner->SchetTcbNominal)) {
-            return ['status' => 0, 'message' => 'Номинальный счет не найден'];
+        $registrationBenificStrategy = new RegistrationBenificStrategy($registrationBenificForm);
+        try {
+            $registrationBenificResponse = $registrationBenificStrategy->exec();
+        } catch (\Exception $e) {
+            return ['status' => 0, 'message' => $e->getMessage()];
         }
 
-        $TcbGate = new TcbGate($kf->IdPartner, TCBank::$AFTGATE);
-        $tcBank = new TCBank($TcbGate);
-        $ret = $tcBank->RegisterBenificiar([
-            'req' => $KfBenific->GetSoapForm($kf->partner)
-        ]);
-
-        if (isset($ret['status']) && $ret['status'] == 1) {
-            $KfBenific->setAttributes(['result' => $ret['soap']]);
-            $ret = $KfBenific->ParseResult();
-            return ['status' => $ret['error'] == 0 ? 1 : 0, 'message' => $ret['message']];
+        if($registrationBenificResponse->status == BaseResponse::STATUS_DONE) {
+            return ['status' => 1, 'message' => $registrationBenificResponse->response];
+        } else {
+            return ['status' => 0, 'message' => $registrationBenificResponse->message];
         }
-
-        return ['status' => 0, 'message' => 'Ошибка запроса'];
-
     }
 
     /**

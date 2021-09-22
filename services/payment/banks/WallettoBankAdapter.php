@@ -11,9 +11,11 @@ use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CurrencyExchangeRatesResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
+use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\traits\WallettoRequestTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CreatePayException;
+use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\RefundPayException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CreatePayForm;
@@ -22,6 +24,7 @@ use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
+use app\services\payment\forms\RegistrationBenificForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use Carbon\Carbon;
@@ -356,5 +359,13 @@ class WallettoBankAdapter implements IBankAdapter
         }
 
         return join(PHP_EOL, $messages);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function registrationBenific(RegistrationBenificForm $registrationBenificForm)
+    {
+        throw new GateException('Метод недоступен');
     }
 }
