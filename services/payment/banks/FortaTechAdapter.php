@@ -31,6 +31,7 @@ use app\services\payment\forms\forta\CreatePayRequest;
 use app\services\payment\forms\forta\OutCardPayRequest;
 use app\services\payment\forms\forta\PaymentRequest;
 use app\services\payment\forms\forta\RefundPayRequest;
+use app\services\payment\forms\GetStatementsForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
@@ -834,6 +835,11 @@ class FortaTechAdapter implements IBankAdapter
      * @inheritDoc
      */
     public function identGetStatus(Ident $ident)
+    {
+        throw new GateException('Метод недоступен');
+    }
+
+    public function getStatements(GetStatementsForm $getStatementsForm)
     {
         throw new GateException('Метод недоступен');
     }

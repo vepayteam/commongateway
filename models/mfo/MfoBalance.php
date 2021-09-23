@@ -4,13 +4,17 @@ namespace app\models\mfo;
 
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
+use app\models\kfapi\KfStatement;
 use app\models\partner\admin\VoznagStat;
 use app\models\partner\stat\ExportExcel;
 use app\models\payonline\Partner;
 use app\models\queue\ReceiveStatementsJob;
 use app\services\payment\models\UslugatovarType;
+use app\services\statements\models\StatementsAccount;
+use app\services\statements\StatementsService;
 use Yii;
 use yii\db\Query;
+use yii\helpers\ArrayHelper;
 
 /**
  * @deprecated
@@ -229,70 +233,36 @@ class MfoBalance
      */
     public function GetBankStatemets($TypeAcc, $dateFrom, $dateTo, $sort = 0)
     {
-        $dates = Yii::$app->db->createCommand("
-            SELECT
-                `DateUpdateFrom`,
-                `DateUpdateTo`
-            FROM
-                `statements_planner`
-            WHERE
-                `IdPartner` = :IDPARTNER
-                AND `IdTypeAcc` = :ACCTYPE
-        ", [':IDPARTNER' => $this->Partner->ID, ':ACCTYPE' => $TypeAcc])->queryOne();
+        $kfStatement = new KfStatement();
+        $kfStatement->partner = $this->Partner;
+        $kfStatement->typeAcc = $TypeAcc;
+        $kfStatement->datefrom = $dateFrom;
+        $kfStatement->dateto = $dateTo;
+        $kfStatement->sort = $sort;
 
-        if (!$dates ||
-            $dateFrom < $dates['DateUpdateFrom'] ||
-            ($dateTo > $dates['DateUpdateTo'] && $dates['DateUpdateTo'] < time() - 60 * 15)
-        ) {
-            //обновить выписку (через очередь)
-            $IdJob = Yii::$app->queue->push(new ReceiveStatementsJob([
-                'IdPartner' => $this->Partner->ID,
-                'TypeAcc' => $TypeAcc,
-                'datefrom' => $dateFrom,
-                'dateto' => $dateTo,
-            ]));
-            //Yii::$app->queue->run(false); //сразу выполнить
-            //for ($i = 0; $i < 15 && !Yii::$app->queue->isDone($IdJob);$i++) sleep(1);
-        }
-
-        $ret = [];
-
-        $desc = "DESC";
-        if ($sort == 1) $desc = "";
-
-        $result = Yii::$app->db->createCommand("
-            SELECT
-                `ID`,
-                `IdPartner`,
-                `TypeAccount`,
-                `BnkId`,
-                `NumberPP`,
-                `DatePP`,
-                `DateDoc`,
-                `SummPP`,
-                `SummComis`,
-                `Description`,
-                `IsCredit`,
-                `Name`,
-                `Inn`,
-                `Account`,
-                `Bic`,
-                `Bank`,
-                `BankAccount`
-            FROM
-                `statements_account`
-            WHERE
-                `IdPartner` = :IDPARTNER
-                AND `DatePP` BETWEEN :DATEFROM AND :DATETO
-                AND `TypeAccount` = :ACCTYPE
-            ORDER BY `DatePP` ".$desc.", `ID` ".$desc."
-        ", [':IDPARTNER' => $this->Partner->ID, ':DATEFROM' => $dateFrom, ':DATETO' => $dateTo, ':ACCTYPE' => $TypeAcc])->query();
-
-        while ($row = $result->read()) {
-            $ret[] = $row;
-        }
-
-        return $ret;
+        $statements = $this->getStatementsService()->getBanksStatements($kfStatement);
+        $result = ArrayHelper::toArray($statements, [
+            'app\services\statements\models\StatementsAccount' => [
+                'ID',
+                'IdPartner',
+                'TypeAccount',
+                'BnkId',
+                'NumberPP',
+                'DatePP',
+                'DateDoc',
+                'SummPP',
+                'SummComis',
+                'Description',
+                'IsCredit',
+                'Name',
+                'Inn',
+                'Account',
+                'Bic',
+                'Bank',
+                'BankAccount',
+            ],
+        ]);
+        return $result;
     }
 
     /**
@@ -565,6 +535,16 @@ class MfoBalance
         $ExportExcel = new ExportExcel();
         return $ExportExcel->CreateXls("Экспорт", $head, $data, $sizes, $itogs);
 
+    }
+
+    /**
+     * @return StatementsService
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\di\NotInstantiableException
+     */
+    protected function getStatementsService()
+    {
+        return Yii::$container->get('StatementsService');
     }
 
 }

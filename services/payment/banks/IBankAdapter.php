@@ -9,6 +9,7 @@ use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\banks\bank_adapter_responses\GetStatementsResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentInitResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
@@ -26,6 +27,7 @@ use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\GetBalanceForm;
+use app\services\payment\forms\GetStatementsForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
@@ -125,4 +127,10 @@ interface IBankAdapter
     public function identGetStatus(Ident $ident);
 
     public function currencyExchangeRates();
+
+    /**
+     * @param GetStatementsForm $getStatementsForm
+     * @return GetStatementsResponse
+     */
+    public function getStatements(GetStatementsForm $getStatementsForm);
 }
