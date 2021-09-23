@@ -207,7 +207,7 @@ class BRSAdapter implements IBankAdapter
 
         $checkStatusPayResponse = new CheckStatusPayResponse();
         try {
-            $ans = $this->sendPostB2CRequest($uri, $checkStatusPayOutAccountRequest->getAttributes());
+            $ans = $this->sendB2CRequest( $uri, $checkStatusPayOutAccountRequest->getAttributes(), 'POST');
             if(isset($ans['code']) && $ans['code'] == 0) {
                 $checkStatusPayResponse->status = BaseResponse::STATUS_DONE;
             } else {
@@ -634,52 +634,8 @@ class BRSAdapter implements IBankAdapter
     public function getBankReceiver()
     {
         $uri = '/eis-app/eis-rs/businessPaymentService/getFpsReference';
-        $ans = $this->sendGetB2CRequest($uri);
-        return $ans;
-    }
 
-    /**
-     * @param $uri
-     * @return mixed|null
-     * @throws BankAdapterResponseException
-     */
-    protected function sendGetB2CRequest($uri)
-    {
-        $curl = curl_init();
-
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $this->bankUrlB2C . $uri,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 120,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'GET',
-            CURLOPT_SSL_VERIFYPEER => 0,
-            CURLOPT_SSL_VERIFYHOST => 0,
-            CURLOPT_SSLCERTTYPE => 'PEM',
-            CURLOPT_SSLKEYTYPE => 'PEM',
-            CURLOPT_SSLCERT => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.pem'),
-            CURLOPT_SSLKEY => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.key'),
-            CURLOPT_HTTPHEADER => [
-                'x-User-Login: ' . $this->gate->Login,
-            ],
-        ));
-
-        Yii::warning('BRSAdapter req GET uri=' . $uri);
-        $response = curl_exec($curl);
-        $curlError = curl_error($curl);
-        $info = curl_getinfo($curl);
-
-        if(empty($curlError) && $info['http_code'] == 200) {
-            $response = Json::decode($response, true);
-            Yii::warning('BRSAdapter ans GET uri=' . $uri .' : ' . Json::encode($response));
-            return $response;
-        } else {
-            Yii::error('BRSAdapter error GET uri=' . $uri .' status=' . $info['http_code']);
-            throw new BankAdapterResponseException('Ошибка запроса: ' . $curlError);
-        }
+        return $this->sendB2CRequest($uri, [], 'GET', $this->getTransferB2CRequestSslStructure());
     }
 
     /**
@@ -718,7 +674,7 @@ class BRSAdapter implements IBankAdapter
         $transferToAccountResponse = new TransferToAccountResponse();
 
         try {
-            $ans = $this->sendPostB2CRequest($uri, $requestData);
+            $ans = $this->sendB2CRequest($uri, $requestData, 'POST');
             if(isset($ans['code']) && $ans['code'] == 0) {
                 $transferToAccountResponse->status = BaseResponse::STATUS_DONE;
                 $transferToAccountResponse->message = $ans['message'];
@@ -737,15 +693,14 @@ class BRSAdapter implements IBankAdapter
     /**
      * @param string $uri
      * @param array $data
+     * @param string $requestType
      * @param CurlSSLStructure|null $curlSSLStructure
+     *
      * @return mixed
      * @throws BankAdapterResponseException
      */
-    protected function sendPostB2CRequest(string $uri, array $data, ?CurlSSLStructure $curlSSLStructure = null)
+    protected function sendB2CRequest(string $uri, array $data = [], string $requestType = 'GET', ?CurlSSLStructure $curlSSLStructure = null)
     {
-        $xUserLogin = strpos(Url::base(true), 'processing.backend.vepay.cf') !== false
-            ? BRSSbpTestData::X_USER_LOGIN : $this->gate->AdvParam_1;
-
         $curl = curl_init();
 
         $optArray = [
@@ -756,22 +711,29 @@ class BRSAdapter implements IBankAdapter
             CURLOPT_TIMEOUT => 120,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_CUSTOMREQUEST => $requestType,
             CURLOPT_SSL_VERIFYPEER => 0,
             CURLOPT_SSL_VERIFYHOST => 0,
-            CURLOPT_POSTFIELDS => Json::encode($data),
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
-                'x-User-Login: ' . $xUserLogin,
+                'x-User-Login: ' . $this->gate->AdvParam_1,
             ],
         ];
+
+        if ($requestType !== 'GET') {
+            if (!empty($data)) {
+                $optArray[CURLOPT_POSTFIELDS] = Json::encode($data);
+            }
+        } else {
+            $uri .= !empty($data) ? '?' . http_build_query($data) : '';
+        }
 
         if ($curlSSLStructure instanceof CurlSSLStructure) {
             $optArray[CURLOPT_SSLCERTTYPE] = $curlSSLStructure->sslcerttype;
             $optArray[CURLOPT_SSLKEYTYPE] = $curlSSLStructure->sslkeytype;
             $optArray[CURLOPT_CAINFO] = $curlSSLStructure->cainfo;
             $optArray[CURLOPT_SSLCERT] = $curlSSLStructure->sslcert;
-            $optArray[CURLOPT_SSLKEY] =$curlSSLStructure->sslkey;
+            $optArray[CURLOPT_SSLKEY] = $curlSSLStructure->sslkey;
         } else {
             $optArray[CURLOPT_SSLCERTTYPE] = 'PEM';
             $optArray[CURLOPT_SSLKEYTYPE] = 'PEM';
@@ -781,8 +743,7 @@ class BRSAdapter implements IBankAdapter
 
         curl_setopt_array($curl, $optArray);
 
-        Yii::warning('selfurl=' . Url::base(true));
-        Yii::warning('BRSAdapter req POST uri=' . $uri . '; data=' . Json::encode($data));
+        Yii::warning('BRSAdapter req ' . $requestType . ' uri=' . $uri . '; data=' . Json::encode($data));
         $response = curl_exec($curl);
         $curlError = curl_error($curl);
         $info = curl_getinfo($curl);
@@ -790,14 +751,14 @@ class BRSAdapter implements IBankAdapter
         if(empty($curlError)) {
             try {
                 $response = Json::decode($response, true);
-                Yii::warning('BRSAdapter ans POST uri=' . $uri .' : ' . Json::encode($response) . '; data=' . Json::encode($data));
+                Yii::warning('BRSAdapter ans ' . $requestType . ' uri=' . $uri .' : ' . Json::encode($response) . '; data=' . Json::encode($data));
                 return $response;
             } catch (Exception $e) {
                 throw new BankAdapterResponseException($e->getMessage());
             }
         } else {
-            Yii::error('BRSAdapter curlError POST uri=' . $uri .'; info=' . json_encode($info) . '; curlError=' . $curlError);
-            Yii::error('BRSAdapter error POST uri=' . $uri .'; status=' . $info['http_code'] . '; data=' . Json::encode($data));
+            Yii::error('BRSAdapter curlError ' . $requestType . ' uri=' . $uri .'; info=' . json_encode($info) . '; curlError=' . $curlError);
+            Yii::error('BRSAdapter error ' . $requestType . ' uri=' . $uri .'; status=' . $info['http_code'] . '; data=' . Json::encode($data));
             throw new BankAdapterResponseException('Ошибка запроса: ' . $curlError);
         }
     }
@@ -830,7 +791,7 @@ class BRSAdapter implements IBankAdapter
         $requestData = $this->getTransferB2cRequestData($outPayaccForm);
 
         try {
-            $ans = $this->sendPostB2CRequest($uri, $requestData, $this->getTransferB2CRequestSslStructure());
+            $ans = $this->sendB2CRequest($uri, $requestData,'POST', $this->getTransferB2CRequestSslStructure());
             return (isset($ans['code']) && $ans['code'] == 0);
         } catch (BankAdapterResponseException $e) {
             return false;
@@ -879,7 +840,7 @@ class BRSAdapter implements IBankAdapter
         $requestData = $this->getTransferB2cRequestData($outPayaccForm);
 
         try {
-            $ans = $this->sendPostB2CRequest($uri, $requestData, $this->getTransferB2CRequestSslStructure());
+            $ans = $this->sendB2CRequest($uri, $requestData, 'POST', $this->getTransferB2CRequestSslStructure());
             if(isset($ans['code']) && $ans['code'] == 0) {
                 return ['status' => 1, 'message' => 'ok', 'id' => $ans['operationId']];
             }
