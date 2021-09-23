@@ -158,34 +158,6 @@ class BankAdapterBuilder
     }
 
     /**
-     * @param Partner $partner
-     * @param Bank $bank
-     * @param int $accountType
-     * @return $this|BankAdapterBuilder
-     * @throws GateException
-     */
-    public function buildByBankAndAccountType(Partner $partner, Bank $bank, $accountType = 0)
-    {
-        $this->partnerBankGate = PartnerBankGate::find()
-            ->where([
-                'PartnerId' => $partner->ID,
-                'BankId' => $bank->ID,
-                'SchetType' => $accountType,
-                'Enable' => 1,
-            ])
-            ->orderBy('Priority DESC')
-            ->one();
-
-        if (!$this->partnerBankGate) {
-            throw new GateException(sprintf(
-                "Нет шлюза. bankId=%d",
-                $bank->ID
-            ));
-        }
-        return $this->buildAdapter();
-    }
-
-    /**
      * @return $this
      * @throws GateException
      */
