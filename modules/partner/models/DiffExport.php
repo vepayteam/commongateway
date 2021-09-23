@@ -69,13 +69,20 @@ class DiffExport
         }
 
         array_unshift($this->rows, $this->title);
-        $toCSV = new ToCSV($this->rows, $tmpdir, time() . '.csv');
+        $toCSV = new ToCSV($this->getGenerator($this->rows), $tmpdir, time() . '.csv');
         $toCSV->export();
 
         $data = file_get_contents($toCSV->fullpath());
         unlink($toCSV->fullpath());
 
         return $data;
+    }
+
+    private function getGenerator(array $rows): \Generator
+    {
+        foreach ($rows as $row) {
+            yield $row;
+        }
     }
 
     public function exportXlsx()
