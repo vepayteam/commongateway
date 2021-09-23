@@ -420,62 +420,6 @@ class PayController extends Controller
         return $this->render('paycancel');
     }
 
-    public function actionOrderPrint($id)
-    {
-        // TODO: DRY
-        Yii::warning("PayForm orderprint id=" . $id);
-        $SesIdPay = Yii::$app->session->get('IdPay');
-        if (!$id || $id != $SesIdPay) {
-            throw new NotFoundHttpException();
-        }
-
-        $payschets = new Payschets();
-        $params = $payschets->getSchetData($id, null);
-        if (!$params || $params['Status'] != 1) {
-            throw new NotFoundHttpException();
-        }
-
-        $this->layout = null;
-        return $this->render('order-print', [
-            'params' => $params,
-            'isPage' => true,
-        ]);
-    }
-
-    public function actionOrderInvoice($id)
-    {
-        // TODO: DRY
-        Yii::warning("PayForm orderinvoice id=" . $id);
-        $SesIdPay = Yii::$app->session->get('IdPay');
-        if (!$id || $id != $SesIdPay) {
-            throw new NotFoundHttpException();
-        }
-
-        $payschets = new Payschets();
-        $params = $payschets->getSchetData($id, null);
-        if (!$params || $params['Status'] != 1) {
-            throw new NotFoundHttpException();
-        }
-
-        $content = $this->renderPartial('order-print', [
-            'params' => $params,
-            'isPage' => false,
-        ]);
-
-        $pdf = new Pdf([
-            // 'mode' => Pdf::MODE_CORE,
-            'format' => Pdf::FORMAT_A4,
-            'orientation' => Pdf::ORIENT_PORTRAIT,
-            'destination' => Pdf::DEST_BROWSER,
-            'content' => $content,
-            'cssFile' => '@webroot/aassets/css/order-print.css',
-            // 'cssInline' => '.kv-heading-1{font-size:18px}',
-        ]);
-
-        // return the pdf output as per the destination setting
-        return $pdf->render();
-    }
-
     public function actionApplepayvalidate()
     {
         if (Yii::$app->request->isAjax) {
