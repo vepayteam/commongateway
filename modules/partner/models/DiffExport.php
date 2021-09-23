@@ -53,7 +53,7 @@ class DiffExport
         $this->rows[] = ['Номера заявки ПЦ нет в Vepay'];
 
         foreach ($this->notFound as $row) {
-            $this->rows[] = [$row['ExtBillNumber']];
+            $this->rows[] = [$row['Select']];
         }
     }
 

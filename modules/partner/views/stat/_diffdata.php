@@ -48,7 +48,7 @@ use app\services\payment\models\PaySchet;
     <tbody>
     <?php foreach ($notFound as $row): ?>
         <tr>
-            <td><?= $row['ExtBillNumber'] ?></td>
+            <td><?= $row['Select'] ?></td>
         </tr>
     <?php endforeach; ?>
     </tbody>

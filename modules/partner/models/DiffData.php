@@ -33,7 +33,8 @@ class DiffData
         $query = new Query();
         $paySchets = $query->select(['ps.ID', 'ps.Extid', 'ps.Status', 'ps.DateCreate', 'ps.DateOplat', 'ps.ExtBillNumber', 'ps.RRN', 'ut.NameUsluga'])
             ->from('pay_schet as ps')
-            ->where(['in', 'ps.' . $this->form->dbColumn, array_column($registry, 'Select')])
+            ->where(['Bank' => $this->form->bank])
+            ->andWhere(['in', 'ps.' . $this->form->dbColumn, array_column($registry, 'Select')])
             ->leftJoin('uslugatovar as ut', 'ut.Id=ps.IdUsluga')
             ->all();
 
@@ -101,7 +102,7 @@ class DiffData
 
         foreach ($rows as $row) {
             $select = strval($row[$this->form->registrySelectColumn]);
-            $status = strval($row[$this->form->registryStatusColumn]);
+            $status = $this->form->allRegistryStatusSuccess ? PaySchet::STATUSES[PaySchet::STATUS_DONE] : strval($row[$this->form->registryStatusColumn]);
 
             if (empty($select) || empty($status)) {
                 continue;

@@ -118,9 +118,14 @@ class StatController extends Controller
             ->where(['BankId' => $form->bank])
             ->one();
 
-        $diffReader = new DiffReader($form->registryFile->tempName);
-        $registryColumns = $diffReader->getRegistryColumns();
-        $dbColumns = $diffReader->getDbColumns();
+        try {
+            $diffReader = new DiffReader($form->registryFile->tempName);
+            $registryColumns = $diffReader->getRegistryColumns();
+            $dbColumns = $diffReader->getDbColumns();
+        } catch (\Exception $e) {
+            Yii::warning('Stat diffColumns exception: ' . $e->getMessage());
+            throw new BadRequestHttpException();
+        }
 
         return $this->asJson([
             'registryColumns' => $registryColumns,
@@ -145,7 +150,7 @@ class StatController extends Controller
         try {
             $diffData = new DiffData($form);
             [$badStatus, $notFound] = $diffData->execute();
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             Yii::warning('Stat diffData exception '
                 . $form->registryFile->tempName
                 . ': ' . $e->getMessage()
