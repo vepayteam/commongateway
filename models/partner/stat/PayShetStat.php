@@ -16,6 +16,7 @@ use yii\helpers\VarDumper;
 class PayShetStat extends Model
 {
     public $IdPart = 0;
+    public $idParts = [];
     public $usluga = [];
     public $TypeUslug = [];
     public $Extid = '';
@@ -35,7 +36,7 @@ class PayShetStat extends Model
             [['Extid'], 'string', 'max' => 40],
             [['datefrom', 'dateto'], 'date', 'format' => 'php:d.m.Y H:i'],
             [['datefrom', 'dateto'], 'required'],
-            [['usluga', 'status', 'TypeUslug'], 'each', 'rule' => ['integer']],
+            [['usluga', 'status', 'TypeUslug', 'idParts'], 'each', 'rule' => ['integer']],
             [['params'], 'each', 'rule' => ['string']],
         ];
     }
@@ -373,6 +374,8 @@ class PayShetStat extends Model
                 ':DATEFROM' => strtotime($this->datefrom . ":00"),
                 ':DATETO' => strtotime($this->dateto . ":59")
             ]);
+
+        $query->andFilterWhere(['qp.IDPartner' => $this->idParts]);
 
         if ($IdPart > 0) {
             $query->andWhere('qp.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);

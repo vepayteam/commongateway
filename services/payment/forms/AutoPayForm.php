@@ -76,7 +76,6 @@ class AutoPayForm extends Model implements Serializable, AmountFormInterface
     {
         if(!$this->_card) {
             $card = Cards::findOne(['ID' => $this->card]);
-
             if($card && $card->user && $card->user->ExtOrg == $this->partner->ID) {
                 $this->user = $card->user;
                 $this->_card = $card;
