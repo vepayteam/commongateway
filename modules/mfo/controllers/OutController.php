@@ -135,7 +135,7 @@ class OutController extends Controller
 
         try {
             $result = $this->getPaymentService()->checkSbpCanTransfer($outPayaccForm);
-            return ['status' => ($result ? 1 : 0), 'message' => ''];
+            return ['status' => $result->status, 'message' => $result->message, 'id' => $result->trans];
         } catch (GateException | NotInstantiableException | InvalidConfigException $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
         }
@@ -158,7 +158,7 @@ class OutController extends Controller
 
         try {
             $result = $this->getPaymentService()->sbpTransfer($outPayaccForm);
-            return ['status' => $result['status'], 'message' => $result['message'], 'id' => $result['id']];
+            return ['status' => $result->Status, 'message' => $result->ErrorInfo, 'id' => $result->ID];
         } catch (GateException | NotInstantiableException | InvalidConfigException $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
         }

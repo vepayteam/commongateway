@@ -652,9 +652,10 @@ class BRSAdapter implements IBankAdapter
         $transferToAccountRequest->bic = $outPayaccForm->bic;
         $transferToAccountRequest->receiverId = (string)$outPayaccForm->paySchet->ID;
         $transferToAccountRequest->merchantId = $this->gate->Token;
+        $transferToAccountRequest->fio = $outPayaccForm->getLastName(). ' '.$outPayaccForm->getFirstName(). $outPayaccForm->getMiddleName();
         $transferToAccountRequest->firstName = $outPayaccForm->getFirstName();
         $transferToAccountRequest->lastName = $outPayaccForm->getLastName();
-        $transferToAccountRequest->middleName = $outPayaccForm->getMiddleName();
+        $transferToAccountRequest->middleName = $outPayaccForm->getLastName();
         $transferToAccountRequest->amount = $outPayaccForm->amount;
         $transferToAccountRequest->account = (string)$outPayaccForm->account;
         $transferToAccountRequest->phone = $outPayaccForm->getPhoneToSend();
@@ -784,18 +785,34 @@ class BRSAdapter implements IBankAdapter
      * @return bool
      * @throws \yii\base\Exception
      */
-    public function checkTransferB2C(OutPayAccountForm $outPayaccForm): bool
+    public function checkTransferB2C(OutPayAccountForm $outPayaccForm): TransferToAccountResponse
     {
         $uri = '/eis-app/eis-rs/businessPaymentService/checkTransferB2c';
 
         $requestData = $this->getTransferB2cRequestData($outPayaccForm);
+        $response = new TransferToAccountResponse();
 
         try {
             $ans = $this->sendB2CRequest($uri, $requestData,'POST', $this->getTransferB2CRequestSslStructure());
-            return (isset($ans['code']) && $ans['code'] == 0);
+
+            if (isset($ans['code']) && $ans['code'] == 0) {
+                $response->status = BaseResponse::STATUS_DONE;
+                $response->message = $ans['message'] ?? '';
+                $response->trans = $ans['operationId'];
+
+                return $response;
+            }
+
+            $response->status = BaseResponse::STATUS_ERROR;
+            $response->message = $ans['message'] ?? '';
+            $response->trans = null;
         } catch (BankAdapterResponseException $e) {
-            return false;
+            $response->status = BaseResponse::STATUS_ERROR;
+            $response->message = $e->getMessage();
+            $response->trans = null;
         }
+
+        return $response;
     }
 
     /**
@@ -826,28 +843,37 @@ class BRSAdapter implements IBankAdapter
 
     /**
      * @param OutPayAccountForm $outPayaccForm
-     * @return array[
-     *  'status' => int,
-     *  'message' => string,
-     *  'id' => string|null
-     * ]
+     * @return TransferToAccountResponse
      * @throws \yii\base\Exception
      */
-    public function transferB2C(OutPayAccountForm $outPayaccForm): array
+    public function transferB2C(OutPayAccountForm $outPayaccForm): TransferToAccountResponse
     {
         $uri = '/eis-app/eis-rs/businessPaymentService/requestTransferB2c';
 
         $requestData = $this->getTransferB2cRequestData($outPayaccForm);
 
+        $response = new TransferToAccountResponse();
+
         try {
             $ans = $this->sendB2CRequest($uri, $requestData, 'POST', $this->getTransferB2CRequestSslStructure());
             if(isset($ans['code']) && $ans['code'] == 0) {
-                return ['status' => 1, 'message' => 'ok', 'id' => $ans['operationId']];
+                $response->status = BaseResponse::STATUS_DONE;
+                $response->message = $ans['message'] ?? '';
+                $response->trans = $ans['operationId'];
+
+                return $response;
             }
-            return ['status' => 0, 'message' => 'ans error. data: '.Json::encode($requestData), 'id' => null];
+
+            $response->status = BaseResponse::STATUS_ERROR;
+            $response->message = $ans['message'] ?? '';
+            $response->trans = null;
         } catch (BankAdapterResponseException $e) {
-            return ['status' => 0, 'message' => $e->getMessage(), 'id' => null];
+            $response->status = BaseResponse::STATUS_ERROR;
+            $response->message = $e->getMessage();
+            $response->trans = null;
         }
+
+        return $response;
     }
 
     public function identInit(Ident $ident)
