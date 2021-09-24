@@ -11,6 +11,8 @@ use app\models\kfapi\KfStatement;
 use app\models\mfo\MfoBalance;
 use app\models\mfo\MfoTestError;
 use app\models\payonline\Partner;
+use app\services\statements\models\StatementsAccount;
+use app\services\statements\StatementsService;
 use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
@@ -115,86 +117,47 @@ class AccountController extends Controller
         $kf->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody());
 
         $kfStatm = new KfStatement();
+        $kfStatm->partner = $kf->partner;
         $kfStatm->load($kf->req, '');
         if (!$kfStatm->validate()) {
             return ['status' => 0, 'message' => $kfStatm->GetError()];
         }
 
-        $TypeAcc = 0;
-        if ($kf->partner->SchetTcbNominal == $kfStatm->account) {
-            //номинальный
-            $TypeAcc = 2;
-        } elseif ($kf->partner->SchetTcbTransit == $kfStatm->account) {
-            //транзитный на погашение
-            $TypeAcc = 1;
-        }
-
-        $MfoBalance = new MfoBalance($kf->partner);
-        $result = $MfoBalance->GetBankStatemets($TypeAcc, strtotime($kfStatm->dayfrom), strtotime($kfStatm->dayto));
-
-        $ret = [];
-        foreach ($result as $row) {
-            $ret[] = [
-                'id' => $row['BnkId'],
-                'number' => $row['NumberPP'],
-                'date' => date('Y-m-d\TH:i:s', $row['DatePP']),
-                'datedoc' => date('Y-m-d\TH:i:s', $row['DateDoc']),
-                'summ' => round(($row['SummPP'] + $row['SummComis'])/100.0,2),
-                'description' => $row['Description'],
-                'iscredit' => $row['IsCredit'] ? true : false, //true - пополнение счета
-                'name' => $row['Name'],
-                'inn' => $row['Inn'],
+        $statements = $this->getStatementsService()->getBanksStatements($kfStatm);
+        $return = [];
+        /** @var StatementsAccount $statement */
+        foreach ($statements as $statement) {
+            $return[] = [
+                'id' => $statement->BnkId,
+                'number' => $statement->NumberPP,
+                'date' => date('Y-m-d\TH:i:s', $statement->DatePP),
+                'datedoc' => date('Y-m-d\TH:i:s', $statement->DateDoc),
+                'summ' => round(($statement->SummPP + $statement->SummComis)/100.0,2),
+                'description' => $statement->Description,
+                'iscredit' => $statement->IsCredit ? true : false, //true - пополнение счета
+                'name' => $statement->Name,
+                'inn' => $statement->Inn,
                 'kpp' => '',
-                'bic' => $row['Bic'],
-                'bank' => $row['Bank'],
-                'bankaccount' => $row['BankAccount'],
-                'account' => $row['Account']
+                'bic' => $statement->Bic,
+                'bank' => $statement->Bank,
+                'bankaccount' => $statement->BankAccount,
+                'account' => $statement->Account,
             ];
         }
-        $state = [
+        return [
             'status' => 1,
             'message' => '',
-            'statements' => $ret
+            'statements' => $return
         ];
+    }
 
-        /*if (Yii::$app->params['TESTMODE'] == 'Y') {
-            //заглушка - тест выписка
-            $test = new MfoTestError();
-            return [
-                'status' => 1,
-                'message' => '',
-                'statements' => $test->TestStatements()
-            ];
-        }
-
-        $tcBank = new TCBank(TCBank::$AFTGATE, null, 1, $kf->GetGates());
-
-        if ($kf->partner->SchetTcbNominal == $kfStatm->account) {
-            //номинальный - по другим данным
-            $ret = $tcBank->getStatementNominal(['account' => $kfStatm->account, 'datefrom' => $kfStatm->dayfrom, 'dateto' => $kfStatm->dayto]);
-            if ($ret && isset($ret['status']) && $ret['status'] == 1) {
-                $state = [
-                    'status' => 1,
-                    'message' => '',
-                    'statements' => $kfStatm->ParseSatementsNominal($ret['statements'])
-                ];
-            } else {
-                $state = ['status' => 0, 'message' => $ret['message'], 'statements' => []];
-            }
-        } else {
-            //транзитный
-            $ret = $tcBank->getStatement(['account' => $kfStatm->account, 'datefrom' => $kfStatm->dayfrom, 'dateto' => $kfStatm->dayto]);
-            if ($ret && isset($ret['status']) && $ret['status'] == 1) {
-                $state = [
-                    'status' => 1,
-                    'message' => '',
-                    'statements' => $kfStatm->ParseSatements($ret['statements'])
-                ];
-            } else {
-                $state = ['status' => 0, 'message' => $ret['message'], 'statements' => []];
-            }
-        }*/
-        return $state;
-
+    /**
+     * @return StatementsService
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\di\NotInstantiableException
+     */
+    public function getStatementsService()
+    {
+        return Yii::$container->get('StatementsService');
     }
 }

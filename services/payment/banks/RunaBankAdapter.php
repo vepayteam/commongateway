@@ -31,6 +31,7 @@ use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
+use app\services\payment\forms\GetStatementsForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
@@ -284,6 +285,11 @@ class RunaBankAdapter implements IBankAdapter
 
     public function currencyExchangeRates()
     {
-        // TODO: Implement currencyExchangeRates() method.
+        throw new GateException('Метод недоступен');
+    }
+
+    public function getStatements(GetStatementsForm $getStatementsForm)
+    {
+        throw new GateException('Метод недоступен');
     }
 }

@@ -28,6 +28,7 @@ use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
+use app\services\payment\forms\GetStatementsForm;
 use app\services\payment\forms\gratapay\CreatePayRequest;
 use app\services\payment\forms\gratapay\RefundPayRequest;
 use app\services\payment\forms\OkPayForm;
@@ -339,5 +340,10 @@ class GratapayAdapter implements IBankAdapter
             'Auth' => $this->gate->Login,
             'Sign' => $sign,
         ];
+    }
+
+    public function getStatements(GetStatementsForm $getStatementsForm)
+    {
+        throw new GateException('Метод недоступен');
     }
 }

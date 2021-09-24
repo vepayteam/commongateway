@@ -38,6 +38,7 @@ use app\services\payment\forms\brs\TransferToAccountRequest;
 use app\services\payment\forms\brs\XmlRequest;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
+use app\services\payment\forms\GetStatementsForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
@@ -866,6 +867,11 @@ class BRSAdapter implements IBankAdapter
      * @throws GateException
      */
     public function currencyExchangeRates()
+    {
+        throw new GateException('Метод недоступен');
+    }
+
+    public function getStatements(GetStatementsForm $getStatementsForm)
     {
         throw new GateException('Метод недоступен');
     }

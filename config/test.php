@@ -64,6 +64,7 @@ return [
             'AuthService' => ['class' => 'app\services\auth\AuthService'],
             'NotificationsService' => ['class' => 'app\services\notifications\NotificationsService'],
             'WallettoExchangeRateService' => ['class' => 'app\services\exchange_rates\WallettoExchangeRateService'],
+            'StatementsService' => ['class' => 'app\services\statements\StatementsService'],
         ],
     ],
     'modules' => [
