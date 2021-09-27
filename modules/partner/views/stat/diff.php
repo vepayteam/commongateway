@@ -66,8 +66,8 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                             </div>
                         </div>
                     </div>
-                    <hr/>
                     <div id="registryStatuses" style="display: none;">
+                        <hr/>
                         <?php foreach ([PaySchet::STATUS_DONE, PaySchet::STATUS_ERROR, PaySchet::STATUS_CANCEL] as $status): ?>
                             <div class="form-group">
                                 <label class="col-sm-2 control-label" for="status<?= $status ?>">Статус в реестре для "<?= PaySchet::STATUSES[$status] ?>"</label>

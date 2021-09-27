@@ -388,10 +388,6 @@
                         }))
                     }
 
-                    if (settings && settings.AllRegistryStatusSuccess) {
-                        $('#allRegistryStatusSuccess').prop('checked', true)
-                    }
-
                     if (settings && settings.Statuses) {
                         const statuses = JSON.parse(settings.Statuses)
                         for (const key in statuses) {
@@ -403,6 +399,13 @@
                     $('#registryStatusColumnGroup').css('display', 'block')
                     $('#dbColumnGroup').css('display', 'block')
                     $('#registryStatuses').css('display', 'block')
+
+                    if (settings && settings.AllRegistryStatusSuccess) {
+                        $('#allRegistryStatusSuccess').prop('checked', true)
+                        $('#registryStatuses').css('display', 'none')
+                    } else {
+                        $('#allRegistryStatusSuccess').prop('checked', false)
+                    }
 
                     $('#diffForm').closest('.ibox-content').toggleClass('sk-loading');
                 },
@@ -425,6 +428,15 @@
                 }
 
                 lk.diffColumns()
+            })
+
+            $('#allRegistryStatusSuccess').change(function () {
+                if (this.checked) {
+                    $('#registryStatuses').css('display', 'none')
+                }
+                else {
+                    $('#registryStatuses').css('display', 'block')
+                }
             })
         },
 
