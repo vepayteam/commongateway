@@ -722,6 +722,7 @@ class MTSBank implements IBank
                 case 500:
                     $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
                     $ans['httperror'] = Json::decode($curl->response);
+                    Yii::error(['curlerror:' => ['Headers' => $curl->getRequestHeaders(), 'Post' => Cards::MaskCardLog($post)]], 'merchant');
                     break;
                 default:
                     $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
@@ -730,6 +731,11 @@ class MTSBank implements IBank
         } catch (\yii\base\InvalidArgumentException $e) {
             $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
             $ans['httperror'] = $curl->response;
+            Yii::error([
+                'curlerror:' => ['Headers' => $curl->getRequestHeaders(), 'Post' => Cards::MaskCardLog($post)],
+                'Ex:' => [$e->getMessage(), $e->getTrace(), $e->getFile(), $e->getLine()],
+            ], 'merchant');
+
             return $ans;
         }
 
