@@ -26,7 +26,6 @@ use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
-use app\services\payment\forms\GetStatementsForm;
 use app\services\payment\forms\mts\CheckStatusPayRequest;
 use app\services\payment\forms\mts\ConfirmPayRequest;
 use app\services\payment\forms\mts\CreatePayRequest;
@@ -965,11 +964,6 @@ class MTSBankAdapter implements IBankAdapter
      * @throws GateException
      */
     public function currencyExchangeRates()
-    {
-        throw new GateException('Метод недоступен');
-    }
-
-    public function getStatements(GetStatementsForm $getStatementsForm)
     {
         throw new GateException('Метод недоступен');
     }

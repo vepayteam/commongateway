@@ -14,12 +14,10 @@ use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\traits\WallettoRequestTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CreatePayException;
-use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\RefundPayException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
-use app\services\payment\forms\GetStatementsForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
@@ -54,6 +52,7 @@ class WallettoBankAdapter implements IBankAdapter
     private const STATUS_REFUNDED = 'refunded';
     private const STATUS_AUTHORIZED = 'authorized';
     private const STATUS_REVERSED = 'reversed';
+
     public const ERROR_STATUS_MSG = 'Ошибка проверки статуса'; //TODO: create global error handler
     public const ERROR_EXCEPTION_MSG = 'Не удалось связаться с провайдером';
 
@@ -159,15 +158,15 @@ class WallettoBankAdapter implements IBankAdapter
                 []
             );
             if (!$response->isSuccess()) {
-                Yii::error('Walletto checkStatusPay err: ' . $response->json('failure_message'));
-                $errorMessage = $response->json('failure_message') ?? self::ERROR_STATUS_MSG;
+                $failureMessage = self::getFailureMessage($response);
+                Yii::error('Walletto checkStatusPay err: ' . $failureMessage);
                 $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
-                $checkStatusPayResponse->message = BankAdapterResponseException::setErrorMsg($errorMessage);
+                $checkStatusPayResponse->message = BankAdapterResponseException::setErrorMsg($failureMessage);
                 return $checkStatusPayResponse;
             }
             $responseData = $response->json('orders');
             $checkStatusPayResponse->status = $this->convertStatus($responseData[0]['status']);
-            $checkStatusPayResponse->message = '';
+            $checkStatusPayResponse->message = $responseData[0]['failure_message'] ?? '';
         } catch (GuzzleException $e) {
             Yii::error(' Walletto checkStatusPay err:' . $e->getMessage());
             throw new BankAdapterResponseException(
@@ -187,12 +186,12 @@ class WallettoBankAdapter implements IBankAdapter
         $refundPayResponse = new RefundPayResponse();
 
         $paySchet = $refundPayForm->paySchet;
-        if($paySchet->Status != PaySchet::STATUS_DONE) {
+        if ($paySchet->Status != PaySchet::STATUS_DONE) {
             throw new RefundPayException('Невозможно отменить незавершенный платеж');
         }
 
         $uri = '/orders/' . $paySchet->ExtBillNumber . '/cancel';
-        if($paySchet->DateCreate < Carbon::now()->startOfDay()->timestamp) {
+        if ($paySchet->DateCreate < Carbon::now()->startOfDay()->timestamp) {
             $uri = '/orders/' . $paySchet->ExtBillNumber . '/refund';
         }
 
@@ -205,7 +204,6 @@ class WallettoBankAdapter implements IBankAdapter
                 ]
             );
             if (!$response->isSuccess()) {
-                $errorMessage = $response->json('failure_message') ?? self::ERROR_STATUS_MSG;
                 $refundPayResponse->status = BaseResponse::STATUS_ERROR;
                 $refundPayResponse->message = BankAdapterResponseException::setErrorMsg(self::getFailureMessage($response));
                 return $refundPayResponse;
@@ -320,11 +318,6 @@ class WallettoBankAdapter implements IBankAdapter
         $currencyExchangeRatesResponse->status = BaseResponse::STATUS_DONE;
         $currencyExchangeRatesResponse->exchangeRates = $response->json('exchange_rates');
         return $currencyExchangeRatesResponse;
-    }
-
-    public function getStatements(GetStatementsForm $getStatementsForm)
-    {
-        throw new GateException('Метод недоступен');
     }
 
     private static function getFailureMessage(ClientResponse $clientResponse): string

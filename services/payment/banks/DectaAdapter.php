@@ -15,7 +15,6 @@ use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\decta\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\decta\OutCardTransactionResponse;
 use app\services\payment\banks\bank_adapter_responses\decta\RefundPayResponse;
-use app\services\payment\banks\bank_adapter_responses\GetStatementsResponse;
 use app\services\payment\banks\exceptions\DectaApiUrlException;
 use app\services\payment\banks\exceptions\InvalidBankActionException;
 use app\services\payment\exceptions\BankAdapterResponseException;
@@ -25,7 +24,6 @@ use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CancelPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
-use app\services\payment\forms\GetStatementsForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
@@ -434,14 +432,6 @@ class DectaAdapter implements IBankAdapter
      * @throws GateException
      */
     private function throwGateException(): void
-    {
-        throw new GateException(self::ERROR_METHOD_NOT_ALLOWED_MSG);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getStatements(GetStatementsForm $getStatementsForm)
     {
         throw new GateException(self::ERROR_METHOD_NOT_ALLOWED_MSG);
     }

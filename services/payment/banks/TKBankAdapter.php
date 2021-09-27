@@ -19,7 +19,6 @@ use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
-use app\services\payment\banks\bank_adapter_responses\GetStatementsResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentInitResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
@@ -39,7 +38,6 @@ use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\CreatePaySecondStepForm;
 use app\services\payment\forms\DonePayForm;
-use app\services\payment\forms\GetStatementsForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
@@ -50,7 +48,6 @@ use app\services\payment\forms\tkb\CreatePayRequest;
 use app\services\payment\forms\tkb\CreateRecurrentPayRequest;
 use app\services\payment\forms\tkb\DonePay3DSv2Request;
 use app\services\payment\forms\tkb\DonePayRequest;
-use app\services\payment\forms\tkb\GetStatementRequest;
 use app\services\payment\forms\tkb\OutCardPayRequest;
 use app\services\payment\forms\tkb\RefundPayRequest;
 use app\services\payment\forms\tkb\TransferToAccountRequest;
@@ -1688,38 +1685,5 @@ class TKBankAdapter implements IBankAdapter
     public function currencyExchangeRates()
     {
         throw new GateException('Метод недоступен');
-    }
-
-    public function getStatements(GetStatementsForm $getStatementsForm)
-    {
-        $action = '/nominal/v2/getStatement';
-
-        $getStatementRequest = new GetStatementRequest();
-        $getStatementRequest->accountNumber = $this->gate->SchetNumber;
-        $getStatementRequest->startDate = $getStatementsForm->dateFrom;
-        $getStatementRequest->endDate = $getStatementsForm->dateTo;
-
-        $this->UserCert = Yii::getAlias('@app/config/tcbcert/vepay.crt');
-        $this->UserKey = Yii::getAlias('@app/config/tcbcert/vepay.key');
-
-        if(!$getStatementRequest->validate()) {
-            throw new GateException('Некорректные данные запроса');
-        }
-
-        $queryData = Json::encode($getStatementRequest->getAttributes());
-        $ans = $this->curlXmlReq($queryData, $this->bankUrlXml . $action);
-
-        $getStatementsResponse = new GetStatementsResponse();
-        if (isset($ans['xml']) && !empty($ans['xml'])) {
-            $ans['xml'] = self::array_change_key_case_recursive($ans['xml'], CASE_LOWER);
-            if (isset($ans['xml']['documents'])) {
-                $getStatementsResponse->status = BaseResponse::STATUS_DONE;
-                $getStatementsResponse->statements = $ans['xml']['documents'];
-                return $getStatementsResponse;
-            }
-        }
-        $getStatementsResponse->status = BaseResponse::STATUS_ERROR;
-        $getStatementsResponse->message = 'Ошибка запроса';
-        return $getStatementsResponse;
     }
 }
