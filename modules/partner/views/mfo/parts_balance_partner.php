@@ -5,13 +5,14 @@
 /* @var \app\models\payonline\Partner $Partner */
 /* @var $IsAdmin bool */
 
-/* @var $partners array */
+/* @var $partners Partner[] */
 /* @var $data array */
 /* @var $columns array */
 
 /* @var $partsBalanceForm \app\services\balance\models\PartsBalanceForm */
 
 use app\models\partner\UserLk;
+use app\models\payonline\Partner;
 use app\services\balance\models\PartsBalancePartnerForm;
 
 $this->title = "Баланс по разбивке (Партнер)";
@@ -66,7 +67,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                         id="parts-balance__form__partner-select">
                                     <?php foreach ($partners as $partner): ?>
                                         <option value="<?= $partner->ID ?>">
-                                            <?= $partner->Name ?>
+                                            <?= $partner->nameWithId ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>

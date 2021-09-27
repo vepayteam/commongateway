@@ -1,6 +1,9 @@
 <?php
-/* @var $partnerlist */
+/* @var $partnerlist Partner[]*/
 /* @var $this yii\web\View */
+
+use app\models\payonline\Partner;
+
 ?>
 
 <div class="form-group row">
@@ -15,8 +18,8 @@
         <label class="control-label col-sm-3">Контрагент</label>
         <div class="col-sm-8">
             <select class="form-control" name="Perechislen[IdPartner]">
-                <?php foreach ($partnerlist as $partn) : ?>
-                    <option value="<?=$partn->ID?>"><?=$partn->Name?></option>
+                <?php foreach ($partnerlist as $partner) : ?>
+                    <option value="<?=$partner->ID?>"><?=$partner->nameWithId?></option>
                 <?php endforeach; ?>
             </select>
         </div>

@@ -45,9 +45,9 @@ use yii\widgets\Pjax;
                                 <div class="col-sm-4">
                                     <select class="form-control" name="IdPart">
                                         <option value="-1" data-ismfo="-1">Все</option>
-                                        <? foreach ($partnerlist as $partn) : ?>
-                                            <option value="<?=$partn->ID?>" data-ismfo="<?=$partn->IsMfo?>"><?=$partn->Name?></option>
-                                        <? endforeach; ?>
+                                        <?php foreach ($partnerlist as $partner) : ?>
+                                            <option value="<?=$partner->ID?>" data-ismfo="<?=$partner->IsMfo?>"><?=$partner->nameWithId?></option>
+                                        <?php endforeach; ?>
                                     </select>
                                 </div>
                             </div>
