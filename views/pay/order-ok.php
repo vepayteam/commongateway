@@ -31,7 +31,7 @@
         <?php endif; ?>
 
         <div class="r-body-info-split"></div>
-        <div class="r-body-info-sum"><span>Сумма</span> <b><?= round($paySchet->getSummFull() / 100, 2) ?> ₽</b></div>
+        <div class="r-body-info-sum"><span>Сумма</span> <b><?= round($paySchet->getSummFull() / 100, 2) ?> <?= $paySchet->currency->getSymbol() ?></b></div>
     </div>
 </div>
 
