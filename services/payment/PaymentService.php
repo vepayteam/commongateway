@@ -16,6 +16,8 @@ use app\modules\partner\models\PaySchetLogForm;
 use app\services\partners\models\PartnerOption;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\BRSAdapter;
+use app\services\payment\banks\IBankAdapter;
+use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\SetPayOkForm;
@@ -84,7 +86,6 @@ class PaymentService
         $paySchet = $setPayOkForm->paySchet;
         $paySchet->Status = 1;
         $paySchet->PayType = 0;
-        $paySchet->TimeElapsed = 1800;
         $paySchet->UserClickPay = 1;
         $paySchet->DateOplat = time();
         $paySchet->ExtBillNumber = $setPayOkForm->paySchet->ExtBillNumber;
@@ -351,23 +352,23 @@ class PaymentService
      */
     public function checkSbpCanTransfer(OutPayAccountForm $outPayAccountForm)
     {
-        // TODO: DRY
-        $uslugatovar = Uslugatovar::findOne([
-            'IDPartner' => $outPayAccountForm->partner->ID,
-            'IsCustom' => TU::$TOSCHET,
-            'IsDeleted' => 0,
-        ]);
-        $brsBank = Bank::findOne([
-            'ID' => BRSAdapter::$bank,
-        ]);
-
-        $bankAdapterBuilder = new BankAdapterBuilder();
-        $bankAdapterBuilder->buildByBank($outPayAccountForm->partner, $uslugatovar, $brsBank);
-
         /** @var BRSAdapter $brsBankAdapter */
-        $brsAdapter = $bankAdapterBuilder->getBankAdapter();
+        $brsAdapter = $this->processBankAdapter($outPayAccountForm, BRSAdapter::$bank, TU::$TOSCHET);
 
-        return $brsAdapter->checkTransfetB2C($outPayAccountForm);
+        return $brsAdapter->checkTransferB2C($outPayAccountForm);
+    }
+
+    /**
+     * @param OutPayAccountForm $outPayAccountForm
+     * @return array
+     * @throws GateException
+     */
+    public function sbpTransfer(OutPayAccountForm $outPayAccountForm): array
+    {
+        /** @var BRSAdapter $brsBankAdapter */
+        $brsAdapter = $this->processBankAdapter($outPayAccountForm, BRSAdapter::$bank, TU::$B2CSBP);
+
+        return $brsAdapter->transferB2C($outPayAccountForm);
     }
 
     /**
@@ -384,5 +385,34 @@ class PaymentService
         $paySchet->ErrorInfo = 'Возврат платежа';
         $paySchet->CountSendOK = 0;
         $paySchet->save(false);
+    }
+
+    /**
+     * @param OutPayAccountForm $outPayAccountForm
+     * @param int $bankId
+     * @param string $uslugatovarType
+     *
+     * @return IBankAdapter
+     * @throws exceptions\GateException
+     */
+    private function processBankAdapter(OutPayAccountForm $outPayAccountForm, int $bankId, string $uslugatovarType): IBankAdapter
+    {
+        $uslugatovar = Uslugatovar::findOne([
+            'IDPartner' => $outPayAccountForm->partner->ID,
+            'IsCustom' => $uslugatovarType,
+            'IsDeleted' => 0,
+        ]);
+        $bank = Bank::findOne([
+            'ID' => $bankId,
+        ]);
+
+        if (!$uslugatovar || !$bank) {
+            throw new GateException("Нет шлюза. partnerId=".$outPayAccountForm->partner->ID.", uslugatovarType=$uslugatovarType bankId=$bankId");
+        }
+
+        $bankAdapterBuilder = new BankAdapterBuilder();
+        $bankAdapterBuilder->buildByBank($outPayAccountForm->partner, $uslugatovar, $bank);
+
+        return $bankAdapterBuilder->getBankAdapter();
     }
 }
