@@ -8,7 +8,7 @@ namespace app\models;
 trait ModelHelper
 {
     /**
-     * @var
+     * @var bool
      */
     public $isTrue = true;
 
