@@ -53,6 +53,22 @@ class OutController extends Controller
     }
 
     /**
+     * @param $action
+     * @return bool
+     * @throws BadRequestHttpException
+     * @throws ForbiddenHttpException
+     */
+    public function beforeAction($action)
+    {
+        if ($this->checkBeforeAction()) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+            $this->enableCsrfValidation = false;
+            return parent::beforeAction($action);
+        }
+        return false;
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function afterAction($action, $result)
@@ -71,22 +87,6 @@ class OutController extends Controller
         }
 
         return $result;
-    }
-
-    /**
-     * @param $action
-     * @return bool
-     * @throws BadRequestHttpException
-     * @throws ForbiddenHttpException
-     */
-    public function beforeAction($action)
-    {
-        if ($this->checkBeforeAction()) {
-            Yii::$app->response->format = Response::FORMAT_JSON;
-            $this->enableCsrfValidation = false;
-            return parent::beforeAction($action);
-        }
-        return false;
     }
 
     protected function verbs()
