@@ -53,6 +53,27 @@ class OutController extends Controller
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public function afterAction($action, $result)
+    {
+        $result = parent::afterAction($action, $result);
+
+        try {
+            Yii::info([
+                'endpoint' => $action->uniqueId,
+                'header' => Yii::$app->request->headers->toArray(),
+                'body' => Yii::$app->request->post(),
+                'return' => (array) $result,
+            ], 'mfo_' . $action->controller->id . '_' . $action->id);
+        } catch (\Exception $e) {
+
+        }
+
+        return $result;
+    }
+
+    /**
      * @param $action
      * @return bool
      * @throws BadRequestHttpException
@@ -98,29 +119,22 @@ class OutController extends Controller
             $outCardPayForm->load($mfo->Req(), '');
             if (!$outCardPayForm->validate()) {
                 Yii::warning("out/paycard: " . $outCardPayForm->GetError(), 'mfo');
-                $this->logRequest(Yii::$app->request, 'mfo/out/paycard', ['status' => 0, 'message' => $outCardPayForm->GetError()]);
                 return ['status' => 0, 'message' => $outCardPayForm->GetError()];
             }
             // рубли в коп
             $outCardPayForm->amount *= 100;
             $mfoOutCardStrategy = new MfoOutCardStrategy($outCardPayForm);
             $paySchet = $mfoOutCardStrategy->exec();
-            $this->logRequest(Yii::$app->request, 'mfo/out/paycard', ['status' => 1, 'id' => $paySchet->ID, 'message' => '']);
             return ['status' => 1, 'id' => $paySchet->ID, 'message' => ''];
         } catch (CardTokenException $e) {
-            $this->logRequest(Yii::$app->request, 'mfo/out/paycard', ['status' => 0, 'message' => $e->getMessage()]);
             return ['status' => 0, 'message' => $e->getMessage()];
         } catch (CreatePayException $e) {
-            $this->logRequest(Yii::$app->request, 'mfo/out/paycard', ['status' => 0, 'message' => $e->getMessage()]);
             return ['status' => 0, 'message' => $e->getMessage()];
         } catch (GateException $e) {
-            $this->logRequest(Yii::$app->request, 'mfo/out/paycard', ['status' => 0, 'message' => $e->getMessage()]);
             return ['status' => 0, 'message' => $e->getMessage()];
         } catch (\Exception $e) {
-            $this->logRequest(Yii::$app->request, 'mfo/out/paycard', ['status' => 0, 'message' => $e->getMessage()]);
             return ['status' => 0, 'message' => $e->getMessage()];
         } catch (ValidationException $e) {
-            $this->logRequest(Yii::$app->request, 'mfo/out/paycard', ['status' => 0, 'message' => $e->getMessage()]);
             return ['status' => 0, 'message' => $e->getMessage()];
         }
     }
@@ -295,16 +309,5 @@ class OutController extends Controller
     protected function getPaymentService()
     {
         return Yii::$container->get('PaymentService');
-    }
-
-    private function logRequest(Request $request, string $endpoint = '', array $return = []): void
-    {
-        Yii::info([
-            'endpoint' => $endpoint,
-            'action' => 'request',
-            'header' => $request->headers->toArray(),
-            'body' => $request->post(),
-            'return' => $return,
-        ], 'mfo_out_paycard');
     }
 }
