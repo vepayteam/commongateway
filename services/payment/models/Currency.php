@@ -43,4 +43,9 @@ class Currency extends ActiveRecord
     {
         return array_keys(CurrencyRepository::getCurrenciesByCode());
     }
+
+    public function getSymbol(): ?string
+    {
+        return self::SYMBOLS[$this->Code] ?? null;
+    }
 }
