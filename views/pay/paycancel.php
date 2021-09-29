@@ -20,7 +20,6 @@
 
     <div class="row">
         <div class="col-xs-12 text-center">
-            <p class="infoend">Отказ банка – эмитента карты.</p>
             <p class="infoend"><?=isset($message) && !empty($message) ? $message : 'Ошибка в процессе оплаты, указаны неверные данные карты.'?></p>
         </div>
     </div>

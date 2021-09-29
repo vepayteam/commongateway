@@ -31,8 +31,8 @@ use app\models\payonline\Partner; ?>
                             <div class="col-sm-4">
                                 <select class="form-control" name="IdPart" id="actidpatner">
                                     <option value="0"></option>
-                                    <?php foreach ($partnerlist as $partn) : ?>
-                                        <option value="<?=$partn->ID?>"><?=$partn->Name?></option>
+                                    <?php foreach ($partnerlist as $partner) : ?>
+                                        <option value="<?=$partner->ID?>"><?=$partner->nameWithId?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>

@@ -52,4 +52,9 @@ class Currency extends ActiveRecord
 
         return ArrayHelper::getColumn($currencies, 'Code');
     }
+
+    public function getSymbol(): ?string
+    {
+        return self::SYMBOLS[$this->Code] ?? null;
+    }
 }

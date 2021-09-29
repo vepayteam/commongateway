@@ -1,9 +1,8 @@
 <?php
 /* @var yii\web\View $this */
-/* @var array $partners */
+/* @var app\models\payonline\Partner[] $partners */
 /* @var int $all */
 /* @var bool $partial */
-
 ?>
 <div class="row">
     <div class="col-lg-6">
@@ -21,12 +20,12 @@
                     <div class="form-group">
                         <label>Выберите мерчант:</label>
                         <select name="IdPartner" class="form-control">
-                            <? if ($all) :?>
+                            <?php if ($all) :?>
                                 <option value="-1">По всем</option>
-                            <? endif; ?>
-                            <? foreach ($partners as $part) : ?>
-                                <option value="<?= $part->ID ?>"><?= $part->Name ?></option>
-                            <? endforeach; ?>
+                            <?php endif; ?>
+                            <?php foreach ($partners as $partner) : ?>
+                                <option value="<?= $partner->ID ?>"><?= $partner->nameWithId ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
                     <div class="form-group">

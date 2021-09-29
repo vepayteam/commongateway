@@ -1,10 +1,11 @@
 <?php
 use app\services\payment\models\Bank;
+use app\models\payonline\Partner;
 
 /* @var yii\web\View $this */
 /* @var array $uslugilist */
 /* @var array $magazlist */
-/* @var $partnerlist  */
+/* @var Partner[] $partnerlist  */
 /* @var $IsAdmin bool */
 /* @var $bankList Bank[] */
 
@@ -48,9 +49,8 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                             <div class="col-sm-4">
                                 <select class="form-control" name="IdPart">
                                     <option value="-1" data-ismfo="-1">Все</option>
-                                    <?php foreach ($partnerlist as $partn) : ?>
-                                        <option value="<?= $partn->ID ?>"
-                                            data-ismfo="<?= $partn->ID == 1 ? 2 : $partn->IsMfo ?>"><?= $partn->Name ?></option>
+                                    <?php foreach ($partnerlist as $partner) : ?>
+                                        <option value="<?=$partner->ID?>" data-ismfo="<?= $partner->ID == 1 ? 2 : $partner->IsMfo?>"><?=$partner->nameWithId?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
