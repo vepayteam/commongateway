@@ -84,7 +84,7 @@ class CurrencyRepository
         $code = $code ? self::getCurrencyByCode($code) : $code;
         $id = $id ? self::getCurrencyById($id) : $id;
 
-        return $code === $id ? $id : null;
+        return $code && $id ? ($code === $id ? $id : null) : ($code ?: $id);
     }
 
     public function getDefaultMainCurrency(): ?Currency
