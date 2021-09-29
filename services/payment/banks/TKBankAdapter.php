@@ -491,6 +491,7 @@ class TKBankAdapter implements IBankAdapter
                 case 500:
                     $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
                     $ans['httperror'] = $jsonReq ? Json::decode($curl->response) : $curl->response;
+                    Yii::error(['curlerror:' => ['Headers' => $curl->getRequestHeaders(), 'Post' => Cards::MaskCardLog($post)]], 'merchant');
                     break;
                 default:
                     $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
@@ -499,6 +500,10 @@ class TKBankAdapter implements IBankAdapter
         } catch (\yii\base\InvalidArgumentException $e) {
             $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
             $ans['httperror'] = $curl->response;
+            Yii::error([
+                'curlerror:' => ['Headers' => $curl->getRequestHeaders(), 'Post' => Cards::MaskCardLog($post)],
+                'Ex:' => [$e->getMessage(), $e->getTrace(), $e->getFile(), $e->getLine()],
+            ], 'merchant');
             return $ans;
         }
 

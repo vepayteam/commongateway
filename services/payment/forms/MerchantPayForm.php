@@ -20,7 +20,7 @@ class MerchantPayForm extends BaseForm implements AmountFormInterface
     public $id;
     //public $type = 0;/*'type', */
     public $card = 0;
-    public $timeout = 15;
+    public $timeout = 30;
     public $successurl = '';
     public $failurl = '';
     public $cancelurl = '';

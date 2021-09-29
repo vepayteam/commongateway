@@ -119,6 +119,7 @@ class MerchantPayCreateStrategy
         $paySchet->DateLastUpdate = time();
         $paySchet->IsAutoPay = 0;
         $paySchet->UserUrlInform = $bankAdapterBuilder->getUslugatovar()->UrlInform;
+        $paySchet->TimeElapsed = $this->payForm->timeout * 60;
 
         $paySchet->SuccessUrl = $this->payForm->successurl;
         $paySchet->FailedUrl = $this->payForm->failurl;
