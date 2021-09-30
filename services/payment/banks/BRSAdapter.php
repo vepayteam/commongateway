@@ -10,7 +10,6 @@ use app\models\TU;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
-use app\services\payment\banks\bank_adapter_responses\CheckStatusB2cResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
@@ -201,14 +200,14 @@ class BRSAdapter implements IBankAdapter
     /**
      * @param OkPayForm $okPayForm
      *
-     * @return CheckStatusB2cResponse
+     * @return CheckStatusPayResponse
      */
-    protected function checkStatusB2c(OkPayForm $okPayForm): CheckStatusB2cResponse
+    protected function checkStatusB2c(OkPayForm $okPayForm): CheckStatusPayResponse
     {
         $uri = '/eis-app/eis-rs/businessPaymentService/getB2cStatus';
 
         $requestData = $this->getCheckStatusB2cRequestData($okPayForm);
-        $response = new CheckStatusB2cResponse();
+        $response = new CheckStatusPayResponse();
 
         try {
             $ans = $this->sendB2CRequest($uri, $requestData,'POST', $this->getTransferB2CRequestSslStructure());
