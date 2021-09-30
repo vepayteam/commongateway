@@ -60,7 +60,7 @@ class MfoSbpTransferStrategy
             $this->outPayaccForm->paySchet->ErrorInfo = 'Ожидает запрос статуса';
 
             Yii::$app->queue->push(new RefreshStatusPayJob([
-                'paySchetId' =>  $this->outPayaccForm->paySchet->ID,
+                'paySchetId' => $this->outPayaccForm->paySchet->ID,
             ]));
         } else {
             $this->outPayaccForm->paySchet->Status = PaySchet::STATUS_ERROR;

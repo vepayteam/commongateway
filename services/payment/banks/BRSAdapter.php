@@ -10,6 +10,7 @@ use app\models\TU;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
+use app\services\payment\banks\bank_adapter_responses\CheckStatusB2cResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
@@ -23,6 +24,7 @@ use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\BRSAdapterExeception;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
+use app\services\payment\forms\brs\CheckStatusB2cRequest;
 use app\services\payment\forms\brs\CheckStatusPayOutAccountRequest;
 use app\services\payment\forms\brs\CheckStatusPayOutCardRequest;
 use app\services\payment\forms\brs\CheckStatusPayRequest;
@@ -185,20 +187,53 @@ class BRSAdapter implements IBankAdapter
      */
     public function checkStatusPay(OkPayForm $okPayForm)
     {
-        if($okPayForm->getPaySchet()->uslugatovar->IsCustom == TU::$TOCARD) {
+        $uslugatovar = $okPayForm->getPaySchet()->uslugatovar;
+        if($uslugatovar->IsCustom == TU::$TOCARD) {
             return $this->checkStatusPayOutCard($okPayForm);
-        } elseif ($okPayForm->getPaySchet()->uslugatovar->IsCustom == TU::$TOSCHET) {
+        } elseif ($uslugatovar->IsCustom == TU::$TOSCHET) {
             return $this->checkStatusPayOutSchet($okPayForm);
-        } elseif ($okPayForm->getPaySchet()->uslugatovar->IsCustom == TU::$B2CSBP) {
-            /** @TODO: реализация метода получения статуса по выполненному переводу,
-             * метод «getB2сStatus» (Спецификация по интеграции с СБП Функционал В2С) */
-        } else {
-            return $this->checkStatusPayBase($okPayForm);
+        } elseif ($uslugatovar->IsCustom == TU::$B2CSBP) {
+            return $this->checkStatusB2c($okPayForm);
         }
+        return $this->checkStatusPayBase($okPayForm);
     }
 
     /**
      * @param OkPayForm $okPayForm
+     *
+     * @return CheckStatusB2cResponse
+     */
+    protected function checkStatusB2c(OkPayForm $okPayForm): CheckStatusB2cResponse
+    {
+        $uri = '/eis-app/eis-rs/businessPaymentService/getB2cStatus';
+
+        $requestData = $this->getCheckStatusB2cRequestData($okPayForm);
+        $response = new CheckStatusB2cResponse();
+
+        try {
+            $ans = $this->sendB2CRequest($uri, $requestData,'POST', $this->getTransferB2CRequestSslStructure());
+
+            if (isset($ans['code']) && $ans['code'] == 0) {
+                $response->status = BaseResponse::STATUS_DONE;
+                $response->message = $ans['message'] ?? '';
+
+                return $response;
+            }
+
+            $response->status = BaseResponse::STATUS_ERROR;
+            $response->message = $ans['message'] ?? '';
+        } catch (BankAdapterResponseException $e) {
+            $response->status = BaseResponse::STATUS_ERROR;
+            $response->message = $e->getMessage();
+        }
+
+        return $response;
+    }
+
+    /**
+     * @deprecated
+     * @param OkPayForm $okPayForm
+     *
      * @return CheckStatusPayResponse
      */
     protected function checkStatusPayOutSchet(OkPayForm $okPayForm)
@@ -821,11 +856,9 @@ class BRSAdapter implements IBankAdapter
     /**
      * @param OutPayAccountForm $outPayaccForm
      * @return array
-     * @throws \yii\base\Exception
      */
     private function getTransferB2cRequestData(OutPayAccountForm $outPayaccForm): array
     {
-        $id = Yii::$app->security->generateRandomString(16);
         $transferToAccountRequest = new TransferToAccountRequest();
         $transferToAccountRequest->bic = $outPayaccForm->bic;
         $transferToAccountRequest->receiverId = $outPayaccForm->getPhoneToSend();
@@ -836,12 +869,26 @@ class BRSAdapter implements IBankAdapter
         $transferToAccountRequest->amount = $outPayaccForm->amount;
         $transferToAccountRequest->account = $outPayaccForm->account;
         $transferToAccountRequest->phone = $outPayaccForm->getPhoneToSend();
-        $transferToAccountRequest->sourceId = $id;
+        $transferToAccountRequest->sourceId = $outPayaccForm->paySchet->ID;
 
         $requestData = $transferToAccountRequest->getAttributes();
         $requestData['msgSign'] = $transferToAccountRequest->getMsgSign($this->gate, 'key_' . $this->gate->Login . '.pem');
 
         return $requestData;
+    }
+
+    /**
+     * @param OkPayForm $okPayForm
+     *
+     * @return array
+     */
+    private function getCheckStatusB2cRequestData(OkPayForm $okPayForm): array
+    {
+        $transferToAccountRequest = new CheckStatusB2cRequest();
+        $transferToAccountRequest->sourceId = (string)$okPayForm->getPaySchet()->ID;
+        $transferToAccountRequest->operationId = $okPayForm->getPaySchet()->ExtBillNumber;
+
+        return $transferToAccountRequest->getAttributes();
     }
 
     /**
