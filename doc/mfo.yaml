@@ -375,7 +375,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StatusId"
+                $ref: "#/components/schemas/Status"
         default:
           description: Error (40X,500)
           content:
@@ -1084,16 +1084,20 @@ components:
           description: Данные клиента (опциональный параметр)
         account:
           type: string
-          description: Счет в банке
+          description: Счет юридического лица, с которого отравляется перевод
         phone:
           type: string
           description: Номер телефона в формате 79123456789
         bic:
           type: string
-          description: БИК банка
+          description: БИК банка получателя
         amount:
           type: number
           description: Cумма платежа
+        extid:
+          type: string
+          maxLength: 40
+          description: Ext ID
     Status:
       type: object
       properties:

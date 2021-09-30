@@ -858,6 +858,7 @@ class BRSAdapter implements IBankAdapter
      */
     private function getTransferB2cRequestData(OutPayAccountForm $outPayaccForm): array
     {
+        $id = $outPayaccForm->paySchet->ID ?? Yii::$app->security->generateRandomString(16);
         $transferToAccountRequest = new TransferToAccountRequest();
         $transferToAccountRequest->bic = $outPayaccForm->bic;
         $transferToAccountRequest->receiverId = $outPayaccForm->getPhoneToSend();
@@ -868,7 +869,7 @@ class BRSAdapter implements IBankAdapter
         $transferToAccountRequest->amount = $outPayaccForm->amount;
         $transferToAccountRequest->account = $outPayaccForm->account;
         $transferToAccountRequest->phone = $outPayaccForm->getPhoneToSend();
-        $transferToAccountRequest->sourceId = $outPayaccForm->paySchet->ID;
+        $transferToAccountRequest->sourceId = $id;
 
         $requestData = $transferToAccountRequest->getAttributes();
         $requestData['msgSign'] = $transferToAccountRequest->getMsgSign($this->gate, 'key_' . $this->gate->Login . '.pem');
