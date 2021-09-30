@@ -160,7 +160,8 @@ class OutController extends Controller
             $result = $this->getPaymentService()->sbpTransfer($outPayaccForm);
             return ['status' => $result->Status, 'message' => $result->ErrorInfo, 'id' => $result->ID];
         } catch (GateException | NotInstantiableException | InvalidConfigException $e) {
-            return ['status' => 0, 'message' => $e->getMessage()];
+            Yii::error([$e->getMessage(), $e->getTrace(), $e->getFile(), $e->getLine()], 'mfo_out');
+            return ['status' => 0, 'message' => 'Ошибка запроса'];
         }
     }
 
