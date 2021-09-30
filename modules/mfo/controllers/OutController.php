@@ -83,7 +83,7 @@ class OutController extends Controller
                 'return' => (array) $result,
             ], 'mfo_' . $action->controller->id . '_' . $action->id);
         } catch (\Exception $e) {
-
+            Yii::error([$e->getMessage(), $e->getTrace(), $e->getFile(), $e->getLine()], 'mfo_out');
         }
 
         return $result;
