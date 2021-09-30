@@ -90,7 +90,7 @@ class GetStatementsJob extends BaseObject implements \yii\queue\JobInterface
             return true;
         }
 
-        $inn = $statement['inn'];
+        $inn = $statement['inn'] ?? '';
         $description = $statement['description'];
         if ($inn == '7709129705') {
             // TODO: заменить ТКБ на Vepay и прибвать комиссию
@@ -98,6 +98,7 @@ class GetStatementsJob extends BaseObject implements \yii\queue\JobInterface
             $inn = '7728487400';
             $description = $this->changeDescript($description);
         } elseif ($inn == '7707083893' || $inn == '7744001497') {
+
             //сбербанк,гпб - подставить реквизиты из name и назначения
             $n = explode('//', $statement['name']);
             if (count($n) > 2) {
@@ -111,6 +112,8 @@ class GetStatementsJob extends BaseObject implements \yii\queue\JobInterface
             if (preg_match('/ИНН\s+(\d+)/ius', $description, $d)) {
                 $inn = $d[1];
             }
+        } else {
+            $name = $statement['name'] ?? '';
         }
 
         $statementsAccount = new StatementsAccount();
@@ -124,15 +127,15 @@ class GetStatementsJob extends BaseObject implements \yii\queue\JobInterface
         $statementsAccount->SummPP = round($statement['summ'] * 100.0);
         $statementsAccount->SummComis = 0;
         $statementsAccount->Description = mb_substr($description, 0, 500);
-        $statementsAccount->Name = $name;
-        $statementsAccount->Inn = $inn;
-        $statementsAccount->Kpp = $statement['kpp'];
+        $statementsAccount->Name = $name ?? '';
+        $statementsAccount->Inn = $inn ?? '';
+        $statementsAccount->Kpp = $statement['kpp'] ?? '';
         $statementsAccount->Account = $statement['account'];
-        $statementsAccount->Bic = $statement['bic'];
-        $statementsAccount->Bank = $statement['bank'];
-        $statementsAccount->BankAccount = $statement['bankaccount'];
+        $statementsAccount->Bic = $statement['bic'] ?? '';
+        $statementsAccount->Bank = $statement['bank'] ?? '';
+        $statementsAccount->BankAccount = $statement['bankaccount'] ?? '';
 
-        return $statementsAccount->save();
+        return $statementsAccount->save(false);
     }
 
     /**
