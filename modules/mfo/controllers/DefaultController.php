@@ -122,7 +122,8 @@ class DefaultController extends Controller
         try {
             $data = $this->getPaymentService()->getSbpBankReceive();
         } catch (NotInstantiableException | InvalidConfigException | \Exception $e) {
-            return ['status' => 0, 'message' => $e->getMessage()];
+            Yii::error([$e->getMessage(), $e->getTrace(), $e->getFile(), $e->getLine()], 'mfo_out');
+            return ['status' => 0, 'message' => 'Ошибка запроса'];
         }
         Yii::$app->response->format = Response::FORMAT_JSON;
 
