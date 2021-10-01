@@ -24,6 +24,7 @@ class TransferToAccountRequest extends Model
     public $firstName;
     public $lastName;
     public $middleName;
+    public $fio;
     public $phone;
     public $amount;
     public $account;

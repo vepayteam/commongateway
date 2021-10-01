@@ -61,6 +61,9 @@ class FortaTechAdapter implements IBankAdapter
     protected $gate;
     /** @var Client */
     protected $api;
+    protected $errorMatchList = [
+        'failed to connect to' => 'Не удалось связаться с провайдером',
+    ];
 
     /**
      * @inheritDoc
@@ -443,6 +446,21 @@ class FortaTechAdapter implements IBankAdapter
     }
 
     /**
+     * @param string $errorMessage
+     * @return string
+     */
+    protected function formatErrorMessage(string $errorMessage): string
+    {
+        $errorNeedles = array_keys($this->errorMatchList);
+        foreach ($errorNeedles as $errorNeedle) {
+            if (stripos($errorMessage, $errorNeedle) !== false) {
+                return $this->errorMatchList[$errorNeedle];
+            }
+        }
+        return $errorMessage;
+    }
+
+    /**
      * @inheritDoc
      */
     public function outCardPay(OutCardPayForm $outCardPayForm)
@@ -476,6 +494,9 @@ class FortaTechAdapter implements IBankAdapter
                 $outCardPayResponse->message = 'Ошибка запроса';
             }
         }
+
+        $outCardPayResponse->message = $this->formatErrorMessage($outCardPayResponse->message);
+
         return $outCardPayResponse;
     }
 
