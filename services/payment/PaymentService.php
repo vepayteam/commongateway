@@ -6,22 +6,21 @@ namespace app\services\payment;
 
 use app\models\kfapi\KfRequest;
 use app\models\partner\stat\export\csv\ToCSV;
-use app\models\payonline\BalancePartner;
 use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
-use app\models\queue\JobPriorityInterface;
 use app\models\SendEmail;
 use app\models\TU;
 use app\modules\partner\models\PaySchetLogForm;
 use app\services\partners\models\PartnerOption;
+use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\BRSAdapter;
 use app\services\payment\banks\IBankAdapter;
 use app\services\payment\exceptions\GateException;
-use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\SetPayOkForm;
 use app\services\payment\jobs\RecurrentPayJob;
+use app\services\payment\jobs\RefreshStatusPayJob;
 use app\services\payment\jobs\RefundPayJob;
 use app\services\payment\models\Bank;
 use app\services\payment\models\PaySchet;
@@ -30,7 +29,7 @@ use app\services\payment\models\UslugatovarType;
 use app\services\payment\payment_strategies\CreateFormEcomStrategy;
 use app\services\payment\payment_strategies\CreateFormJkhStrategy;
 use app\services\payment\payment_strategies\IPaymentStrategy;
-use app\services\payment\jobs\RefreshStatusPayJob;
+use app\services\payment\payment_strategies\mfo\MfoSbpTransferStrategy;
 use app\services\payment\traits\CardsTrait;
 use app\services\payment\traits\PayPartsTrait;
 use app\services\payment\traits\ValidateTrait;
@@ -350,25 +349,24 @@ class PaymentService
      * @return mixed
      * @throws exceptions\GateException
      */
-    public function checkSbpCanTransfer(OutPayAccountForm $outPayAccountForm)
+    public function checkSbpCanTransfer(OutPayAccountForm $outPayAccountForm): TransferToAccountResponse
     {
         /** @var BRSAdapter $brsBankAdapter */
-        $brsAdapter = $this->processBankAdapter($outPayAccountForm, BRSAdapter::$bank, TU::$TOSCHET);
+        $brsAdapter = $this->processBankAdapter($outPayAccountForm, BRSAdapter::$bank, TU::$B2CSBP);
 
         return $brsAdapter->checkTransferB2C($outPayAccountForm);
     }
 
     /**
      * @param OutPayAccountForm $outPayAccountForm
-     * @return array
+     * @return PaySchet
      * @throws GateException
+     * @throws exceptions\CreatePayException
      */
-    public function sbpTransfer(OutPayAccountForm $outPayAccountForm): array
+    public function sbpTransfer(OutPayAccountForm $outPayAccountForm): PaySchet
     {
-        /** @var BRSAdapter $brsBankAdapter */
-        $brsAdapter = $this->processBankAdapter($outPayAccountForm, BRSAdapter::$bank, TU::$B2CSBP);
-
-        return $brsAdapter->transferB2C($outPayAccountForm);
+        $mfoSbpTransferStrategy = new MfoSbpTransferStrategy($outPayAccountForm);
+        return $mfoSbpTransferStrategy->exec();
     }
 
     /**
