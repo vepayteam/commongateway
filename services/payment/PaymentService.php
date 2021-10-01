@@ -317,8 +317,6 @@ class PaymentService
      */
     public function getSbpBankReceive()
     {
-        Yii::$app->cache->flush();
-
         $data = Yii::$app->cache->getOrSet(self::GET_SBP_BANK_RECEIVER_CACHE_KEY, function() {
             $partner = Partner::findOne(['ID' => Partner::VEPAY_ID]);
             $uslugatovar = Uslugatovar::findOne([
