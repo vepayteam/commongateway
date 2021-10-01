@@ -162,6 +162,7 @@ class DectaHelper
      * @param ClientResponse $response
      *
      * @return CheckStatusPayResponse
+     * @throws BankAdapterResponseException
      */
     public static function handleCheckStatusPayResponse(ClientResponse $response): CheckStatusPayResponse
     {
@@ -176,10 +177,13 @@ class DectaHelper
             return $checkStatusPayResponse;
         }
 
-        $checkStatusPayResponse->status = self::convertStatus($response->json('status'));
-        $checkStatusPayResponse->message = '';
+        $statusData = $response->json('status_changes');
 
-        return $checkStatusPayResponse;
+        if(!is_array($statusData) || count($statusData) === 0) {
+            throw new BankAdapterResponseException('Invalid status_changes data');
+        }
+
+        return self::handleOrderStatus($statusData, $checkStatusPayResponse);
     }
 
     /**
@@ -309,5 +313,26 @@ class DectaHelper
         $responseData = $response->json();
 
         return $responseData[self::ERROR_RESPONSE_TOP_KEY][0]['message'] ?? '';
+    }
+
+    /**
+     * @param array $statusData
+     * @param CheckStatusPayResponse $checkStatusPayResponse
+     *
+     * @return CheckStatusPayResponse
+     * @throws BankAdapterResponseException
+     */
+    private static function handleOrderStatus(array $statusData, CheckStatusPayResponse $checkStatusPayResponse): CheckStatusPayResponse
+    {
+        $actualStatusData = array_pop($statusData);
+
+        if (!array_key_exists('new_status', $actualStatusData)) {
+            throw new BankAdapterResponseException('Cannot get new_status');
+        }
+
+        $checkStatusPayResponse->status = self::convertStatus($actualStatusData['new_status']);
+        $checkStatusPayResponse->message = '';
+
+        return $checkStatusPayResponse;
     }
 }
