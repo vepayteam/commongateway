@@ -145,6 +145,10 @@ class DefaultController extends Controller
      */
     private function mapGetsbpbankreceiverResult(array $data): array
     {
+        if (!isset($data['fpsMembers'])) {
+            return [];
+        }
+
         $filteredMembers = array_filter($data['fpsMembers'], static function($member) {
             $b2COtherScenarioIndex = array_search('B2COther', array_column($member['scenarios'], 'name'), true);
             // Если в массиве scenarios нет записи с name=B2COther, не включаем в результат
