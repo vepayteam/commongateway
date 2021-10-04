@@ -3,6 +3,7 @@
 
 namespace app\services\payment\banks;
 
+use app\helpers\DebugHelper;
 use app\models\mfo\MfoReq;
 use app\models\payonline\Cards;
 use app\models\payonline\User;
@@ -1367,6 +1368,14 @@ class TKBankAdapter implements IBankAdapter
     public function checkStatusPay(OkPayForm $okPayForm)
     {
         $action = '/api/tcbpay/gate/getorderstate';
+
+        /**
+         * VPBC-1013: добавлено логирование для того, чтобы выяснить что вызывает getorderstate.
+         * @todo Удалить после багфикса.
+         */
+        $route = Yii::$app->controller->route ?? null;
+        $stackTrace = DebugHelper::getStackTrace();
+        Yii::info("Request TKB getorderstate. PaySchet ID: {$okPayForm->IdPay}, Route: {$route}). Stack trace: \n{$stackTrace}");
 
         $checkStatusPayRequest = new CheckStatusPayRequest();
         $checkStatusPayRequest->OrderID = $okPayForm->IdPay;
