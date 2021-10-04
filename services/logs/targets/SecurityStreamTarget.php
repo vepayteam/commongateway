@@ -3,10 +3,13 @@
 namespace app\services\logs\targets;
 
 use app\helpers\Modifiers;
+use app\services\logs\traits\TraceLogTrait;
 use yii\log\Target;
 
 abstract class SecurityStreamTarget extends Target
 {
+    use TraceLogTrait;
+
     public $_stream;
 
     public function __construct($config = [])
