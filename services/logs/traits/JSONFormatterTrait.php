@@ -2,7 +2,6 @@
 
 namespace app\services\logs\traits;
 
-use app\helpers\EnvHelper;
 use Exception;
 use Yii;
 use yii\helpers\Json;
@@ -61,7 +60,7 @@ trait JSONFormatterTrait
      * @throws \Throwable
      * @throws \yii\base\InvalidConfigException
      */
-    public function getMessagePrefix($message)
+    public function getMessagePrefix($message): array
     {
         if ($this->prefix !== null) {
             return call_user_func($this->prefix, $message);
@@ -89,10 +88,8 @@ trait JSONFormatterTrait
         return [
             'ip' => $ip,
             'user' => $userID,
-            'session_id' => $sessionID,
-            'trace_id' => EnvHelper::getParam(EnvHelper::UNIQUE_ID),
-            'payschet_id' => EnvHelper::getParam(EnvHelper::PAYSCHET_ID),
-            'payschet_extid' => EnvHelper::getParam(EnvHelper::PAYSCHET_EXTID),
+            'session_id' => $sessionID
         ];
     }
+
 }
