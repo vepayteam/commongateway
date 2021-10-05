@@ -3,6 +3,7 @@
 
 namespace app\services\payment\banks;
 
+use app\helpers\DebugHelper;
 use app\models\mfo\MfoReq;
 use app\models\payonline\Cards;
 use app\models\payonline\User;
@@ -479,8 +480,11 @@ class TKBankAdapter implements IBankAdapter
         //Yii::warning("Headers: " .print_r($curl->getRequestHeaders(), true), 'merchant');
 
         $ans = [];
-        Yii::warning("curlcode: " . $curl->errorCode, 'merchant');
-        Yii::warning("curlans: " . $curl->responseCode . ":" . Cards::MaskCardLog($curl->response), 'merchant');
+
+        Yii::info("curlcode: " . $curl->errorCode, 'merchant');
+        Yii::info("curlans: " . $curl->responseCode . ":" . Cards::MaskCardLog($curl->response), 'merchant');
+        Yii::info(['curl_request:' => ['FROM' => __METHOD__, 'POST' => $post, 'FullCurl' => (array) $curl]], 'merchant');
+
         try {
             switch ($curl->responseCode) {
                 case 200:
@@ -1367,6 +1371,14 @@ class TKBankAdapter implements IBankAdapter
     public function checkStatusPay(OkPayForm $okPayForm)
     {
         $action = '/api/tcbpay/gate/getorderstate';
+
+        /**
+         * VPBC-1013: добавлено логирование для того, чтобы выяснить что вызывает getorderstate.
+         * @todo Удалить после багфикса.
+         */
+        $route = Yii::$app->controller->route ?? null;
+        $stackTrace = DebugHelper::getStackTrace();
+        Yii::info("Request TKB getorderstate. PaySchet ID: {$okPayForm->IdPay}, Route: {$route}). Stack trace: \n{$stackTrace}");
 
         $checkStatusPayRequest = new CheckStatusPayRequest();
         $checkStatusPayRequest->OrderID = $okPayForm->IdPay;
