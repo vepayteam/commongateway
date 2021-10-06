@@ -60,7 +60,7 @@ trait WallettoRequestTrait
                 'browser_accept_header' => $_SERVER['HTTP_ACCEPT'],
                 'browser_color_depth' => $clientData['browser_color_depth'] ?? '',
                 'browser_ip' => Yii::$app->request->remoteIP,
-                'browser_language' => $_SERVER['HTTP_ACCEPT_LANGUAGE'],
+                'browser_language' => 'ru', // @TODO: я хз что он от меня хочет :(
                 'browser_screen_height' => $clientData['browser_screen_height'] ?? '',
                 'browser_screen_width' => $clientData['browser_screen_width'] ?? '',
                 'browser_timezone' => $clientData['browser_timezone'] ?? '',
