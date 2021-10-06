@@ -4,6 +4,7 @@
 namespace app\services\payment\jobs;
 
 
+use app\models\TU;
 use app\services\notifications\NotificationsService;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\forms\OkPayForm;
@@ -42,7 +43,13 @@ class RefreshStatusPayJob extends BaseObject implements \yii\queue\JobInterface
             $paySchet->save(false);
 
             if($paySchet->isNeedContinueRefreshStatus()) {
-                Yii::$app->queue->delay(5 * 60)->push(new RefreshStatusPayJob([
+                // TODO пока костыль
+                $delay = 5 * 60; // 5 min
+                if (TU::IsInAutoAll($paySchet->uslugatovar->IsCustom)) {
+                    $delay = 120 * 60; // 120 min
+                }
+
+                Yii::$app->queue->delay($delay)->push(new RefreshStatusPayJob([
                     'paySchetId' =>  $paySchet->ID,
                 ]));
             }
