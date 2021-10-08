@@ -27,7 +27,7 @@ class PartnerOption extends \yii\db\ActiveRecord
         self::CARD_REG_TEXT_HEADER_NAME => [
             'title' => 'Текст сообщения при регистрации карты',
             'type' => 'textarea',
-            'default' => 'Для проверки банковской карты с нее будет списано 11 р, затем будет произведен возврат',
+            'default' => 'Для проверки банковской карты с неё будет списано и затем возвращено 11 р.',
         ],
         self::EMAILS_BY_SEND_LATE_UPDATE_PAY_SCHETS_NAME => [
             'title' => 'Emails для отправки реестров с поздним обновлением статуса, через запятую',
