@@ -183,7 +183,14 @@ class DectaHelper
             throw new BankAdapterResponseException('Invalid status_changes data');
         }
 
-        return self::handleOrderStatus($statusData, $checkStatusPayResponse);
+        $checkStatusPayResponse = self::handleOrderStatus($statusData, $checkStatusPayResponse);
+
+        $transactionDetails = $response->json('transaction_details') ?? [];
+        $checkStatusPayResponse->message =
+            (isset($transactionDetails['errors']['description']) && is_string($transactionDetails['errors']['description']))
+            ? $transactionDetails['errors']['description'] : '';
+
+        return $checkStatusPayResponse;
     }
 
     /**
@@ -331,7 +338,6 @@ class DectaHelper
         }
 
         $checkStatusPayResponse->status = self::convertStatus($actualStatusData['new_status']);
-        $checkStatusPayResponse->message = '';
 
         return $checkStatusPayResponse;
     }
