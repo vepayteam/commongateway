@@ -25,6 +25,7 @@ use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
+use app\services\payment\forms\SendP2pForm;
 use app\services\payment\helpers\ADGroupBankHelper;
 use app\services\payment\models\adb\ClientCardModel;
 use app\services\payment\models\adb\OrderDataModel;
@@ -167,5 +168,10 @@ class ADGroupBankAdapter implements IBankAdapter
     public function currencyExchangeRates()
     {
         throw new GateException('Метод недоступен');
+    }
+
+    public function sendP2p(SendP2pForm $sendP2pForm)
+    {
+        // TODO: Implement sendP2p() method.
     }
 }

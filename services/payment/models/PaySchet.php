@@ -47,6 +47,7 @@ use Yii;
  * @property string|null $ApprovalCode kod avtorizacii
  * @property string|null $RRN nomer RRN
  * @property string|null $CardNum nomer karty
+ * @property string|null $OutCardPan nomer karty
  * @property string|null $CardType tip karty
  * @property string|null $CardHolder derjatel karty
  * @property int $CardExp srok deistvia karty - MMYY

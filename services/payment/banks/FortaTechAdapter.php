@@ -35,6 +35,7 @@ use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
+use app\services\payment\forms\SendP2pForm;
 use app\services\payment\helpers\TimeHelper;
 use app\services\payment\jobs\RefreshStatusPayJob;
 use app\services\payment\models\PartnerBankGate;
@@ -836,5 +837,10 @@ class FortaTechAdapter implements IBankAdapter
     public function identGetStatus(Ident $ident)
     {
         throw new GateException('Метод недоступен');
+    }
+
+    public function sendP2p(SendP2pForm $sendP2pForm)
+    {
+        // TODO: Implement sendP2p() method.
     }
 }
