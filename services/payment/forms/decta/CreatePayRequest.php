@@ -24,6 +24,10 @@ class CreatePayRequest extends Structure
      */
     public $terminal_processing_id;
     /**
+     * @var int $due
+     */
+    public $due;
+    /**
      * @var int $total
      */
     public $total;

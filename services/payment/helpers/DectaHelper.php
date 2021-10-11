@@ -50,6 +50,7 @@ class DectaHelper
         $paymentRequest = new CreatePayRequest();
         $paymentRequest->client = new CreatePayClient();
         $paymentRequest->client->email = $paySchet->getUserEmail();
+        $paymentRequest->due = time() + $paySchet->TimeElapsed;
         $paymentRequest->total = $amount;
         $paymentRequest->products = [
             [
