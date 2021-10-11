@@ -31,12 +31,12 @@ final class ClientResponse extends GuzzleResponse implements Response
      * @param mixed $key
      * @return mixed
      */
-    public function json(string $key = null)
+    public function json(string $key = null, $default = null)
     {
         $body = $this->getBody();
         $decoded = \GuzzleHttp\json_decode($body, true);
         if (!is_null($key)) {
-            $decoded = $decoded[$key];
+            $decoded = $decoded[$key] ?? $default;
         }
         return $decoded;
     }
