@@ -2,8 +2,6 @@
 
 namespace app\services\payment\models;
 
-use Yii;
-
 /**
  * This is the model class for table "uslugatovar_types".
  *
@@ -47,17 +45,20 @@ class UslugatovarType extends \yii\db\ActiveRecord
     /** Перевод B2C СБП  */
     public const TRANSFER_B2C_SBP = 203;
 
-    const OUT_TYPES = [
-        self::TOSCHET,
-        self::TOCARD,
-    ];
+    /**
+     * {@inheritDoc}
+     */
+    public static function tableName(): string
+    {
+        return 'uslugatovar_types';
+    }
 
-    const AUTO_TYPES = [
-        self::AVTOPLATECOM,
-        self::AVTOPLATATF,
-    ];
-
-    public static function getAll()
+    /**
+     * Возвращает список всех типов.
+     *
+     * @return string[] Вернет массив: [ID типа => Название типа].
+     */
+    public static function typeList(): array
     {
         return [
             self::REGCARD => 'Регистрация карты',
@@ -93,7 +94,29 @@ class UslugatovarType extends \yii\db\ActiveRecord
     /**
      * @return int[]
      */
-    public static function getRecurrent()
+    public static function outTypes(): array
+    {
+        return [
+            self::TOSCHET,
+            self::TOCARD,
+        ];
+    }
+
+    /**
+     * @return int[]
+     */
+    public static function autoTypes(): array
+    {
+        return [
+            self::AVTOPLATECOM,
+            self::AVTOPLATATF,
+        ];
+    }
+
+    /**
+     * @return int[]
+     */
+    public static function recurrentTypes(): array
     {
         return [
             self::AVTOPLATECOM,
@@ -104,34 +127,20 @@ class UslugatovarType extends \yii\db\ActiveRecord
     }
 
     /**
-     * {@inheritdoc}
+     * Типы для оплаты через ECOM.
+     *
+     * @return int[]
      */
-    public static function tableName()
-    {
-        return 'uslugatovar_types';
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function rules()
+    public static function ecomTypes(): array
     {
         return [
-            [['Id', 'DefaultBankId'], 'integer'],
-            [['Name'], 'required'],
-            [['Name'], 'string', 'max' => 255],
-        ];
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function attributeLabels()
-    {
-        return [
-            'Id' => 'ID',
-            'Name' => 'Name',
-            'DefaultBankId' => 'Default Bank ID',
+            self::ECOM,
+            self::ECOMPARTS,
+            self::POGASHECOM,
+            self::AVTOPLATECOM,
+            self::AVTOPLATECOMPARTS,
+            self::H2H_POGASH_ECOM,
+            self::H2H_ECOM,
         ];
     }
 }
