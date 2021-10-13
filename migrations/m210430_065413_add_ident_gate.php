@@ -15,7 +15,7 @@ class m210430_065413_add_ident_gate extends Migration
     {
         $uslugatovarType = new UslugatovarType();
         $uslugatovarType->Id = UslugatovarType::IDENT;
-        $uslugatovarType->Name = UslugatovarType::getAll()[UslugatovarType::IDENT];
+        $uslugatovarType->Name = UslugatovarType::typeList()[UslugatovarType::IDENT];
         $uslugatovarType->save(false);
 
     }
