@@ -83,6 +83,7 @@ class DectaAdapter implements IBankAdapter
         ];
         $config = [
             RequestOptions::HEADERS => $apiClientHeader,
+            RequestOptions::PROXY => Yii::$app->params['dectaProxy'],
         ];
         $infoMessage = sprintf(
             'partnerId=%d bankId=%d',
