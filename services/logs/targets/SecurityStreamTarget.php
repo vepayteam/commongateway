@@ -3,10 +3,13 @@
 namespace app\services\logs\targets;
 
 use app\helpers\Modifiers;
+use app\services\logs\traits\TraceLogTrait;
 use yii\log\Target;
 
 abstract class SecurityStreamTarget extends Target
 {
+    use TraceLogTrait;
+
     public $_stream;
 
     public function __construct($config = [])
@@ -28,5 +31,13 @@ abstract class SecurityStreamTarget extends Target
         $text = implode("\n", array_map([$this, 'formatMessage'], $this->messages)) . "\n";
         $text = Modifiers::searchAndReplaceSecurity($text);
         fwrite($this->_stream, $text);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getMessagePrefix($message)
+    {
+        return $this->getTracePrefix();
     }
 }
