@@ -1208,14 +1208,20 @@ class TKBankAdapter implements IBankAdapter
      */
     public function confirm(DonePayForm $donePayForm)
     {
+        Yii::info('TKBankAdapter confirm IdPay=' . $donePayForm->IdPay);
+
         $paySchet = $donePayForm->getPaySchet();
 
         $checkDataCacheKey = Cache3DSv2Interface::CACHE_PREFIX_CHECK_DATA . $paySchet->ID;
         if(Yii::$app->cache->exists($checkDataCacheKey)
             && in_array(Yii::$app->cache->get($checkDataCacheKey)['version'], Issuer3DSVersionInterface::V_2)
         ) {
+            Yii::info('TKBankAdapter confirm IdPay=' . $donePayForm->IdPay . ' confirmBy3DS v2');
+
             return $this->confirmBy3DSv2($donePayForm);
         } else {
+            Yii::info('TKBankAdapter confirm IdPay=' . $donePayForm->IdPay . ' confirmBy3DS v1');
+
             return $this->confirmBy3DSv1($donePayForm);
         }
     }
