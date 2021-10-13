@@ -9,6 +9,7 @@ return [
     'DEVMODE' => 'N',
     'TESTMODE' => 'N',
     'accountServiceUrl' => '',
+    'dectaApiUrl' => 'https://gate.decta.com',
 	'key' => '',
     'keycancel' => '',
     'info' => [
