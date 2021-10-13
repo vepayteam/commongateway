@@ -6,6 +6,7 @@ return [
     'robotEmail' => 'robot@vepay.online',
     'infoEmail' => 'support@vepay.online',
     'buhEmail' => 'support@vepay.online',
+    'dectaApiUrl' => 'https://gate.decta.com',
     'DEVMODE' => boolval(getenv('DEVMODE', true)) ? 'Y' : 'N',
     'TESTMODE' => 'Y',
     'accountServiceUrl' => '',
