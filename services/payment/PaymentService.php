@@ -258,7 +258,7 @@ class PaymentService
         $generator = $this->generatorPaySchetsForWhere($where, $limit);
         /** @var PaySchet $paySchet */
         foreach ($generator as $paySchet) {
-            if(!in_array($paySchet->uslugatovar->IsCustom, UslugatovarType::recurrentTypes())) {
+            if(!in_array($paySchet->uslugatovar->IsCustom, UslugatovarType::getRecurrent())) {
                 continue;
             }
 
