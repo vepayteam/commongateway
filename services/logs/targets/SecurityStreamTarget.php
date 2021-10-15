@@ -38,6 +38,9 @@ abstract class SecurityStreamTarget extends Target
      */
     public function getMessagePrefix($message)
     {
-        return $this->getTracePrefix();
+        $parentPrefix = parent::getMessagePrefix($message);
+        $tracePrefix = $this->getTracePrefix();
+
+        return $tracePrefix . $parentPrefix;
     }
 }

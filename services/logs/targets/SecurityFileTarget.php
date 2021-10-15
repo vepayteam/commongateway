@@ -21,6 +21,9 @@ class SecurityFileTarget extends FileTarget
      */
     public function getMessagePrefix($message): string
     {
-        return $this->getTracePrefix();
+        $parentPrefix = parent::getMessagePrefix($message);
+        $tracePrefix = $this->getTracePrefix();
+
+        return $tracePrefix . $parentPrefix;
     }
 }
