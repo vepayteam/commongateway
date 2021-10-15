@@ -7,7 +7,7 @@ return [
     'infoEmail' => 'support@vepay.online',
     'buhEmail' => 'support@vepay.online',
     'dectaApiUrl' => 'https://gate.decta.com',
-    'dectaProxy' => 'http://username:password@vepay-proxy.virtualfort.ru:30013',
+    'dectaProxy' => getenv("DECTA_PROXY_URL", true),
     'DEVMODE' => boolval(getenv('DEVMODE', true)) ? 'Y' : 'N',
     'TESTMODE' => 'Y',
     'accountServiceUrl' => '',
