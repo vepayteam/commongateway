@@ -168,11 +168,11 @@ class RecurrentPaymentPartsService extends Component
                 PaymentException::BANK_EXCEPTION);
         }
 
+        $paySchet->ExtBillNumber = $bankAdapterResponse->transac;
         if ($bankAdapterResponse->status == BaseResponse::STATUS_DONE) {
             $paySchet->RRN = $bankAdapterResponse->rrn;
             $paySchet->Status = PaySchet::STATUS_WAITING_CHECK_STATUS;
             $paySchet->ErrorInfo = 'Ожидается обновление статуса';
-            $paySchet->ExtBillNumber = $bankAdapterResponse->transac;
             $paySchet->save(false);
         } else {
             $paySchet->ErrorInfo = $bankAdapterResponse->message;
