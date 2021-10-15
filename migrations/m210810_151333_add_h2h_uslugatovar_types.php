@@ -16,7 +16,7 @@ class m210810_151333_add_h2h_uslugatovar_types extends Migration
         /**
          * Добавлена проверка существования на случай, если миграции запущены с нуля,
          * так как в одной из предыдущих миграций {@see m201012_062012_create_uslugatovar_types} происходит
-         * добавление записей из МЕТОДА КЛАССА {@see \app\services\payment\models\UslugatovarType::getAll()}!
+         * добавление записей из МЕТОДА КЛАССА {@see \app\services\payment\models\UslugatovarType::typeList()}!
          */
         foreach ($this->types() as $id => $name) {
             if (!(new Query())->from('uslugatovar_types')->andWhere(['Id' => $id])->exists()) {
