@@ -6,8 +6,8 @@ use yii\base\BaseObject;
 
 /**
  * @property-read string $extId
- * @property-read string|null $md
- * @property-read string|null $paRes
+ * @property-read string $md
+ * @property-read string $paRes
  */
 class DebitFinishRequest extends BaseObject
 {
@@ -16,20 +16,20 @@ class DebitFinishRequest extends BaseObject
      */
     private $_extId;
     /**
-     * @var string|null
+     * @var string
      */
     private $_md;
     /**
-     * @var string|null
+     * @var string
      */
     private $_paRes;
 
     /**
      * @param string $extId Уникальный идентификатор операции.
-     * @param string|null $md Параметр, указанный в запросе на прохождение в ACS.
-     * @param string|null $paRes Параметр, полученный в ответе от метода finish на ACS.
+     * @param string $md Параметр, указанный в запросе на прохождение в ACS.
+     * @param string $paRes Параметр, полученный в ответе от метода finish на ACS.
      */
-    public function __construct(string $extId, ?string $md, ?string $paRes)
+    public function __construct(string $extId, string $md, string $paRes)
     {
         parent::__construct();
 
@@ -47,17 +47,17 @@ class DebitFinishRequest extends BaseObject
     }
 
     /**
-     * @return string|null
+     * @return string
      */
-    public function getMd(): ?string
+    public function getMd(): string
     {
         return $this->_md;
     }
 
     /**
-     * @return string|null
+     * @return string
      */
-    public function getPaRes(): ?string
+    public function getPaRes(): string
     {
         return $this->_paRes;
     }
