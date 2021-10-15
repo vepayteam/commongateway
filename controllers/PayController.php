@@ -254,12 +254,14 @@ class PayController extends Controller
         /** @var TKBankAdapter $tkbAdapter */
         $tkbAdapter = $bankAdapterBuilder->getBankAdapter();
         try {
+            Yii::info('PayController createpaySecondStep createPayStep2');
             $createPayResponse = $tkbAdapter->createPayStep2($createPaySecondStepForm);
         } catch (Check3DSv2Exception $e) {
             $errorMessage = 'Карта не поддерживается, обратитесь в банк';
             if ($e->getCode() === Check3DSv2Exception::INCORRECT_ECI) {
                 $errorMessage = 'Операция по карте запрещена. Обратитесь в банк эмитент.';
             }
+            Yii::warning('PayController createpaySecondStep redirect: ' . $paySchet->FailedUrl . '. Error:' . $errorMessage);
             return $this->render('client-error', [
                 'message' => $errorMessage,
                 'failUrl' => $paySchet->FailedUrl,
@@ -270,6 +272,7 @@ class PayController extends Controller
         $paySchet->save(false);
 
         if ($createPayResponse->isNeed3DSVerif) {
+            Yii::info('PayController createpaySecondStep render client-submit-form:' . $paySchet->ID);
             return $this->render('client-submit-form', [
                 'method' => 'POST',
                 'url' => $createPayResponse->url,
@@ -278,6 +281,7 @@ class PayController extends Controller
                 ],
             ]);
         } else {
+            Yii::info('PayController createpaySecondStep render client-redirect:' . $paySchet->ID);
             return $this->render('client-redirect', [
                 'redirectUrl' => Url::to('/pay/orderdone/' . $paySchet->ID),
             ]);
