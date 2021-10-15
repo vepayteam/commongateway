@@ -154,6 +154,8 @@ class PayController extends Controller
                 $params['currency'] = $currency->Code;
                 $params['currencySymbol'] = $currency->getSymbol();
 
+                Yii::info('PayForm render id:' . $id .  ',  paySchet: ' . $params['ID'] . ', Headers: ' . Yii::$app->request->headers);
+
                 return $this->render('formpay', [
                     'params' => $params,
                     'apple' => (new ApplePay())->GetConf($params['IDPartner']),
@@ -163,9 +165,11 @@ class PayController extends Controller
                 ]);
 
             } else {
+                Yii::info('PayForm redirect id:' . $id .  ',  paySchet: ' . $params['ID'] . ', Headers: ' . Yii::$app->request->headers);
                 return $this->redirect(Url::to('/pay/orderok?id=' . $id));
             }
         } else {
+            Yii::error('PayForm error id:' . $id .  ',  paySchet: ' . $params['ID'] . ', Headers: ' . Yii::$app->request->headers);
             throw new NotFoundHttpException("Счет для оплаты не найден");
         }
     }
@@ -261,7 +265,7 @@ class PayController extends Controller
             if ($e->getCode() === Check3DSv2Exception::INCORRECT_ECI) {
                 $errorMessage = 'Операция по карте запрещена. Обратитесь в банк эмитент.';
             }
-            Yii::warning('PayController createpaySecondStep redirect: ' . $paySchet->FailedUrl . '. Error:' . $errorMessage);
+            Yii::warning('PayController createpaySecondStep redirect: '. $paySchet->ID. ', redirect url:' . $paySchet->FailedUrl . ', Error:' . $errorMessage . ', Headers: ' . Yii::$app->request->headers);
             return $this->render('client-error', [
                 'message' => $errorMessage,
                 'failUrl' => $paySchet->FailedUrl,
@@ -272,7 +276,7 @@ class PayController extends Controller
         $paySchet->save(false);
 
         if ($createPayResponse->isNeed3DSVerif) {
-            Yii::info('PayController createpaySecondStep render client-submit-form:' . $paySchet->ID);
+            Yii::info('PayController createpaySecondStep render client-submit-form: ' . $paySchet->ID . ', Headers: ' . Yii::$app->request->headers);
             return $this->render('client-submit-form', [
                 'method' => 'POST',
                 'url' => $createPayResponse->url,
@@ -281,7 +285,7 @@ class PayController extends Controller
                 ],
             ]);
         } else {
-            Yii::info('PayController createpaySecondStep render client-redirect:' . $paySchet->ID);
+            Yii::info('PayController createpaySecondStep render client-redirect: ' . $paySchet->ID . ', Headers: ' . Yii::$app->request->headers);
             return $this->render('client-redirect', [
                 'redirectUrl' => Url::to('/pay/orderdone/' . $paySchet->ID),
             ]);
