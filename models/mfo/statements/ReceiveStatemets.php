@@ -15,6 +15,7 @@ use app\models\StatementsAccount;
 use app\models\StatementsPlanner;
 use app\models\TU;
 use Yii;
+use yii\db\Exception;
 use yii\helpers\ArrayHelper;
 
 class ReceiveStatemets
@@ -130,7 +131,12 @@ class ReceiveStatemets
         }
 
         if ($this->list && count($this->list)) {
-            $this->SaveStatemens($TypeSchet, $dateFrom, $dateTo);
+            try {
+                $this->SaveStatemens($TypeSchet, $dateFrom, $dateTo);
+            } catch (Exception $e) {
+                Yii::error([$e->getName(), $e->getMessage(), $e->getLine(), $e->getFile(), $e->getTrace()]);
+                throw (new Exception('Нарушение уникальности запроса'));
+            }
         }
 
     }
