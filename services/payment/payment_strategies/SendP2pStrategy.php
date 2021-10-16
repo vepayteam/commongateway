@@ -54,6 +54,7 @@ class SendP2pStrategy
 
         $this->sendP2pResponse = $bankAdapterBuilder->getBankAdapter()->sendP2p($this->sendP2pForm);
         $paySchet->ExtBillNumber = $this->sendP2pResponse->transac;
+        $paySchet->save(false);
         return $paySchet;
     }
 
