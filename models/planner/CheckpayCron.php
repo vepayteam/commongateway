@@ -157,7 +157,8 @@ class CheckpayCron
                     m.Status = 0  
                     AND m.ExtBillNumber IS NULL
                     AND m.DateLastUpdate < UNIX_TIMESTAMP() - m.TimeElapsed * 2                    
-            ')->query();
+                    AND us.IsCustom != :toCardType
+            ', [':toCardType' => UslugatovarType::TOCARD])->query();
 
             while ($row = $res->read()) {
                 if ($row['sms_accept'] == 0) {

@@ -327,6 +327,8 @@ class PayController extends Controller
      */
     public function actionOrderdone($id = null)
     {
+        Yii::info('PayController orderdone IdPay=' . $id);
+
         $donePayForm = new DonePayForm();
         $donePayForm->IdPay = $id;
         $donePayForm->trans = Yii::$app->request->post('trans_id', null);
@@ -334,6 +336,8 @@ class PayController extends Controller
         // Для тестирования, добавляем возможность передать ид транзакции GET параметром
         if (!empty($trans = Yii::$app->request->get('trans_id', null))) {
             $donePayForm->trans = $trans;
+
+            Yii::info('PayController orderdone IdPay=' . $id . ' trans=' . $trans);
         }
 
         $donePayForm->md = Yii::$app->request->post('MD', null);
@@ -344,20 +348,25 @@ class PayController extends Controller
             Yii::$app->cache->set(Cache3DSv2Interface::CACHE_PREFIX_CRES, $donePayForm->cres, 60 * 60);
         }
 
-        Yii::warning('Orderdone ' . $id . ' POST: ' . json_encode(Yii::$app->request->post()));
+        Yii::info('PayController orderdone IdPay=' . $id . ' POST=' . Json::encode(Yii::$app->request->post()));
 
         if (!$donePayForm->validate()) {
-            Yii::warning('Orderdone validate fail ' . $id);
+            Yii::error('PayController orderdone IdPay=' . $id . ' validate fail=' . Json::encode($donePayForm->getErrors()));
             throw new BadRequestHttpException();
         }
 
         if (!empty($donePayForm->IdPay) && $donePayForm->getPaySchet()->Status == PaySchet::STATUS_DONE) {
+            Yii::info('PayController orderdone IdPay=' . $donePayForm->IdPay . ' redirect to orderok STATUS_DONE');
+
             return $this->redirect(['orderok', 'id' => $id]);
         }
 
-        Yii::warning("PayForm done id={$id}");
+        Yii::info("PayForm done id={$id}");
         $donePayStrategy = new DonePayStrategy($donePayForm);
         $paySchet = $donePayStrategy->exec();
+        Yii::info('PayController orderdone IdPay=' . $donePayForm->IdPay . ' donePayStrategy exec ok'
+            . ' Status=' . $paySchet->Status
+            . ' ErrorInfo=' . $paySchet->ErrorInfo);
 
         return $this->redirect(Url::to('/pay/orderok?id=' . $paySchet->ID));
     }
@@ -372,7 +381,7 @@ class PayController extends Controller
      */
     public function actionOrderok($id)
     {
-        Yii::warning("PayForm orderok id={$id}");
+        Yii::info('PayController orderok IdPay=' . $id);
 
         // Дадим время, чтобы банк закрыл платеж
         sleep(5);
@@ -386,27 +395,43 @@ class PayController extends Controller
 
         $okPayStrategy = new OkPayStrategy($okPayForm);
         $paySchet = $okPayStrategy->exec();
+        Yii::info('PayController orderok IdPay=' . $id . ' okPayStrategy exec ok'
+            . ' Status=' . $paySchet->Status
+            . ' ErrorInfo=' . $paySchet->ErrorInfo);
 
         if ($paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD && $paySchet->IdOrg == '3') {
+            Yii::info('PayController orderok IdPay=' . $id . ' redirect to cashtoyou');
+
             return $this->redirect('https://cashtoyou.ru/registration/third/');
         } elseif ($paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD && $paySchet->IdOrg == '8') {
+            Yii::info('PayController orderok IdPay=' . $id . ' redirect to oneclickmoney');
+
             return $this->redirect('https://oneclickmoney.ru/registration/third/');
         }
 
         if (in_array($paySchet->Status, [PaySchet::STATUS_DONE, PaySchet::STATUS_CANCEL])) {
+            Yii::info('PayController orderok IdPay=' . $id . ' render orderok');
 
             $this->layout = 'order_done';
             return $this->render('order-ok', ['paySchet' => $paySchet]);
 
         } elseif ($paySchet->Status == PaySchet::STATUS_ERROR) {
             if (!empty($paySchet->FailedUrl) && (mb_stripos($paySchet->ErrorInfo, 'Отказ от оплаты') === false || empty($paySchet->CancelUrl))) {
+                Yii::info('PayController orderok IdPay=' . $id . ' redirect to failedUrl=' . $paySchet->FailedUrl);
+
                 return $this->redirect(Payschets::RedirectUrl($paySchet->FailedUrl, $id, $paySchet->Extid));
-            } elseif (!empty($params['CancelUrl'])) {
+            } elseif (!empty($paySchet->CancelUrl)) {
+                Yii::info('PayController orderok IdPay=' . $id . ' redirect to cancelUrl=' . $paySchet->CancelUrl);
+
                 return $this->redirect(Payschets::RedirectUrl($paySchet->CancelUrl, $id, $paySchet->Extid));
             } else {
+                Yii::info('PayController orderok IdPay=' . $id . ' render payCancel');
+
                 return $this->render('paycancel', ['message' => $paySchet->ErrorInfo]);
             }
         } else {
+            Yii::info('PayController orderok IdPay=' . $id . ' render payWait');
+
             return $this->render('paywait');
         }
     }

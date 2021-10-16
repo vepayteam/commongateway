@@ -5,7 +5,9 @@ namespace app\services\payment\banks\traits;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\walletto\CreatePayRequest;
 use app\services\payment\helpers\PaymentHelper;
+use Exception;
 use Yii;
+use yii\helpers\Json;
 
 trait WallettoRequestTrait
 {
@@ -46,6 +48,29 @@ trait WallettoRequestTrait
         $request->currency = $paySchet->currency->Code;
         $request->merchant_order_id = $paySchet->ID;
         $request->description = 'Счет №' . $paySchet->ID ?? '';
+
+        try {
+            $clientData = Json::decode(Yii::$app->request->post('client_data', '{}'), true);
+        } catch (Exception $e) {
+            $clientData = [];
+        }
+
+        $request->secure3d = [
+            'browser_details' => [
+                'browser_accept_header' => $_SERVER['HTTP_ACCEPT'],
+                'browser_color_depth' => $clientData['browser_color_depth'] ?? '',
+                'browser_ip' => Yii::$app->request->remoteIP,
+                'browser_language' => 'ru', // @TODO: я хз что он от меня хочет :(
+                'browser_screen_height' => $clientData['browser_screen_height'] ?? '',
+                'browser_screen_width' => $clientData['browser_screen_width'] ?? '',
+                'browser_timezone' => $clientData['browser_timezone'] ?? '',
+                'browser_user_agent' => $_SERVER['HTTP_USER_AGENT'],
+                'browser_java_enabled' => $clientData['browser_java_enabled'] ?? '',
+                'window_height' => $clientData['window_height'] ?? '',
+                'window_width' => $clientData['window_width'] ?? '',
+            ],
+        ];
+
         return $request;
     }
 
