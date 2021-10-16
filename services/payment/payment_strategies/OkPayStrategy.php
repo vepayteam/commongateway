@@ -199,21 +199,24 @@ class OkPayStrategy
 
                 // если регистрация карты, делаем возврат
                 // иначе изменяем баланс
-                if($paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD) {
-                    Yii::$app->queue->push(new ReverspayJob([
-                        'idpay' => $paySchet->ID,
-                    ]));
-                } else {
-                    /** @var BalanceService $balanceService */
-                    $balanceService = Yii::$container->get('BalanceService');
-                    $balanceService->changeBalance($paySchet);
+                if($paySchet->Bank != 0) {
+                    if($paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD) {
+                        Yii::$app->queue->push(new ReverspayJob([
+                            'idpay' => $paySchet->ID,
+                        ]));
+                    } else {
+                        /** @var BalanceService $balanceService */
+                        $balanceService = Yii::$container->get('BalanceService');
+                        $balanceService->changeBalance($paySchet);
+                    }
+
+                    $BankCheck = new BankCheck();
+                    $BankCheck->UpdateLastCheck($paySchet->Bank);
+
+                    $antifraud = new AntiFraud($paySchet->ID);
+                    $antifraud->update_status_transaction(1);
                 }
 
-                $BankCheck = new BankCheck();
-                $BankCheck->UpdateLastCheck($paySchet->Bank);
-
-                $antifraud = new AntiFraud($paySchet->ID);
-                $antifraud->update_status_transaction(1);
                 return true;
             } elseif ($checkStatusPayResponse->status != BaseResponse::STATUS_CREATED) {
                 Yii::warning('OkPayStrategy confirmPay isStatusDone');

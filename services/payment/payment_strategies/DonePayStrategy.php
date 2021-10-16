@@ -1,15 +1,13 @@
 <?php
 
-
 namespace app\services\payment\payment_strategies;
-
 
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\forms\DonePayForm;
-use app\services\payment\interfaces\Issuer3DSVersionInterface;
 use app\services\payment\jobs\RefreshStatusPayJob;
 use app\services\payment\models\PaySchet;
 use Yii;
+use yii\helpers\Json;
 use yii\web\NotFoundHttpException;
 
 class DonePayStrategy
@@ -31,8 +29,12 @@ class DonePayStrategy
 
     public function exec()
     {
+        Yii::info('DonePayStrategy exec. IdPay=' . $this->donePayForm->IdPay);
+
         // для случаев, если пользователь возвращается к нам без ИД счета, но с транзакцией
-        if(!empty($this->donePayForm->trans)) {
+        if (!empty($this->donePayForm->trans)) {
+            Yii::info('DonePayStrategy exec. IdPay=' . $this->donePayForm->IdPay . ' trans=' . $this->donePayForm->trans);
+
             $paySchet = PaySchet::find()
                 ->where(['ExtBillNumber' => $this->donePayForm->trans])
                 ->orderBy('ID DESC')->one();
@@ -40,17 +42,33 @@ class DonePayStrategy
             $paySchet = $this->donePayForm->getPaySchet();
         }
 
-        if($paySchet && $paySchet->Status == PaySchet::STATUS_WAITING) {
-            $bankAdapterBuilder = new BankAdapterBuilder();
-            $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank, $paySchet->currency);
+        Yii::info('DonePayStrategy exec. PaySchet ID=' . $paySchet->ID . ' Status=' . $paySchet->Status);
 
-            $this->donePayResponse = $bankAdapterBuilder->getBankAdapter()->confirm($this->donePayForm);
+        if ($paySchet && $paySchet->Status == PaySchet::STATUS_WAITING) {
+            Yii::info('DonePayStrategy exec. PaySchet ID=' . $paySchet->ID
+                . ' partner=' . $paySchet->partner->ID
+                . ' uslugatovar=' . $paySchet->uslugatovar->ID
+                . ' bank=' . $paySchet->bank->ID
+                . ' currency=' . $paySchet->currency->Id);
+
+            try {
+                $bankAdapterBuilder = new BankAdapterBuilder();
+                $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank, $paySchet->currency);
+
+                $this->donePayResponse = $bankAdapterBuilder->getBankAdapter()->confirm($this->donePayForm);
+
+                Yii::info('DonePayStrategy exec. PaySchet ID=' . $paySchet->ID . ' donePayResponse=' . Json::encode($this->donePayResponse));
+            } catch (\Exception $e) {
+                Yii::error('DonePayStrategy exec. PaySchet ID=' . $paySchet->ID . ' exception=' . $e->getMessage());
+            }
 
             Yii::$app->queue->delay(30)->push(new RefreshStatusPayJob([
-                'paySchetId' =>  $paySchet->ID,
+                'paySchetId' => $paySchet->ID,
             ]));
             return $paySchet;
         } else {
+            Yii::info('DonePayStrategy exec. PaySchet not found IdPay=' . $this->donePayForm->IdPay);
+
             throw new NotFoundHttpException();
         }
     }

@@ -12,19 +12,13 @@ use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
-use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
-use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\exceptions\BankAdapterResponseException;
-use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
-use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
-use app\services\payment\exceptions\RefundPayException;
 use app\services\payment\forms\AutoPayForm;
-use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\forta\CreatePayRequest;
@@ -39,7 +33,6 @@ use app\services\payment\helpers\TimeHelper;
 use app\services\payment\jobs\RefreshStatusPayJob;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
-use Faker\Provider\Base;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
 use Vepay\Gateway\Client\Validator\ValidationException;
@@ -495,8 +488,9 @@ class FortaTechAdapter implements IBankAdapter
             }
         }
 
-        $outCardPayResponse->message = $this->formatErrorMessage($outCardPayResponse->message);
-
+        if ($outCardPayResponse->message !== null) {
+            $outCardPayResponse->message = $this->formatErrorMessage($outCardPayResponse->message);
+        }
         return $outCardPayResponse;
     }
 

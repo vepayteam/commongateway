@@ -77,12 +77,13 @@ class DectaAdapter implements IBankAdapter
     public function setGate(PartnerBankGate $partnerBankGate)
     {
         $this->gate = $partnerBankGate;
-        $this->apiUrl = self::API_URL;
+        $this->apiUrl = (Yii::$app->params['dectaApiUrl'] ?? 'https://gate.decta.com').'/api/v0.6';
         $apiClientHeader = [
             'Authorization' => $partnerBankGate->Token,
         ];
         $config = [
             RequestOptions::HEADERS => $apiClientHeader,
+            RequestOptions::PROXY => Yii::$app->params['dectaProxy'],
         ];
         $infoMessage = sprintf(
             'partnerId=%d bankId=%d',
