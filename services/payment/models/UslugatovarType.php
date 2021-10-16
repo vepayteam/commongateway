@@ -135,7 +135,6 @@ class UslugatovarType extends \yii\db\ActiveRecord
             self::ECOM,
             self::ECOMPARTS,
             self::POGASHECOM,
-            self::POGASHECOM,
             self::AVTOPLATECOM,
             self::AVTOPLATECOMPARTS,
             self::H2H_POGASH_ECOM,
