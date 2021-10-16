@@ -11,6 +11,7 @@ use app\models\mfo\MfoReq;
 use app\models\mfo\MfoTestError;
 use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
+use app\models\StatementsAccount;
 use app\models\TU;
 use app\models\payonline\BalancePartner;
 use Yii;
@@ -276,7 +277,7 @@ class ReceiveStatemets
                 }
 
             if (!$existId) {
-                Yii::$app->db->createCommand()->insert('statements_account', [
+                $statementsAccaunt = new StatementsAccount([
                     'IdPartner' => $this->Partner->ID,
                     'TypeAccount' => $TypeSchet,
                     'BnkId' => $statement['id'],
@@ -295,7 +296,8 @@ class ReceiveStatemets
                     'Bic' => $statement['bic'],
                     'Bank' => $statement['bank'],
                     'BankAccount' => $statement['bankaccount']
-                ])->execute();
+                ]);
+                $statementsAccaunt->save(false);
 
                 $IdStatm = Yii::$app->db->lastInsertID;
 
