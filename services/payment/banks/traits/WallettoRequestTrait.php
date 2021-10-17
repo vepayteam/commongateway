@@ -57,7 +57,7 @@ trait WallettoRequestTrait
 
         $request->secure3d = [
             'browser_details' => [
-                'browser_accept_header' => $_SERVER['HTTP_ACCEPT'],
+                'browser_accept_header' => $clientData['header_accept'] !== '/' ? $clientData['header_accept'] : 'text/html',
                 'browser_color_depth' => $clientData['browser_color_depth'] ?? '',
                 'browser_ip' => Yii::$app->request->remoteIP,
                 'browser_language' => 'ru', // @TODO: я хз что он от меня хочет :(
