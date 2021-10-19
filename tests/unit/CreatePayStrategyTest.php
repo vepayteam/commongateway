@@ -59,7 +59,7 @@ class CreatePayStrategyTest extends \Codeception\Test\Unit
     public function testReleaseLock()
     {
         $paySchet = $this->make(PaySchet::class, [
-            'ID' => 1,
+            'ID' => 3000,
         ]);
 
         $createPayStrategy = $this->construct(CreatePayStrategy::class, [new CreatePayForm(['IdPay' => $paySchet->ID])]);
