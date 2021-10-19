@@ -16,6 +16,7 @@ class CreatePayStrategyTest extends \Codeception\Test\Unit
         $paySchet = $this->make(PaySchet::class, [
             'ID' => 1,
         ]);
+        $this->releaseLock($paySchet);
 
         $createPayStrategy = $this->make(CreatePayStrategy::class, [
             'mutex' => new FileMutex(),
@@ -39,6 +40,7 @@ class CreatePayStrategyTest extends \Codeception\Test\Unit
         $paySchet = $this->make(PaySchet::class, [
             'ID' => 1,
         ]);
+        $this->releaseLock($paySchet);
 
         $createPayStrategy = $this->make(CreatePayStrategy::class, [
             'mutex' => new FileMutex(),
@@ -61,6 +63,7 @@ class CreatePayStrategyTest extends \Codeception\Test\Unit
         $paySchet = $this->make(PaySchet::class, [
             'ID' => 3000,
         ]);
+        $this->releaseLock($paySchet);
 
         $createPayStrategy = $this->construct(CreatePayStrategy::class, [new CreatePayForm(['IdPay' => $paySchet->ID])]);
 
@@ -79,5 +82,10 @@ class CreatePayStrategyTest extends \Codeception\Test\Unit
         $createPayStrategy->releaseLock();
 
         $this->assertFalse(Yii::$app->cache->exists($cacheKey));
+    }
+
+    private function releaseLock($paySchet)
+    {
+        Yii::$app->cache->delete(CreatePayStrategy::CACHE_PREFIX_LOCK_CREATE_PAY . $paySchet->ID);
     }
 }
