@@ -1,7 +1,7 @@
 <?php
 
 /* @var yii\web\View $this */
-/* @var $partnerlist  */
+/* @var $partnerlist Partner[] */
 /* @var $IsAdmin bool */
 
 $this->title = "Виджет";
@@ -9,6 +9,7 @@ $this->title = "Виджет";
 $this->params['breadtitle'] = "Виджет";
 $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 
+use app\models\payonline\Partner;
 use yii\web\View;
 ?>
 
@@ -41,8 +42,8 @@ use yii\web\View;
                             <div class="col-sm-4">
                                 <select class="form-control" name="partner">
                                     <option value="-1" data-ismfo="-1">Все</option>
-                                    <?php foreach ($partnerlist as $partn) : ?>
-                                        <option value="<?=$partn->ID?>" data-ismfo="<?= $partn->ID == 1 ? 2 : $partn->IsMfo?>"><?=$partn->Name?></option>
+                                    <?php foreach ($partnerlist as $partner) : ?>
+                                        <option value="<?=$partner->ID?>" data-ismfo="<?= $partner->ID == 1 ? 2 : $partner->IsMfo?>"><?=$partner->nameWithId?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
