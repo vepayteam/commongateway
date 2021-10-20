@@ -58,7 +58,7 @@ use app\services\payment\models\PaySchet;
     <tfoot>
     <tr>
         <th>
-            <form action="/partner/stat/diffexport" method="post">
+            <form action="/partner/stat/diff-export" method="post">
                 <textarea name="badStatus" style="display: none;"><?= json_encode($badStatus) ?></textarea>
                 <textarea name="notFound" style="display: none;"><?= json_encode($notFound) ?></textarea>
 

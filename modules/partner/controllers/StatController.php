@@ -93,7 +93,9 @@ class StatController extends Controller
             'verbs' => [
                 'class' => VerbFilter::class,
                 'actions' => [
-                    'diffdata' => ['POST'],
+                    'diffColumns' => ['POST'],
+                    'diffData' => ['POST'],
+                    'diffExport' => ['POST'],
                 ],
             ],
         ];
@@ -114,6 +116,13 @@ class StatController extends Controller
         $form->load(Yii::$app->request->post(), '');
         $form->registryFile = UploadedFile::getInstanceByName('registryFile');
 
+        if (!$form->validate(['registryFile'])) {
+            return $this->asJson([
+                'status' => 0,
+                'errors' => $form->getErrors(),
+            ]);
+        }
+
         $settings = StatDiffSettings::find()
             ->where(['BankId' => $form->bank])
             ->one();
@@ -123,11 +132,12 @@ class StatController extends Controller
             $registryColumns = $diffReader->getRegistryColumns();
             $dbColumns = $diffReader->getDbColumns();
         } catch (\Exception $e) {
-            Yii::warning('Stat diffColumns exception: ' . $e->getMessage());
+            Yii::error('Stat diffColumns exception: ' . $e->getMessage());
             throw new BadRequestHttpException();
         }
 
         return $this->asJson([
+            'status' => 1,
             'registryColumns' => $registryColumns,
             'dbColumns' => $dbColumns,
             'settings' => $settings,
@@ -151,7 +161,7 @@ class StatController extends Controller
             $diffData = new DiffData($form);
             [$badStatus, $notFound] = $diffData->execute();
         } catch (\Exception $e) {
-            Yii::warning('Stat diffData exception '
+            Yii::error('Stat diffData exception '
                 . $form->registryFile->tempName
                 . ': ' . $e->getMessage()
             );
@@ -169,7 +179,7 @@ class StatController extends Controller
         ]);
     }
 
-    public function actionDiffexport()
+    public function actionDiffExport()
     {
         $badStatus = json_decode(Yii::$app->request->post('badStatus'), true);
         $notFound = json_decode(Yii::$app->request->post('notFound'), true);

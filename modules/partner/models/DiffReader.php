@@ -36,7 +36,7 @@ class DiffReader
         $rows = $this->readActiveSheet(new DiffReadColumnsFilter());
         [$columns] = $rows;
 
-        return $columns;
+        return range(1, count($columns));
     }
 
     public function getDbColumns(): array

@@ -317,6 +317,23 @@
             });
         },
 
+        getErrors: function (errors) {
+            let arrayErrors = []
+            for (const errorKey in errors) {
+                arrayErrors.push(errors[errorKey].join('<br/>'))
+            }
+
+            return arrayErrors.join('<br/>')
+        },
+
+        diffHideAll: function () {
+            $('#registrySelectColumnGroup').css('display', 'none')
+            $('#registryStatusColumnGroup').css('display', 'none')
+            $('#dbColumnGroup').css('display', 'none')
+            $('#registryStatuses').css('display', 'none')
+            $('#allRegistryStatusSuccess').css('display', 'none')
+        },
+
         diffDataReq: function () {
             $.ajax({
                 type: 'POST',
@@ -330,10 +347,15 @@
                 },
                 success: function (data) {
                     $('#diffForm').closest('.ibox-content').toggleClass('sk-loading');
+
                     if (data.status === 1) {
                         $('#diffDataResult').html(data.data)
                     } else {
-                        $('#diffDataResult').html("<p class='text-center'>" + data.message + "</p>")
+                        if (data.errors) {
+                            $('#diffDataResult').html("<p class='text-center'>" + lk.getErrors(data.errors) + "</p>")
+                        } else {
+                            $('#diffDataResult').html("<p class='text-center'>Ошибка</p>")
+                        }
                     }
                 },
                 error: function () {
@@ -343,7 +365,7 @@
             })
         },
 
-        diffColumns: function () {
+        diffColumnsReq: function () {
             $.ajax({
                 type: 'POST',
                 enctype: 'multipart/form-data',
@@ -355,13 +377,31 @@
                     $('#diffForm').closest('.ibox-content').toggleClass('sk-loading');
                 },
                 success: function (data) {
+                    if (data.status === 0) {
+                        $('#diffForm').closest('.ibox-content').toggleClass('sk-loading');
+
+                        if (data.errors) {
+                            $('#diffDataResult').html("<p class='text-center'>" + lk.getErrors(data.errors) + "</p>")
+                        } else {
+                            $('#diffDataResult').html("<p class='text-center'>Ошибка</p>")
+                        }
+
+                        return
+                    }
+
                     const registryColumns = data.registryColumns
                     const dbColumns = data.dbColumns
                     const settings = data.settings
 
                     const registrySelectColumn = $('#registrySelectColumn')
+                    registrySelectColumn.empty()
+
                     const registryStatusColumn = $('#registryStatusColumn')
+                    registryStatusColumn.empty()
+
                     const dbColumnElement = $('#dbColumn')
+                    dbColumnElement.empty()
+
                     for (let a = 0; a < registryColumns.length; a++) {
                         const registrySelect = settings ? settings.RegistrySelectColumn : 0
                         const registryStatus = settings ? settings.RegistryStatusColumn : 0
@@ -411,6 +451,7 @@
                 },
                 error: function () {
                     $('#diffForm').closest('.ibox-content').toggleClass('sk-loading');
+                    $('#diffDataResult').html("<p class='text-center'>Ошибка</p>");
                 }
             })
         },
@@ -422,12 +463,17 @@
                 lk.diffDataReq();
             })
 
+            $('#bank').change(function () {
+                lk.diffColumnsReq()
+            })
+
             $('#registryFile').change(function (e) {
                 if (!$(e.target).val()) {
+                    lk.diffHideAll()
                     return
                 }
 
-                lk.diffColumns()
+                lk.diffColumnsReq()
             })
 
             $('#allRegistryStatusSuccess').change(function () {

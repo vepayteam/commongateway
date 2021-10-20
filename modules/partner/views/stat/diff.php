@@ -38,7 +38,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         </div>
                     </div>
                     <div class="form-group" id="registrySelectColumnGroup" style="display: none;">
-                        <label class="col-sm-2 control-label" for="registrySelectColumn">Столбик выборки из файла реестра</label>
+                        <label class="col-sm-2 control-label" for="registrySelectColumn">Номер столбика из файла реестра</label>
                         <div class="col-sm-10 col-md-6">
                             <select class="form-control" id="registrySelectColumn" name="registrySelectColumn"></select>
                         </div>

@@ -38,7 +38,7 @@ class DiffData
             ->leftJoin('uslugatovar as ut', 'ut.Id=ps.IdUsluga')
             ->all();
 
-        Yii::warning('Stat diffData paySchets loaded: count=' . count($paySchets));
+        Yii::info('Stat diffData paySchets loaded: count=' . count($paySchets));
 
         $map = $this->getMap($paySchets);
 
@@ -82,7 +82,7 @@ class DiffData
             }
         }
 
-        Yii::warning('Stat diffData data ready: badStatus=' . count($badStatus)
+        Yii::info('Stat diffData data ready: badStatus=' . count($badStatus)
             . ' notFound=' . count($notFound)
         );
 
@@ -114,7 +114,7 @@ class DiffData
             ];
         }
 
-        Yii::warning('Stat diffData registry ready: count=' . count($registry));
+        Yii::info('Stat diffData registry ready: count=' . count($registry));
 
         return $registry;
     }
