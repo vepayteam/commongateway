@@ -393,33 +393,33 @@ class FortaTechAdapter implements IBankAdapter
     public function recurrentPay(AutoPayForm $autoPayForm): CreateRecurrentPayResponse
     {
         $action = '/api/recurrentPayment';
-            $request = new RecurrentPayRequest();
+        $request = new RecurrentPayRequest();
 
-            $request->orderId = $autoPayForm->paySchet->ID;
-            $request->amount = $autoPayForm->paySchet->getSummFull();
-            $card = $autoPayForm->getCard();
-            if (!$card) {
-                throw new CardTokenException('cant get card');
-            }
-            $request->cardToken = $this->getCardToken($card->CardNumber);
-            $request->callbackUrl = $autoPayForm->postbackurl;
-            $queryData = Json::encode($request->getAttributes());
+        $request->orderId = $autoPayForm->paySchet->ID;
+        $request->amount = $autoPayForm->paySchet->getSummFull();
+        $card = $autoPayForm->getCard();
+        if (!$card) {
+            throw new CardTokenException('cant get card');
+        }
+        $request->cardToken = $this->getCardToken($card->CardNumber);
+        $request->callbackUrl = $autoPayForm->postbackurl;
+        $queryData = Json::encode($request->getAttributes());
 
-            $response = $this->sendRequest($action, $queryData, $this->buildRecurrentPaySignature($request));
+        $response = $this->sendRequest($action, $queryData, $this->buildRecurrentPaySignature($request));
 
-            $createRecurrentPayResponse = new CreateRecurrentPayResponse();
+        $createRecurrentPayResponse = new CreateRecurrentPayResponse();
 
-            if (isset($response['status'], $response['data']['paymentId']) && $response['status'] === true) {
-                $createRecurrentPayResponse->status = BaseResponse::STATUS_DONE;
-                $createRecurrentPayResponse->transac = $response['data']['paymentId'];
-
-                return $createRecurrentPayResponse;
-            }
-
-            $createRecurrentPayResponse->status = BaseResponse::STATUS_ERROR;
-            $createRecurrentPayResponse->message = $response['errors']['description'] ?? '';
+        if (isset($response['status'], $response['data']['paymentId']) && $response['status'] === true) {
+            $createRecurrentPayResponse->status = BaseResponse::STATUS_DONE;
+            $createRecurrentPayResponse->transac = $response['data']['paymentId'];
 
             return $createRecurrentPayResponse;
+        }
+
+        $createRecurrentPayResponse->status = BaseResponse::STATUS_ERROR;
+        $createRecurrentPayResponse->message = $response['errors']['description'] ?? '';
+
+        return $createRecurrentPayResponse;
     }
 
     /**
