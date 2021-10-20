@@ -53,7 +53,7 @@ class RecurrentPayJob extends BaseObject implements \yii\queue\JobInterface
         if($createRecurrentPayResponse->status == BaseResponse::STATUS_DONE) {
             Yii::warning('RecurrentPayJob Set ExtBillNumber autoPay=' . $paySchet->ID . $autoPayForm->extid, 'mfo');
         } else {
-            Yii::warning('RecurrentPayJob errorResponse autoPay=' . $paySchet->ID . $autoPayForm->extid, 'mfo');
+            Yii::warning('RecurrentPayJob errorResponse autoPay=' . $paySchet->ID . $autoPayForm->extid.'. Message: '.$createRecurrentPayResponse->message, 'mfo');
         }
 
         Yii::$app->queue

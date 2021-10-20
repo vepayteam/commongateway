@@ -17,6 +17,7 @@ use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2DuplicatedException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
+use app\services\payment\exceptions\DuplicateCreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
 use app\services\payment\exceptions\reRequestingStatusException;
@@ -200,31 +201,35 @@ class PayController extends Controller
 
         try {
             $paySchet = $createPayStrategy->exec();
-        } catch (CreatePayException $e) {
+        } catch (DuplicateCreatePayException $e) {
+            // releaseLock сюда не надо, эксепшен вызывается при попытке провести платеж, который уже проведен
+
             return ['status' => 0, 'message' => $e->getMessage()];
-        } catch (GateException $e) {
-            return ['status' => 0, 'message' => $e->getMessage()];
-        } catch (reRequestingStatusException $e) {
+        } catch (CreatePayException | GateException | reRequestingStatusException | BankAdapterResponseException | Exception $e) {
+            $createPayStrategy->releaseLock();
+
             return ['status' => 0, 'message' => $e->getMessage()];
         } catch (reRequestingStatusOkException $e) {
+            $createPayStrategy->releaseLock();
+
             return [
                 'status' => 2,
                 'message' => $e->getMessage(),
                 'url' => Yii::$app->params['domain'] . '/pay/orderok?id=' . $form->IdPay,
             ];
         } catch (Check3DSv2DuplicatedException $e) {
+            $createPayStrategy->releaseLock();
+
             // отменить счет
             return [
                 'status' => 2,
                 'message' => $e->getMessage(),
                 'url' => Yii::$app->params['domain'] . '/pay/orderok?id=' . $form->IdPay,
             ];
-        } catch (BankAdapterResponseException $e) {
-            return ['status' => 0, 'message' => $e->getMessage()];
         } catch (Check3DSv2Exception $e) {
+            $createPayStrategy->releaseLock();
+
             return ['status' => 0, 'message' => 'Карта не поддерживается, обратитесь в банк'];
-        } catch (Exception $e) {
-            return ['status' => 0, 'message' => $e->getMessage()];
         }
 
         $createPayResponse = $createPayStrategy->getCreatePayResponse();
