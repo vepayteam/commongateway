@@ -464,7 +464,9 @@
             })
 
             $('#bank').change(function () {
-                lk.diffColumnsReq()
+                if ($('#registryFile').val()) {
+                    lk.diffColumnsReq()
+                }
             })
 
             $('#registryFile').change(function (e) {
