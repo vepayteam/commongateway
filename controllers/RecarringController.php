@@ -215,8 +215,6 @@ class RecarringController extends Controller
                 return ['status' => 2, 'message' => 'Платеж не успешный'];
             case PaySchet::STATUS_WAITING:
                 return ['status' => 0, 'message' => 'В обработке'];
-            case PaySchet::STATUS_CANCEL:
-                return ['status' => 3, 'message' => 'Отменен'];
         }
 
         $Card = $kfCard->FindKardByPay($kfRequest->IdPartner, $type);
@@ -230,6 +228,7 @@ class RecarringController extends Controller
                     'id' => (int)$Card->ID,
                     'num' => (string)$Card->CardNumber,
                     'exp' => $Card->getMonth() . '/' . $Card->getYear(),
+                    'holder' => $Card->CardHolder,
                 ]
             ];
         } elseif ($Card && $type == 1) {
@@ -240,6 +239,7 @@ class RecarringController extends Controller
                     'id' => (int)$Card->ID,
                     'num' => $Card->CardNumber,
                     'exp' => '',
+                    'holder' => '',
                 ]
             ];
         } else {
