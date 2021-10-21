@@ -48,7 +48,7 @@ return [
             'class' => 'yii\base\BaseObject',
         ],
         'queue' => [
-            'class' => \yii\queue\db\Queue::class,
+            'class' => \app\services\queue\RedisQueueTraceId::class,
             'db' => 'db', // DB connection component or its config
             'tableName' => '{{%queue}}', // Table name
             'channel' => 'default', // Queue channel key
