@@ -10,7 +10,7 @@ return [
     'dectaProxy' => 'http://username:password@vepay-proxy.virtualfort.ru:30013',
     'DEVMODE' => 'Y',
     'TESTMODE' => 'Y',
-	'key' => '',
+    'key' => '',
     'keycancel' => '',
     'info' => [
         'email' => '',
@@ -47,23 +47,24 @@ return [
 
     'components' => [
         'redis' => [
-            'class' => 'yii\base\BaseObject',
+            'class' => 'yii\redis\Connection',
+            'hostname' => '127.0.0.1',
+            'port' => 6379,
+            'database' => 3,
+            'retries' => 3
         ],
         'queue' => [
             'class' => \app\services\queue\RedisQueueTraceId::class,
-            'db' => 'db', // DB connection component or its config
-            'tableName' => '{{%queue}}', // Table name
-            'channel' => 'default', // Queue channel key
-            'mutex' => \yii\mutex\MysqlMutex::class, // Mutex used to sync queries
-            'as log' => \yii\queue\LogBehavior::class,
-            'attempts' => 3, // Максимальное кол-во попыток
+            'redis' => 'redis',
+            'channel' => 'queue',
+            'attempts' => 10,
         ],
         'cache' => [
             'class' => 'yii\redis\Cache',
             'redis' => [
-                'hostname' => getenv('REDIS_HOST', true),
-                'port' => getenv('REDIS_PORT', true),
-                'database' => getenv('REDIS_DB_NUM_CACHE', true),
+                'hostname' => '127.0.0.1',
+                'port' => 6379,
+                'database' => 4
             ],
         ],
     ],
@@ -84,7 +85,7 @@ return [
             ],
         ],
     ],
-    'login_user_token_valid_time' => 60*60,
+    'login_user_token_valid_time' => 60 * 60,
     'support_email' => 'support@vepay.online',
     'remote_ip' => '',
 ];
