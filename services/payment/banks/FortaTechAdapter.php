@@ -12,10 +12,12 @@ use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
+use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\exceptions\BankAdapterResponseException;
+use app\services\payment\exceptions\CardTokenException;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
@@ -24,6 +26,7 @@ use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\forta\CreatePayRequest;
 use app\services\payment\forms\forta\OutCardPayRequest;
 use app\services\payment\forms\forta\PaymentRequest;
+use app\services\payment\forms\forta\RecurrentPayRequest;
 use app\services\payment\forms\forta\RefundPayRequest;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
@@ -35,7 +38,6 @@ use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
-use Vepay\Gateway\Client\Validator\ValidationException;
 use Yii;
 use yii\helpers\Json;
 
@@ -368,11 +370,73 @@ class FortaTechAdapter implements IBankAdapter
     }
 
     /**
-     * @inheritDoc
+     * @param string $cardNumber
+     *
+     * @return string
+     * @throws BankAdapterResponseException
+     * @throws CardTokenException
      */
-    public function recurrentPay(AutoPayForm $autoPayForm)
+    private function getCardToken(string $cardNumber): string
     {
-        throw new GateException('Метод недоступен');
+        $queryUrl = '/api/cardToken?cardNumber='.$cardNumber;
+        $cardData = $this->sendRequest($queryUrl, [], '', 'GET');
+        if (isset($cardData['status'], $cardData['data']['tokenExist']) && $cardData['status'] === true && $cardData['data']['tokenExist'] === true) {
+            return $cardData['data']['token'];
+        }
+        throw new CardTokenException('Cant get card token. Card number: '.$this->maskCardNumber($cardNumber));
+    }
+
+    /**
+     * @inheritDoc
+     * @throws BankAdapterResponseException|CardTokenException
+     */
+    public function recurrentPay(AutoPayForm $autoPayForm): CreateRecurrentPayResponse
+    {
+        $action = '/api/recurrentPayment';
+        $request = new RecurrentPayRequest();
+
+        $request->orderId = $autoPayForm->paySchet->ID;
+        $request->amount = $autoPayForm->paySchet->getSummFull();
+        $card = $autoPayForm->getCard();
+        if (!$card) {
+            throw new CardTokenException('cant get card');
+        }
+        $request->cardToken = $this->getCardToken($card->CardNumber);
+        $request->callbackUrl = $autoPayForm->postbackurl;
+        $queryData = Json::encode($request->getAttributes());
+
+        $response = $this->sendRequest($action, $queryData, $this->buildRecurrentPaySignature($request));
+
+        $createRecurrentPayResponse = new CreateRecurrentPayResponse();
+
+        if (isset($response['status'], $response['data']['paymentId']) && $response['status'] === true) {
+            $createRecurrentPayResponse->status = BaseResponse::STATUS_DONE;
+            $createRecurrentPayResponse->transac = $response['data']['paymentId'];
+
+            return $createRecurrentPayResponse;
+        }
+
+        $createRecurrentPayResponse->status = BaseResponse::STATUS_ERROR;
+        $createRecurrentPayResponse->message = $response['errors']['description'] ?? '';
+
+        return $createRecurrentPayResponse;
+    }
+
+    /**
+     * @param RecurrentPayRequest $recurrentPayRequest
+     *
+     * @return string
+     */
+    protected function buildRecurrentPaySignature(RecurrentPayRequest $recurrentPayRequest): string
+    {
+        $stringToEncode = sprintf(
+            '%s;%s;%s;',
+            $recurrentPayRequest->orderId,
+            $recurrentPayRequest->cardToken,
+            $recurrentPayRequest->amount
+        );
+
+        return $this->buildSignature($stringToEncode);
     }
 
     /**
@@ -507,7 +571,17 @@ class FortaTechAdapter implements IBankAdapter
             $outCardPayRequest->cards[0]['amount']
         );
 
-        $hash = hash('sha256', $s, true);
+        return $this->buildSignature($s);
+    }
+
+    /**
+     * @param string $string
+     *
+     * @return string
+     */
+    protected function buildSignature(string $string): string
+    {
+        $hash = hash('sha256', $string, true);
         $resPrivateKey = openssl_pkey_get_private(
             'file://' . Yii::getAlias('@app/config/forta/' . $this->gate->Login . '.pem')
         );
@@ -528,10 +602,11 @@ class FortaTechAdapter implements IBankAdapter
      * @param $uri
      * @param $data
      * @param string $signature
+     * @param string $methodType
      * @return array
      * @throws BankAdapterResponseException
      */
-    protected function sendRequest($uri, $data, $signature = '')
+    protected function sendRequest($uri, $data, $signature = '', string $methodType = 'POST')
     {
         $curl = curl_init();
 
@@ -552,7 +627,7 @@ class FortaTechAdapter implements IBankAdapter
             CURLOPT_TIMEOUT => 90,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_CUSTOMREQUEST => $methodType,
             CURLOPT_POSTFIELDS => Json::encode($data),
             CURLOPT_HTTPHEADER => $headers,
         ));
