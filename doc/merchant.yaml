@@ -402,7 +402,7 @@ components:
       properties:
         status:
           type: integer
-          description: Статус (0 - в обработке, 1 - успешно, 2 - ошибка, 3 - отменен)
+          description: Статус (0 - в обработке, 1 - успешно, 2 - ошибка)
         card:
           $ref: "#/components/schemas/CardInfo"
     StatusResult:
@@ -410,7 +410,7 @@ components:
       properties:
         status:
           type: integer
-          description: Статус (0 - в обработке, 1 - успешно, 2 - ошибка, 3 - отменен)
+          description: Статус (0 - в обработке, 1 - успешно, 2 - ошибка)
         message:
           type: string
           description: Сообщение ошибки
@@ -504,3 +504,6 @@ components:
         exp:
           type: string
           description: Срок действия (мм/гг)
+        holder:
+          type: string
+          description: Держатель карты
