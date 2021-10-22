@@ -3,7 +3,6 @@
 namespace app\services\queue;
 
 use app\helpers\EnvHelper;
-use yii\base\NotSupportedException;
 use yii\queue\redis\Queue;
 
 class RedisQueueTraceId extends Queue
@@ -13,19 +12,10 @@ class RedisQueueTraceId extends Queue
      */
     protected function pushMessage($message, $ttr, $delay, $priority)
     {
-        if ($priority !== null) {
-            throw new NotSupportedException('Job priority is not supported in the driver.');
-        }
+        $id = parent::pushMessage($message, $ttr, $delay, $priority);
 
         $traceId = EnvHelper::getParam(EnvHelper::UNIQUE_ID);
-
-        $id = $this->redis->incr("$this->channel.message_id");
-        $this->redis->hset("$this->channel.messages", $id, "$ttr;$message;$traceId");
-        if (!$delay) {
-            $this->redis->lpush("$this->channel.waiting", $id);
-        } else {
-            $this->redis->zadd("$this->channel.delayed", time() + $delay, $id);
-        }
+        $this->redis->hset("$this->channel.trace_id", $id, $traceId);
 
         return $id;
     }
@@ -50,9 +40,6 @@ class RedisQueueTraceId extends Queue
 
     private function getTraceId($id)
     {
-        $payload = $this->redis->hget("$this->channel.messages", $id);
-        list(, , $traceId) = explode(';', $payload, 3);
-
-        return $traceId;
+        return $this->redis->hget("$this->channel.trace_id", $id);
     }
 }
