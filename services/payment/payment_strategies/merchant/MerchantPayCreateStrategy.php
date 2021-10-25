@@ -4,10 +4,9 @@
 namespace app\services\payment\payment_strategies\merchant;
 
 
+use app\models\api\Reguser;
 use app\models\payonline\Uslugatovar;
-use app\services\CompensationService;
 use app\services\payment\banks\BankAdapterBuilder;
-use app\services\payment\banks\IBankAdapter;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\MerchantPayForm;
@@ -17,7 +16,6 @@ use app\services\payment\models\repositories\CurrencyRepository;
 use app\services\payment\models\UslugatovarType;
 use app\services\payment\PaymentService;
 use Yii;
-use yii\base\DynamicModel;
 
 class MerchantPayCreateStrategy
 {
@@ -147,6 +145,18 @@ class MerchantPayCreateStrategy
             if (isset($this->payForm->client['zip']) && $this->payForm->client['zip']) {
                 $paySchet->ZipUser = $this->payForm->client['zip'];
             }
+        }
+
+        if ($this->payForm->regcard) {
+            $partnerId = $this->payForm->partner->ID;
+            $user = (new Reguser())->findUser(
+                '0',
+                $partnerId . '-' . time(),
+                md5($partnerId . '-' . time()),
+                $partnerId,
+                false
+            );
+            $paySchet->IdUser = $user->ID ?? 0;
         }
 
         if (!$paySchet->save()) {
