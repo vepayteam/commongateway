@@ -333,6 +333,7 @@
                     //ок - переход по url банка
                     payform.load3ds(data.url, data.pa, data.md, data.creq, data.termurl, data.threeDSServerTransID, data.html3dsForm);
                 } else {
+                    // Walletto при создании платежа тут переход на orderdone при статусе charged
                     // если 3DS v2 и не требуется авторизация, переходим на orderdone
                     window.location = data.termurl;
                 }
