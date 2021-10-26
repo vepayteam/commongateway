@@ -64,7 +64,7 @@ class MerchantPayForm extends BaseForm implements AmountFormInterface
             [['amount', 'card'], 'required'],
             [['client'], 'validateClient'],
             [['currency'], 'validateCurrency'],
-            [['regcard'], 'in', 'range' => [1, 0]],
+            [['regcard'], 'in', 'range' => [1, 0], 'strict' => true],
         ];
     }
 

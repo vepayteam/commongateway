@@ -856,6 +856,13 @@ components:
           type: string
           format: url
           description: Адрес для Url для возврата после отказа от оплаты
+        regcard:
+          type: integer
+          required: false
+          enum:
+            - 1
+            - 0
+          description: (опционально) 1 – регистрация карты после платежа
         client:
             type: array
             required: false
