@@ -342,8 +342,7 @@ paths:
         - name: key
           in: query
           required: true
-          description: Ключ, формируется как хеш суммы строк параметров md5(id + sum +
-            status + Ключ обратного запроса).
+          description: Ключ формируется, как хеш суммы строк параметров md5(extid + id + sum + status + channel + ключ обратного запроса)
           schema:
             type: string
       responses:

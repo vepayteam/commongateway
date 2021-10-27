@@ -24,6 +24,7 @@ use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\BRSAdapterExeception;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
+use app\services\payment\forms\brs\CheckStatusB2cRequest;
 use app\services\payment\forms\brs\CheckStatusPayOutAccountRequest;
 use app\services\payment\forms\brs\CheckStatusPayOutCardRequest;
 use app\services\payment\forms\brs\CheckStatusPayRequest;
@@ -220,17 +221,53 @@ class BRSAdapter implements IBankAdapter
      */
     public function checkStatusPay(OkPayForm $okPayForm)
     {
-        if($okPayForm->getPaySchet()->uslugatovar->IsCustom == TU::$TOCARD) {
+        $uslugatovar = $okPayForm->getPaySchet()->uslugatovar;
+        if($uslugatovar->IsCustom == TU::$TOCARD) {
             return $this->checkStatusPayOutCard($okPayForm);
-        } elseif ($okPayForm->getPaySchet()->uslugatovar->IsCustom == TU::$TOSCHET) {
+        } elseif ($uslugatovar->IsCustom == TU::$TOSCHET) {
             return $this->checkStatusPayOutSchet($okPayForm);
-        } else {
-            return $this->checkStatusPayBase($okPayForm);
+        } elseif ($uslugatovar->IsCustom == TU::$B2CSBP) {
+            return $this->checkStatusB2c($okPayForm);
         }
+        return $this->checkStatusPayBase($okPayForm);
     }
 
     /**
      * @param OkPayForm $okPayForm
+     *
+     * @return CheckStatusPayResponse
+     */
+    protected function checkStatusB2c(OkPayForm $okPayForm): CheckStatusPayResponse
+    {
+        $uri = '/eis-app/eis-rs/businessPaymentService/getB2cStatus';
+
+        $requestData = $this->getCheckStatusB2cRequestData($okPayForm);
+        $response = new CheckStatusPayResponse();
+
+        try {
+            $ans = $this->sendB2CRequest($uri, $requestData,'POST', $this->getTransferB2CRequestSslStructure());
+
+            if (isset($ans['code']) && $ans['code'] == 0) {
+                $response->status = BaseResponse::STATUS_DONE;
+                $response->message = $ans['message'] ?? '';
+
+                return $response;
+            }
+
+            $response->status = BaseResponse::STATUS_ERROR;
+            $response->message = $ans['message'] ?? '';
+        } catch (BankAdapterResponseException $e) {
+            $response->status = BaseResponse::STATUS_ERROR;
+            $response->message = $e->getMessage();
+        }
+
+        return $response;
+    }
+
+    /**
+     * @deprecated
+     * @param OkPayForm $okPayForm
+     *
      * @return CheckStatusPayResponse
      */
     protected function checkStatusPayOutSchet(OkPayForm $okPayForm)
@@ -405,7 +442,7 @@ class BRSAdapter implements IBankAdapter
             CURLOPT_SSL_VERIFYHOST => 0,
             CURLOPT_SSLCERT => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.pem'),
             CURLOPT_SSLKEY => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.key'),
-//            CURLOPT_CAINFO => Yii::getAlias(self::KEYS_PATH . 'chain-ecomm-ca-root-ca.crt'),
+            //            CURLOPT_CAINFO => Yii::getAlias(self::KEYS_PATH . 'chain-ecomm-ca-root-ca.crt'),
             CURLOPT_POSTFIELDS => $request,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
@@ -688,9 +725,10 @@ class BRSAdapter implements IBankAdapter
         $transferToAccountRequest->bic = $outPayaccForm->bic;
         $transferToAccountRequest->receiverId = (string)$outPayaccForm->paySchet->ID;
         $transferToAccountRequest->merchantId = $this->gate->Token;
+        $transferToAccountRequest->fio = $outPayaccForm->getLastName(). ' '.$outPayaccForm->getFirstName(). $outPayaccForm->getMiddleName();
         $transferToAccountRequest->firstName = $outPayaccForm->getFirstName();
         $transferToAccountRequest->lastName = $outPayaccForm->getLastName();
-        $transferToAccountRequest->middleName = $outPayaccForm->getMiddleName();
+        $transferToAccountRequest->middleName = $outPayaccForm->getLastName();
         $transferToAccountRequest->amount = $outPayaccForm->amount;
         $transferToAccountRequest->account = (string)$outPayaccForm->account;
         $transferToAccountRequest->phone = $outPayaccForm->getPhoneToSend();
@@ -820,28 +858,43 @@ class BRSAdapter implements IBankAdapter
      * @return bool
      * @throws \yii\base\Exception
      */
-    public function checkTransferB2C(OutPayAccountForm $outPayaccForm): bool
+    public function checkTransferB2C(OutPayAccountForm $outPayaccForm): TransferToAccountResponse
     {
         $uri = '/eis-app/eis-rs/businessPaymentService/checkTransferB2c';
 
         $requestData = $this->getTransferB2cRequestData($outPayaccForm);
+        $response = new TransferToAccountResponse();
 
         try {
             $ans = $this->sendB2CRequest($uri, $requestData,'POST', $this->getTransferB2CRequestSslStructure());
-            return (isset($ans['code']) && $ans['code'] == 0);
+
+            if (isset($ans['code']) && $ans['code'] == 0) {
+                $response->status = BaseResponse::STATUS_DONE;
+                $response->message = $ans['message'] ?? '';
+                $response->trans = $ans['operationId'];
+
+                return $response;
+            }
+
+            $response->status = BaseResponse::STATUS_ERROR;
+            $response->message = $ans['message'] ?? '';
+            $response->trans = null;
         } catch (BankAdapterResponseException $e) {
-            return false;
+            $response->status = BaseResponse::STATUS_ERROR;
+            $response->message = $e->getMessage();
+            $response->trans = null;
         }
+
+        return $response;
     }
 
     /**
      * @param OutPayAccountForm $outPayaccForm
      * @return array
-     * @throws \yii\base\Exception
      */
     private function getTransferB2cRequestData(OutPayAccountForm $outPayaccForm): array
     {
-        $id = Yii::$app->security->generateRandomString(16);
+        $id = $outPayaccForm->paySchet->ID ?? Yii::$app->security->generateRandomString(16);
         $transferToAccountRequest = new TransferToAccountRequest();
         $transferToAccountRequest->bic = $outPayaccForm->bic;
         $transferToAccountRequest->receiverId = $outPayaccForm->getPhoneToSend();
@@ -861,29 +914,52 @@ class BRSAdapter implements IBankAdapter
     }
 
     /**
+     * @param OkPayForm $okPayForm
+     *
+     * @return array
+     */
+    private function getCheckStatusB2cRequestData(OkPayForm $okPayForm): array
+    {
+        $transferToAccountRequest = new CheckStatusB2cRequest();
+        $transferToAccountRequest->sourceId = (string)$okPayForm->getPaySchet()->ID;
+        $transferToAccountRequest->operationId = $okPayForm->getPaySchet()->ExtBillNumber;
+
+        return $transferToAccountRequest->getAttributes();
+    }
+
+    /**
      * @param OutPayAccountForm $outPayaccForm
-     * @return array[
-     *  'status' => int,
-     *  'message' => string,
-     *  'id' => string|null
-     * ]
+     * @return TransferToAccountResponse
      * @throws \yii\base\Exception
      */
-    public function transferB2C(OutPayAccountForm $outPayaccForm): array
+    public function transferB2C(OutPayAccountForm $outPayaccForm): TransferToAccountResponse
     {
         $uri = '/eis-app/eis-rs/businessPaymentService/requestTransferB2c';
 
         $requestData = $this->getTransferB2cRequestData($outPayaccForm);
 
+        $response = new TransferToAccountResponse();
+
         try {
             $ans = $this->sendB2CRequest($uri, $requestData, 'POST', $this->getTransferB2CRequestSslStructure());
             if(isset($ans['code']) && $ans['code'] == 0) {
-                return ['status' => 1, 'message' => 'ok', 'id' => $ans['operationId']];
+                $response->status = BaseResponse::STATUS_DONE;
+                $response->message = $ans['message'] ?? '';
+                $response->trans = $ans['operationId'];
+
+                return $response;
             }
-            return ['status' => 0, 'message' => 'ans error. data: '.Json::encode($requestData), 'id' => null];
+
+            $response->status = BaseResponse::STATUS_ERROR;
+            $response->message = $ans['message'] ?? '';
+            $response->trans = null;
         } catch (BankAdapterResponseException $e) {
-            return ['status' => 0, 'message' => $e->getMessage(), 'id' => null];
+            $response->status = BaseResponse::STATUS_ERROR;
+            $response->message = $e->getMessage();
+            $response->trans = null;
         }
+
+        return $response;
     }
 
     public function identInit(Ident $ident)

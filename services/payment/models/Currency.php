@@ -2,8 +2,8 @@
 
 namespace app\services\payment\models;
 
+use app\services\payment\models\repositories\CurrencyRepository;
 use yii\db\ActiveRecord;
-use yii\helpers\ArrayHelper;
 
 /**
  * @property string Name
@@ -17,14 +17,12 @@ class Currency extends ActiveRecord
     public const RUB = 'RUB';
     public const USD = 'USD';
     public const EUR = 'EUR';
-
     public const SYMBOLS = [
         self::RUB => '₽',
         self::USD => '$',
         self::EUR => '€'
     ];
-
-    public const MAIN_CURRENCY = 'RUB';
+    public const MAIN_CURRENCY = self::RUB;
 
     public static function tableName(): string
     {
@@ -41,16 +39,9 @@ class Currency extends ActiveRecord
         ];
     }
 
-    /**
-     * @return array
-     */
     public static function getCurrencyCodes(): array
     {
-        $currencies = Currency::find()
-            ->select(['Code'])
-            ->all();
-
-        return ArrayHelper::getColumn($currencies, 'Code');
+        return array_keys(CurrencyRepository::getCurrenciesByCode());
     }
 
     public function getSymbol(): ?string

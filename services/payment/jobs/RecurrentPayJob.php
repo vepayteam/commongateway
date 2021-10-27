@@ -49,11 +49,11 @@ class RecurrentPayJob extends BaseObject implements \yii\queue\JobInterface
         $paySchet->RRN = $createRecurrentPayResponse->rrn;
         $paySchet->Status = PaySchet::STATUS_WAITING_CHECK_STATUS;
         $paySchet->ErrorInfo = 'Ожидается обновление статуса';
+        $paySchet->ExtBillNumber = $createRecurrentPayResponse->transac;
         if($createRecurrentPayResponse->status == BaseResponse::STATUS_DONE) {
             Yii::warning('RecurrentPayJob Set ExtBillNumber autoPay=' . $paySchet->ID . $autoPayForm->extid, 'mfo');
-            $paySchet->ExtBillNumber = $createRecurrentPayResponse->transac;
         } else {
-            Yii::warning('RecurrentPayJob errorResponse autoPay=' . $paySchet->ID . $autoPayForm->extid, 'mfo');
+            Yii::warning('RecurrentPayJob errorResponse autoPay=' . $paySchet->ID . $autoPayForm->extid.'. Message: '.$createRecurrentPayResponse->message, 'mfo');
         }
 
         Yii::$app->queue

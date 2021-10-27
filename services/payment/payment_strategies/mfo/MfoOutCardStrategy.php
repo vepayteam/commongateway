@@ -158,12 +158,15 @@ class MfoOutCardStrategy
      */
     private function getReplyPay()
     {
-        return $this->outCardPayForm->partner
-            ->getPaySchets()
-            ->where([
-                'Extid' => $this->outCardPayForm->extid,
-            ])
-            ->one();
+        try {
+            Yii::info((array)$this->outCardPayForm, 'getReplyPay');
+            return $this->outCardPayForm->extid ? $this->outCardPayForm->partner->getPaySchets()->where([
+                    'Extid' => $this->outCardPayForm->extid,
+                ])->one() : null;
+        } catch (\Exception $e) {
+            Yii::error([$e->getMessage(), $e->getTrace(), $e->getFile(), $e->getLine()], 'getReplyPay');
+            return null;
+        }
     }
 
     /**
