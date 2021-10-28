@@ -2,6 +2,7 @@
 
 namespace app\services\payment\models;
 
+use app\helpers\EnvHelper;
 use app\models\payonline\Partner;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
@@ -491,5 +492,23 @@ class PaySchet extends \yii\db\ActiveRecord
         $dateCreate = Carbon::createFromTimestamp($this->DateCreate);
 
         return $now < $dateCreate->addDays(3);
+    }
+
+    public function afterFind()
+    {
+        EnvHelper::setParam(EnvHelper::PAYSCHET_ID, $this->ID);
+        if ($this->Extid) {
+            EnvHelper::setParam(EnvHelper::PAYSCHET_EXTID, $this->Extid);
+        }
+    }
+
+    public function afterSave($insert, $changedAttributes)
+    {
+        if ($insert) {
+            EnvHelper::setParam(EnvHelper::PAYSCHET_ID, $this->ID);
+            if ($this->Extid) {
+                EnvHelper::setParam(EnvHelper::PAYSCHET_EXTID, $this->Extid);
+            }
+        }
     }
 }
