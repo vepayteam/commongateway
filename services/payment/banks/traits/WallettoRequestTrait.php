@@ -50,14 +50,14 @@ trait WallettoRequestTrait
         $request->description = 'Счет №' . $paySchet->ID ?? '';
 
         try {
-            $clientData = Json::decode(Yii::$app->request->post('client_data', '{}'), true);
+            $clientData = Json::decode(Yii::$app->request->post('client_data', '{}'));
         } catch (Exception $e) {
             $clientData = [];
         }
 
         $request->secure3d = [
             'browser_details' => [
-                'browser_accept_header' => $clientData['header_accept'] !== '/' ? $clientData['header_accept'] : 'text/html',
+                'browser_accept_header' => Yii::$app->request->post('client_data_accept') !== '/' ? Yii::$app->request->post('client_data_accept') : 'text/html',
                 'browser_color_depth' => $clientData['browser_color_depth'] ?? '',
                 'browser_ip' => Yii::$app->request->remoteIP,
                 'browser_language' => 'ru', // @TODO: я хз что он от меня хочет :(
