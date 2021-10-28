@@ -24,6 +24,7 @@ class KfPay extends Model
     public $id;
     //public $type = 0;/*'type', */
     public $card = 0;
+    public $regcard = 0;
     public $timeout = 15;
     public $successurl = '';
     public $failurl = '';
@@ -48,7 +49,8 @@ class KfPay extends Model
             [['amount'/*, 'extid'*/], 'required', 'on' => self::SCENARIO_FORM],
             [['amount'/*, 'extid'*/, 'card'], 'required', 'on' => self::SCENARIO_AUTO],
             [['id'], 'integer', 'on' => self::SCENARIO_STATE],
-            [['id'], 'required', 'on' => self::SCENARIO_STATE]
+            [['id'], 'required', 'on' => self::SCENARIO_STATE],
+            [['regcard'], 'in', 'range' => [1, 0]]
         ];
     }
 
@@ -69,7 +71,7 @@ class KfPay extends Model
     public function GetUslug($org, $typeUsl)
     {
         return Yii::$app->db->createCommand("
-            SELECT `ID` 
+            SELECT `ID`
             FROM `uslugatovar`
             WHERE `IDPartner` = :IDMFO AND `IsCustom` = :TYPEUSL AND `IsDeleted` = 0
         ", [':IDMFO' => $org, ':TYPEUSL' => $typeUsl]
@@ -85,7 +87,7 @@ class KfPay extends Model
     public function GetUslugAuto($org)
     {
         return Yii::$app->db->createCommand("
-            SELECT `ID` 
+            SELECT `ID`
             FROM `uslugatovar`
             WHERE `IDPartner` = :IDMFO AND `IsCustom` = :TYPEUSL AND `IsDeleted` = 0
         ", [':IDMFO' => $org, ':TYPEUSL' => TU::$AVTOPLATECOM]
@@ -101,7 +103,7 @@ class KfPay extends Model
     public function GetUslugEcom($org)
     {
         return Yii::$app->db->createCommand("
-            SELECT `ID` 
+            SELECT `ID`
             FROM `uslugatovar`
             WHERE `IDPartner` = :IDMFO AND `IsCustom` = :TYPEUSL AND `IsDeleted` = 0
         ", [':IDMFO' => $org, ':TYPEUSL' => TU::$ECOM]
@@ -117,7 +119,7 @@ class KfPay extends Model
     public function GetUslugJkh($org)
     {
         return Yii::$app->db->createCommand("
-            SELECT `ID` 
+            SELECT `ID`
             FROM `uslugatovar`
             WHERE `IDPartner` = :IDMFO AND `IsCustom` = :TYPEUSL AND `IsDeleted` = 0
         ", [':IDMFO' => $org, ':TYPEUSL' => TU::$JKH]
@@ -175,9 +177,9 @@ class KfPay extends Model
         //три платежа в сутки на одну карту по одному шлюзу, 7 шлюзов
         $res = Yii::$app->db->createCommand("
             SELECT `ID`, `AutoPayIdGate`
-            FROM pay_schet 
-            WHERE 
-              `IdKard` = :IDCARD 
+            FROM pay_schet
+            WHERE
+              `IdKard` = :IDCARD
               AND `IsAutoPay` = 1
               AND `DateCreate` BETWEEN :DATEFROM AND :DATETO
         ", [
