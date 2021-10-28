@@ -1,11 +1,8 @@
 <?php
 
-
 namespace app\models\antifraud\control_objects;
 
-
 use app\models\antifraud\tables\AFFingerPrit;
-use Yii;
 use yii\base\Model;
 
 class FingerPrint extends Model
@@ -18,7 +15,7 @@ class FingerPrint extends Model
         return [
             [['transaction_id', 'hash'], 'required'],
             [['hash'], 'string'],
-            ['transaction_id', 'integer']
+            [['transaction_id'], 'integer']
         ];
     }
 
