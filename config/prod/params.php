@@ -9,6 +9,8 @@ return [
     'DEVMODE' => 'N',
     'TESTMODE' => 'N',
     'accountServiceUrl' => '',
+    'dectaApiUrl' => 'https://gate.decta.com',
+    'dectaProxy' => 'http://username:password@vepay-proxy.virtualfort.ru:30013',
 	'key' => '',
     'keycancel' => '',
     'info' => [
@@ -53,7 +55,7 @@ return [
             'retries' => 1,
         ],
         'queue' => [
-            'class' => \yii\queue\redis\Queue::class,
+            'class' => \app\services\queue\RedisQueueTraceId::class,
             'redis' => 'redis',
             'channel' => 'queue',
             'attempts' => 10,

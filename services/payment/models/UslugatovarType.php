@@ -88,6 +88,7 @@ class UslugatovarType extends \yii\db\ActiveRecord
             self::H2H_POGASH_AFT => 'H2H Погашение займа AFT',
             self::H2H_POGASH_ECOM => 'H2H погашение займа ECOM',
             self::H2H_ECOM => 'H2H оплата товаров и услуг',
+            self::TRANSFER_B2C_SBP => 'Перевод B2C SBP',
         ];
     }
 

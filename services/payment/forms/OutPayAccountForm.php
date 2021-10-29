@@ -25,6 +25,7 @@ class OutPayAccountForm extends Model
     /** @var Partner */
     public $partner;
     public $extid;
+    public $fio;
     public $client;
     public $name;
     public $account;
@@ -53,6 +54,10 @@ class OutPayAccountForm extends Model
             [['inn', 'account', 'bic', 'descript', 'amount'], 'required', 'on' => self::SCENARIO_FL],
             [['account', 'bic', 'amount'], 'required', 'on' => self::SCENARIO_BRS_CHECK],
             [['sms'], 'integer', 'on' => [self::SCENARIO_UL, self::SCENARIO_FL]],
+
+            ['fio', 'required', 'on' => [self::SCENARIO_FL, self::SCENARIO_UL]],
+            ['fio', 'string', 'max' => 150, 'on' => [self::SCENARIO_FL, self::SCENARIO_UL]],
+
             ['phone', 'match', 'pattern' => '/^7\d{10}$/', 'message' => 'Неверный номер телефона'],
             ['client', 'validateClient'],
 

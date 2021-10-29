@@ -1,10 +1,16 @@
 <?php
+/* @see \app\controllers\PayController::actionFormData() */
+
 /* @var \yii\web\View $this */
 /* @var array $params */
 /* @var array $formData */
+/* @var Currency $currency */
 
+use app\services\payment\models\Currency;
 use yii\bootstrap\ActiveForm;
 use yii\bootstrap\Html;
+
+$currencySymbol = $currency->getSymbol();
 ?>
 <div id="middle-wrapper" class="middle middle-background">
     <section class="container">
@@ -23,8 +29,8 @@ use yii\bootstrap\Html;
         <?php if ($params['IdUsluga'] != 1) : ?>
             <div class="row nopadding">
                 <div class="col-xs-12">
-                    <div class="info"><span>Сумма</span> <span class="pull-right blacksumm"><?=number_format($params['SummPay']/100.0, 2, ',', '')?> ₽</span></div>
-                    <div class="info"><span>Комиссия</span> <span class="pull-right blacksumm"><?=number_format($params['ComissSumm']/100.0, 2, ',', '')?> ₽</span></div>
+                    <div class="info"><span>Сумма</span> <span class="pull-right blacksumm"><?=number_format($params['SummPay']/100.0, 2, ',', '')?> <?= $currencySymbol ?></span></div>
+                    <div class="info"><span>Комиссия</span> <span class="pull-right blacksumm"><?=number_format($params['ComissSumm']/100.0, 2, ',', '')?> <?= $currencySymbol ?></span></div>
                 </div>
             </div>
         <?php endif; ?>

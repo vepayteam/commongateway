@@ -6,6 +6,8 @@ return [
     'robotEmail' => 'robot@vepay.online',
     'infoEmail' => 'support@vepay.online',
     'buhEmail' => 'support@vepay.online',
+    'dectaApiUrl' => 'https://gate.decta.com',
+    'dectaProxy' => getenv("DECTA_PROXY_URL", true),
     'DEVMODE' => boolval(getenv('DEVMODE', true)) ? 'Y' : 'N',
     'TESTMODE' => 'Y',
     'accountServiceUrl' => '',
@@ -52,7 +54,7 @@ return [
             'retries' => 1,
         ],
         'queue' => [
-            'class' => \yii\queue\redis\Queue::class,
+            'class' => \app\services\queue\RedisQueueTraceId::class,
             'redis' => 'redis',
             'channel' => 'queue',
             'attempts' => 10,
