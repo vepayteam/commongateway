@@ -1761,6 +1761,10 @@
                 return false;
             })
 
+            $('#partner-edit__bank-gates-edit-modal__cancel-button').on('click', function(e) {
+                $('#partner-edit__bank-gates-edit-modal__gate-form [name="Id"]').val('');
+            });
+
             $('.partner-edit__bank-gates-table__edit-button').on('click', function(e) {
                 let $form = $('#partner-edit__bank-gates-edit-modal__gate-form');
                 let gate = $(this).parents('tr').data('gate');

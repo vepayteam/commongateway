@@ -254,7 +254,7 @@ $currencyList = ArrayHelper::merge(['' => ''], ArrayHelper::map(CurrencyReposito
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Отмена</button>
+                <button id="partner-edit__bank-gates-edit-modal__cancel-button" type="button" class="btn btn-default" data-dismiss="modal">Отмена</button>
                 <button id="partner-edit__bank-gates-edit-modal__save-button" type="button" class="btn btn-primary">
                     Сохранить
                 </button>
