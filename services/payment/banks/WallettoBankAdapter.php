@@ -138,9 +138,18 @@ class WallettoBankAdapter implements IBankAdapter
         $responseData = $response->json('orders')[0];
         $createPayResponse->status = BaseResponse::STATUS_DONE;
         $createPayResponse->isNeed3DSRedirect = false;
-        $createPayResponse->isNeed3DSVerif = true;
         $createPayResponse->transac = $responseData['id'];
-        $createPayResponse->html3dsForm = $responseData['form3d_html'];
+
+        if ($responseData['status'] === self::STATUS_CHARGED) {
+            // Если приходит статус charged, значит нам не надо отображать 3ds form
+            // устанавливаем isNeed3DSVerif в false дальше по логике payform.js:332 будет редирект сразу на orderdone
+
+            $createPayResponse->isNeed3DSVerif = false;
+        } else {
+            $createPayResponse->isNeed3DSVerif = true;
+            $createPayResponse->html3dsForm = $responseData['form3d_html'];
+        }
+
         return $createPayResponse;
     }
 

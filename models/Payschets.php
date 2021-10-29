@@ -249,7 +249,7 @@ class Payschets
                         //$this->exportPay($params['idpay']);
 
                         //возврат платежа при привязке карты
-                        if ($query['IdUsluga'] == 1) {
+                        if ($query['IdUsluga'] == 1 && $query['Bank'] != 0) {
                             $this->reversPay($params['idpay']);
                         }
 

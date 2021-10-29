@@ -3,6 +3,7 @@
 
 namespace app\services\payment\banks;
 
+use app\helpers\DebugHelper;
 use app\models\mfo\MfoReq;
 use app\models\payonline\Cards;
 use app\models\payonline\User;
@@ -481,8 +482,11 @@ class TKBankAdapter implements IBankAdapter
         //Yii::warning("Headers: " .print_r($curl->getRequestHeaders(), true), 'merchant');
 
         $ans = [];
-        Yii::warning("curlcode: " . $curl->errorCode, 'merchant');
-        Yii::warning("curlans: " . $curl->responseCode . ":" . Cards::MaskCardLog($curl->response), 'merchant');
+
+        Yii::info("curlcode: " . $curl->errorCode, 'merchant');
+        Yii::info("curlans: " . $curl->responseCode . ":" . Cards::MaskCardLog($curl->response), 'merchant');
+        Yii::info(['curl_request:' => ['FROM' => __METHOD__, 'POST' => $post, 'FullCurl' => (array) $curl]], 'merchant');
+
         try {
             switch ($curl->responseCode) {
                 case 200:
@@ -493,6 +497,7 @@ class TKBankAdapter implements IBankAdapter
                 case 500:
                     $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
                     $ans['httperror'] = $jsonReq ? Json::decode($curl->response) : $curl->response;
+                    Yii::error(['curlerror:' => ['Headers' => $curl->getRequestHeaders(), 'Post' => Cards::MaskCardLog($post)]], 'merchant');
                     break;
                 default:
                     $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
@@ -501,6 +506,10 @@ class TKBankAdapter implements IBankAdapter
         } catch (\yii\base\InvalidArgumentException $e) {
             $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
             $ans['httperror'] = $curl->response;
+            Yii::error([
+                'curlerror:' => ['Headers' => $curl->getRequestHeaders(), 'Post' => Cards::MaskCardLog($post)],
+                'Ex:' => [$e->getMessage(), $e->getTrace(), $e->getFile(), $e->getLine()],
+            ], 'merchant');
             return $ans;
         }
 
@@ -1117,7 +1126,7 @@ class TKBankAdapter implements IBankAdapter
     {
         $checkDataCacheKey = Cache3DSv2Interface::CACHE_PREFIX_CHECK_DATA . $createPaySecondStepForm->getPaySchet()->ID;
 
-        if(Yii::$app->cache->exists($checkDataCacheKey)) {
+        if(Yii::$app->cache->exists($checkDataCacheKey)) { //@TODO: а я не понял, а если в кэше нет, то ничего вообще не делаем?
             $checkData = Yii::$app->cache->get($checkDataCacheKey);
 
             $check3DSVersionResponse = new Check3DSVersionResponse();
@@ -1201,14 +1210,20 @@ class TKBankAdapter implements IBankAdapter
      */
     public function confirm(DonePayForm $donePayForm)
     {
+        Yii::info('TKBankAdapter confirm IdPay=' . $donePayForm->IdPay);
+
         $paySchet = $donePayForm->getPaySchet();
 
         $checkDataCacheKey = Cache3DSv2Interface::CACHE_PREFIX_CHECK_DATA . $paySchet->ID;
         if(Yii::$app->cache->exists($checkDataCacheKey)
             && in_array(Yii::$app->cache->get($checkDataCacheKey)['version'], Issuer3DSVersionInterface::V_2)
         ) {
+            Yii::info('TKBankAdapter confirm IdPay=' . $donePayForm->IdPay . ' confirmBy3DS v2');
+
             return $this->confirmBy3DSv2($donePayForm);
         } else {
+            Yii::info('TKBankAdapter confirm IdPay=' . $donePayForm->IdPay . ' confirmBy3DS v1');
+
             return $this->confirmBy3DSv1($donePayForm);
         }
     }
@@ -1364,6 +1379,14 @@ class TKBankAdapter implements IBankAdapter
     public function checkStatusPay(OkPayForm $okPayForm)
     {
         $action = '/api/tcbpay/gate/getorderstate';
+
+        /**
+         * VPBC-1013: добавлено логирование для того, чтобы выяснить что вызывает getorderstate.
+         * @todo Удалить после багфикса.
+         */
+        $route = Yii::$app->controller->route ?? null;
+        $stackTrace = DebugHelper::getStackTrace();
+        Yii::info("Request TKB getorderstate. PaySchet ID: {$okPayForm->IdPay}, Route: {$route}). Stack trace: \n{$stackTrace}");
 
         $checkStatusPayRequest = new CheckStatusPayRequest();
         $checkStatusPayRequest->OrderID = $okPayForm->IdPay;

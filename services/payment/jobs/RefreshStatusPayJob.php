@@ -4,6 +4,8 @@
 namespace app\services\payment\jobs;
 
 
+use app\helpers\DebugHelper;
+use app\models\TU;
 use app\services\notifications\NotificationsService;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\forms\OkPayForm;
@@ -20,11 +22,29 @@ class RefreshStatusPayJob extends BaseObject implements \yii\queue\JobInterface
     public $paySchetId;
 
     /**
+     * VPBC-1013: нужно узнать, где была добавлена задача для очереди.
+     * @var string
+     * @todo Удалить после дебага.
+     */
+    public $stackTrace;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function init()
+    {
+        parent::init();
+
+        // Инициализируется при каждом создании объекта.
+        $this->stackTrace = DebugHelper::getStackTrace();
+    }
+
+    /**
      * @inheritDoc
      */
     public function execute($queue)
     {
-        Yii::warning('RefreshStatusPayJob execute: ID='.$this->paySchetId, 'RefreshStatusPayJob');
+        Yii::warning("RefreshStatusPayJob execute: ID={$this->paySchetId}, stackTrace: {$this->stackTrace}", 'RefreshStatusPayJob');
         $paySchet = PaySchet::findOne(['ID' => $this->paySchetId]);
 
         Yii::warning('RefreshStatusPayJob execute isHavePayschet=' . !empty($paySchet), 'RefreshStatusPayJob');
@@ -42,7 +62,13 @@ class RefreshStatusPayJob extends BaseObject implements \yii\queue\JobInterface
             $paySchet->save(false);
 
             if($paySchet->isNeedContinueRefreshStatus()) {
-                Yii::$app->queue->delay(5 * 60)->push(new RefreshStatusPayJob([
+                // TODO пока костыль
+                $delay = 5 * 60; // 5 min
+                if (TU::IsInAutoAll($paySchet->uslugatovar->IsCustom)) {
+                    $delay = 120 * 60; // 120 min
+                }
+
+                Yii::$app->queue->delay($delay)->push(new RefreshStatusPayJob([
                     'paySchetId' =>  $paySchet->ID,
                 ]));
             }
