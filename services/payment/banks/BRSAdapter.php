@@ -445,7 +445,7 @@ class BRSAdapter implements IBankAdapter
             //            CURLOPT_CAINFO => Yii::getAlias(self::KEYS_PATH . 'chain-ecomm-ca-root-ca.crt'),
             CURLOPT_POSTFIELDS => $request,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYPEER => (Yii::$app->params['TESTMODE'] == 'Y'),
             CURLOPT_TIMEOUT => 120,
         ));
 
