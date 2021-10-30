@@ -62,7 +62,7 @@ class DonePayStrategy
                 Yii::error('DonePayStrategy exec. PaySchet ID=' . $paySchet->ID . ' exception=' . $e->getMessage());
             }
 
-            Yii::$app->queue->delay(30)->push(new RefreshStatusPayJob([
+            Yii::$app->queue->delay(10)->push(new RefreshStatusPayJob([
                 'paySchetId' => $paySchet->ID,
             ]));
             return $paySchet;
