@@ -665,7 +665,7 @@ class FortaTechAdapter implements IBankAdapter
             $response = $this->parseResponse($response);
             $maskedResponse = $this->maskResponseCardInfo($response);
         } catch (\Exception $e) {
-            Yii::error('FortaTechAdapter sendRequest exception: ' . $e->getMessage());
+            Yii::$app->errorHandler->logException($e);
             throw new BankAdapterResponseException('Ошибка запроса');
         }
 
