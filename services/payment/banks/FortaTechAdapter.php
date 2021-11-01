@@ -649,9 +649,6 @@ class FortaTechAdapter implements IBankAdapter
         Yii::warning('FortaTechAdapter curlError:' . $curlError);
         $info = curl_getinfo($curl);
 
-        $response = 'Сумма меньше рекомендуемой'; // todo hack
-        $info['http_code'] = 400; // todo hack
-
         // При ошибке 400 форта всегда возвращает ошибку строкой
         if ($info['http_code'] === 400) {
             Yii::error('FortaTechAdapter sendRequest 400 response: ' . $response);
