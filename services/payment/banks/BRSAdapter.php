@@ -103,6 +103,7 @@ class BRSAdapter implements IBankAdapter
         $config = Yii::$app->params['services']['payments']['BRS'];
 
         $this->bankUrl = $config['url'];
+        $this->bankUrl3DS = $config['url_3ds'];
         $this->bankUrlP2p = $config['url_p2p'];
         $this->bankUrlP2p3DS = $config['url_p2p_3ds'];
         $this->bankUrlXml = $config['url_xml'];
@@ -1026,7 +1027,7 @@ class BRSAdapter implements IBankAdapter
             } else {
                 $sendP2pResponse->status = BaseResponse::STATUS_DONE;
                 $sendP2pResponse->transac = $ans['TRANSACTION_ID'];
-                $sendP2pResponse->url = $this->bankUrl3DS . '?trans_id=' . urlencode($ans['TRANSACTION_ID']);
+                $sendP2pResponse->url = $this->bankUrlP2p3DS . '?trans_id=' . urlencode($ans['TRANSACTION_ID']);
             }
         } catch (BankAdapterResponseException $e) {
             $sendP2pResponse->status = BaseResponse::STATUS_ERROR;
