@@ -51,6 +51,7 @@ trait WallettoRequestTrait
             'force3d' => 1,
             'auto_charge' => 1,
             'return_url' => $createPayForm->getReturnUrl(),
+            'expiration_timeout' => (int) ($paySchet->TimeElapsed / 60),
         ];
         $request->currency = $paySchet->currency->Code;
         $request->merchant_order_id = $paySchet->ID;
