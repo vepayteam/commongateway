@@ -75,7 +75,9 @@ class BRSAdapter implements IBankAdapter
     protected $gate;
 
     protected $bankUrl;
+    protected $bankP2pUrl;
     protected $bankUrl3DS;
+    protected $bankUrlP2p3DS;
     protected $bankUrlB2C;
 
     protected $bankUrlXml;
@@ -101,7 +103,8 @@ class BRSAdapter implements IBankAdapter
         $config = Yii::$app->params['services']['payments']['BRS'];
 
         $this->bankUrl = $config['url'];
-        $this->bankUrl3DS = $config['url_3ds'];
+        $this->bankUrlP2p = $config['url_p2p'];
+        $this->bankUrlP2p3DS = $config['url_p2p_3ds'];
         $this->bankUrlXml = $config['url_xml'];
         $this->bankUrlB2C = $config['url_b2c'];
     }
@@ -438,11 +441,15 @@ class BRSAdapter implements IBankAdapter
      * @return array|string
      * @throws BankAdapterResponseException
      */
-    protected function sendRequest(string $uri, array $data)
+    protected function sendRequest(string $uri, array $data, string $domain=null)
     {
         $curl = curl_init();
 
-        $url = $this->bankUrl . $uri;
+        if(is_null($domain)) {
+            $domain = $this->bankUrl;
+        }
+
+        $url = $domain . $uri;
         $request = http_build_query($data);
         curl_setopt_array($curl, array(
             CURLOPT_URL => $url,
@@ -455,7 +462,7 @@ class BRSAdapter implements IBankAdapter
             //            CURLOPT_CAINFO => Yii::getAlias(self::KEYS_PATH . 'chain-ecomm-ca-root-ca.crt'),
             CURLOPT_POSTFIELDS => $request,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_SSL_VERIFYPEER => (Yii::$app->params['TESTMODE'] == 'Y'),
+            CURLOPT_SSL_VERIFYPEER => (Yii::$app->params['TESTMODE'] != 'Y'),
             CURLOPT_TIMEOUT => 120,
         ));
 
@@ -1012,7 +1019,7 @@ class BRSAdapter implements IBankAdapter
         $sendP2pResponse = new SendP2pResponse();
         try {
             $data = $sendP2pRequest->getAttributes();
-            $ans = $this->sendRequest($uri, $data);
+            $ans = $this->sendRequest($uri, $data, $this->bankP2pUrl);
             if(array_key_exists('error', $ans)) {
                 $sendP2pResponse->status = BaseResponse::STATUS_ERROR;
                 $sendP2pResponse->message = $ans['error'];
