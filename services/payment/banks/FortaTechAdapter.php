@@ -19,6 +19,7 @@ use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CardTokenException;
 use app\services\payment\exceptions\CreatePayException;
+use app\services\payment\exceptions\FortaBadRequestException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CreatePayForm;
@@ -130,6 +131,8 @@ class FortaTechAdapter implements IBankAdapter
      */
     public function createPay(CreatePayForm $createPayForm)
     {
+        $createPayResponse = new CreatePayResponse();
+
         $action = '/api/payments';
         $paySchet = $createPayForm->getPaySchet();
         $paymentRequest = new PaymentRequest();
@@ -141,9 +144,15 @@ class FortaTechAdapter implements IBankAdapter
         $paymentRequest->callback_url = $paySchet->getOrderdoneUrl();
         $paymentRequest->ttl = TimeHelper::secondsToHoursCeil($paySchet->TimeElapsed);
 
-        $ans = $this->sendRequest($action, $paymentRequest->getAttributes());
-        if(!array_key_exists('id', $ans) || empty($ans['id'])) {
-            throw new CreatePayException('FortaTechAdapter Empty ExtBillNumber');
+        try {
+            $ans = $this->sendRequest($action, $paymentRequest->getAttributes());
+            if(!array_key_exists('id', $ans) || empty($ans['id'])) {
+                throw new CreatePayException('FortaTechAdapter Empty ExtBillNumber');
+            }
+        } catch (FortaBadRequestException $e) {
+            $createPayResponse->status = BaseResponse::STATUS_ERROR;
+            $createPayResponse->message = $e->getMessage();
+            return $createPayResponse;
         }
 
         $transId = $ans['id'];
@@ -605,7 +614,7 @@ class FortaTechAdapter implements IBankAdapter
      * @param string $signature
      * @param string $methodType
      * @return array
-     * @throws BankAdapterResponseException
+     * @throws BankAdapterResponseException|FortaBadRequestException
      */
     protected function sendRequest($uri, $data, $signature = '', string $methodType = 'POST')
     {
@@ -641,6 +650,12 @@ class FortaTechAdapter implements IBankAdapter
         Yii::warning('FortaTechAdapter curlError:' . $curlError);
         $info = curl_getinfo($curl);
 
+        // При ошибке 400 форта всегда возвращает ошибку строкой
+        if ($info['http_code'] === 400) {
+            Yii::error('FortaTechAdapter sendRequest 400 response: ' . $response);
+            throw new FortaBadRequestException($response);
+        }
+
         try {
             Yii::warning(sprintf(
                 'FortaTechAdapter response: %s | curlError: %s | info: %s',
@@ -651,6 +666,7 @@ class FortaTechAdapter implements IBankAdapter
             $response = $this->parseResponse($response);
             $maskedResponse = $this->maskResponseCardInfo($response);
         } catch (\Exception $e) {
+            Yii::$app->errorHandler->logException($e);
             throw new BankAdapterResponseException('Ошибка запроса');
         }
 
