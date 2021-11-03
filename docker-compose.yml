@@ -38,7 +38,7 @@ services:
         client_port=${XDEBUG_CLIENT_PORT:-9000}
         idekey=${XDEBUG_IDEKEY:-PHPSTORM}
     ports:
-      - 8000:8000/tcp
+      - "8000:8000/tcp"
     depends_on:
       - api_init
       - mariadb
@@ -52,7 +52,7 @@ services:
       - mariadb_volume:/var/lib/mysql
       - ./dump/:/docker-entrypoint-initdb.d/
     ports:
-      - 3306
+      - "3306"
     environment:
       TZ: Europe/Moscow
       MYSQL_DATABASE: vepay
@@ -66,7 +66,7 @@ services:
     environment:
       TZ: Europe/Moscow
     ports:
-      - 6379
+      - "6379"
 
 volumes:
   mariadb_volume: { }

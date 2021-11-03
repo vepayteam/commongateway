@@ -375,6 +375,32 @@ paths:
           content:
             application/json:
               schema:
+                $ref: "#/components/schemas/Status"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /out/sbp-transfer:
+    post:
+      tags:
+        - Out
+      summary: СБП. Выдача займа на счет физлица
+      description: Выдача займа на счет физлица
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckSbpOutF"
+        description: Параметры перевода
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
                 $ref: "#/components/schemas/StatusId"
         default:
           description: Error (40X,500)
@@ -563,8 +589,7 @@ paths:
         - name: key
           in: query
           required: true
-          description: Ключ, формируется как хеш суммы строк параметров md5(id + sum +
-            status + channel + Ключ обратного запроса).
+          description: Ключ формируется, как хеш суммы строк параметров md5(extid + id + sum + status + channel + ключ обратного запроса)
           schema:
             type: string
       responses:
@@ -1043,18 +1068,35 @@ components:
     CheckSbpOutF:
       type: object
       properties:
-        fio:
-          type: string
-          description: ФИО получателя
+        client:
+          type: object
+          properties:
+            firstName:
+              type: string
+              maxLength: 32
+            middleName:
+              type: string
+              maxLength: 32
+            lastName:
+              type: string
+              maxLength: 100
+          description: Данные клиента (опциональный параметр)
         account:
           type: string
-          description: Счет в банке
+          description: Счет юридического лица, с которого отравляется перевод
+        phone:
+          type: string
+          description: Номер телефона в формате 79123456789
         bic:
           type: string
-          description: БИК банка
+          description: БИК банка получателя
         amount:
           type: number
           description: Cумма платежа
+        extid:
+          type: string
+          maxLength: 40
+          description: Ext ID
     Status:
       type: object
       properties:
@@ -1218,6 +1260,9 @@ components:
         name:
           type: string
           description: Название банка
+        bankNameRu:
+          type: string
+          description: Название банка (на русском языке)
         bic:
           type: string
           description: БИК

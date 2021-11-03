@@ -2,13 +2,13 @@
 
 namespace app\services\logs\traits;
 
+use app\helpers\EnvHelper;
 use Exception;
 use Yii;
 use yii\helpers\Json;
 use yii\helpers\VarDumper;
 use yii\log\Logger;
 use yii\web\Request;
-
 
 trait JSONFormatterTrait
 {
@@ -60,7 +60,7 @@ trait JSONFormatterTrait
      * @throws \Throwable
      * @throws \yii\base\InvalidConfigException
      */
-    public function getMessagePrefix($message): array
+    public function getMessagePrefix($message)
     {
         if ($this->prefix !== null) {
             return call_user_func($this->prefix, $message);
@@ -85,11 +85,15 @@ trait JSONFormatterTrait
         $session = Yii::$app->has('session', true) ? Yii::$app->get('session') : null;
         $sessionID = $session && $session->getIsActive() ? $session->getId() : '-';
 
+        [$traceId, $paySchetId, $paySchetExtId] = EnvHelper::getTraceParams();
+
         return [
             'ip' => $ip,
             'user' => $userID,
-            'session_id' => $sessionID
+            'session_id' => $sessionID,
+            'trace_id' => $traceId,
+            'payschet_id' => $paySchetId,
+            'payschet_extid' => $paySchetExtId,
         ];
     }
-
 }

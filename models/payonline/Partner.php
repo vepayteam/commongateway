@@ -135,7 +135,7 @@ use yii\db\ActiveRecord;
  * @property int $RunaBankCid
  * @property Uslugatovar[] $uslugatovars
  * @property PartnerBankRekviz $partner_bank_rekviz
- *
+ * @property string $nameWithId
  */
 class Partner extends ActiveRecord
 {
@@ -412,6 +412,11 @@ class Partner extends ActiveRecord
     public function getVyvodReestr(): ActiveQuery
     {
         return $this->hasMany(VyvodReestr::class, ['IdPartner' => 'ID']);
+    }
+    
+    public function getNameWithId(): string
+    {
+        return $this->ID . ' | ' . $this->Name;
     }
 
     /**

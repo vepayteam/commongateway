@@ -3,9 +3,10 @@
 /* @var yii\web\View $this */
 /* @var array $uslugilist */
 /* @var string $veekends */
-/* @var $partnerlist  */
+/* @var Partner[] $partnerlist  */
 /* @var $IsAdmin bool */
 
+use app\models\payonline\Partner;
 use yii\web\View;
 use app\services\payment\forms\VoznagStatForm;
 use yii\helpers\Html;
@@ -39,8 +40,8 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                             <label class="col-sm-2 control-label">Мерчант</label>
                             <div class="col-sm-4">
                                 <select class="form-control" name="IdPart">
-                                    <?php foreach ($partnerlist as $partn) : ?>
-                                        <option value="<?=$partn->ID?>"><?=$partn->Name?></option>
+                                    <?php foreach ($partnerlist as $partner) : ?>
+                                        <option value="<?=$partner->ID?>"><?=$partner->nameWithId?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
