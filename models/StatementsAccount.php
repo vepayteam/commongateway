@@ -49,32 +49,4 @@ class StatementsAccount extends \yii\db\ActiveRecord
             [['Inn', 'Account', 'Bic', 'BankAccount', 'Kpp'], 'string', 'max' => 50],
         ];
     }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function attributeLabels(): array
-    {
-        return [
-            'ID' => 'ID',
-            'IdPartner' => 'Id Partner',
-            'TypeAccount' => 'Type Account',
-            'BnkId' => 'Bnk ID',
-            'NumberPP' => 'Number Pp',
-            'DatePP' => 'Date Pp',
-            'SummPP' => 'Summ Pp',
-            'SummComis' => 'Summ Comis',
-            'Description' => 'Description',
-            'IsCredit' => 'Is Credit',
-            'Name' => 'Name',
-            'Inn' => 'Inn',
-            'Account' => 'Account',
-            'Bic' => 'Bic',
-            'Bank' => 'Bank',
-            'BankAccount' => 'Bank Account',
-            'Kpp' => 'Kpp',
-            'DateRead' => 'Date Read',
-            'DateDoc' => 'Date Doc',
-        ];
-    }
 }
