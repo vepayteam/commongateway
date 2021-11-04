@@ -55,7 +55,7 @@ return [
             'retries' => 1,
         ],
         'queue' => [
-            'class' => \yii\queue\redis\Queue::class,
+            'class' => \app\services\queue\RedisQueueTraceId::class,
             'redis' => 'redis',
             'channel' => 'queue',
             'attempts' => 10,

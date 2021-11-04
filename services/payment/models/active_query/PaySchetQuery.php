@@ -34,7 +34,7 @@ class PaySchetQuery extends ActiveQuery
                 OR (%1$s.IsCustom IN (%3$s) AND %2$s.DateLastUpdate < %4$s)',
                 Uslugatovar::tableName(),
                 PaySchet::tableName(),
-                implode(', ', array_merge(UslugatovarType::outTypes(), UslugatovarType::autoTypes())),
+                implode(', ', array_merge(UslugatovarType::OUT_TYPES, UslugatovarType::AUTO_TYPES)),
                 Carbon::now()->addMinutes(-1)->timestamp
             ));
     }

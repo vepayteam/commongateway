@@ -63,6 +63,8 @@ class BRSAdapter implements IBankAdapter
     const BALANCE_CARD_NUM = '5100476090795931'; // Карта используется для запроса баланса TODO: переместить в другое место?
     const BALANCE_FAKE_AMOUNT = 1000;
 
+    const BRS_RESPONSE_SYSTEM_ERROR_CODE = 1001;
+
     public static $bank = 7;
 
     /** @var PartnerBankGate */
@@ -347,11 +349,19 @@ class BRSAdapter implements IBankAdapter
 
         $createRecurrentPayResponse = new CreateRecurrentPayResponse;
         try {
-            $ans = $this->sendRequest($uri, $recurrentPayRequest->getAttributes());
-            $createRecurrentPayResponse->message = BRSErrorHelper::getMessage($ans);
-            $createRecurrentPayResponse->status = $this->getStatusResponse($ans['RESULT']);
-            $createRecurrentPayResponse->transac = isset($ans['TRANSACTION_ID']) ? $ans['TRANSACTION_ID'] : '';
-            $createRecurrentPayResponse->rrn = isset($ans['RRN']) ? $ans['RRN'] : '';
+            $ans = $this->sendRequest($uri, $recurrentPayRequest->getAttributes()); // todo fix there
+            if (isset($ans['RESULT_CODE']) && intval($ans['RESULT_CODE']) === self::BRS_RESPONSE_SYSTEM_ERROR_CODE) {
+                Yii::error('BRSAdapter recurrentPay paySchet.ID=' . $paySchet->ID
+                    . ' bad response result code 1001');
+
+                // Вызываем GateException, чтобы в RecurrentPayJob платежу присвоился статус ERROR и не было опроса статуса
+                throw new GateException(BRSErrorHelper::getMessage($ans));
+            } else {
+                $createRecurrentPayResponse->message = BRSErrorHelper::getMessage($ans);
+                $createRecurrentPayResponse->status = $this->getStatusResponse($ans['RESULT']);
+                $createRecurrentPayResponse->transac = isset($ans['TRANSACTION_ID']) ? $ans['TRANSACTION_ID'] : '';
+                $createRecurrentPayResponse->rrn = isset($ans['RRN']) ? $ans['RRN'] : '';
+            }
         } catch (BankAdapterResponseException $e) {
             $createRecurrentPayResponse->status = BaseResponse::STATUS_ERROR;
             $createRecurrentPayResponse->message = 'Ошибка запроса';
