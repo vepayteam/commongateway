@@ -18,7 +18,7 @@ class StatementsPlanner extends \yii\db\ActiveRecord
     /**
      * {@inheritdoc}
      */
-    public static function tableName()
+    public static function tableName(): string
     {
         return 'statements_planner';
     }
@@ -26,24 +26,10 @@ class StatementsPlanner extends \yii\db\ActiveRecord
     /**
      * {@inheritdoc}
      */
-    public function rules()
+    public function rules(): array
     {
         return [
             [['IdPartner', 'IdTypeAcc', 'DateUpdateFrom', 'DateUpdateTo'], 'integer'],
-        ];
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function attributeLabels()
-    {
-        return [
-            'ID' => 'ID',
-            'IdPartner' => 'Id Partner',
-            'IdTypeAcc' => 'Id Type Acc',
-            'DateUpdateFrom' => 'Date Update From',
-            'DateUpdateTo' => 'Date Update To',
         ];
     }
 }
