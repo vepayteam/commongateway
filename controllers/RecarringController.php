@@ -9,6 +9,7 @@ use app\models\kfapi\KfPay;
 use app\models\kfapi\KfRequest;
 use app\models\payonline\Uslugatovar;
 use app\models\TU;
+use app\modules\mfo\controllers\CardController;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
@@ -175,6 +176,9 @@ class RecarringController extends Controller
 
     /**
      * Получить данные карты после платежа регистранции карты
+     *
+     * Код из {@see CardController::actionGet()}
+     *
      * @return array
      * @throws BadRequestHttpException
      * @throws ForbiddenHttpException
@@ -186,53 +190,61 @@ class RecarringController extends Controller
         $kfRequest = new KfRequest();
         $kfRequest->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody(), 0);
 
+        $type = $kfRequest->GetReq('type', 0);
+
         $kfCard = new KfCard();
         $kfCard->scenario = KfCard::SCENARIO_GET;
         $kfCard->load($kfRequest->req, '');
         if (!$kfCard->validate()) {
             $err = $kfCard->GetError();
-            Yii::warning('recarring/get: ошибка валидации формы: ' . $err);
+            Yii::warning("recarring/get validation error: {$err}.");
             return ['status' => 0, 'message' => $err];
         }
 
         $paySchet = PaySchet::findOne(['ID' => $kfCard->id]);
         if (!$paySchet) {
-            Yii::warning('recarring/get: paySchet не найден id=' . $kfCard->id);
+            Yii::warning("recarring/get PaySchet not found (PaySchet ID: {$kfCard->id}).");
             return ['status' => 0, 'message' => 'Счет не найден'];
         }
 
-        $uslugatovar = Uslugatovar::findOne(['ID' => $paySchet->IdUsluga]);
-        $partner = $kfRequest->partner;
-        if (!$uslugatovar || !$partner) {
-            Yii::warning('recarring/get: partner или uslugatovar не найдена paySchet id=' . $kfCard->id);
-            return ['status' => 0, 'message' => 'Счет не найден'];
+        Yii::info("recarring/get request (Partner ID: {$kfRequest->IdPartner}, Payschet ID: {$kfCard->id}, type: {$type}).");
+
+        $statePay = $kfCard->GetPayState();
+        switch ($statePay) {
+            case PaySchet::STATUS_ERROR:
+                return ['status' => 2, 'message' => 'Платеж не успешный'];
+            case PaySchet::STATUS_WAITING:
+                return ['status' => 0, 'message' => 'В обработке'];
         }
 
-        $donePayForm = new DonePayForm(['IdPay' => $paySchet->ID]);
+        $Card = $kfCard->FindKardByPay($kfRequest->IdPartner, $type);
 
-        $bankAdapterBuilder = new BankAdapterBuilder();
-        try {
-            $bankAdapter = $bankAdapterBuilder->build($partner, $uslugatovar)->getBankAdapter();
-            $bankAdapter->confirm($donePayForm);
-        } catch (GateException $e) {
-            Yii::warning('recarring/get: ' . $e->getMessage());
-            return ['status' => 0, 'message' => $e->getMessage()];
+        // Информация по карте
+        if ($Card && $type == 0) {
+            return [
+                'status' => 1,
+                'message' => '',
+                'card' => [
+                    'id' => (int)$Card->ID,
+                    'num' => (string)$Card->CardNumber,
+                    'exp' => $Card->getMonth() . '/' . $Card->getYear(),
+                    'holder' => $Card->CardHolder,
+                ]
+            ];
+        } elseif ($Card && $type == 1) {
+            return [
+                'status' => 1,
+                'message' => '',
+                'card' => [
+                    'id' => (int)$Card->ID,
+                    'num' => $Card->CardNumber,
+                    'exp' => '',
+                    'holder' => '',
+                ]
+            ];
+        } else {
+            return ['status' => 0, 'message' => 'Ошибка запроса'];
         }
-
-        $card = $kfCard->FindKardByPay($kfRequest->IdPartner, 0);
-        if (!$card) {
-            Yii::warning('recarring/get: карта не найдена idPartner=' . $kfRequest->IdPartner);
-            return ['status' => 0, 'message' => 'Карта не найдена'];
-        }
-
-        return [
-            'status' => 1,
-            'card' => [
-                'id' => intval($card->ID),
-                'num' => $card->CardNumber,
-                'exp' => $card->getMonth() . "/" . $card->getYear()
-            ]
-        ];
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace app\services\payment\models;
 
+use app\helpers\EnvHelper;
 use app\models\payonline\Partner;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
@@ -92,7 +93,6 @@ use Yii;
  * @property string $Eci
  * @property string $AuthValue3DS
  * @property string $CardRefId3DS
- * @property int $regcard
  */
 class PaySchet extends \yii\db\ActiveRecord
 {
@@ -162,7 +162,6 @@ class PaySchet extends \yii\db\ActiveRecord
             [['UserUrlInform', 'SuccessUrl', 'FailedUrl', 'CancelUrl'], 'string', 'max' => 1000],
             [['PostbackUrl', 'Dogovor', 'FIO', 'UserEmail'], 'string', 'max' => 255],
             [['RCCode'], 'string', 'max' => 10],
-            [['regcard'], 'in', 'range' => [1, 0]]
         ];
     }
 
@@ -492,5 +491,23 @@ class PaySchet extends \yii\db\ActiveRecord
         $dateCreate = Carbon::createFromTimestamp($this->DateCreate);
 
         return $now < $dateCreate->addDays(3);
+    }
+
+    public function afterFind()
+    {
+        EnvHelper::setParam(EnvHelper::PAYSCHET_ID, $this->ID);
+        if ($this->Extid) {
+            EnvHelper::setParam(EnvHelper::PAYSCHET_EXTID, $this->Extid);
+        }
+    }
+
+    public function afterSave($insert, $changedAttributes)
+    {
+        if ($insert) {
+            EnvHelper::setParam(EnvHelper::PAYSCHET_ID, $this->ID);
+            if ($this->Extid) {
+                EnvHelper::setParam(EnvHelper::PAYSCHET_EXTID, $this->Extid);
+            }
+        }
     }
 }
