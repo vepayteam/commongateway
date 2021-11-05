@@ -75,7 +75,7 @@ return [
         'basePath' => '@webroot/assets',
         'baseUrl' => '@web/assets',
         'js' => [
-            'pay-6f0f217c0621e4af6d1d426548656c3c.js',
+            'pay-be894bb72893ca2de3dd319d98744dfb.js',
         ],
         'css' => [
             'pay-26d5739b2ec9724046c78940f51f56d8.css',
