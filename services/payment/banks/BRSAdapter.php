@@ -160,7 +160,7 @@ class BRSAdapter implements IBankAdapter
     {
         /** @var CreatePayRequest $createPayRequest */
         $createPayRequest = new CreatePayRequest();
-        if($paySchet->uslugatovar->ID == Uslugatovar::REG_CARD_ID || $paySchet->regcard == 1) {
+        if($paySchet->uslugatovar->ID == Uslugatovar::REG_CARD_ID) {
             $createPayRequest = new CreatePayByRegCardRequest();
             $security = new Security();
             $createPayRequest->biller_client_id = $security->generateRandomString();

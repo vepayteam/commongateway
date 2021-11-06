@@ -24,7 +24,6 @@ class KfPay extends Model
     public $id;
     //public $type = 0;/*'type', */
     public $card = 0;
-    public $regcard = 0;
     public $timeout = 15;
     public $successurl = '';
     public $failurl = '';
@@ -49,8 +48,7 @@ class KfPay extends Model
             [['amount'/*, 'extid'*/], 'required', 'on' => self::SCENARIO_FORM],
             [['amount'/*, 'extid'*/, 'card'], 'required', 'on' => self::SCENARIO_AUTO],
             [['id'], 'integer', 'on' => self::SCENARIO_STATE],
-            [['id'], 'required', 'on' => self::SCENARIO_STATE],
-            [['regcard'], 'in', 'range' => [1, 0]]
+            [['id'], 'required', 'on' => self::SCENARIO_STATE]
         ];
     }
 

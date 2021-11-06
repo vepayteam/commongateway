@@ -176,7 +176,6 @@ class MerchantController extends Controller
         if ($kf->GetReq('regcard', 0)) {
             $reguser = new Reguser();
             $user = $reguser->findUser('0', $kf->IdPartner . '-' . time(), md5($kf->IdPartner . '-' . time()), $kf->IdPartner, false);
-            $kfPay->regcard = 1;
         }
         Yii::warning("/merchant/pay CreatePay id={$id}", 'merchant');
         $mutex = new FileMutex();

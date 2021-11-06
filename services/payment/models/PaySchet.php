@@ -87,13 +87,14 @@ use Yii;
  * @property Currency $currency
  * @property PaySchetLog[] $log
  * @property User $user
+ * @property Bank $bank
+ *
  * @property string $Version3DS
  * @property int $IsNeed3DSVerif
  * @property string $DsTransId
  * @property string $Eci
  * @property string $AuthValue3DS
  * @property string $CardRefId3DS
- * @property int $regcard
  */
 class PaySchet extends \yii\db\ActiveRecord
 {
@@ -163,7 +164,6 @@ class PaySchet extends \yii\db\ActiveRecord
             [['UserUrlInform', 'SuccessUrl', 'FailedUrl', 'CancelUrl'], 'string', 'max' => 1000],
             [['PostbackUrl', 'Dogovor', 'FIO', 'UserEmail'], 'string', 'max' => 255],
             [['RCCode'], 'string', 'max' => 10],
-            [['regcard'], 'in', 'range' => [1, 0]]
         ];
     }
 
