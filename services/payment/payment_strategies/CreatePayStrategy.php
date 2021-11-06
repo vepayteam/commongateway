@@ -70,6 +70,7 @@ class CreatePayStrategy
     public function exec(): PaySchet
     {
         $paySchet = $this->createPayForm->getPaySchet();
+        $this->createPayForm->regcard = (bool) $paySchet->user;
 
         if ($paySchet->isOld()) {
             throw new CreatePayException('Время для оплаты истекло');
