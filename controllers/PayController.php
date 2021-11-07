@@ -17,6 +17,7 @@ use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2DuplicatedException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
+use app\services\payment\exceptions\DuplicateCreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
 use app\services\payment\exceptions\reRequestingStatusException;
@@ -154,6 +155,8 @@ class PayController extends Controller
                 $params['currency'] = $currency->Code;
                 $params['currencySymbol'] = $currency->getSymbol();
 
+                Yii::info('PayForm render id:' . $id .  ',  paySchet: ' . $params['ID'] . ', Headers: ' . Json::encode(Yii::$app->request->headers));
+
                 return $this->render('formpay', [
                     'params' => $params,
                     'apple' => (new ApplePay())->GetConf($params['IDPartner']),
@@ -163,9 +166,11 @@ class PayController extends Controller
                 ]);
 
             } else {
+                Yii::info('PayForm redirect id:' . $id .  ',  paySchet: ' . $params['ID'] . ', Headers: ' . Json::encode(Yii::$app->request->headers));
                 return $this->redirect(Url::to('/pay/orderok?id=' . $id));
             }
         } else {
+            Yii::error('PayForm error id:' . $id .  ',  paySchet: ' . $params['ID'] . ', Headers: ' . Json::encode(Yii::$app->request->headers));
             throw new NotFoundHttpException("Счет для оплаты не найден");
         }
     }
@@ -196,31 +201,35 @@ class PayController extends Controller
 
         try {
             $paySchet = $createPayStrategy->exec();
-        } catch (CreatePayException $e) {
+        } catch (DuplicateCreatePayException $e) {
+            // releaseLock сюда не надо, эксепшен вызывается при попытке провести платеж, который уже проведен
+
             return ['status' => 0, 'message' => $e->getMessage()];
-        } catch (GateException $e) {
-            return ['status' => 0, 'message' => $e->getMessage()];
-        } catch (reRequestingStatusException $e) {
+        } catch (CreatePayException | GateException | reRequestingStatusException | BankAdapterResponseException | Exception $e) {
+            $createPayStrategy->releaseLock();
+
             return ['status' => 0, 'message' => $e->getMessage()];
         } catch (reRequestingStatusOkException $e) {
+            $createPayStrategy->releaseLock();
+
             return [
                 'status' => 2,
                 'message' => $e->getMessage(),
                 'url' => Yii::$app->params['domain'] . '/pay/orderok?id=' . $form->IdPay,
             ];
         } catch (Check3DSv2DuplicatedException $e) {
+            $createPayStrategy->releaseLock();
+
             // отменить счет
             return [
                 'status' => 2,
                 'message' => $e->getMessage(),
                 'url' => Yii::$app->params['domain'] . '/pay/orderok?id=' . $form->IdPay,
             ];
-        } catch (BankAdapterResponseException $e) {
-            return ['status' => 0, 'message' => $e->getMessage()];
         } catch (Check3DSv2Exception $e) {
+            $createPayStrategy->releaseLock();
+
             return ['status' => 0, 'message' => 'Карта не поддерживается, обратитесь в банк'];
-        } catch (Exception $e) {
-            return ['status' => 0, 'message' => $e->getMessage()];
         }
 
         $createPayResponse = $createPayStrategy->getCreatePayResponse();
@@ -254,12 +263,14 @@ class PayController extends Controller
         /** @var TKBankAdapter $tkbAdapter */
         $tkbAdapter = $bankAdapterBuilder->getBankAdapter();
         try {
+            Yii::info('PayController createpaySecondStep createPayStep2');
             $createPayResponse = $tkbAdapter->createPayStep2($createPaySecondStepForm);
         } catch (Check3DSv2Exception $e) {
             $errorMessage = 'Карта не поддерживается, обратитесь в банк';
             if ($e->getCode() === Check3DSv2Exception::INCORRECT_ECI) {
                 $errorMessage = 'Операция по карте запрещена. Обратитесь в банк эмитент.';
             }
+            Yii::warning('PayController createpaySecondStep redirect: '. $paySchet->ID. ', redirect url:' . $paySchet->FailedUrl . ', Error:' . $errorMessage . ', Headers: ' . Json::encode(Yii::$app->request->headers));
             return $this->render('client-error', [
                 'message' => $errorMessage,
                 'failUrl' => $paySchet->FailedUrl,
@@ -270,6 +281,7 @@ class PayController extends Controller
         $paySchet->save(false);
 
         if ($createPayResponse->isNeed3DSVerif) {
+            Yii::info('PayController createpaySecondStep render client-submit-form: ' . $paySchet->ID . ', Headers: ' . Json::encode(Yii::$app->request->headers));
             return $this->render('client-submit-form', [
                 'method' => 'POST',
                 'url' => $createPayResponse->url,
@@ -278,6 +290,7 @@ class PayController extends Controller
                 ],
             ]);
         } else {
+            Yii::info('PayController createpaySecondStep render client-redirect: ' . $paySchet->ID . ', Headers: ' . Json::encode(Yii::$app->request->headers));
             return $this->render('client-redirect', [
                 'redirectUrl' => Url::to('/pay/orderdone/' . $paySchet->ID),
             ]);

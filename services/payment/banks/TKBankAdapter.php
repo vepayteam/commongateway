@@ -1124,7 +1124,7 @@ class TKBankAdapter implements IBankAdapter
     {
         $checkDataCacheKey = Cache3DSv2Interface::CACHE_PREFIX_CHECK_DATA . $createPaySecondStepForm->getPaySchet()->ID;
 
-        if(Yii::$app->cache->exists($checkDataCacheKey)) {
+        if(Yii::$app->cache->exists($checkDataCacheKey)) { //@TODO: а я не понял, а если в кэше нет, то ничего вообще не делаем?
             $checkData = Yii::$app->cache->get($checkDataCacheKey);
 
             $check3DSVersionResponse = new Check3DSVersionResponse();
