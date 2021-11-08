@@ -20,6 +20,7 @@ use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CardTokenException;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\FortaBadRequestException;
+use app\services\payment\exceptions\FortaGatewayTimeoutException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CreatePayForm;
@@ -163,7 +164,18 @@ class FortaTechAdapter implements IBankAdapter
         $createPayRequest->expireYear = $createPayForm->CardYear;
         $createPayRequest->cvv = $createPayForm->CardCVC;
 
-        $ans = $this->sendRequest($action, $createPayRequest->getAttributes());
+        try {
+            $ans = $this->sendRequest($action, $createPayRequest->getAttributes());
+        } catch (FortaGatewayTimeoutException $e) {
+            Yii::error('FortaTechAdapter createPay gateway timeout exception PaySchet.ID=' . $paySchet->ID);
+            Yii::$app->queue
+                ->delay(self::REFUND_REFRESH_STATUS_JOB_DELAY)
+                ->push(new RefreshStatusPayJob([
+                    'paySchetId' => $paySchet->ID,
+                ]));
+
+            throw $e;
+        }
 
         if(!array_key_exists('url', $ans) || empty($ans['url'])) {
             throw new CreatePayException('FortaTechAdapter Empty 3ds url');
@@ -542,7 +554,18 @@ class FortaTechAdapter implements IBankAdapter
         ];
 
         $signature = $this->buildSignatureByOutCardPay($outCardPayRequest);
-        $ans = $this->sendRequest($action, $outCardPayRequest->getAttributes(), $signature);
+        try {
+            $ans = $this->sendRequest($action, $outCardPayRequest->getAttributes(), $signature);
+        } catch (FortaGatewayTimeoutException $e) {
+            Yii::error('FortaTechAdapter outCardPay gateway timeout exception paySchet.ID=' . $outCardPayForm->paySchet->ID);
+            Yii::$app->queue
+                ->delay(self::REFUND_REFRESH_STATUS_JOB_DELAY)
+                ->push(new RefreshStatusPayJob([
+                    'paySchetId' => $outCardPayForm->paySchet->ID,
+                ]));
+
+            throw $e;
+        }
 
         $outCardPayResponse = new OutCardPayResponse();
         if($ans['status'] == true && isset($ans['data']['id'])) {
@@ -678,6 +701,9 @@ class FortaTechAdapter implements IBankAdapter
         } elseif ($response['result'] == false && isset($response['message'])) {
             Yii::error('FortaTechAdapter ans uri=' . $uri .' : ' . Json::encode($maskedResponse));
             return $response;
+        } elseif ($info['http_code'] === 504) {
+            Yii::error('FortaTechAdapter gateway timeout exception');
+            throw new FortaGatewayTimeoutException('Ошибка запроса: ' . $curlError);
         } else {
             Yii::error('FortaTechAdapter error uri=' . $uri .' status=' . $info['http_code']);
             throw new BankAdapterResponseException('Ошибка запроса: ' . $curlError);
