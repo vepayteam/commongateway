@@ -31,9 +31,10 @@ class PayShetStat extends Model
     public function rules()
     {
         return [
-            [['IdPart', 'id'], 'integer'],
+            [['IdPart'], 'integer'],
+            [['id'], 'string'],
             [['summpayFrom','summpayTo'], 'number'],
-            [['Extid'], 'string', 'max' => 40],
+            [['Extid'], 'string'],
             [['datefrom', 'dateto'], 'date', 'format' => 'php:d.m.Y H:i'],
             [['datefrom', 'dateto'], 'required'],
             [['usluga', 'status', 'TypeUslug', 'idParts'], 'each', 'rule' => ['integer']],
@@ -376,6 +377,8 @@ class PayShetStat extends Model
             ]);
 
         $query->andFilterWhere(['qp.IDPartner' => $this->idParts]);
+        $query->andFilterWhere(['ps.ID' => $this->id ? explode(';', $this->id) : null]);
+        $query->andFilterWhere(['ps.Extid' => $this->id ? explode(';', $this->Extid) : null]);
 
         if ($IdPart > 0) {
             $query->andWhere('qp.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);
@@ -393,12 +396,6 @@ class PayShetStat extends Model
         }
         if (count($this->TypeUslug) > 0) {
             $query->andWhere(['in', 'qp.IsCustom', $this->TypeUslug]);
-        }
-        if ($this->id > 0) {
-            $query->andWhere('ps.ID = :ID', [':ID' => $this->id]);
-        }
-        if (!empty($this->Extid)) {
-            $query->andWhere('ps.Extid = :EXTID', [':EXTID' => $this->Extid]);
         }
         if (is_numeric($this->summpayFrom) && is_numeric($this->summpayTo)) {
             $query->andWhere(['between', 'ps.SummPay', round($this->summpayFrom * 100.0), round($this->summpayTo * 100.0)]);
@@ -424,7 +421,7 @@ class PayShetStat extends Model
             }
             if (array_key_exists('cardMask', $this->params) && $this->params['cardMask'] !== '') {
                 if (strpos($this->params['cardMask'], '*') !== false) {
-                    $regexp = str_replace('*', '(\d|\*)', $this->params['cardMask']);
+                    $regexp = str_replace(['*', ';'], ['(\d|\*)', '|'], $this->params['cardMask']);
                     $query->andWhere(['REGEXP','c.CardNumber', $regexp]);
                 } else {
                     $query->andWhere(['like', 'c.CardNumber', $this->params['cardMask'].'%', false]);
