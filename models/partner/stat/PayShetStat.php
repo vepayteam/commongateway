@@ -378,7 +378,7 @@ class PayShetStat extends Model
 
         $query->andFilterWhere(['qp.IDPartner' => $this->idParts]);
         $query->andFilterWhere(['ps.ID' => $this->id ? explode(';', $this->id) : null]);
-        $query->andFilterWhere(['ps.Extid' => $this->id ? explode(';', $this->Extid) : null]);
+        $query->andFilterWhere(['ps.Extid' => $this->Extid ? explode(';', $this->Extid) : null]);
 
         if ($IdPart > 0) {
             $query->andWhere('qp.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);
