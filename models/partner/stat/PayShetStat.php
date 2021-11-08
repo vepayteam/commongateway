@@ -272,7 +272,7 @@ class PayShetStat extends Model
             'ps.IdOrg',
             'ps.Extid',
             'ps.RRN',
-            'ps.CardNum',
+            'c.CardNumber',
             'ps.CardHolder',
             'ps.IdKard',//
             'qp.NameUsluga',
@@ -377,8 +377,8 @@ class PayShetStat extends Model
             ]);
 
         $query->andFilterWhere(['qp.IDPartner' => $this->idParts]);
-        $query->andFilterWhere(['ps.ID' => $this->id ? explode(';', $this->id) : null]);
-        $query->andFilterWhere(['ps.Extid' => $this->Extid ? explode(';', $this->Extid) : null]);
+        $query->andFilterWhere(['ps.ID' => $this->explode($this->id)]);
+        $query->andFilterWhere(['ps.Extid' => $this->explode($this->Extid)]);
 
         if ($IdPart > 0) {
             $query->andWhere('qp.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);
@@ -431,7 +431,7 @@ class PayShetStat extends Model
                 $query->andWhere(['like', 'b.Name',  $this->params['bankName']]);
             }
             if (array_key_exists('operationNumber', $this->params) && $this->params['operationNumber'] !== '') {
-                $query->andWhere(['ps.ExtBillNumber' => explode(';', $this->params['operationNumber'])]);
+                $query->andWhere(['ps.ExtBillNumber' => $this->explode($this->params['operationNumber'])]);
             }
         }
         return $query;
@@ -573,6 +573,11 @@ class PayShetStat extends Model
             ':DATETO' => strtotime($this->dateto . ":59")])->queryScalar();
 
         return (double)$summVozvr;
+    }
+
+    private function explode(string $id): ?array
+    {
+        return $this->id ? array_filter(explode(';', $id)) : null;
     }
 
 }

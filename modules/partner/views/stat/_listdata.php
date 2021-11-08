@@ -101,7 +101,7 @@ use yii\widgets\LinkPager;
                 <td><?= $row['CardType'] ?></td>
                 <td><?= $row['CountryUser'] . " " . $row['CityUser'] ?></td>
                 <td><?= $row['IdOrg'] ?></td>
-                <td><?= $row['CardNum'] ?></td>
+                <td><?= $row['CardNumber'] ?></td>
                 <td><?= $row['CardHolder'] ?></td>
                 <td><?= $row['RRN'] ?></td>
                 <td><?= $row['IdKard'] ?></td>
