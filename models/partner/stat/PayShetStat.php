@@ -577,6 +577,7 @@ class PayShetStat extends Model
 
     private function explode(string $id): ?array
     {
+        $id = trim($id);
         return $id ? array_filter(explode(';', $id)) : null;
     }
 
