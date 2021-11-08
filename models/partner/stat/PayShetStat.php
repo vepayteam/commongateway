@@ -431,7 +431,7 @@ class PayShetStat extends Model
                 $query->andWhere(['like', 'b.Name',  $this->params['bankName']]);
             }
             if (array_key_exists('operationNumber', $this->params) && $this->params['operationNumber'] !== '') {
-                $query->andWhere('ps.ExtBillNumber = :EXTBILLNUMBER', [':EXTBILLNUMBER' => $this->params['operationNumber']]);
+                $query->andWhere(['ps.ExtBillNumber' => explode(';', $this->params['operationNumber'])]);
             }
         }
         return $query;
