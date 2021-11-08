@@ -11,6 +11,8 @@ use yii\helpers\Json;
 
 trait WallettoRequestTrait
 {
+    private $publicIpAddress = '84.38.187.23';
+
     /**
      * @param CreatePayForm $createPayForm
      * @return CreatePayRequest
@@ -29,7 +31,12 @@ trait WallettoRequestTrait
             'expiration_month' => str_pad($createPayForm->CardMonth, 2, '0', STR_PAD_LEFT),
             'expiration_year' => '20' . $createPayForm->CardYear,
         ];
-        $request->location['ip'] = $paySchet->IPAddressUser;
+        // По ответам walletto нужно передавать в location['ip'] публичный адрес, иначе придет ошибка
+        // Если находимся в девмоде или в тестмоде, то указываем наш публичный ip адрес
+        // В остальных случаях указываем ip адрес клиента
+        $request->location['ip'] = (Yii::$app->params['DEVMODE'] === 'Y' || Yii::$app->params['TESTMODE'] === 'Y')
+            ? $this->publicIpAddress
+            : $paySchet->IPAddressUser;
         //TODO: add address, city, country, login, phone, zip
         $request->client = [
           'email' => $paySchet->UserEmail,
@@ -44,6 +51,7 @@ trait WallettoRequestTrait
             'force3d' => 1,
             'auto_charge' => 1,
             'return_url' => $createPayForm->getReturnUrl(),
+            'expiration_timeout' => (int) ($paySchet->TimeElapsed / 60),
         ];
         $request->currency = $paySchet->currency->Code;
         $request->merchant_order_id = $paySchet->ID;
