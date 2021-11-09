@@ -25,20 +25,6 @@ class DiffReader
         $this->filename = $filename;
     }
 
-    /**
-     * Возвращает первую строку фала с названиями колонок
-     *
-     * @return array
-     * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
-     */
-    public function getRegistryColumns(): array
-    {
-        $rows = $this->readActiveSheet(new DiffReadColumnsFilter());
-        [$columns] = $rows;
-
-        return range(1, count($columns));
-    }
-
     public function getDbColumns(): array
     {
         return $this->dbColumns;

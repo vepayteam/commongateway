@@ -101,8 +101,8 @@ class DiffData
         $registry = [];
 
         foreach ($rows as $row) {
-            $select = strval($row[$this->form->registrySelectColumn]);
-            $status = $this->form->allRegistryStatusSuccess ? PaySchet::STATUSES[PaySchet::STATUS_DONE] : strval($row[$this->form->registryStatusColumn]);
+            $select = strval($row[$this->form->registrySelectColumn - 1]);
+            $status = $this->form->allRegistryStatusSuccess ? PaySchet::STATUSES[PaySchet::STATUS_DONE] : strval($row[$this->form->registryStatusColumn - 1]);
 
             if (empty($select) || empty($status)) {
                 continue;

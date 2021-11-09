@@ -389,34 +389,14 @@
                         return
                     }
 
-                    const registryColumns = data.registryColumns
                     const dbColumns = data.dbColumns
                     const settings = data.settings
 
-                    const registrySelectColumn = $('#registrySelectColumn')
-                    registrySelectColumn.empty()
-
-                    const registryStatusColumn = $('#registryStatusColumn')
-                    registryStatusColumn.empty()
+                    $('#registrySelectColumn').val(settings ? settings.RegistrySelectColumn : '')
+                    $('#registryStatusColumn').val(settings ? settings.RegistryStatusColumn : '')
 
                     const dbColumnElement = $('#dbColumn')
                     dbColumnElement.empty()
-
-                    for (let a = 0; a < registryColumns.length; a++) {
-                        const registrySelect = settings ? settings.RegistrySelectColumn : 0
-                        const registryStatus = settings ? settings.RegistryStatusColumn : 0
-
-                        registrySelectColumn.append($('<option>', {
-                            value: a,
-                            text: registryColumns[a],
-                            selected: a === registrySelect,
-                        }))
-                        registryStatusColumn.append($('<option>', {
-                            value: a,
-                            text: registryColumns[a],
-                            selected: a === registryStatus,
-                        }))
-                    }
 
                     for (const dbColumnName of dbColumns) {
                         const dbColumnSettings = settings ? settings.DbColumn : ''
@@ -465,6 +445,7 @@
 
             $('#bank').change(function () {
                 if ($('#registryFile').val()) {
+                    $('#diffDataResult').html('')
                     lk.diffColumnsReq()
                 }
             })
@@ -475,6 +456,7 @@
                     return
                 }
 
+                $('#diffDataResult').html('')
                 lk.diffColumnsReq()
             })
 

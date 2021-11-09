@@ -129,7 +129,6 @@ class StatController extends Controller
 
         try {
             $diffReader = new DiffReader($form->registryFile->tempName);
-            $registryColumns = $diffReader->getRegistryColumns();
             $dbColumns = $diffReader->getDbColumns();
         } catch (\Exception $e) {
             Yii::error('Stat diffColumns exception: ' . $e->getMessage());
@@ -138,7 +137,6 @@ class StatController extends Controller
 
         return $this->asJson([
             'status' => 1,
-            'registryColumns' => $registryColumns,
             'dbColumns' => $dbColumns,
             'settings' => $settings,
         ]);
