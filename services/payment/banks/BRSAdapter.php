@@ -77,7 +77,7 @@ class BRSAdapter implements IBankAdapter
     protected $bankUrl;
     protected $bankP2pUrl;
     protected $bankUrl3DS;
-    protected $bankUrlP2p3DS;
+    protected $bankP2pUrl3DS;
     protected $bankUrlB2C;
 
     protected $bankUrlXml;
@@ -104,8 +104,8 @@ class BRSAdapter implements IBankAdapter
 
         $this->bankUrl = $config['url'];
         $this->bankUrl3DS = $config['url_3ds'];
-        $this->bankUrlP2p = $config['url_p2p'];
-        $this->bankUrlP2p3DS = $config['url_p2p_3ds'];
+        $this->bankP2pUrl = $config['url_p2p'];
+        $this->bankP2pUrl3DS = $config['url_p2p_3ds'];
         $this->bankUrlXml = $config['url_xml'];
         $this->bankUrlB2C = $config['url_b2c'];
     }
@@ -1027,7 +1027,7 @@ class BRSAdapter implements IBankAdapter
             } else {
                 $sendP2pResponse->status = BaseResponse::STATUS_DONE;
                 $sendP2pResponse->transac = $ans['TRANSACTION_ID'];
-                $sendP2pResponse->url = $this->bankUrlP2p3DS . '?trans_id=' . urlencode($ans['TRANSACTION_ID']);
+                $sendP2pResponse->url = $this->bankP2pUrl3DS . '?trans_id=' . urlencode($ans['TRANSACTION_ID']);
             }
         } catch (BankAdapterResponseException $e) {
             $sendP2pResponse->status = BaseResponse::STATUS_ERROR;
