@@ -80,6 +80,8 @@ return [
             'BRS' => [
                 'url' => getenv('PARAMS_PAYMENTS_BRS_URL', true),
                 'url_3ds' => getenv('PARAMS_PAYMENTS_BRS_URL_3DS', true),
+                'url_p2p' => getenv('PARAMS_PAYMENTS_BRS_URL_P2P', true),
+                'url_p2p_3ds' => getenv('PARAMS_PAYMENTS_BRS_URL_P2P_3DS', true),
                 'url_xml' => getenv('PARAMS_PAYMENTS_BRS_URL_XML', true),
                 'url_b2c' => getenv('PARAMS_PAYMENTS_BRS_URL_B2C', true),
             ],
