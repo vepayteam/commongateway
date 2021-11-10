@@ -14,15 +14,4 @@ class CheckStatusPayResponse extends BaseResponse
     public $expMonth;
     public $cardHolder;
     public $operations;
-
-    /**
-     * проверка полученного внешнего идентификатора карты
-     * @return array[]
-     */
-    public function rules(): array
-    {
-        return [
-            [['cardRefId'], 'required'],
-        ];
-    }
 }
