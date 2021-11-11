@@ -145,7 +145,7 @@ class BRSAdapter implements IBankAdapter
         $confirmPayResponse = new ConfirmPayResponse();
         try {
             $data = $conformP2pRequest->getAttributes();
-            $ans = $this->sendRequest($uri, $data);
+            $ans = $this->sendRequest($uri, $data, $this->bankP2pUrl);
             if(array_key_exists('error', $ans)) {
                 $confirmPayResponse->status = BaseResponse::STATUS_ERROR;
                 $confirmPayResponse->message = $ans['error'];
@@ -315,7 +315,11 @@ class BRSAdapter implements IBankAdapter
 
         $checkStatusPayResponse = new CheckStatusPayResponse();
         try {
-            $ans = $this->sendRequest($uri, $checkStatusPayRequest->getAttributes());
+            $domain = $this->bankUrl;
+            if($paySchet->OutCardPan) {
+                $domain = $this->bankP2pUrl;
+            }
+            $ans = $this->sendRequest($uri, $checkStatusPayRequest->getAttributes(), $domain);
             $checkStatusPayResponse->message = BRSErrorHelper::getMessage($ans);
             $checkStatusPayResponse->status = $this->getStatusResponse($ans['RESULT']);
             $this->checkStatusPayResponseFiller($checkStatusPayResponse, $ans);
