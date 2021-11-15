@@ -326,8 +326,6 @@
         },
 
         createPaySuccess: function (data, textStatus, jqXHR) {
-            $("#loader").hide();
-
             if (data.status == 1 && !data.isNeed3DSRedirect) {
                 if (data.isNeed3DSVerif == 1) {
                     //ок - переход по url банка

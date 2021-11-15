@@ -45,6 +45,8 @@ class ServicesPaymentFormsDonePayFormTest extends \Codeception\Test\Unit
         $form = new DonePayForm();
         $form->IdPay = 1;
         $this->tester->assertInstanceOf(PaySchet::class, $form->getPaySchet());
+
+        $form = new DonePayForm();
         $form->IdPay = 0;
         $this->tester->assertEquals(null,  $form->getPaySchet());
     }

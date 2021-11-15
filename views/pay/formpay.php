@@ -123,7 +123,7 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
                 ]); ?>
             </div>
             <div class="cvcblock">
-                <img src="/imgs/info.svg" alt="info" class="infocvc" data-toggle="tooltip" data-placement="top" title="Последние 3 цифры на белой полосе карты с обратной стороны">
+                <img src="/imgs/info.svg" alt="info" class="infocvc" data-toggle="tooltip" data-placement="top" title="Трехзначный код на обратной стороне карты">
                 <?= $form->field($payform, 'CardCVC')->passwordInput([
                     'data-inputmask-placeholder' => '_',
                     'data-inputmask-jitMasking' => 'true',
