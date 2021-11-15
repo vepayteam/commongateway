@@ -209,7 +209,7 @@ class WidgetController extends Controller
         try {
             $createPayStrategy->exec();
         } catch (Exception $e) {
-            Yii::warning('WidgetController createPayStrategy exception: ' . $e->getMessage());
+            Yii::$app->errorHandler->logException($e);
             return ['status' => 0, 'message' => $e->getMessage()];
         }
 

@@ -81,6 +81,8 @@ return [
             'BRS' => [
                 'url' => 'https://testsecurepay2.rsb.ru:9443',
                 'url_3ds' => 'https://testsecurepay2.rsb.ru/ecomm2/ClientHandler',
+                'url_p2p' => 'https://testsecurepay.rsb.ru:9443',
+                'url_p2p_3ds' => 'https://testsecurepay.rsb.ru/ecomm2/ClientHandler',
                 'url_xml' => 'https://194.67.29.216:8443',
                 'url_b2c' => 'https://212.46.217.150:7601',
             ],
