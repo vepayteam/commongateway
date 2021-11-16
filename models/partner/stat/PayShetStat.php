@@ -420,8 +420,9 @@ class PayShetStat extends Model
                                   round($this->params['fullSummpayTo'] * 100.0)]);
             }
             if (array_key_exists('cardMask', $this->params) && $this->params['cardMask'] !== '') {
+                $this->params['cardMask'] = trim($this->params['cardMask'], '; \t\n\r');
                 if (strpos($this->params['cardMask'], '*') !== false) {
-                    $regexp = str_replace(['*', ';'], ['(\d|\*)', '|'], $this->params['cardMask']);
+                    $regexp = str_replace(['*'], ['(\d|\*)'], implode('|', $this->explode($this->params['cardMask'])));
                     $query->andWhere(['REGEXP','c.CardNumber', $regexp]);
                 } else {
                     $query->andWhere(['like', 'c.CardNumber', $this->params['cardMask'].'%', false]);
@@ -431,7 +432,7 @@ class PayShetStat extends Model
                 $query->andWhere(['like', 'b.Name',  $this->params['bankName']]);
             }
             if (array_key_exists('operationNumber', $this->params) && $this->params['operationNumber'] !== '') {
-                $query->andWhere(['ps.ExtBillNumber' => $this->explode($this->params['operationNumber'])]);
+                $query->andFilterWhere(['ps.ExtBillNumber' => $this->explode($this->params['operationNumber'])]);
             }
         }
         return $query;
@@ -577,7 +578,7 @@ class PayShetStat extends Model
 
     private function explode(string $id): ?array
     {
-        $id = trim($id);
+        $id = trim($id, ' \t\n\r');
         return $id ? array_filter(explode(';', $id)) : null;
     }
 
