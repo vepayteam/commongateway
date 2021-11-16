@@ -493,7 +493,7 @@ class PayShetStat extends Model
                 ':DATETO' => strtotime($this->dateto . ":59")
             ])
             ->andWhere('ps.Status = 1')
-            ->groupBy('idusluga, bank')
+            ->groupBy('idusluga, NameUsluga, bank')
             ->orderBy('bank')
         ;
 
