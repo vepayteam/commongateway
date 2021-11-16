@@ -90,7 +90,6 @@ use yii\db\ActiveQuery;
  * @property PaySchetLog[] $log
  * @property User $user
  * @property Bank $bank
- *
  * @property string $Version3DS
  * @property int $IsNeed3DSVerif
  * @property string $DsTransId

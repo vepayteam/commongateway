@@ -298,7 +298,8 @@ class StatController extends Controller
             'IsAdmin' => $IsAdmin,
             'partnerlist' => $fltr->getPartnersList(),
             'magazlist' => $IsAdmin ? $fltr->getMagazList(-1) : $fltr->getMagazList(UserLk::getPartnerId(Yii::$app->user)),
-            'uslugilist' => $fltr->getTypeUslugLiust()
+            'uslugilist' => $fltr->getTypeUslugLiust(),
+            'bankList' => $fltr->getBankList(),
         ]);
     }
 

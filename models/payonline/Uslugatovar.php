@@ -258,7 +258,7 @@ class Uslugatovar extends \yii\db\ActiveRecord
     {
         return $this->hasOne(UslugatovarType::className(), ['Id' => 'IsCustom']);
     }
-    
+
     /**
      * Gets query for [[PaySchets]].
      */
@@ -266,7 +266,7 @@ class Uslugatovar extends \yii\db\ActiveRecord
     {
         return $this->hasMany(PaySchet::className(), ['IdUsluga' => 'ID']);
     }
-    
+
     /**
      * Gets query for [[PaySchets]].
      */
@@ -274,7 +274,7 @@ class Uslugatovar extends \yii\db\ActiveRecord
     {
         return $this->hasOne(Cards::className(), ['ID' => 'IdKard'])->via('paySchets');
     }
-    
+
     /**
      * Gets query for [[PaySchets]].
      */
@@ -282,7 +282,7 @@ class Uslugatovar extends \yii\db\ActiveRecord
     {
         return $this->hasMany(PaySchet::className(), ['IdUsluga' => 'ID']);
     }
-    
+
     /**
      * {@inheritdoc}
      */

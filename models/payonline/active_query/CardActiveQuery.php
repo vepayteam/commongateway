@@ -25,7 +25,7 @@ class CardActiveQuery extends ActiveQuery
                 User::tableName() . '.ExtOrg' => $partner->ID,
             ]);
     }
-    
+
     /**
      * @param $dateFrom
      * @param $dateTo

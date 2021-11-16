@@ -19,6 +19,7 @@ class PayShetStat extends Model
     public $idParts = [];
     public $usluga = [];
     public $TypeUslug = [];
+    public $idBank = [];
     public $Extid = '';
     public $id = 0;
     public $summpayFrom = 0;
@@ -32,11 +33,11 @@ class PayShetStat extends Model
     {
         return [
             [['IdPart', 'id'], 'integer'],
-            [['summpayFrom','summpayTo'], 'number'],
+            [['summpayFrom', 'summpayTo'], 'number'],
             [['Extid'], 'string', 'max' => 40],
             [['datefrom', 'dateto'], 'date', 'format' => 'php:d.m.Y H:i'],
             [['datefrom', 'dateto'], 'required'],
-            [['usluga', 'status', 'TypeUslug', 'idParts'], 'each', 'rule' => ['integer']],
+            [['usluga', 'status', 'TypeUslug', 'idBank', 'idParts'], 'each', 'rule' => ['integer']],
             [['params'], 'each', 'rule' => ['string']],
         ];
     }
@@ -408,19 +409,29 @@ class PayShetStat extends Model
             $query->andWhere(['<=', 'ps.SummPay', round($this->summpayTo * 100.0)]);
         }
         if (count($this->params) > 0) {
-            if (!empty($this->params[0])) $query->andWhere(['like', 'ps.Dogovor', $this->params[0]]);
+            if (!empty($this->params[0])) {
+                $query->andWhere(['like', 'ps.Dogovor', $this->params[0]]);
+            }
             if (isset($this->params['fullSummpayFrom']) && isset($this->params['fullSummpayTo'])
                 && is_numeric($this->params['fullSummpayFrom']) && is_numeric($this->params['fullSummpayTo'])) {
                 $query->andWhere([
-                    'between', new Expression('(`ps`.`SummPay` + `ps`.`ComissSumm`)'),
-                    round($this->params['fullSummpayFrom'] * 100.0), round($this->params['fullSummpayTo'] * 100.0)
+                    'between',
+                    new Expression('(`ps`.`SummPay` + `ps`.`ComissSumm`)'),
+                    round($this->params['fullSummpayFrom'] * 100.0),
+                    round($this->params['fullSummpayTo'] * 100.0)
                 ]);
-            } elseif (isset($this->params['fullSummpayFrom'])&& is_numeric($this->params['fullSummpayFrom'])) {
-                $query->andWhere(['>=', new Expression('(`ps`.`SummPay` + `ps`.`ComissSumm`)'),
-                                  round($this->params['fullSummpayFrom'] * 100.0)]);
-            } elseif (isset($this->params['fullSummpayTo'])&& is_numeric($this->params['fullSummpayTo'])) {
-                $query->andWhere(['<=', new Expression('(`ps`.`SummPay` + `ps`.`ComissSumm`)'),
-                                  round($this->params['fullSummpayTo'] * 100.0)]);
+            } elseif (isset($this->params['fullSummpayFrom']) && is_numeric($this->params['fullSummpayFrom'])) {
+                $query->andWhere([
+                    '>=',
+                    new Expression('(`ps`.`SummPay` + `ps`.`ComissSumm`)'),
+                    round($this->params['fullSummpayFrom'] * 100.0)
+                ]);
+            } elseif (isset($this->params['fullSummpayTo']) && is_numeric($this->params['fullSummpayTo'])) {
+                $query->andWhere([
+                    '<=',
+                    new Expression('(`ps`.`SummPay` + `ps`.`ComissSumm`)'),
+                    round($this->params['fullSummpayTo'] * 100.0)
+                ]);
             }
             if (array_key_exists('cardMask', $this->params) && $this->params['cardMask'] !== '') {
                 if (strpos($this->params['cardMask'], '*') !== false) {
@@ -459,22 +470,21 @@ class PayShetStat extends Model
         $IdPart = $IsAdmin ? $this->IdPart : UserLk::getPartnerId(Yii::$app->user);
 
         $query = new Query();
-        $query
-            ->select([
-                'ut.NameUsluga',
-                'ut.ProvVoznagPC',
-                'ut.ProvVoznagMin',
-                'ps.SummPay',
-                'ps.ComissSumm',
-                'ps.MerchVozn',
-                'ps.BankComis',
-                'ps.IdUsluga',
-                'ut.IsCustom',
-                'ut.ProvVoznagPC',
-                'ut.ProvVoznagMin',
-                'ut.ProvComisPC',
-                'ut.ProvComisMin'
-            ])
+        $query->select([
+            '`ut`.`NameUsluga`',
+            '`b`.`Name` as bankName',
+            '`ut`.`ProvVoznagPC`',
+            '`ut`.`ProvVoznagMin`',
+            '`ps`.`IdUsluga`',
+            '`ut`.`IsCustom`',
+            '`ut`.`ProvComisPC`',
+            '`ut`.`ProvComisMin`',
+            'SUM(`ps`.`SummPay`) AS `SummPay`',
+            'SUM(`ps`.`ComissSumm`) AS `ComissSumm`',
+            'SUM(`ps`.`MerchVozn`) AS `MerchVozn`',
+            'SUM(`ps`.`BankComis`) AS `BankComis`',
+            'COUNT(*) AS CntPays'
+        ])
             ->from('`pay_schet` AS ps')
             ->leftJoin('`uslugatovar` AS ut', 'ps.IdUsluga = ut.ID')
             ->leftJoin('`banks` AS b', 'ps.Bank = b.ID')
@@ -482,7 +492,10 @@ class PayShetStat extends Model
                 ':DATEFROM' => strtotime($this->datefrom . ":00"),
                 ':DATETO' => strtotime($this->dateto . ":59")
             ])
-            ->andWhere('ps.Status = 1');
+            ->andWhere('ps.Status = 1')
+            ->groupBy('idusluga, bank')
+            ->orderBy('bank')
+        ;
 
         if ($IdPart > 0) {
             $query->andWhere('ut.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);
@@ -498,27 +511,15 @@ class PayShetStat extends Model
             $query->andWhere(['in', 'ut.IsCustom', $this->TypeUslug]);
         }
 
-        $res = $query->cache(10)->all();
+        $query->andFilterWhere(['bank' => $this->idBank]);
 
-        $ret = [];
-        foreach ($res as $row) {
-            $indx = $row['IdUsluga'];
-            $row['VoznagSumm'] = $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
+        $res = $query->all();
 
-            if (!isset($ret[$indx])) {
-                $row['CntPays'] = 1;
-                $ret[$indx] = $row;
-            } else {
-                $ret[$indx]['SummPay'] += $row['SummPay'];
-                $ret[$indx]['ComissSumm'] += $row['ComissSumm'];
-                $ret[$indx]['BankComis'] += $row['BankComis'];
-                $ret[$indx]['VoznagSumm'] += $row['VoznagSumm'];
-                $ret[$indx]['MerchVozn'] += $row['MerchVozn'];
-                $ret[$indx]['CntPays']++;
-            }
+        foreach ($res as &$row) {
+            $row['VoznagSumm'] = (string)$row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
         }
 
-        return $ret;
+        return $res;
     }
 
     /**

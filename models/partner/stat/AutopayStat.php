@@ -32,10 +32,10 @@ class AutopayStat extends Model
     {
         $err = $this->firstErrors;
         $err = array_pop($err);
-        
+
         return $err;
     }
-    
+
     /**
      * @param $isAdmin
      *
@@ -45,10 +45,10 @@ class AutopayStat extends Model
     {
         $IdPart = ($isAdmin ? $this->IdPart : UserLk::getPartnerId(Yii::$app->user));
         $idPart = $IdPart > 0 ? $IdPart : null;
-        
+
         $datefrom = strtotime($this->datefrom . ' 00:00:00');
         $dateto = strtotime($this->dateto . ' 23:59:59');
-        
+
         $ret = [
             'cntnewcards' => 0,
             'activecards' => 0,
@@ -65,9 +65,9 @@ class AutopayStat extends Model
             ->andWhere(['!=', 'ExtCardIDP', 0])
             ->andWhere(['between', 'DateAdd', $datefrom, $dateto])
             ->andFilterWhere(['ExtOrg' => $idPart]);
-        
+
         $ret['cntnewcards'] = $queryNewCards->count();
-        
+
         //сколько активных привязанных карт
         $queryAciveCards = Uslugatovar::find()
             ->joinWith('cards')
@@ -75,9 +75,9 @@ class AutopayStat extends Model
             ->andWhere(['cards.Typecard' => 0])
             ->andWhere(['between', 'DateCreate', $datefrom, $dateto])
             ->andFilterWhere(['IDPartner' => $idPart]);
-        
+
         $ret['activecards'] = $queryAciveCards->count('DISTINCT `cards`.`ID`');
-        
+
         //Количество запросов на одну карту
         $queryPayShet = PaySchet::find()
             ->joinWith(['cards', 'uslugatovar'])
@@ -85,9 +85,9 @@ class AutopayStat extends Model
             ->andWhere(['uslugatovar.IsCustom' => TU::AutoPay()])
             ->andWhere(['between', 'DateCreate', $datefrom, $dateto])
             ->andFilterWhere(['IDPartner' => $idPart]);
-        
+
         $ret['reqcards'] = $queryPayShet->count();
-        
+
         if ($ret['activecards'] > 0) {
             $ret['reqonecard'] = $ret['reqcards'] / $ret['activecards'] / ceil(($dateto + 1 - $datefrom) / (60 * 60 * 24));
         }
@@ -100,10 +100,10 @@ class AutopayStat extends Model
             ->andWhere(['uslugatovar.IsCustom' => TU::AutoPay()])
             ->andWhere(['between', 'DateCreate', $datefrom, $dateto])
             ->andFilterWhere(['IDPartner' => $idPart]);
-        
+
         $ret['payscards'] = $querySuccess->count();
         $ret['sumpayscards'] = $querySuccess->sum('SummPay');
-        
+
         return $ret;
     }
 
