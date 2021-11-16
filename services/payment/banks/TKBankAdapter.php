@@ -43,6 +43,7 @@ use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
+use app\services\payment\forms\SendP2pForm;
 use app\services\payment\forms\tkb\CheckStatusPayRequest;
 use app\services\payment\forms\tkb\Confirm3DSv2Request;
 use app\services\payment\forms\tkb\CreatePayRequest;
@@ -1708,5 +1709,10 @@ class TKBankAdapter implements IBankAdapter
     public function currencyExchangeRates()
     {
         throw new GateException('Метод недоступен');
+    }
+
+    public function sendP2p(SendP2pForm $sendP2pForm)
+    {
+        // TODO: Implement sendP2p() method.
     }
 }
