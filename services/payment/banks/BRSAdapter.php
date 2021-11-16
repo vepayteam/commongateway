@@ -199,17 +199,14 @@ class BRSAdapter implements IBankAdapter
     protected function buildCreatePayRequest(PaySchet $paySchet, CreatePayForm $createPayForm)
     {
         /** @var CreatePayRequest $createPayRequest */
-        $createPayRequest = new CreatePayRequest();
-        if($paySchet->uslugatovar->ID == Uslugatovar::REG_CARD_ID || $createPayForm->regcard) {
+        if($paySchet->uslugatovar->ID == Uslugatovar::REG_CARD_ID || $paySchet->RegisterCard || $createPayForm->regcard) {
             $createPayRequest = new CreatePayByRegCardRequest();
-            $security = new Security();
-            $createPayRequest->biller_client_id = $security->generateRandomString();
-
-            $expiry = Carbon::now()->addYears(3);
-            $createPayRequest->perspayee_expiry = sprintf('%02d', $expiry->month)
-                . substr((string)$expiry->year, -2);
+            $createPayRequest->biller_client_id = Yii::$app->security->generateRandomString();
+            $createPayRequest->perspayee_expiry = Carbon::now()->addYears(3)->format('my');
         } elseif ($this->gate->TU == UslugatovarType::POGASHATF) {
             $createPayRequest = new CreatePayAftRequest();
+        } else {
+            $createPayRequest = new CreatePayRequest();
         }
 
         $createPayRequest->mrch_transaction_id = $paySchet->ID;

@@ -3,9 +3,7 @@
 namespace app\modules\mfo\controllers;
 
 use app\models\api\CorsTrait;
-use app\models\bank\TCBank;
 use app\models\kfapi\KfFormPay;
-use app\models\kfapi\KfPayParts;
 use app\models\mfo\MfoReq;
 use app\modules\mfo\jobs\recurrentPaymentParts\ExecutePaymentJob;
 use app\modules\mfo\models\RecurrentPaymentPartsForm;
@@ -13,13 +11,10 @@ use app\services\compensationService\CompensationException;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
-use app\services\payment\forms\MfoLkPayForm;
 use app\services\payment\forms\CreatePayPartsForm;
+use app\services\payment\forms\MfoLkPayForm;
 use app\services\payment\models\PaySchet;
-use app\services\payment\payment_strategies\CreateFormMfoAftPartsStrategy;
-use app\services\payment\payment_strategies\CreateFormMfoEcomPartsStrategy;
 use app\services\payment\payment_strategies\CreatePayPartsStrategy;
-use app\services\payment\payment_strategies\IMfoStrategy;
 use app\services\payment\payment_strategies\mfo\MfoAutoPayStrategy;
 use app\services\payment\payment_strategies\mfo\MfoPayLkCreateStrategy;
 use app\services\PaySchetService;
