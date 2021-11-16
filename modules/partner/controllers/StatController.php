@@ -568,7 +568,7 @@ class StatController extends Controller
                 return [
                     'status' => 1,
                     'data' => $this->renderPartial('_recurrentcarddata', [
-                        'data' => $AutopayStat->GetData($IsAdmin)
+                        'data' => $AutopayStat->getData($IsAdmin)
                     ])
                 ];
             }
