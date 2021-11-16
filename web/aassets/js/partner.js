@@ -133,12 +133,12 @@
             linklink = $.ajax({
                 type: "POST",
                 url: '/partner/stat/recalcdata?page=' + page,
-                data: $('#statlistform').serialize(),
+                data: $('#statrecalcform').serialize(),
                 beforeSend: function () {
-                    $('#statlistform').closest('.ibox-content').toggleClass('sk-loading');
+                    $('#statrecalcform').closest('.ibox-content').toggleClass('sk-loading');
                 },
                 success: function (data) {
-                    $('#statlistform').closest('.ibox-content').toggleClass('sk-loading');
+                    $('#statrecalcform').closest('.ibox-content').toggleClass('sk-loading');
                     if (data.status == 1) {
                         $('#statlistresult').html(data.data);
                         $('.pagination a').each(function(){
@@ -150,7 +150,7 @@
                     }
                 },
                 error: function () {
-                    $('#statlistform').closest('.ibox-content').toggleClass('sk-loading');
+                    $('#statrecalcform').closest('.ibox-content').toggleClass('sk-loading');
                     $('#statlistresult').html("<p class='text-center'>Ошибка</p>");
                 }
             });
@@ -194,7 +194,7 @@
             });
 
             $('#statrecalcform').on('submit', function () {
-                lk.statlistreq(1);
+                lk.statrecalcreq(1);
                 return false;
             });
 

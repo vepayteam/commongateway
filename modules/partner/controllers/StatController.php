@@ -237,7 +237,8 @@ class StatController extends Controller
         return $this->render('recalc', [
             'IsAdmin' => $IsAdmin,
             'partnerlist' => $fltr->getPartnersList(),
-            'uslugilist' => $fltr->getTypeUslugLiust()
+            'uslugilist' => $fltr->getTypeUslugLiust(),
+            'bankList' => $fltr->getBankList(),
         ]);
     }
 
@@ -252,7 +253,7 @@ class StatController extends Controller
             if ($payShetList->load($data, '') && $payShetList->validate()) {
                 $list = $payShetList->getList2($IsAdmin, $page);
                 return [
-                    'status' => 1, 'data' => $this->renderPartial('_listdata', [
+                    'status' => 1, 'data' => $this->renderPartial('_recalcdata', [
                         'reqdata' => $data,
                         'data' => $list['data'],
                         'cntpage' => $list['cntpage'],

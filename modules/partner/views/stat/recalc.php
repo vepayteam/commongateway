@@ -4,6 +4,7 @@
 /* @var array $uslugilist */
 /* @var $partnerlist  */
 /* @var $IsAdmin bool */
+/* @var $bankList \app\services\payment\models\Bank[] */
 
 $this->title = "Пересчет комиссий";
 
@@ -38,6 +39,18 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                     </div>
                     <?php if ($IsAdmin) : ?>
                         <div class="form-group">
+                            <label class="col-sm-2 control-label">Банк-эквайер</label>
+                            <div class="col-sm-4">
+                                <select class="form-control multiselect-field" multiple name="idBank[]">
+                                    <?php
+                                    foreach ($bankList as $bank) : ?>
+                                        <option value="<?= $bank->ID ?>"><?= $bank->Name ?></option>
+                                    <?php
+                                    endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
                             <label class="col-sm-2 control-label">Мерчант</label>
                             <div class="col-sm-4">
                                 <select class="form-control multiselect-field" multiple name="idParts[]">
@@ -49,20 +62,6 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         </div>
                     <?php endif; ?>
                     <div class="form-group">
-                        <label class="col-sm-2 control-label">Тип операции</label>
-                        <div class="col-sm-4">
-                            <select class="form-control multiselect-field" multiple name="TypeUslug[]">
-                                <?php foreach ($uslugilist as $usl) : ?>
-                                    <option value="<?=$usl->ID?>" data-partner="<?= $usl->IsMfo ?>"><?=$usl->Name?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <label class="col-sm-2 control-label">ID Vepay</label>
-                        <div class="col-sm-4">
-                            <input type="text" class="form-control" name="id">
-                        </div>
-                    </div>
-                    <div class="form-group">
                         <label class="col-sm-2 control-label">Статус</label>
                         <div class="col-sm-4">
                             <select class="form-control multiselect-status" id="sp" multiple name="status[]">
@@ -72,49 +71,6 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                 <option value="2">Отменен</option>
                                 <option value="3">Возврат</option>
                             </select>
-                        </div>
-                        <label class="col-sm-2 control-label">Сумма платежа</label>
-                        <div class="col-sm-4">
-                            <div class="input-daterange input-group">
-                                <input type="text" name="summpayFrom" maxlength="10" class="form-control">
-                                <span class="input-group-addon">по</span>
-                                <input type="text" name="summpayTo" maxlength="10" class="form-control">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="col-sm-2 control-label">Ext ID</label>
-                        <div class="col-sm-4">
-                            <input type="text" class="form-control" name="Extid">
-                        </div>
-                        <label class="col-sm-2 control-label">Договор</label>
-                        <div class="col-sm-4">
-                            <input type="text" class="form-control" name="params[0]">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="col-sm-2 control-label">Провайдер</label>
-                        <div class="col-sm-4">
-                            <input type="text" class="form-control" name="params[bankName]">
-                        </div>
-                        <label class="col-sm-2 control-label">Номер операции на стороне провайдера</label>
-                        <div class="col-sm-4">
-                            <input type="text" class="form-control" name="params[operationNumber]">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="col-sm-2 control-label">Маска карты</label>
-                        <div class="col-sm-4">
-                            <input type="text" class="form-control" name="params[cardMask]" maxlength="30">
-                        </div>
-
-                        <label class="col-sm-2 control-label">Полная сумма к оплате</label>
-                        <div class="col-sm-4">
-                            <div class="input-daterange input-group">
-                                <input type="text" name="params[fullSummpayFrom]" maxlength="10" class="form-control">
-                                <span class="input-group-addon">по</span>
-                                <input type="text" name="params[fullSummpayTo]" maxlength="10" class="form-control">
-                            </div>
                         </div>
                     </div>
                     <input type="hidden" name="paytype" value="-1">

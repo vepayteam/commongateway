@@ -19,6 +19,7 @@ class PayShetStat extends Model
     public $idParts = [];
     public $usluga = [];
     public $TypeUslug = [];
+    public $idBank = [];
     public $Extid = '';
     public $id = 0;
     public $summpayFrom = 0;
@@ -36,7 +37,7 @@ class PayShetStat extends Model
             [['Extid'], 'string', 'max' => 40],
             [['datefrom', 'dateto'], 'date', 'format' => 'php:d.m.Y H:i'],
             [['datefrom', 'dateto'], 'required'],
-            [['usluga', 'status', 'TypeUslug', 'idParts'], 'each', 'rule' => ['integer']],
+            [['usluga', 'status', 'TypeUslug', 'idBank', 'idParts'], 'each', 'rule' => ['integer']],
             [['params'], 'each', 'rule' => ['string']],
         ];
     }
@@ -97,7 +98,7 @@ class PayShetStat extends Model
      *
      * @return array
      */
-    public function getList($IsAdmin, $page = 0, $nolimit = 0)
+    public function getRecalcList($IsAdmin, $page = 0, $nolimit = 0)
     {
         $before = microtime(true);
         try {
@@ -377,6 +378,8 @@ class PayShetStat extends Model
 
         $query->andFilterWhere(['qp.IDPartner' => $this->idParts]);
 
+//        $query->andFilterWhere(['b.ID' => $this->idBank]);
+
         if ($IdPart > 0) {
             $query->andWhere('qp.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);
         }
@@ -400,7 +403,7 @@ class PayShetStat extends Model
         if (!empty($this->Extid)) {
             $query->andWhere('ps.Extid = :EXTID', [':EXTID' => $this->Extid]);
         }
-        if (is_numeric($this->summpayFrom) && is_numeric($this->summpayTo)) {
+        if (is_numeric($this->summpayFrom) && is_numeric($this->summpayTo) && $this->summpayTo) {
             $query->andWhere(['between', 'ps.SummPay', round($this->summpayFrom * 100.0), round($this->summpayTo * 100.0)]);
         } elseif (is_numeric($this->summpayFrom)) {
             $query->andWhere(['>=', 'ps.SummPay', round($this->summpayFrom * 100.0)]);
