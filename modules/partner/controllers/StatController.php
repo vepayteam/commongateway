@@ -230,6 +230,50 @@ class StatController extends Controller
         throw new NotFoundHttpException();
     }
 
+    public function actionRecalc()
+    {
+        $fltr = new StatFilter();
+        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+        return $this->render('recalc', [
+            'IsAdmin' => $IsAdmin,
+            'partnerlist' => $fltr->getPartnersList(),
+            'uslugilist' => $fltr->getTypeUslugLiust()
+        ]);
+    }
+
+    public function actionRecalcdata()
+    {
+        if (Yii::$app->request->isAjax) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+            $data = Yii::$app->request->post();
+            $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+            $page = Yii::$app->request->get('page', 0);
+            $payShetList = new PayShetStat();
+            if ($payShetList->load($data, '') && $payShetList->validate()) {
+                $list = $payShetList->getList2($IsAdmin, $page);
+                return [
+                    'status' => 1, 'data' => $this->renderPartial('_listdata', [
+                        'reqdata' => $data,
+                        'data' => $list['data'],
+                        'cntpage' => $list['cntpage'],
+                        'cnt' => $list['cnt'],
+                        'pagination' => $list['pagination'],
+                        'sumpay' => $list['sumpay'],
+                        'sumcomis' => $list['sumcomis'],
+                        'bankcomis' => $list['bankcomis'],
+                        'voznagps' => $list['voznagps'],
+                        'page' => $page,
+                        'IsAdmin' => $IsAdmin
+                    ])
+                ];
+            } else {
+                return ['status' => 0, 'message' => $payShetList->GetError()];
+            }
+        } else {
+            return $this->redirect('/partner');
+        }
+    }
+
     /**
      * Отменить платеж
      * @return array|Response
