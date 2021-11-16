@@ -20,6 +20,7 @@ use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CardTokenException;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\FortaBadRequestException;
+use app\services\payment\exceptions\FortaForbiddenException;
 use app\services\payment\exceptions\FortaGatewayTimeoutException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
@@ -555,6 +556,8 @@ class FortaTechAdapter implements IBankAdapter
             ]
         ];
 
+        $outCardPayResponse = new OutCardPayResponse();
+
         $signature = $this->buildSignatureByOutCardPay($outCardPayRequest);
         try {
             $ans = $this->sendRequest($action, $outCardPayRequest->getAttributes(), $signature);
@@ -568,9 +571,17 @@ class FortaTechAdapter implements IBankAdapter
 
             Yii::$app->errorHandler->logException($e);
             throw $e;
+        } catch (FortaForbiddenException $e) {
+            Yii::error([
+                "FortaTechAdapter forbidden exception paySchet.ID={$outCardPayForm->paySchet->ID}",
+                $e
+            ]);
+
+            $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
+            $outCardPayResponse->message = $e->getMessage();
+            return $outCardPayResponse;
         }
 
-        $outCardPayResponse = new OutCardPayResponse();
         if($ans['status'] == true && isset($ans['data']['id'])) {
             $outCardPayResponse->status = BaseResponse::STATUS_DONE;
             $outCardPayResponse->trans = $ans['data']['id'];
@@ -704,6 +715,9 @@ class FortaTechAdapter implements IBankAdapter
         } elseif ($response['result'] == false && isset($response['message'])) {
             Yii::error('FortaTechAdapter ans uri=' . $uri .' : ' . Json::encode($maskedResponse));
             return $response;
+        } elseif ($info['http_code'] === 403) {
+            Yii::error('FortaTechAdapter ans forbidden uri=' . $uri . ' : ' . Json::encode($maskedResponse));
+            throw new FortaForbiddenException('Ошибка запроса');
         } elseif ($info['http_code'] === 504) {
             Yii::error('FortaTechAdapter gateway timeout exception');
             throw new FortaGatewayTimeoutException('Ошибка запроса: ' . $curlError);
