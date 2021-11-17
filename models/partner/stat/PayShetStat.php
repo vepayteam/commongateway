@@ -273,6 +273,7 @@ class PayShetStat extends Model
             'ps.Extid',
             'ps.RRN',
             'c.CardNumber',
+            'ps.CardNum',
             'ps.CardHolder',
             'ps.IdKard',//
             'qp.NameUsluga',
@@ -320,7 +321,6 @@ class PayShetStat extends Model
         $res = Yii::$app->db->createCommand($query->createCommand()->getRawSql())->cache(10)->queryAll();
 
         if($nolimit) {
-
             $data = self::mapQueryPaymentResult($res);
 
         } else {
@@ -428,7 +428,7 @@ class PayShetStat extends Model
                     $query->andWhere(['like', 'c.CardNumber', $this->params['cardMask'].'%', false]);
                 }
             }
-            if (array_key_exists('cardMask', $this->params) && $this->params['bankName'] !== '') {
+            if (array_key_exists('bankName', $this->params) && $this->params['bankName'] !== '') {
                 $query->andWhere(['like', 'b.Name',  $this->params['bankName']]);
             }
             if (array_key_exists('operationNumber', $this->params) && $this->params['operationNumber'] !== '') {
