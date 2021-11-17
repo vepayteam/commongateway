@@ -8,10 +8,12 @@ use app\services\payment\models\PaySchet;
 use app\services\payment\models\repositories\CurrencyRepository;
 use Yii;
 use yii\base\Model;
-use yii\db\Expression;
 use yii\data\Pagination;
+use yii\db\Expression;
 use yii\db\Query;
-use yii\helpers\VarDumper;
+
+use function array_map;
+use function array_walk;
 
 class PayShetStat extends Model
 {
@@ -469,55 +471,49 @@ class PayShetStat extends Model
     {
         $IdPart = $IsAdmin ? $this->IdPart : UserLk::getPartnerId(Yii::$app->user);
 
-        $query = new Query();
-        $query->select([
-            '`ut`.`NameUsluga`',
-            '`b`.`Name` as bankName',
-            '`ut`.`ProvVoznagPC`',
-            '`ut`.`ProvVoznagMin`',
-            '`ps`.`IdUsluga`',
-            '`ut`.`IsCustom`',
-            '`ut`.`ProvComisPC`',
-            '`ut`.`ProvComisMin`',
-            'SUM(`ps`.`SummPay`) AS `SummPay`',
-            'SUM(`ps`.`ComissSumm`) AS `ComissSumm`',
-            'SUM(`ps`.`MerchVozn`) AS `MerchVozn`',
-            'SUM(`ps`.`BankComis`) AS `BankComis`',
-            'COUNT(*) AS CntPays'
-        ])
+        $query = (new Query())
+            ->select([
+                '`ut`.`NameUsluga`',
+                '`b`.`Name` as bankName',
+                '`ut`.`ProvVoznagPC`',
+                '`ut`.`ProvVoznagMin`',
+                '`ps`.`IdUsluga`',
+                '`ut`.`IsCustom`',
+                '`ut`.`ProvComisPC`',
+                '`ut`.`ProvComisMin`',
+                'SUM(`ps`.`SummPay`) AS `SummPay`',
+                'SUM(`ps`.`ComissSumm`) AS `ComissSumm`',
+                'SUM(`ps`.`MerchVozn`) AS `MerchVozn`',
+                'SUM(`ps`.`BankComis`) AS `BankComis`',
+                'COUNT(*) AS CntPays'
+            ])
             ->from('`pay_schet` AS ps')
             ->leftJoin('`uslugatovar` AS ut', 'ps.IdUsluga = ut.ID')
             ->leftJoin('`banks` AS b', 'ps.Bank = b.ID')
-            ->where('ps.DateCreate BETWEEN :DATEFROM AND :DATETO', [
-                ':DATEFROM' => strtotime($this->datefrom . ":00"),
-                ':DATETO' => strtotime($this->dateto . ":59")
+            ->andWhere(['between', 'ps.DateCreate', strtotime($this->datefrom . ":00"), strtotime($this->dateto . ":59")])
+            ->andWhere(['ps.Status' => 1])
+            ->groupBy([
+                '`ps`.`IdUsluga`',
+                '`ut`.`IsCustom`',
+                '`ut`.`ProvVoznagPC`',
+                '`ut`.`ProvVoznagMin`',
+                '`ut`.`ProvComisPC`',
+                '`ut`.`ProvComisMin`',
+                '`ps`.`Bank`',
+                '`b`.`Name`',
+                '`ut`.NameUsluga'
             ])
-            ->andWhere('ps.Status = 1')
-            ->groupBy('ps.IdUsluga, b.Name, ps.Bank, NameUsluga, IsCustom')
-            ->orderBy('bank')
-        ;
+            ->orderBy('bank');
 
-        if ($IdPart > 0) {
-            $query->andWhere('ut.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);
-        }
-
-        if (count($this->usluga) > 0) {
-            $query->andWhere(['in', 'ut.ID', $this->usluga]);
-        }
-        //if ($data['paytype'] >= 0) {
-        //$query->andWhere('ps.PayType = :IDPAYTYPE', [':IDPAYTYPE' => $data['paytype']]);
-        //}
-        if (count($this->TypeUslug) > 0) {
-            $query->andWhere(['in', 'ut.IsCustom', $this->TypeUslug]);
-        }
-
+        $query->andFilterWhere(['ut.IDPartner' => $IdPart > 0 ? $IdPart : null]);
+        $query->andFilterWhere(['ut.ID' => $this->usluga]);
+        $query->andFilterWhere(['ut.IsCustom' => $this->TypeUslug]);
         $query->andFilterWhere(['bank' => $this->idBank]);
-
         $res = $query->all();
 
-        foreach ($res as &$row) {
+        array_walk($res, static function (&$row) {
             $row['VoznagSumm'] = (string)$row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
-        }
+        });
 
         return $res;
     }
