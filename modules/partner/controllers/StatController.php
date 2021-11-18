@@ -217,7 +217,7 @@ class StatController extends Controller
 
     public function actionListExportCsv()
     {
-		ini_set('memory_limit', '24M');
+		ini_set('memory_limit', '8096M');
         $isAdmin = UserLk::IsAdmin(Yii::$app->user);
         $payschet = new PayShetStat(); //загрузить
 
