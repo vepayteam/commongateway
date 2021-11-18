@@ -32,7 +32,7 @@ class PayShetStat extends Model
     {
         return [
             [['IdPart'], 'integer'],
-            [['id'], 'string'],
+            [['id'], 'safe'],
             [['summpayFrom','summpayTo'], 'number'],
             [['Extid'], 'string'],
             [['datefrom', 'dateto'], 'date', 'format' => 'php:d.m.Y H:i'],
