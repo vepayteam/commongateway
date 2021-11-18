@@ -229,6 +229,7 @@ class StatController extends Controller
                 return Yii::$app->response->sendFile($file->fullpath());
             }
         }
+
         Yii::error([$payschet->getErrors(), $payschet, Yii::$app->request->get()]);
         throw new NotFoundHttpException();
     }
