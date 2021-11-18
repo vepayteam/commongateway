@@ -220,18 +220,21 @@ class StatController extends Controller
 		ini_set('memory_limit', '1024M');
         $isAdmin = UserLk::IsAdmin(Yii::$app->user);
         $payschet = new PayShetStat(); //загрузить
-        if ($payschet->load(Yii::$app->request->get(), '') && $payschet->validate()){
-            Yii::info([$payschet, Yii::$app->request->get()]);
-            $data = $payschet->getList2($isAdmin,0,1);
-            if ($data){
-                $file = new OtchToCSV($data);
-                $file->export();
-                return Yii::$app->response->sendFile($file->fullpath());
-            }
-        }
 
-        Yii::error([$payschet->getErrors(), $payschet, Yii::$app->request->get()]);
-        throw new NotFoundHttpException();
+        try {
+            if ($payschet->load(Yii::$app->request->get(), '') && $payschet->validate()) {
+                Yii::info([$payschet, Yii::$app->request->get()]);
+                $data = $payschet->getList2($isAdmin, 0, 1);
+                if ($data) {
+                    $file = new OtchToCSV($data);
+                    $file->export();
+                    return Yii::$app->response->sendFile($file->fullpath());
+                }
+            }
+        } catch (Exception $e) {
+            Yii::error([$e->getMessage(), $e->getFile(), $e->getLine(), $e->getTrace(), $e->getPrevious(), $payschet->getErrors(), $payschet, Yii::$app->request->get()]);
+            throw new NotFoundHttpException();
+        }
     }
 
     /**
