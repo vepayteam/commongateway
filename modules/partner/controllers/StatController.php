@@ -2,9 +2,6 @@
 
 namespace app\modules\partner\controllers;
 
-use app\models\bank\BankMerchant;
-use app\models\bank\TCBank;
-use app\models\bank\TcbGate;
 use app\models\kkt\OnlineKassa;
 use app\models\mfo\MfoStat;
 use app\models\partner\admin\VyvodVoznag;
@@ -24,9 +21,6 @@ use app\models\partner\stat\StatFilter;
 use app\models\partner\stat\StatGraph;
 use app\models\partner\UserLk;
 use app\models\payonline\Partner;
-use app\models\Payschets;
-use app\models\queue\JobPriorityInterface;
-use app\models\queue\SendMailJob;
 use app\models\SendEmail;
 use app\models\TU;
 use app\modules\partner\models\DiffData;
@@ -46,10 +40,8 @@ use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
-use yii\helpers\VarDumper;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
-use yii\web\MethodNotAllowedHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 use yii\web\UploadedFile;
@@ -220,25 +212,18 @@ class StatController extends Controller
 		ini_set('memory_limit', '8096M');
         $isAdmin = UserLk::IsAdmin(Yii::$app->user);
         $payschet = new PayShetStat(); //загрузить
-
         try {
-            if ($payschet->load(Yii::$app->request->get(), '') && $payschet->validate()) {
-                Yii::info(['GET PAYSCHET:' => __LINE__, $payschet, Yii::$app->request->get()]);
+            if ($payschet->load(Yii::$app->request->get(), '')) {
                 $data = $payschet->getList2($isAdmin, 0, 1);
                 if ($data) {
-                    Yii::info(['data get:' => count($data['data'] ?? ''), ], __METHOD__);
                     $file = new OtchToCSV($data);
-                    Yii::info(['file' => $file, ], __METHOD__);
                     $file->export();
-                    Yii::info(['export fone'], __METHOD__);
-                    $response = Yii::$app->response->sendFile($file->fullpath());
-                    Yii::info(['response fone'], __METHOD__);
-                    return $response;
+                    return Yii::$app->response->sendFile($file->fullpath());
                 }
             }
         } catch (Exception $e) {
             Yii::error([$e->getMessage(), $e->getFile(), $e->getLine(), $e->getTrace(), $e->getPrevious(), $payschet->getErrors(), $payschet, Yii::$app->request->get()], __METHOD__);
-            throw new NotFoundHttpException();
+            throw $e;
         }
     }
 

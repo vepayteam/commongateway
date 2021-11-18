@@ -320,7 +320,7 @@ class PayShetStat extends Model
         // @TODO: костыль, без него ругается на invalid parameter number, но запрос в консоли БД выполняется нормально
         $res = Yii::$app->db->createCommand($query->createCommand()->getRawSql())->cache(10)->queryAll();
 
-        if($nolimit) {
+        if($nolimit && 0) {
             $data = self::mapQueryPaymentResult($res);
 
         } else {
