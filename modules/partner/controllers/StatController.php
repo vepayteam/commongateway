@@ -217,7 +217,7 @@ class StatController extends Controller
 
     public function actionListExportCsv()
     {
-		ini_set('memory_limit', '4024M');
+		ini_set('memory_limit', '24M');
         $isAdmin = UserLk::IsAdmin(Yii::$app->user);
         $payschet = new PayShetStat(); //загрузить
 
@@ -226,13 +226,18 @@ class StatController extends Controller
                 Yii::info(['GET PAYSCHET:' => __LINE__, $payschet, Yii::$app->request->get()]);
                 $data = $payschet->getList2($isAdmin, 0, 1);
                 if ($data) {
+                    Yii::info(['data get:' => count($data['data'] ?? ''), ], __METHOD__);
                     $file = new OtchToCSV($data);
+                    Yii::info(['file' => $file, ], __METHOD__);
                     $file->export();
-                    return Yii::$app->response->sendFile($file->fullpath());
+                    Yii::info(['export fone'], __METHOD__);
+                    $response = Yii::$app->response->sendFile($file->fullpath());
+                    Yii::info(['response fone'], __METHOD__);
+                    return $response;
                 }
             }
         } catch (Exception $e) {
-            Yii::error([$e->getMessage(), $e->getFile(), $e->getLine(), $e->getTrace(), $e->getPrevious(), $payschet->getErrors(), $payschet, Yii::$app->request->get()]);
+            Yii::error([$e->getMessage(), $e->getFile(), $e->getLine(), $e->getTrace(), $e->getPrevious(), $payschet->getErrors(), $payschet, Yii::$app->request->get()], __METHOD__);
             throw new NotFoundHttpException();
         }
     }
