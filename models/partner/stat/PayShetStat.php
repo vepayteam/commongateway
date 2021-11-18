@@ -257,7 +257,7 @@ class PayShetStat extends Model
 
         // @TODO: костыль, без него ругается на invalid parameter number, но запрос в консоли БД выполняется нормально
 //        $res = Yii::$app->db->createCommand($query->createCommand()->getRawSql())->cache(10)->queryOne();
-        $res = $query->all();
+        $res = $query->one();
 
         $sumPay = $res['SummPay'];
         $sumComis = $res['ComissSumm'];

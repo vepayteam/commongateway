@@ -202,6 +202,7 @@ if (YII_ENV_DEV) {
         'panels' => [
             'queue' => \yii\queue\debug\Panel::class,
         ],
+        'allowedIPs' => ['*'],
     ];
 
     $config['bootstrap'][] = 'gii';
@@ -212,6 +213,7 @@ if (YII_ENV_DEV) {
                 'class' => \yii\queue\gii\Generator::class,
             ],
         ],
+        'allowedIPs' => ['*'],
     ];
 
     Yii::setAlias('@img', '');
