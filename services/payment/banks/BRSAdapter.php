@@ -17,6 +17,7 @@ use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
+use app\services\payment\banks\bank_adapter_responses\SendP2pResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\CurlSSLStructure;
 use app\services\payment\exceptions\BankAdapterResponseException;
@@ -27,6 +28,7 @@ use app\services\payment\forms\brs\CheckStatusB2cRequest;
 use app\services\payment\forms\brs\CheckStatusPayOutAccountRequest;
 use app\services\payment\forms\brs\CheckStatusPayOutCardRequest;
 use app\services\payment\forms\brs\CheckStatusPayRequest;
+use app\services\payment\forms\brs\ConfirmP2pRequest;
 use app\services\payment\forms\brs\CreatePayAftRequest;
 use app\services\payment\forms\brs\CreatePayByRegCardRequest;
 use app\services\payment\forms\brs\CreatePayRequest;
@@ -35,6 +37,7 @@ use app\services\payment\forms\brs\OutCardPayCheckRequest;
 use app\services\payment\forms\brs\OutCardPayRequest;
 use app\services\payment\forms\brs\RecurrentPayRequest;
 use app\services\payment\forms\brs\RefundPayRequest;
+use app\services\payment\forms\brs\SendP2pRequest;
 use app\services\payment\forms\brs\TransferToAccountRequest;
 use app\services\payment\forms\brs\XmlRequest;
 use app\services\payment\forms\CreatePayForm;
@@ -43,6 +46,7 @@ use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
+use app\services\payment\forms\SendP2pForm;
 use app\services\payment\helpers\BRSErrorHelper;
 use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\PartnerBankGate;
@@ -71,7 +75,9 @@ class BRSAdapter implements IBankAdapter
     protected $gate;
 
     protected $bankUrl;
+    protected $bankP2pUrl;
     protected $bankUrl3DS;
+    protected $bankP2pUrl3DS;
     protected $bankUrlB2C;
 
     protected $bankUrlXml;
@@ -98,6 +104,8 @@ class BRSAdapter implements IBankAdapter
 
         $this->bankUrl = $config['url'];
         $this->bankUrl3DS = $config['url_3ds'];
+        $this->bankP2pUrl = $config['url_p2p'];
+        $this->bankP2pUrl3DS = $config['url_p2p_3ds'];
         $this->bankUrlXml = $config['url_xml'];
         $this->bankUrlB2C = $config['url_b2c'];
     }
@@ -115,8 +123,40 @@ class BRSAdapter implements IBankAdapter
      */
     public function confirm(DonePayForm $donePayForm)
     {
+        if($donePayForm->getPaySchet()->uslugatovar->IsCustom == UslugatovarType::P2P) {
+            return $this->confirmP2p($donePayForm);
+        }
         $confirmPayResponse = new ConfirmPayResponse();
         $confirmPayResponse->status = BaseResponse::STATUS_DONE;
+        return $confirmPayResponse;
+    }
+
+    /**
+     * @param DonePayForm $donePayForm
+     * @return ConfirmPayResponse
+     */
+    protected function confirmP2p(DonePayForm $donePayForm)
+    {
+        $uri = '/ecomm2/MerchantHandler';
+        $conformP2pRequest = new ConfirmP2pRequest();
+        $conformP2pRequest->trans_id = $donePayForm->getPaySchet()->ExtBillNumber;
+        $conformP2pRequest->client_ip_address = Yii::$app->request->remoteIP;
+
+        $confirmPayResponse = new ConfirmPayResponse();
+        try {
+            $data = $conformP2pRequest->getAttributes();
+            $ans = $this->sendRequest($uri, $data, $this->bankP2pUrl);
+            if(array_key_exists('error', $ans)) {
+                $confirmPayResponse->status = BaseResponse::STATUS_ERROR;
+                $confirmPayResponse->message = $ans['error'];
+            } else {
+                $confirmPayResponse->status = BaseResponse::STATUS_DONE;
+            }
+        } catch (BankAdapterResponseException $e) {
+            $confirmPayResponse->status = BaseResponse::STATUS_ERROR;
+            $confirmPayResponse->message = 'Ошибка запроса';
+        }
+
         return $confirmPayResponse;
     }
 
@@ -159,17 +199,14 @@ class BRSAdapter implements IBankAdapter
     protected function buildCreatePayRequest(PaySchet $paySchet, CreatePayForm $createPayForm)
     {
         /** @var CreatePayRequest $createPayRequest */
-        $createPayRequest = new CreatePayRequest();
-        if($paySchet->uslugatovar->ID == Uslugatovar::REG_CARD_ID) {
+        if($paySchet->uslugatovar->ID == Uslugatovar::REG_CARD_ID || $paySchet->RegisterCard) {
             $createPayRequest = new CreatePayByRegCardRequest();
-            $security = new Security();
-            $createPayRequest->biller_client_id = $security->generateRandomString();
-
-            $expiry = Carbon::now()->addYears(3);
-            $createPayRequest->perspayee_expiry = sprintf('%02d', $expiry->month)
-                . substr((string)$expiry->year, -2);
+            $createPayRequest->biller_client_id = Yii::$app->security->generateRandomString();
+            $createPayRequest->perspayee_expiry = Carbon::now()->addYears(3)->format('my');
         } elseif ($this->gate->TU == UslugatovarType::POGASHATF) {
             $createPayRequest = new CreatePayAftRequest();
+        } else {
+            $createPayRequest = new CreatePayRequest();
         }
 
         $createPayRequest->mrch_transaction_id = $paySchet->ID;
@@ -275,7 +312,11 @@ class BRSAdapter implements IBankAdapter
 
         $checkStatusPayResponse = new CheckStatusPayResponse();
         try {
-            $ans = $this->sendRequest($uri, $checkStatusPayRequest->getAttributes());
+            $domain = $this->bankUrl;
+            if($paySchet->OutCardPan) {
+                $domain = $this->bankP2pUrl;
+            }
+            $ans = $this->sendRequest($uri, $checkStatusPayRequest->getAttributes(), $domain);
             $checkStatusPayResponse->message = BRSErrorHelper::getMessage($ans);
             $checkStatusPayResponse->status = $this->getStatusResponse($ans['RESULT']);
             $this->checkStatusPayResponseFiller($checkStatusPayResponse, $ans);
@@ -402,11 +443,15 @@ class BRSAdapter implements IBankAdapter
      * @return array|string
      * @throws BankAdapterResponseException
      */
-    protected function sendRequest(string $uri, array $data)
+    protected function sendRequest(string $uri, array $data, string $domain=null)
     {
         $curl = curl_init();
 
-        $url = $this->bankUrl . $uri;
+        if(is_null($domain)) {
+            $domain = $this->bankUrl;
+        }
+
+        $url = $domain . $uri;
         $request = http_build_query($data);
         curl_setopt_array($curl, array(
             CURLOPT_URL => $url,
@@ -419,6 +464,7 @@ class BRSAdapter implements IBankAdapter
             //            CURLOPT_CAINFO => Yii::getAlias(self::KEYS_PATH . 'chain-ecomm-ca-root-ca.crt'),
             CURLOPT_POSTFIELDS => $request,
             CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_SSL_VERIFYPEER => (Yii::$app->params['TESTMODE'] != 'Y'),
             CURLOPT_TIMEOUT => 120,
         ));
 
@@ -954,5 +1000,41 @@ class BRSAdapter implements IBankAdapter
     public function currencyExchangeRates()
     {
         throw new GateException('Метод недоступен');
+    }
+
+    public function sendP2p(SendP2pForm $sendP2pForm)
+    {
+        $uri = '/ecomm2/MerchantHandler';
+
+        $paySchet = $sendP2pForm->paySchet;
+        $sendP2pRequest = new SendP2pRequest();
+        $sendP2pRequest->amount = $paySchet->getSummFull() / 100;
+        $sendP2pRequest->currency = $paySchet->currency->Number;
+        $sendP2pRequest->client_ip_addr = Yii::$app->request->remoteIP;
+        $sendP2pRequest->cardname = $sendP2pForm->cardHolder;
+        $sendP2pRequest->pan = $sendP2pForm->cardPan;
+        $sendP2pRequest->expiry = substr($sendP2pForm->cardExpYear, 2)
+            . sprintf('%02d', $sendP2pForm->cardExpMonth);
+        $sendP2pRequest->cvc2 = $sendP2pForm->cvv;
+        $sendP2pRequest->pan2 = $sendP2pForm->outCardPan;
+
+        $sendP2pResponse = new SendP2pResponse();
+        try {
+            $data = $sendP2pRequest->getAttributes();
+            $ans = $this->sendRequest($uri, $data, $this->bankP2pUrl);
+            if(array_key_exists('error', $ans)) {
+                $sendP2pResponse->status = BaseResponse::STATUS_ERROR;
+                $sendP2pResponse->message = $ans['error'];
+            } else {
+                $sendP2pResponse->status = BaseResponse::STATUS_DONE;
+                $sendP2pResponse->transac = $ans['TRANSACTION_ID'];
+                $sendP2pResponse->url = $this->bankP2pUrl3DS . '?trans_id=' . urlencode($ans['TRANSACTION_ID']);
+            }
+        } catch (BankAdapterResponseException $e) {
+            $sendP2pResponse->status = BaseResponse::STATUS_ERROR;
+            $sendP2pResponse->message = 'Ошибка запроса';
+        }
+
+        return $sendP2pResponse;
     }
 }
