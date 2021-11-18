@@ -83,6 +83,8 @@ use Yii;
  * @property string|null $UserEmail
  * @property string|null $RCCode
  * @property string|null $Operations
+ * @property int $RegisterCard Регистрировать ли карту для рекуррентных платежей при оплате. Значения: 1, 0. По умолчанию 0.
+ *
  * @property Uslugatovar $uslugatovar
  * @property Partner $partner
  * @property Currency $currency
@@ -143,6 +145,8 @@ class PaySchet extends \yii\db\ActiveRecord
 
     /**
      * {@inheritdoc}
+     *
+     * @todo Удалить этот метод, т.к. не предполагается использовать данную модель как форму.
      */
     public function rules()
     {
@@ -150,7 +154,8 @@ class PaySchet extends \yii\db\ActiveRecord
             [['IdUser', 'IdKard', 'IdUsluga', 'IdShablon', 'IdOrder', 'IdOrg', 'IdGroupOplat', 'Period', 'IdQrProv',
                 'SummPay', 'ComissSumm', 'MerchVozn', 'BankComis', 'Status', 'DateCreate', 'DateOplat', 'DateLastUpdate',
                 'PayType', 'TimeElapsed', 'ExtKeyAcces', 'CardExp', 'UserClickPay', 'CountSendOK', 'SendKvitMail',
-                'IdAgent', 'TypeWidget', 'Bank', 'IsAutoPay', 'AutoPayIdGate', 'sms_accept', 'CurrencyId'
+                'IdAgent', 'TypeWidget', 'Bank', 'IsAutoPay', 'AutoPayIdGate', 'sms_accept', 'CurrencyId',
+                'RegisterCard',
                 ],
                 'integer'
             ],
