@@ -54,6 +54,7 @@ use yii\web\NotFoundHttpException;
 use yii\web\Response;
 use yii\web\UploadedFile;
 
+use function count;
 use function serialize;
 
 class StatController extends Controller
@@ -220,6 +221,7 @@ class StatController extends Controller
         $isAdmin = UserLk::IsAdmin(Yii::$app->user);
         $payschet = new PayShetStat(); //загрузить
         if ($payschet->load(Yii::$app->request->get(), '') && $payschet->validate()){
+            Yii::info([$payschet, Yii::$app->request->get()]);
             $data = $payschet->getList2($isAdmin,0,1);
             if ($data){
                 $file = new OtchToCSV($data);
@@ -227,6 +229,7 @@ class StatController extends Controller
                 return Yii::$app->response->sendFile($file->fullpath());
             }
         }
+        Yii::error([$payschet->getErrors(), $payschet, Yii::$app->request->get()]);
         throw new NotFoundHttpException();
     }
 
