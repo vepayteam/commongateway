@@ -256,7 +256,8 @@ class PayShetStat extends Model
         $cnt = $sumPay = $sumComis = $voznagps = $bankcomis = 0;
 
         // @TODO: костыль, без него ругается на invalid parameter number, но запрос в консоли БД выполняется нормально
-        $res = Yii::$app->db->createCommand($query->createCommand()->getRawSql())->cache(10)->queryOne();
+//        $res = Yii::$app->db->createCommand($query->createCommand()->getRawSql())->cache(10)->queryOne();
+        $res = $query->all();
 
         $sumPay = $res['SummPay'];
         $sumComis = $res['ComissSumm'];
@@ -318,9 +319,10 @@ class PayShetStat extends Model
         }
 
         // @TODO: костыль, без него ругается на invalid parameter number, но запрос в консоли БД выполняется нормально
-        $res = Yii::$app->db->createCommand($query->createCommand()->getRawSql())->cache(10)->queryAll();
+//        $res = Yii::$app->db->createCommand($query->createCommand()->getRawSql())->cache(10)->queryAll();
+        $res = $query->all();
 
-        if($nolimit && 0) {
+        if($nolimit) {
             $data = self::mapQueryPaymentResult($res);
 
         } else {
