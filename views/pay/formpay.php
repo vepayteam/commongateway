@@ -238,6 +238,7 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
         </div>
     <?php endif; ?>
     <input id="client_data" type="hidden" name="client_data" value="{}">
+    <?php /* Crutch for Walletto, which need real client_data_accept from client in 3DS 2.0 */ ?>
     <input id="client_data_accept" type="hidden" name="client_data_accept" value="<?= Yii::$app->request->headers->get('accept') ?>">
     <?php ActiveForm::end(); ?>
 
@@ -301,7 +302,7 @@ if (isset($google['IsUseGooglepay']) && $google['IsUseGooglepay']) {
 if (isset($samsung['IsUseSamsungpay']) && $samsung['IsUseSamsungpay']) {
     $this->registerJs('payform.samsungpay("' . $samsung['Samsung_MerchantID'] . '", "' . number_format($params['SummFull'] / 100.0, 2, '.', '') . '", "' . $params['NamePartner'] . '");');
 }
-$this->registerJs('$("#client_data").val(JSON.stringify({ "browser_screen_height": window.innerHeight, "browser_screen_width": window.innerWidth, "browser_timezone": (new Date()).getTimezoneOffset(), "browser_java_enabled": navigator.javaEnabled(), "window_height": window.outerHeight, "window_width": window.outerWidth, "browser_color_depth": screen.colorDepth}))');
+$this->registerJs('$("#client_data").val(JSON.stringify({ "browser_screen_height": window.innerHeight, "browser_screen_width": window.innerWidth, "browser_timezone": (new Date()).getTimezoneOffset(), "browser_java_enabled": navigator.javaEnabled(), "window_height": window.outerHeight, "window_width": window.outerWidth, "browser_color_depth": screen.colorDepth }))');
 $this->registerJs('setTimeout(tracking.sendToServer, 500)', \yii\web\View::POS_READY);
 $this->registerJsFile('/payasset/js/ym.js');
 ?>
