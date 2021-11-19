@@ -105,7 +105,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                     <div class="form-group">
                         <label class="col-sm-2 control-label">Маска карты</label>
                         <div class="col-sm-4">
-                            <input type="text" class="form-control" name="params[cardMask]" maxlength="30">
+                            <input type="text" class="form-control" name="params[cardMask]">
                         </div>
 
                         <label class="col-sm-2 control-label">Полная сумма к оплате</label>
