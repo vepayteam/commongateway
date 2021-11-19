@@ -91,9 +91,30 @@ if ($partner->IsMfo) {
     </div>
 
     <?php
+    echo $form->field($partner, 'LoginTkbEcom')->textInput(['class' => 'form-control']);
+    echo $form->field($partner, 'KeyTkbEcom')->textInput(['class' => 'form-control']);
+    echo $form->field($partner, 'LoginTkbAft')->textInput(['class' => 'form-control']);
+    echo $form->field($partner, 'KeyTkbAft')->textInput(['class' => 'form-control']);
+    echo $form->field($partner, 'LoginTkbOct')->textInput(['class' => 'form-control']);
+    echo $form->field($partner, 'KeyTkbOct')->textInput(['class' => 'form-control']);
+    echo $form->field($partner, 'LoginTkbVyvod')->textInput(['class' => 'form-control']);
+    echo $form->field($partner, 'KeyTkbVyvod')->textInput(['class' => 'form-control']);
+    echo $form->field($partner, 'LoginTkbPerevod')->textInput(['class' => 'form-control']);
+    echo $form->field($partner, 'KeyTkbPerevod')->textInput(['class' => 'form-control']);
+
+    echo $form->field($partner, 'LoginTkbOctVyvod')->textInput(['class' => 'form-control']);
+    echo $form->field($partner, 'KeyTkbOctVyvod')->textInput(['class' => 'form-control']);
+    echo $form->field($partner, 'LoginTkbOctPerevod')->textInput(['class' => 'form-control']);
+    echo $form->field($partner, 'KeyTkbOctPerevod')->textInput(['class' => 'form-control']);
 
 } else {
     echo $form->field($partner, 'SchetTcbTransit')->textInput(['class' => 'form-control']);
+    echo $form->field($partner, 'LoginTkbJkh')->textInput(['class' => 'form-control']);
+    echo $form->field($partner, 'KeyTkbJkh')->textInput(['class' => 'form-control']);
+    echo $form->field($partner, 'LoginTkbEcom')->textInput(['class' => 'form-control']);
+    echo $form->field($partner, 'KeyTkbEcom')->textInput(['class' => 'form-control']);
+    echo $form->field($partner, 'LoginTkbVyvod')->textInput(['class' => 'form-control']);
+    echo $form->field($partner, 'KeyTkbVyvod')->textInput(['class' => 'form-control']);
 }
 
 echo $form->field($partner, 'SchetTcbParts')->textInput(['class' => 'form-control']);
