@@ -12,6 +12,7 @@ use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\Banks;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\models\active_query\PaySchetQuery;
+use app\services\payment\payment_strategies\mfo\MfoCardRegStrategy;
 use Carbon\Carbon;
 use Yii;
 
@@ -369,10 +370,17 @@ class PaySchet extends \yii\db\ActiveRecord
         $this->DateLastUpdate = time();
 
         if ($insert) {
-            // Считаем отчисления (комиссии) для платежа.
-            $gate = (new BankAdapterBuilder())
-                ->buildByBank($this->partner, $this->uslugatovar, $this->bank, $this->currency)
-                ->getPartnerBankGate();
+            // Calculate compensation
+            if ($this->Bank === 0) {
+                /** @see MfoCardRegStrategy::createPaySchet() */
+                $gate = (new BankAdapterBuilder())
+                    ->build($this->partner, $this->uslugatovar, $this->currency)
+                    ->getPartnerBankGate();
+            } else {
+                $gate = (new BankAdapterBuilder())
+                    ->buildByBank($this->partner, $this->uslugatovar, $this->bank, $this->currency)
+                    ->getPartnerBankGate();
+            }
             /** @var CompensationService $compensationService */
             $compensationService = \Yii::$app->get(CompensationService::class);
             $this->ComissSumm = round($compensationService->calculateForClient($this, $gate));
