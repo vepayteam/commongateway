@@ -45,7 +45,7 @@ class CreatePayPartsForm extends MerchantPayForm
         if ($amount < 1 || $amount > 1000000) {
             $this->addError('amount', 'Общая сумма должна быть больше 1 и меньше 1000000');
         }
-        $this->setAmount($amount);
+        $this->setAmount($amount * 100);
     }
 
     public function validateParts()
