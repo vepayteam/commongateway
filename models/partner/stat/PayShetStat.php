@@ -31,9 +31,10 @@ class PayShetStat extends Model
     public function rules()
     {
         return [
-            [['IdPart', 'id'], 'integer'],
+            [['IdPart'], 'integer'],
+            [['id'], 'safe'],
             [['summpayFrom','summpayTo'], 'number'],
-            [['Extid'], 'string', 'max' => 40],
+            [['Extid'], 'string'],
             [['datefrom', 'dateto'], 'date', 'format' => 'php:d.m.Y H:i'],
             [['datefrom', 'dateto'], 'required'],
             [['usluga', 'status', 'TypeUslug', 'idParts'], 'each', 'rule' => ['integer']],
@@ -255,7 +256,8 @@ class PayShetStat extends Model
         $cnt = $sumPay = $sumComis = $voznagps = $bankcomis = 0;
 
         // @TODO: костыль, без него ругается на invalid parameter number, но запрос в консоли БД выполняется нормально
-        $res = Yii::$app->db->createCommand($query->createCommand()->getRawSql())->cache(10)->queryOne();
+//        $res = Yii::$app->db->createCommand($query->createCommand()->getRawSql())->cache(10)->queryOne();
+        $res = $query->one();
 
         $sumPay = $res['SummPay'];
         $sumComis = $res['ComissSumm'];
@@ -271,6 +273,7 @@ class PayShetStat extends Model
             'ps.IdOrg',
             'ps.Extid',
             'ps.RRN',
+            'c.CardNumber',
             'ps.CardNum',
             'ps.CardHolder',
             'ps.IdKard',//
@@ -316,10 +319,10 @@ class PayShetStat extends Model
         }
 
         // @TODO: костыль, без него ругается на invalid parameter number, но запрос в консоли БД выполняется нормально
-        $res = Yii::$app->db->createCommand($query->createCommand()->getRawSql())->cache(10)->queryAll();
+//        $res = Yii::$app->db->createCommand($query->createCommand()->getRawSql())->cache(10)->queryAll();
+        $res = $query->all();
 
         if($nolimit) {
-
             $data = self::mapQueryPaymentResult($res);
 
         } else {
@@ -376,6 +379,8 @@ class PayShetStat extends Model
             ]);
 
         $query->andFilterWhere(['qp.IDPartner' => $this->idParts]);
+        $query->andFilterWhere(['ps.ID' => $this->explode($this->id)]);
+        $query->andFilterWhere(['ps.Extid' => $this->explode($this->Extid)]);
 
         if ($IdPart > 0) {
             $query->andWhere('qp.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);
@@ -393,12 +398,6 @@ class PayShetStat extends Model
         }
         if (count($this->TypeUslug) > 0) {
             $query->andWhere(['in', 'qp.IsCustom', $this->TypeUslug]);
-        }
-        if ($this->id > 0) {
-            $query->andWhere('ps.ID = :ID', [':ID' => $this->id]);
-        }
-        if (!empty($this->Extid)) {
-            $query->andWhere('ps.Extid = :EXTID', [':EXTID' => $this->Extid]);
         }
         if (is_numeric($this->summpayFrom) && is_numeric($this->summpayTo)) {
             $query->andWhere(['between', 'ps.SummPay', round($this->summpayFrom * 100.0), round($this->summpayTo * 100.0)]);
@@ -423,18 +422,19 @@ class PayShetStat extends Model
                                   round($this->params['fullSummpayTo'] * 100.0)]);
             }
             if (array_key_exists('cardMask', $this->params) && $this->params['cardMask'] !== '') {
+                $this->params['cardMask'] = trim($this->params['cardMask'], '; \t\n\r');
                 if (strpos($this->params['cardMask'], '*') !== false) {
-                    $regexp = str_replace('*', '(\d|\*)', $this->params['cardMask']);
+                    $regexp = str_replace(['*'], ['(\d|\*)'], implode('|', $this->explode($this->params['cardMask'])));
                     $query->andWhere(['REGEXP','c.CardNumber', $regexp]);
                 } else {
                     $query->andWhere(['like', 'c.CardNumber', $this->params['cardMask'].'%', false]);
                 }
             }
-            if (array_key_exists('cardMask', $this->params) && $this->params['bankName'] !== '') {
+            if (array_key_exists('bankName', $this->params) && $this->params['bankName'] !== '') {
                 $query->andWhere(['like', 'b.Name',  $this->params['bankName']]);
             }
             if (array_key_exists('operationNumber', $this->params) && $this->params['operationNumber'] !== '') {
-                $query->andWhere('ps.ExtBillNumber = :EXTBILLNUMBER', [':EXTBILLNUMBER' => $this->params['operationNumber']]);
+                $query->andFilterWhere(['ps.ExtBillNumber' => $this->explode($this->params['operationNumber'])]);
             }
         }
         return $query;
@@ -576,6 +576,12 @@ class PayShetStat extends Model
             ':DATETO' => strtotime($this->dateto . ":59")])->queryScalar();
 
         return (double)$summVozvr;
+    }
+
+    private function explode(string $id): ?array
+    {
+        $id = trim($id, ' \t\n\r');
+        return $id ? array_filter(explode(';', $id)) : null;
     }
 
 }

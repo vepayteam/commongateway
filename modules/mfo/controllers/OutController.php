@@ -23,6 +23,7 @@ use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
+use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\PaySchet;
 use app\services\payment\payment_strategies\mfo\MfoOutCardStrategy;
 use app\services\payment\payment_strategies\mfo\MfoOutPayAccountStrategy;
@@ -122,7 +123,7 @@ class OutController extends Controller
                 return ['status' => 0, 'message' => $outCardPayForm->GetError()];
             }
             // рубли в коп
-            $outCardPayForm->amount *= 100;
+            $outCardPayForm->amount = PaymentHelper::convertToPenny($outCardPayForm->amount);
             $mfoOutCardStrategy = new MfoOutCardStrategy($outCardPayForm);
             $paySchet = $mfoOutCardStrategy->exec();
             return ['status' => 1, 'id' => $paySchet->ID, 'message' => ''];
