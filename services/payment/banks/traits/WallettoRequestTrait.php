@@ -51,20 +51,21 @@ trait WallettoRequestTrait
             'force3d' => 1,
             'auto_charge' => 1,
             'return_url' => $createPayForm->getReturnUrl(),
+            'expiration_timeout' => (int) ($paySchet->TimeElapsed / 60),
         ];
         $request->currency = $paySchet->currency->Code;
         $request->merchant_order_id = $paySchet->ID;
         $request->description = 'Счет №' . $paySchet->ID ?? '';
 
         try {
-            $clientData = Json::decode(Yii::$app->request->post('client_data', '{}'), true);
+            $clientData = Json::decode(Yii::$app->request->post('client_data', '{}'));
         } catch (Exception $e) {
             $clientData = [];
         }
 
         $request->secure3d = [
             'browser_details' => [
-                'browser_accept_header' => $_SERVER['HTTP_ACCEPT'],
+                'browser_accept_header' => Yii::$app->request->post('client_data_accept') !== '/' ? Yii::$app->request->post('client_data_accept') : 'text/html',
                 'browser_color_depth' => $clientData['browser_color_depth'] ?? '',
                 'browser_ip' => Yii::$app->request->remoteIP,
                 'browser_language' => 'ru', // @TODO: я хз что он от меня хочет :(

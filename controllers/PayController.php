@@ -203,30 +203,25 @@ class PayController extends Controller
             $paySchet = $createPayStrategy->exec();
         } catch (DuplicateCreatePayException $e) {
             // releaseLock сюда не надо, эксепшен вызывается при попытке провести платеж, который уже проведен
+            Yii::$app->errorHandler->logException($e);
 
             return ['status' => 0, 'message' => $e->getMessage()];
         } catch (CreatePayException | GateException | reRequestingStatusException | BankAdapterResponseException | Exception $e) {
+            Yii::$app->errorHandler->logException($e);
             $createPayStrategy->releaseLock();
 
             return ['status' => 0, 'message' => $e->getMessage()];
-        } catch (reRequestingStatusOkException $e) {
+        } catch (reRequestingStatusOkException | Check3DSv2DuplicatedException $e) {
+            Yii::$app->errorHandler->logException($e);
             $createPayStrategy->releaseLock();
 
-            return [
-                'status' => 2,
-                'message' => $e->getMessage(),
-                'url' => Yii::$app->params['domain'] . '/pay/orderok?id=' . $form->IdPay,
-            ];
-        } catch (Check3DSv2DuplicatedException $e) {
-            $createPayStrategy->releaseLock();
-
-            // отменить счет
             return [
                 'status' => 2,
                 'message' => $e->getMessage(),
                 'url' => Yii::$app->params['domain'] . '/pay/orderok?id=' . $form->IdPay,
             ];
         } catch (Check3DSv2Exception $e) {
+            Yii::$app->errorHandler->logException($e);
             $createPayStrategy->releaseLock();
 
             return ['status' => 0, 'message' => 'Карта не поддерживается, обратитесь в банк'];

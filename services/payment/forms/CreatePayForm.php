@@ -23,6 +23,7 @@ class CreatePayForm extends Model
     public $Phone = '';
     public $Email = '';
     public $LinkPhone = false;
+    public $regcard = false;
 
     public $IdPay;
 
@@ -59,7 +60,7 @@ class CreatePayForm extends Model
             [['IdPay'], 'integer', 'min' => 1],
             [['Phone'], 'match', 'pattern' => '/^\d{10}$/', 'message' => 'Неверный номер телефона'],
             [['Email'], 'email', 'message' => 'Неверный адрес почты'],
-            [['LinkPhone'], 'boolean'],
+            [['LinkPhone', 'regcard'], 'boolean'],
             [['CardNumber', 'CardHolder', 'CardExp', 'CardCVC', 'IdPay'], 'required', 'message' => 'Заполните данные карты']
         ];
     }
