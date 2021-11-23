@@ -208,7 +208,7 @@ class RecurrentPaymentPartsForm extends Model implements PaymentData
     {
         $result = [];
         foreach ($this->parts as $part) {
-            $result[] = new PartData($part['merchant_id'], $part['amount'] * 100);
+            $result[] = new PartData($part['merchant_id'], $part['amount']);
         }
         return $result;
     }
