@@ -154,11 +154,13 @@ class CardController extends Controller
                 'url' => $paySchet->getFromUrl(!empty($cardRegForm->card) ? $cardRegForm->card : null),
             ];
         } catch (CreatePayException $e) {
+            \Yii::$app->errorHandler->logException($e);
             $mutex->release($cardRegForm->getMutexKey());
-            return ['status' => 0, 'message' => 'Ошибка запроса'];
+            return ['status' => 0, 'message' => $e->getMessage()];
         } catch (GateException $e) {
+            \Yii::$app->errorHandler->logException($e);
             $mutex->release($cardRegForm->getMutexKey());
-            return ['status' => 0, 'message' => 'Ошибка запроса'];
+            return ['status' => 0, 'message' => $e->getMessage()];
         }
     }
 

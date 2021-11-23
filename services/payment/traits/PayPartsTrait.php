@@ -59,9 +59,6 @@ trait PayPartsTrait
      */
     private function payPartsSenderToRecipient(Partner $senderPartner, Partner $recipientPartner, Carbon $dateFrom, Carbon $dateTo)
     {
-        /** @var PaySchetService $paySchetService */
-        $paySchetService = \Yii::$app->get(PaySchetService::class);
-
         $transaction = Yii::$app->db->beginTransaction();
 
         $transactionOk = true;

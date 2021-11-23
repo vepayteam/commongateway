@@ -44,6 +44,9 @@ return [
         'reportQueue' => $params['components']['reportQueue'],
 
         // Сервисы
+        \app\services\PartnerService::class => \app\services\PartnerService::class,
+        \app\services\PaySchetService::class => \app\services\PaySchetService::class,
+        \app\services\CompensationService::class => \app\services\CompensationService::class,
         \app\services\RecurrentPaymentPartsService::class => \app\services\RecurrentPaymentPartsService::class,
         \app\services\ReportService::class => \app\services\ReportService::class,
     ],
