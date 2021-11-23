@@ -214,7 +214,6 @@ if (YII_ENV_DEV) {
                 'class' => \yii\queue\gii\Generator::class,
             ],
         ],
-        'allowedIPs' => ['*'],
     ];
 
     Yii::setAlias('@img', '');
