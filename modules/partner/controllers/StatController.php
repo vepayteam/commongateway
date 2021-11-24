@@ -275,6 +275,26 @@ class StatController extends Controller
         }
     }
 
+    public function actionRecalcSave()
+    {
+        $ids = explode(",", Yii::$app->request->post('ids', ''));
+        $uslugaTovar = Yii::$app->request->post('Uslugatovar');
+
+        $paySchets = PaySchet::findAll($ids);
+
+        foreach ($paySchets as $paySchet) {
+            $paySchet->uslugatovar->ProvVoznagPC = $uslugaTovar['ProvVoznagPC'] ?: 0;
+            $paySchet->uslugatovar->ProvComisPC = $uslugaTovar['ProvComisPC'] ?: 0;
+            $paySchet->recalcComiss();
+            $paySchet->save();
+        }
+        Yii::$app->response->format = Yii::$app->response::FORMAT_JSON;
+        return [
+            'status' => 1,
+            'count' => count($paySchets),
+        ];
+    }
+
     /**
      * Отменить платеж
      * @return array|Response

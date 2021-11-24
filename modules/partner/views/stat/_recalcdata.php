@@ -17,10 +17,41 @@ use app\models\payonline\Uslugatovar;
 use app\models\payonline\User;
 use app\models\TU;
 use app\services\payment\models\PaySchet;
+use yii\bootstrap\Modal;
 use yii\data\Pagination;
+use yii\helpers\ArrayHelper;
 use yii\widgets\LinkPager;
 
 ?>
+
+<?php Modal::begin([
+    'header' => '<h2>Recalc</h2>',
+    'toggleButton' => ['label' => 'Recalc'],
+]); ?>
+<form id="recalc-from" action="/partner/stat/recalc-save" method="POST" role="form">
+	<input type="hidden" name="ids" value="<?= implode(",", ArrayHelper::getColumn($data, 'ID')) ?>">
+	<div class="form-group">
+		<label for="">Uslugatovar[ProvComisPC]</label>
+		<input type="text" class="form-control" name="Uslugatovar[ProvComisPC]">
+	</div>
+	<div class="form-group">
+		<label>Uslugatovar[ProvVoznagPC]</label>
+		<input type="text" class="form-control" name="Uslugatovar[ProvVoznagPC]">
+	</div>
+	<button type="submit" class="btn btn-primary">save</button>
+</form>
+<?php Modal::end();  ?>
+<script>
+	$('#recalc-from').submit((e) => {
+		$.ajax({
+			url: $('#recalc-from').attr('action'),
+			method: 'POST',
+			data: $('#recalc-from').serializeArray(),
+			dataType: "json"
+		});
+		return false;
+	})
+</script>
 
 <table class="table table-striped tabledata" style="font-size: 0.9em">
     <thead>

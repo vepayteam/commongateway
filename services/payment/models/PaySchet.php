@@ -378,6 +378,19 @@ class PaySchet extends \yii\db\ActiveRecord
         return true;
     }
 
+    public function recalcComiss()
+    {
+        /** @var CompensationService $compensationService */
+        $compensationService = \Yii::$app->get(CompensationService::class);
+        $gate = (new BankAdapterBuilder())
+            ->build($this->partner, $this->uslugatovar, $this->currency)
+            ->getPartnerBankGate();
+        $this->BankComis = round($compensationService->calculateForBank($this, $gate));
+        $this->MerchVozn = round($compensationService->calculateForPartner($this, $gate));
+
+        return true;
+    }
+
     /**
      * {@inheritDoc}
      */
