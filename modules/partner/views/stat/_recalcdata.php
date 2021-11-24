@@ -24,35 +24,27 @@ use yii\widgets\LinkPager;
 
 ?>
 
+<div class="col-sm-2">
+
 <?php Modal::begin([
-    'header' => '<h2>Recalc</h2>',
-    'toggleButton' => ['label' => 'Recalc'],
+	'id' => 'recalc-modal',
+    'header' => '<h2>Пересчитать</h2>',
+    'toggleButton' => ['label' => 'Пересчитать', 'class' => 'btn btn-sm btn-success', ],
 ]); ?>
 <form id="recalc-from" action="/partner/stat/recalc-save" method="POST" role="form">
 	<input type="hidden" name="ids" value="<?= implode(",", ArrayHelper::getColumn($data, 'ID')) ?>">
 	<div class="form-group">
-		<label for="">Uslugatovar[ProvComisPC]</label>
-		<input type="text" class="form-control" name="Uslugatovar[ProvComisPC]">
-	</div>
-	<div class="form-group">
-		<label>Uslugatovar[ProvVoznagPC]</label>
+		<label>Комиссия с мерчанта %</label>
 		<input type="text" class="form-control" name="Uslugatovar[ProvVoznagPC]">
 	</div>
-	<button type="submit" class="btn btn-primary">save</button>
+	<div class="form-group">
+		<label for="">Комиссия банка %</label>
+		<input type="text" class="form-control" name="Uslugatovar[ProvComisPC]">
+	</div>
+	<button type="submit" class="btn btn-primary" data-confirm="Вы уверены, что хотите персчитать комиссии для найденых платежей?">Пересчитать</button>
 </form>
 <?php Modal::end();  ?>
-<script>
-	$('#recalc-from').submit((e) => {
-		$.ajax({
-			url: $('#recalc-from').attr('action'),
-			method: 'POST',
-			data: $('#recalc-from').serializeArray(),
-			dataType: "json"
-		});
-		return false;
-	})
-</script>
-
+</div>
 <table class="table table-striped tabledata" style="font-size: 0.9em">
     <thead>
     <tr>
@@ -221,3 +213,21 @@ echo LinkPager::widget([
     'lastPageLabel' => '»',
 ]);
 ?>
+<script>
+	$('#recalc-from').submit((e) => {
+		$.ajax({
+			url: $('#recalc-from').attr('action'),
+			method: 'POST',
+			data: $('#recalc-from').serializeArray(),
+			dataType: "json",
+			success: (data) => {
+				if (data.status) {
+					alert('Пересчитано записей: ' + data.count);
+					$('#recalc-modal').modal('hide');
+					$('#statrecalcform').submit();
+				}
+			}
+		});
+		return false;
+	})
+</script>
