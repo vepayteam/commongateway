@@ -24,7 +24,6 @@ class PayShetStat extends Model
     public $idParts = [];
     public $usluga = [];
     public $TypeUslug = [];
-    public $idBank = [];
     public $Extid = '';
     public $id = 0;
     public $summpayFrom = 0;
@@ -42,7 +41,7 @@ class PayShetStat extends Model
             [['Extid'], 'string', 'max' => 40],
             [['datefrom', 'dateto'], 'date', 'format' => 'php:d.m.Y H:i'],
             [['datefrom', 'dateto'], 'required'],
-            [['usluga', 'status', 'TypeUslug', 'idBank', 'idParts'], 'each', 'rule' => ['integer']],
+            [['usluga', 'status', 'TypeUslug', 'idParts'], 'each', 'rule' => ['integer']],
             [['params'], 'each', 'rule' => ['string']],
         ];
     }
