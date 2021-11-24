@@ -13,6 +13,11 @@ use yii\data\Pagination;
 use yii\db\Query;
 use yii\helpers\VarDumper;
 
+use function count;
+use function microtime;
+use function round;
+use function strtotime;
+
 class PayShetStat extends Model
 {
     public $IdPart = 0;
@@ -98,7 +103,7 @@ class PayShetStat extends Model
      *
      * @return array
      */
-    public function getRecalcList($IsAdmin, $page = 0, $nolimit = 0)
+    public function getList($IsAdmin, $page = 0, $nolimit = 0)
     {
         $before = microtime(true);
         try {
