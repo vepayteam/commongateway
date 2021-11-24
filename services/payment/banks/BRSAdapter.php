@@ -145,7 +145,7 @@ class BRSAdapter implements IBankAdapter
         $confirmPayResponse = new ConfirmPayResponse();
         try {
             $data = $conformP2pRequest->getAttributes();
-            $ans = $this->sendRequest($uri, $data);
+            $ans = $this->sendRequest($uri, $data, $this->bankP2pUrl);
             if(array_key_exists('error', $ans)) {
                 $confirmPayResponse->status = BaseResponse::STATUS_ERROR;
                 $confirmPayResponse->message = $ans['error'];
@@ -199,17 +199,14 @@ class BRSAdapter implements IBankAdapter
     protected function buildCreatePayRequest(PaySchet $paySchet, CreatePayForm $createPayForm)
     {
         /** @var CreatePayRequest $createPayRequest */
-        $createPayRequest = new CreatePayRequest();
-        if($paySchet->uslugatovar->ID == Uslugatovar::REG_CARD_ID) {
+        if($paySchet->uslugatovar->ID == Uslugatovar::REG_CARD_ID || $paySchet->RegisterCard) {
             $createPayRequest = new CreatePayByRegCardRequest();
-            $security = new Security();
-            $createPayRequest->biller_client_id = $security->generateRandomString();
-
-            $expiry = Carbon::now()->addYears(3);
-            $createPayRequest->perspayee_expiry = sprintf('%02d', $expiry->month)
-                . substr((string)$expiry->year, -2);
+            $createPayRequest->biller_client_id = Yii::$app->security->generateRandomString();
+            $createPayRequest->perspayee_expiry = Carbon::now()->addYears(3)->format('my');
         } elseif ($this->gate->TU == UslugatovarType::POGASHATF) {
             $createPayRequest = new CreatePayAftRequest();
+        } else {
+            $createPayRequest = new CreatePayRequest();
         }
 
         $createPayRequest->mrch_transaction_id = $paySchet->ID;
@@ -315,7 +312,11 @@ class BRSAdapter implements IBankAdapter
 
         $checkStatusPayResponse = new CheckStatusPayResponse();
         try {
-            $ans = $this->sendRequest($uri, $checkStatusPayRequest->getAttributes());
+            $domain = $this->bankUrl;
+            if($paySchet->OutCardPan) {
+                $domain = $this->bankP2pUrl;
+            }
+            $ans = $this->sendRequest($uri, $checkStatusPayRequest->getAttributes(), $domain);
             $checkStatusPayResponse->message = BRSErrorHelper::getMessage($ans);
             $checkStatusPayResponse->status = $this->getStatusResponse($ans['RESULT']);
             $this->checkStatusPayResponseFiller($checkStatusPayResponse, $ans);

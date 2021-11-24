@@ -12,6 +12,7 @@ use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\Banks;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\models\active_query\PaySchetQuery;
+use app\services\payment\payment_strategies\mfo\MfoCardRegStrategy;
 use Carbon\Carbon;
 use Yii;
 
@@ -83,6 +84,8 @@ use Yii;
  * @property string|null $UserEmail
  * @property string|null $RCCode
  * @property string|null $Operations
+ * @property int $RegisterCard Регистрировать ли карту для рекуррентных платежей при оплате. Значения: 1, 0. По умолчанию 0.
+ *
  * @property Uslugatovar $uslugatovar
  * @property Partner $partner
  * @property Currency $currency
@@ -143,6 +146,8 @@ class PaySchet extends \yii\db\ActiveRecord
 
     /**
      * {@inheritdoc}
+     *
+     * @todo Удалить этот метод, т.к. не предполагается использовать данную модель как форму.
      */
     public function rules()
     {
@@ -150,7 +155,8 @@ class PaySchet extends \yii\db\ActiveRecord
             [['IdUser', 'IdKard', 'IdUsluga', 'IdShablon', 'IdOrder', 'IdOrg', 'IdGroupOplat', 'Period', 'IdQrProv',
                 'SummPay', 'ComissSumm', 'MerchVozn', 'BankComis', 'Status', 'DateCreate', 'DateOplat', 'DateLastUpdate',
                 'PayType', 'TimeElapsed', 'ExtKeyAcces', 'CardExp', 'UserClickPay', 'CountSendOK', 'SendKvitMail',
-                'IdAgent', 'TypeWidget', 'Bank', 'IsAutoPay', 'AutoPayIdGate', 'sms_accept', 'CurrencyId'
+                'IdAgent', 'TypeWidget', 'Bank', 'IsAutoPay', 'AutoPayIdGate', 'sms_accept', 'CurrencyId',
+                'RegisterCard',
                 ],
                 'integer'
             ],
@@ -364,15 +370,21 @@ class PaySchet extends \yii\db\ActiveRecord
         $this->DateLastUpdate = time();
 
         if ($insert) {
-            // Считаем отчисления (комиссии) для платежа.
-            /** @var CompensationService $compensationService */
-            $compensationService = \Yii::$app->get(CompensationService::class);
-            $gate = (new BankAdapterBuilder())
-                ->build($this->partner, $this->uslugatovar, $this->currency)
-                ->getPartnerBankGate();
-            $this->ComissSumm = round($compensationService->calculateForClient($this, $gate));
-            $this->BankComis = round($compensationService->calculateForBank($this, $gate));
-            $this->MerchVozn = round($compensationService->calculateForPartner($this, $gate));
+            /**
+             * Calculate compensation.
+             * Needed only when bank is not 0 ({@see MfoCardRegStrategy::createPaySchet()}).
+             */
+            if ($this->Bank !== 0) {
+                $gate = (new BankAdapterBuilder())
+                    ->buildByBank($this->partner, $this->uslugatovar, $this->bank, $this->currency)
+                    ->getPartnerBankGate();
+
+                /** @var CompensationService $compensationService */
+                $compensationService = \Yii::$app->get(CompensationService::class);
+                $this->ComissSumm = round($compensationService->calculateForClient($this, $gate));
+                $this->BankComis = round($compensationService->calculateForBank($this, $gate));
+                $this->MerchVozn = round($compensationService->calculateForPartner($this, $gate));
+            }
         }
 
         return true;

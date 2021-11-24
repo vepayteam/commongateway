@@ -51,6 +51,7 @@ use yii\web\NotFoundHttpException;
 use yii\web\Response;
 use yii\web\UploadedFile;
 
+use function count;
 use function serialize;
 
 class StatController extends Controller
@@ -260,18 +261,22 @@ class StatController extends Controller
 
     public function actionListExportCsv()
     {
-		ini_set('memory_limit', '1024M');
+		ini_set('memory_limit', '8096M');
         $isAdmin = UserLk::IsAdmin(Yii::$app->user);
         $payschet = new PayShetStat(); //загрузить
-        if ($payschet->load(Yii::$app->request->get(), '') && $payschet->validate()){
-            $data = $payschet->getList2($isAdmin,0,1);
-            if ($data){
-                $file = new OtchToCSV($data);
-                $file->export();
-                return Yii::$app->response->sendFile($file->fullpath());
+        try {
+            if ($payschet->load(Yii::$app->request->get(), '')) {
+                $data = $payschet->getList2($isAdmin, 0, 1);
+                if ($data) {
+                    $file = new OtchToCSV($data);
+                    $file->export();
+                    return Yii::$app->response->sendFile($file->fullpath());
+                }
             }
+        } catch (Exception $e) {
+            Yii::error([$e->getMessage(), $e->getFile(), $e->getLine(), $e->getTrace(), $e->getPrevious(), $payschet->getErrors(), $payschet, Yii::$app->request->get()], __METHOD__);
+            throw $e;
         }
-        throw new NotFoundHttpException();
     }
 
     /**

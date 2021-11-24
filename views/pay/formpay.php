@@ -238,6 +238,8 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
         </div>
     <?php endif; ?>
     <input id="client_data" type="hidden" name="client_data" value="{}">
+    <?php /* Crutch for Walletto, which need real client_data_accept from client in 3DS 2.0 */ ?>
+    <input id="client_data_accept" type="hidden" name="client_data_accept" value="<?= Yii::$app->request->headers->get('accept') ?>">
     <?php ActiveForm::end(); ?>
 
     <iframe name="threDS" id="confirm3dsV2TKBFrame" style="height: 1px; display: none">
