@@ -35,11 +35,19 @@ use yii\widgets\LinkPager;
 	<input type="hidden" name="ids" value="<?= implode(",", ArrayHelper::getColumn($data, 'ID')) ?>">
 	<div class="form-group">
 		<label>Комиссия с мерчанта %</label>
-		<input type="text" class="form-control" name="Uslugatovar[ProvVoznagPC]">
+		<input type="text" class="form-control" name="ProvVoznagPC">
+	</div>
+	<div class="form-group">
+		<label>Комиссия с мерчанта не менее, руб.</label>
+		<input type="text" class="form-control" name="ProvVoznagMin">
 	</div>
 	<div class="form-group">
 		<label for="">Комиссия банка %</label>
-		<input type="text" class="form-control" name="Uslugatovar[ProvComisPC]">
+		<input type="text" class="form-control" name="ProvComisPC">
+	</div>
+	<div class="form-group">
+		<label for="">Комиссия банка не менее, руб.</label>
+		<input type="text" class="form-control" name="ProvComisMin">
 	</div>
 	<button type="submit" class="btn btn-primary" data-confirm="Вы уверены, что хотите персчитать комиссии для найденых платежей?">Пересчитать</button>
 </form>
@@ -222,8 +230,8 @@ echo LinkPager::widget([
 			dataType: "json",
 			success: (data) => {
 				if (data.status) {
-					alert('Пересчитано записей: ' + data.count);
 					$('#recalc-modal').modal('hide');
+					alert('Пересчитано записей: ' + data.count);
 					$('#statrecalcform').submit();
 				}
 			}

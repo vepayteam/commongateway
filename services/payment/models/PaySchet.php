@@ -378,8 +378,25 @@ class PaySchet extends \yii\db\ActiveRecord
         return true;
     }
 
-    public function recalcComiss()
+    /**
+     * Recalculate comissions with parametrs
+     *
+     * @param $ProvVoznagPC
+     * @param $ProvVoznagMin
+     * @param $ProvComisPC
+     * @param $ProvComisMin
+     *
+     * @return bool
+     * @throws GateException
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function recalcComiss($ProvVoznagPC, $ProvVoznagMin, $ProvComisPC, $ProvComisMin): bool
     {
+        $this->uslugatovar->ProvVoznagPC = (float) $ProvVoznagPC;
+        $this->uslugatovar->ProvVoznagMin = (float) $ProvVoznagMin;
+        $this->uslugatovar->ProvComisPC = (float) $ProvComisPC;
+        $this->uslugatovar->ProvComisMin = (float) $ProvComisMin;
+
         /** @var CompensationService $compensationService */
         $compensationService = \Yii::$app->get(CompensationService::class);
         $gate = (new BankAdapterBuilder())

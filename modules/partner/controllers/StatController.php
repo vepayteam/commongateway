@@ -2,9 +2,6 @@
 
 namespace app\modules\partner\controllers;
 
-use app\models\bank\BankMerchant;
-use app\models\bank\TCBank;
-use app\models\bank\TcbGate;
 use app\models\kkt\OnlineKassa;
 use app\models\mfo\MfoStat;
 use app\models\partner\admin\VyvodVoznag;
@@ -24,9 +21,6 @@ use app\models\partner\stat\StatFilter;
 use app\models\partner\stat\StatGraph;
 use app\models\partner\UserLk;
 use app\models\payonline\Partner;
-use app\models\Payschets;
-use app\models\queue\JobPriorityInterface;
-use app\models\queue\SendMailJob;
 use app\models\SendEmail;
 use app\models\TU;
 use app\modules\partner\models\DiffData;
@@ -46,10 +40,8 @@ use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
-use yii\helpers\VarDumper;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
-use yii\web\MethodNotAllowedHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 use yii\web\UploadedFile;
@@ -277,22 +269,24 @@ class StatController extends Controller
 
     public function actionRecalcSave()
     {
-        $ids = explode(",", Yii::$app->request->post('ids', ''));
-        $uslugaTovar = Yii::$app->request->post('Uslugatovar');
-
-        $paySchets = PaySchet::findAll($ids);
-
-        foreach ($paySchets as $paySchet) {
-            $paySchet->uslugatovar->ProvVoznagPC = $uslugaTovar['ProvVoznagPC'] ?: 0;
-            $paySchet->uslugatovar->ProvComisPC = $uslugaTovar['ProvComisPC'] ?: 0;
-            $paySchet->recalcComiss();
-            $paySchet->save();
+        if (Yii::$app->request->isAjax) {
+            Yii::$app->response->format = Yii::$app->response::FORMAT_JSON;
+            $paySchets = PaySchet::findAll(explode(",", Yii::$app->request->post('ids', '')));
+            foreach ($paySchets as $paySchet) {
+                $paySchet->recalcComiss(
+                    Yii::$app->request->post('ProvVoznagPC', 0),
+                    Yii::$app->request->post('ProvVoznagMin', 0),
+                    Yii::$app->request->post('ProvComisPC', 0),
+                    Yii::$app->request->post('ProvComisMin', 0)
+                );
+                $paySchet->save();
+            }
+            return [
+                'status' => 1,
+                'count' => count($paySchets),
+            ];
         }
-        Yii::$app->response->format = Yii::$app->response::FORMAT_JSON;
-        return [
-            'status' => 1,
-            'count' => count($paySchets),
-        ];
+        return $this->redirect('/partner');
     }
 
     /**
