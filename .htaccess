@@ -5,7 +5,13 @@ PassEnv REDIS_DB_NUM_QUEUE REDIS_DB_NUM_CACHE
 Options +FollowSymLinks
 IndexIgnore */*
 RewriteEngine on
- 
+
+RewriteCond %{REMOTE_ADDR} !^13\.37\.130\.12
+RewriteCond %{REMOTE_ADDR} !^13\.36\.117\.179
+RewriteCond %{REMOTE_ADDR} !^127\.0\.0\.1
+RewriteCond %{REMOTE_ADDR} !^172\.18\.0\.1
+RewriteRule (^|/)mfo/pay/callback(/|$) - [F,L]
+
 RewriteCond %{REQUEST_URI} ^/.*
 RewriteRule ^(.*)$ web/$1 [L]
 
