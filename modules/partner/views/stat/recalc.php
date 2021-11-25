@@ -77,7 +77,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                     <div class="form-group">
                         <div class="col-sm-offset-2 col-sm-4">
                             <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
-                            <button class="btn btn-sm btn-primary" type="submit">Найти</button>
+                            <button class="btn btn-sm btn-primary" type="submit">Сформировать</button>
                         </div>
                     </div>
                 </form>
