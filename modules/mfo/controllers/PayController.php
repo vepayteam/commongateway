@@ -5,6 +5,7 @@ namespace app\modules\mfo\controllers;
 use app\models\api\CorsTrait;
 use app\models\kfapi\KfFormPay;
 use app\models\mfo\MfoReq;
+use app\models\payonline\Cards;
 use app\modules\mfo\jobs\recurrentPaymentParts\ExecutePaymentJob;
 use app\modules\mfo\models\RecurrentPaymentPartsForm;
 use app\services\compensationService\CompensationException;
@@ -78,6 +79,22 @@ class PayController extends Controller
             return parent::beforeAction($action);
         }
         return false;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function afterAction($action, $result)
+    {
+        $result = parent::afterAction($action, $result);
+        Yii::info([
+            'endpoint' => $action->uniqueId,
+            'header' => Yii::$app->request->headers->toArray(),
+            'body' => Cards::MaskCardLog(Yii::$app->request->post()),
+            'return' => (array)$result,
+        ], 'mfo_' . $action->controller->id . '_' . $action->id);
+
+        return $result;
     }
 
     protected function verbs()
@@ -224,13 +241,13 @@ class PayController extends Controller
             Yii::warning("mfo/pay/auto: ошибка валидации формы");
             return ['status' => 0, 'message' => $autoPayForm->getError()];
         }
-    
+
         if ($autoPayForm->getCard() && (!$autoPayForm->getCard()->ExtCardIDP || $autoPayForm->getCard()->ExtCardIDP == '0')) {
             Yii::warning("mfo/pay/auto: у карты нет ExtCardIDP");
             $autoPayForm->addError('card', 'Карта не зарегистрирована');
             return ['status' => 0, 'message' => $autoPayForm->getError()];
         }
-        
+
         Yii::warning("mfo/pay/auto AutoPayForm extid=$autoPayForm->extid amount=$autoPayForm->amount", 'mfo');
         // рубли в копейки
         $autoPayForm->amount *= 100;

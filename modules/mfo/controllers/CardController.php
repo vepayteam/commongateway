@@ -9,6 +9,7 @@ use app\models\bank\TcbGate;
 use app\models\kfapi\KfCard;
 use app\models\kfapi\KfPay;
 use app\models\mfo\MfoReq;
+use app\models\payonline\Cards;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\CardRegForm;
@@ -48,6 +49,22 @@ class CardController extends Controller
             return parent::beforeAction($action);
         }
         return false;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function afterAction($action, $result)
+    {
+        $result = parent::afterAction($action, $result);
+        Yii::info([
+            'endpoint' => $action->uniqueId,
+            'header' => Yii::$app->request->headers->toArray(),
+            'body' => Cards::MaskCardLog(Yii::$app->request->post()),
+            'return' => (array)$result,
+        ], 'mfo_' . $action->controller->id . '_' . $action->id);
+
+        return $result;
     }
 
     protected function verbs()
@@ -189,12 +206,12 @@ class CardController extends Controller
         }
 
         Yii::warning('/card/get mfo='. $mfo->mfo . ' IdPay=' . $kfCard->id . ' type=' .$type, 'mfo');
-        
+
         $paySchet = PaySchet::findOne($kfCard->id);
         if (!$paySchet) {
             return ['status' => 0, 'message' => 'Ошибка запроса'];
         }
-    
+
         $statePay = $kfCard->GetPayState();
         if ($statePay == PaySchet::STATUS_ERROR) {
             return ['status' => 2, 'message' => 'Платеж не успешный'];
