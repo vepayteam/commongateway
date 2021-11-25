@@ -46,6 +46,7 @@ use yii\web\NotFoundHttpException;
 use yii\web\Response;
 use yii\web\UploadedFile;
 
+use function array_map;
 use function count;
 use function serialize;
 
@@ -278,13 +279,9 @@ class StatController extends Controller
             Yii::$app->response->format = Yii::$app->response::FORMAT_JSON;
             $paySchets = PaySchet::findAll(explode(",", Yii::$app->request->post('ids', '')));
             foreach ($paySchets as $paySchet) {
-                $paySchet->recalcComiss(
-                    Yii::$app->request->post('ProvVoznagPC', 0),
-                    Yii::$app->request->post('ProvVoznagMin', 0),
-                    Yii::$app->request->post('ProvComisPC', 0),
-                    Yii::$app->request->post('ProvComisMin', 0)
-                );
-                $paySchet->save();
+                $paySchet->uslugatovar->load(array_map('floatval', Yii::$app->request->post()), '');
+                $paySchet->recalcComiss();
+                $paySchet->save(false);
             }
             return [
                 'status' => 1,

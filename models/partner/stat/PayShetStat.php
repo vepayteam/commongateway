@@ -399,7 +399,7 @@ class PayShetStat extends Model
         if (count($this->TypeUslug) > 0) {
             $query->andWhere(['in', 'qp.IsCustom', $this->TypeUslug]);
         }
-        if (is_numeric($this->summpayFrom) && is_numeric($this->summpayTo)) {
+        if (is_numeric($this->summpayFrom) && is_numeric($this->summpayTo) && $this->summpayTo) {
             $query->andWhere(['between', 'ps.SummPay', round($this->summpayFrom * 100.0), round($this->summpayTo * 100.0)]);
         } elseif (is_numeric($this->summpayFrom)) {
             $query->andWhere(['>=', 'ps.SummPay', round($this->summpayFrom * 100.0)]);

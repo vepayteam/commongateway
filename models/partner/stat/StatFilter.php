@@ -106,4 +106,12 @@ class StatFilter
         }
         return $ret;
     }
+
+    /**
+     * @return Bank[]
+     */
+    public function getBankList(): array
+    {
+        return Bank::find()->all();
+    }
 }

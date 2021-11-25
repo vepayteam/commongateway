@@ -35,19 +35,19 @@ use yii\widgets\LinkPager;
 	<input type="hidden" name="ids" value="<?= implode(",", ArrayHelper::getColumn($data, 'ID')) ?>">
 	<div class="form-group">
 		<label>Комиссия с мерчанта %</label>
-		<input type="text" class="form-control" name="ProvVoznagPC">
+		<input type="text" class="form-control" name="ProvVoznagPC" placeholder="0">
 	</div>
 	<div class="form-group">
 		<label>Комиссия с мерчанта не менее, руб.</label>
-		<input type="text" class="form-control" name="ProvVoznagMin">
+		<input type="text" class="form-control" name="ProvVoznagMin" placeholder="0">
 	</div>
 	<div class="form-group">
 		<label for="">Комиссия банка %</label>
-		<input type="text" class="form-control" name="ProvComisPC">
+		<input type="text" class="form-control" name="ProvComisPC" placeholder="0">
 	</div>
 	<div class="form-group">
 		<label for="">Комиссия банка не менее, руб.</label>
-		<input type="text" class="form-control" name="ProvComisMin">
+		<input type="text" class="form-control" name="ProvComisMin" placeholder="0">
 	</div>
 	<button type="submit" class="btn btn-primary" data-confirm="Вы уверены, что хотите персчитать комиссии для найденых платежей?">Пересчитать</button>
 </form>
