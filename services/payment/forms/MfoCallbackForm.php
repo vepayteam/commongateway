@@ -5,11 +5,11 @@ namespace app\services\payment\forms;
 class MfoCallbackForm extends BaseForm
 {
     /**
-     * @var string $id
+     * @var string $order_id
      */
     public $order_id;
     /**
-     * @var string $token
+     * @var string $cardToken
      */
     public $cardToken;
 

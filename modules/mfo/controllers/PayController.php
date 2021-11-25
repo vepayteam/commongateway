@@ -347,7 +347,7 @@ class PayController extends Controller
         $form = new MfoCallbackForm();
 
         if (!$form->load($data, '') || !$form->validate()) {
-            Yii::warning("pay/callback: " . $form->GetError());
+            Yii::warning("pay/callback: " . $form->getError());
             return ['status' => 0, 'message' => $form->getError()];
         }
 
