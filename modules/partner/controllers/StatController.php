@@ -276,17 +276,16 @@ class StatController extends Controller
     public function actionRecalcSave()
     {
         if (Yii::$app->request->isAjax) {
-            Yii::$app->response->format = Yii::$app->response::FORMAT_JSON;
             $paySchets = PaySchet::findAll(explode(",", Yii::$app->request->post('ids', '')));
             foreach ($paySchets as $paySchet) {
                 $paySchet->uslugatovar->load(array_map('floatval', Yii::$app->request->post()), '');
                 $paySchet->recalcComiss();
                 $paySchet->save(false);
             }
-            return [
+            return $this->asJson([
                 'status' => 1,
                 'count' => count($paySchets),
-            ];
+            ]);
         }
         return $this->redirect('/partner');
     }
