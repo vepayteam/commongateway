@@ -102,7 +102,7 @@ class AutopayStat extends Model
             ->andFilterWhere(['IDPartner' => $idPart]);
 
         $ret['payscards'] = $querySuccess->count();
-        $ret['sumpayscards'] = $querySuccess->sum('SummPay');
+        $ret['sumpayscards'] = $querySuccess->sum('SummPay + ComissSumm');
 
         return $ret;
     }

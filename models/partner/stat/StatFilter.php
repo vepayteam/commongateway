@@ -53,7 +53,7 @@ class StatFilter
     {
         $partners = Partner::find()
             ->where(['IsDeleted' => '0'])
-            ->andFilterWhere(['IsMfo' => $onlymfo]);
+            ->andFilterWhere(['IsMfo' => $onlymfo ?: null]);
         if ($notehpartner) {
             $partners = $partners->andWhere('ID <> 1');
         }
