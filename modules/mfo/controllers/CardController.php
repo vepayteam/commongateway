@@ -60,7 +60,7 @@ class CardController extends Controller
         Yii::info([
             'endpoint' => $action->uniqueId,
             'header' => Yii::$app->request->headers->toArray(),
-            'body' => Cards::MaskCardLog(Yii::$app->request->post()),
+            'body' => Cards::maskCardUni(Yii::$app->request->post()),
             'return' => (array)$result,
         ], 'mfo_' . $action->controller->id . '_' . $action->id);
 
