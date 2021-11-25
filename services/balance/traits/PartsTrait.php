@@ -22,7 +22,7 @@ trait PartsTrait
         $result = [
             'draw' => $partsBalanceForm->draw,
         ];
-        $q = PayschetPart::find()
+        $query = PayschetPart::find()
             ->innerJoin('pay_schet', 'pay_schet.ID = pay_schet_parts.PayschetId')
             ->innerJoin('partner', 'partner.ID = pay_schet_parts.PartnerId')
             ->leftJoin('vyvod_parts', 'vyvod_parts.ID = pay_schet_parts.VyvodId AND vyvod_parts.Status = 1')
@@ -33,12 +33,12 @@ trait PartsTrait
             ->andWhere(['>=', 'pay_schet.DateCreate', strtotime($partsBalanceForm->filters['datefrom'].':00')])
             ->andWhere(['<=', 'pay_schet.DateCreate', strtotime($partsBalanceForm->filters['dateto'])]);
 
-        $result['recordsTotal'] = $q->count();
+        $result['recordsTotal'] = $query->count();
 
         foreach ($partsBalanceForm->columns as $column) {
             if(!empty($column['search']['value'])) {
                 $arr = explode(' AS ', $column['name']);
-                $q->andWhere([
+                $query->andWhere([
                     'like',
                     $arr[0],
                     $column['search']['value']
@@ -46,15 +46,14 @@ trait PartsTrait
             }
         }
 
-        $result['recordsFiltered'] = $q->count();
+        $result['recordsFiltered'] = $query->count();
 
-        $q->limit($partsBalanceForm->length);
-        $q->offset($partsBalanceForm->start);
+        $query->limit($partsBalanceForm->length);
+        $query->offset($partsBalanceForm->start);
 
         // подмена даты
         $columns = PartsBalanceForm::COLUMNS_BY_PARTS_BALANCE;
-        unset($columns['DateCreate']);
-        unset($columns['VyvodDateCreate']);
+        unset($columns['DateCreate'], $columns['VyvodDateCreate']);
         $columns = array_keys($columns);
         $columns[] = 'FROM_UNIXTIME(pay_schet.DateCreate) AS DateCreate';
         $columns[] = 'FROM_UNIXTIME(vyvod_parts.DateCreate) AS VyvodDateCreate';
@@ -62,10 +61,10 @@ trait PartsTrait
         $columnNOrder = $partsBalanceForm->order[0]['column'];
         $orderColumn = $partsBalanceForm->columns[$columnNOrder]['data'];
         $orderDir = $partsBalanceForm->order[0]['dir'];
-        $q->orderBy($orderColumn.' '.$orderDir);
+        $query->orderBy($orderColumn.' '.$orderDir);
 
-        $q->addSelect($columns);
-        $result['data'] = $q->asArray()->all();
+        $query->addSelect($columns);
+        $result['data'] = $query->asArray()->all();
         return $result;
     }
 
@@ -78,7 +77,7 @@ trait PartsTrait
         $result = [
             'draw' => $partsBalancePartnerForm->draw,
         ];
-        $q = PayschetPart::find()
+        $query = PayschetPart::find()
             ->innerJoin('pay_schet', 'pay_schet.ID = pay_schet_parts.PayschetId')
             ->innerJoin('partner', 'partner.ID = pay_schet_parts.PartnerId')
             ->leftJoin('vyvod_parts', 'vyvod_parts.ID = pay_schet_parts.VyvodId AND vyvod_parts.Status = 1')
@@ -89,12 +88,12 @@ trait PartsTrait
             ->andWhere(['>=', 'pay_schet.DateCreate', strtotime($partsBalancePartnerForm->filters['datefrom'].':00')])
             ->andWhere(['<=', 'pay_schet.DateCreate', strtotime($partsBalancePartnerForm->filters['dateto'])]);
 
-        $result['recordsTotal'] = $q->count();
+        $result['recordsTotal'] = $query->count();
 
         foreach ($partsBalancePartnerForm->columns as $column) {
             if(!empty($column['search']['value'])) {
                 $arr = explode(' AS ', $column['name']);
-                $q->andWhere([
+                $query->andWhere([
                     'like',
                     $arr[0],
                     $column['search']['value']
@@ -102,15 +101,14 @@ trait PartsTrait
             }
         }
 
-        $result['recordsFiltered'] = $q->count();
+        $result['recordsFiltered'] = $query->count();
 
-        $q->limit($partsBalancePartnerForm->length);
-        $q->offset($partsBalancePartnerForm->start);
+        $query->limit($partsBalancePartnerForm->length);
+        $query->offset($partsBalancePartnerForm->start);
 
         // подмена даты
         $columns = PartsBalancePartnerForm::COLUMNS_BY_PARTS_BALANCE;
-        unset($columns['DateCreate']);
-        unset($columns['VyvodDateCreate']);
+        unset($columns['DateCreate'], $columns['VyvodDateCreate']);
         $columns = array_keys($columns);
         $columns[] = 'FROM_UNIXTIME(pay_schet.DateCreate) AS DateCreate';
         $columns[] = 'FROM_UNIXTIME(vyvod_parts.DateCreate) AS VyvodDateCreate';
@@ -118,10 +116,10 @@ trait PartsTrait
         $columnNOrder = $partsBalancePartnerForm->order[0]['column'];
         $orderColumn = $partsBalancePartnerForm->columns[$columnNOrder]['data'];
         $orderDir = $partsBalancePartnerForm->order[0]['dir'];
-        $q->orderBy($orderColumn.' '.$orderDir);
+        $query->orderBy($orderColumn.' '.$orderDir);
 
-        $q->addSelect($columns);
-        $result['data'] = $q->asArray()->all();
+        $query->addSelect($columns);
+        $result['data'] = $query->asArray()->all();
         return $result;
     }
 }
