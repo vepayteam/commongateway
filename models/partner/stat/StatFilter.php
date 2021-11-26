@@ -3,12 +3,13 @@
 namespace app\models\partner\stat;
 
 
+use app\services\payment\models\Bank;
 use app\models\payonline\Partner;
 use app\models\payonline\PartnerDogovor;
 use app\models\payonline\Uslugatovar;
 use app\models\TU;
-use app\services\payment\models\Bank;
 use app\services\payment\models\UslugatovarType;
+use yii\helpers\StringHelper;
 
 class StatFilter
 {
@@ -50,12 +51,9 @@ class StatFilter
      */
     public function getPartnersList($onlymfo = false, $notehpartner = false)
     {
-        $partners = Partner::find()->where(
-            '`IsDeleted` = 0'
-        );
-        if ($onlymfo) {
-            $partners = $partners->andWhere(['IsMfo' => $onlymfo]);
-        }
+        $partners = Partner::find()
+            ->where(['IsDeleted' => '0'])
+            ->andFilterWhere(['IsMfo' => $onlymfo ?: null]);
         if ($notehpartner) {
             $partners = $partners->andWhere('ID <> 1');
         }
@@ -114,4 +112,5 @@ class StatFilter
     {
         return Bank::find()->all();
     }
+
 }

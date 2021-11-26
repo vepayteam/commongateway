@@ -358,7 +358,8 @@ class StatController extends Controller
             'IsAdmin' => $IsAdmin,
             'partnerlist' => $fltr->getPartnersList(),
             'magazlist' => $IsAdmin ? $fltr->getMagazList(-1) : $fltr->getMagazList(UserLk::getPartnerId(Yii::$app->user)),
-            'uslugilist' => $fltr->getTypeUslugLiust()
+            'uslugilist' => $fltr->getTypeUslugLiust(),
+            'bankList' => $fltr->getBankList(),
         ]);
     }
 
@@ -627,7 +628,7 @@ class StatController extends Controller
                 return [
                     'status' => 1,
                     'data' => $this->renderPartial('_recurrentcarddata', [
-                        'data' => $AutopayStat->GetData($IsAdmin)
+                        'data' => $AutopayStat->getData($IsAdmin)
                     ])
                 ];
             }

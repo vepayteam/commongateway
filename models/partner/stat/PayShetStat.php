@@ -8,10 +8,12 @@ use app\services\payment\models\PaySchet;
 use app\services\payment\models\repositories\CurrencyRepository;
 use Yii;
 use yii\base\Model;
-use yii\db\Expression;
 use yii\data\Pagination;
+use yii\db\Expression;
 use yii\db\Query;
-use yii\helpers\VarDumper;
+
+use function array_map;
+use function array_walk;
 
 class PayShetStat extends Model
 {
@@ -19,6 +21,7 @@ class PayShetStat extends Model
     public $idParts = [];
     public $usluga = [];
     public $TypeUslug = [];
+    public $idBank = [];
     public $Extid = '';
     public $id = 0;
     public $summpayFrom = 0;
@@ -37,7 +40,7 @@ class PayShetStat extends Model
             [['Extid'], 'string'],
             [['datefrom', 'dateto'], 'date', 'format' => 'php:d.m.Y H:i'],
             [['datefrom', 'dateto'], 'required'],
-            [['usluga', 'status', 'TypeUslug', 'idParts'], 'each', 'rule' => ['integer']],
+            [['usluga', 'status', 'TypeUslug', 'idBank', 'idParts'], 'each', 'rule' => ['integer']],
             [['params'], 'each', 'rule' => ['string']],
         ];
     }
@@ -458,67 +461,51 @@ class PayShetStat extends Model
     {
         $IdPart = $IsAdmin ? $this->IdPart : UserLk::getPartnerId(Yii::$app->user);
 
-        $query = new Query();
-        $query
+        $query = (new Query())
             ->select([
-                'ut.NameUsluga',
-                'ut.ProvVoznagPC',
-                'ut.ProvVoznagMin',
-                'ps.SummPay',
-                'ps.ComissSumm',
-                'ps.MerchVozn',
-                'ps.BankComis',
-                'ps.IdUsluga',
-                'ut.IsCustom',
-                'ut.ProvVoznagPC',
-                'ut.ProvVoznagMin',
-                'ut.ProvComisPC',
-                'ut.ProvComisMin'
+                '`ut`.`NameUsluga`',
+                '`b`.`Name` as bankName',
+                '`ut`.`ProvVoznagPC`',
+                '`ut`.`ProvVoznagMin`',
+                '`ps`.`IdUsluga`',
+                '`ut`.`IsCustom`',
+                '`ut`.`ProvComisPC`',
+                '`ut`.`ProvComisMin`',
+                'SUM(`ps`.`SummPay`) AS `SummPay`',
+                'SUM(`ps`.`ComissSumm`) AS `ComissSumm`',
+                'SUM(`ps`.`MerchVozn`) AS `MerchVozn`',
+                'SUM(`ps`.`BankComis`) AS `BankComis`',
+                'COUNT(*) AS CntPays'
             ])
             ->from('`pay_schet` AS ps')
             ->leftJoin('`uslugatovar` AS ut', 'ps.IdUsluga = ut.ID')
             ->leftJoin('`banks` AS b', 'ps.Bank = b.ID')
-            ->where('ps.DateCreate BETWEEN :DATEFROM AND :DATETO', [
-                ':DATEFROM' => strtotime($this->datefrom . ":00"),
-                ':DATETO' => strtotime($this->dateto . ":59")
+            ->andWhere(['between', 'ps.DateCreate', strtotime($this->datefrom . ":00"), strtotime($this->dateto . ":59")])
+            ->andWhere(['ps.Status' => 1])
+            ->groupBy([
+                '`ps`.`IdUsluga`',
+                '`ut`.`IsCustom`',
+                '`ut`.`ProvVoznagPC`',
+                '`ut`.`ProvVoznagMin`',
+                '`ut`.`ProvComisPC`',
+                '`ut`.`ProvComisMin`',
+                '`ps`.`Bank`',
+                '`b`.`Name`',
+                '`ut`.NameUsluga'
             ])
-            ->andWhere('ps.Status = 1');
+            ->orderBy('bank');
 
-        if ($IdPart > 0) {
-            $query->andWhere('ut.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);
-        }
+        $query->andFilterWhere(['ut.IDPartner' => $IdPart > 0 ? $IdPart : null]);
+        $query->andFilterWhere(['ut.ID' => $this->usluga]);
+        $query->andFilterWhere(['ut.IsCustom' => $this->TypeUslug]);
+        $query->andFilterWhere(['bank' => $this->idBank]);
+        $res = $query->all();
 
-        if (count($this->usluga) > 0) {
-            $query->andWhere(['in', 'ut.ID', $this->usluga]);
-        }
-        //if ($data['paytype'] >= 0) {
-        //$query->andWhere('ps.PayType = :IDPAYTYPE', [':IDPAYTYPE' => $data['paytype']]);
-        //}
-        if (count($this->TypeUslug) > 0) {
-            $query->andWhere(['in', 'ut.IsCustom', $this->TypeUslug]);
-        }
+        array_walk($res, static function (&$row) {
+            $row['VoznagSumm'] = (string)$row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
+        });
 
-        $res = $query->cache(10)->all();
-
-        $ret = [];
-        foreach ($res as $row) {
-            $indx = $row['IdUsluga'];
-            $row['VoznagSumm'] = $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
-
-            if (!isset($ret[$indx])) {
-                $row['CntPays'] = 1;
-                $ret[$indx] = $row;
-            } else {
-                $ret[$indx]['SummPay'] += $row['SummPay'];
-                $ret[$indx]['ComissSumm'] += $row['ComissSumm'];
-                $ret[$indx]['BankComis'] += $row['BankComis'];
-                $ret[$indx]['VoznagSumm'] += $row['VoznagSumm'];
-                $ret[$indx]['MerchVozn'] += $row['MerchVozn'];
-                $ret[$indx]['CntPays']++;
-            }
-        }
-
-        return $ret;
+        return $res;
     }
 
     /**
