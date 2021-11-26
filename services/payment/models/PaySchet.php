@@ -462,6 +462,14 @@ class PaySchet extends \yii\db\ActiveRecord
     }
 
     /**
+     * @return string
+     */
+    public function getCallbackUrl(): string
+    {
+        return Yii::$app->params['domain'] . '/mfo/pay/callback';
+    }
+
+    /**
      * @param string|null $cardNumber
      * @return string
      */
