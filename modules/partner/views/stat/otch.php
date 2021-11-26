@@ -1,12 +1,13 @@
 <?php
+use app\services\payment\models\Bank;
+use app\models\payonline\Partner;
 
 /* @var yii\web\View $this */
 /* @var array $uslugilist */
 /* @var array $magazlist */
 /* @var Partner[] $partnerlist  */
 /* @var $IsAdmin bool */
-
-use app\models\payonline\Partner;
+/* @var $bankList Bank[] */
 
 $this->title = "отчет по платежам";
 
@@ -22,13 +23,24 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
             </div>
             <div class="ibox-content">
                 <form class="form-horizontal" id="otchlistform">
-                    <div class="form-group"><label class="col-sm-2 control-label">Дата</label>
+                    <div class="form-group">
+	                    <label class="col-sm-2 control-label">Дата</label>
                         <div class="col-sm-4">
                             <div class="input-daterange input-group">
                                 <input type="text" name="datefrom" value="<?=date("d.m.Y")?> 00:00" maxlength="10" class="form-control">
                                 <span class="input-group-addon">по</span>
                                 <input type="text" name="dateto" value="<?=date("d.m.Y")?> 23:59" maxlength="10" class="form-control">
                             </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">Провайдер</label>
+                        <div class="col-sm-4">
+                            <select class="form-control multiselect-field" multiple name="idBank[]">
+                                <?php foreach ($bankList as $bank) : ?>
+                                    <option value="<?= $bank->ID ?>"><?= $bank->Name ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                     </div>
                     <?php if ($IsAdmin) : ?>
@@ -49,7 +61,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         <div class="col-sm-4">
                             <select class="form-control multiselect-field" multiple name="TypeUslug[]">
                                 <?php foreach ($uslugilist as $usl) : ?>
-                                    <option value="<?=$usl->ID?>" data-partner="<?= $usl->IsMfo ?>"><?=$usl->Name?></option>
+                                    <option value="<?= $usl->ID ?>" data-partner="<?= $usl->IsMfo ?>"><?= $usl->Name ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
