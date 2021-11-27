@@ -1,29 +1,16 @@
 <?php
 
-
 namespace app\services\payment\jobs;
 
-
 use app\models\crypt\CardToken;
-use app\models\payonline\Partner;
-use app\models\payonline\Uslugatovar;
-use app\models\queue\JobPriorityInterface;
-use app\services\payment\banks\ADGroupBankAdapter;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\BankAdapterBuilder;
-use app\services\payment\banks\BRSAdapter;
-use app\services\payment\banks\DectaAdapter;
-use app\services\payment\banks\FortaTechAdapter;
-use app\services\payment\banks\MTSBankAdapter;
-use app\services\payment\banks\TKBankAdapter;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\models\PaySchet;
 use Yii;
 use yii\base\BaseObject;
-use yii\mutex\FileMutex;
-use yii\queue\Queue;
 
 class RecurrentPayJob extends BaseObject implements \yii\queue\JobInterface
 {
