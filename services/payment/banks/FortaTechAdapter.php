@@ -418,6 +418,7 @@ class FortaTechAdapter implements IBankAdapter
     {
         $action = '/api/recurrentPayment';
         $request = new RecurrentPayRequest();
+        Yii::info([$action => $autoPayForm->attributes], 'recurentPay start');
 
         $request->orderId = $autoPayForm->paySchet->ID;
         $request->amount = $autoPayForm->paySchet->getSummFull();
@@ -427,9 +428,13 @@ class FortaTechAdapter implements IBankAdapter
         }
         $request->cardToken = $this->getCardToken($card->CardNumber);
         $request->callbackUrl = $autoPayForm->postbackurl;
-        $queryData = Json::encode($request->getAttributes());
 
-        $response = $this->sendRequest($action, $queryData, $this->buildRecurrentPaySignature($request));
+        try {
+            $response = $this->sendRequest($action, $request->getAttributes(), $this->buildRecurrentPaySignature($request));
+        } catch (BankAdapterResponseException $e) {
+            Yii::error([$e->getMessage(), $e->getTrace(), 'recurentPay send']);
+            throw new BankAdapterResponseException('Ошибка запроса');
+        }
 
         $createRecurrentPayResponse = new CreateRecurrentPayResponse();
 
@@ -665,7 +670,7 @@ class FortaTechAdapter implements IBankAdapter
             $headers[] = 'Signature: ' . $signature;
         }
 
-        curl_setopt_array($curl, array(
+        $curlOptions = [
             CURLOPT_URL => $this->bankUrl . $uri,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
@@ -676,9 +681,12 @@ class FortaTechAdapter implements IBankAdapter
             CURLOPT_CUSTOMREQUEST => $methodType,
             CURLOPT_POSTFIELDS => Json::encode($data),
             CURLOPT_HTTPHEADER => $headers,
-        ));
+        ];
+        curl_setopt_array($curl, $curlOptions);
 
         $maskedRequest = $this->maskRequestCardInfo($data);
+
+        Yii::info(['curl to send' => $curlOptions], 'mfo/sendRequest');
         Yii::warning('FortaTechAdapter req uri=' . $uri .' : ' . Json::encode($maskedRequest));
         $response = curl_exec($curl);
         Yii::warning('FortaTechAdapter response:' . $response);
