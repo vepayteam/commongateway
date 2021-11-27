@@ -419,18 +419,17 @@ class FortaTechAdapter implements IBankAdapter
         $action = '/api/recurrentPayment';
         $request = new RecurrentPayRequest();
         Yii::info([$action => $autoPayForm->attributes], 'recurentPay start');
-
         $request->orderId = $autoPayForm->paySchet->ID;
         $request->amount = $autoPayForm->paySchet->getSummFull();
         $card = $autoPayForm->getCard();
         if (!$card) {
             throw new CardTokenException('cant get card');
         }
-        $request->cardToken = $this->getCardToken($card->CardNumber);
+        $request->cardToken = $card->ExtCardIDP;
         $request->callbackUrl = $autoPayForm->postbackurl;
 
         try {
-            $response = $this->sendRequest($action, $request->getAttributes(), $this->buildRecurrentPaySignature($request));
+            $response = $this->sendRequest($action, $request->attributes, $this->buildRecurrentPaySignature($request));
         } catch (BankAdapterResponseException $e) {
             Yii::error([$e->getMessage(), $e->getTrace(), 'recurentPay send']);
             throw new BankAdapterResponseException('Ошибка запроса');
@@ -682,11 +681,10 @@ class FortaTechAdapter implements IBankAdapter
             CURLOPT_POSTFIELDS => Json::encode($data),
             CURLOPT_HTTPHEADER => $headers,
         ];
-        curl_setopt_array($curl, $curlOptions);
-
-        $maskedRequest = $this->maskRequestCardInfo($data);
 
         Yii::info(['curl to send' => $curlOptions], 'mfo/sendRequest');
+        curl_setopt_array($curl, $curlOptions);
+        $maskedRequest = $this->maskRequestCardInfo($data);
         Yii::warning('FortaTechAdapter req uri=' . $uri .' : ' . Json::encode($maskedRequest));
         $response = curl_exec($curl);
         Yii::warning('FortaTechAdapter response:' . $response);
