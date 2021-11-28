@@ -1,6 +1,14 @@
 $(document).ready(function() {
 
-    $("input").inputmask();
+    $("input").inputmask({
+        "placeholder": "",
+        showMaskOnHover: false,
+        showMaskOnFocus: false
+    });
+
+    $("#btnClose").click(function() {
+        window.location = $(this).data('url');
+    })
 
     $('#paymentAmount').change(function() {
         var amount = parseInt($(this).val());
@@ -13,6 +21,14 @@ $(document).ready(function() {
 
     $('#sendForm').click(function(e) {
         e.preventDefault();
+
+        if(!$("#agree").prop('checked')) {
+            $("#formErrorOfferMessage").show();
+            return false;
+        } else {
+            $("#formErrorOfferMessage").hide();
+        }
+
         var csrfParam = $('meta[name=csrf-param]').attr("content");
         var csrfToken = $('meta[name=csrf-token]').attr("content");
 
@@ -46,7 +62,7 @@ $(document).ready(function() {
             $('#paymentAmount').css({'border-color': 'rgb(230, 230, 230)'});
         }
 
-        $("input[type=text]").each(function() {
+        $("input").each(function() {
             if(!$(this).inputmask('isComplete')) {
                 valid = false;
                 $(this).css({'border-color': 'red'});
@@ -56,7 +72,10 @@ $(document).ready(function() {
         })
 
         if(!valid) {
+            $("#formErrorMessage").show();
             return false;
+        } else {
+            $("#formErrorMessage").hide();
         }
 
         var data = {

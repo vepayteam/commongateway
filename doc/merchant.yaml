@@ -171,7 +171,7 @@ paths:
     post:
       tags:
         - Pay
-      summary: Перевод с карыт на карту
+      summary: P2P перевод с карты на карту через платёжную форму VEPAY
       requestBody:
         content:
           application/json:

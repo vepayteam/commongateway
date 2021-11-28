@@ -1,6 +1,8 @@
 <?php
+
 use app\services\payment\models\PaySchet;
-use Carbon\Carbon;use yii\helpers\Html;
+use Carbon\Carbon;
+use yii\helpers\Html;
 
 /* @var PaySchet $paySchet */
 \app\assets\P2pAsset::register($this);
@@ -34,6 +36,17 @@ const MAX_EXP_CARD_YEARS = 10;
 <div class="container">
     <h2 class="center greenText">Перевод с карты на карту</h2>
     <div class="content">
+        <button id="btnClose" data-url="<?=$paySchet->CancelUrl?>" style="
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            background: none;
+            border: none;
+            font-size: 1.2em;
+            font-weight: bolder;"
+        >
+            x
+        </button>
         <form name="p2pForm" action="">
             <div class="cardsBlock">
                 <div class="cardWrapper">
@@ -41,10 +54,12 @@ const MAX_EXP_CARD_YEARS = 10;
                         <div class="cardBack">
                             <div class="blackStripe">
                             </div>
-                            <span class="center d-block CVV-text" title="3 цифры на оборотной строне карточки">CVC2/CVV2</span>
-                            <input class="CVV-input" id="cvv" placeholder="XXX" data-inputmask="'mask': '999'" type="text">
+                            <span class="center d-block CVV-text"
+                                  title="3 цифры на оборотной строне карточки">CVC2/CVV2</span>
+                            <input class="CVV-input" id="cvv" placeholder="XXX" data-inputmask="'mask': '999'"
+                                   type="text">
                         </div>
-                        <span class="cardTopText" >Номер карты отправителя:</span>
+                        <span class="cardTopText">Номер карты отправителя:</span>
                         <div class="cardNubmerBlock">
                             <input placeholder="XXXX" id="cardPan1" data-inputmask="'mask': '9999'" type="text">
                             <input placeholder="XXXX" id="cardPan2" data-inputmask="'mask': '9999'" type="text">
@@ -54,18 +69,20 @@ const MAX_EXP_CARD_YEARS = 10;
                         <div class="expiryBlock">
                             <select name="expMonth" id="expMonth">
                                 <?php $currMonth = Carbon::now()->month ?>
-                                <?php $month = 1; while($month < 12): ?>
-                                    <option <?=$month == $currMonth ? 'selected': ''?>
-                                            value="<?=$month?>"
+                                <?php $month = 1;
+                                while ($month < 12): ?>
+                                    <option <?= $month == $currMonth ? 'selected' : '' ?>
+                                            value="<?= $month ?>"
                                     >
-                                        <?=sprintf('%02d', $month)?>
+                                        <?= sprintf('%02d', $month) ?>
                                     </option>
                                     <?php $month++ ?>
-                                <?php endwhile;?>
+                                <?php endwhile; ?>
                             </select>
                             <select name="expYear" id="expYear">
-                                <?php $currYear = $year = Carbon::now()->year; while($year < $currYear + MAX_EXP_CARD_YEARS): ?>
-                                    <option value="<?=$year?>>"><?=$year?></option>
+                                <?php $currYear = $year = Carbon::now()->year;
+                                while ($year < $currYear + MAX_EXP_CARD_YEARS): ?>
+                                    <option value="<?= $year ?>>"><?= $year ?></option>
                                     <?php $year++ ?>
                                 <?php endwhile; ?>
                             </select>
@@ -76,17 +93,18 @@ const MAX_EXP_CARD_YEARS = 10;
                             </div>
                         </div>
                         <span class="cardHolder" style="bottom: 1px;">
-                            <input placeholder="MR. CARDHOLDER" id="holder" data-inputmask-regex="[a-zA-Z ]{3,}" type="text">
+                            <input placeholder="MR. CARDHOLDER" id="holder" data-inputmask-regex="[a-zA-Z ]{3,}"
+                                   type="text">
                         </span>
                     </div>
                 </div>
                 <div class="greenArrowBlock">
-                    <div class="square" ></div>
+                    <div class="square"></div>
                     <div class="triangle-right"></div>
                 </div>
                 <div class="cardWrapper">
                     <div class="card gray">
-                        <span class="cardTopText" >Номер карты получателя:</span>
+                        <span class="cardTopText">Номер карты получателя:</span>
                         <div class="cardNubmerBlock">
                             <input placeholder="XXXX" id="outCardPan1" data-inputmask="'mask': '9999'" type="text">
                             <input placeholder="XXXX" id="outCardPan2" data-inputmask="'mask': '9999'" type="text">
@@ -94,7 +112,7 @@ const MAX_EXP_CARD_YEARS = 10;
                             <input placeholder="XXXX" id="outCardPan4" data-inputmask="'mask': '9999'" type="text">
                         </div>
                         <div class="expiryBlock">
-                            <span class="grayCardValidThru" >00 / 00</span>
+                            <span class="grayCardValidThru">00 / 00</span>
                             <div class="validThru">
                                 <span>valid</span>
                                 <br>
@@ -116,13 +134,16 @@ const MAX_EXP_CARD_YEARS = 10;
                         <label for="paymentAmount">
                             Сумма перевода:
                         </label>
-                        <input class="inputsBlockInput" id="paymentAmount" value="0.00" min="0" step="0.01" type="number">
+                        <input class="inputsBlockInput" id="paymentAmount" value="0.00" min="0" step="0.01" type="test"
+                               data-inputmask-regex="^\d*(\.\d{0,2})?$"
+                        >
                     </div>
                     <div class="inputsBlockItem">
                         <label class="comissionLabel" for="paymentComission">
                             Комиссия:
                         </label>
-                        <input class="inputsBlockInput" id="paymentComission" disabled value="0.00" min="0" step="0.01"  type="number">
+                        <input class="inputsBlockInput" id="paymentComission" disabled value="0.00" min="0" step="0.01"
+                               type="number">
                     </div>
                 </div>
                 <span class="center d-block greenText">Укажите свою почту, и мы отправим Вам справку о совершенной операции</span>
@@ -133,7 +154,20 @@ const MAX_EXP_CARD_YEARS = 10;
                         >
                     </div>
                     <div class="center">
-                        <button class="submitBtn" id="sendForm" type="submit" >Отправить деньги</button>
+                        <div style="display: flex; margin-bottom: 10px;">
+                            <input type="checkbox" id="agreeOffer" name="agreeOffer">
+                            <label for="agreeOffer">
+                                Я согласен(на) с правилами
+                                <a target="_blank" href="/files/с_21_06_2021_Пуб_оферта_№_2_от_21_06_2021_Card2Card_2_2.pdf">оферты</a>
+                            </label>
+                        </div>
+                        <button class="submitBtn" id="sendForm" type="submit">Отправить деньги</button>
+                        <div id="formErrorOfferMessage" style="display: none; color: red">
+                            Необходимо подтвердить оферту
+                        </div>
+                        <div id="formErrorMessage" style="display: none; color: red">
+                            Подсвеченные поля обязательны для заполнения
+                        </div>
                     </div>
                 </div>
             </div>
