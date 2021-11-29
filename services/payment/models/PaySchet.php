@@ -3,6 +3,7 @@
 namespace app\services\payment\models;
 
 use app\helpers\EnvHelper;
+use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
@@ -15,6 +16,7 @@ use app\services\payment\models\active_query\PaySchetQuery;
 use app\services\payment\payment_strategies\mfo\MfoCardRegStrategy;
 use Carbon\Carbon;
 use Yii;
+use yii\db\ActiveQuery;
 
 /**
  * This is the model class for table "pay_schet".
@@ -92,7 +94,6 @@ use Yii;
  * @property PaySchetLog[] $log
  * @property User $user
  * @property Bank $bank
- *
  * @property string $Version3DS
  * @property int $IsNeed3DSVerif
  * @property string $DsTransId
@@ -355,6 +356,11 @@ class PaySchet extends \yii\db\ActiveRecord
     public function getNotifications()
     {
         return $this->hasMany(NotificationPay::class, ['IdPay' => 'ID']);
+    }
+
+    public function getCards(): ActiveQuery
+    {
+        return $this->hasOne(Cards::className(), ['ID' => 'IdKard']);
     }
 
     /**
