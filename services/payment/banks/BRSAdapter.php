@@ -1,8 +1,6 @@
 <?php
 
-
 namespace app\services\payment\banks;
-
 
 use app\models\payonline\Cards;
 use app\models\payonline\Uslugatovar;
@@ -55,9 +53,7 @@ use app\services\payment\models\UslugatovarType;
 use Carbon\Carbon;
 use Exception;
 use Yii;
-use yii\base\Security;
 use yii\helpers\Json;
-use yii\helpers\Url;
 
 class BRSAdapter implements IBankAdapter
 {
@@ -154,7 +150,7 @@ class BRSAdapter implements IBankAdapter
             }
         } catch (BankAdapterResponseException $e) {
             $confirmPayResponse->status = BaseResponse::STATUS_ERROR;
-            $confirmPayResponse->message = 'Ошибка запроса';
+            $confirmPayResponse->message = BankAdapterResponseException::REQUEST_ERROR_MSG;
         }
 
         return $confirmPayResponse;
@@ -185,7 +181,7 @@ class BRSAdapter implements IBankAdapter
             }
         } catch (BankAdapterResponseException $e) {
             $createPayResponse->status = BaseResponse::STATUS_ERROR;
-            $createPayResponse->message = 'Ошибка запроса';
+            $createPayResponse->message = BankAdapterResponseException::REQUEST_ERROR_MSG;
         }
 
         return $createPayResponse;
@@ -292,7 +288,7 @@ class BRSAdapter implements IBankAdapter
             $checkStatusPayResponse->message = ($ans['message'] ?? '');
         } catch (BankAdapterResponseException $e) {
             $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
-            $checkStatusPayResponse->message = 'Ошибка запроса';
+            $checkStatusPayResponse->message = BankAdapterResponseException::REQUEST_ERROR_MSG;
         }
         return $checkStatusPayResponse;
     }
@@ -323,7 +319,7 @@ class BRSAdapter implements IBankAdapter
             $checkStatusPayResponse->rrn = (array_key_exists('RRN', $ans) ? $ans['RRN'] : '');
         } catch (BankAdapterResponseException $e) {
             $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
-            $checkStatusPayResponse->message = 'Ошибка запроса';
+            $checkStatusPayResponse->message = BankAdapterResponseException::REQUEST_ERROR_MSG;
         }
 
         return $checkStatusPayResponse;
@@ -405,7 +401,7 @@ class BRSAdapter implements IBankAdapter
             }
         } catch (BankAdapterResponseException $e) {
             $createRecurrentPayResponse->status = BaseResponse::STATUS_ERROR;
-            $createRecurrentPayResponse->message = 'Ошибка запроса';
+            $createRecurrentPayResponse->message = BankAdapterResponseException::REQUEST_ERROR_MSG;
         }
         return $createRecurrentPayResponse;
     }
@@ -451,6 +447,10 @@ class BRSAdapter implements IBankAdapter
             $domain = $this->bankUrl;
         }
 
+        $sslCertPath = Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.pem');
+        $sslKeyPath = Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.key');
+        $this->validateCertFiles($sslCertPath, $sslKeyPath);
+
         $url = $domain . $uri;
         $request = http_build_query($data);
         curl_setopt_array($curl, array(
@@ -459,8 +459,8 @@ class BRSAdapter implements IBankAdapter
             CURLOPT_POST => true,
             CURLOPT_USERAGENT => (Yii::$app instanceof \yii\web\Application) ? Yii::$app->request->userAgent : '',
             CURLOPT_SSL_VERIFYHOST => 0,
-            CURLOPT_SSLCERT => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.pem'),
-            CURLOPT_SSLKEY => Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.key'),
+            CURLOPT_SSLCERT => $sslCertPath,
+            CURLOPT_SSLKEY => $sslKeyPath,
             //            CURLOPT_CAINFO => Yii::getAlias(self::KEYS_PATH . 'chain-ecomm-ca-root-ca.crt'),
             CURLOPT_POSTFIELDS => $request,
             CURLOPT_RETURNTRANSFER => true,
@@ -499,7 +499,7 @@ class BRSAdapter implements IBankAdapter
 
             Yii::warning('BRSAdapter bad xml response: ' . join(' ', $errMsg));
 
-            throw new BankAdapterResponseException('Ошибка запроса: ' . $curlError);
+            throw new BankAdapterResponseException(BankAdapterResponseException::setErrorMsg($curlError));
         }
     }
 
@@ -662,7 +662,7 @@ class BRSAdapter implements IBankAdapter
 
             Yii::warning('BRSAdapter bad xml response: ' . join(' ', $errMsg));
 
-            throw new BankAdapterResponseException('Ошибка запроса: ' . $curlError);
+            throw new BankAdapterResponseException(BankAdapterResponseException::setErrorMsg($curlError));
         }
     }
 
@@ -774,7 +774,7 @@ class BRSAdapter implements IBankAdapter
                 $transferToAccountResponse->trans = ($ans['operationId'] ?? '');
             } else {
                 $transferToAccountResponse->status = BaseResponse::STATUS_DONE;
-                $transferToAccountResponse->message = ($ans['message'] ?? 'Ошибка запроса');
+                $transferToAccountResponse->message = ($ans['message'] ?? BankAdapterResponseException::REQUEST_ERROR_MSG);
             }
         } catch (BankAdapterResponseException $e) {
             $transferToAccountResponse->status = BaseResponse::STATUS_ERROR;
@@ -822,16 +822,22 @@ class BRSAdapter implements IBankAdapter
         }
 
         if ($curlSSLStructure instanceof CurlSSLStructure) {
+            $this->validateCertFiles($curlSSLStructure->sslcert, $curlSSLStructure->sslkey, $curlSSLStructure->cainfo);
+
             $optArray[CURLOPT_SSLCERTTYPE] = $curlSSLStructure->sslcerttype;
             $optArray[CURLOPT_SSLKEYTYPE] = $curlSSLStructure->sslkeytype;
             $optArray[CURLOPT_CAINFO] = $curlSSLStructure->cainfo;
             $optArray[CURLOPT_SSLCERT] = $curlSSLStructure->sslcert;
             $optArray[CURLOPT_SSLKEY] = $curlSSLStructure->sslkey;
         } else {
+            $sslCertPath = Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.pem');
+            $sslKeyPath = Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.key');
+            $this->validateCertFiles($sslCertPath, $sslKeyPath);
+
             $optArray[CURLOPT_SSLCERTTYPE] = 'PEM';
             $optArray[CURLOPT_SSLKEYTYPE] = 'PEM';
-            $optArray[CURLOPT_SSLCERT] = Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.pem');
-            $optArray[CURLOPT_SSLKEY] = Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.key');
+            $optArray[CURLOPT_SSLCERT] = $sslCertPath;
+            $optArray[CURLOPT_SSLKEY] = $sslKeyPath;
         }
 
         curl_setopt_array($curl, $optArray);
@@ -852,7 +858,7 @@ class BRSAdapter implements IBankAdapter
         } else {
             Yii::error('BRSAdapter curlError ' . $requestType . ' uri=' . $uri .'; info=' . json_encode($info) . '; curlError=' . $curlError);
             Yii::error('BRSAdapter error ' . $requestType . ' uri=' . $uri .'; status=' . $info['http_code'] . '; data=' . Json::encode($data));
-            throw new BankAdapterResponseException('Ошибка запроса: ' . $curlError);
+            throw new BankAdapterResponseException(BankAdapterResponseException::setErrorMsg($curlError));
         }
     }
 
@@ -1032,9 +1038,48 @@ class BRSAdapter implements IBankAdapter
             }
         } catch (BankAdapterResponseException $e) {
             $sendP2pResponse->status = BaseResponse::STATUS_ERROR;
-            $sendP2pResponse->message = 'Ошибка запроса';
+            $sendP2pResponse->message = BankAdapterResponseException::REQUEST_ERROR_MSG;
         }
 
         return $sendP2pResponse;
+    }
+
+    /**
+     * @param string $sslCertPath
+     * @param string $sslKeyPath
+     * @param string|null $caInfoPath
+     * @throws BankAdapterResponseException
+     */
+    private function validateCertFiles(string $sslCertPath, string $sslKeyPath, ?string $caInfoPath = null)
+    {
+        if (!file_exists($sslCertPath)) {
+            Yii::error(
+                'BRSAdapter validate cert files ssl cert file not found'
+                . " gateLogin={$this->gate->Login}"
+                . " partnerId={$this->gate->PartnerId}"
+                . " fullPath=$sslCertPath"
+            );
+            throw new BankAdapterResponseException(BankAdapterResponseException::REQUEST_ERROR_MSG);
+        }
+
+        if (!file_exists($sslKeyPath)) {
+            Yii::error(
+                'BRSAdapter validate cert files ssl key file not found'
+                . " gateLogin={$this->gate->Login}"
+                . " partnerId={$this->gate->PartnerId}"
+                . " fullPath=$sslKeyPath"
+            );
+            throw new BankAdapterResponseException(BankAdapterResponseException::REQUEST_ERROR_MSG);
+        }
+
+        if ($caInfoPath && !file_exists($caInfoPath)) {
+            Yii::error(
+                'BRSAdapter validate cert files ssl ca file not found'
+                . " gateLogin={$this->gate->Login}"
+                . " partnerId={$this->gate->PartnerId}"
+                . " fullPath=$caInfoPath"
+            );
+            throw new BankAdapterResponseException(BankAdapterResponseException::REQUEST_ERROR_MSG);
+        }
     }
 }
