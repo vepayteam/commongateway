@@ -824,6 +824,7 @@ components:
         type:
           type: number
           description: Тип шлюза
+          deprecated: true
         document_id:
           type: string
           maxLength: 40
