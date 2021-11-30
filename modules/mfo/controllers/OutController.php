@@ -23,6 +23,7 @@ use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
+use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\PaySchet;
 use app\services\payment\payment_strategies\mfo\MfoOutCardStrategy;
 use app\services\payment\payment_strategies\mfo\MfoOutPayAccountStrategy;
@@ -37,6 +38,7 @@ use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
+use yii\web\Request;
 use yii\web\Response;
 
 
@@ -67,6 +69,27 @@ class OutController extends Controller
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public function afterAction($action, $result)
+    {
+        $result = parent::afterAction($action, $result);
+
+        try {
+            Yii::info([
+                'endpoint' => $action->uniqueId,
+                'header' => Yii::$app->request->headers->toArray(),
+                'body' => Yii::$app->request->post(),
+                'return' => (array) $result,
+            ], 'mfo_' . $action->controller->id . '_' . $action->id);
+        } catch (\Exception $e) {
+            Yii::error([$e->getMessage(), $e->getTrace(), $e->getFile(), $e->getLine()], 'mfo_out');
+        }
+
+        return $result;
+    }
+
     protected function verbs()
     {
         return [
@@ -91,7 +114,6 @@ class OutController extends Controller
         $mfo->LoadData(Yii::$app->request->getRawBody());
         Yii::warning("mfo/out/paycard Authorization mfo=$mfo->mfo", 'mfo_out_paycard');
 
-
         try {
             $outCardPayForm = new OutCardPayForm();
             $outCardPayForm->partner = $mfo->getPartner();
@@ -101,7 +123,7 @@ class OutController extends Controller
                 return ['status' => 0, 'message' => $outCardPayForm->GetError()];
             }
             // рубли в коп
-            $outCardPayForm->amount *= 100;
+            $outCardPayForm->amount = PaymentHelper::convertToPenny($outCardPayForm->amount);
             $mfoOutCardStrategy = new MfoOutCardStrategy($outCardPayForm);
             $paySchet = $mfoOutCardStrategy->exec();
             return ['status' => 1, 'id' => $paySchet->ID, 'message' => ''];
@@ -135,12 +157,35 @@ class OutController extends Controller
 
         try {
             $result = $this->getPaymentService()->checkSbpCanTransfer($outPayaccForm);
-            return ['status' => ($result ? 1 : 0), 'message' => ''];
+            return ['status' => $result->status, 'message' => $result->message, 'id' => $result->trans];
         } catch (GateException | NotInstantiableException | InvalidConfigException $e) {
-            return ['status' => 0, 'message' => $e->getMessage()];
+            Yii::error([$e->getMessage(), $e->getTrace(), $e->getFile(), $e->getLine()], 'mfo_out');
+            return ['status' => 0, 'message' => 'Ошибка запроса'];
         }
+    }
 
+    public function actionSbpTransfer()
+    {
+        $mfo = new MfoReq();
+        $mfo->LoadData(Yii::$app->request->getRawBody());
 
+        $outPayaccForm = new OutPayAccountForm();
+        $outPayaccForm->scenario = OutPayAccountForm::SCENARIO_BRS_CHECK;
+        $outPayaccForm->load($mfo->Req(), '');
+
+        if (!$outPayaccForm->validate()) {
+            Yii::warning("out/b2c: " . $outPayaccForm->GetError(), 'mfo');
+            return ['status' => 0, 'message' => $outPayaccForm->GetError()];
+        }
+        $outPayaccForm->partner = $mfo->getPartner();
+
+        try {
+            $result = $this->getPaymentService()->sbpTransfer($outPayaccForm);
+            return ['status' => $result->Status, 'message' => $result->ErrorInfo, 'id' => $result->ID];
+        } catch (GateException | NotInstantiableException | InvalidConfigException $e) {
+            Yii::error([$e->getMessage(), $e->getTrace(), $e->getFile(), $e->getLine()], 'mfo_out');
+            return ['status' => 0, 'message' => 'Ошибка запроса'];
+        }
     }
 
     /**

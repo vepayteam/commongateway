@@ -1,13 +1,8 @@
 <?php
 
-
 namespace app\services\payment\jobs;
 
-
 use app\models\crypt\CardToken;
-use app\models\payonline\Partner;
-use app\models\payonline\Uslugatovar;
-use app\models\queue\JobPriorityInterface;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\CreatePayException;
@@ -16,8 +11,6 @@ use app\services\payment\forms\AutoPayForm;
 use app\services\payment\models\PaySchet;
 use Yii;
 use yii\base\BaseObject;
-use yii\mutex\FileMutex;
-use yii\queue\Queue;
 
 class RecurrentPayJob extends BaseObject implements \yii\queue\JobInterface
 {
@@ -49,11 +42,11 @@ class RecurrentPayJob extends BaseObject implements \yii\queue\JobInterface
         $paySchet->RRN = $createRecurrentPayResponse->rrn;
         $paySchet->Status = PaySchet::STATUS_WAITING_CHECK_STATUS;
         $paySchet->ErrorInfo = 'Ожидается обновление статуса';
+        $paySchet->ExtBillNumber = $createRecurrentPayResponse->transac;
         if($createRecurrentPayResponse->status == BaseResponse::STATUS_DONE) {
             Yii::warning('RecurrentPayJob Set ExtBillNumber autoPay=' . $paySchet->ID . $autoPayForm->extid, 'mfo');
-            $paySchet->ExtBillNumber = $createRecurrentPayResponse->transac;
         } else {
-            Yii::warning('RecurrentPayJob errorResponse autoPay=' . $paySchet->ID . $autoPayForm->extid, 'mfo');
+            Yii::warning('RecurrentPayJob errorResponse autoPay=' . $paySchet->ID . $autoPayForm->extid.'. Message: '.$createRecurrentPayResponse->message, 'mfo');
         }
 
         Yii::$app->queue

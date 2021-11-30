@@ -38,4 +38,5 @@ key/key.txt
 .vagrant
 Vagrantfile
 *.log
-.version
+.version!
+/config/dev/web.php

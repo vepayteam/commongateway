@@ -9,6 +9,8 @@ return [
     'DEVMODE' => 'N',
     'TESTMODE' => 'N',
     'accountServiceUrl' => '',
+    'dectaApiUrl' => 'https://gate.decta.com',
+    'dectaProxy' => 'http://username:password@vepay-proxy.virtualfort.ru:30013',
 	'key' => '',
     'keycancel' => '',
     'info' => [
@@ -53,7 +55,7 @@ return [
             'retries' => 1,
         ],
         'queue' => [
-            'class' => \yii\queue\redis\Queue::class,
+            'class' => \app\services\queue\RedisQueueTraceId::class,
             'redis' => 'redis',
             'channel' => 'queue',
             'attempts' => 10,
@@ -79,6 +81,8 @@ return [
             'BRS' => [
                 'url' => 'https://securepay.rsb.ru:9443',
                 'url_3ds' => 'https://securepay.rsb.ru/ecomm2/ClientHandler',
+                'url_p2p' => 'https://securepay.rsb.ru:9443',
+                'url_p2p_3ds' => 'https://securepay.rsb.ru/ecomm2/ClientHandler',
                 'url_xml' => 'https://194.67.29.215:8443',
                 'url_b2c' => 'https://212.46.217.150:7603',
             ],

@@ -27,7 +27,7 @@ paths:
       tags:
         - Card
       summary: Получить информацию о зарегистрированной карте
-      description: Получить информацию о зарегистрированной карте по её идентификатору.
+      description: Возвращает информацию о зарегистрированной карте пользователя по её идентификатору.
       requestBody:
         content:
           application/json:
@@ -52,12 +52,10 @@ paths:
     post:
       tags:
         - Card
-      summary: Регистрация карты пользователя
-      description: Регистрация карты позволяет сохранить токен карты пользователя, который
-        можно использовать для перевода на карту. Также можно зарегистрировать
-        карту для последующего автоплатежа этой картой. Для регистрации карты
-        «для автоплатежа» совершается тестовый платеж на случайную сумму от 1 до
-        10 рублей.
+      summary: Регистрация (привязка) карты пользователя
+      description: Сохраняет идентификатор карты пользователя, который можно использовать
+        для дальнейших выплат или автоплатежей с использованием этой самой карты.
+        В случае с привязкой карты для автоплатежей пользователю необходимо будет провести проверочный платеж на сумму в 11 р.
       requestBody:
         content:
           application/json:
@@ -83,9 +81,8 @@ paths:
       tags:
         - Card
       summary: Получить идентификатор карты
-      description: Перед запросом идентификатора карты необходимо проверь статус
-        завершения платежа по регистрации карты. У карт «для пополнения» срок
-        действия отсутствует.
+      description: Возвращает идентификатор и другие данные зарегистрованной карты,
+        если регистрация ранее прошла успешно.
       requestBody:
         content:
           application/json:
@@ -111,7 +108,7 @@ paths:
       tags:
         - Card
       summary: Удаление карты
-      description: Удаление зарегистрированной карты
+      description: Делает недоступным использование идентификатора ранее зарегистрированной карты.
       requestBody:
         content:
           application/json:
@@ -136,9 +133,8 @@ paths:
     post:
       tags:
         - Pay
-      summary: Запрос оплаты pay in через платежную форму
-      description: Отправляется запрос на оплату с переходом к форме ввода
-        реквизитов карты
+      summary: Оплата pay in через платежную форму VEPAY
+      description: Создаёт операцию pay in. Возвращает ссылку на платёжную форму для дальнейшего ввода реквизитов карты.
       requestBody:
         content:
           application/json:
@@ -163,8 +159,9 @@ paths:
     post:
       tags:
         - Pay
-      summary: Запрос оплаты pay in через платежную форму с разбивкой
-      description: Разбивка (сплитование) платежа
+      summary: Оплата pay in через платежную форму VEPAY с разбивкой (сплитованием)
+      description: Создаёт операцию pay in. Возвращает ссылку на платёжную форму для дальнейшего ввода реквизитов карты.
+        Денежные средства в случае успешного проведения платежа распределяются между разными партнёрами, указанными в запросе.
       requestBody:
         content:
           application/json:
@@ -188,8 +185,8 @@ paths:
     post:
       tags:
         - Pay
-      summary: Запрос на совершение автоплатежа с разбивкой
-      description: Разбивка (сплитование) автоплатежа
+      summary: Совершить автоплатёж с разбивкой (сплитованием)
+      description: Создаёт операцию автоплатежа с разбивкой (сплитованием).
       requestBody:
         content:
           application/json:
@@ -230,8 +227,8 @@ paths:
     post:
       tags:
         - Pay
-      summary: Автоплатеж (рекуррентный платеж)
-      description: Отправляется запрос на совершение автоплатежа
+      summary: Совершить автоплатёж (рекуррентный платеж)
+      description: Создаёт операцию автоплатежа.
       requestBody:
         content:
           application/json:
@@ -256,8 +253,8 @@ paths:
     post:
       tags:
         - Pay
-      summary: Статус платежа
-      description: Запрос результата операции
+      summary: Статус операции pay in
+      description: Возвращает статус проведённой ранее операции pay in.
       requestBody:
         content:
           application/json:
@@ -283,7 +280,7 @@ paths:
       tags:
         - Out
       summary: Выплата денежных средств на карту (pay out)
-      description: Отправляется перевод денежных средств на карту клиента
+      description: Создаёт операцию выплаты денежных средств на карту клиента.
       requestBody:
         content:
           application/json:
@@ -308,8 +305,8 @@ paths:
     post:
       tags:
         - Out
-      summary:  Выплата денежных средств на счет юрлица (pay out)
-      description: Отправляется перевод денежных средств на счет юрлица
+      summary:  Выплата денежных средств на счёт юрлица (pay out)
+      description: Создаёт операцию выплаты денежных средств на счёт юрлица.
       requestBody:
         content:
           application/json:
@@ -334,8 +331,8 @@ paths:
     post:
       tags:
         - Out
-      summary: Выплата денежных средств на счет физлица (pay out)
-      description: Отправляется перевод денежных средств на счет физлица
+      summary: Выплата денежных средств на счёт физлица (pay out)
+      description: Создаёт операцию выплаты денежных средств на счёт физлица.
       requestBody:
         content:
           application/json:
@@ -360,8 +357,34 @@ paths:
     post:
       tags:
         - Out
-      summary: СБП. Проверка возможности выдачи займа на счет физлица
-      description: Проверка возможности выдачи займа на счет физлица
+      summary: СБП. Проверка возможности выплаты денежных средств на счёт физлица
+      description: Проверка возможности выплаты денежных средств на счёт физлица через СБП.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckSbpOutF"
+        description: Параметры перевода
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Status"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /out/sbp-transfer:
+    post:
+      tags:
+        - Out
+      summary: СБП. Выплата денежных средств на счёт физлица
+      description: Создаёт операцию выплаты денежных средств на счёт физлица через СБП.
       requestBody:
         content:
           application/json:
@@ -387,7 +410,7 @@ paths:
       tags:
         - Out
       summary: Статус операции pay out
-      description: Запрос результата операции
+      description: Возвращает статус проведённой ранее операции pay out.
       requestBody:
         content:
           application/json:
@@ -412,8 +435,8 @@ paths:
     post:
       tags:
         - Out
-      summary: Список банк-участинков банка СПБ БРС
-      description: Запрос возвращает список банк-участников банка Русский стандарт, сервис быстрых платежей
+      summary: Список банков-участников СБП
+      description: Возвращает список банков, участвующих в Системе Быстрых Платежей (СБП).
       responses:
         "200":
           description: OK
@@ -490,7 +513,7 @@ paths:
       tags:
         - Info
       summary: Проверка подключения
-      description: Проверка подключения к серверу
+      description: Проверка подключения к серверу.
       responses:
         "200":
           description: OK
@@ -508,8 +531,8 @@ paths:
     post:
       tags:
         - Info
-      summary: Запрос баланса счета
-      description: Запрос баланса счета площадки
+      summary: Запрос баланса счёта
+      description: Возвращает баланс счёта площадки.
       responses:
         "200":
           description: OK
@@ -528,7 +551,7 @@ paths:
       tags:
         - Callback
       summary: Обратный запрос
-      description: Оповещение отправляется обратным HTTP-запросом на адрес указанный в кабинете.
+      description: Оповещение отправляется обратным HTTP-запросом на адрес, указанный в личном кабинете.
       parameters:
         - name: extid
           in: query
@@ -563,8 +586,7 @@ paths:
         - name: key
           in: query
           required: true
-          description: Ключ, формируется как хеш суммы строк параметров md5(id + sum +
-            status + channel + Ключ обратного запроса).
+          description: Ключ формируется, как хеш суммы строк параметров md5(extid + id + sum + status + channel + ключ обратного запроса)
           schema:
             type: string
       responses:
@@ -615,7 +637,7 @@ components:
       type: apiKey
       in: header
       name: X-Token
-      description: Токен, формируется по алгоритму sha1(sha1(ключ) + sha1(тело запроса))
+      description: Токен формируется по алгоритму sha1(sha1(ключ) + sha1(тело запроса))
   schemas:
     BankBalance:
       type: object
@@ -832,10 +854,10 @@ components:
           format: url
           description: Адрес для Url для возврата после отказа от оплаты
         client:
-            type: array
-            required: false
-            items:
-              $ref: "#/components/schemas/Client"
+          type: array
+          required: false
+          items:
+            $ref: "#/components/schemas/Client"
     PayLkParts:
       type: object
       properties:
@@ -1043,18 +1065,35 @@ components:
     CheckSbpOutF:
       type: object
       properties:
-        fio:
-          type: string
-          description: ФИО получателя
+        client:
+          type: object
+          properties:
+            firstName:
+              type: string
+              maxLength: 32
+            middleName:
+              type: string
+              maxLength: 32
+            lastName:
+              type: string
+              maxLength: 100
+          description: Данные клиента (опциональный параметр)
         account:
           type: string
-          description: Счет в банке
+          description: Счет юридического лица, с которого отравляется перевод
+        phone:
+          type: string
+          description: Номер телефона в формате 79123456789
         bic:
           type: string
-          description: БИК банка
+          description: БИК банка получателя
         amount:
           type: number
           description: Cумма платежа
+        extid:
+          type: string
+          maxLength: 40
+          description: Ext ID
     Status:
       type: object
       properties:

@@ -29,11 +29,11 @@ use app\services\payment\forms\cauri\RecurrentPayRequest;
 use app\services\payment\forms\cauri\RefundPayRequest;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
-use app\services\payment\forms\GetStatementsForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
+use app\services\payment\forms\SendP2pForm;
 use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
@@ -562,8 +562,8 @@ class CauriAdapter implements IBankAdapter
         throw new GateException('Метод недоступен');
     }
 
-    public function getStatements(GetStatementsForm $getStatementsForm)
+    public function sendP2p(SendP2pForm $sendP2pForm)
     {
-        throw new GateException('Метод недоступен');
+        // TODO: Implement sendP2p() method.
     }
 }

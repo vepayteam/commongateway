@@ -1,8 +1,6 @@
 <?php
 
-
 namespace app\services\payment\payment_strategies;
-
 
 use app\models\api\Reguser;
 use app\models\crypt\CardToken;
@@ -18,6 +16,7 @@ use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2DuplicatedException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
+use app\services\payment\exceptions\DuplicateCreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
 use app\services\payment\forms\CreatePayForm;
@@ -29,25 +28,35 @@ use app\services\payment\models\UslugatovarType;
 use app\services\payment\PaymentService;
 use Yii;
 use yii\db\Exception;
+use yii\mutex\FileMutex;
 
 class CreatePayStrategy
 {
     const BRS_ECOMM_MAX_SUMM = 185000;
 
+    const CACHE_PREFIX_LOCK_CREATE_PAY = 'Cache_CreatePayStrategy_Stop_CreatePay_';
+    const CACHE_DURATION_LOCK_CREATE_PAY = 60 * 60; // 60 минут
+
+    const MUTEX_PREFIX_LOCK_CREATE_PAY = 'Mutex_CreatePayStrategy_Stop_CreatePay_';
+    const MUTEX_TIMEOUT_LOCK_CREATE_PAY = 2; // 2 секунды
+
     /** @var CreatePayForm */
     protected $createPayForm;
     /** @var PaymentService */
     protected $paymentService;
-    /** @var CreatePayResponse  */
+    /** @var CreatePayResponse */
     protected $createPayResponse;
     /** @var CurrencyRepository */
     private $currencyRepository;
+    /** @var FileMutex */
+    private $mutex;
 
     public function __construct(CreatePayForm $payForm)
     {
         $this->createPayForm = $payForm;
         $this->paymentService = Yii::$container->get('PaymentService');
         $this->currencyRepository = new CurrencyRepository();
+        $this->mutex = new FileMutex();
     }
 
     /**
@@ -56,6 +65,7 @@ class CreatePayStrategy
      * @throws Check3DSv2Exception
      * @throws CreatePayException
      * @throws GateException
+     * @throws DuplicateCreatePayException
      */
     public function exec(): PaySchet
     {
@@ -64,6 +74,10 @@ class CreatePayStrategy
         if ($paySchet->isOld()) {
             throw new CreatePayException('Время для оплаты истекло');
         }
+
+        // Проверяем можно ли отправлять запрос в банк
+        $this->checkCreatePayLock($paySchet);
+
         $bankAdapterBuilder = new BankAdapterBuilder();
         $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank, $paySchet->currency);
         $this->setCardPay($paySchet, $bankAdapterBuilder->getPartnerBankGate());
@@ -124,7 +138,6 @@ class CreatePayStrategy
         $this->paymentService->tokenizeCard($paySchet, $payCard);
     }
 
-
     /**
      * @throws CreatePayException
      */
@@ -133,7 +146,7 @@ class CreatePayStrategy
         $cartToken = new CardToken();
         $token = $cartToken->CheckExistToken(
             $this->createPayForm->CardNumber,
-            $this->createPayForm->CardMonth.$this->createPayForm->CardYear
+            $this->createPayForm->CardMonth . $this->createPayForm->CardYear
         );
 
         if ($paySchet->IdUser) {
@@ -199,5 +212,66 @@ class CreatePayStrategy
     public function getCreatePayResponse(): CreatePayResponse
     {
         return $this->createPayResponse;
+    }
+
+    /**
+     * Проверяем можно ли создавать платеж
+     *
+     * @param PaySchet $paySchet
+     * @throws DuplicateCreatePayException
+     */
+    private function checkCreatePayLock(PaySchet $paySchet)
+    {
+        $cacheKey = $this->getCacheKey($paySchet);
+        $mutexKey = $this->getMutexKey($paySchet);
+
+        // Открываем mutex
+        if ($this->mutex->acquire($mutexKey, self::MUTEX_TIMEOUT_LOCK_CREATE_PAY)) {
+            if (Yii::$app->cache->exists($cacheKey)) {
+                Yii::error("CreatePayStrategy checkCreatePayLock PaySchet.ID={$paySchet->ID} cache exists throw CreatePayException");
+
+                throw new DuplicateCreatePayException('Платеж в процессе оплаты');
+            }
+
+            Yii::$app->cache->set($cacheKey, $paySchet->ID, self::CACHE_DURATION_LOCK_CREATE_PAY);
+
+            // Релизим mutex
+            $this->mutex->release($mutexKey);
+        } else {
+            Yii::error("CreatePayStrategy checkCreatePayLock PaySchet.ID={$paySchet->ID} mutex acquire return false");
+
+            throw new DuplicateCreatePayException('Ошибка проведения платежа');
+        }
+    }
+
+    /**
+     * Снимаем ограничения с проведения платежа
+     */
+    public function releaseLock()
+    {
+        $paySchet = $this->createPayForm->getPaySchet();
+
+        Yii::info("CreatePayStrategy releaseLock PaySchet.ID={$paySchet->ID}");
+
+        $cacheKey = $this->getCacheKey($paySchet);
+        Yii::$app->cache->delete($cacheKey);
+    }
+
+    /**
+     * @param PaySchet $paySchet
+     * @return string
+     */
+    private function getCacheKey(PaySchet $paySchet): string
+    {
+        return self::CACHE_PREFIX_LOCK_CREATE_PAY . $paySchet->ID;
+    }
+
+    /**
+     * @param PaySchet $paySchet
+     * @return string
+     */
+    private function getMutexKey(PaySchet $paySchet): string
+    {
+        return self::MUTEX_PREFIX_LOCK_CREATE_PAY . $paySchet->ID;
     }
 }

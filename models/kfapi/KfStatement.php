@@ -3,22 +3,16 @@
 
 namespace app\models\kfapi;
 
-use app\models\payonline\Partner;
 use yii\base\Model;
 
 class KfStatement extends Model
 {
-    /** @var Partner */
-    public $partner;
-
     public $account;
     public $datefrom;
     public $dateto;
 
     public $dayfrom;
     public $dayto;
-    public $typeAcc = 0;
-    public $sort = 0;
 
     public function rules()
     {

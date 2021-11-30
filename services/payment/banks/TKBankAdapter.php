@@ -3,6 +3,7 @@
 
 namespace app\services\payment\banks;
 
+use app\helpers\DebugHelper;
 use app\models\mfo\MfoReq;
 use app\models\payonline\Cards;
 use app\models\payonline\User;
@@ -19,7 +20,6 @@ use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
-use app\services\payment\banks\bank_adapter_responses\GetStatementsResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentInitResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
@@ -39,18 +39,17 @@ use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\CreatePaySecondStepForm;
 use app\services\payment\forms\DonePayForm;
-use app\services\payment\forms\GetStatementsForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
+use app\services\payment\forms\SendP2pForm;
 use app\services\payment\forms\tkb\CheckStatusPayRequest;
 use app\services\payment\forms\tkb\Confirm3DSv2Request;
 use app\services\payment\forms\tkb\CreatePayRequest;
 use app\services\payment\forms\tkb\CreateRecurrentPayRequest;
 use app\services\payment\forms\tkb\DonePay3DSv2Request;
 use app\services\payment\forms\tkb\DonePayRequest;
-use app\services\payment\forms\tkb\GetStatementRequest;
 use app\services\payment\forms\tkb\OutCardPayRequest;
 use app\services\payment\forms\tkb\RefundPayRequest;
 use app\services\payment\forms\tkb\TransferToAccountRequest;
@@ -482,8 +481,11 @@ class TKBankAdapter implements IBankAdapter
         //Yii::warning("Headers: " .print_r($curl->getRequestHeaders(), true), 'merchant');
 
         $ans = [];
-        Yii::warning("curlcode: " . $curl->errorCode, 'merchant');
-        Yii::warning("curlans: " . $curl->responseCode . ":" . Cards::MaskCardLog($curl->response), 'merchant');
+
+        Yii::info("curlcode: " . $curl->errorCode, 'merchant');
+        Yii::info("curlans: " . $curl->responseCode . ":" . Cards::MaskCardLog($curl->response), 'merchant');
+        Yii::info(['curl_request:' => ['FROM' => __METHOD__, 'POST' => $post, 'FullCurl' => (array) $curl]], 'merchant');
+
         try {
             switch ($curl->responseCode) {
                 case 200:
@@ -494,6 +496,7 @@ class TKBankAdapter implements IBankAdapter
                 case 500:
                     $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
                     $ans['httperror'] = $jsonReq ? Json::decode($curl->response) : $curl->response;
+                    Yii::error(['curlerror:' => ['Headers' => $curl->getRequestHeaders(), 'Post' => Cards::MaskCardLog($post)]], 'merchant');
                     break;
                 default:
                     $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
@@ -502,6 +505,10 @@ class TKBankAdapter implements IBankAdapter
         } catch (\yii\base\InvalidArgumentException $e) {
             $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
             $ans['httperror'] = $curl->response;
+            Yii::error([
+                'curlerror:' => ['Headers' => $curl->getRequestHeaders(), 'Post' => Cards::MaskCardLog($post)],
+                'Ex:' => [$e->getMessage(), $e->getTrace(), $e->getFile(), $e->getLine()],
+            ], 'merchant');
             return $ans;
         }
 
@@ -1118,7 +1125,7 @@ class TKBankAdapter implements IBankAdapter
     {
         $checkDataCacheKey = Cache3DSv2Interface::CACHE_PREFIX_CHECK_DATA . $createPaySecondStepForm->getPaySchet()->ID;
 
-        if(Yii::$app->cache->exists($checkDataCacheKey)) {
+        if(Yii::$app->cache->exists($checkDataCacheKey)) { //@TODO: а я не понял, а если в кэше нет, то ничего вообще не делаем?
             $checkData = Yii::$app->cache->get($checkDataCacheKey);
 
             $check3DSVersionResponse = new Check3DSVersionResponse();
@@ -1202,14 +1209,20 @@ class TKBankAdapter implements IBankAdapter
      */
     public function confirm(DonePayForm $donePayForm)
     {
+        Yii::info('TKBankAdapter confirm IdPay=' . $donePayForm->IdPay);
+
         $paySchet = $donePayForm->getPaySchet();
 
         $checkDataCacheKey = Cache3DSv2Interface::CACHE_PREFIX_CHECK_DATA . $paySchet->ID;
         if(Yii::$app->cache->exists($checkDataCacheKey)
             && in_array(Yii::$app->cache->get($checkDataCacheKey)['version'], Issuer3DSVersionInterface::V_2)
         ) {
+            Yii::info('TKBankAdapter confirm IdPay=' . $donePayForm->IdPay . ' confirmBy3DS v2');
+
             return $this->confirmBy3DSv2($donePayForm);
         } else {
+            Yii::info('TKBankAdapter confirm IdPay=' . $donePayForm->IdPay . ' confirmBy3DS v1');
+
             return $this->confirmBy3DSv1($donePayForm);
         }
     }
@@ -1365,6 +1378,14 @@ class TKBankAdapter implements IBankAdapter
     public function checkStatusPay(OkPayForm $okPayForm)
     {
         $action = '/api/tcbpay/gate/getorderstate';
+
+        /**
+         * VPBC-1013: добавлено логирование для того, чтобы выяснить что вызывает getorderstate.
+         * @todo Удалить после багфикса.
+         */
+        $route = Yii::$app->controller->route ?? null;
+        $stackTrace = DebugHelper::getStackTrace();
+        Yii::info("Request TKB getorderstate. PaySchet ID: {$okPayForm->IdPay}, Route: {$route}). Stack trace: \n{$stackTrace}");
 
         $checkStatusPayRequest = new CheckStatusPayRequest();
         $checkStatusPayRequest->OrderID = $okPayForm->IdPay;
@@ -1690,36 +1711,8 @@ class TKBankAdapter implements IBankAdapter
         throw new GateException('Метод недоступен');
     }
 
-    public function getStatements(GetStatementsForm $getStatementsForm)
+    public function sendP2p(SendP2pForm $sendP2pForm)
     {
-        $action = '/nominal/v2/getStatement';
-
-        $getStatementRequest = new GetStatementRequest();
-        $getStatementRequest->accountNumber = $this->gate->SchetNumber;
-        $getStatementRequest->startDate = $getStatementsForm->dateFrom;
-        $getStatementRequest->endDate = $getStatementsForm->dateTo;
-
-        $this->UserCert = Yii::getAlias('@app/config/tcbcert/vepay.crt');
-        $this->UserKey = Yii::getAlias('@app/config/tcbcert/vepay.key');
-
-        if(!$getStatementRequest->validate()) {
-            throw new GateException('Некорректные данные запроса');
-        }
-
-        $queryData = Json::encode($getStatementRequest->getAttributes());
-        $ans = $this->curlXmlReq($queryData, $this->bankUrlXml . $action);
-
-        $getStatementsResponse = new GetStatementsResponse();
-        if (isset($ans['xml']) && !empty($ans['xml'])) {
-            $ans['xml'] = self::array_change_key_case_recursive($ans['xml'], CASE_LOWER);
-            if (isset($ans['xml']['documents'])) {
-                $getStatementsResponse->status = BaseResponse::STATUS_DONE;
-                $getStatementsResponse->statements = $ans['xml']['documents'];
-                return $getStatementsResponse;
-            }
-        }
-        $getStatementsResponse->status = BaseResponse::STATUS_ERROR;
-        $getStatementsResponse->message = 'Ошибка запроса';
-        return $getStatementsResponse;
+        // TODO: Implement sendP2p() method.
     }
 }

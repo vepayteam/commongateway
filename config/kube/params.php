@@ -6,6 +6,8 @@ return [
     'robotEmail' => 'robot@vepay.online',
     'infoEmail' => 'support@vepay.online',
     'buhEmail' => 'support@vepay.online',
+    'dectaApiUrl' => 'https://gate.decta.com',
+    'dectaProxy' => getenv("DECTA_PROXY_URL", true),
     'DEVMODE' => boolval(getenv('DEVMODE', true)) ? 'Y' : 'N',
     'TESTMODE' => 'Y',
     'accountServiceUrl' => '',
@@ -52,7 +54,7 @@ return [
             'retries' => 1,
         ],
         'queue' => [
-            'class' => \yii\queue\redis\Queue::class,
+            'class' => \app\services\queue\RedisQueueTraceId::class,
             'redis' => 'redis',
             'channel' => 'queue',
             'attempts' => 10,
@@ -78,6 +80,8 @@ return [
             'BRS' => [
                 'url' => getenv('PARAMS_PAYMENTS_BRS_URL', true),
                 'url_3ds' => getenv('PARAMS_PAYMENTS_BRS_URL_3DS', true),
+                'url_p2p' => getenv('PARAMS_PAYMENTS_BRS_URL_P2P', true),
+                'url_p2p_3ds' => getenv('PARAMS_PAYMENTS_BRS_URL_P2P_3DS', true),
                 'url_xml' => getenv('PARAMS_PAYMENTS_BRS_URL_XML', true),
                 'url_b2c' => getenv('PARAMS_PAYMENTS_BRS_URL_B2C', true),
             ],

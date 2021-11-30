@@ -66,6 +66,27 @@ class OutController extends Controller
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public function afterAction($action, $result)
+    {
+        $result = parent::afterAction($action, $result);
+
+        try {
+            Yii::info([
+                'endpoint' => $action->uniqueId,
+                'header' => Yii::$app->request->headers->toArray(),
+                'body' => Yii::$app->request->post(),
+                'return' => (array) $result,
+            ], 'mfo_' . $action->controller->id . '_' . $action->id);
+        } catch (\Exception $e) {
+            Yii::error([$e->getMessage(), $e->getTrace(), $e->getFile(), $e->getLine()], 'kfapi_out');
+        }
+
+        return $result;
+    }
+
     protected function verbs()
     {
         return [

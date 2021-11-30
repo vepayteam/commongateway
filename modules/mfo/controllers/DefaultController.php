@@ -122,7 +122,8 @@ class DefaultController extends Controller
         try {
             $data = $this->getPaymentService()->getSbpBankReceive();
         } catch (NotInstantiableException | InvalidConfigException | \Exception $e) {
-            return ['status' => 0, 'message' => $e->getMessage()];
+            Yii::error([$e->getMessage(), $e->getTrace(), $e->getFile(), $e->getLine()], 'mfo_out');
+            return ['status' => 0, 'message' => 'Ошибка запроса'];
         }
         Yii::$app->response->format = Response::FORMAT_JSON;
 
@@ -145,6 +146,10 @@ class DefaultController extends Controller
      */
     private function mapGetsbpbankreceiverResult(array $data): array
     {
+        if (!isset($data['fpsMembers'])) {
+            return [];
+        }
+
         $filteredMembers = array_filter($data['fpsMembers'], static function($member) {
             $b2COtherScenarioIndex = array_search('B2COther', array_column($member['scenarios'], 'name'), true);
             // Если в массиве scenarios нет записи с name=B2COther, не включаем в результат

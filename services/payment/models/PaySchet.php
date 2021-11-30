@@ -2,6 +2,8 @@
 
 namespace app\services\payment\models;
 
+use app\helpers\EnvHelper;
+use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
@@ -11,8 +13,10 @@ use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\Banks;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\models\active_query\PaySchetQuery;
+use app\services\payment\payment_strategies\mfo\MfoCardRegStrategy;
 use Carbon\Carbon;
 use Yii;
+use yii\db\ActiveQuery;
 
 /**
  * This is the model class for table "pay_schet".
@@ -47,6 +51,7 @@ use Yii;
  * @property string|null $ApprovalCode kod avtorizacii
  * @property string|null $RRN nomer RRN
  * @property string|null $CardNum nomer karty
+ * @property string|null $OutCardPan nomer karty
  * @property string|null $CardType tip karty
  * @property string|null $CardHolder derjatel karty
  * @property int $CardExp srok deistvia karty - MMYY
@@ -81,13 +86,14 @@ use Yii;
  * @property string|null $UserEmail
  * @property string|null $RCCode
  * @property string|null $Operations
+ * @property int $RegisterCard Регистрировать ли карту для рекуррентных платежей при оплате. Значения: 1, 0. По умолчанию 0.
+ *
  * @property Uslugatovar $uslugatovar
  * @property Partner $partner
  * @property Currency $currency
  * @property PaySchetLog[] $log
  * @property User $user
  * @property Bank $bank
- *
  * @property string $Version3DS
  * @property int $IsNeed3DSVerif
  * @property string $DsTransId
@@ -141,6 +147,8 @@ class PaySchet extends \yii\db\ActiveRecord
 
     /**
      * {@inheritdoc}
+     *
+     * @todo Удалить этот метод, т.к. не предполагается использовать данную модель как форму.
      */
     public function rules()
     {
@@ -148,7 +156,8 @@ class PaySchet extends \yii\db\ActiveRecord
             [['IdUser', 'IdKard', 'IdUsluga', 'IdShablon', 'IdOrder', 'IdOrg', 'IdGroupOplat', 'Period', 'IdQrProv',
                 'SummPay', 'ComissSumm', 'MerchVozn', 'BankComis', 'Status', 'DateCreate', 'DateOplat', 'DateLastUpdate',
                 'PayType', 'TimeElapsed', 'ExtKeyAcces', 'CardExp', 'UserClickPay', 'CountSendOK', 'SendKvitMail',
-                'IdAgent', 'TypeWidget', 'Bank', 'IsAutoPay', 'AutoPayIdGate', 'sms_accept', 'CurrencyId'
+                'IdAgent', 'TypeWidget', 'Bank', 'IsAutoPay', 'AutoPayIdGate', 'sms_accept', 'CurrencyId',
+                'RegisterCard',
                 ],
                 'integer'
             ],
@@ -349,6 +358,11 @@ class PaySchet extends \yii\db\ActiveRecord
         return $this->hasMany(NotificationPay::class, ['IdPay' => 'ID']);
     }
 
+    public function getCards(): ActiveQuery
+    {
+        return $this->hasOne(Cards::className(), ['ID' => 'IdKard']);
+    }
+
     /**
      * {@inheritDoc}
      * @throws \Exception
@@ -362,15 +376,21 @@ class PaySchet extends \yii\db\ActiveRecord
         $this->DateLastUpdate = time();
 
         if ($insert) {
-            // Считаем отчисления (комиссии) для платежа.
-            /** @var CompensationService $compensationService */
-            $compensationService = \Yii::$app->get(CompensationService::class);
-            $gate = (new BankAdapterBuilder())
-                ->build($this->partner, $this->uslugatovar, $this->currency)
-                ->getPartnerBankGate();
-            $this->ComissSumm = round($compensationService->calculateForClient($this, $gate));
-            $this->BankComis = round($compensationService->calculateForBank($this, $gate));
-            $this->MerchVozn = round($compensationService->calculateForPartner($this, $gate));
+            /**
+             * Calculate compensation.
+             * Needed only when bank is not 0 ({@see MfoCardRegStrategy::createPaySchet()}).
+             */
+            if ($this->Bank !== 0) {
+                $gate = (new BankAdapterBuilder())
+                    ->buildByBank($this->partner, $this->uslugatovar, $this->bank, $this->currency)
+                    ->getPartnerBankGate();
+
+                /** @var CompensationService $compensationService */
+                $compensationService = \Yii::$app->get(CompensationService::class);
+                $this->ComissSumm = round($compensationService->calculateForClient($this, $gate));
+                $this->BankComis = round($compensationService->calculateForBank($this, $gate));
+                $this->MerchVozn = round($compensationService->calculateForPartner($this, $gate));
+            }
         }
 
         return true;
@@ -448,6 +468,14 @@ class PaySchet extends \yii\db\ActiveRecord
     }
 
     /**
+     * @return string
+     */
+    public function getCallbackUrl(): string
+    {
+        return Yii::$app->params['domain'] . '/mfo/pay/callback';
+    }
+
+    /**
      * @param string|null $cardNumber
      * @return string
      */
@@ -492,5 +520,23 @@ class PaySchet extends \yii\db\ActiveRecord
         $dateCreate = Carbon::createFromTimestamp($this->DateCreate);
 
         return $now < $dateCreate->addDays(3);
+    }
+
+    public function afterFind()
+    {
+        EnvHelper::setParam(EnvHelper::PAYSCHET_ID, $this->ID);
+        if ($this->Extid) {
+            EnvHelper::setParam(EnvHelper::PAYSCHET_EXTID, $this->Extid);
+        }
+    }
+
+    public function afterSave($insert, $changedAttributes)
+    {
+        if ($insert) {
+            EnvHelper::setParam(EnvHelper::PAYSCHET_ID, $this->ID);
+            if ($this->Extid) {
+                EnvHelper::setParam(EnvHelper::PAYSCHET_EXTID, $this->Extid);
+            }
+        }
     }
 }

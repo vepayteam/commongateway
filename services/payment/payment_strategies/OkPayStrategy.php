@@ -5,23 +5,17 @@ namespace app\services\payment\payment_strategies;
 
 
 use app\models\antifraud\AntiFraud;
-use app\models\api\Reguser;
 use app\models\bank\BankCheck;
-use app\models\crypt\CardToken;
 use app\models\payonline\Cards;
-use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
 use app\models\queue\DraftPrintJob;
-use app\models\queue\JobPriorityInterface;
 use app\models\queue\ReverspayJob;
 use app\models\TU;
 use app\services\balance\BalanceService;
-use app\services\cards\models\PanToken;
 use app\services\notifications\NotificationsService;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\BankAdapterBuilder;
-use app\services\payment\exceptions\CardTokenException;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\SetPayOkForm;
 use app\services\payment\models\PayCard;
@@ -110,14 +104,17 @@ class OkPayStrategy
     protected function isNeedLinkCard(PaySchet $paySchet, CheckStatusPayResponse $checkStatusPayResponse)
     {
         return (
-            $checkStatusPayResponse->status != BaseResponse::STATUS_CREATED
-            && $paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD
-                || (
-                    $paySchet->IdUser > 0
-                    && in_array($paySchet->uslugatovar->IsCustom, [TU::$JKH, TU::$ECOM])
-                )
+                $paySchet->RegisterCard
+                ||
+                $checkStatusPayResponse->status != BaseResponse::STATUS_CREATED
+                && $paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD
+                ||
+                /** @todo Проверить нужен ли этот блок условий, когда есть {@see PaySchet::$RegisterCard} */
+                $paySchet->IdUser > 0
+                && in_array($paySchet->uslugatovar->IsCustom, [TU::$JKH, TU::$ECOM, TU::$POGASHECOM, TU::$POGASHATF])
             )
-            && $checkStatusPayResponse->validate();
+            &&
+            !empty($checkStatusPayResponse->cardRefId);
     }
 
     /**
@@ -199,21 +196,24 @@ class OkPayStrategy
 
                 // если регистрация карты, делаем возврат
                 // иначе изменяем баланс
-                if($paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD) {
-                    Yii::$app->queue->push(new ReverspayJob([
-                        'idpay' => $paySchet->ID,
-                    ]));
-                } else {
-                    /** @var BalanceService $balanceService */
-                    $balanceService = Yii::$container->get('BalanceService');
-                    $balanceService->changeBalance($paySchet);
+                if($paySchet->Bank != 0) {
+                    if($paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD) {
+                        Yii::$app->queue->push(new ReverspayJob([
+                            'idpay' => $paySchet->ID,
+                        ]));
+                    } else {
+                        /** @var BalanceService $balanceService */
+                        $balanceService = Yii::$container->get('BalanceService');
+                        $balanceService->changeBalance($paySchet);
+                    }
+
+                    $BankCheck = new BankCheck();
+                    $BankCheck->UpdateLastCheck($paySchet->Bank);
+
+                    $antifraud = new AntiFraud($paySchet->ID);
+                    $antifraud->update_status_transaction(1);
                 }
 
-                $BankCheck = new BankCheck();
-                $BankCheck->UpdateLastCheck($paySchet->Bank);
-
-                $antifraud = new AntiFraud($paySchet->ID);
-                $antifraud->update_status_transaction(1);
                 return true;
             } elseif ($checkStatusPayResponse->status != BaseResponse::STATUS_CREATED) {
                 Yii::warning('OkPayStrategy confirmPay isStatusDone');

@@ -23,5 +23,7 @@ class CreatePayRequest extends Model
     /** @var array */
     public $location;
     /** @var array */
+    public $secure3d;
+    /** @var array */
     public $options;
 }

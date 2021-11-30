@@ -40,8 +40,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         <div class="form-group">
                             <label class="col-sm-2 control-label">Мерчант</label>
                             <div class="col-sm-4">
-                                <select class="form-control" name="IdPart">
-                                    <option value="-1" data-ismfo="-1">Все</option>
+                                <select class="form-control multiselect-field" multiple name="idParts[]">
                                     <?php foreach ($partnerlist as $partn) : ?>
                                         <option value="<?=$partn->ID?>" data-ismfo="<?= $partn->ID == 1 ? 2 : $partn->IsMfo?>"><?=$partn->ID?> | <?=$partn->Name?></option>
                                     <?php endforeach; ?>
@@ -106,7 +105,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                     <div class="form-group">
                         <label class="col-sm-2 control-label">Маска карты</label>
                         <div class="col-sm-4">
-                            <input type="text" class="form-control" name="params[cardMask]" maxlength="30">
+                            <input type="text" class="form-control" name="params[cardMask]">
                         </div>
 
                         <label class="col-sm-2 control-label">Полная сумма к оплате</label>
@@ -141,7 +140,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 </div>
 <?=$this->render('excerpt/_modal_pdf')?>
 <?php $this->registerJs('
-lk.statlist(); 
+lk.statlist();
 multiselect.statList();
 '
 ); ?>

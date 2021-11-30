@@ -2,9 +2,6 @@
 
 namespace app\modules\partner\controllers;
 
-use app\models\bank\BankMerchant;
-use app\models\bank\TCBank;
-use app\models\bank\TcbGate;
 use app\models\kkt\OnlineKassa;
 use app\models\mfo\MfoStat;
 use app\models\partner\admin\VyvodVoznag;
@@ -24,9 +21,6 @@ use app\models\partner\stat\StatFilter;
 use app\models\partner\stat\StatGraph;
 use app\models\partner\UserLk;
 use app\models\payonline\Partner;
-use app\models\Payschets;
-use app\models\queue\JobPriorityInterface;
-use app\models\queue\SendMailJob;
 use app\models\SendEmail;
 use app\models\TU;
 use app\modules\partner\models\DiffData;
@@ -46,14 +40,13 @@ use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
-use yii\helpers\VarDumper;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
-use yii\web\MethodNotAllowedHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 use yii\web\UploadedFile;
 
+use function count;
 use function serialize;
 
 class StatController extends Controller
@@ -216,18 +209,22 @@ class StatController extends Controller
 
     public function actionListExportCsv()
     {
-		ini_set('memory_limit', '1024M');
+		ini_set('memory_limit', '8096M');
         $isAdmin = UserLk::IsAdmin(Yii::$app->user);
         $payschet = new PayShetStat(); //загрузить
-        if ($payschet->load(Yii::$app->request->get(), '') && $payschet->validate()){
-            $data = $payschet->getList2($isAdmin,0,1);
-            if ($data){
-                $file = new OtchToCSV($data);
-                $file->export();
-                return Yii::$app->response->sendFile($file->fullpath());
+        try {
+            if ($payschet->load(Yii::$app->request->get(), '')) {
+                $data = $payschet->getList2($isAdmin, 0, 1);
+                if ($data) {
+                    $file = new OtchToCSV($data);
+                    $file->export();
+                    return Yii::$app->response->sendFile($file->fullpath());
+                }
             }
+        } catch (Exception $e) {
+            Yii::error([$e->getMessage(), $e->getFile(), $e->getLine(), $e->getTrace(), $e->getPrevious(), $payschet->getErrors(), $payschet, Yii::$app->request->get()], __METHOD__);
+            throw $e;
         }
-        throw new NotFoundHttpException();
     }
 
     /**
@@ -298,7 +295,8 @@ class StatController extends Controller
             'IsAdmin' => $IsAdmin,
             'partnerlist' => $fltr->getPartnersList(),
             'magazlist' => $IsAdmin ? $fltr->getMagazList(-1) : $fltr->getMagazList(UserLk::getPartnerId(Yii::$app->user)),
-            'uslugilist' => $fltr->getTypeUslugLiust()
+            'uslugilist' => $fltr->getTypeUslugLiust(),
+            'bankList' => $fltr->getBankList(),
         ]);
     }
 
@@ -567,7 +565,7 @@ class StatController extends Controller
                 return [
                     'status' => 1,
                     'data' => $this->renderPartial('_recurrentcarddata', [
-                        'data' => $AutopayStat->GetData($IsAdmin)
+                        'data' => $AutopayStat->getData($IsAdmin)
                     ])
                 ];
             }

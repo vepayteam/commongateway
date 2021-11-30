@@ -21,11 +21,11 @@ use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
-use app\services\payment\forms\GetStatementsForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
+use app\services\payment\forms\SendP2pForm;
 use app\services\payment\helpers\ADGroupBankHelper;
 use app\services\payment\models\adb\ClientCardModel;
 use app\services\payment\models\adb\OrderDataModel;
@@ -170,8 +170,8 @@ class ADGroupBankAdapter implements IBankAdapter
         throw new GateException('Метод недоступен');
     }
 
-    public function getStatements(GetStatementsForm $getStatementsForm)
+    public function sendP2p(SendP2pForm $sendP2pForm)
     {
-        throw new GateException('Метод недоступен');
+        // TODO: Implement sendP2p() method.
     }
 }

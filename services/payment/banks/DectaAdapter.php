@@ -15,7 +15,6 @@ use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\decta\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\decta\OutCardTransactionResponse;
 use app\services\payment\banks\bank_adapter_responses\decta\RefundPayResponse;
-use app\services\payment\banks\bank_adapter_responses\GetStatementsResponse;
 use app\services\payment\banks\exceptions\DectaApiUrlException;
 use app\services\payment\banks\exceptions\InvalidBankActionException;
 use app\services\payment\exceptions\BankAdapterResponseException;
@@ -25,11 +24,11 @@ use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CancelPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
-use app\services\payment\forms\GetStatementsForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
+use app\services\payment\forms\SendP2pForm;
 use app\services\payment\helpers\DectaHelper;
 use app\services\payment\models\PartnerBankGate;
 use Exception;
@@ -79,12 +78,13 @@ class DectaAdapter implements IBankAdapter
     public function setGate(PartnerBankGate $partnerBankGate)
     {
         $this->gate = $partnerBankGate;
-        $this->apiUrl = self::API_URL;
+        $this->apiUrl = (Yii::$app->params['dectaApiUrl'] ?? 'https://gate.decta.com').'/api/v0.6';
         $apiClientHeader = [
             'Authorization' => $partnerBankGate->Token,
         ];
         $config = [
             RequestOptions::HEADERS => $apiClientHeader,
+            RequestOptions::PROXY => Yii::$app->params['dectaProxy'],
         ];
         $infoMessage = sprintf(
             'partnerId=%d bankId=%d',
@@ -438,11 +438,8 @@ class DectaAdapter implements IBankAdapter
         throw new GateException(self::ERROR_METHOD_NOT_ALLOWED_MSG);
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function getStatements(GetStatementsForm $getStatementsForm)
+    public function sendP2p(SendP2pForm $sendP2pForm)
     {
-        throw new GateException(self::ERROR_METHOD_NOT_ALLOWED_MSG);
+        // TODO: Implement sendP2p() method.
     }
 }

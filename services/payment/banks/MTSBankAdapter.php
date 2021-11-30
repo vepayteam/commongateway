@@ -26,7 +26,6 @@ use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
-use app\services\payment\forms\GetStatementsForm;
 use app\services\payment\forms\mts\CheckStatusPayRequest;
 use app\services\payment\forms\mts\ConfirmPayRequest;
 use app\services\payment\forms\mts\CreatePayRequest;
@@ -37,6 +36,7 @@ use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
+use app\services\payment\forms\SendP2pForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use Carbon\Carbon;
@@ -618,8 +618,11 @@ class MTSBankAdapter implements IBankAdapter
         //Yii::warning("Headers: " .print_r($curl->getRequestHeaders(), true), 'merchant');
 
         $ans = [];
-        Yii::warning("curlcode: " . $curl->errorCode, 'merchant');
-        Yii::warning("curlans: " . $curl->responseCode . ":" . Cards::MaskCardLog($curl->response), 'merchant');
+
+        Yii::info("curlcode: " . $curl->errorCode, 'merchant');
+        Yii::info("curlans: " . $curl->responseCode . ":" . Cards::MaskCardLog($curl->response), 'merchant');
+        Yii::info(['curl_request:' => ['FROM' => __METHOD__, 'POST' => $post, 'FullCurl' => (array) $curl]], 'merchant');
+
         try {
             switch ($curl->responseCode) {
                 case 200:
@@ -629,6 +632,7 @@ class MTSBankAdapter implements IBankAdapter
                 case 500:
                     $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
                     $ans['httperror'] = Json::decode($curl->response);
+                    Yii::error(['curlerror:' => ['Headers' => $curl->getRequestHeaders(), 'Post' => Cards::MaskCardLog($post)]], 'merchant');
                     break;
                 default:
                     $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
@@ -637,6 +641,11 @@ class MTSBankAdapter implements IBankAdapter
         } catch (\yii\base\InvalidArgumentException $e) {
             $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
             $ans['httperror'] = $curl->response;
+            Yii::error([
+                'curlerror:' => ['Headers' => $curl->getRequestHeaders(), 'Post' => Cards::MaskCardLog($post)],
+                'Ex:' => [$e->getMessage(), $e->getTrace(), $e->getFile(), $e->getLine()],
+            ], 'merchant');
+
             return $ans;
         }
 
@@ -969,8 +978,8 @@ class MTSBankAdapter implements IBankAdapter
         throw new GateException('Метод недоступен');
     }
 
-    public function getStatements(GetStatementsForm $getStatementsForm)
+    public function sendP2p(SendP2pForm $sendP2pForm)
     {
-        throw new GateException('Метод недоступен');
+        // TODO: Implement sendP2p() method.
     }
 }

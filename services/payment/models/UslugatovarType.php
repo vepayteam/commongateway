@@ -28,6 +28,7 @@ class UslugatovarType extends \yii\db\ActiveRecord
     const REVERSCOMIS = 21; //возмещение комиссии
     const PEREVPAYS = 23; //перевод на выдачу
     const IDENT = 24; //идентификация
+    const P2P = 26; //с карты на карту
 
     const JKHPARTS = 100; //оплата жкх с разбивкой
     const ECOMPARTS = 102; //оплата еком с разбивкой
@@ -43,6 +44,9 @@ class UslugatovarType extends \yii\db\ActiveRecord
     public const H2H_POGASH_ECOM = 201;
     /** H2H оплата товаров и услуг */
     public const H2H_ECOM = 202;
+
+    /** Перевод B2C СБП  */
+    public const TRANSFER_B2C_SBP = 203;
 
     const OUT_TYPES = [
         self::TOSCHET,
@@ -71,6 +75,7 @@ class UslugatovarType extends \yii\db\ActiveRecord
             self::REVERSCOMIS => 'Возмещение комисии',
             self::PEREVPAYS => 'Внутренний перевод между счетами',
             self::IDENT => 'Упрощенная идентификация пользователей',
+            self::P2P => 'Перевод с карты на карту',
 
             self::POGASHATFPARTS => 'Погашение займа AFT с разбивкой',
             self::POGASHECOMPARTS => 'Погашение займа ECOM с разбивкой',
@@ -83,6 +88,7 @@ class UslugatovarType extends \yii\db\ActiveRecord
             self::H2H_POGASH_AFT => 'H2H Погашение займа AFT',
             self::H2H_POGASH_ECOM => 'H2H погашение займа ECOM',
             self::H2H_ECOM => 'H2H оплата товаров и услуг',
+            self::TRANSFER_B2C_SBP => 'Перевод B2C SBP',
         ];
     }
 

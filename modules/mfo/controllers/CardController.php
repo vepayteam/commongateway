@@ -84,7 +84,7 @@ class CardController extends Controller
             $Card = $kfCard->FindKard($mfo->mfo, $type);
         }
         if (!$Card) {
-            Yii::warning("card/info: нет такой карты", 'mfo');
+            Yii::warning('card/info: нет такой карты', 'mfo');
             return ['status' => 0, 'message' => 'Нет такой карты'];
         }
 
@@ -96,7 +96,7 @@ class CardController extends Controller
                 'card' => [
                     'id' => (int)$Card->ID,
                     'num' => (string)$Card->CardNumber,
-                    'exp' => $Card->getMonth() . "/" . $Card->getYear(),
+                    'exp' => $Card->getMonth() . '/' . $Card->getYear(),
                     'holder' => $Card->CardHolder
                 ]
             ];
@@ -154,11 +154,13 @@ class CardController extends Controller
                 'url' => $paySchet->getFromUrl(!empty($cardRegForm->card) ? $cardRegForm->card : null),
             ];
         } catch (CreatePayException $e) {
+            \Yii::$app->errorHandler->logException($e);
             $mutex->release($cardRegForm->getMutexKey());
-            return ['status' => 0, 'message' => 'Ошибка запроса'];
+            return ['status' => 0, 'message' => $e->getMessage()];
         } catch (GateException $e) {
+            \Yii::$app->errorHandler->logException($e);
             $mutex->release($cardRegForm->getMutexKey());
-            return ['status' => 0, 'message' => 'Ошибка запроса'];
+            return ['status' => 0, 'message' => $e->getMessage()];
         }
     }
 
@@ -182,18 +184,20 @@ class CardController extends Controller
         $kfCard->scenario = KfCard::SCENARIO_GET;
         $kfCard->load($mfo->Req(), '');
         if (!$kfCard->validate()) {
-            Yii::warning('/card/get mfo='. $mfo->mfo . " " . $kfCard->GetError(), 'mfo');
+            Yii::warning('/card/get mfo='. $mfo->mfo . ' ' . $kfCard->GetError(), 'mfo');
             return ['status' => 0, 'message' => $kfCard->GetError()];
         }
 
-        Yii::warning('/card/get mfo='. $mfo->mfo . " IdPay=". $kfCard->id . " type=".$type, 'mfo');
-
+        Yii::warning('/card/get mfo='. $mfo->mfo . ' IdPay=' . $kfCard->id . ' type=' .$type, 'mfo');
+        
+        $paySchet = PaySchet::findOne($kfCard->id);
+        if (!$paySchet) {
+            return ['status' => 0, 'message' => 'Ошибка запроса'];
+        }
+    
         $statePay = $kfCard->GetPayState();
-        if ($statePay == 2) {
-            return [
-                'status' => 2,
-                'message' => 'Платеж не успешный'
-            ];
+        if ($statePay == PaySchet::STATUS_ERROR) {
+            return ['status' => 2, 'message' => 'Платеж не успешный'];
         }
 
         if($statePay == PaySchet::STATUS_WAITING) {
@@ -210,7 +214,7 @@ class CardController extends Controller
                 'card' => [
                     'id' => (int)$Card->ID,
                     'num' => (string)$Card->CardNumber,
-                    'exp' => $Card->getMonth() . "/" . $Card->getYear(),
+                    'exp' => $Card->getMonth() . '/' . $Card->getYear(),
                     'holder' => $Card->CardHolder
                 ]
             ];
