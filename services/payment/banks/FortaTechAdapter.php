@@ -143,7 +143,7 @@ class FortaTechAdapter implements IBankAdapter
         $paymentRequest->processing_url = $paySchet->getOrderdoneUrl();
         $paymentRequest->return_url = $paySchet->getOrderdoneUrl();
         $paymentRequest->fail_url = $paySchet->getOrderfailUrl();
-        $paymentRequest->callback_url = $paySchet->getOrderdoneUrl();
+        $paymentRequest->callback_url = $paySchet->getCallbackUrl();
         $paymentRequest->ttl = TimeHelper::secondsToHoursCeil($paySchet->TimeElapsed);
 
         try {
@@ -418,18 +418,22 @@ class FortaTechAdapter implements IBankAdapter
     {
         $action = '/api/recurrentPayment';
         $request = new RecurrentPayRequest();
-
+        Yii::info([$action => $autoPayForm->attributes], 'recurentPay start');
         $request->orderId = $autoPayForm->paySchet->ID;
         $request->amount = $autoPayForm->paySchet->getSummFull();
         $card = $autoPayForm->getCard();
         if (!$card) {
             throw new CardTokenException('cant get card');
         }
-        $request->cardToken = $this->getCardToken($card->CardNumber);
+        $request->cardToken = $card->ExtCardIDP;
         $request->callbackUrl = $autoPayForm->postbackurl;
-        $queryData = Json::encode($request->getAttributes());
 
-        $response = $this->sendRequest($action, $queryData, $this->buildRecurrentPaySignature($request));
+        try {
+            $response = $this->sendRequest($action, $request->attributes, $this->buildRecurrentPaySignature($request));
+        } catch (BankAdapterResponseException $e) {
+            Yii::error([$e->getMessage(), $e->getTrace(), 'recurentPay send']);
+            throw new BankAdapterResponseException('Ошибка запроса');
+        }
 
         $createRecurrentPayResponse = new CreateRecurrentPayResponse();
 
@@ -665,7 +669,7 @@ class FortaTechAdapter implements IBankAdapter
             $headers[] = 'Signature: ' . $signature;
         }
 
-        curl_setopt_array($curl, array(
+        $curlOptions = [
             CURLOPT_URL => $this->bankUrl . $uri,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
@@ -676,8 +680,10 @@ class FortaTechAdapter implements IBankAdapter
             CURLOPT_CUSTOMREQUEST => $methodType,
             CURLOPT_POSTFIELDS => Json::encode($data),
             CURLOPT_HTTPHEADER => $headers,
-        ));
+        ];
 
+        Yii::info(['curl to send' => $curlOptions], 'mfo/sendRequest');
+        curl_setopt_array($curl, $curlOptions);
         $maskedRequest = $this->maskRequestCardInfo($data);
         Yii::warning('FortaTechAdapter req uri=' . $uri .' : ' . Json::encode($maskedRequest));
         $response = curl_exec($curl);
