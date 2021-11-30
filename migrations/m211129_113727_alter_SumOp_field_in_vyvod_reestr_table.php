@@ -9,7 +9,7 @@ class m211129_113727_alter_SumOp_field_in_vyvod_reestr_table extends Migration
      */
     public function safeUp()
     {
-        $this->alterColumn('vyvod_reestr', 'SumOp', 'bigint');
+        $this->alterColumn('vyvod_reestr', 'SumOp', 'bigint unsigned default 0 not null comment \'summa\'');
     }
 
     /**
@@ -17,6 +17,6 @@ class m211129_113727_alter_SumOp_field_in_vyvod_reestr_table extends Migration
      */
     public function safeDown()
     {
-        $this->alterColumn('vyvod_reestr', 'SumOp', 'int');
+        $this->alterColumn('vyvod_reestr', 'SumOp', 'int unsigned default 0 not null comment \'summa\'');
     }
 }
