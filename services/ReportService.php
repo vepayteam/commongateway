@@ -4,12 +4,15 @@ namespace app\services;
 
 use app\models\payonline\Partner;
 use app\models\Report;
+use app\models\ReportTransaction;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
 use app\services\reportService\dataObjects\CreateReportData;
 use Carbon\Carbon;
 use yii\base\Component;
 use yii\data\ActiveDataProvider;
+use yii\db\ActiveQuery;
+use yii\db\Expression;
 use yii\helpers\ArrayHelper;
 
 /**
@@ -117,6 +120,7 @@ class ReportService extends Component
             $report->CompletedAt = time();
             $report->save(false);
 
+            \Yii::$app->errorHandler->logException($e);
             throw $e;
         }
 
@@ -125,92 +129,63 @@ class ReportService extends Component
         }
     }
 
+    /**
+     * @throws \yii\db\Exception
+     */
     private function fillReportInternal(Report $report)
     {
         \Yii::info("Report (ID: {$report->Id}) filling started.");
 
         $date = Carbon::createFromFormat('Y-m-d', $report->Date);
-        $params = [
-            'reportId' => $report->Id,
-            'partnerId' => $report->PartnerId,
-            'startTimestamp' => $date->startOfDay()->getTimestamp(),
-            'endTimestamp' => $date->endOfDay()->getTimestamp(),
-        ];
-
-        $where = '';
+        $selectQuery = PaySchet::find()
+            ->alias('paySchetAlias')
+            ->select([
+                'ReportId' => new Expression(':reportId'),
+                'TransactionId' => 'paySchetAlias.ID',
+                'Status' => '(IF(paySchetAlias.Status IN (0,4,5), 0, paySchetAlias.Status))', // 0,4,5 - in progress (0)
+                'ErrorCode' => 'paySchetAlias.RCCode',
+                'Error' => 'paySchetAlias.ErrorInfo',
+                'ExtId' => 'paySchetAlias.Extid',
+                'ProviderBillNumber' => 'paySchetAlias.Extbillnumber',
+                'Merchant' => 'partnerAlias.Name',
+                'ServiceName' => 'uslugatovarTypeAlias.Name',
+                'BasicAmount' => 'ROUND(paySchetAlias.SummPay / 100, 2)',
+                'ClientCommission' => 'ROUND(paySchetAlias.ComissSumm / 100, 2)',
+                'MerchantCommission' => 'ROUND(paySchetAlias.MerchVozn / 100, 2)',
+                'Currency' => 'currencyAlias.Code',
+                'CardPan' => 'paySchetAlias.CardNum',
+                'CardPaymentSystem' => 'paySchetAlias.CardType',
+                'Provider' => 'bankAlias.Name',
+                'CreateDateTime' => 'FROM_UNIXTIME(paySchetAlias.DateCreate)',
+                'FinishDateTime' => '(IF(paySchetAlias.DateOplat = 0, NULL, FROM_UNIXTIME(paySchetAlias.DateOplat)))',
+            ])
+            ->joinWith([
+                'partner AS partnerAlias',
+                'uslugatovar AS uslugatovarAlias',
+                'uslugatovar AS uslugatovarAlias' => function (ActiveQuery $query) {
+                    $query->joinWith(['type AS uslugatovarTypeAlias']);
+                },
+                'currency AS currencyAlias',
+                'bank AS bankAlias',
+            ])
+            ->andWhere(['paySchetAlias.IdOrg' => $report->PartnerId])
+            ->andWhere(['>=', 'paySchetAlias.DateCreate', $date->startOfDay()->getTimestamp()])
+            ->andWhere(['<=', 'paySchetAlias.DateCreate', $date->endOfDay()->getTimestamp()])
+            ->params([':reportId' => $report->Id]);
         if ($report->serviceTypes !== []) {
-            $typeIds = join(',', array_unique(array_map('intval', ArrayHelper::getColumn($report->serviceTypes, 'Id'))));
-            $where .= " AND u.Id IN ({$typeIds})";
+            $selectQuery->andWhere(['in', 'uslugatovarTypeAlias.Id', ArrayHelper::getColumn($report->serviceTypes, 'Id')]);
         }
         if ($report->TransactionStatus !== null) {
-            $statuses = join(',', [
+            $statuses = [
                 Report::TRANSACTION_STATUS_IN_PROCESS => [PaySchet::STATUS_WAITING, PaySchet::STATUS_NOT_EXEC, PaySchet::STATUS_WAITING_CHECK_STATUS],
                 Report::TRANSACTION_STATUS_SUCCESS => [PaySchet::STATUS_DONE],
                 Report::TRANSACTION_STATUS_FAIL => [PaySchet::STATUS_ERROR],
                 Report::TRANSACTION_STATUS_CANCEL => [PaySchet::STATUS_CANCEL],
-            ][$report->TransactionStatus]);
-            $where .= " AND p.Status IN ({$statuses})";
+            ][$report->TransactionStatus];
+            $selectQuery->andWhere(['in', 'paySchetAlias.Status', $statuses]);
         }
 
-        $sql = "
-            INSERT INTO report_transaction (
-                `ReportId`,
-                `TransactionId`,
-                `Status`,
-                `ErrorCode`,
-                `Error`,
-                `ExtId`,
-                `ProviderBillNumber`,
-                `Merchant`,
-                `ServiceName`,
-                `BasicAmount`,
-                `ClientCommission`,
-                `MerchantCommission`,
-                `Currency`,
-                `CardPan`,
-                `CardPaymentSystem`,
-                `Provider`,
-                `CreateDateTime`,
-                `FinishDateTime`
-            )
-            (   
-                SELECT
-                    :reportId AS 'ReportId',
-                    p.ID AS 'TransactionId',
-                    -- p.Status AS 'Status',
-                    (IF(p.Status IN (0,4,5), 0, p.Status)) AS 'Status', -- 0,4,5 - in progress (0)
-                    p.RCCode AS 'ErrorCode',
-                    p.ErrorInfo AS 'Error',
-                    p.Extid AS 'ExtId',
-                    p.Extbillnumber AS 'ProviderBillNumber',
-                    pt.Name AS 'Merchant',
-                    u.name AS 'ServiceName',
-                    ROUND(p.SummPay / 100, 2) AS 'BasicAmount',
-                    ROUND (p.ComissSumm / 100, 2) AS 'ClientCommission',
-                    ROUND (p.MerchVozn / 100, 2) AS 'MerchantCommission',
-                    c.Code AS 'Currency',
-                    p.CardNum AS 'CardPan',
-                    p.CardType AS 'CardPaymentSystem',
-                    b.Name AS 'Provider',
-                    FROM_UNIXTIME(p.DateCreate) AS 'CreateDateTime',
-                    (IF(p.DateOplat = 0, NULL, FROM_UNIXTIME(p.DateOplat))) AS 'FinishDateTime'
-                
-                FROM pay_schet p
-                
-                LEFT JOIN partner pt ON pt.ID = p.IdOrg
-                LEFT JOIN uslugatovar ut ON ut.ID = p.IdUsluga
-                LEFT JOIN uslugatovar_types u ON u.Id = ut.IsCustom
-                LEFT JOIN currency c on p.CurrencyId = c.Id
-                LEFT JOIN banks b ON b.ID = p.Bank
-                
-                WHERE
-                    p.IdOrg = :partnerId
-                    AND p.DateCreate >= :startTimestamp AND p.DateCreate < :endTimestamp
-                    {$where}
-            );
-        ";
-
-        \Yii::$app->db->createCommand($sql, $params)->execute();
+        \Yii::$app->db->createCommand()->insert(ReportTransaction::tableName(), $selectQuery)->execute();
 
         \Yii::info("Report (ID: {$report->Id}) filling completed.");
     }

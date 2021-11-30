@@ -18,7 +18,6 @@ use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
-use yii\web\ServerErrorHttpException;
 use yii\web\UnauthorizedHttpException;
 
 /**
@@ -28,7 +27,7 @@ class ReportController extends \yii\rest\Controller
 {
     use CorsTrait;
 
-    const CREATION_TIMEOUT = 60 * 5; // 5 minutes
+    private const CREATION_TIMEOUT = 60 * 5; // 5 minutes
 
     /**
      * @var ReportService
@@ -115,7 +114,6 @@ class ReportController extends \yii\rest\Controller
      * @throws UnauthorizedHttpException
      * @throws ForbiddenHttpException
      * @throws BadRequestHttpException
-     * @throws ServerErrorHttpException
      * @throws NotFoundHttpException
      */
     public function actionState(): array
@@ -123,11 +121,15 @@ class ReportController extends \yii\rest\Controller
         $mfo = new MfoReq();
         $mfo->LoadData(\Yii::$app->request->getRawBody());
 
+        $reportId = $mfo->GetReq('id');
+        $partnerId = $mfo->getPartner()->ID;
+
         $report = Report::findOne([
-            'Id' => $mfo->GetReq('id'),
-            'PartnerId' => $mfo->getPartner()->ID,
+            'Id' => $reportId,
+            'PartnerId' => $partnerId,
         ]);
         if ($report === null) {
+            \Yii::warning("Report not found (report ID: {$reportId}, partner ID: {$partnerId}, route: {$this->route}).");
             throw new NotFoundHttpException('Отчёт не найден.');
         }
 
@@ -173,11 +175,15 @@ class ReportController extends \yii\rest\Controller
         $mfo = new MfoReq();
         $mfo->LoadData(\Yii::$app->request->getRawBody());
 
+        $reportId = $mfo->GetReq('id');
+        $partnerId = $mfo->getPartner()->ID;
+
         $report = Report::findOne([
             'Id' => $mfo->GetReq('id'),
             'PartnerId' => $mfo->getPartner()->ID,
         ]);
         if ($report === null) {
+            \Yii::warning("Report not found (report ID: {$reportId}, partner ID: {$partnerId}, route: {$this->route}).");
             throw new NotFoundHttpException('Отчёт не найден.');
         }
 

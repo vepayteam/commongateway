@@ -17,7 +17,7 @@ class m211118_003204_report extends Migration
         // Transaction report generated upon merchant's request
         $this->createTable('report', [
             'Id' => $this->primaryKey(),
-            'PartnerId' => $this->integer()->notNull(),
+            'PartnerId' => $this->integer()->unsigned()->notNull(),
             'Status' => $this->integer()->notNull()->comment('Report filling up status: 0 - in process, 1 - completed, 2 - error'),
             'Date' => $this->date()->notNull()->comment('Date of transactions which should be in the report'),
             'TransactionStatus' => $this->tinyInteger()->comment('Status of transactions which should be in the report'),
@@ -25,7 +25,12 @@ class m211118_003204_report extends Migration
             'CompletedAt' => $this->integer()->comment('Timestamp when the report was filled up'),
         ], self::TABLE_OPTIONS);
         $this->addCommentOnTable('report', 'Transaction report generated upon merchant\'s request');
-
+        $this->addForeignKey(
+            'report_partner_id_fk',
+            'report', 'PartnerId', // from table / field
+            'partner', 'ID', // to table / field
+            'CASCADE', 'CASCADE' // on delete / on update
+        );
 
         // Many-to-many relation between report and service type (uslugatovar_types)'
         $this->createTable('report_to_service_type_link', [
