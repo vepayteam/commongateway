@@ -169,7 +169,7 @@ steps:
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
-- name: helm-values-generator-2c01f413085afa9d2b29d4a553c05991
+- name: helm-values-generator-cc32efdea353aacefe0be1faaf65ef8b
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
@@ -181,6 +181,7 @@ steps:
   - yq write values.yaml "ingress.tls[0].hosts[0]" "`replace-slash ${DRONE_SOURCE_BRANCH}`-${DRONE_REPO_NAME}.backend.vepay.cf" -i
   - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-cf-wildcard-certificate" -i
   - yq write values.yaml "redis.enabled" "true" -i
+  - yq write values.yaml "config.reportQueue.enabled" "true" -i
   - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+50000000))" -i
   - yq write values.yaml "config.payments.brs.url_xml" "https://194.67.29.216:8443" -i
   - echo "=>>>" && cat values.yaml
@@ -395,7 +396,7 @@ steps:
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
-- name: helm-values-generator-28816239dab68401ae71bbb58e5f47cb
+- name: helm-values-generator-eec62e26649768d05471a98ecfc3795c
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
@@ -406,6 +407,7 @@ steps:
   - yq write values.yaml "ingress.hosts[0].paths[0]" "/" -i
   - yq write values.yaml "ingress.tls[0].hosts[0]" "${DRONE_BRANCH}-test-${DRONE_REPO_NAME}.backend.vepay.cf" -i
   - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-cf-wildcard-certificate" -i
+  - yq write values.yaml "config.reportQueue.enabled" "true" -i
   - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+100000000))" -i
   - yq write values.yaml "config.payments.brs.url_xml" "https://194.67.29.216:8443" -i
   - echo "=>>>" && cat values.yaml
@@ -576,7 +578,7 @@ steps:
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
-- name: helm-values-generator-e18252b4e72a7df1957e0520ce8c97b0
+- name: helm-values-generator-b3008e5ef84020b2214813420f40f7d9
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
@@ -590,6 +592,7 @@ steps:
   - yq write values.yaml "ingress.tls[0].hosts[0]" "test-${DRONE_REPO_NAME}.backend.vepay.cf" -i
   - yq write values.yaml "ingress.tls[0].hosts[1]" "test.vepay.online" -i
   - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-cf-wildcard-certificate" -i
+  - yq write values.yaml "config.reportQueue.enabled" "true" -i
   - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+200000000))" -i
   - yq write values.yaml "config.payments.brs.url_xml" "https://194.67.29.216:8443" -i
   - echo "=>>>" && cat values.yaml
@@ -722,6 +725,6 @@ get:
 
 ---
 kind: signature
-hmac: 44888da4ec5e21bd5ec0896d85ebc8d8971658c5fbb3d171b5bb784ed857dee1
+hmac: 695eff9c195e886691dd414290ff55ef8cb35228dd9f3fd9639178c19b660520
 
 ...
