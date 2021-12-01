@@ -631,9 +631,12 @@ class FortaTechAdapter implements IBankAdapter
      */
     protected function buildSignature(string $string): string
     {
-        return shell_exec("echo -n '".$string."' | openssl dgst -sha256 -sign "
-                          .Yii::getAlias('@app/config/forta/' . $this->gate->Login . '.pem')
-                          ." | openssl base64");
+        $keyFilePath = '@app/config/forta/' . escapeshellarg($this->gate->Login) . '.pem';
+        $command = "echo -n " . escapeshellarg($string)
+                   . " | openssl dgst -sha256 -sign " . Yii::getAlias($keyFilePath)
+                   . " | openssl base64";
+
+        return shell_exec($command);
     }
 
     /**
