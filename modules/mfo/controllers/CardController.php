@@ -9,6 +9,7 @@ use app\models\bank\TcbGate;
 use app\models\kfapi\KfCard;
 use app\models\kfapi\KfPay;
 use app\models\mfo\MfoReq;
+use app\services\cards\CacheCardService;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\CardRegForm;
@@ -147,11 +148,17 @@ class CardController extends Controller
         try {
             $paySchet = $mfoCardRegStrategy->exec();
             $mutex->release($cardRegForm->getMutexKey());
+
+            if (!empty($cardRegForm->card)) {
+                $cacheCardService = new CacheCardService($paySchet->ID);
+                $cacheCardService->setCard($cardRegForm->card);
+            }
+
             return [
                 'status' => 1,
                 'message' => '',
                 'id' => $paySchet->ID,
-                'url' => $paySchet->getFromUrl(!empty($cardRegForm->card) ? $cardRegForm->card : null),
+                'url' => $paySchet->getFromUrl(),
             ];
         } catch (CreatePayException $e) {
             \Yii::$app->errorHandler->logException($e);

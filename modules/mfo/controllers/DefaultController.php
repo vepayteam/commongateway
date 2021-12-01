@@ -11,6 +11,7 @@ use app\models\payonline\Cards;
 use app\models\payonline\User;
 use app\models\Payschets;
 use app\models\TU;
+use app\services\cards\CacheCardService;
 use app\services\payment\PaymentService;
 use Yii;
 use yii\base\InvalidConfigException;
@@ -61,18 +62,25 @@ class DefaultController extends Controller
     /**
      * Регистрация карт для выплат
      * @param $id
-     * @param string|null $cardNumber
      * @return string
      * @throws NotFoundHttpException
      * @throws \yii\db\Exception
      */
-    public function actionOutcard($id, $cardNumber = null)
+    public function actionOutcard($id)
     {
         $payschets = new Payschets();
         //данные счета для оплаты
         $params = $payschets->getSchetData($id, null);
         $user = User::find()->where(['ID' => $params['IdUser'], 'IsDeleted' => 0])->one();
         if ($params && isset($params['ID']) && $params['Status'] == 0) {
+            $cardNumber = null;
+
+            $cacheCardService = new CacheCardService($params['ID']);
+            if ($cacheCardService->cardExists()) {
+                $cardNumber = $cacheCardService->getCard();
+                $cacheCardService->deleteCard();
+            }
+
             return $this->render('outcard', ['user' => $user, 'IdPay' => $params['ID'], 'cardNumber' => $cardNumber]);
         } else {
             throw new NotFoundHttpException("Идентификатор не найден");
