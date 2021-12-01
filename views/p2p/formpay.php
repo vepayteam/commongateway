@@ -36,7 +36,7 @@ const MAX_EXP_CARD_YEARS = 10;
 <div class="container">
     <h2 class="center greenText">Перевод с карты на карту</h2>
     <div class="content">
-        <button id="btnClose" data-url="<?=$paySchet->CancelUrl?>" style="
+        <button id="btnClose" data-url="<?=yii\helpers\Html::encode($paySchet->CancelUrl)?>" style="
             position: absolute;
             right: 20px;
             top: 20px;
