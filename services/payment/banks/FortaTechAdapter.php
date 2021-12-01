@@ -426,7 +426,7 @@ class FortaTechAdapter implements IBankAdapter
             throw new CardTokenException('cant get card');
         }
         $request->cardToken = $card->ExtCardIDP;
-        $request->callbackUrl = $autoPayForm->postbackurl;
+        $request->callbackUrl = $autoPayForm->paySchet->getCallbackUrl();
 
         try {
             $response = $this->sendRequest($action, $request->attributes, $this->buildRecurrentPaySignature($request));

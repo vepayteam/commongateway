@@ -80,19 +80,19 @@ class ReportController extends \yii\rest\Controller
         $mfo->LoadData(\Yii::$app->request->getRawBody());
         $partner = $mfo->getPartner();
 
-        if (!$this->reportService->checkCreateTimeout($partner, static::CREATION_TIMEOUT)) {
-            return [
-                'status' => 0,
-                'message' => 'Минимальный интервал для запроса - ' . ceil(static::CREATION_TIMEOUT / 60) . ' минут.',
-            ];
-        }
-
         $form = new CreateReportForm($partner);
         $form->load($mfo->Req(), '');
         if (!$form->validate()) {
             return [
                 'status' => 0,
                 'message' => 'Ошибка валидации: ' . $this->getError($form),
+            ];
+        }
+
+        if (!$this->reportService->checkCreateTimeout($partner, static::CREATION_TIMEOUT)) {
+            return [
+                'status' => 0,
+                'message' => 'Минимальный интервал для запроса - ' . ceil(static::CREATION_TIMEOUT / 60) . ' минут.',
             ];
         }
 
