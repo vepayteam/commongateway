@@ -802,16 +802,25 @@ class AdminController extends Controller
     }
 
     /**
+     * @param string $queueName
      * @return string
+     * @throws BadRequestHttpException
+     * @throws \yii\base\InvalidConfigException
      */
-    public function actionQueueInfo()
+    public function actionQueueInfo($queueName = 'queue')
     {
         $this->layout = 'queue';
-        $prefix = Yii::$app->queue->channel;
-        $waiting = Yii::$app->queue->redis->llen("$prefix.waiting");
-        $delayed = Yii::$app->queue->redis->zcount("$prefix.delayed", '-inf', '+inf');
-        $reserved = Yii::$app->queue->redis->zcount("$prefix.reserved", '-inf', '+inf');
-        $total = Yii::$app->queue->redis->get("$prefix.message_id");
+
+        if(!in_array($queueName, ['queue', 'reportQueue'])){
+            throw new BadRequestHttpException();
+        }
+        $queue = Yii::$app->get($queueName);
+
+        $prefix = $queue->channel;
+        $waiting = $queue->redis->llen("$prefix.waiting");
+        $delayed = $queue->redis->zcount("$prefix.delayed", '-inf', '+inf');
+        $reserved = $queue->redis->zcount("$prefix.reserved", '-inf', '+inf');
+        $total = $queue->redis->get("$prefix.message_id");
         $done = $total - $waiting - $delayed - $reserved;
         $dataProvider = new ArrayDataProvider([
             'allModels' => [
@@ -829,13 +838,22 @@ class AdminController extends Controller
     }
 
     /**
+     * @param string $queueName
      * @return string
+     * @throws BadRequestHttpException
+     * @throws \yii\base\InvalidConfigException
      */
-    public function actionGetQueueAllMessages()
+    public function actionGetQueueAllMessages($queueName = 'queue')
     {
         $this->layout = 'queue';
-        $prefix = Yii::$app->queue->channel;
-        $messages = Yii::$app->queue->redis->hgetall("$prefix.messages");
+
+        if(!in_array($queueName, ['queue', 'reportQueue'])){
+            throw new BadRequestHttpException();
+        }
+        $queue = Yii::$app->get($queueName);
+
+        $prefix = $queue->channel;
+        $messages = $queue->redis->hgetall("$prefix.messages");
         $i = 0;
         $allModels = [];
         while (isset($messages[$i]) && isset($messages[$i + 1])) {
@@ -855,16 +873,25 @@ class AdminController extends Controller
     }
 
     /**
+     * @param string $queueName
      * @return string
+     * @throws BadRequestHttpException
+     * @throws \yii\base\InvalidConfigException
      */
-    public function actionGetQueueWaitingMessages()
+    public function actionGetQueueWaitingMessages($queueName = 'queue')
     {
         $this->layout = 'queue';
-        $prefix = Yii::$app->queue->channel;
+
+        if(!in_array($queueName, ['queue', 'reportQueue'])){
+            throw new BadRequestHttpException();
+        }
+        $queue = Yii::$app->get($queueName);
+
+        $prefix = $queue->channel;
         $messages = [];
-        $waitingRange = Yii::$app->queue->redis->lrange("$prefix.waiting", 0, -1);
+        $waitingRange = $queue->redis->lrange("$prefix.waiting", 0, -1);
         if (is_array($waitingRange) && count($waitingRange) > 0) {
-            $messages = Yii::$app->queue->redis->hmget("$prefix.messages", ... $waitingRange);
+            $messages = $queue->redis->hmget("$prefix.messages", ... $waitingRange);
         }
         $i = 0;
         $allModels = [];
@@ -885,16 +912,25 @@ class AdminController extends Controller
     }
 
     /**
+     * @param string $queueName
      * @return string
+     * @throws BadRequestHttpException
+     * @throws \yii\base\InvalidConfigException
      */
-    public function actionGetQueueReservedMessages()
+    public function actionGetQueueReservedMessages($queueName = 'queue')
     {
         $this->layout = 'queue';
-        $prefix = Yii::$app->queue->channel;
+
+        if(!in_array($queueName, ['queue', 'reportQueue'])){
+            throw new BadRequestHttpException();
+        }
+        $queue = Yii::$app->get($queueName);
+
+        $prefix = $queue->channel;
         $messages = [];
-        $reservedRange = Yii::$app->queue->redis->zrange("$prefix.reserved", 0, -1);
+        $reservedRange = $queue->redis->zrange("$prefix.reserved", 0, -1);
         if (is_array($reservedRange) && count($reservedRange) > 0) {
-            $messages = Yii::$app->queue->redis->hmget("$prefix.messages", ... $reservedRange);
+            $messages = $queue->redis->hmget("$prefix.messages", ... $reservedRange);
         }
         $i = 0;
         $allModels = [];
