@@ -626,6 +626,135 @@ paths:
                 $ref: "#/components/schemas/CheckReq"
         default:
           description: Ошибка проверки
+
+  /report/create:
+    post:
+      tags:
+        - Report
+      summary: Создание отчета по транзакциям
+      description: Отправляется запрос на формирование отчета по транзакциям. В ответ возвращается ID отчета (пока не сформированного).
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportCreateRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportCreateResponse"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /report/state:
+    post:
+      tags:
+        - Report
+      summary: Получение статуса отчета
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  description: ID Отчета
+                  required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    description: Статус отчета. 0 - в процессе, 1 - сформирован, 2 - ошибка
+                  message:
+                    type: string
+                    description: Сообщение
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /report/get-service-types:
+    post:
+      tags:
+        - Report
+      summary: Список доступных для мерчанта типов услуги
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                description: Массив из ID типов услуги
+                items:
+                  type: integer
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /report/get-transaction-list:
+    post:
+      tags:
+        - Report
+      summary: Постраничный список транзакций в отчете
+      description: 1000 записей на каждой странице
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  description: ID Отчета
+                  required: true
+                page:
+                  type: integer
+                  description: Номер страницы начиная с нуля (0 - первая страница).
+                  default: 0
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Pagination-Total-Count:
+              description: Всего транзакций в отчете
+            X-Pagination-Page-Count:
+              description: Всего страниц
+            X-Pagination-Current-Page:
+              description: Номер текущей страницы
+            X-Pagination-Per-Page:
+              description: Количество транзакций на странице
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReportTransaction"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   securitySchemes:
     Mfo:
@@ -824,6 +953,7 @@ components:
         type:
           type: number
           description: Тип шлюза
+          deprecated: true
         document_id:
           type: string
           maxLength: 40
@@ -1260,3 +1390,111 @@ components:
         bic:
           type: string
           description: БИК
+
+    ReportCreateRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          description: Дата транзакций в отчете в формате "Y-m-d". Пример "2021-12-12".
+          required: true
+        transactionStatus:
+          type: integer
+          description: Статус транзакций в отчете. 0 - в процессе, 1 - платеж завершён, 2 - ошибка, 3 - отмена
+        serviceType:
+          type: array
+          description: Массив из ID типа услуги
+          items:
+            type: integer
+
+    ReportCreateResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Статус выполнения запроса на отчет. 0 - ошибка, 1 - успешно
+          enum: [0, 1]
+        message:
+          type: string
+          description: Сообщение
+        id:
+          type: integer
+          description: ID отчета (есть при успешном выполнении)
+
+    ReportTransaction:
+      type: object
+      properties:
+        Id:
+          type: integer
+          description: ID транзакции в Vepay
+        ReportId:
+          type: integer
+          description: ID отчета
+        Status:
+          type: integer
+          description: Статус транзакции. 0 - в процессе, 1 - успешно, 2 - ошибка, 3 - отмена.
+        ErrorCode:
+          type: integer
+          description: Код ошибки
+          nullable: true
+        Error:
+          type: string
+          description: Сообщение об ошибке
+          nullable: true
+        ExtId:
+          type: string
+          description: Внешний ID от мерчанта
+          nullable: true
+        ProviderBillNumber:
+          type: string
+          description: ID транзакции в банке
+          nullable: true
+        Merchant:
+          type: string
+          description: Имя мерчанта
+        ServiceName:
+          type: string
+          description: Название типа услуги
+        BasicAmount:
+          type: string
+          description: Сумма платежа
+          example: "500.00"
+        AuthAmount:
+          type: string
+          description: Сумма списания
+          example: "510.50"
+        ClientCommission:
+          type: string
+          description: Комиссия с клиента
+          example: "10.50"
+        MerchantCommission:
+          type: string
+          description: Комиссия с мерчанта
+          example: "0.00"
+        Currency:
+          type: string
+          description: Валюта (ISO 4217)
+          example: "RUB"
+        CardPan:
+          type: string
+          description: Маскированный номер карты
+          example: "411111******1111"
+        CardPaymentSystem:
+          type: string
+          description: Система оплаты
+          example: "VISA"
+        Provider:
+          type: string
+          description: Название банка
+          example: "ТКБ"
+        CreateDateTime:
+          type: string
+          description: Дата и время создания в формате "Y-m-d H:i:s"
+          example: "2021-12-04 11:45:08"
+        FinishDateTime:
+          type: string
+          description: Дата и время завершения платежа в формате "Y-m-d H:i:s" (если завершился)
+          example: "2021-12-04 11:45:08"
+          nullable: true
+
+
