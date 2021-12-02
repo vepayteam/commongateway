@@ -60,6 +60,16 @@ return [
             'channel' => 'queue',
             'attempts' => 10,
         ],
+        'reportQueue' => [
+            'class' => \yii\queue\redis\Queue::class,
+            'redis' => 'redis',
+            'channel' => 'report_queue',
+            'on afterError' => function (\yii\queue\ExecEvent $event) {
+                if ($event->error) {
+                    Yii::$app->errorHandler->logException($event->error);
+                }
+            }
+        ],
         'cache' => [
             'class' => 'yii\redis\Cache',
             'redis' => [

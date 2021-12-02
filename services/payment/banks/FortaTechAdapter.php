@@ -426,7 +426,7 @@ class FortaTechAdapter implements IBankAdapter
             throw new CardTokenException('cant get card');
         }
         $request->cardToken = $card->ExtCardIDP;
-        $request->callbackUrl = $autoPayForm->postbackurl;
+        $request->callbackUrl = $autoPayForm->paySchet->getCallbackUrl();
 
         try {
             $response = $this->sendRequest($action, $request->attributes, $this->buildRecurrentPaySignature($request));
@@ -631,13 +631,12 @@ class FortaTechAdapter implements IBankAdapter
      */
     protected function buildSignature(string $string): string
     {
-        $hash = hash('sha256', $string, true);
-        $resPrivateKey = openssl_pkey_get_private(
-            'file://' . Yii::getAlias('@app/config/forta/' . $this->gate->Login . '.pem')
-        );
-        $signature = null;
-        openssl_private_encrypt($hash, $signature, $resPrivateKey);
-        return base64_encode($signature);
+        $keyFilePath = '@app/config/forta/' . escapeshellarg($this->gate->Login) . '.pem';
+        $command = "echo -n " . escapeshellarg($string)
+                   . " | openssl dgst -sha256 -sign " . Yii::getAlias($keyFilePath)
+                   . " | openssl base64";
+
+        return shell_exec($command);
     }
 
     /**

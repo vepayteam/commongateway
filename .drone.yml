@@ -169,7 +169,7 @@ steps:
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
-- name: helm-values-generator-2c01f413085afa9d2b29d4a553c05991
+- name: helm-values-generator-cc32efdea353aacefe0be1faaf65ef8b
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
@@ -181,13 +181,14 @@ steps:
   - yq write values.yaml "ingress.tls[0].hosts[0]" "`replace-slash ${DRONE_SOURCE_BRANCH}`-${DRONE_REPO_NAME}.backend.vepay.cf" -i
   - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-cf-wildcard-certificate" -i
   - yq write values.yaml "redis.enabled" "true" -i
+  - yq write values.yaml "config.reportQueue.enabled" "true" -i
   - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+50000000))" -i
   - yq write values.yaml "config.payments.brs.url_xml" "https://194.67.29.216:8443" -i
   - echo "=>>>" && cat values.yaml
 
 - name: helm-deployment-upgrade-baa45884b60a4f0c9e522a66e07efbf7
   pull: if-not-exists
-  image: registry.vepay.cf/drone-plugin-helm3:3.5.2-1
+  image: registry.vepay.cf/drone-plugin-helm3:3.7.1-1
   settings:
     add_repos:
     - vepay=http://charts.service.vepay:8080/
@@ -395,7 +396,7 @@ steps:
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
-- name: helm-values-generator-28816239dab68401ae71bbb58e5f47cb
+- name: helm-values-generator-eec62e26649768d05471a98ecfc3795c
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
@@ -406,13 +407,14 @@ steps:
   - yq write values.yaml "ingress.hosts[0].paths[0]" "/" -i
   - yq write values.yaml "ingress.tls[0].hosts[0]" "${DRONE_BRANCH}-test-${DRONE_REPO_NAME}.backend.vepay.cf" -i
   - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-cf-wildcard-certificate" -i
+  - yq write values.yaml "config.reportQueue.enabled" "true" -i
   - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+100000000))" -i
   - yq write values.yaml "config.payments.brs.url_xml" "https://194.67.29.216:8443" -i
   - echo "=>>>" && cat values.yaml
 
 - name: helm-deployment-upgrade-92ef42f80124f30279fb47f2cd4ffd68
   pull: if-not-exists
-  image: registry.vepay.cf/drone-plugin-helm3:3.5.2-1
+  image: registry.vepay.cf/drone-plugin-helm3:3.7.1-1
   settings:
     add_repos:
     - vepay=http://charts.service.vepay:8080/
@@ -456,7 +458,7 @@ steps:
 
 - name: helm-deployment-upgrade-3606237ab0fb9dcc2c35d0bef846fdb8
   pull: if-not-exists
-  image: registry.vepay.cf/drone-plugin-helm3:3.5.2-1
+  image: registry.vepay.cf/drone-plugin-helm3:3.7.1-1
   settings:
     add_repos:
     - vepay=http://charts.service.vepay:8080/
@@ -576,7 +578,7 @@ steps:
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
-- name: helm-values-generator-e18252b4e72a7df1957e0520ce8c97b0
+- name: helm-values-generator-b3008e5ef84020b2214813420f40f7d9
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
@@ -590,13 +592,14 @@ steps:
   - yq write values.yaml "ingress.tls[0].hosts[0]" "test-${DRONE_REPO_NAME}.backend.vepay.cf" -i
   - yq write values.yaml "ingress.tls[0].hosts[1]" "test.vepay.online" -i
   - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-cf-wildcard-certificate" -i
+  - yq write values.yaml "config.reportQueue.enabled" "true" -i
   - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+200000000))" -i
   - yq write values.yaml "config.payments.brs.url_xml" "https://194.67.29.216:8443" -i
   - echo "=>>>" && cat values.yaml
 
 - name: helm-deployment-upgrade-091eac7be9d381f18978b1c621dd6a86
   pull: if-not-exists
-  image: registry.vepay.cf/drone-plugin-helm3:3.5.2-1
+  image: registry.vepay.cf/drone-plugin-helm3:3.7.1-1
   settings:
     add_repos:
     - vepay=http://charts.service.vepay:8080/
@@ -722,6 +725,6 @@ get:
 
 ---
 kind: signature
-hmac: 44888da4ec5e21bd5ec0896d85ebc8d8971658c5fbb3d171b5bb784ed857dee1
+hmac: 059d1f4475ae72af749f2ea49b3e183868ec50794f4a289be66d12edddae99da
 
 ...

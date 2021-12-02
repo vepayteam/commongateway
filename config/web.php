@@ -14,7 +14,7 @@ $config = [
     'language' => 'ru_RU',
     'timezone' => 'Europe/Moscow',
     'defaultRoute' => 'site',
-    'bootstrap' => ['log', 'queue'],
+    'bootstrap' => ['log', 'queue', 'reportQueue'],
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
         '@npm' => '@vendor/npm-asset',
@@ -150,12 +150,14 @@ $config = [
         'cache' => $params['components']['cache'],
         'redis' => $params['components']['redis'],
         'queue' => $params['components']['queue'],
+        'reportQueue' => $params['components']['reportQueue'],
 
         // Сервисы
         \app\services\PartnerService::class => \app\services\PartnerService::class,
         \app\services\PaySchetService::class => \app\services\PaySchetService::class,
         \app\services\CompensationService::class => \app\services\CompensationService::class,
         \app\services\RecurrentPaymentPartsService::class => \app\services\RecurrentPaymentPartsService::class,
+        \app\services\ReportService::class => \app\services\ReportService::class,
     ],
     'params' => $params,
     'container' => [
