@@ -695,7 +695,10 @@ class FortaTechAdapter implements IBankAdapter
     {
         $curl = curl_init();
 
+        $dataJSON = Json::encode($data);
+
         $headers = [
+            'Content-Length: ' . mb_strlen($dataJSON),
             'Content-Type: application/json',
             'Authorization: Token: ' . $this->gate->Token,
         ];
@@ -713,7 +716,7 @@ class FortaTechAdapter implements IBankAdapter
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => $methodType,
-            CURLOPT_POSTFIELDS => Json::encode($data),
+            CURLOPT_POSTFIELDS => $dataJSON,
             CURLOPT_HTTPHEADER => $headers,
         ];
 
