@@ -129,6 +129,7 @@ trait PayPartsTrait
             $outPayAccountForm->extid = '';
             $outPayAccountForm->name = $recipientPartner->partner_bank_rekviz[0]->NamePoluchat;
             $outPayAccountForm->account = $recipientPartner->partner_bank_rekviz[0]->RaschShetPolushat;
+            $outPayAccountForm->inn = $recipientPartner->partner_bank_rekviz[0]->INNPolushat;
             $outPayAccountForm->bic = $recipientPartner->partner_bank_rekviz[0]->BIKPoluchat;
             $outPayAccountForm->descript = $descript;
             $outPayAccountForm->amount = $vyvodParts->Amount;
