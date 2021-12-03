@@ -159,6 +159,7 @@ class FortaTechAdapter implements IBankAdapter
                 throw new CreatePayException('FortaTechAdapter Empty ExtBillNumber');
             }
         } catch (FortaBadRequestException|FortaNotFoundException|FortaForbiddenException|FortaUnauthorizedException|BankAdapterResponseException $e) {
+            Yii::$app->errorHandler->logException($e);
             $createPayResponse->status = BaseResponse::STATUS_ERROR;
             $createPayResponse->message = $e->getMessage();
             return $createPayResponse;
@@ -186,6 +187,7 @@ class FortaTechAdapter implements IBankAdapter
             Yii::$app->errorHandler->logException($e);
             throw $e;
         } catch (FortaBadRequestException|FortaNotFoundException|FortaForbiddenException|FortaUnauthorizedException|BankAdapterResponseException $e) {
+            Yii::$app->errorHandler->logException($e);
             $createPayResponse->status = BaseResponse::STATUS_ERROR;
             $createPayResponse->message = $e->getMessage();
             return $createPayResponse;
@@ -446,6 +448,7 @@ class FortaTechAdapter implements IBankAdapter
         try {
             $response = $this->sendRequest($action, $request->attributes, $this->buildRecurrentPaySignature($request));
         } catch (FortaBadRequestException|FortaNotFoundException|FortaDisabledRecurrentException|FortaForbiddenException|FortaUnauthorizedException|BankAdapterResponseException $e) {
+            Yii::$app->errorHandler->logException($e);
             Yii::error([$e->getMessage(), $e->getTrace(), 'recurentPay send']);
             throw new BankAdapterResponseException('Ошибка запроса');
         }
@@ -523,6 +526,7 @@ class FortaTechAdapter implements IBankAdapter
                     }
 
                 } catch (FortaBadRequestException|FortaNotFoundException|FortaForbiddenException|FortaUnauthorizedException|BankAdapterResponseException $e) {
+                    Yii::$app->errorHandler->logException($e);
                     $refundPayResponse->status = BaseResponse::STATUS_ERROR;
                     $refundPayResponse->message = isset($ans['message']) ? $ans['message'] : 'Ошибка запроса';
                 }
@@ -607,6 +611,7 @@ class FortaTechAdapter implements IBankAdapter
             $outCardPayResponse->message = $e->getMessage();
             return $outCardPayResponse;
         } catch (FortaBadRequestException|FortaNotFoundException|FortaUnauthorizedException|BankAdapterResponseException $e) {
+            Yii::$app->errorHandler->logException($e);
             $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
             $outCardPayResponse->message = $e->getMessage();
             return $outCardPayResponse;
