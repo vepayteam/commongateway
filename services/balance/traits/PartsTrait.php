@@ -19,7 +19,7 @@ trait PartsTrait
      * @param PartsBalanceForm $partsBalanceForm
      * @return array
      * @throws \Exception
-     * @todo Refactor or remove: unsafe and frogile code.
+     * @todo Refactor or remove: unsafe and fragile code.
      */
     public function getPartsBalance(PartsBalanceForm $partsBalanceForm)
     {
@@ -86,7 +86,7 @@ trait PartsTrait
      * @param PartsBalancePartnerForm $partsBalancePartnerForm
      * @return array
      * @throws \Exception
-     * @todo Refactor or remove: unsafe and frogile code.
+     * @todo Refactor or remove: unsafe and fragile code.
      */
     public function getPartsBalancePartner(PartsBalancePartnerForm $partsBalancePartnerForm)
     {

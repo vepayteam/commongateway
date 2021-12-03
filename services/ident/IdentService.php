@@ -29,7 +29,7 @@ class IdentService
      * @param IdentStatisticForm $identStatisticForm
      * @return array
      * @throws \Exception
-     * @todo Refactor or remove: unsafe and frogile code.
+     * @todo Refactor or remove: unsafe and fragile code.
      */
     public function getIdentStatistic(IdentStatisticForm $identStatisticForm)
     {
