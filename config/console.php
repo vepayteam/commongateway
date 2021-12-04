@@ -11,7 +11,7 @@ return [
     'id' => 'basic-console',
     'language' => 'ru_RU',
     'basePath' => dirname(__DIR__),
-    'bootstrap' => ['log', 'gii', 'queue'],
+    'bootstrap' => ['log', 'gii', 'queue', 'reportQueue'],
     'controllerNamespace' => 'app\commands',
     'modules' => [
         'gii' => 'yii\gii\Module',
@@ -41,12 +41,14 @@ return [
         'db' => require(__DIR__ . '/db.php'),
         'redis' => $params['components']['redis'],
         'queue' => $params['components']['queue'],
+        'reportQueue' => $params['components']['reportQueue'],
 
         // Сервисы
         \app\services\PartnerService::class => \app\services\PartnerService::class,
         \app\services\PaySchetService::class => \app\services\PaySchetService::class,
         \app\services\CompensationService::class => \app\services\CompensationService::class,
         \app\services\RecurrentPaymentPartsService::class => \app\services\RecurrentPaymentPartsService::class,
+        \app\services\ReportService::class => \app\services\ReportService::class,
     ],
     'params' => $params,
     'container' => [
