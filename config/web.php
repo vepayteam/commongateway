@@ -124,6 +124,7 @@ $config = [
             'loginUrl' => ['partner'],
             'enableAutoLogin' => false,
             'authTimeout' => 600,
+            'absoluteAuthTimeout' => 86400,
         ],
         'errorHandler' => [
             'errorAction' => 'site/error',
