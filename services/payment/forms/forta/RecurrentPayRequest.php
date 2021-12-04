@@ -30,4 +30,14 @@ class RecurrentPayRequest extends Model
      * @var string $currency
      */
     public $currency = 'RUB';
+
+
+    public function rules()
+    {
+        return [
+            [['amount', 'cardToken', 'orderId'], 'required'],
+            [['cardToken', 'orderId'], 'string'],
+            ['amount', 'integer'],
+        ];
+    }
 }

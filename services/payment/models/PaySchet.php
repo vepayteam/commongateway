@@ -343,9 +343,9 @@ class PaySchet extends \yii\db\ActiveRecord
         return $this->hasOne(Bank::class, ['ID' => 'Bank']);
     }
 
-    public function getCurrency()
+    public function getCurrency(): ActiveQuery
     {
-        return $this->hasOne(Currency::class, ['Id' => 'CurrencyId'])->one();
+        return $this->hasOne(Currency::class, ['Id' => 'CurrencyId']);
     }
 
     public function getLog()
