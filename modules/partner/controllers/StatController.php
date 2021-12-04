@@ -214,7 +214,7 @@ class StatController extends Controller
         $isAdmin = UserLk::IsAdmin(Yii::$app->user);
         $payschet = new PayShetStat(); //загрузить
         try {
-            if ($payschet->load(Yii::$app->request->get(), '')) {
+            if ($payschet->load(Yii::$app->request->get(), '') && $payschet->validate()) {
                 $data = $payschet->getList2($isAdmin, 0, 1);
                 if ($data) {
                     $file = new OtchToCSV($data);
