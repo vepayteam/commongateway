@@ -112,28 +112,25 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
             column_number: 0,
             filter_type: "text",
             filter_delay: 500,
-	        filter_default_label: ""
+            filter_default_label: ""
         },
         {
             column_number: 1,
             filter_type: "text",
             filter_delay: 500,
-			filter_default_label: ""
-
+            filter_default_label: ""
         },
         {
             column_number: 4,
             filter_type: "text",
             filter_delay: 500,
-			filter_default_label: ""
-
+            filter_default_label: ""
         },
         {
             column_number: 14,
             filter_type: "text",
             filter_delay: 500,
-			filter_default_label: ""
-
+            filter_default_label: ""
         },
 
     ];
