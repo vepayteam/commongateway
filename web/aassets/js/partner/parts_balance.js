@@ -20,6 +20,11 @@ $(document).ready(function() {
         ],
 
         "columns": datatableColumns,
+        "columnDefs": [ {
+            "targets": 2,
+            "createdCell": (td, cellData) => $(td).html(parseFloat(cellData).toFixed(2))
+        } ],
+
         "ajax": function (data, callback) {
 
             var dataRequest = {
