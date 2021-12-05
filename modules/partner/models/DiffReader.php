@@ -2,7 +2,6 @@
 
 namespace app\modules\partner\models;
 
-use app\modules\partner\models\readers\DiffReadColumnsFilter;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Reader\IReadFilter;
 
@@ -10,10 +9,6 @@ class DiffReader
 {
     private const CSV_READER_TYPE = 'Csv';
     private const CSV_DELIMITER = ';';
-
-    private $dbColumns = [
-        'ID', 'RRN', 'ExtBillNumber'
-    ];
 
     /**
      * @var string
@@ -23,11 +18,6 @@ class DiffReader
     public function __construct(string $filename)
     {
         $this->filename = $filename;
-    }
-
-    public function getDbColumns(): array
-    {
-        return $this->dbColumns;
     }
 
     /**

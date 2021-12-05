@@ -2,6 +2,7 @@
 
 namespace app\modules\partner\models;
 
+use app\modules\partner\models\forms\DiffDataForm;
 use app\modules\partner\models\readers\DiffDataReadFilter;
 use app\services\payment\models\PaySchet;
 use Yii;
@@ -34,7 +35,7 @@ class DiffData
         $paySchets = $query->select(['ps.ID', 'ps.Extid', 'ps.Status', 'ps.DateCreate', 'ps.DateOplat', 'ps.ExtBillNumber', 'ps.RRN', 'ut.NameUsluga'])
             ->from('pay_schet as ps')
             ->where(['Bank' => $this->form->bank])
-            ->andWhere(['in', 'ps.' . $this->form->dbColumn, array_column($registry, 'Select')])
+            ->andWhere(['in', 'ps.' . $this->form->dbColumn, array_column($registry, 'Identifier')])
             ->leftJoin('uslugatovar as ut', 'ut.Id=ps.IdUsluga')
             ->all();
 
@@ -55,13 +56,13 @@ class DiffData
         $badStatus = [];
         $notFound = [];
         foreach ($registry as $record) {
-            if (!array_key_exists($record['Select'], $map)) {
+            if (!array_key_exists($record['Identifier'], $map)) {
                 $notFound[] = $record;
                 continue;
             }
 
             /** @var PaySchet $paySchet */
-            $paySchet = $map[$record['Select']];
+            $paySchet = $map[$record['Identifier']];
 
             if ($this->form->allRegistryStatusSuccess) {
                 if (intval($paySchet['Status']) !== PaySchet::STATUS_DONE) {
@@ -71,8 +72,7 @@ class DiffData
                     ];
                 }
             } else {
-                $paySchetStatus = $paySchet['Status'];
-                $registryStatus = $this->form->getStatusFor($paySchetStatus);
+                $registryStatus = $this->form->getStatusFor($paySchet['Status']);
                 if ($record['Status'] !== $registryStatus) {
                     $badStatus[] = [
                         'record' => $record,
@@ -101,15 +101,17 @@ class DiffData
         $registry = [];
 
         foreach ($rows as $row) {
-            $select = strval($row[$this->form->registrySelectColumn - 1]);
-            $status = $this->form->allRegistryStatusSuccess ? PaySchet::STATUSES[PaySchet::STATUS_DONE] : strval($row[$this->form->registryStatusColumn - 1]);
+            $identifier = strval($row[$this->form->registrySelectColumn - 1]);
+            $status = $this->form->allRegistryStatusSuccess
+                ? PaySchet::STATUSES[PaySchet::STATUS_DONE]
+                : strval($row[$this->form->registryStatusColumn - 1]);
 
-            if (empty($select) || empty($status)) {
+            if (empty($identifier) || empty($status)) {
                 continue;
             }
 
             $registry[] = [
-                'Select' => $select,
+                'Identifier' => $identifier,
                 'Status' => $status,
             ];
         }

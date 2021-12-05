@@ -9,11 +9,23 @@ use Yii;
 
 class DiffExport
 {
+    const XLSX_DEFAULT_TITLE = 'Лист1';
+    const XLSX_DEFAULT_SIZES = [12, 45, 22, 35, 35, 40, 40];
+
     private $badStatus;
     private $notFound;
 
-    private $title;
     private $rows;
+
+    private $header = [
+        'ID Vepay',
+        'Ext ID',
+        'Номер операции',
+        'Статус в Vepay',
+        'Статус в банке-эквайере',
+        'Дата и время операции',
+        'Услуга',
+    ];
 
     public function __construct(array $badStatus, array $notFound)
     {
@@ -21,18 +33,8 @@ class DiffExport
         $this->notFound = $notFound;
     }
 
-    public function prepareData()
+    public function loadData()
     {
-        $this->title = [
-            'ID Vepay',
-            'Ext ID',
-            'Номер операции',
-            'Статус в Vepay',
-            'Статус в банке-эквайере',
-            'Дата и время операции',
-            'Услуга',
-        ];
-
         $this->rows = [];
         foreach ($this->badStatus as $row) {
             $dateCreate = date('d.m.Y H:i:s', $row['paySchet']['DateCreate']);
@@ -53,7 +55,7 @@ class DiffExport
         $this->rows[] = ['Номера заявки ПЦ нет в Vepay'];
 
         foreach ($this->notFound as $row) {
-            $this->rows[] = [$row['Select']];
+            $this->rows[] = [$row['Identifier']];
         }
     }
 
@@ -68,7 +70,7 @@ class DiffExport
             mkdir($tmpdir, 0777, true);
         }
 
-        array_unshift($this->rows, $this->title);
+        array_unshift($this->rows, $this->header);
         $toCSV = new ToCSV($this->getGenerator($this->rows), $tmpdir, time() . '.csv');
         $toCSV->export();
 
@@ -78,16 +80,16 @@ class DiffExport
         return $data;
     }
 
+    public function exportXlsx()
+    {
+        $export = new ExportExcel();
+        return $export->CreateXls(self::XLSX_DEFAULT_TITLE, $this->header, $this->rows, self::XLSX_DEFAULT_SIZES);
+    }
+
     private function getGenerator(array $rows): \Generator
     {
         foreach ($rows as $row) {
             yield $row;
         }
-    }
-
-    public function exportXlsx()
-    {
-        $export = new ExportExcel();
-        return $export->CreateXls('Лист1', $this->title, $this->rows, [12, 45, 22, 35, 35, 40, 40]);
     }
 }

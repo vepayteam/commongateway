@@ -23,14 +23,16 @@ use app\models\partner\UserLk;
 use app\models\payonline\Partner;
 use app\models\SendEmail;
 use app\models\TU;
+use app\modules\partner\models\DiffColumns;
 use app\modules\partner\models\DiffData;
-use app\modules\partner\models\DiffDataForm;
 use app\modules\partner\models\DiffExport;
-use app\modules\partner\models\DiffReader;
+use app\modules\partner\models\forms\DiffColumnsForm;
+use app\modules\partner\models\forms\DiffDataForm;
+use app\modules\partner\models\forms\DiffExportForm;
 use app\modules\partner\models\PaySchetLogForm;
-use app\modules\partner\models\StatDiffSettings;
 use app\services\ident\forms\IdentStatisticForm;
 use app\services\ident\IdentService;
+use app\services\partners\StatDiffSettingsService;
 use app\services\payment\jobs\RefundPayJob;
 use app\services\payment\models\Bank;
 use app\services\payment\models\PaySchet;
@@ -43,7 +45,6 @@ use yii\base\DynamicModel;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\helpers\ArrayHelper;
-use yii\helpers\Json;
 use yii\helpers\Url;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
@@ -113,28 +114,21 @@ class StatController extends Controller
 
     public function actionDiffColumns()
     {
-        $form = new DiffDataForm();
+        $form = new DiffColumnsForm();
         $form->load(Yii::$app->request->post(), '');
-        $form->registryFile = UploadedFile::getInstanceByName('registryFile');
 
-        if (!$form->validate(['registryFile'])) {
+        if (!$form->validate()) {
             return $this->asJson([
                 'status' => 0,
                 'errors' => $form->getErrors(),
             ]);
         }
 
-        $settings = StatDiffSettings::find()
-            ->where(['BankId' => $form->bank])
-            ->one();
+        $diffColumns = new DiffColumns();
+        $dbColumns = $diffColumns->getDbColumns();
 
-        try {
-            $diffReader = new DiffReader($form->registryFile->tempName);
-            $dbColumns = $diffReader->getDbColumns();
-        } catch (\Exception $e) {
-            Yii::error('Stat diffColumns exception: ' . $e->getMessage());
-            throw new BadRequestHttpException();
-        }
+        $statDiffSettingsService = new StatDiffSettingsService();
+        $settings = $statDiffSettingsService->getByBankId($form->bank);
 
         return $this->asJson([
             'status' => 1,
@@ -160,14 +154,12 @@ class StatController extends Controller
             $diffData = new DiffData($form);
             [$badStatus, $notFound] = $diffData->execute();
         } catch (\Exception $e) {
-            Yii::error('Stat diffData exception '
-                . $form->registryFile->tempName
-                . ': ' . $e->getMessage()
-            );
-            throw new BadRequestHttpException();
+            Yii::$app->errorHandler->logException($e);
+            throw $e;
         }
 
-        StatDiffSettings::saveByForm($form);
+        $statDiffSettingsService = new StatDiffSettingsService();
+        $statDiffSettingsService->saveByForm($form);
 
         return $this->asJson([
             'status' => 1,
@@ -180,20 +172,26 @@ class StatController extends Controller
 
     public function actionDiffExport()
     {
-        $badStatus = json_decode(Yii::$app->request->post('badStatus'), true);
-        $notFound = json_decode(Yii::$app->request->post('notFound'), true);
-        $format = Yii::$app->request->post('format');
+        $form = new DiffExportForm();
+        $form->load(Yii::$app->request->post(), '');
 
-        $diffExport = new DiffExport($badStatus, $notFound);
-        $diffExport->prepareData();
+        if (!$form->validate()) {
+            return $this->asJson([
+                'status' => 0,
+                'errors' => $form->getErrors(),
+            ]);
+        }
 
-        if ($format === 'csv') {
+        $diffExport = new DiffExport($form->getBadStatus(), $form->getNotFound());
+        $diffExport->loadData();
+
+        if ($form->format === 'csv') {
             $data = $diffExport->exportCsv();
 
             return Yii::$app->response->sendContentAsFile($data, 'export.csv', [
                 'mimeType' => 'text/csv'
             ]);
-        } else if ($format === 'xlsx') {
+        } else if ($form->format === 'xlsx') {
             $data = $diffExport->exportXlsx();
 
             return Yii::$app->response->sendContentAsFile($data, 'export.xlsx', [
