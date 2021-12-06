@@ -410,6 +410,9 @@ class PaySchet extends \yii\db\ActiveRecord
         $gate = (new BankAdapterBuilder())
             ->build($this->partner, $this->uslugatovar, $this->currency)
             ->getPartnerBankGate();
+        if ($gate->UseGateCompensation) {
+            $this->loadGateFeesFromUsluga($gate);
+        }
         $this->BankComis = round($compensationService->calculateForBank($this, $gate));
         $this->MerchVozn = round($compensationService->calculateForPartner($this, $gate));
 
@@ -558,5 +561,11 @@ class PaySchet extends \yii\db\ActiveRecord
                 EnvHelper::setParam(EnvHelper::PAYSCHET_EXTID, $this->Extid);
             }
         }
+    }
+
+    private function loadGateFeesFromUsluga(PartnerBankGate $gate)
+    {
+        $gate->BankCommission = $this->uslugatovar->ProvComisPC;
+        $gate->BankMinimalFee = $this->uslugatovar->ProvComisMin * 100.0;
     }
 }
