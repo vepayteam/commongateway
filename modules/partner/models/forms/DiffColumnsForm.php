@@ -20,15 +20,7 @@ class DiffColumnsForm extends Model
         return [
             [['bank'], 'required'],
             [['bank'], 'number'],
-            [['bank'], 'validateBank'],
+            [['bank'], 'exist', 'targetClass' => Bank::class, 'targetAttribute' => 'ID'],
         ];
-    }
-
-    /**
-     * @return bool
-     */
-    public function validateBank(): bool
-    {
-        return !empty(Bank::findOne(['ID' => $this->bank]));
     }
 }

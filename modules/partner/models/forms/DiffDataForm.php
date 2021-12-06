@@ -51,21 +51,13 @@ class DiffDataForm extends Model
         return [
             [['bank', 'registryFile', 'registrySelectColumn', 'registryStatusColumn', 'dbColumn'], 'required'],
             [['bank', 'registrySelectColumn', 'registryStatusColumn'], 'number'],
-            [['bank'], 'validateBank'],
+            [['bank'], 'exist', 'targetClass' => Bank::class, 'targetAttribute' => 'ID'],
             [['allRegistryStatusSuccess'], 'boolean'],
             [['allRegistryStatusSuccess'], 'default', 'value' => false],
             [['registryFile'], 'file'],
             [['dbColumn'], 'string'],
             ['statuses', 'each', 'rule' => ['string']],
         ];
-    }
-
-    /**
-     * @return bool
-     */
-    public function validateBank(): bool
-    {
-        return !empty(Bank::findOne(['ID' => $this->bank]));
     }
 
     /**
