@@ -143,7 +143,7 @@
                         $('#statlistresult').html(data.data);
                         $('.pagination a').each(function(){
                             $(this).removeAttr('href');
-                            $(this).attr('onclick', 'lk.statlistreq('+(parseInt($(this).attr('data-page'))+1)+');');
+                            $(this).attr('onclick', 'lk.statrecalcreq('+(parseInt($(this).attr('data-page'))+1)+');');
                         });
                     } else {
                         $('#statlistresult').html("<p class='text-center'>" + data.message + "</p>");
