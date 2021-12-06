@@ -5,17 +5,21 @@ namespace app\modules\mfo\controllers;
 use app\models\api\CorsTrait;
 use app\models\kfapi\KfFormPay;
 use app\models\mfo\MfoReq;
+use app\models\payonline\Cards;
 use app\modules\mfo\jobs\recurrentPaymentParts\ExecutePaymentJob;
 use app\modules\mfo\models\RecurrentPaymentPartsForm;
+use app\services\base\exceptions\InvalidInputParamException;
 use app\services\compensationService\CompensationException;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CreatePayPartsForm;
+use app\services\payment\forms\MfoCallbackForm;
 use app\services\payment\forms\MfoLkPayForm;
 use app\services\payment\models\PaySchet;
 use app\services\payment\payment_strategies\CreatePayPartsStrategy;
 use app\services\payment\payment_strategies\mfo\MfoAutoPayStrategy;
+use app\services\payment\payment_strategies\mfo\MfoPayLkCallbackStrategy;
 use app\services\payment\payment_strategies\mfo\MfoPayLkCreateStrategy;
 use app\services\PaySchetService;
 use app\services\RecurrentPaymentPartsService;
@@ -78,6 +82,22 @@ class PayController extends Controller
             return parent::beforeAction($action);
         }
         return false;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function afterAction($action, $result)
+    {
+        $result = parent::afterAction($action, $result);
+        Yii::info([
+            'endpoint' => $action->uniqueId,
+            'header' => Yii::$app->request->headers->toArray(),
+            'body' => Cards::maskCardUni(Yii::$app->request->post()),
+            'return' => (array)$result,
+        ], 'mfo_' . $action->controller->id . '_' . $action->id);
+
+        return $result;
     }
 
     protected function verbs()
@@ -224,13 +244,13 @@ class PayController extends Controller
             Yii::warning("mfo/pay/auto: ошибка валидации формы");
             return ['status' => 0, 'message' => $autoPayForm->getError()];
         }
-    
+
         if ($autoPayForm->getCard() && (!$autoPayForm->getCard()->ExtCardIDP || $autoPayForm->getCard()->ExtCardIDP == '0')) {
             Yii::warning("mfo/pay/auto: у карты нет ExtCardIDP");
             $autoPayForm->addError('card', 'Карта не зарегистрирована');
             return ['status' => 0, 'message' => $autoPayForm->getError()];
         }
-        
+
         Yii::warning("mfo/pay/auto AutoPayForm extid=$autoPayForm->extid amount=$autoPayForm->amount", 'mfo');
         // рубли в копейки
         $autoPayForm->amount *= 100;
@@ -332,4 +352,37 @@ class PayController extends Controller
         }
     }
 
+    /**
+     * Callback-action после оплаты
+     * @return array
+     * @throws \Exception
+     */
+    public function actionCallback(): array
+    {
+        $data = Yii::$app->request->post();
+
+        $form = new MfoCallbackForm();
+
+        if (!$form->load($data, '') || !$form->validate()) {
+            Yii::warning("pay/callback: " . $form->getError());
+            return ['status' => 0, 'message' => $form->getError()];
+        }
+
+        $message = sprintf(
+            '/pay/callback id=%s token=%s',
+            $form->order_id,
+            $form->cardToken
+        );
+        Yii::warning($message, 'mfo');
+        $callbackStrategy = new MfoPayLkCallbackStrategy($form);
+
+        try {
+            $callbackStrategy->exec();
+        } catch (InvalidInputParamException | \Exception $e) {
+            Yii::warning("pay/callback: " . $e->getMessage());
+            return ['status' => 0, 'message' => 'Ошибка запроса'];
+        }
+
+        return ['status' => 1, 'message' => ''];
+    }
 }

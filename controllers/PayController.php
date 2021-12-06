@@ -10,6 +10,7 @@ use app\models\payonline\PayForm;
 use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\TU;
+use app\services\cards\CacheCardService;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\TKBankAdapter;
@@ -117,12 +118,11 @@ class PayController extends Controller
      * Форма оплаты своя (PCI DSS)
      *
      * @param $id
-     * @param string|null $cardNumber
      * @return string|Response
      * @throws Exception
      * @throws NotFoundHttpException
      */
-    public function actionForm($id, $cardNumber = null)
+    public function actionForm($id)
     {
         Yii::warning("PayForm open id={$id}");
         $payschets = new Payschets();
@@ -130,10 +130,6 @@ class PayController extends Controller
 
         //данные счета для оплаты
         $params = $payschets->getSchetData($id, null);
-        $payform = new PayForm();
-        if ($cardNumber !== null) {
-            $payform->CardNumber = $cardNumber;
-        }
 
         if ($params && TU::IsInPay($params['IsCustom'])) {
             if (
@@ -141,6 +137,14 @@ class PayController extends Controller
                 && $params['UserClickPay'] == 0
                 && $params['DateCreate'] + $params['TimeElapsed'] > time()
             ) {
+                $payForm = new PayForm();
+
+                $cacheCardService = new CacheCardService($params['ID']);
+                if ($cacheCardService->cardExists()) {
+                    $payForm->CardNumber = $cacheCardService->getCard();
+                    $cacheCardService->deleteCard();
+                }
+
                 $payschets->SetIpAddress($params['ID']);
 
                 //разрешить открытие во фрейме на сайте мерчанта
@@ -162,7 +166,7 @@ class PayController extends Controller
                     'apple' => (new ApplePay())->GetConf($params['IDPartner']),
                     'google' => (new GooglePay())->GetConf($params['IDPartner']),
                     'samsung' => (new SamsungPay())->GetConf($params['IDPartner']),
-                    'payform' => $payform,
+                    'payform' => $payForm,
                 ]);
 
             } else {

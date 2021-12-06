@@ -7,8 +7,10 @@ use app\models\payonline\active_query\CardActiveQuery;
 use app\services\cards\models\PanToken;
 use app\services\payment\models\Bank;
 use app\services\payment\models\PaySchet;
+use Exception;
 use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
+use yii\helpers\Json;
 
 /**
  * This is the model class for table "cards".
@@ -127,6 +129,19 @@ class Cards extends ActiveRecord
         return parent::beforeSave($insert);
     }
 
+    /**
+     * Gets query for [[PaySchets]].
+     */
+    public function getPaySchets(): ActiveQuery
+    {
+        return $this->hasMany(PaySchet::className(), ['IdKard' => 'ID']);
+    }
+
+    public function getUslugatovar(): ActiveQuery
+    {
+        return $this->hasMany(Uslugatovar::class, ['ID' => 'IdUsluga'])->via('paySchets');
+    }
+
     public function getUser(): ActiveQuery
     {
         return $this->hasOne(User::class, ['ID' => 'IdUser']);
@@ -206,6 +221,21 @@ class Cards extends ActiveRecord
         }
 
         return $post;
+    }
+
+    /**
+     * Masking card. If $data is array returns masked array, if string retuns masked string
+     *
+     * @param string|array $data
+     * @return string|array
+     */
+    public static function maskCardUni($data)
+    {
+        try {
+            return is_array($data) ? Json::decode(self::MaskCardLog(Json::encode($data))) : self::MaskCardLog((string)$data);
+        } catch (Exception $e) {
+            return $data;
+        }
     }
 
     /**
