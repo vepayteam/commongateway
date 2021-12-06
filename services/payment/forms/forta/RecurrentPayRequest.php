@@ -19,10 +19,6 @@ class RecurrentPayRequest extends Model
      */
     public $amount;
     /**
-     * @var string $walletId
-     */
-    public $walletId;
-    /**
      * @var string $callbackUrl
      */
     public $callbackUrl;
