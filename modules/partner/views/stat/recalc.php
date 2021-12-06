@@ -61,16 +61,16 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                             </div>
                         </div>
                     <?php endif; ?>
-	                <div class="form-group">
-		                <label class="col-sm-2 control-label">Тип операции</label>
-		                <div class="col-sm-4">
-			                <select class="form-control multiselect-field" multiple name="TypeUslug[]">
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">Тип операции</label>
+                        <div class="col-sm-4">
+                            <select class="form-control multiselect-field" multiple name="TypeUslug[]">
                                 <?php foreach ($uslugilist as $usl) : ?>
-					                <option value="<?=$usl->ID?>" data-partner="<?= $usl->IsMfo ?>"><?=$usl->Name?></option>
+                                    <option value="<?=$usl->ID?>" data-partner="<?= $usl->IsMfo ?>"><?=$usl->Name?></option>
                                 <?php endforeach; ?>
-			                </select>
-		                </div>
-	                </div>
+                            </select>
+                        </div>
+                    </div>
                     <div class="form-group">
                         <label class="col-sm-2 control-label">Статус</label>
                         <div class="col-sm-4">
