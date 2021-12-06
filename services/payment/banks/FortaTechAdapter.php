@@ -45,6 +45,7 @@ use app\services\payment\jobs\RefreshStatusPayJob;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use app\services\payment\traits\MaskableTrait;
+use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
 use Yii;
@@ -693,47 +694,66 @@ class FortaTechAdapter implements IBankAdapter
      */
     protected function sendRequest($uri, $data, $signature = '', string $methodType = 'POST')
     {
-        $curl = curl_init();
-
-        $dataJSON = Json::encode($data);
+        $requestJson = Json::encode($data);
 
         $headers = [
-            'Content-Length: ' . mb_strlen($dataJSON),
-            'Content-Type: application/json',
-            'Authorization: Token: ' . $this->gate->Token,
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Token: ' . $this->gate->Token,
+            'User-Agent' => 'Vepay',
         ];
-
-        if(!empty($signature)) {
-            $headers[] = 'Signature: ' . $signature;
+        if (!empty($signature)) {
+            $headers['Signature'] = $signature;
         }
 
-        $curlOptions = [
-            CURLOPT_URL => $this->bankUrl . $uri,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 90,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => $methodType,
-            CURLOPT_POSTFIELDS => $dataJSON,
-            CURLOPT_HTTPHEADER => $headers,
-        ];
+        $maskedRequestString = Json::encode($this->maskRequestCardInfo($data));
 
-        Yii::info(['curl to send' => $curlOptions], 'mfo/sendRequest');
-        curl_setopt_array($curl, $curlOptions);
-        $maskedRequest = $this->maskRequestCardInfo($data);
-        Yii::warning('FortaTechAdapter req uri=' . $uri .' : ' . Json::encode($maskedRequest));
-        $response = curl_exec($curl);
+        \Yii::info([
+            'message' => 'FortaTechAdapter request start.',
+            'uri' => $uri,
+            'requestData' => $maskedRequestString,
+        ]);
 
-        if($response === false) {
-            Yii::warning('FortaTechAdapter error uri=' . $uri .' : ' . Json::encode($maskedRequest));
-            throw new BankAdapterResponseException('Ошибка запроса');
+        $client = new \GuzzleHttp\Client();
+        try {
+
+            $response = $client->request($methodType, $this->bankUrl . $uri, [
+                'timeout' => 90,
+                'headers' => $headers,
+                'body' => $requestJson,
+            ]);
+
+        } catch (GuzzleException $e) {
+            \Yii::$app->errorHandler->logException($e);
+            if($e instanceof BadResponseException) {
+                \Yii::error([
+                    'message' => 'FortaTechAdapter bad response error.',
+                    'uri' => $uri,
+                    'requestData' => $maskedRequestString,
+                    'responseStatusCode' => $e->getResponse()->getStatusCode(),
+                    'responseBody' => $e->getResponse()->getBody()->getContents(),
+                ]);
+                throw new BankAdapterResponseException("Ошибка запроса: {$e->getCode()} - {$e->getMessage()}");
+            } else {
+                \Yii::error([
+                    'message' => 'FortaTechAdapter HTTP error.',
+                    'uri' => $uri,
+                    'requestData' => $maskedRequestString,
+                    'guzzleError' => $e->getMessage(),
+                ]);
+                throw new BankAdapterResponseException('Ошибка запроса');
+            }
         }
 
-        (new FortaErrorHandler($uri, $curl, $response))->exec();
+        $responseContent = $response->getBody()->getContents();
 
-        return $this->parseResponse($response);
+        \Yii::info([
+            'message' => 'FortaTechAdapter request end.',
+            'uri' => $uri,
+            'requestData' => $maskedRequestString,
+            'responseData' => $this->maskCardNumber($responseContent),
+        ]);
+
+        return $this->parseResponse($responseContent);
     }
 
     /**
