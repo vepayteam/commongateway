@@ -107,21 +107,6 @@ if ($partner->IsMfo) {
     echo $form->field($partner, 'LoginTkbOctPerevod')->textInput(['class' => 'form-control']);
     echo $form->field($partner, 'KeyTkbOctPerevod')->textInput(['class' => 'form-control']);
 
-    echo $form->field($partner, 'LoginTkbAuto1')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'KeyTkbAuto1')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'LoginTkbAuto2')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'KeyTkbAuto2')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'LoginTkbAuto3')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'KeyTkbAuto3')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'LoginTkbAuto4')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'KeyTkbAuto4')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'LoginTkbAuto5')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'KeyTkbAuto5')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'LoginTkbAuto6')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'KeyTkbAuto6')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'LoginTkbAuto7')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'KeyTkbAuto7')->textInput(['class' => 'form-control']);
-
 } else {
     echo $form->field($partner, 'SchetTcbTransit')->textInput(['class' => 'form-control']);
     echo $form->field($partner, 'LoginTkbJkh')->textInput(['class' => 'form-control']);
@@ -130,50 +115,9 @@ if ($partner->IsMfo) {
     echo $form->field($partner, 'KeyTkbEcom')->textInput(['class' => 'form-control']);
     echo $form->field($partner, 'LoginTkbVyvod')->textInput(['class' => 'form-control']);
     echo $form->field($partner, 'KeyTkbVyvod')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'LoginTkbAuto1')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'KeyTkbAuto1')->textInput(['class' => 'form-control']);
 }
 
 echo $form->field($partner, 'SchetTcbParts')->textInput(['class' => 'form-control']);
-echo $form->field($partner, 'LoginTkbParts')->textInput(['class' => 'form-control']);
-echo $form->field($partner, 'KeyTkbParts')->textInput(['class' => 'form-control']);
-
-echo $form->field($partner, 'MtsLogin')->textInput(['class' => 'form-control']);
-echo $form->field($partner, 'MtsPassword')->textInput(['class' => 'form-control']);
-echo $form->field($partner, 'MtsToken')->textInput(['class' => 'form-control']);
-
-echo $form->field($partner,'MtsLoginJkh')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsPasswordJkh')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsTokenJkh')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsLoginAft')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsPasswordAft')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsTokenAft')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsLoginOct')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsPasswordOct')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsTokenOct')->textInput(['class' => 'form-control']);
-
-echo $form->field($partner,'MtsLoginEcom')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsPasswordEcom')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsTokenEcom')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsLoginVyvod')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsPasswordVyvod')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsTokenVyvod')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsLoginAuto')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsPasswordAuto')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsTokenAuto')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsLoginPerevod')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsPasswordPerevod')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsTokenPerevod')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsLoginOctVyvod')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsPasswordOctVyvod')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsTokenOctVyvod')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsLoginOctPerevod')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsPasswordOctPerevod')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsTokenOctPerevod')->textInput(['class' => 'form-control']);
-
-echo $form->field($partner,'MtsLoginParts')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsPasswordParts')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsTokenParts')->textInput(['class' => 'form-control']);
 
 ?>
 <div class="row">
