@@ -24,6 +24,7 @@ use app\services\payment\exceptions\FortaDisabledRecurrentException;
 use app\services\payment\exceptions\FortaForbiddenException;
 use app\services\payment\exceptions\FortaGatewayTimeoutException;
 use app\services\payment\exceptions\FortaNotFoundException;
+use app\services\payment\exceptions\FortaSignatureException;
 use app\services\payment\exceptions\FortaUnauthorizedException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
@@ -451,6 +452,9 @@ class FortaTechAdapter implements IBankAdapter
             Yii::$app->errorHandler->logException($e);
             Yii::error([$e->getMessage(), $e->getTrace(), 'recurentPay send']);
             throw new BankAdapterResponseException('Ошибка запроса');
+        } catch (FortaSignatureException $e) {
+            Yii::$app->errorHandler->logException($e);
+            throw $e;
         }
 
         $createRecurrentPayResponse = new CreateRecurrentPayResponse();
@@ -482,7 +486,7 @@ class FortaTechAdapter implements IBankAdapter
             $recurrentPayRequest->amount
         );
 
-        return $this->buildSignature($stringToEncode);
+        return $this->sign($stringToEncode);
     }
 
     /**
@@ -671,6 +675,31 @@ class FortaTechAdapter implements IBankAdapter
     }
 
     /**
+     * Creates a signature by the specified string.
+     *
+     * @param string $string
+     * @return string Signature base64-encoded.
+     * @throws FortaSignatureException
+     */
+    protected function sign(string $string): string
+    {
+        $keyFilePath = '@app/config/forta/' . $this->gate->Login . '.pem';
+        $success = openssl_sign(
+            $string,
+            $rawSignature,
+            file_get_contents($keyFilePath),
+            OPENSSL_ALGO_SHA256
+        );
+
+        if (!$success) {
+            \Yii::error('FortaTechAdapter signature error: ' . openssl_error_string());
+            throw new FortaSignatureException();
+        }
+
+        return base64_encode($rawSignature);
+    }
+
+    /**
      * @inheritDoc
      */
     public function getAftMinSum()
@@ -701,6 +730,7 @@ class FortaTechAdapter implements IBankAdapter
             'uri' => $uri,
             'method' => $methodType,
             'requestData' => $maskedRequestString,
+            'signature' => $signature,
         ]);
 
         $headers = [
@@ -739,6 +769,7 @@ class FortaTechAdapter implements IBankAdapter
                     'requestData' => $maskedRequestString,
                     'responseStatusCode' => $e->getResponse()->getStatusCode(),
                     'responseBody' => $e->getResponse()->getBody()->getContents(),
+                    'signature' => $signature,
                 ]);
                 throw new BankAdapterResponseException("Ошибка запроса: {$e->getCode()} - {$e->getMessage()}");
             } else {
