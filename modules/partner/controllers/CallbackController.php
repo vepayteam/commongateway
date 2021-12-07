@@ -10,6 +10,7 @@ use app\models\partner\UserLk;
 use app\models\queue\JobPriorityInterface;
 use app\services\notifications\jobs\CallbackSendJob;
 use app\services\notifications\models\NotificationPay;
+use app\services\payment\models\PaySchet;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
@@ -197,14 +198,16 @@ class CallbackController extends Controller
 
     private function repeatIteration(NotificationPay $notificationPay): void
     {
-        $notificationPay->HttpCode = 0;
-        $notificationPay->DateLastReq = 0;
-        $notificationPay->DateSend = 0;
-        $notificationPay->HttpAns = null;
-        $notificationPay->save(false);
+        if (in_array($notificationPay->paySchet->Status, [PaySchet::STATUS_DONE, PaySchet::STATUS_ERROR])) {
+            $notificationPay->HttpCode = 0;
+            $notificationPay->DateLastReq = 0;
+            $notificationPay->DateSend = 0;
+            $notificationPay->HttpAns = null;
+            $notificationPay->save(false);
 
-        \Yii::$app->queue->push(new CallbackSendJob([
-            'notificationPayId' => $notificationPay->ID,
-        ]));
+            \Yii::$app->queue->push(new CallbackSendJob([
+                'notificationPayId' => $notificationPay->ID,
+            ]));
+        }
     }
 }
