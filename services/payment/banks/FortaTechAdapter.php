@@ -5,6 +5,8 @@ namespace app\services\payment\banks;
 
 
 use app\Api\Client\Client;
+use app\helpers\SignatureHelper;
+use app\helpers\signatureHelper\SignatureException;
 use app\models\TU;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
@@ -476,17 +478,24 @@ class FortaTechAdapter implements IBankAdapter
      * @param RecurrentPayRequest $recurrentPayRequest
      *
      * @return string
+     * @throws FortaSignatureException
      */
     protected function buildRecurrentPaySignature(RecurrentPayRequest $recurrentPayRequest): string
     {
-        $stringToEncode = sprintf(
+        $stringToSign = sprintf(
             '%s;%s;%s;',
             $recurrentPayRequest->orderId,
             $recurrentPayRequest->cardToken,
             $recurrentPayRequest->amount
         );
 
-        return $this->sign($stringToEncode);
+        $keyFilePath = \Yii::getAlias('@app/config/forta/' . str_replace('/', '', $this->gate->Login) . '.pem');
+        try {
+            return SignatureHelper::sign($stringToSign, file_get_contents($keyFilePath), OPENSSL_ALGO_SHA256);
+        } catch (SignatureException $e) {
+            \Yii::error('FortaTechAdapter signature error: ' . $e->getMessage());
+            throw new FortaSignatureException('Не удалось создать подпись.');
+        }
     }
 
     /**
@@ -672,31 +681,6 @@ class FortaTechAdapter implements IBankAdapter
                    . " | openssl base64";
 
         return shell_exec($command);
-    }
-
-    /**
-     * Creates a signature by the specified string.
-     *
-     * @param string $string
-     * @return string Signature base64-encoded.
-     * @throws FortaSignatureException
-     */
-    protected function sign(string $string): string
-    {
-        $keyFilePath = '@app/config/forta/' . $this->gate->Login . '.pem';
-        $success = openssl_sign(
-            $string,
-            $rawSignature,
-            file_get_contents($keyFilePath),
-            OPENSSL_ALGO_SHA256
-        );
-
-        if (!$success) {
-            \Yii::error('FortaTechAdapter signature error: ' . openssl_error_string());
-            throw new FortaSignatureException();
-        }
-
-        return base64_encode($rawSignature);
     }
 
     /**
