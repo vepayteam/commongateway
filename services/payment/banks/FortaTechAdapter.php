@@ -439,7 +439,7 @@ class FortaTechAdapter implements IBankAdapter
         $action = '/api/recurrentPayment';
         $request = new RecurrentPayRequest();
         Yii::info([$action => $autoPayForm->attributes], 'recurentPay start');
-        $request->orderId = $autoPayForm->paySchet->ID;
+        $request->orderId = (string)$autoPayForm->paySchet->ID;
         $request->amount = $autoPayForm->paySchet->getSummFull();
         $card = $autoPayForm->getCard();
         if (!$card) {
