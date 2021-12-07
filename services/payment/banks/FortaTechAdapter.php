@@ -694,7 +694,15 @@ class FortaTechAdapter implements IBankAdapter
      */
     protected function sendRequest($uri, $data, $signature = '', string $methodType = 'POST')
     {
-        $requestJson = Json::encode($data);
+        $requestJson = $data !== null ? Json::encode($data) : null;
+        $maskedRequestString = $data !== null ? Json::encode($this->maskRequestCardInfo($data)) : null;
+
+        \Yii::info([
+            'message' => 'FortaTechAdapter request start.',
+            'uri' => $uri,
+            'method' => $methodType,
+            'requestData' => $maskedRequestString,
+        ]);
 
         $headers = [
             'Content-Type' => 'application/json',
@@ -704,23 +712,18 @@ class FortaTechAdapter implements IBankAdapter
         if (!empty($signature)) {
             $headers['Signature'] = $signature;
         }
-
-        $maskedRequestString = Json::encode($this->maskRequestCardInfo($data));
-
-        \Yii::info([
-            'message' => 'FortaTechAdapter request start.',
-            'uri' => $uri,
-            'requestData' => $maskedRequestString,
-        ]);
+        $params = [
+            'timeout' => 90,
+            'headers' => $headers,
+        ];
+        if ($requestJson !== null) {
+            $params['body'] = $requestJson;
+        }
 
         $client = new \GuzzleHttp\Client();
         try {
 
-            $response = $client->request($methodType, $this->bankUrl . $uri, [
-                'timeout' => 90,
-                'headers' => $headers,
-                'body' => $requestJson,
-            ]);
+            $response = $client->request($methodType, $this->bankUrl . $uri, $params);
 
         } catch (GuzzleException $e) {
             \Yii::$app->errorHandler->logException($e);
@@ -728,6 +731,7 @@ class FortaTechAdapter implements IBankAdapter
                 \Yii::error([
                     'message' => 'FortaTechAdapter bad response error.',
                     'uri' => $uri,
+                    'method' => $methodType,
                     'requestData' => $maskedRequestString,
                     'responseStatusCode' => $e->getResponse()->getStatusCode(),
                     'responseBody' => $e->getResponse()->getBody()->getContents(),
@@ -737,6 +741,7 @@ class FortaTechAdapter implements IBankAdapter
                 \Yii::error([
                     'message' => 'FortaTechAdapter HTTP error.',
                     'uri' => $uri,
+                    'method' => $methodType,
                     'requestData' => $maskedRequestString,
                     'guzzleError' => $e->getMessage(),
                 ]);
@@ -747,10 +752,12 @@ class FortaTechAdapter implements IBankAdapter
         $responseContent = $response->getBody()->getContents();
 
         \Yii::info([
-            'message' => 'FortaTechAdapter request end.',
+            'message' => 'FortaTechAdapter request finish.',
             'uri' => $uri,
+            'method' => $methodType,
             'requestData' => $maskedRequestString,
             'responseData' => $this->maskCardNumber($responseContent),
+            'responseStatusCode' => $response->getStatusCode(),
         ]);
 
         return $this->parseResponse($responseContent);
@@ -763,119 +770,20 @@ class FortaTechAdapter implements IBankAdapter
      */
     protected function sendGetStatusRequest(PaySchet $paySchet)
     {
-        $curl = curl_init();
-
-        $url = sprintf(
-            '%s/api/payments?order_id=%s&id=%s',
-            $this->bankUrl,
-            $paySchet->ID,
-            $paySchet->ExtBillNumber
-        );
-        curl_setopt_array($curl, array(
-            CURLOPT_URL =>  $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'GET',
-            CURLOPT_HTTPHEADER => array(
-                'Authorization: Token: ' . $this->gate->Token,
-            ),
-        ));
-
-        Yii::warning('FortaTechAdapter req uri=' . $url);
-        $response = curl_exec($curl);
-        $curlError = curl_error($curl);
-        $info = curl_getinfo($curl);
-
-        if(empty($curlError) && ($info['http_code'] == 200 || $info['http_code'] == 201)) {
-            $response = $this->parseResponse($response);
-            $maskedResponse = $this->maskResponseCardInfo($response);
-            Yii::warning('FortaTechAdapter ans uri=' . $url .' : ' . Json::encode($maskedResponse));
-            return $response;
-        } else {
-            Yii::error('FortaTechAdapter error uri=' . $url .' status=' . $info['http_code']);
-            throw new BankAdapterResponseException('Ошибка запроса: ' . $curlError);
-        }
+        $uri = "/api/payments?order_id={$paySchet->ID}&id={$paySchet->ExtBillNumber}";
+        return $this->sendRequest($uri, null, '', 'GET');
     }
 
     protected function sendGetStatusOutRequest(PaySchet $paySchet)
     {
-        $curl = curl_init();
-
-        $url = sprintf(
-            '%s/api/transferToCardv2?orderId=%s',
-            $this->bankUrl,
-            $paySchet->ID
-        );
-        curl_setopt_array($curl, array(
-            CURLOPT_URL =>  $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'GET',
-            CURLOPT_HTTPHEADER => array(
-                'Authorization: Token: ' . $this->gate->Token,
-            ),
-        ));
-
-        Yii::warning('FortaTechAdapter req uri=' . $url);
-        $response = curl_exec($curl);
-        $curlError = curl_error($curl);
-        $info = curl_getinfo($curl);
-
-        if(empty($curlError) && ($info['http_code'] == 200 || $info['http_code'] == 201)) {
-            $response = $this->parseResponse($response);
-            $maskedResponse = $this->maskResponseCardInfo($response);
-            Yii::warning('FortaTechAdapter ans uri=' . $url .' : ' . Json::encode($maskedResponse));
-            return $response;
-        } else {
-            Yii::error('FortaTechAdapter error uri=' . $url .' status=' . $info['http_code']);
-            throw new BankAdapterResponseException('Ошибка запроса: ' . $curlError);
-        }
+        $uri = "/api/transferToCardv2?orderId={$paySchet->ID}";
+        return $this->sendRequest($uri, null, '', 'GET');
     }
 
     public function sendGetStatusRefundRequest($refundId)
     {
-        $curl = curl_init();
-
-        $url = sprintf(
-            '%s/api/refund?refund_id=%s',
-            $this->bankUrl,
-            $refundId
-        );
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'GET',
-            CURLOPT_HTTPHEADER => array(
-                'Authorization: Token: ' . $this->gate->Token,
-            ),
-        ));
-
-        Yii::warning('FortaTechAdapter req uri=' . $url);
-        $response = curl_exec($curl);
-        $curlError = curl_error($curl);
-        $info = curl_getinfo($curl);
-
-        if (empty($curlError) && ($info['http_code'] == 200 || $info['http_code'] == 201)) {
-            $response = $this->parseResponse($response);
-            $maskedResponse = $this->maskResponseCardInfo($response);
-            Yii::warning('FortaTechAdapter ans uri=' . $url . ' : ' . Json::encode($maskedResponse));
-            return $response;
-        } else {
-            Yii::error('FortaTechAdapter error uri=' . $url . ' status=' . $info['http_code']);
-        }
+        $uri = "/api/refund?refund_id={$refundId}";
+        return $this->sendRequest($uri, null, '', 'GET');
     }
 
     /**
