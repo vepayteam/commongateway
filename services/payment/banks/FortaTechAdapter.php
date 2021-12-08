@@ -5,6 +5,8 @@ namespace app\services\payment\banks;
 
 
 use app\Api\Client\Client;
+use app\helpers\SignatureHelper;
+use app\helpers\signatureHelper\SignatureException;
 use app\models\TU;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
@@ -24,6 +26,7 @@ use app\services\payment\exceptions\FortaDisabledRecurrentException;
 use app\services\payment\exceptions\FortaForbiddenException;
 use app\services\payment\exceptions\FortaGatewayTimeoutException;
 use app\services\payment\exceptions\FortaNotFoundException;
+use app\services\payment\exceptions\FortaSignatureException;
 use app\services\payment\exceptions\FortaUnauthorizedException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
@@ -436,7 +439,7 @@ class FortaTechAdapter implements IBankAdapter
         $action = '/api/recurrentPayment';
         $request = new RecurrentPayRequest();
         Yii::info([$action => $autoPayForm->attributes], 'recurentPay start');
-        $request->orderId = $autoPayForm->paySchet->ID;
+        $request->orderId = (string)$autoPayForm->paySchet->ID;
         $request->amount = $autoPayForm->paySchet->getSummFull();
         $card = $autoPayForm->getCard();
         if (!$card) {
@@ -451,6 +454,9 @@ class FortaTechAdapter implements IBankAdapter
             Yii::$app->errorHandler->logException($e);
             Yii::error([$e->getMessage(), $e->getTrace(), 'recurentPay send']);
             throw new BankAdapterResponseException('Ошибка запроса');
+        } catch (FortaSignatureException $e) {
+            Yii::$app->errorHandler->logException($e);
+            throw $e;
         }
 
         $createRecurrentPayResponse = new CreateRecurrentPayResponse();
@@ -472,17 +478,24 @@ class FortaTechAdapter implements IBankAdapter
      * @param RecurrentPayRequest $recurrentPayRequest
      *
      * @return string
+     * @throws FortaSignatureException
      */
     protected function buildRecurrentPaySignature(RecurrentPayRequest $recurrentPayRequest): string
     {
-        $stringToEncode = sprintf(
+        $stringToSign = sprintf(
             '%s;%s;%s;',
             $recurrentPayRequest->orderId,
             $recurrentPayRequest->cardToken,
             $recurrentPayRequest->amount
         );
 
-        return $this->buildSignature($stringToEncode);
+        $keyFilePath = \Yii::getAlias('@app/config/forta/' . str_replace('/', '', $this->gate->Login) . '.pem');
+        try {
+            return SignatureHelper::sign($stringToSign, file_get_contents($keyFilePath), OPENSSL_ALGO_SHA256);
+        } catch (SignatureException $e) {
+            \Yii::error('FortaTechAdapter signature error: ' . $e->getMessage());
+            throw new FortaSignatureException('Не удалось создать подпись.');
+        }
     }
 
     /**
@@ -701,6 +714,7 @@ class FortaTechAdapter implements IBankAdapter
             'uri' => $uri,
             'method' => $methodType,
             'requestData' => $maskedRequestString,
+            'signature' => $signature,
         ]);
 
         $headers = [
@@ -739,6 +753,7 @@ class FortaTechAdapter implements IBankAdapter
                     'requestData' => $maskedRequestString,
                     'responseStatusCode' => $e->getResponse()->getStatusCode(),
                     'responseBody' => $e->getResponse()->getBody()->getContents(),
+                    'signature' => $signature,
                 ]);
                 throw new BankAdapterResponseException("Ошибка запроса: {$e->getCode()} - {$e->getMessage()}");
             } else {
