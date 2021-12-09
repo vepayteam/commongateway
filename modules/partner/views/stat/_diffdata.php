@@ -4,6 +4,7 @@
 /** @var array $notFound */
 
 use app\services\payment\models\PaySchet;
+use yii\helpers\Html;
 
 ?>
 
@@ -22,18 +23,18 @@ use app\services\payment\models\PaySchet;
     <tbody>
     <?php foreach ($badStatus as $row): ?>
         <tr>
-            <td><?= $row['paySchet']['ID'] ?></td>
-            <td><?= $row['paySchet']['Extid'] ?></td>
-            <td><?= $row['paySchet']['ExtBillNumber'] ?></td>
-            <td><?= PaySchet::STATUSES[$row['paySchet']['Status']] ?></td>
-            <td><?= $row['record']['Status'] ?></td>
+            <td><?= Html::encode($row['paySchet']['ID']) ?></td>
+            <td><?= Html::encode($row['paySchet']['Extid']) ?></td>
+            <td><?= Html::encode($row['paySchet']['ExtBillNumber']) ?></td>
+            <td><?= Html::encode(PaySchet::STATUSES[$row['paySchet']['Status']]) ?></td>
+            <td><?= Html::encode($row['record']['Status']) ?></td>
             <td>
                 <?= date('d.m.Y H:i:s', $row['paySchet']['DateCreate']) ?>
                 <span> /</span>
                 <br>
                 <?= $row['paySchet']['DateOplat'] > 0 ? date('d.m.Y H:i:s', $row['paySchet']['DateOplat']) : "нет" ?>
             </td>
-            <td><?= $row['paySchet']['NameUsluga'] ?></td>
+            <td><?= Html::encode($row['paySchet']['NameUsluga']) ?></td>
         </tr>
     <?php endforeach; ?>
     </tbody>
@@ -48,7 +49,7 @@ use app\services\payment\models\PaySchet;
     <tbody>
     <?php foreach ($notFound as $row): ?>
         <tr>
-            <td><?= $row['ExtBillNumber'] ?></td>
+            <td><?= Html::encode($row['ExtBillNumber']) ?></td>
         </tr>
     <?php endforeach; ?>
     </tbody>
@@ -59,8 +60,8 @@ use app\services\payment\models\PaySchet;
     <tr>
         <th>
             <form action="/partner/stat/diffexport" method="post">
-                <textarea name="badStatus" style="display: none;"><?= json_encode($badStatus) ?></textarea>
-                <textarea name="notFound" style="display: none;"><?= json_encode($notFound) ?></textarea>
+                <?= Html::textarea('badStatus', json_encode($badStatus), ['style' => 'display: none;']) ?>
+                <?= Html::textarea('notFound', json_encode($notFound), ['style' => 'display: none;']) ?>
 
                 <button name="format" value="csv" class="btn btn-white btn-xs">
                     <i class="fa fa-share"></i>&nbsp;Экспорт csv

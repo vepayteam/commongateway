@@ -11,6 +11,7 @@ $this->title = "логи";
 $this->params['breadtitle'] = "Логи";
 $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 
+use yii\helpers\Html;
 use yii\web\View; ?>
 
     <div class="row">
@@ -33,7 +34,7 @@ use yii\web\View; ?>
 
                         <div class="form-group">
                             <div class="col-sm-offset-2 col-sm-4">
-                                <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
+                                <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
                                 <button class="btn btn-sm btn-primary" type="submit">Сформировать</button>
                             </div>
                         </div>

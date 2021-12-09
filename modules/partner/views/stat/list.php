@@ -2,8 +2,11 @@
 
 /* @var yii\web\View $this */
 /* @var array $uslugilist */
-/* @var $partnerlist  */
+/* @var Partner[] $partnerlist  */
 /* @var $IsAdmin bool */
+
+use app\models\payonline\Partner;
+use yii\helpers\Html;
 
 $this->title = "список операций";
 
@@ -42,7 +45,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                             <div class="col-sm-4">
                                 <select class="form-control multiselect-field" multiple name="idParts[]">
                                     <?php foreach ($partnerlist as $partn) : ?>
-                                        <option value="<?=$partn->ID?>" data-ismfo="<?= $partn->ID == 1 ? 2 : $partn->IsMfo?>"><?=$partn->ID?> | <?=$partn->Name?></option>
+                                        <option value="<?=Html::encode($partn->ID)?>" data-ismfo="<?= $partn->ID == 1 ? 2 : Html::encode($partn->IsMfo)?>"><?=Html::encode($partn->ID)?> | <?=Html::encode($partn->Name)?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -53,7 +56,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         <div class="col-sm-4">
                             <select class="form-control multiselect-field" multiple name="TypeUslug[]">
                                 <?php foreach ($uslugilist as $usl) : ?>
-                                    <option value="<?=$usl->ID?>" data-partner="<?= $usl->IsMfo ?>"><?=$usl->Name?></option>
+                                    <option value="<?=Html::encode($usl->ID)?>" data-partner="<?= Html::encode($usl->IsMfo) ?>"><?=Html::encode($usl->Name)?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -120,7 +123,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                     <input type="hidden" name="paytype" value="-1">
                     <div class="form-group">
                         <div class="col-sm-offset-2 col-sm-4">
-                            <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
+                            <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
                             <button class="btn btn-sm btn-primary" type="submit">Найти</button>
                         </div>
                     </div>

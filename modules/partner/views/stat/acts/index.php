@@ -9,12 +9,13 @@ $this->title = "Отчетные документы";
 $this->params['breadtitle'] = "Отчетные документы";
 $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 
-use app\models\payonline\Partner; ?>
+use app\models\payonline\Partner;
+use yii\helpers\Html; ?>
 <div class="row">
     <div class="col-sm-12">
         <div class="ibox float-e-margins">
             <div class="ibox-title">
-                <h5><?=$this->title?></h5>
+                <h5><?=Html::encode($this->title)?></h5>
             </div>
             <div class="ibox-content">
                 <form class="form-horizontal" method="POST" id="actlistform">
@@ -32,7 +33,7 @@ use app\models\payonline\Partner; ?>
                                 <select class="form-control" name="IdPart" id="actidpatner">
                                     <option value="0"></option>
                                     <?php foreach ($partnerlist as $partner) : ?>
-                                        <option value="<?=$partner->ID?>"><?=$partner->nameWithId?></option>
+                                        <option value="<?=Html::encode($partner->ID)?>"><?=Html::encode($partner->nameWithId)?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -40,7 +41,7 @@ use app\models\payonline\Partner; ?>
                     <?php endif; ?>
                     <div class="form-group">
                         <div class="col-sm-offset-2 col-sm-4">
-                            <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
+                            <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
                         </div>
                     </div>
                 </form>
