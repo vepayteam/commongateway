@@ -789,7 +789,7 @@ class FortaTechAdapter implements IBankAdapter
      */
     protected function sendGetStatusRequest(PaySchet $paySchet)
     {
-        $uri = "/api/payments?order_id={$paySchet->ID}&id={$paySchet->ExtBillNumber}";
+        $uri = "/api/payments?order_id={$paySchet->ID}";
         return $this->sendRequest($uri, null, '', 'GET');
     }
 
