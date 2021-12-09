@@ -123,7 +123,7 @@ $config = [
             'identityClass' => 'app\models\partner\UserLk',
             'loginUrl' => ['partner'],
             'enableAutoLogin' => false,
-            'authTimeout' => 60 * 10,
+            'authTimeout' => 60 * 30,
             'absoluteAuthTimeout' => 60 * 60 * 24,
         ],
         'errorHandler' => [
