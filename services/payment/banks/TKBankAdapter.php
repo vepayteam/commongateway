@@ -449,6 +449,7 @@ class TKBankAdapter implements IBankAdapter
         Yii::warning("req: login = " . $this->gate->Login . " url = " . $url . "\r\n" . Cards::MaskCardLog($post), 'merchant');
         try {
             $curl->reset()
+                ->setOption(CURLOPT_VERBOSE, Yii::$app->params['VERBOSE'] === 'Y')
                 ->setOption(CURLOPT_TIMEOUT, $timout)
                 ->setOption(CURLOPT_CONNECTTIMEOUT, $timout)
                 ->setOption(CURLOPT_HTTPHEADER, array_merge([

@@ -454,6 +454,7 @@ class BRSAdapter implements IBankAdapter
         $url = $domain . $uri;
         $request = http_build_query($data);
         curl_setopt_array($curl, array(
+            CURLOPT_VERBOSE => Yii::$app->params['VERBOSE'] === 'Y',
             CURLOPT_URL => $url,
             CURLOPT_HEADER => false,
             CURLOPT_POST => true,
@@ -609,6 +610,7 @@ class BRSAdapter implements IBankAdapter
         $curl = curl_init();
 
         curl_setopt_array($curl, array(
+            CURLOPT_VERBOSE => Yii::$app->params['VERBOSE'] === 'Y',
             CURLOPT_URL => $this->bankUrlXml,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
@@ -797,6 +799,7 @@ class BRSAdapter implements IBankAdapter
         $curl = curl_init();
 
         $optArray = [
+            CURLOPT_VERBOSE => Yii::$app->params['VERBOSE'] === 'Y',
             CURLOPT_URL => $this->bankUrlB2C . $uri,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
