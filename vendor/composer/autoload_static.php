@@ -593,6 +593,13 @@ class ComposerStaticInita57ff6ced5f8f56ae58d5b096b8905e4
                 0 => __DIR__ . '/..' . '/rmccue/requests/library',
             ),
         ),
+        'P' => 
+        array (
+            'PHPSQLParser\\' => 
+            array (
+                0 => __DIR__ . '/..' . '/greenlion/php-sql-parser/src',
+            ),
+        ),
         'H' => 
         array (
             'HTMLPurifier' => 
@@ -674,6 +681,7 @@ class ComposerStaticInita57ff6ced5f8f56ae58d5b096b8905e4
         'Codeception\\Util\\JsonType' => __DIR__ . '/..' . '/codeception/module-rest/src/Codeception/Util/JsonType.php',
         'Codeception\\Util\\Shared\\Asserts' => __DIR__ . '/..' . '/codeception/lib-asserts/src/Codeception/Util/Shared/Asserts.php',
         'Codeception\\Util\\Shared\\InheritedAsserts' => __DIR__ . '/..' . '/codeception/lib-asserts/src/Codeception/Util/Shared/InheritedAsserts.php',
+        'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'JsonException' => __DIR__ . '/..' . '/symfony/polyfill-php73/Resources/stubs/JsonException.php',
         'Normalizer' => __DIR__ . '/..' . '/symfony/polyfill-intl-normalizer/Resources/stubs/Normalizer.php',
         'PHPUnit\\Exception' => __DIR__ . '/..' . '/phpunit/phpunit/src/Exception.php',
