@@ -12,14 +12,14 @@ class TestSelValidationService
     private const MAX_LIMIT = 20000;
 
     private $blockKeywords = [
-        'UPDATE',
-        'DELETE',
-        'INSERT',
-        'REPLACE',
-        'CALL',
-        'DO',
-        'ALTER',
-        'LIKE',
+        'update',
+        'delete',
+        'insert',
+        'replace',
+        'call',
+        'do',
+        'alter',
+        'like',
     ];
 
     /**
@@ -54,8 +54,10 @@ class TestSelValidationService
      */
     private function checkBlockKeywords(string $sql)
     {
+        $lowerSql = strtolower($sql);
+
         foreach ($this->blockKeywords as $blockKeyword) {
-            if (str_contains($sql, $blockKeyword)) {
+            if (str_contains($lowerSql, $blockKeyword)) {
                 throw new TestSelValidateException('Запрещенное слово: ' . $blockKeyword);
             }
         }
