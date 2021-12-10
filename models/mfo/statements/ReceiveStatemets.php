@@ -6,14 +6,16 @@ namespace app\models\mfo\statements;
 
 use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
-use app\models\kfapi\KfStatement;
 use app\models\mfo\MfoReq;
 use app\models\mfo\MfoTestError;
+use app\models\payonline\BalancePartner;
 use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
+use app\models\StatementsAccount;
+use app\models\StatementsPlanner;
 use app\models\TU;
-use app\models\payonline\BalancePartner;
 use Yii;
+use yii\db\Exception;
 use yii\helpers\ArrayHelper;
 
 class ReceiveStatemets
@@ -129,7 +131,12 @@ class ReceiveStatemets
         }
 
         if ($this->list && count($this->list)) {
-            $this->SaveStatemens($TypeSchet, $dateFrom, $dateTo);
+            try {
+                $this->SaveStatemens($TypeSchet, $dateFrom, $dateTo);
+            } catch (Exception $e) {
+                Yii::error([$e->getName(), $e->getMessage(), $e->getLine(), $e->getFile(), $e->getTrace()]);
+                throw (new Exception('Нарушение уникальности запроса'));
+            }
         }
 
     }
@@ -234,49 +241,43 @@ class ReceiveStatemets
         $BalanceOut = new BalancePartner(BalancePartner::OUT, $this->Partner->ID);
 
         foreach ($this->list as $statement) {
+            $existId = StatementsAccount::findOne([
+                'IdPartner' => $this->Partner->ID,
+                'BnkId' => $statement['id'],
+                'TypeAccount' => $TypeSchet,
+            ])->ID;
 
-            $existId = Yii::$app->db->createCommand("
-                SELECT
-                    `ID`
-                FROM
-                    `statements_account`
-                WHERE
-                    `IdPartner` = :IDPARTNER
-                    AND `BnkId` = :BNKID
-                    AND `TypeAccount` = :ACCTYPE
-            ", [':IDPARTNER' => $this->Partner->ID, ':BNKID' => $statement['id'], ':ACCTYPE' => $TypeSchet])->queryScalar();
-
-                $sumVyp = round($statement['summ'] * 100.0);
-                $comisSum = 0;
-                $name = $statement['name'];
-                $inn = $statement['inn'];
-                $description = $statement['description'];
-                if ($inn == '7709129705') {
-                    //заменить ТКБ на Vepay и прибвать комиссию
-                    $name = 'ООО "ПКБП"';
-                    $inn = '7728487400';
-                    /*if (!empty($this->Partner->SchetTcbNominal)) {
-                        $comisSum = $this->CalcComiss($sumVyp, $statement['description'], $UslPsr, $UslCard);
-                    }*/
-                    $description = $this->ChangeDescript($description);
-                } elseif ($inn == '7707083893' || $inn == '7744001497') {
-                    //сбербанк,гпб - подставить реквизиты из name и назначения
-                    $n = explode('//', $name);
-                    if (count($n) > 2) {
-                        $name = $n[1].(isset($n[3]) ? '//'.$n[3].'//' : '');
-                    }
-                    if (preg_match('/ИНН\s+(\d+)/ius', $description, $d)) {
-                        $inn = $d[1];
-                    }
-                } elseif (empty($inn) || $inn == 0) {
-                    //нет инн в пп, взять из назначения
-                    if (preg_match('/ИНН\s+(\d+)/ius', $description, $d)) {
-                        $inn = $d[1];
-                    }
+            $sumVyp = round($statement['summ'] * 100.0);
+            $comisSum = 0;
+            $name = $statement['name'];
+            $inn = $statement['inn'];
+            $description = $statement['description'];
+            if ($inn == '7709129705') {
+                //заменить ТКБ на Vepay и прибвать комиссию
+                $name = 'ООО "ПКБП"';
+                $inn = '7728487400';
+                /*if (!empty($this->Partner->SchetTcbNominal)) {
+                    $comisSum = $this->CalcComiss($sumVyp, $statement['description'], $UslPsr, $UslCard);
+                }*/
+                $description = $this->ChangeDescript($description);
+            } elseif ($inn == '7707083893' || $inn == '7744001497') {
+                //сбербанк,гпб - подставить реквизиты из name и назначения
+                $n = explode('//', $name);
+                if (count($n) > 2) {
+                    $name = $n[1] . (isset($n[3]) ? '//' . $n[3] . '//' : '');
                 }
+                if (preg_match('/ИНН\s+(\d+)/ius', $description, $d)) {
+                    $inn = $d[1];
+                }
+            } elseif (empty($inn) || $inn == 0) {
+                //нет инн в пп, взять из назначения
+                if (preg_match('/ИНН\s+(\d+)/ius', $description, $d)) {
+                    $inn = $d[1];
+                }
+            }
 
             if (!$existId) {
-                Yii::$app->db->createCommand()->insert('statements_account', [
+                $statementsAccaunt = new StatementsAccount([
                     'IdPartner' => $this->Partner->ID,
                     'TypeAccount' => $TypeSchet,
                     'BnkId' => $statement['id'],
@@ -295,7 +296,8 @@ class ReceiveStatemets
                     'Bic' => $statement['bic'],
                     'Bank' => $statement['bank'],
                     'BankAccount' => $statement['bankaccount']
-                ])->execute();
+                ]);
+                $statementsAccaunt->save(false);
 
                 $IdStatm = Yii::$app->db->lastInsertID;
 
@@ -320,50 +322,43 @@ class ReceiveStatemets
                         $BalanceIn->Dec($sumVyp, $description, 0, 0, $IdStatm);
                     }
                 }
-
             } else {
-                Yii::$app->db->createCommand()->update('statements_account', [/*
-                    'NumberPP' => $statement['number'],
-                    'DatePP' => strtotime($statement['date']),
-                    'SummPP' => $sumVyp,*/
+                // я знаю, что можно было просто StatementsAccount::updateAll() @Kirill B.
+                $statementsAccaunt = StatementsAccount::findOne($existId);
+                $statementsAccaunt->setAttributes([
                     'SummComis' => $comisSum,
-                    /*'Description' => $description,
-                    'IsCredit' => $statement['iscredit'], //true - пополнение счета*/
                     'DateDoc' => strtotime($statement['datedoc']),
                     'Name' => $name,
                     'Inn' => $inn,
-                    'Kpp' => $statement['kpp'],/*
-                    'Account' => $statement['account'],
-                    'Bic' => $statement['bic'],
-                    'Bank' => $statement['bank'],
-                    'BankAccount' => $statement['bankaccount']*/
-                ],'`ID` = :ID', [':ID' => $existId]
-                )->execute();
+                    'Kpp' => $statement['kpp'],
+                    //'NumberPP' => $statement['number'],
+                    //'DatePP' => strtotime($statement['date']),
+                    //'SummPP' => $sumVyp,
+                    //'Description' => $description,
+                    //'IsCredit' => $statement['iscredit'], //true - пополнение счета*/
+                    //'Account' => $statement['account'],
+                    //'Bic' => $statement['bic'],
+                    //'Bank' => $statement['bank'],
+                    //'BankAccount' => $statement['bankaccount']
+                ], false);
+                $statementsAccaunt->save(false);
             }
         }
 
-        $IdPlanner = Yii::$app->db->createCommand("
-            SELECT
-                `ID`
-            FROM
-                `statements_planner`
-            WHERE
-                `IdPartner` = :IDPARTNER
-                AND `IdTypeAcc` = :ACCTYPE
-        ", [':IDPARTNER' => $this->Partner->ID, ':ACCTYPE' => $TypeSchet])->queryScalar();
-
+        $IdPlanner = StatementsPlanner::findOne(['IdPartner' => $this->Partner->ID, 'IdTypeAcc' => $TypeSchet])->ID;
         if ($IdPlanner) {
-            Yii::$app->db->createCommand()->update('statements_planner', [
+            StatementsPlanner::updateAll([
                 'DateUpdateFrom' => $dateFrom,
                 'DateUpdateTo' => min($dateTo, time() - 60)
-            ],'`ID` = :ID', [':ID' => $IdPlanner])->execute();
+            ], ['ID' => $IdPlanner]);
         } else {
-            Yii::$app->db->createCommand()->insert('statements_planner', [
+            $statementsPlanner = new StatementsPlanner([
                 'IdPartner' => $this->Partner->ID,
                 'IdTypeAcc' => $TypeSchet,
                 'DateUpdateFrom' => $dateFrom,
                 'DateUpdateTo' => min($dateTo, time() - 60)
-            ])->execute();
+            ]);
+            $statementsPlanner->save(false);
         }
 
         $tr->commit();

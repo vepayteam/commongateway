@@ -10,6 +10,8 @@ use app\models\partner\PartUserAccess;
 
 $act = PartUserAccess::getSelRazdel(\Yii::$app->controller->action);
 //\yii\helpers\VarDumper::dump($act);
+
+$action = Yii::$app->controller->action->id . ':' . Yii::$app->request->get('queueName', 'queue');
 ?>
 
 <nav class="navbar-default navbar-static-side" role="navigation">
@@ -23,27 +25,54 @@ $act = PartUserAccess::getSelRazdel(\Yii::$app->controller->action);
                     <img src="/imgs/favicon.svg" alt="VEPAY" width="auto" height="26" border="0">
                 </div>
             </li>
-            <li class="<?= $_SERVER['REQUEST_URI'] == '/partner/admin/queue-info' ? 'active' : '' ?>">
+            <li class="<?= $action == 'queue-info:queue' ? 'active' : '' ?>">
                 <a href="/partner/admin/queue-info">
                     <i class="fa fa-list"></i>
                     <span class="nav-label">Queue info</span>
                 </a>
-            </li><li class="<?= $_SERVER['REQUEST_URI'] == '/partner/admin/get-queue-all-messages' ? 'active' : '' ?>">
+            </li>
+            <li class="<?= $action == 'get-queue-all-messages:queue' ? 'active' : '' ?>">
                 <a href="/partner/admin/get-queue-all-messages">
                     <i class="fa fa-list"></i>
                     <span class="nav-label">All messages</span>
                 </a>
             </li>
-            <li class="<?= $_SERVER['REQUEST_URI'] == '/partner/admin/get-queue-waiting-messages' ? 'active' : '' ?>">
+            <li class="<?= $action == 'get-queue-waiting-messages:queue' ? 'active' : '' ?>">
                 <a href="/partner/admin/get-queue-waiting-messages">
                     <i class="fa fa-list"></i>
                     <span class="nav-label">Waiting messages</span>
                 </a>
             </li>
-            <li class="<?= $_SERVER['REQUEST_URI'] == '/partner/admin/get-queue-reserved-messages' ? 'active' : '' ?>">
+            <li class="<?= $action == 'get-queue-reserved-messages:queue' ? 'active' : '' ?>">
                 <a href="/partner/admin/get-queue-reserved-messages">
                     <i class="fa fa-list"></i>
                     <span class="nav-label">Reserved messages</span>
+                </a>
+            </li>
+
+
+            <li class="<?= $action == 'queue-info:reportQueue' ? 'active' : '' ?>">
+                <a href="/partner/admin/queue-info?queueName=reportQueue">
+                    <i class="fa fa-list"></i>
+                    <span class="nav-label">Report - Queue info</span>
+                </a>
+            </li>
+            <li class="<?= $action == 'get-queue-all-messages:reportQueue' ? 'active' : '' ?>">
+                <a href="/partner/admin/get-queue-all-messages?queueName=reportQueue">
+                    <i class="fa fa-list"></i>
+                    <span class="nav-label">Report - All messages</span>
+                </a>
+            </li>
+            <li class="<?= $action == 'get-queue-waiting-messages:reportQueue' ? 'active' : '' ?>">
+                <a href="/partner/admin/get-queue-waiting-messages?queueName=reportQueue">
+                    <i class="fa fa-list"></i>
+                    <span class="nav-label">Report - Waiting messages</span>
+                </a>
+            </li>
+            <li class="<?= $action == 'get-queue-reserved-messages:reportQueue' ? 'active' : '' ?>">
+                <a href="/partner/admin/get-queue-reserved-messages?queueName=reportQueue">
+                    <i class="fa fa-list"></i>
+                    <span class="nav-label">Report - Reserved messages</span>
                 </a>
             </li>
         </ul>
