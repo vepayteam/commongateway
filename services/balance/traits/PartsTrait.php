@@ -5,17 +5,21 @@ namespace app\services\balance\traits;
 
 
 use app\models\PayschetPart;
+use app\services\balance\BalanceService;
 use app\services\balance\models\PartsBalanceForm;
 use app\services\balance\models\PartsBalancePartnerForm;
 
 /**
  * @deprecated
+ * @mixin BalanceService
  */
 trait PartsTrait
 {
     /**
      * @param PartsBalanceForm $partsBalanceForm
      * @return array
+     * @throws \Exception
+     * @todo Refactor or remove: unsafe and fragile code.
      */
     public function getPartsBalance(PartsBalanceForm $partsBalanceForm)
     {
@@ -36,6 +40,9 @@ trait PartsTrait
         $result['recordsTotal'] = $q->count();
 
         foreach ($partsBalanceForm->columns as $column) {
+            if (!in_array($column['name'], array_keys(PartsBalanceForm::COLUMNS_BY_PARTS_BALANCE))) {
+                throw new \Exception("Invalid column name: \"{$column['name']}\".");
+            }
             if(!empty($column['search']['value'])) {
                 $arr = explode(' AS ', $column['name']);
                 $q->andWhere([
@@ -61,7 +68,13 @@ trait PartsTrait
 
         $columnNOrder = $partsBalanceForm->order[0]['column'];
         $orderColumn = $partsBalanceForm->columns[$columnNOrder]['data'];
-        $orderDir = $partsBalanceForm->order[0]['dir'];
+        if (!in_array($orderColumn, $this->getValidOrderColumns($columns))) {
+            throw new \Exception("Invalid order column name: \"{$orderColumn}\".");
+        }
+        $orderDir = strtoupper(trim($partsBalanceForm->order[0]['dir']));
+        if (!in_array($orderDir, ['ASC', 'DESC', ''])) {
+            throw new \Exception("Invalid order direction: \"{$orderDir}\".");
+        }
         $q->orderBy($orderColumn.' '.$orderDir);
 
         $q->addSelect($columns);
@@ -72,6 +85,8 @@ trait PartsTrait
     /**
      * @param PartsBalancePartnerForm $partsBalancePartnerForm
      * @return array
+     * @throws \Exception
+     * @todo Refactor or remove: unsafe and fragile code.
      */
     public function getPartsBalancePartner(PartsBalancePartnerForm $partsBalancePartnerForm)
     {
@@ -92,6 +107,9 @@ trait PartsTrait
         $result['recordsTotal'] = $q->count();
 
         foreach ($partsBalancePartnerForm->columns as $column) {
+            if (!in_array($column['name'], array_keys(PartsBalancePartnerForm::COLUMNS_BY_PARTS_BALANCE))) {
+                throw new \Exception("Invalid column name: \"{$column['name']}\".");
+            }
             if(!empty($column['search']['value'])) {
                 $arr = explode(' AS ', $column['name']);
                 $q->andWhere([
@@ -117,11 +135,27 @@ trait PartsTrait
 
         $columnNOrder = $partsBalancePartnerForm->order[0]['column'];
         $orderColumn = $partsBalancePartnerForm->columns[$columnNOrder]['data'];
-        $orderDir = $partsBalancePartnerForm->order[0]['dir'];
+        if (!in_array($orderColumn, $this->getValidOrderColumns($columns))) {
+            throw new \Exception("Invalid order column name: \"{$orderColumn}\".");
+        }
+        $orderDir = strtoupper(trim($partsBalancePartnerForm->order[0]['dir']));
+        if (!in_array($orderDir, ['ASC', 'DESC', ''])) {
+            throw new \Exception("Invalid order direction: \"{$orderDir}\".");
+        }
         $q->orderBy($orderColumn.' '.$orderDir);
 
         $q->addSelect($columns);
         $result['data'] = $q->asArray()->all();
+        return $result;
+    }
+
+    private function getValidOrderColumns(array $columnNames): array
+    {
+        $result = [];
+        foreach ($columnNames as $columnName) {
+            $parts = explode(' AS ', $columnName);
+            $result[] = array_pop($parts);
+        }
         return $result;
     }
 }
