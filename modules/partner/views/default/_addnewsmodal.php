@@ -1,3 +1,8 @@
+<?php
+
+use yii\helpers\Html;
+
+?>
 <div id="modal-addnews" class="modal fade" aria-hidden="true" style="display: none;">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -14,7 +19,7 @@
                     </div>
                     <div class="form-group row">
                         <div class="col-sm-12">
-                            <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
+                            <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
                             <input type="submit" id="submitnews" value="Сохранить" class="btn btn-primary">
                         </div>
                     </div>

@@ -6,6 +6,7 @@
 /* @var $partnerlist array */
 
 use app\models\payonline\Partner;
+use yii\helpers\Html;
 
 $this->title = "контрагенты";
 
@@ -64,14 +65,14 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                             <?php if (is_array($list) && count($list) > 0) : ?>
                                 <?php /** @var Partner $usl */
                                 foreach ($list as $usl) : ?>
-                                    <tr data-parttype="<?=$usl->TypeMerchant?>" data-click="/partner/partner/partner-edit/<?=$usl->ID?>" style="cursor: pointer;">
-                                        <td class="project-title"><?=$usl->ID?></td>
-                                        <td class="project-title"><?=$usl->Name?></td>
-                                        <td class="project-title"><?=$usl->UrLico?></td>
+                                    <tr data-parttype="<?=Html::encode($usl->TypeMerchant)?>" data-click="/partner/partner/partner-edit/<?=Html::encode($usl->ID)?>" style="cursor: pointer;">
+                                        <td class="project-title"><?=Html::encode($usl->ID)?></td>
+                                        <td class="project-title"><?=Html::encode($usl->Name)?></td>
+                                        <td class="project-title"><?=Html::encode($usl->UrLico)?></td>
                                         <td class="project-title">
-                                            <div><?=$usl->KontTehFio?></div>
-                                            <div><?=$usl->KontTehPhone?></div>
-                                            <div><?=$usl->KontTehEmail?></div>
+                                            <div><?=Html::encode($usl->KontTehFio)?></div>
+                                            <div><?=Html::encode($usl->KontTehPhone)?></div>
+                                            <div><?=Html::encode($usl->KontTehEmail)?></div>
                                         </td>
                                         <td class="project-title"><?=Partner::$TypeContrag[$usl->TypeMerchant]?></td>
                                     </tr>

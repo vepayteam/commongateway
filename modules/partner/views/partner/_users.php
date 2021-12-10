@@ -4,11 +4,13 @@
 /* @var array $users */
 /* @var $partner \app\models\payonline\Partner */
 
+use yii\helpers\Html;
+
 ?>
 
 <div class="row">
     <div class="m-md">
-        <a href="/partner/partner/users-add/<?=$partner->ID?>" class="btn btn-primary">Добавить</a>
+        <a href="/partner/partner/users-add/<?=Html::encode($partner->ID)?>" class="btn btn-primary">Добавить</a>
     </div>
 </div>
 
@@ -27,10 +29,10 @@
         <?php if ($users) : ?>
             <?php foreach ($users as $u) : ?>
                 <tr>
-                    <td class="project-title"><a href="/partner/partner/users-edit/<?=$u->ID?>"><?=$u->Login?></a></td>
-                    <td class="project-title"><?=$u->FIO?></td>
-                    <td class="project-title"><?=$u->Doljnost?></td>
-                    <td class="project-title"><?=$u->Email?></td>
+                    <td class="project-title"><a href="/partner/partner/users-edit/<?=Html::encode($u->ID)?>"><?=Html::encode($u->Login)?></a></td>
+                    <td class="project-title"><?=Html::encode($u->FIO)?></td>
+                    <td class="project-title"><?=Html::encode($u->Doljnost)?></td>
+                    <td class="project-title"><?=Html::encode($u->Email)?></td>
                     <td class="project-actions"><?=($u->IsActive ?
                             '<span class="label label-info">Активный</span>' :
                             '<span class="label label-warning">Неактивный</span>'

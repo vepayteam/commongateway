@@ -7,6 +7,7 @@
 /* @var $IsMfo bool */
 
 use app\models\partner\PartUserAccess;
+use yii\helpers\Html;
 
 $act = PartUserAccess::getSelRazdel(\Yii::$app->controller->action);
 $partsBalanceAccess = PartUserAccess::checkPartsBalanceAccess();
@@ -104,11 +105,11 @@ $partsBalanceAccess = PartUserAccess::checkPartsBalanceAccess();
                     </a>
                     <ul class="nav nav-second-level collapse <?= $activeSubMenu ? 'in' : '' ?>"
                         aria-expanded="true" style="">
-                        <li class="<?= $act[10] ?>"><a href="/partner/stat/sale">Продажи</a></li>
-                        <li class="<?= $act[11] ?>"><a href="/partner/stat/saledraft">Средний чек</a></li>
-                        <li class="<?= $act[12] ?>"><a href="/partner/stat/salekonvers">Конверсия</a></li>
+                        <li class="<?= Html::encode($act[10]) ?>"><a href="/partner/stat/sale">Продажи</a></li>
+                        <li class="<?= Html::encode($act[11]) ?>"><a href="/partner/stat/saledraft">Средний чек</a></li>
+                        <li class="<?= Html::encode($act[12]) ?>"><a href="/partner/stat/salekonvers">Конверсия</a></li>
                         <?php if ($IsAdmin || $IsMfo || ((count($razdels) == 0 || isset($razdels[13])))) : ?>
-                            <li class="<?= $act[13] ?>"><a href="/partner/stat/platelshik">Покупатели</a></li>
+                            <li class="<?= Html::encode($act[13]) ?>"><a href="/partner/stat/platelshik">Покупатели</a></li>
                         <?php endif; ?>
                         <li class="<?= !empty($act[14]) || !empty($act[15]) || !empty($act[16]) || !empty($act[17]) || !empty($act[23]) ? 'active' : '' ?>">
                             <a href="/partner/stat/recurrentcard">Регулярные платежи</a>
@@ -121,12 +122,12 @@ $partsBalanceAccess = PartUserAccess::checkPartsBalanceAccess();
             <?php endif; ?>
 
             <?php if ($IsAdmin || (!$IsMfo && (count($razdels) == 0 || isset($razdels[6])))) : ?>
-                <li class="<?= $act[6] ?>"><a href="/partner/order/index"><i class="fa fa-dribbble"></i> <span
+                <li class="<?= Html::encode($act[6]) ?>"><a href="/partner/order/index"><i class="fa fa-dribbble"></i> <span
                                 class="nav-label">Виджет</span></a></li>
             <?php endif; ?>
 
             <?php if ($IsAdmin /*|| (!$IsMfo && (count($razdels) == 0 || isset($razdels[3])))*/) : ?>
-                <li class="<?= $act[3] ?>"><a href="/partner/partner/index"><i class="fa fa-briefcase"></i> <span
+                <li class="<?= Html::encode($act[3]) ?>"><a href="/partner/partner/index"><i class="fa fa-briefcase"></i> <span
                                 class="nav-label">Контрагенты</span></a></li>
             <?php endif; ?>
 
@@ -136,13 +137,13 @@ $partsBalanceAccess = PartUserAccess::checkPartsBalanceAccess();
             <?php endif; ?>
 
             <?php if ($IsAdmin || $IsMfo || (!$IsMfo && (count($razdels) == 0 || isset($razdels[7])))) : ?>
-                <li class="<?= $act[7] ?>"><a href="/partner/callback/list"><i class="fa fa-bell-o"></i> <span
+                <li class="<?= Html::encode($act[7]) ?>"><a href="/partner/callback/list"><i class="fa fa-bell-o"></i> <span
                                 class="nav-label">Коллбэки</span></a></li>
             <?php endif; ?>
 
             <?php if ($IsAdmin) : ?>
-                <li class="<?=$act[8]?>"><a href="/partner/admin/comisotchet"><i class="fa fa-lemon-o"></i> <span class="nav-label">Вывод вознаграждения</span></a></li>
-                <li class="<?= $act[19] . $act[20] . $act[22]?>"><a href="/partner/antifraud/index"><i class="fa fa-free-code-camp"></i> <span class="nav-label">Антифрод</span></a></li>
+                <li class="<?=Html::encode($act[8])?>"><a href="/partner/admin/comisotchet"><i class="fa fa-lemon-o"></i> <span class="nav-label">Вывод вознаграждения</span></a></li>
+                <li class="<?=Html::encode($act[19] . $act[20] . $act[22])?>"><a href="/partner/antifraud/index"><i class="fa fa-free-code-camp"></i> <span class="nav-label">Антифрод</span></a></li>
             <?php endif; ?>
 
         </ul>

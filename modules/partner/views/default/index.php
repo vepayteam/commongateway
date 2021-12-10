@@ -1,6 +1,7 @@
 <?php
 
 use app\models\partner\news\News;
+use yii\helpers\Html;
 
 /* @var yii\web\View $this */
 /* @var $IsAdmin */
@@ -32,11 +33,11 @@ $this->title = "Кабинет партнера";
 
                     <div class="feed-element">
                         <div>
-                            <strong <?= false ? 'style=\'color: red\'' : ''?>><?=\yii\helpers\Html::encode($onenew->Head)?></strong>
+                            <strong <?= false ? 'style=\'color: red\'' : ''?>><?=Html::encode($onenew->Head)?></strong>
                             <?php if ($IsAdmin) : ?>
-                                <a class="pull-right" data-id="<?=$onenew->ID?>" data-click="delnews"><i class="fa fa-times" style="color: #a7b1c2"></i></a>
+                                <a class="pull-right" data-id="<?= Html::encode($onenew->ID)?>" data-click="delnews"><i class="fa fa-times" style="color: #a7b1c2"></i></a>
                             <?php endif;?>
-                            <div <?= false ? 'style=\'color: red\'' : ''?>><?=str_replace("\r\n", "<br>", \yii\helpers\Html::encode($onenew->Body))?></div>
+                            <div <?= false ? 'style=\'color: red\'' : ''?>><?=str_replace("\r\n", "<br>", Html::encode($onenew->Body))?></div>
                             <small class="text-muted"><?=date('d.m.Y H:i', $onenew->DateAdd)?></small>
                         </div>
                     </div>

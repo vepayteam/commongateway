@@ -58,7 +58,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 
                         <div class="form-group">
                             <div class="col-sm-offset-2 col-sm-4">
-                                <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
+                                <?=Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf'])?>
                                 <input name="paytype" type="hidden" value="-1">
                                 <input name="accountpay" type="hidden" value="">
                                 <button class="btn btn-sm btn-primary" type="submit">Сохранить</button>
@@ -94,9 +94,9 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                 <select class=" form-control" name="Options[<?=Banks::BANK_BY_PAYMENT_OPTION_NAME?>]">
                                     <option value="-1">Любой</option>
                                     <? foreach(Banks::getBanksByDropdown() as $id => $name) : ?>
-                                        <option value="<?=$id?>"
+                                        <option value="<?=Html::encode($id)?>"
                                             <?=($options[Banks::BANK_BY_PAYMENT_OPTION_NAME] == $id ? 'selected' : '')?>>
-                                            <?=$name?>
+                                            <?=Html::encode($name)?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -108,9 +108,9 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                 <select class=" form-control" name="Options[<?=Banks::BANK_BY_TRANSFER_IN_CARD_OPTION_NAME?>]">
                                     <option value="-1">Любой</option>
                                     <? foreach(Banks::getBanksByDropdown() as $id => $name) : ?>
-                                        <option value="<?=$id?>"
+                                        <option value="<?=Html::encode($id)?>"
                                             <?=($options[Banks::BANK_BY_TRANSFER_IN_CARD_OPTION_NAME] == $id ? 'selected' : '')?>>
-                                            <?=$name?>
+                                            <?=Html::encode($name)?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -118,40 +118,40 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         </div>
                         <?php /** @var Banks $bank */?>
                         <?php foreach ($banks as $bank) : ?>
-                            <input type="hidden" name="Bank[<?=$bank->ID?>][ID]" value="<?=$bank->ID?>">
+                            <input type="hidden" name="Bank[<?=Html::encode($bank->ID)?>][ID]" value="<?=Html::encode($bank->ID)?>">
                             <div class="form-group">
-                                <label class="col-sm-2 control-label"><?=$bank->Name?> приоритет:</label>
+                                <label class="col-sm-2 control-label"><?=Html::encode($bank->Name)?> приоритет:</label>
                                 <div class="col-sm-2">
-                                    <input type="text" name="Bank[<?=$bank->ID?>][SortOrder]" value="<?=$bank->SortOrder?>" maxlength="2" class="form-control">
+                                    <input type="text" name="Bank[<?=Html::encode($bank->ID)?>][SortOrder]" value="<?=Html::encode($bank->SortOrder)?>" maxlength="2" class="form-control">
                                 </div>
                                 <div class="col-sm-2">
                                     <div class="checkbox m-r-xs">
-                                        <input type="checkbox" id="checkboxUsePayIn<?=$bank->ID?>" name="Bank[<?=$bank->ID?>][UsePayIn]" value="1" <?=$bank->UsePayIn ? 'checked' : ''?>>
-                                        <label for="checkboxUsePayIn<?=$bank->ID?>">
+                                        <input type="checkbox" id="checkboxUsePayIn<?=Html::encode($bank->ID)?>" name="Bank[<?=Html::encode($bank->ID)?>][UsePayIn]" value="1" <?=$bank->UsePayIn ? 'checked' : ''?>>
+                                        <label for="checkboxUsePayIn<?=Html::encode($bank->ID)?>">
                                             Использовать
                                         </label>
                                     </div>
                                 </div>
                                 <div class="col-sm-2">
                                     <div class="checkbox m-r-xs">
-                                        <input type="checkbox" id="checkboxUseApplePay<?=$bank->ID?>" name="Bank[<?=$bank->ID?>][UseApplePay]" value="1" <?=$bank->UseApplePay ? 'checked' : ''?>>
-                                        <label for="checkboxUseApplePay<?=$bank->ID?>">
+                                        <input type="checkbox" id="checkboxUseApplePay<?=Html::encode($bank->ID)?>" name="Bank[<?=Html::encode($bank->ID)?>][UseApplePay]" value="1" <?=$bank->UseApplePay ? 'checked' : ''?>>
+                                        <label for="checkboxUseApplePay<?=Html::encode($bank->ID)?>">
                                             Apple Pay
                                         </label>
                                     </div>
                                 </div>
                                 <div class="col-sm-2">
                                     <div class="checkbox m-r-xs">
-                                        <input type="checkbox" id="checkboxUseGooglePay<?=$bank->ID?>" name="Bank[<?=$bank->ID?>][UseGooglePay]" value="1" <?=$bank->UseGooglePay ? 'checked' : ''?>>
-                                        <label for="checkboxUseGooglePay<?=$bank->ID?>">
+                                        <input type="checkbox" id="checkboxUseGooglePay<?=Html::encode($bank->ID)?>" name="Bank[<?=Html::encode($bank->ID)?>][UseGooglePay]" value="1" <?=$bank->UseGooglePay ? 'checked' : ''?>>
+                                        <label for="checkboxUseGooglePay<?=Html::encode($bank->ID)?>">
                                             Google Pay
                                         </label>
                                     </div>
                                 </div>
                                 <div class="col-sm-2">
                                     <div class="checkbox m-r-xs">
-                                        <input type="checkbox" id="checkboxUseSamsungPay<?=$bank->ID?>" name="Bank[<?=$bank->ID?>][UseSamsungPay]" value="1" <?=$bank->UseSamsungPay ? 'checked' : ''?>>
-                                        <label for="checkboxUseSamsungPay<?=$bank->ID?>">
+                                        <input type="checkbox" id="checkboxUseSamsungPay<?=Html::encode($bank->ID)?>" name="Bank[<?=Html::encode($bank->ID)?>][UseSamsungPay]" value="1" <?=$bank->UseSamsungPay ? 'checked' : ''?>>
+                                        <label for="checkboxUseSamsungPay<?=Html::encode($bank->ID)?>">
                                             Samsung Pay
                                         </label>
                                     </div>
@@ -160,7 +160,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         <?php endforeach; ?>
                         <div class="form-group">
                             <div class="col-sm-offset-2 col-sm-4">
-                                <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
+                                <?=Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf'])?>
                                 <button class="btn btn-sm btn-primary" type="submit">Сохранить</button>
                             </div>
                         </div>
@@ -188,12 +188,12 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                 <form class="form-horizontal m-t-md" id="veekenddays">
                     <div class="form-group"><label class="col-sm-2 control-label">Праздничные дни</label>
                         <div class="col-sm-10 col-md-6">
-                            <input type="text" name="veekenddays" value="<?=$veekends?>" maxlength="200" class="form-control">
+                            <input type="text" name="veekenddays" value="<?=Html::encode($veekends)?>" maxlength="200" class="form-control">
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="col-sm-offset-2 col-sm-4">
-                            <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
+                            <?=Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf'])?>
                             <button class="btn btn-sm btn-primary" type="submit">Сохранить</button>
                         </div>
                     </div>
