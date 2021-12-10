@@ -97,11 +97,16 @@ class ReceiveStatemets
 
         $bal = null;
         if (!empty($this->Partner->SchetTcbNominal) && $TypeSchet == 2) {
-            $bal = $tcBank->getStatementNominal([
-                'account' => $this->Partner->SchetTcbNominal,
-                'datefrom' => date('Y-m-d\TH:i:s', $dateFrom),
-                'dateto' => date('Y-m-d\TH:i:s', $dateTo)
-            ]);
+            if (Yii::$app->params['TESTMODE'] == 'Y') {
+                $MfoTestError = new MfoTestError();
+                $bal = $MfoTestError->TestNominalStatements();
+            } else {
+                $bal = $tcBank->getStatementNominal([
+                    'account' => $this->Partner->SchetTcbNominal,
+                    'datefrom' => date('Y-m-d\TH:i:s', $dateFrom),
+                    'dateto' => date('Y-m-d\TH:i:s', $dateTo)
+                ]);
+            }
             if ($bal && isset($bal['statements'])) {
                 $this->list = $this->ParseSatementsNominal($bal['statements']);
             }
@@ -241,11 +246,17 @@ class ReceiveStatemets
         $BalanceOut = new BalancePartner(BalancePartner::OUT, $this->Partner->ID);
 
         foreach ($this->list as $statement) {
-            $existId = StatementsAccount::findOne([
+            $existId = null;
+
+            /** @var  StatementsAccount|null $statementsAccount */
+            $statementsAccount = StatementsAccount::findOne([
                 'IdPartner' => $this->Partner->ID,
                 'BnkId' => $statement['id'],
                 'TypeAccount' => $TypeSchet,
-            ])->ID;
+            ]);
+            if($statementsAccount) {
+                $existId = $statementsAccount->ID;
+            }
 
             $sumVyp = round($statement['summ'] * 100.0);
             $comisSum = 0;
@@ -344,13 +355,17 @@ class ReceiveStatemets
                 $statementsAccaunt->save(false);
             }
         }
+        /** @var  StatementsPlanner|null $statementsPlanner */
+        $statementsPlanner = StatementsPlanner::findOne([
+            'IdPartner' => $this->Partner->ID,
+            'IdTypeAcc' => $TypeSchet]
+        );
 
-        $IdPlanner = StatementsPlanner::findOne(['IdPartner' => $this->Partner->ID, 'IdTypeAcc' => $TypeSchet])->ID;
-        if ($IdPlanner) {
+        if ($statementsPlanner) {
             StatementsPlanner::updateAll([
                 'DateUpdateFrom' => $dateFrom,
                 'DateUpdateTo' => min($dateTo, time() - 60)
-            ], ['ID' => $IdPlanner]);
+            ], ['ID' => $statementsPlanner->ID]);
         } else {
             $statementsPlanner = new StatementsPlanner([
                 'IdPartner' => $this->Partner->ID,
