@@ -8,7 +8,8 @@ $this->params['breadtitle'] = "Платежные поручения";
 $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 
 use app\models\payonline\Cards;
-use yii\grid\GridView; ?>
+use yii\grid\GridView;
+use yii\helpers\Html; ?>
 <div class="row">
     <div class="col-sm-12">
         <div class="ibox float-e-margins">
@@ -49,7 +50,7 @@ use yii\grid\GridView; ?>
                                 'header' => 'Реквизиты',
                                 'value' => function ($model) {
                                     $params = $model['QrParams'];
-                                    return str_replace("|", '<br>', $params);
+                                    return str_replace("\n", '<br>', Html::encode(str_replace('|', "\n", $params)));
                                 },
                                 'format' => 'raw'
 
@@ -71,7 +72,7 @@ use yii\grid\GridView; ?>
                             [
                                 'header' => 'Действие',
                                 'value' => function ($model) {
-                                    return '<button class="btn btn-white btn-xs confirm-small" data-id="' . $model['ID'] . '">Подтвердить</button>';
+                                    return '<button class="btn btn-white btn-xs confirm-small" data-id="' . Html::encode($model['ID']) . '">Подтвердить</button>';
                                 },
                                 'format' => 'raw'
                             ]

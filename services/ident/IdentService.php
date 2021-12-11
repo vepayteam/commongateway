@@ -8,6 +8,9 @@ use app\services\ident\forms\IdentStatisticForm;
 use app\services\ident\traits\RunaIdentTrait;
 use yii\db\Query;
 
+/**
+ * @deprecated
+ */
 class IdentService
 {
     use RunaIdentTrait;
@@ -22,6 +25,12 @@ class IdentService
         'NotValid' => '101',
     ];
 
+    /**
+     * @param IdentStatisticForm $identStatisticForm
+     * @return array
+     * @throws \Exception
+     * @todo Refactor or remove: unsafe and fragile code.
+     */
     public function getIdentStatistic(IdentStatisticForm $identStatisticForm)
     {
         $result = [
@@ -41,6 +50,9 @@ class IdentService
         $result['recordsTotal'] = $q->count();
 
         foreach ($identStatisticForm->columns as $column) {
+            if (!in_array($column['name'], array_keys(IdentStatisticForm::COLUMNS_BY_PARTS_BALANCE))) {
+                throw new \Exception("Invalid column name: \"{$column['name']}\".");
+            }
             if (!empty($column['search']['value'])) {
                 $arr = explode(' AS ', $column['name']);
                 $q->andWhere([
@@ -64,7 +76,13 @@ class IdentService
 
         $columnNOrder = $identStatisticForm->order[0]['column'];
         $orderColumn = $identStatisticForm->columns[$columnNOrder]['data'];
-        $orderDir = $identStatisticForm->order[0]['dir'];
+        if (!in_array($orderColumn, $this->getValidOrderColumns($columns))) {
+            throw new \Exception("Invalid order column name: \"{$orderColumn}\".");
+        }
+        $orderDir = strtoupper(trim($identStatisticForm->order[0]['dir']));
+        if (!in_array($orderDir, ['ASC', 'DESC', ''])) {
+            throw new \Exception("Invalid order direction: \"{$orderDir}\".");
+        }
         $q->orderBy($orderColumn . ' ' . $orderDir);
 
         $q->addSelect($columns);
@@ -94,6 +112,16 @@ class IdentService
         }
 
         return bindec($decResult);
+    }
+
+    private function getValidOrderColumns(array $columnNames): array
+    {
+        $result = [];
+        foreach ($columnNames as $columnName) {
+            $parts = explode(' AS ', $columnName);
+            $result[] = array_pop($parts);
+        }
+        return $result;
     }
 
 }

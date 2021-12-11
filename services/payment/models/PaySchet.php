@@ -343,9 +343,9 @@ class PaySchet extends \yii\db\ActiveRecord
         return $this->hasOne(Bank::class, ['ID' => 'Bank']);
     }
 
-    public function getCurrency()
+    public function getCurrency(): ActiveQuery
     {
-        return $this->hasOne(Currency::class, ['Id' => 'CurrencyId'])->one();
+        return $this->hasOne(Currency::class, ['Id' => 'CurrencyId']);
     }
 
     public function getLog()
@@ -371,6 +371,10 @@ class PaySchet extends \yii\db\ActiveRecord
     {
         if (!parent::beforeSave($insert)) {
             return false;
+        }
+
+        if (is_string($this->ErrorInfo)) {
+            $this->ErrorInfo = mb_substr($this->ErrorInfo, 0, 250);
         }
 
         $this->DateLastUpdate = time();

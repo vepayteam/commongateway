@@ -18,6 +18,7 @@ use app\models\payonline\User;
 use app\models\TU;
 use app\services\payment\models\PaySchet;
 use yii\data\Pagination;
+use yii\helpers\Html;
 use yii\widgets\LinkPager;
 
 ?>
@@ -65,14 +66,14 @@ use yii\widgets\LinkPager;
         foreach ($data as $row) :
 ?>
             <tr>
-                <td><?= $row['ID'] ?></td>
-                <td><?= $row['Extid'] ?></td>
-                <td><?= $row['NameUsluga'] ?></td>
-                <td><?= str_ireplace("\r\n", "<br>", trim(str_ireplace("|", "\r\n", $row['QrParams']))) ?></td>
+                <td><?= Html::encode($row['ID']) ?></td>
+                <td><?= Html::encode($row['Extid']) ?></td>
+                <td><?= Html::encode($row['NameUsluga']) ?></td>
+                <td><?= str_replace("\n", "<br>", Html::encode(trim(str_replace('|', "\n", $row['QrParams'])))) ?></td>
                 <td class="text-right"><?= number_format($row['SummPay'] / 100.0,2,'.','&nbsp;') ?></td>
                 <td class="text-right"><?= number_format($row['ComissSumm'] / 100.0,2,'.','&nbsp;') ?></td>
                 <td class="text-right"><?= number_format(($row['SummPay']+$row['ComissSumm']) / 100.0,2,'.','&nbsp;') ?></td>
-                <td class="text-right"><?= $row['Currency'] ?></td>
+                <td class="text-right"><?= Html::encode($row['Currency']) ?></td>
                 <?php if ($IsAdmin) : ?>
                     <td class="text-right">
                         <?= number_format($row['BankComis'] / 100.0,2,'.','&nbsp;') ?>
@@ -85,36 +86,36 @@ use yii\widgets\LinkPager;
                     <?= date('d.m.Y H:i:s', $row['DateCreate']) ?> /<br>
                     <?= $row['DateOplat'] > 0 ? date('d.m.Y H:i:s', $row['DateOplat']) : "нет" ?>
                 </td>
-                <td><?= $row['ExtBillNumber'] ?></td>
+                <td><?= Html::encode($row['ExtBillNumber']) ?></td>
                 <td>
 
-                    <span class="label label-primary" style="background-color: <?=PaySchet::STATUS_COLORS[$row['Status']]?>">
-                        <?= (!$row['sms_accept'] && $row['Status'] == 0) ? 'Создан' : PaySchet::STATUSES[$row['Status']] ?>
+                    <span class="label label-primary" style="background-color: <?=Html::encode(PaySchet::STATUS_COLORS[$row['Status']])?>">
+                        <?= (!$row['sms_accept'] && $row['Status'] == 0) ? 'Создан' : Html::encode(PaySchet::STATUSES[$row['Status']]) ?>
                     </span>
                 </td>
                 <td>
-                    <div><?= $row['ErrorInfo'] ?></div>
+                    <div><?= Html::encode($row['ErrorInfo']) ?></div>
                     <?php if ($row['Status'] == 2 && !empty($row['RCCode'])) : ?>
-                        <div>Код: <?= $row['RCCode'] ?></div>
+                        <div>Код: <?= Html::encode($row['RCCode']) ?></div>
                     <?php endif; ?>
                 </td>
-                <td><?= $row['CardType'] ?></td>
-                <td><?= $row['CountryUser'] . " " . $row['CityUser'] ?></td>
-                <td><?= $row['IdOrg'] ?></td>
-                <td><?= $row['CardNumber'] ?></td>
-                <td><?= $row['CardHolder'] ?></td>
-                <td><?= $row['RRN'] ?></td>
-                <td><?= $row['IdKard'] ?></td>
-                <td><?= $row['BankName'] ?></td>
+                <td><?= Html::encode($row['CardType']) ?></td>
+                <td><?= Html::encode($row['CountryUser'] . " " . $row['CityUser']) ?></td>
+                <td><?= Html::encode($row['IdOrg']) ?></td>
+                <td><?= Html::encode($row['CardNumber']) ?></td>
+                <td><?= Html::encode($row['CardHolder']) ?></td>
+                <td><?= Html::encode($row['RRN']) ?></td>
+                <td><?= Html::encode($row['IdKard']) ?></td>
+                <td><?= Html::encode($row['BankName']) ?></td>
                 <td>
-                    <input class='btn btn-white btn-xs' data-action="logpay" data-id='<?= $row['ID'] ?>' type='button' value='Лог'>
+                    <input class='btn btn-white btn-xs' data-action="logpay" data-id='<?= Html::encode($row['ID']) ?>' type='button' value='Лог'>
                     <?php if ($row['Status'] == 1 && (TU::IsInPay($row['IsCustom']) || TU::IsInAutoAll($row['IsCustom']))): ?>
-                        <input class='btn btn-white btn-xs' data-action="cancelpay" data-id='<?= $row['ID'] ?>' type='button' value='Отменить'>
+                        <input class='btn btn-white btn-xs' data-action="cancelpay" data-id='<?= Html::encode($row['ID']) ?>' type='button' value='Отменить'>
                     <?php endif; ?>
-                        <input class="btn btn-white btn-xs excerpt" data-id="<?=$row['ID']?>" type="button" value="Выписка">
+                        <input class="btn btn-white btn-xs excerpt" data-id="<?=Html::encode($row['ID'])?>" type="button" value="Выписка">
                     <?php if ($IsAdmin && $row['Status'] != 0) : ?>
                         <a class="btn btn-white btn-xs" data-action="update-status-pay"
-                           href="#" data-id="<?=$row['ID']?>">
+                           href="#" data-id="<?=Html::encode($row['ID'])?>">
                             Обновить статус
                         </a>
                     <?php endif; ?>
@@ -163,12 +164,12 @@ use yii\widgets\LinkPager;
             }
             ?>
             <a class="btn btn-white btn-xs pull-right" target="_blank"
-               href="/partner/stat/list-export-csv?<?=$exportLink?>">
+               href="/partner/stat/list-export-csv?<?=Html::encode($exportLink)?>">
                 <i class="fa fa-share"></i>&nbsp;Экспорт csv
             </a></th>
             <th>
             <a class="btn btn-white btn-xs pull-right" target="_blank"
-               href="/partner/stat/listexport?<?=$exportLink?>">
+               href="/partner/stat/listexport?<?=Html::encode($exportLink)?>">
                 <i class="fa fa-share"></i>&nbsp;Экспорт xlsx
             </a></th>
     </tr>
