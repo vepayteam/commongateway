@@ -4,6 +4,8 @@
 /* @var $this \yii\web\View */
 /* @var bool $IsAdmin */
 
+use yii\helpers\Html;
+
 ?>
 
 <table class="table table-striped tabledata" id="orderlisttable" style="font-size: 0.9em">
@@ -32,22 +34,22 @@
             if ($row['StateOrder'] == 0) {
                 $actionBtn = '
                 <div class="btn-group">
-                    <button data-id="' . $row['ID'] . '" data-action="cancelorder" class="btn-white btn btn-xs">Отменить</button>
-                    <button data-id="' . $row['ID'] . '" data-action="resendorder" class="btn-white btn btn-xs">Повторно</button>
+                    <button data-id="' . Html::encode($row['ID']) . '" data-action="cancelorder" class="btn-white btn btn-xs">Отменить</button>
+                    <button data-id="' . Html::encode($row['ID']) . '" data-action="resendorder" class="btn-white btn btn-xs">Повторно</button>
                 </div>';
             }
             ?>
             <tr>
-                <td><a href="/widget/order/<?= $row['ID'] ?>" target="_blank"><?= $row['ID'] ?></a></td>
+                <td><a href="/widget/order/<?= Html::encode($row['ID']) ?>" target="_blank"><?= Html::encode($row['ID']) ?></a></td>
                 <td><span class="label label-primary" style="background-color: <?=$stClr[$row['StateOrder']]?>">
                             <?=$st[$row['StateOrder']]?></span></td>
                 <td><?= date('d.m.Y H:i:s', $row['DateAdd']) ?></td>
                 <td>
-                    <?= $row['DateOplata'] > 0 ? date('d.m.Y H:i:s', $row['DateOplata'])."<br>".$row['IdPaySchet'] : "нет" ?>
+                    <?= Html::encode($row['DateOplata'] > 0 ? date('d.m.Y H:i:s', $row['DateOplata'])."<br>".$row['IdPaySchet'] : "нет") ?>
                 </td>
                 <td class="text-right"><?= number_format($row['SumOrder'] / 100.0,2,'.',' ') ?></td>
-                <td><?= $row['EmailTo'] ?></td>
-                <td><?= $row['SmsTo'] ?></td>
+                <td><?= Html::encode($row['EmailTo']) ?></td>
+                <td><?= Html::encode($row['SmsTo']) ?></td>
                 <td><?= $actionBtn ?></td>
             </tr>
         <?php endforeach; ?>

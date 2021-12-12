@@ -10,6 +10,7 @@ $this->params['breadtitle'] = "Виджет";
 $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 
 use app\models\payonline\Partner;
+use yii\helpers\Html;
 use yii\web\View;
 ?>
 
@@ -43,7 +44,7 @@ use yii\web\View;
                                 <select class="form-control" name="partner">
                                     <option value="-1" data-ismfo="-1">Все</option>
                                     <?php foreach ($partnerlist as $partner) : ?>
-                                        <option value="<?=$partner->ID?>" data-ismfo="<?= $partner->ID == 1 ? 2 : $partner->IsMfo?>"><?=$partner->nameWithId?></option>
+                                        <option value="<?=Html::encode($partner->ID)?>" data-ismfo="<?= $partner->ID == 1 ? 2 : Html::encode($partner->IsMfo)?>"><?= Html::encode($partner->nameWithId)?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -62,7 +63,7 @@ use yii\web\View;
                     </div>
                     <div class="form-group">
                         <div class="col-sm-offset-2 col-sm-4">
-                            <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
+                            <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
                             <button class="btn btn-sm btn-primary" type="submit">Найти</button>
                         </div>
                     </div>

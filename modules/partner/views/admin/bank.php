@@ -125,7 +125,7 @@ use yii\web\View;
                     </div>
 
 
-                    <input type="hidden" value="<?=$Bank->ID?>" name="IdBank">
+                    <input type="hidden" value="<?=Html::encode($Bank->ID)?>" name="IdBank">
 
                     <?= Html::Button('Сохранить', [
                         'class' => 'btn btn-primary',
