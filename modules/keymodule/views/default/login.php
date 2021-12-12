@@ -1,4 +1,9 @@
-<div class="middle-box text-center loginscreen animated fadeInDown">
+<?php
+
+use yii\helpers\Html;
+
+?>
+    <div class="middle-box text-center loginscreen animated fadeInDown">
     <div>
         <div>
             <h1 class="text-center"><a href="/"><img src="/imgs/logo_vepay.svg" alt="Impay" width="auto" height="40" border="0"></a></h1>
@@ -18,7 +23,7 @@
 
             <a href="mailto:support@vepay.online"><small>Забыли пароль?</small></a>
 
-            <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
+            <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
         </form>
         <p class="m-t"> <small>ООО "ПРОЦЕССИНГОВАЯ КОМПАНИЯ БЫСТРЫХ ПЛАТЕЖЕЙ" &copy; <?= date('Y') ?></small> </p>
     </div>

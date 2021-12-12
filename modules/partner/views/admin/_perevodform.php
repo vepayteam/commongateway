@@ -3,6 +3,7 @@
 /* @var $this yii\web\View */
 
 use app\models\payonline\Partner;
+use yii\helpers\Html;
 
 ?>
 
@@ -19,7 +20,7 @@ use app\models\payonline\Partner;
         <div class="col-sm-8">
             <select class="form-control" name="Perechislen[IdPartner]">
                 <?php foreach ($partnerlist as $partner) : ?>
-                    <option value="<?=$partner->ID?>"><?=$partner->nameWithId?></option>
+                    <option value="<?=Html::encode($partner->ID)?>"><?=Html::encode($partner->nameWithId)?></option>
                 <?php endforeach; ?>
             </select>
         </div>
@@ -60,7 +61,7 @@ use app\models\payonline\Partner;
 
     <div class="form-group row">
         <div class="col-sm-12">
-            <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
+            <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
             <input type="submit" id="perevodpartner" value="Перевести" class="btn btn-primary pull-right" disabled="disabled">
         </div>
     </div>

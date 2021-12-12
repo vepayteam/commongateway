@@ -1,6 +1,7 @@
 <?php
 
 use app\models\partner\stat\ActMfo;
+use yii\helpers\Html;
 
 /* @var $act ActMfo */
 
@@ -15,7 +16,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
     <div class="col-sm-12">
         <div class="ibox float-e-margins">
             <div class="ibox-title">
-                <h5><?=$this->title?></h5>
+                <h5><?=Html::encode($this->title)?></h5>
             </div>
             <div class="ibox-content">
 
@@ -31,7 +32,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                     </tr>
                                     <tr>
                                         <td>1</td>
-                                        <td colspan="2"><?=$act->getPartner()->Name?></td>
+                                        <td colspan="2"><?=Html::encode($act->getPartner()->Name)?></td>
                                     </tr>
                                     <tr>
                                         <td>2</td>
@@ -89,8 +90,8 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                         <td><input type="text" class="form-control" name="ActMfo[EndOstatokPerevod]" value="<?=$act->EndOstatokPerevod/100.0?>"></td>
                                     </tr>
                                 </table>
-                                <input type="hidden" name="ID" value="<?=$act->ID?>">
-                                <input type="hidden" name="_csrf" value="<?=Yii::$app->request->csrfToken?>">
+                                <input type="hidden" name="ID" value="<?=Html::encode($act->ID)?>">
+                                <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
                             </form>
                         <?php else: ?>
                             <div class="row">

@@ -8,6 +8,7 @@ $this->title = "cредний чек";
 $this->params['breadtitle'] = "Средний чек";
 $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 
+use yii\helpers\Html;
 use yii\web\View;
 ?>
 
@@ -41,7 +42,7 @@ use yii\web\View;
                             <div class="col-sm-10 col-md-6">
                                 <select class="form-control multiselect-sale" multiple name="TypeUslug[]">
                                     <?php foreach ($uslugilist as $usl) : ?>
-                                        <option value="<?=$usl->ID?>"><?=$usl->Name?></option>
+                                        <option value="<?= Html::encode($usl->ID)?>"><?=Html::encode($usl->Name)?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>

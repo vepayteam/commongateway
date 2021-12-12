@@ -6,6 +6,8 @@
 /* @var $usl \app\models\payonline\Uslugatovar */
 /* @var $mags array */
 
+use yii\helpers\Html;
+
 $this->title = "изменить точку";
 
 $this->params['breadtitle'] = "Изменить точку";
@@ -17,11 +19,11 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
     <div class="col-lg-12">
         <div class="ibox float-e-margins">
             <div class="ibox-title">
-                <h5>Точка №<?=$usl->ID?></h5>
+                <h5>Точка №<?=Html::encode($usl->ID)?></h5>
                 <?php if (intval($usl->ID) > 0) : ?>
                 <div class="ibox-tools">
                     <a class="btn btn-xs btn-primary" data-toggle="modal" data-target="#showKodModal"
-                       data-id="<?=$usl->ID?>"><i class="fa fa-cog" aria-hidden="true"></i> Код на сайт</a>
+                       data-id="<?=Html::encode($usl->ID)?>"><i class="fa fa-cog" aria-hidden="true"></i> Код на сайт</a>
                     <a class="btn btn-xs btn-default" href="/partner/uslug/index"><i class="fa fa-close" aria-hidden="true"></i> Назад</a>
                 </div>
                 <?php endif; ?>
@@ -35,11 +37,11 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                     <div class="sk-rect5"></div>
                 </div>
                 <form class="form-horizontal" id="pointeditform">
-                    <p><?=$partner->Name?></p>
+                    <p><?=Html::encode($partner->Name)?></p>
                     <div class="form-group">
                         <label class="col-sm-4 control-label">Наименование точки</label>
                         <div class="col-sm-8">
-                            <input type="text" name="NameUsluga" class="form-control" value="<?=$usl->NameUsluga?>">
+                            <input type="text" name="NameUsluga" class="form-control" value="<?=Html::encode($usl->NameUsluga)?>">
                         </div>
                     </div>
                     <div class="form-group">
@@ -76,7 +78,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                 <option value="0" <?=$usl->IdMagazin == 0 ? 'selected' : ''?>>Нет</option>
                                 <?php if ($mags) : ?>
                                     <?php foreach ($mags as $m) : ?>
-                                    <option value="<?=$m->ID?>" <?=$usl->IdMagazin == $m->ID ? 'selected' : ''?>><?=$m->NameMagazin?></option>
+                                    <option value="<?=Html::encode($m->ID)?>" <?=$usl->IdMagazin == $m->ID ? 'selected' : ''?>><?=Html::encode($m->NameMagazin)?></option>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
                             </select>
@@ -85,17 +87,17 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                     <div class="form-group">
                         <label class="col-sm-4 control-label">URL-адрес точки</label>
                         <div class="col-sm-8">
-                            <input type="url" name="SitePoint" class="form-control" value="<?=$usl->SitePoint?>">
+                            <input type="url" name="SitePoint" class="form-control" value="<?=Html::encode($usl->SitePoint)?>">
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="col-sm-4 control-label">Цветовая схема</label>
                         <div class="col-sm-8">
                             <span class="col-sm-6" style="padding-left: 0">
-                            Основной цвет: <input type="text" class="form-control" id="colorpickerField1" name="ColorWdtMain" value="<?=$usl->ColorWdtMain?>">
+                            Основной цвет: <input type="text" class="form-control" id="colorpickerField1" name="ColorWdtMain" value="<?=Html::encode($usl->ColorWdtMain)?>">
                             </span>
                             <span class="col-sm-6" style="padding-right: 0">
-                            Цвет выбранного: <input type="text" class="form-control ColorWdt" id="colorpickerField2" name="ColorWdtActive" value="<?=$usl->ColorWdtActive?>">
+                            Цвет выбранного: <input type="text" class="form-control ColorWdt" id="colorpickerField2" name="ColorWdtActive" value="<?=Html::encode($usl->ColorWdtActive)?>">
                             </span>
                         </div>
                     </div>
@@ -110,7 +112,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                 <a href="#" class="close fileinput-exists" data-dismiss="fileinput" style="float: none">×</a>
                             </div>
                             <?php if (!empty($usl->LogoProv)) : ?>
-                                <div class="row"><img src="/shopdata/<?=$usl->IDPartner?>/<?=$usl->LogoProv?>" class="m-l" style="width: 100px; height: auto;" /></div>
+                                <div class="row"><img src="/shopdata/<?=Html::encode($usl->IDPartner)?>/<?=Html::encode($usl->LogoProv)?>" class="m-l" style="width: 100px; height: auto;" /></div>
                             <? endif; ?>
                         </div>
                     </div>
@@ -125,19 +127,19 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                     <div class="form-group">
                         <label class="col-sm-4 control-label">Email для оповещения о платеже и отправки реестра</label>
                         <div class="col-sm-8">
-                            <input type="email" class="form-control" name="EmailReestr" value="<?=$usl->EmailReestr?>">
+                            <input type="email" class="form-control" name="EmailReestr" value="<?=Html::encode($usl->EmailReestr)?>">
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="col-sm-4 control-label">URL-адрес для оповещения о платеже</label>
                         <div class="col-sm-8">
-                            <input type="url" class="form-control" name="UrlInform" value="<?=$usl->UrlInform?>">
+                            <input type="url" class="form-control" name="UrlInform" value="<?=Html::encode($usl->UrlInform)?>">
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="col-sm-4 control-label">URL-адрес для возврата клиента</label>
                         <div class="col-sm-8">
-                            <input type="url" class="form-control" name="UrlReturn" value="<?=$usl->UrlReturn?>">
+                            <input type="url" class="form-control" name="UrlReturn" value="<?=Html::encode($usl->UrlReturn)?>">
                         </div>
                     </div>
                     <div class="form-group">
@@ -150,13 +152,13 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                     </div>
                     <div class="form-group">
                         <div class="col-sm-offset-4 col-sm-8">
-                            <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
+                            <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
                             <input name="ID" type="hidden" value="<?=intval($usl->ID)?>">
                             <input name="idpart" type="hidden" value="<?=intval($usl->IDPartner)?>">
                             <button class="btn btn-primary" type="submit">Сохранить</button>
                         </div>
                     </div>
-                    <input type="hidden" name="EmailShablon" value="<?=$usl->EmailShablon?>">
+                    <input type="hidden" name="EmailShablon" value="<?=Html::encode($usl->EmailShablon)?>">
                 </form>
             </div>
         </div>

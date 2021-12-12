@@ -2,14 +2,16 @@
 /* @var $this \yii\web\View */
 /* @var $partner \app\models\payonline\Partner */
 
+use yii\helpers\Html;
+
 ?>
 
 <div class="ibox-content" style="border: none;">
-    <h3 class="m-b-xs"><strong><?=$partner->UrLico?></strong></h3>
-    <div>ИНН: <?=$partner->INN?><?=!empty($partner->KPP) ? 'КПП: '.$partner->KPP : ''?></div>
+    <h3 class="m-b-xs"><strong><?=Html::encode($partner->UrLico)?></strong></h3>
+    <div>ИНН: <?=Html::encode($partner->INN)?><?=Html::encode(!empty($partner->KPP) ? 'КПП: '.$partner->KPP : '')?></div>
     <address class="m-t-xs">
-        Юр.адрес:<?=str_ireplace("|", ",", $partner->UrAdres)?><br>
-        Почт.адрес:<?=str_ireplace("|", ",", $partner->PostAdres)?><br>
+        Юр.адрес:<?=Html::encode(str_replace("|", ",", $partner->UrAdres))?><br>
+        Почт.адрес:<?=Html::encode(str_replace("|", ",", $partner->PostAdres))?><br>
     </address>
 </div>
 

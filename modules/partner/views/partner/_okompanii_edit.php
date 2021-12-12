@@ -3,6 +3,7 @@
 use app\models\partner\PartnerUsers;
 use app\models\payonline\Partner;
 use yii\bootstrap\ActiveForm;
+use yii\helpers\Html;
 
 /* @var yii\web\View $this */
 /* @var Partner $partner */
@@ -135,7 +136,7 @@ echo $form->field($partner,'KSchet')->textInput(['class'=>'form-control']);
 
     <div class="row">
         <div class="col-sm-8 col-sm-offset-3">
-            <input type="hidden" name="Partner_ID" value="<?=$partner->ID?>">
+            <?= Html::hiddenInput('Partner_ID', $partner->ID) ?>
             <button type="button" class="btn btn-primary" id="btnEditPartner">Сохранить</button>
         </div>
     </div>
@@ -182,7 +183,7 @@ echo $form->field($partner,'KSchet')->textInput(['class'=>'form-control']);
 
 <div class="row">
     <div class="col-sm-8 col-sm-offset-3">
-        <input type="hidden" name="Partner_ID" value="<?=$partner->ID?>">
+        <?= Html::hiddenInput('Partner_ID', $partner->ID) ?>
         <button type="button" class="btn btn-primary" id="btnEditPartnerStatus">Сохранить</button>
     </div>
 </div>
@@ -232,10 +233,10 @@ ActiveForm::end();
     </div>
     <div class="row">
         <div class="col-sm-8 col-sm-offset-3">
-            <input type="hidden" name="ID" value="<?=(int)$PartnerAdmin->ID?>">
-            <input type="hidden" name="razdely[]" value="">
-            <input type="hidden" name="PartnerUsers[RoleUser]" value="1">
-            <input type="hidden" name="PartnerUsers[IdPartner]" value="<?=$partner->ID?>">
+            <?= Html::hiddenInput('ID', (int)$PartnerAdmin->ID) ?>
+            <?= Html::hiddenInput('razdely[]', '') ?>
+            <?= Html::hiddenInput('PartnerUsers[RoleUser]', '1') ?>
+            <?= Html::hiddenInput('PartnerUsers[IdPartner]', $partner->ID) ?>
             <button type="button" class="btn btn-primary" id="btnEditPartnerAdmin">Сохранить</button>
         </div>
     </div>
