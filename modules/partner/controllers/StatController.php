@@ -248,6 +248,7 @@ class StatController extends Controller
             if(PaySchet::find()->where($where)->exists()) {
                 Yii::$app->queue->push(new RefundPayJob([
                     'paySchetId' => Yii::$app->request->post('id', 0),
+                    'initiator' => Yii::$app->user->getId() ?? 'actionReversOrder',
                 ]));
             }
 

@@ -200,6 +200,7 @@ class OkPayStrategy
                     if($paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD) {
                         Yii::$app->queue->push(new ReverspayJob([
                             'idpay' => $paySchet->ID,
+                            'initiator' => 'OkPayStrategy confirmPay',
                         ]));
                     } else {
                         /** @var BalanceService $balanceService */
