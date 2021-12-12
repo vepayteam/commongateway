@@ -257,9 +257,6 @@ class PayShetStat extends Model
         $query = $this->buildQuery($select, $IdPart);
 
         $cnt = $sumPay = $sumComis = $voznagps = $bankcomis = 0;
-
-        // @TODO: костыль, без него ругается на invalid parameter number, но запрос в консоли БД выполняется нормально
-//        $res = Yii::$app->db->createCommand($query->createCommand()->getRawSql())->cache(10)->queryOne();
         $res = $query->one();
 
         $sumPay = $res['SummPay'];
@@ -321,8 +318,6 @@ class PayShetStat extends Model
             $query->orderBy('ID DESC')->limit($CNTPAGE);
         }
 
-        // @TODO: костыль, без него ругается на invalid parameter number, но запрос в консоли БД выполняется нормально
-//        $res = Yii::$app->db->createCommand($query->createCommand()->getRawSql())->cache(10)->queryAll();
         $res = $query->all();
 
         if($nolimit) {
@@ -384,6 +379,7 @@ class PayShetStat extends Model
         $query->andFilterWhere(['qp.IDPartner' => $this->idParts]);
         $query->andFilterWhere(['ps.ID' => $this->explode($this->id)]);
         $query->andFilterWhere(['ps.Extid' => $this->explode($this->Extid)]);
+        $query->andFilterWhere(['ps.Bank' => $this->idBank]);
 
         if ($IdPart > 0) {
             $query->andWhere('qp.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);

@@ -281,8 +281,7 @@ class StatController extends Controller
                 $data = $payShetList->getList2(UserLk::IsAdmin(Yii::$app->user), 0, 1);
                 $paySchets = PaySchet::findAll(ArrayHelper::getColumn($data['data'], 'ID'));
                 foreach ($paySchets as $paySchet) {
-                    $paySchet->uslugatovar->load(array_map('floatval', Yii::$app->request->post()), '');
-                    $paySchet->recalcComiss();
+                    $paySchet->recalcComiss(array_map('floatval', Yii::$app->request->post()));
                     $paySchet->save(false);
                 }
                 return $this->asJson([

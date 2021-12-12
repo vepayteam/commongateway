@@ -399,11 +399,12 @@ class PaySchet extends \yii\db\ActiveRecord
     /**
      * Recalculate comissions with parametrs
      *
+     * @param array $data
      * @return bool
      * @throws GateException
      * @throws \yii\base\InvalidConfigException
      */
-    public function recalcComiss(): bool
+    public function recalcComiss(array $data): bool
     {
         /** @var CompensationService $compensationService */
         $compensationService = \Yii::$app->get(CompensationService::class);
@@ -411,8 +412,11 @@ class PaySchet extends \yii\db\ActiveRecord
             ->build($this->partner, $this->uslugatovar, $this->currency)
             ->getPartnerBankGate();
         if ($gate->UseGateCompensation) {
-            $this->loadGateFeesFromUsluga($gate);
+            $this->fillGateFee($gate, $data);
+        } else {
+            $this->fillUslugaFee($this->uslugatovar, $data);
         }
+
         $this->BankComis = round($compensationService->calculateForBank($this, $gate));
         $this->MerchVozn = round($compensationService->calculateForPartner($this, $gate));
 
@@ -563,9 +567,21 @@ class PaySchet extends \yii\db\ActiveRecord
         }
     }
 
-    private function loadGateFeesFromUsluga(PartnerBankGate $gate)
+    private function fillGateFee(PartnerBankGate $gate, array $data)
     {
-        $gate->BankCommission = $this->uslugatovar->ProvComisPC;
-        $gate->BankMinimalFee = $this->uslugatovar->ProvComisMin * 100.0;
+        $gate->BankCommission = $data['ProvComisPC'];
+        $gate->BankMinimalFee = $data['ProvComisMin'];
+        $gate->BankFee = $data['BankFee'];
+        $gate->PartnerCommission = $data['ProvVoznagPC'];
+        $gate->PartnerMinimalFee = $data['ProvVoznagMin'];
+        $gate->PartnerFee = $data['ProvFee'];
+    }
+
+    private function fillUslugaFee(Uslugatovar $uslugatovar, array $data)
+    {
+        $uslugatovar->ProvComisPC = $data['ProvComisPC'];
+        $uslugatovar->ProvComisMin = $data['ProvComisMin'];
+        $uslugatovar->ProvVoznagPC = $data['ProvVoznagPC'];
+        $uslugatovar->ProvVoznagMin = $data['ProvVoznagMin'];
     }
 }

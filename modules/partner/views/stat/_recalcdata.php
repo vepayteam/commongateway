@@ -37,12 +37,20 @@ use yii\widgets\LinkPager;
 		<input type="text" class="form-control" name="ProvVoznagPC" placeholder="0">
 	</div>
 	<div class="form-group">
+		<label>Фиксированная комиссия с мерчанта, руб. (только шлюзы)</label>
+		<input type="text" class="form-control" name="ProvFee" placeholder="0">
+	</div>
+	<div class="form-group">
 		<label>Комиссия с мерчанта не менее, руб.</label>
 		<input type="text" class="form-control" name="ProvVoznagMin" placeholder="0">
 	</div>
 	<div class="form-group">
 		<label for="">Комиссия банка %</label>
 		<input type="text" class="form-control" name="ProvComisPC" placeholder="0">
+	</div>
+	<div class="form-group">
+		<label for="">Фиксированная комиссия банка, руб. (только шлюзы)</label>
+		<input type="text" class="form-control" name="BankFee" placeholder="0">
 	</div>
 	<div class="form-group">
 		<label for="">Комиссия банка не менее, руб.</label>
@@ -227,6 +235,9 @@ echo LinkPager::widget([
 			method: 'POST',
 			data: $('#recalc-from').serializeArray(),
 			dataType: "json",
+			beforeSend: () => {
+				$('#recalc-from button[type="submit"]').prop('disabled', 'disabled').html('Идёт загрузка, пожалуйста подождите...');
+			},
 			success: (data) => {
 				if (data.status) {
 					$('#recalc-modal').modal('hide');
