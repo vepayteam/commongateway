@@ -3,6 +3,8 @@
 /* @var yii\web\View $this */
 /* @var \app\models\payonline\Uslugatovar $usl */
 
+use yii\helpers\Html;
+
 $this->title = "конструктор виджета";
 
 $this->params['breadtitle'] = "Конструктор виджета";
@@ -140,9 +142,9 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         <div class="tab-content">
                             <div class="tab-pane bg-gray-lighter active" id="tab1">
                                 <form action="#" method="POST" id="uslForm">
-                                    <input type="hidden" name="IdPartner" value="<?= $usl['IDPartner'] ?>">
-                                    <input type="hidden" name="IdUsl" value="<?= $usl['ID'] ?>">
-                                    <input type="hidden" name="NameUsl" value="<?= $usl['NameUsluga'] ?>">
+                                    <input type="hidden" name="IdPartner" value="<?=Html::encode($usl['IDPartner'])?>">
+                                    <input type="hidden" name="IdUsl" value="<?=Html::encode($usl['ID'])?>">
+                                    <input type="hidden" name="NameUsl" value="<?=Html::encode($usl['NameUsluga'])?>">
                                     <input type="hidden" name="NameForm" value="Заказ">
                                     <input type="hidden" name="TypeTemplate" value="two">
                                 </form>

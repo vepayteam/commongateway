@@ -5,6 +5,8 @@ namespace app\services\payment\banks;
 
 
 use app\Api\Client\Client;
+use app\helpers\SignatureHelper;
+use app\helpers\signatureHelper\SignatureException;
 use app\models\TU;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
@@ -16,7 +18,6 @@ use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
-use app\services\payment\banks\commands\FortaErrorHandler;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CardTokenException;
 use app\services\payment\exceptions\CreatePayException;
@@ -25,6 +26,7 @@ use app\services\payment\exceptions\FortaDisabledRecurrentException;
 use app\services\payment\exceptions\FortaForbiddenException;
 use app\services\payment\exceptions\FortaGatewayTimeoutException;
 use app\services\payment\exceptions\FortaNotFoundException;
+use app\services\payment\exceptions\FortaSignatureException;
 use app\services\payment\exceptions\FortaUnauthorizedException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
@@ -45,6 +47,7 @@ use app\services\payment\jobs\RefreshStatusPayJob;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use app\services\payment\traits\MaskableTrait;
+use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
 use Yii;
@@ -436,7 +439,7 @@ class FortaTechAdapter implements IBankAdapter
         $action = '/api/recurrentPayment';
         $request = new RecurrentPayRequest();
         Yii::info([$action => $autoPayForm->attributes], 'recurentPay start');
-        $request->orderId = $autoPayForm->paySchet->ID;
+        $request->orderId = (string)$autoPayForm->paySchet->ID;
         $request->amount = $autoPayForm->paySchet->getSummFull();
         $card = $autoPayForm->getCard();
         if (!$card) {
@@ -451,6 +454,9 @@ class FortaTechAdapter implements IBankAdapter
             Yii::$app->errorHandler->logException($e);
             Yii::error([$e->getMessage(), $e->getTrace(), 'recurentPay send']);
             throw new BankAdapterResponseException('Ошибка запроса');
+        } catch (FortaSignatureException $e) {
+            Yii::$app->errorHandler->logException($e);
+            throw $e;
         }
 
         $createRecurrentPayResponse = new CreateRecurrentPayResponse();
@@ -472,17 +478,24 @@ class FortaTechAdapter implements IBankAdapter
      * @param RecurrentPayRequest $recurrentPayRequest
      *
      * @return string
+     * @throws FortaSignatureException
      */
     protected function buildRecurrentPaySignature(RecurrentPayRequest $recurrentPayRequest): string
     {
-        $stringToEncode = sprintf(
+        $stringToSign = sprintf(
             '%s;%s;%s;',
             $recurrentPayRequest->orderId,
             $recurrentPayRequest->cardToken,
             $recurrentPayRequest->amount
         );
 
-        return $this->buildSignature($stringToEncode);
+        $keyFilePath = \Yii::getAlias('@app/config/forta/' . str_replace('/', '', $this->gate->Login) . '.pem');
+        try {
+            return SignatureHelper::sign($stringToSign, file_get_contents($keyFilePath), OPENSSL_ALGO_SHA256);
+        } catch (SignatureException $e) {
+            \Yii::error('FortaTechAdapter signature error: ' . $e->getMessage());
+            throw new FortaSignatureException('Не удалось создать подпись.');
+        }
     }
 
     /**
@@ -693,47 +706,80 @@ class FortaTechAdapter implements IBankAdapter
      */
     protected function sendRequest($uri, $data, $signature = '', string $methodType = 'POST')
     {
-        $curl = curl_init();
+        $requestJson = $data !== null ? Json::encode($data) : null;
+        $maskedRequestString = $data !== null ? Json::encode($this->maskRequestCardInfo($data)) : null;
 
-        $dataJSON = Json::encode($data);
+        \Yii::info([
+            'message' => 'FortaTechAdapter request start.',
+            'uri' => $uri,
+            'method' => $methodType,
+            'requestData' => $maskedRequestString,
+            'signature' => $signature,
+        ]);
 
         $headers = [
-            'Content-Length: ' . mb_strlen($dataJSON),
-            'Content-Type: application/json',
-            'Authorization: Token: ' . $this->gate->Token,
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Token: ' . $this->gate->Token,
+            'User-Agent' => 'Vepay',
         ];
+        if (!empty($signature)) {
+            $headers['Signature'] = $signature;
+        }
+        $headers = array_map(function ($header){
+            // remove new lines
+            return trim(str_replace(["\r", "\n"], '', $header));
+        }, $headers);
 
-        if(!empty($signature)) {
-            $headers[] = 'Signature: ' . $signature;
+        $params = [
+            'timeout' => 90,
+            'headers' => $headers,
+        ];
+        if ($requestJson !== null) {
+            $params['body'] = $requestJson;
         }
 
-        $curlOptions = [
-            CURLOPT_URL => $this->bankUrl . $uri,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 90,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => $methodType,
-            CURLOPT_POSTFIELDS => $dataJSON,
-            CURLOPT_HTTPHEADER => $headers,
-        ];
+        $client = new \GuzzleHttp\Client();
+        try {
 
-        Yii::info(['curl to send' => $curlOptions], 'mfo/sendRequest');
-        curl_setopt_array($curl, $curlOptions);
-        $maskedRequest = $this->maskRequestCardInfo($data);
-        Yii::warning('FortaTechAdapter req uri=' . $uri .' : ' . Json::encode($maskedRequest));
-        $response = curl_exec($curl);
+            $response = $client->request($methodType, $this->bankUrl . $uri, $params);
 
-        if($response === false) {
-            Yii::warning('FortaTechAdapter error uri=' . $uri .' : ' . Json::encode($maskedRequest));
-            throw new BankAdapterResponseException('Ошибка запроса');
+        } catch (GuzzleException $e) {
+            \Yii::$app->errorHandler->logException($e);
+            if($e instanceof BadResponseException) {
+                \Yii::error([
+                    'message' => 'FortaTechAdapter bad response error.',
+                    'uri' => $uri,
+                    'method' => $methodType,
+                    'requestData' => $maskedRequestString,
+                    'responseStatusCode' => $e->getResponse()->getStatusCode(),
+                    'responseBody' => $e->getResponse()->getBody()->getContents(),
+                    'signature' => $signature,
+                ]);
+                throw new BankAdapterResponseException("Ошибка запроса: {$e->getCode()} - {$e->getMessage()}");
+            } else {
+                \Yii::error([
+                    'message' => 'FortaTechAdapter HTTP error.',
+                    'uri' => $uri,
+                    'method' => $methodType,
+                    'requestData' => $maskedRequestString,
+                    'guzzleError' => $e->getMessage(),
+                ]);
+                throw new BankAdapterResponseException('Ошибка запроса');
+            }
         }
 
-        (new FortaErrorHandler($uri, $curl, $response))->exec();
+        $responseContent = $response->getBody()->getContents();
 
-        return $this->parseResponse($response);
+        \Yii::info([
+            'message' => 'FortaTechAdapter request finish.',
+            'uri' => $uri,
+            'method' => $methodType,
+            'requestData' => $maskedRequestString,
+            'responseData' => $this->maskCardNumber($responseContent),
+            'responseStatusCode' => $response->getStatusCode(),
+        ]);
+
+        return $this->parseResponse($responseContent);
     }
 
     /**
@@ -743,119 +789,20 @@ class FortaTechAdapter implements IBankAdapter
      */
     protected function sendGetStatusRequest(PaySchet $paySchet)
     {
-        $curl = curl_init();
-
-        $url = sprintf(
-            '%s/api/payments?order_id=%s&id=%s',
-            $this->bankUrl,
-            $paySchet->ID,
-            $paySchet->ExtBillNumber
-        );
-        curl_setopt_array($curl, array(
-            CURLOPT_URL =>  $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'GET',
-            CURLOPT_HTTPHEADER => array(
-                'Authorization: Token: ' . $this->gate->Token,
-            ),
-        ));
-
-        Yii::warning('FortaTechAdapter req uri=' . $url);
-        $response = curl_exec($curl);
-        $curlError = curl_error($curl);
-        $info = curl_getinfo($curl);
-
-        if(empty($curlError) && ($info['http_code'] == 200 || $info['http_code'] == 201)) {
-            $response = $this->parseResponse($response);
-            $maskedResponse = $this->maskResponseCardInfo($response);
-            Yii::warning('FortaTechAdapter ans uri=' . $url .' : ' . Json::encode($maskedResponse));
-            return $response;
-        } else {
-            Yii::error('FortaTechAdapter error uri=' . $url .' status=' . $info['http_code']);
-            throw new BankAdapterResponseException('Ошибка запроса: ' . $curlError);
-        }
+        $uri = "/api/payments?order_id={$paySchet->ID}";
+        return $this->sendRequest($uri, null, '', 'GET');
     }
 
     protected function sendGetStatusOutRequest(PaySchet $paySchet)
     {
-        $curl = curl_init();
-
-        $url = sprintf(
-            '%s/api/transferToCardv2?orderId=%s',
-            $this->bankUrl,
-            $paySchet->ID
-        );
-        curl_setopt_array($curl, array(
-            CURLOPT_URL =>  $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'GET',
-            CURLOPT_HTTPHEADER => array(
-                'Authorization: Token: ' . $this->gate->Token,
-            ),
-        ));
-
-        Yii::warning('FortaTechAdapter req uri=' . $url);
-        $response = curl_exec($curl);
-        $curlError = curl_error($curl);
-        $info = curl_getinfo($curl);
-
-        if(empty($curlError) && ($info['http_code'] == 200 || $info['http_code'] == 201)) {
-            $response = $this->parseResponse($response);
-            $maskedResponse = $this->maskResponseCardInfo($response);
-            Yii::warning('FortaTechAdapter ans uri=' . $url .' : ' . Json::encode($maskedResponse));
-            return $response;
-        } else {
-            Yii::error('FortaTechAdapter error uri=' . $url .' status=' . $info['http_code']);
-            throw new BankAdapterResponseException('Ошибка запроса: ' . $curlError);
-        }
+        $uri = "/api/transferToCardv2?orderId={$paySchet->ID}";
+        return $this->sendRequest($uri, null, '', 'GET');
     }
 
     public function sendGetStatusRefundRequest($refundId)
     {
-        $curl = curl_init();
-
-        $url = sprintf(
-            '%s/api/refund?refund_id=%s',
-            $this->bankUrl,
-            $refundId
-        );
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'GET',
-            CURLOPT_HTTPHEADER => array(
-                'Authorization: Token: ' . $this->gate->Token,
-            ),
-        ));
-
-        Yii::warning('FortaTechAdapter req uri=' . $url);
-        $response = curl_exec($curl);
-        $curlError = curl_error($curl);
-        $info = curl_getinfo($curl);
-
-        if (empty($curlError) && ($info['http_code'] == 200 || $info['http_code'] == 201)) {
-            $response = $this->parseResponse($response);
-            $maskedResponse = $this->maskResponseCardInfo($response);
-            Yii::warning('FortaTechAdapter ans uri=' . $url . ' : ' . Json::encode($maskedResponse));
-            return $response;
-        } else {
-            Yii::error('FortaTechAdapter error uri=' . $url . ' status=' . $info['http_code']);
-        }
+        $uri = "/api/refund?refund_id={$refundId}";
+        return $this->sendRequest($uri, null, '', 'GET');
     }
 
     /**

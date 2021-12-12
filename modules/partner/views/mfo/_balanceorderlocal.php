@@ -5,6 +5,8 @@
 /* @var $sort */
 /* @var $this \yii\web\View */
 
+use yii\helpers\Html;
+
 $sumIn = $sumOut = $sumComis = 0;
 
 ?>
@@ -29,7 +31,7 @@ $sumIn = $sumOut = $sumComis = 0;
                 <td data-datesort="<?=date('YmdHis', $row['DateOp'])?>"><?= date('d.m.Y H:i:s', $row['DateOp']) ?></td>
                 <td class="text-right"><?= $row['Summ'] >= 0 ? number_format($row['Summ']/100.0,2,'.','&nbsp;') : ''?></td>
                 <td class="text-right"><?= $row['Summ'] < 0 ? number_format($row['Summ']/100.0, 2,'.','&nbsp;') : ''?></td>
-                <td><?= $row['Comment'] ?></td>
+                <td><?= Html::encode($row['Comment']) ?></td>
                 <td class="text-right"><?= number_format($row['SummAfter']/100.0,2,'.','&nbsp;') ?></td>
             </tr>
             <?php

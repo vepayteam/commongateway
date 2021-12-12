@@ -4,6 +4,7 @@ use app\models\partner\PartnerUsers;
 use app\models\partner\PartUserAccess;
 use app\models\payonline\Partner;
 use yii\bootstrap\ActiveForm;
+use yii\helpers\Html;
 
 /* @var yii\web\View $this */
 /* @var PartnerUsers $user */
@@ -26,7 +27,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
         <div class="ibox-title">
             <h5>Редактирование пользователя</h5>
             <div class="ibox-tools">
-                <a class="btn btn-xs btn-default" href="/partner/partner/partner-edit/<?=$partner->ID?>#tab-3">
+                <a class="btn btn-xs btn-default" href="/partner/partner/partner-edit/<?=Html::encode($partner->ID)?>#tab-3">
                     <i class="fa fa-close" aria-hidden="true"></i> Назад</a>
             </div>
         </div>
@@ -67,7 +68,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                 ?>
                 <select class="select2 form-control" multiple="multiple" name="razdely[]">
                     <?php foreach (PartUserAccess::$razdely as $k => $r) : ?>
-                    <option value="<?=$k?>"
+                    <option value="<?=Html::encode($k)?>"
                             <?php
                             if ($userRazdAll) {
                                 echo " selected ";
@@ -80,7 +81,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                 }
                             }
                             ?>
-                    ><?=$r?></option>
+                    ><?=Html::encode($r)?></option>
                     <?php endforeach;?>
                 </select>
             </div>
@@ -101,9 +102,9 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
         </div>
         <div class="row">
             <div class="col-sm-8 col-sm-offset-3">
-                <input type="hidden" name="ID" value="<?=$user->ID?>">
-                <input type="hidden" name="IdPartner" value="<?=$user->IdPartner?>">
-                <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
+                <input type="hidden" name="ID" value="<?=Html::encode($user->ID)?>">
+                <input type="hidden" name="IdPartner" value="<?=Html::encode($user->IdPartner)?>">
+                <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
                 <button type="button" class="btn btn-primary" id="saveUser">Сохранить</button>
             </div>
         </div>

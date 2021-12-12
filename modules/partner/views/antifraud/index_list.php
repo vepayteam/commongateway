@@ -2,6 +2,7 @@
 
 use app\models\payonline\Cards;
 use yii\grid\GridView;
+use yii\helpers\Html;
 
 /**@var \yii\data\ArrayDataProvider $list_provider */
 ?>
@@ -80,12 +81,15 @@ use yii\grid\GridView;
                                         . ' / ' .
                                         ($model['DateOplat'] > 0 ? date('d.m.Y H:i', $model['DateOplat']) : '-');
                                 },
-                                'format' => 'raw',
                             ],
                             [
                                 'header' => '',
                                 'value' => function ($model) {
-                                    return '<button class="btn btn-white btn-xs confirm-small send-pjax" data-user-hash="' . $model['user_hash'] . '" data-transaction-id="'.$model['transaction_id'].'">Иформация</button>';
+                                    return '<button class="btn btn-white btn-xs confirm-small send-pjax" data-user-hash="'
+                                        . Html::encode($model['user_hash'])
+                                        . '" data-transaction-id="'
+                                        . Html::encode($model['transaction_id'])
+                                        .'">Иформация</button>';
                                 },
                                 'format' => 'raw'
                             ]

@@ -2,6 +2,9 @@
 /* @var array $data */
 /* @var $this \yii\web\View */
 /* @var bool $IsAdmin */
+
+use yii\helpers\Html;
+
 ?>
 
 <table class="table table-striped tabledata">
@@ -31,8 +34,8 @@
             <td><?= ($i++) ?></td>
             <td><?= date("d.m.Y", $row['DateFrom']) ?></td>
             <td><?= date("d.m.Y", $row['DateTo']) ?></td>
-            <td><?= $row['NamePartner'] ?></td>
-            <td><?= str_ireplace('|', '<br>', $row['QrParams']) ?></td>
+            <td><?= Html::encode($row['NamePartner']) ?></td>
+            <td><?= str_replace("\n", '<br>', Html::encode(str_replace('|', "\n", $row['QrParams']))) ?></td>
             <?php if(isset($row['TypeVyvod'])): ?>
                 <td><?= $row['TypeVyvod'] == 0 ? 'погашение' : 'выдача' ?></td>
             <?php elseif(isset($row['TypePerechisl'])): ?>
