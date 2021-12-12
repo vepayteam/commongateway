@@ -4,6 +4,8 @@
 /* @var $fio string */
 /* @var $IsAdmin bool */
 
+use yii\helpers\Html;
+
 ?>
 <div class="row border-bottom">
     <nav class="navbar navbar-static-top" role="navigation" style="margin-bottom: 0">
@@ -13,7 +15,7 @@
         <ul class="nav navbar-top-links navbar-right">
             <li>
                 <a href="/partner/default/chngpassw" class="welcome-message">
-                    Пользователь: <?=$IsAdmin ? 'Администратор' : $fio?>
+                    Пользователь: <?= Html::encode($IsAdmin ? 'Администратор' : $fio)?>
                 </a>
             </li>
             <li>

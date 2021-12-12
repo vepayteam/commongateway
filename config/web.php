@@ -122,7 +122,9 @@ $config = [
             'class' => 'yii\web\User',
             'identityClass' => 'app\models\partner\UserLk',
             'loginUrl' => ['partner'],
-            'enableAutoLogin' => false
+            'enableAutoLogin' => false,
+            'authTimeout' => 60 * 30,
+            'absoluteAuthTimeout' => 60 * 60 * 24,
         ],
         'errorHandler' => [
             'errorAction' => 'site/error',

@@ -3,6 +3,9 @@
 /* @var app\models\payonline\Partner[] $partners */
 /* @var int $all */
 /* @var bool $partial */
+
+use yii\helpers\Html;
+
 ?>
 <div class="row">
     <div class="col-lg-6">
@@ -24,12 +27,12 @@
                                 <option value="-1">По всем</option>
                             <?php endif; ?>
                             <?php foreach ($partners as $partner) : ?>
-                                <option value="<?= $partner->ID ?>"><?= $partner->nameWithId ?></option>
+                                <option value="<?=Html::encode($partner->ID)?>"><?=Html::encode($partner->nameWithId)?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
                     <div class="form-group">
-                        <input type="hidden" name="_csrf" value="<?=Yii::$app->request->csrfToken?>">
+                        <?=Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf'])?>
                         <input type="submit" class="btn btn-primary" value="Выбрать">
                     </div>
                 </form>

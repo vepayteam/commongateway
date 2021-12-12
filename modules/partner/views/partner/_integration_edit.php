@@ -107,21 +107,6 @@ if ($partner->IsMfo) {
     echo $form->field($partner, 'LoginTkbOctPerevod')->textInput(['class' => 'form-control']);
     echo $form->field($partner, 'KeyTkbOctPerevod')->textInput(['class' => 'form-control']);
 
-    echo $form->field($partner, 'LoginTkbAuto1')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'KeyTkbAuto1')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'LoginTkbAuto2')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'KeyTkbAuto2')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'LoginTkbAuto3')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'KeyTkbAuto3')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'LoginTkbAuto4')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'KeyTkbAuto4')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'LoginTkbAuto5')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'KeyTkbAuto5')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'LoginTkbAuto6')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'KeyTkbAuto6')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'LoginTkbAuto7')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'KeyTkbAuto7')->textInput(['class' => 'form-control']);
-
 } else {
     echo $form->field($partner, 'SchetTcbTransit')->textInput(['class' => 'form-control']);
     echo $form->field($partner, 'LoginTkbJkh')->textInput(['class' => 'form-control']);
@@ -130,55 +115,14 @@ if ($partner->IsMfo) {
     echo $form->field($partner, 'KeyTkbEcom')->textInput(['class' => 'form-control']);
     echo $form->field($partner, 'LoginTkbVyvod')->textInput(['class' => 'form-control']);
     echo $form->field($partner, 'KeyTkbVyvod')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'LoginTkbAuto1')->textInput(['class' => 'form-control']);
-    echo $form->field($partner, 'KeyTkbAuto1')->textInput(['class' => 'form-control']);
 }
 
 echo $form->field($partner, 'SchetTcbParts')->textInput(['class' => 'form-control']);
-echo $form->field($partner, 'LoginTkbParts')->textInput(['class' => 'form-control']);
-echo $form->field($partner, 'KeyTkbParts')->textInput(['class' => 'form-control']);
-
-echo $form->field($partner, 'MtsLogin')->textInput(['class' => 'form-control']);
-echo $form->field($partner, 'MtsPassword')->textInput(['class' => 'form-control']);
-echo $form->field($partner, 'MtsToken')->textInput(['class' => 'form-control']);
-
-echo $form->field($partner,'MtsLoginJkh')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsPasswordJkh')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsTokenJkh')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsLoginAft')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsPasswordAft')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsTokenAft')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsLoginOct')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsPasswordOct')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsTokenOct')->textInput(['class' => 'form-control']);
-
-echo $form->field($partner,'MtsLoginEcom')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsPasswordEcom')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsTokenEcom')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsLoginVyvod')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsPasswordVyvod')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsTokenVyvod')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsLoginAuto')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsPasswordAuto')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsTokenAuto')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsLoginPerevod')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsPasswordPerevod')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsTokenPerevod')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsLoginOctVyvod')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsPasswordOctVyvod')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsTokenOctVyvod')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsLoginOctPerevod')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsPasswordOctPerevod')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsTokenOctPerevod')->textInput(['class' => 'form-control']);
-
-echo $form->field($partner,'MtsLoginParts')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsPasswordParts')->textInput(['class' => 'form-control']);
-echo $form->field($partner,'MtsTokenParts')->textInput(['class' => 'form-control']);
 
 ?>
 <div class="row">
     <div class="col-sm-8 col-sm-offset-3">
-        <input type="hidden" name="Partner_ID" value="<?=$partner->ID?>">
+        <?= Html::hiddenInput('Partner_ID', $partner->ID) ?>
         <button type="button" class="btn btn-primary" id="btnEditPartnerTkb">Сохранить</button>
     </div>
 </div>
@@ -251,7 +195,7 @@ echo $form->field($partner, 'Apple_MerchIdentCert')->fileInput(['class' => 'form
 
 <div class="row">
     <div class="col-sm-8 col-sm-offset-3">
-        <input type="hidden" name="Partner_ID" value="<?=$partner->ID?>">
+        <?= Html::hiddenInput('Partner_ID', $partner->ID) ?>
         <button type="button" class="btn btn-primary" id="btnEditPartnerApplepay">Сохранить</button>
     </div>
 </div>
@@ -303,7 +247,7 @@ echo $form->field($partner, 'IpAccesApi')->textInput(['class' => 'form-control']
 
 <div class="row">
     <div class="col-sm-8 col-sm-offset-3">
-        <input type="hidden" name="Partner_ID" value="<?=$partner->ID?>">
+        <?= Html::hiddenInput('Partner_ID', $partner->ID) ?>
         <button type="button" class="btn btn-primary" id="btnEditPartnerIntegr">Сохранить</button>
     </div>
 </div>
@@ -366,7 +310,7 @@ echo $form->field($bankrecv,'MaxIntervalOplat')->textInput(['class'=>'form-contr
 
 <div class="row">
     <div class="col-sm-8 col-sm-offset-3">
-        <input type="hidden" value="<?= $bankrecv->ID ?>" name="IdRecviz"/>
+        <?= Html::hiddenInput('IdRecviz', $bankrecv->ID) ?>
         <button type="button" class="btn btn-primary" id="btnEditRekviz">Сохранить</button>
     </div>
 </div>
@@ -418,7 +362,7 @@ echo $form->field($partner, 'OrangeDataConCert')->fileInput(['class' => 'form-co
 
 <div class="row">
     <div class="col-sm-8 col-sm-offset-3">
-        <input type="hidden" name="Partner_ID" value="<?=$partner->ID?>">
+        <?= Html::hiddenInput('Partner_ID', $partner->ID) ?>
         <button type="button" class="btn btn-primary" id="btnEditPartnerKkm">Сохранить</button>
     </div>
 </div>
@@ -525,8 +469,8 @@ ActiveForm::end();
 
     <div class="form-group">
         <div class="col-sm-offset-3 col-sm-4">
-            <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
-            <input name="IdPartner" type="hidden" value="<?= $partner->ID ?>">
+            <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
+            <?= Html::hiddenInput('IdPartner', $partner->ID) ?>
             <input name="paytype" type="hidden" value="-1">
             <input name="accountpay" type="hidden" value="">
             <button class="btn btn-primary" type="button" id="btnOpoveshSettings">Сохранить</button>
@@ -547,7 +491,7 @@ ActiveForm::end();
         <label class="control-label col-sm-3">Адрес почты</label>
         <div class="col-sm-8">
             <input class="form-control" type="email" placeholder='example@online.ru'
-                   name="email" value="<?= isset($partner->distribution->email) ?$partner->distribution->email : "" ?>">
+                   name="email" value="<?= Html::encode(isset($partner->distribution->email) ?$partner->distribution->email : "") ?>">
         </div>
     </div>
     <div class="form-group row">
@@ -572,9 +516,9 @@ ActiveForm::end();
 
     <div class="form-group row">
         <div class="col-sm-8 col-sm-offset-3">
-            <input name="partner_id" type="hidden" value="<?= isset($partner) ? $partner->ID : 0 ?>">
-            <input name="distribution_id" type="hidden" value="<?= isset($partner->distribution->payment) ? $partner->distribution->id : 0 ?>">
-            <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
+            <input name="partner_id" type="hidden" value="<?= isset($partner) ? Html::encode($partner->ID) : 0 ?>">
+            <input name="distribution_id" type="hidden" value="<?= isset($partner->distribution->payment) ? Html::encode($partner->distribution->id) : 0 ?>">
+            <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
             <input type="button" class="btn btn-primary" value="Сохранить" id="btnEditDistribution">
         </div>
     </div>
@@ -591,19 +535,19 @@ ActiveForm::end();
     <div class="form-group">
         <label class="col-sm-3 control-label">Имя проекта:</label>
         <div class="col-sm-6">
-            <input type="text" maxlength="200" class="form-control" name="publicKey" value="<?= $publicKey ?>">
+            <input type="text" maxlength="200" class="form-control" name="publicKey" value="<?= Html::encode($publicKey) ?>">
         </div>
     </div>
     <div class="form-group">
         <label class="col-sm-3 control-label">APIKEY (ключ проекта):</label>
         <div class="col-sm-6">
-            <input type="text" maxlength="50" class="form-control" name="secretKey" value="<?= $secretKey ?>">
+            <input type="text" maxlength="50" class="form-control" name="secretKey" value="<?= Html::encode($secretKey) ?>">
         </div>
     </div>
     <div class="form-group">
         <div class="col-sm-offset-3 col-sm-6">
-            <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
-            <input type="hidden" name="idPartner" value="<?= $partner->ID ?>">
+            <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
+            <?= Html::hiddenInput('idPartner', $partner->ID) ?>
             <button class="btn btn-primary" id="#saveMainsms" type="submit">Сохранить</button>
         </div>
     </div>
