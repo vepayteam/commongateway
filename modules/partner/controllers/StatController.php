@@ -276,16 +276,25 @@ class StatController extends Controller
     public function actionRecalcSave()
     {
         if (Yii::$app->request->isAjax) {
-            $paySchets = PaySchet::findAll(explode(",", Yii::$app->request->post('ids', '')));
-            foreach ($paySchets as $paySchet) {
-                $paySchet->uslugatovar->load(array_map('floatval', Yii::$app->request->post()), '');
-                $paySchet->recalcComiss();
-                $paySchet->save(false);
+            $payShetList = new PayShetStat();
+            if ($payShetList->load(Yii::$app->request->get(), '')) {
+                $data = $payShetList->getList2(UserLk::IsAdmin(Yii::$app->user), 0, 1);
+                $paySchets = PaySchet::findAll(ArrayHelper::getColumn($data['data'], 'ID'));
+                foreach ($paySchets as $paySchet) {
+                    $paySchet->uslugatovar->load(array_map('floatval', Yii::$app->request->post()), '');
+                    $paySchet->recalcComiss();
+                    $paySchet->save(false);
+                }
+                return $this->asJson([
+                    'status' => 1,
+                    'count' => count($paySchets),
+                ]);
             }
             return $this->asJson([
-                'status' => 1,
-                'count' => count($paySchets),
+                'status' => 0,
+                'count' => 0,
             ]);
+
         }
         return $this->redirect('/partner');
     }

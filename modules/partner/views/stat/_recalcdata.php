@@ -31,8 +31,7 @@ use yii\widgets\LinkPager;
     'header' => '<h2>Пересчитать</h2>',
     'toggleButton' => ['label' => 'Пересчитать', 'class' => 'btn btn-sm btn-success', ],
 ]); ?>
-<form id="recalc-from" action="/partner/stat/recalc-save" method="POST" role="form">
-	<input type="hidden" name="ids" value="<?= implode(",", ArrayHelper::getColumn($data, 'ID')) ?>">
+<form id="recalc-from" action="/partner/stat/recalc-save?<?= http_build_query($reqdata) ?>" method="POST" role="form">
 	<div class="form-group">
 		<label>Комиссия с мерчанта %</label>
 		<input type="text" class="form-control" name="ProvVoznagPC" placeholder="0">
