@@ -50,9 +50,10 @@ class RecurrentPayJob extends BaseObject implements \yii\queue\JobInterface
         }
 
         Yii::$app->queue
-            ->delay(self::RECURRENT_STATUS_PAY_JOB_DELAY)
+            ->delay($createRecurrentPayResponse->refreshStatusInterval ?? self::RECURRENT_STATUS_PAY_JOB_DELAY)
             ->push(new RefreshStatusPayJob([
                 'paySchetId' => $paySchet->ID,
+                'interval' => $createRecurrentPayResponse->refreshStatusInterval,
             ]));
 
         $paySchet->save(false);
