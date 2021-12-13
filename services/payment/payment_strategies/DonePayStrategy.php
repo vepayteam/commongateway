@@ -3,6 +3,7 @@
 namespace app\services\payment\payment_strategies;
 
 use app\services\payment\banks\BankAdapterBuilder;
+use app\services\payment\exceptions\TKBankRefusalException;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\jobs\RefreshStatusPayJob;
 use app\services\payment\models\PaySchet;
@@ -58,6 +59,14 @@ class DonePayStrategy
                 $this->donePayResponse = $bankAdapterBuilder->getBankAdapter()->confirm($this->donePayForm);
 
                 Yii::info('DonePayStrategy exec. PaySchet ID=' . $paySchet->ID . ' donePayResponse=' . Json::encode($this->donePayResponse));
+            } catch (TKBankRefusalException $e) {
+                Yii::error(['DonePayStrategy tkbank refusal exception paySchet.ID=' . $paySchet->ID, $e]);
+
+                $paySchet->Status = PaySchet::STATUS_ERROR;
+                $paySchet->ErrorInfo = $e->getMessage();
+                $paySchet->save(false);
+
+                return $paySchet;
             } catch (\Exception $e) {
                 Yii::error('DonePayStrategy exec. PaySchet ID=' . $paySchet->ID . ' exception=' . $e->getMessage());
             }
