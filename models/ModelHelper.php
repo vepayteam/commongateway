@@ -4,8 +4,6 @@ namespace app\models;
 
 use yii\db\ActiveRecord;
 
-use function method_exists;
-
 /**
  * @see ActiveRecord
  */
@@ -16,32 +14,31 @@ trait ModelHelper
      */
     public $loaded = false;
 
-    public function load(array $data, string $formName = null): ActiveRecord
-    {
-        $this->setLoaded(method_exists('parent', 'load') && parent::load($data, $formName));
-        return $this;
-    }
-
     /**
-     * @param bool $runValidation
-     * @param array|string $attributeNames
-     *
-     * @return bool
-     */
-    public function save(bool $runValidation = true, $attributeNames = null): bool
-    {
-        return method_exists('parent', 'save') && $this->isLoaded() && parent::save($runValidation, $attributeNames);
-    }
-
-    /**
-     * @param array|string $attributeNames
+     * @param array $data
+     * @param string|null $formName
+     * @param bool $validate
+     * @param string|array|null $attributeNames
      * @param bool $clearErrors
      *
      * @return bool
      */
-    public function validate($attributeNames = null, bool $clearErrors = true): bool
+    public function load($data, $formName = null, bool $validate = false, $attributeNames = null, bool $clearErrors = true): bool
     {
-        return method_exists('parent', 'validate') && $this->isLoaded() && parent::validate($attributeNames, $clearErrors);
+        return $validate ? parent::load($data, $formName) && parent::validate($attributeNames, $clearErrors) : parent::load($data, $formName);
+    }
+
+    /**
+     * @param string|array|null $attributeNames
+     * @param bool $clearErrors
+     * @param array|null $data
+     * @param string|null $formName
+     *
+     * @return bool
+     */
+    public function validate($attributeNames = null, $clearErrors = true, ?array $data = null, ?string $formName = null): bool
+    {
+        return $data ? parent::load($data, $formName) && parent::validate($attributeNames, $clearErrors) : parent::validate($attributeNames, $clearErrors);
     }
 
     public function isLoaded(): bool
@@ -49,9 +46,8 @@ trait ModelHelper
         return $this->loaded;
     }
 
-    public function setLoaded(bool $loaded): ActiveRecord
+    public function setLoaded(bool $loaded): void
     {
         $this->loaded = $loaded;
-        return $this;
     }
 }
