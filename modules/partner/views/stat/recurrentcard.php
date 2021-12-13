@@ -1,4 +1,7 @@
 <?php
+use app\models\payonline\Partner;
+use yii\helpers\Html;
+
 /* @var yii\web\View $this */
 /* @var array $uslugilist */
 /* @var bool $IsAdmin */
@@ -7,15 +10,10 @@
 /* @var int $type */
 
 $this->title = mb_strtolower($name);
-
 $this->params['breadtitle'] = $name;
 $this->params['breadcrumbs'][] = $this->params['breadtitle'];
-
-use app\models\payonline\Partner;
-use yii\web\View;
 ?>
-
-    <div class="row">
+<div class="row">
         <div class="col-sm-12">
             <div class="ibox float-e-margins">
                 <div class="ibox-title">
@@ -50,7 +48,7 @@ use yii\web\View;
                                     <select class="form-control" name="IdPart">
                                         <option value="-1">Все</option>
                                         <?php foreach ($partnerlist as $partner) : ?>
-                                            <option value="<?=Html::encode($partner->ID)?>"><?=Html::encode($partner->nameWithId)?></option>
+                                            <option value="<?= Html::encode($partner->ID) ?>"><?= Html::encode($partner->nameWithId) ?></option>
                                         <?php endforeach; ?>
                                     </select>
                                 </div>
