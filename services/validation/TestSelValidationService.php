@@ -54,10 +54,8 @@ class TestSelValidationService
      */
     private function checkBlockKeywords(string $sql)
     {
-        $lowerSql = strtolower($sql);
-
         foreach ($this->blockKeywords as $blockKeyword) {
-            if (str_contains($lowerSql, $blockKeyword)) {
+            if (preg_match('/(\s|\W|^)' . $blockKeyword . '(\s|\W|$)/i', $sql)) {
                 throw new TestSelValidateException('Запрещенное слово: ' . $blockKeyword);
             }
         }
