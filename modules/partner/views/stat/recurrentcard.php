@@ -50,7 +50,7 @@ use yii\web\View;
                                     <select class="form-control" name="IdPart">
                                         <option value="-1">Все</option>
                                         <?php foreach ($partnerlist as $partner) : ?>
-                                            <option value="<?=$partner->ID?>"><?=$partner->nameWithId?></option>
+                                            <option value="<?=Html::encode($partner->ID)?>"><?=Html::encode($partner->nameWithId)?></option>
                                         <?php endforeach; ?>
                                     </select>
                                 </div>

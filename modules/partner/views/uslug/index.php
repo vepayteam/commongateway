@@ -7,6 +7,7 @@
 /* @var array $magazlist */
 
 use app\models\payonline\Uslugatovar;
+use yii\helpers\Html;
 
 $this->title = "точки продаж";
 
@@ -23,14 +24,14 @@ $stc = [0 => 'label-info', 1 => 'label-success', 2 => 'label-danger'];
             <div class="ibox-title">
                 <h5>Точки продаж</h5>
                 <div class="ibox-tools">
-                    <input type="hidden" value="<?= $partner ? $partner->ID : 0 ?>" id="IdPartner"/>
+                    <input type="hidden" value="<?= $partner ? Html::encode($partner->ID) : 0 ?>" id="IdPartner"/>
                 </div>
             </div>
             <div class="ibox-content">
 
                 <div class="row m-b-sm m-t-none">
                     <div class="col-sm-12">
-                        <a href="point-add/<?= $partner ? $partner->ID : 0 ?>" id="PointAddBtn"
+                        <a href="point-add/<?= $partner ? Html::encode($partner->ID) : 0 ?>" id="PointAddBtn"
                            class="btn btn-primary">Добавить</a>
                     </div>
                 </div>
@@ -41,7 +42,7 @@ $stc = [0 => 'label-info', 1 => 'label-success', 2 => 'label-danger'];
                     <select class="form-control" name="partnersel">
                         <option value="-1">Все мерчанты</option>
                         <? foreach ($partnerlist as $partn) : ?>
-                            <option value="<?=$partn->ID?>"><?=$partn->Name?></option>
+                            <option value="<?=Html::encode($partn->ID)?>"><?=Html::encode($partn->Name)?></option>
                         <? endforeach; ?>
                     </select>
                     </div>
@@ -50,7 +51,7 @@ $stc = [0 => 'label-info', 1 => 'label-success', 2 => 'label-danger'];
                         <select class="form-control" name="magazsel">
                             <option value="-1">Все магазины</option>
                             <? foreach ($magazlist as $mag) : ?>
-                                <option value="<?=$mag->ID?>"><?=$mag->NameMagazin?></option>
+                                <option value="<?=Html::encode($mag->ID)?>"><?=Html::encode($mag->NameMagazin)?></option>
                             <? endforeach; ?>
                         </select>
                     </div>
@@ -71,22 +72,22 @@ $stc = [0 => 'label-info', 1 => 'label-success', 2 => 'label-danger'];
                         <tbody>
                         <?php if (is_array($uslug) && count($uslug) > 0) : ?>
                             <?php foreach ($uslug as $usl) : ?>
-                                <tr data-partner="<?=$usl['IDPartner']?>" data-magaz="<?=$usl['IdMagazin']?>">
+                                <tr data-partner="<?=Html::encode($usl['IDPartner'])?>" data-magaz="<?=Html::encode($usl['IdMagazin'])?>">
                                     <td class="project-title">
-                                        <?= $usl['ID'] ?>
+                                        <?= Html::encode($usl['ID']) ?>
                                     </td>
-                                    <td class="project-title"><?= $usl['NameUsluga'] ?></td>
+                                    <td class="project-title"><?= Html::encode($usl['NameUsluga']) ?></td>
                                     <td class="project-title">
-                                        <span class="label <?=$stc[$usl['EnabledStatus']]?>"><?=$st[$usl['EnabledStatus']]?></span>
+                                        <span class="label <?=Html::encode($stc[$usl['EnabledStatus']])?>"><?=Html::encode($st[$usl['EnabledStatus']])?></span>
                                     </td>
                                     <td class="project-title">Интернет-эквайринг</td>
-                                    <td class="project-title"><?= $usl['SitePoint'] ?></td>
+                                    <td class="project-title"><?= Html::encode($usl['SitePoint']) ?></td>
                                     <td class="project-actions">
-                                        <a class="btn btn-white btn-sm" href="point-edit/<?= $usl['ID'] ?>" title="Изменить">
+                                        <a class="btn btn-white btn-sm" href="point-edit/<?= Html::encode($usl['ID']) ?>" title="Изменить">
                                             <i class="fa fa-pencil" aria-hidden="true"></i></a>
                                         <a class="btn btn-white btn-sm"
                                            data-action="delPoint"
-                                           data-id="<?=$usl['ID']?>" title="Удалить">
+                                           data-id="<?=Html::encode($usl['ID'])?>" title="Удалить">
                                             <i class="fa fa-trash" aria-hidden="true"></i>
                                         </a>
                                     </td>

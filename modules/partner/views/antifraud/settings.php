@@ -35,7 +35,7 @@ use yii\helpers\Html; ?>
                             <input class="form-control" type="email" name="block_email_for_antifraud_refund" placeholder='Введите email' value= "<?=isset($data['block_email_for_antifraud_refund'])? $data['block_email_for_antifraud_refund'] : ""?>">
                         </div>
                     </div>
-                    <?=Html :: hiddenInput(Yii::$app->getRequest()->csrfParam, Yii::$app->getRequest()->getCsrfToken(), []);?>
+                    <?=Html::hiddenInput(Yii::$app->request->csrfParam, Yii::$app->request->csrfToken);?>
                     <input type="submit" class="btn btn-primary" value="Сохранить данные">
                 </form>
             </div>

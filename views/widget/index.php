@@ -27,7 +27,7 @@ use yii\web\View;
         </div>
         <div class="col-xs-8">
             <div class="infomag">Адрес магазина</div>
-            <div class="mag"><?=$order->getPartner()->Name?></div>
+            <div class="mag"><?=Html::encode($order->partner->Name)?></div>
         </div>
     </div>
 
@@ -119,12 +119,13 @@ use yii\web\View;
     <div class="row no-row-margins">
         <div class="row nopadding margin-top20">
             <div class="col-xs-12">
-                <input type="hidden" class="idPay" name="IdOrder" value="<?=$order->ID?>">
-                <input type="hidden" name="isorder" value="<?=$isorder?>">
+                <?= Html::hiddenInput('IdOrder', $order->ID, ['class' => 'idPay']) ?>
+                <?= Html::hiddenInput('isorder', $isorder) ?>
+
                 <?php if (!$isorder) :?>
-                    <input type="hidden" name="Order[IdPartner]" value="<?=$order->IdPartner?>">
-                    <input type="hidden" name="Order[Comment]" value="<?=$order->Comment?>">
-                    <input type="hidden" name="Order[SumOrder]" value="<?=$order->SumOrder?>">
+                    <?= Html::hiddenInput('Order[IdPartner]', $order->IdPartner) ?>
+                    <?= Html::hiddenInput('Order[Comment]', $order->Comment) ?>
+                    <?= Html::hiddenInput('Order[SumOrder]', $order->SumOrder) ?>
                 <?php endif; ?>
 
                 <?= Html::Button('Оплатить', [

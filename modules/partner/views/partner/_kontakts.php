@@ -3,6 +3,8 @@
 /* @var $this \yii\web\View */
 /* @var $partner \app\models\payonline\Partner */
 
+use yii\helpers\Html;
+
 ?>
 
 <div class="ibox-content" style="border: none;">
@@ -18,25 +20,25 @@
         <div class="form-group">
             <label class="col-sm-3 control-label">Сайт:</label>
             <div class="col-sm-6">
-                <input type="text" maxlength="200" class="form-control" name="URLSite" value="<?=$partner->URLSite?>">
+                <input type="text" maxlength="200" class="form-control" name="URLSite" value="<?=Html::encode($partner->URLSite)?>">
             </div>
         </div>
         <div class="form-group">
             <label class="col-sm-3 control-label">Телефон:</label>
             <div class="col-sm-6">
-                <input type="text" maxlength="50" class="form-control" name="Phone" value="<?=$partner->Phone?>">
+                <input type="text" maxlength="50" class="form-control" name="Phone" value="<?=Html::encode($partner->Phone)?>">
             </div>
         </div>
         <div class="form-group">
             <label class="col-sm-3 control-label">E-mail:</label>
             <div class="col-sm-6">
-                <input type="text" maxlength="50" class="form-control" name="Email" value="<?=$partner->Email?>">
+                <input type="text" maxlength="50" class="form-control" name="Email" value="<?=Html::encode($partner->Email)?>">
             </div>
         </div>
         <div class="form-group">
             <div class="col-sm-offset-3 col-sm-6">
-                <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
-                <input type="hidden" name="IdPartner" value="<?=$partner->ID?>">
+                <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
+                <?= Html::hiddenInput('IdPartner', $partner->ID) ?>
                 <button class="btn btn-sm btn-primary m-t-n-xs" type="submit">Сохранить</button>
             </div>
         </div>
@@ -47,25 +49,25 @@
         <div class="form-group">
             <label class="col-sm-3 control-label">ФИО менеджера:</label>
             <div class="col-sm-6">
-                <input type="text" maxlength="100" class="form-control" name="KontTehFio" value="<?=$partner->KontTehFio?>">
+                <input type="text" maxlength="100" class="form-control" name="KontTehFio" value="<?=Html::encode($partner->KontTehFio)?>">
             </div>
         </div>
         <div class="form-group">
             <label class="col-sm-3 control-label">Телефон:</label>
             <div class="col-sm-6">
-                <input type="text" maxlength="50" class="form-control" name="KontTehPhone" value="<?=$partner->KontTehPhone?>">
+                <input type="text" maxlength="50" class="form-control" name="KontTehPhone" value="<?=Html::encode($partner->KontTehPhone)?>">
             </div>
         </div>
         <div class="form-group">
             <label class="col-sm-3 control-label">E-mail:</label>
             <div class="col-sm-6">
-                <input type="text" maxlength="50" class="form-control" name="KontTehEmail" value="<?=$partner->KontTehEmail?>">
+                <input type="text" maxlength="50" class="form-control" name="KontTehEmail" value="<?=Html::encode($partner->KontTehEmail)?>">
             </div>
         </div>
         <div class="form-group">
             <div class="col-sm-offset-3 col-sm-6">
-                <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
-                <input type="hidden" name="IdPartner" value="<?=$partner->ID?>">
+                <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
+                <?= Html::hiddenInput('IdPartner', $partner->ID) ?>
                 <button class="btn btn-sm btn-primary m-t-n-xs" type="submit">Сохранить</button>
             </div>
         </div>
@@ -76,25 +78,25 @@
         <div class="form-group">
             <label class="col-sm-3 control-label">ФИО:</label>
             <div class="col-sm-6">
-                <input type="text" maxlength="100" class="form-control" name="KontFinansFio" value="<?=$partner->KontFinansFio?>">
+                <input type="text" maxlength="100" class="form-control" name="KontFinansFio" value="<?=Html::encode($partner->KontFinansFio)?>">
             </div>
         </div>
         <div class="form-group">
             <label class="col-sm-3 control-label">Телефон:</label>
             <div class="col-sm-6">
-                <input type="text" maxlength="50" class="form-control" name="KontFinansPhone" value="<?=$partner->KontFinansPhone?>">
+                <input type="text" maxlength="50" class="form-control" name="KontFinansPhone" value="<?=Html::encode($partner->KontFinansPhone)?>">
             </div>
         </div>
         <div class="form-group">
             <label class="col-sm-3 control-label">E-mail:</label>
             <div class="col-sm-6">
-                <input type="text" maxlength="50" class="form-control" name="KontFinansEmail" value="<?=$partner->KontFinansEmail?>">
+                <input type="text" maxlength="50" class="form-control" name="KontFinansEmail" value="<?=Html::encode($partner->KontFinansEmail)?>">
             </div>
         </div>
         <div class="form-group">
             <div class="col-sm-offset-3 col-sm-6">
-                <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
-                <input type="hidden" name="IdPartner" value="<?=$partner->ID?>">
+                <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
+                <?= Html::hiddenInput('IdPartner', $partner->ID) ?>
                 <button class="btn btn-sm btn-primary m-t-n-xs" type="submit">Сохранить</button>
             </div>
         </div>

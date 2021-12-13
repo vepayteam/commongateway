@@ -3,6 +3,7 @@
 /* @var \app\models\crypt\KeyUsers $user */
 
 use yii\bootstrap\ActiveForm;
+use yii\helpers\Html;
 
 $this->title = "профиль";
 
@@ -25,7 +26,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                     <div class="sk-rect4"></div>
                     <div class="sk-rect5"></div>
                 </div>
-                <? $form = ActiveForm::begin([
+                <?php $form = ActiveForm::begin([
                     'layout' => 'horizontal',
                     'options' => [
                         'id' => 'formProfileUser',
@@ -86,7 +87,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                     </div>
                     <div class="form-group">
                         <div class="col-lg-offset-3 col-lg-4">
-                            <input name="_csrf" type="hidden" value="<?= Yii::$app->request->csrfToken ?>">
+                            <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
                             <button class="btn btn-sm btn-primary" type="submit">Изменить</button>
                         </div>
                     </div>
