@@ -589,10 +589,16 @@ paths:
           description: маска карты в формате 411111******1111
           schema:
             type: string
+        - name: errorCode
+          in: query
+          required: true
+          description: код ошибки
+          schema:
+            type: string
         - name: key
           in: query
           required: true
-          description: Ключ формируется, как хеш суммы строк параметров md5(extid + id + sum + status + channel + card + ключ обратного запроса)
+          description: Ключ формируется, как хеш суммы строк параметров md5(extid + id + sum + status + channel + card + errorCode + ключ обратного запроса)
           schema:
             type: string
       responses:

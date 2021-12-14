@@ -116,6 +116,10 @@ class NotificationPay extends \yii\db\ActiveRecord
             $params['card'] = Cards::MaskCard($this->paySchet->CardNum);
         }
 
+        if ($settings->SendErrorCode) {
+            $params['errorCode'] = $this->paySchet->RCCode ?? '0';
+        }
+
         $params['key'] = $this->buildKey($settings);
 
         return $params;
@@ -166,6 +170,10 @@ class NotificationPay extends \yii\db\ActiveRecord
 
         if ($settings->SendCardMask) {
             $params[] = Cards::MaskCard($this->paySchet->CardNum);
+        }
+
+        if ($settings->SendErrorCode) {
+            $params[] = $this->paySchet->RCCode ?? '0';
         }
 
         $params[] = $this->paySchet->uslugatovar->KeyInform;

@@ -437,6 +437,13 @@ ActiveForm::end();
     </div>
 
     <div class="form-group">
+        <label class="col-sm-3 text-right">Отправлять код ошибки</label>
+        <div class="col-sm-8 col-md-6">
+            <input type="checkbox" name="Settings[CallbackSendErrorCode]" <?=$settings->CallbackSendErrorCode ? 'checked':''?> value="1" class="form-check-input">
+        </div>
+    </div>
+
+    <div class="form-group">
         <div class="col-sm-12">
             <h4>Адрес возврата:</h4>
         </div>
