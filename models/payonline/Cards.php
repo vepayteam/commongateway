@@ -295,4 +295,12 @@ class Cards extends ActiveRecord
     {
         return self::BRAND_NAMES[$cardType];
     }
+
+    /**
+     * @return string|null Payment system name in upper case, e.g. MASTERCARD, VISA.
+     */
+    public function getCardTypeName(): ?string
+    {
+        return self::BRAND_NAMES[$this->CardType] ?? null;
+    }
 }

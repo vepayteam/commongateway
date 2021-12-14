@@ -866,6 +866,10 @@ components:
         holder:
           type: string
           description: Держатель карты
+        payment_system:
+            type: string
+            description: "Система оплаты. Возможные значения: VISA, MASTERCARD, MIR, AMERICAN EXPRESS, JCB, DINNERSCLUB, MAESTRO, DISCOVER, CHINA UNIONPAY"
+            nullable: true
     CardReg:
       type: object
       properties:
