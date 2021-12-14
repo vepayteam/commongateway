@@ -13,7 +13,7 @@ class PartsBalanceForm extends Model
     const COLUMNS_BY_PARTS_BALANCE = [
         'pay_schet.ID AS ID' => 'ID счета',
         'partner.Name AS Name' => 'Имя партнера',
-        'pay_schet_parts.Amount AS Amount' => 'Сумма части',
+        'ROUND(`pay_schet_parts`.`Amount` / 100, 2) AS Amount' => 'Сумма части, руб',
         'DateCreate AS DateCreate' => 'Дата создания',
         'pay_schet.Extid AS Extid' => 'Extid',
         'ROUND(`pay_schet`.`SummPay` / 100, 2) AS SummPay' => 'Сумма платежа, руб',
