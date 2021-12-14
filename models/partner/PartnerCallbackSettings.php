@@ -16,6 +16,7 @@ use yii\db\ActiveRecord;
  * @property bool $SendSum
  * @property bool $SendStatus
  * @property bool $SendChannel
+ * @property bool $SendCardMask
  *
  * @property-read Partner $partner
  */
@@ -36,7 +37,7 @@ class PartnerCallbackSettings extends ActiveRecord
     {
         return [
             [['Id', 'PartnerId'], 'integer'],
-            [['SendExtId', 'SendId', 'SendSum', 'SendStatus', 'SendChannel'], 'boolean'],
+            [['SendExtId', 'SendId', 'SendSum', 'SendStatus', 'SendChannel', 'SendCardMask'], 'boolean'],
         ];
     }
 
@@ -75,6 +76,7 @@ class PartnerCallbackSettings extends ActiveRecord
         $settings->SendSum = true;
         $settings->SendStatus = true;
         $settings->SendChannel = false;
+        $settings->SendCardMask = false;
 
         return $settings;
     }

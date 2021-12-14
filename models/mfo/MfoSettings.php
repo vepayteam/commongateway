@@ -22,6 +22,7 @@ class MfoSettings extends Model
     public $CallbackSendSum = false;
     public $CallbackSendStatus = false;
     public $CallbackSendChannel = false;
+    public $CallbackSendCardMask = false;
 
     public function rules()
     {
@@ -30,7 +31,7 @@ class MfoSettings extends Model
             [['url', 'UrlReturn', 'UrlReturnFail', 'UrlCheckReq', 'UrlReturnCancel'], 'url'],
             [['url', 'UrlReturn', 'UrlReturnFail', 'UrlCheckReq', 'UrlReturnCancel'], 'string', 'max' => 300],
             ['key', 'string', 'max' => 20],
-            [['CallbackSendExtId', 'CallbackSendId', 'CallbackSendSum', 'CallbackSendStatus', 'CallbackSendChannel'], 'boolean'],
+            [['CallbackSendExtId', 'CallbackSendId', 'CallbackSendSum', 'CallbackSendStatus', 'CallbackSendChannel', 'CallbackSendCardMask'], 'boolean'],
         ];
     }
 
@@ -63,6 +64,7 @@ class MfoSettings extends Model
             $this->CallbackSendSum = $partnerCallbackSettings->SendSum;
             $this->CallbackSendStatus = $partnerCallbackSettings->SendStatus;
             $this->CallbackSendChannel = $partnerCallbackSettings->SendChannel;
+            $this->CallbackSendCardMask = $partnerCallbackSettings->SendCardMask;
         }
     }
 
@@ -150,6 +152,7 @@ class MfoSettings extends Model
             $partnerCallbackSettings->SendSum = $this->CallbackSendSum;
             $partnerCallbackSettings->SendStatus = $this->CallbackSendStatus;
             $partnerCallbackSettings->SendChannel = $this->CallbackSendChannel;
+            $partnerCallbackSettings->SendCardMask = $this->CallbackSendCardMask;
             $partnerCallbackSettings->save(false);
         }
 

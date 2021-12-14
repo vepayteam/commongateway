@@ -3,6 +3,7 @@
 namespace app\services\notifications\models;
 
 use app\models\partner\PartnerCallbackSettings;
+use app\models\payonline\Cards;
 use app\services\payment\models\PaySchet;
 
 /**
@@ -111,6 +112,10 @@ class NotificationPay extends \yii\db\ActiveRecord
             $params['channel'] = $this->paySchet->bank->ChannelName;
         }
 
+        if ($settings->SendCardMask) {
+            $params['card'] = Cards::MaskCard($this->paySchet->CardNum);
+        }
+
         $params['key'] = $this->buildKey($settings);
 
         return $params;
@@ -157,6 +162,10 @@ class NotificationPay extends \yii\db\ActiveRecord
 
         if ($settings->SendChannel) {
             $params[] = $this->paySchet->bank->Name;
+        }
+
+        if ($settings->SendCardMask) {
+            $params[] = Cards::MaskCard($this->paySchet->CardNum);
         }
 
         $params[] = $this->paySchet->uslugatovar->KeyInform;

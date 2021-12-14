@@ -228,11 +228,17 @@ paths:
           required: true
           description: банк-эквайер, через который была совершена транзакция
           schema:
-            type: integer
+            type: string
+        - name: card
+          in: query
+          required: true
+          description: маска карты в формате 411111******1111
+          schema:
+              type: string
         - name: key
           in: query
           required: true
-          description: Ключ формируется, как хеш суммы строк параметров md5(extid + id + sum + status + channel + ключ обратного запроса)
+          description: Ключ формируется, как хеш суммы строк параметров md5(extid + id + sum + status + channel + card + ключ обратного запроса)
           schema:
             type: string
       responses:
