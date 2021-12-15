@@ -85,7 +85,7 @@ class StatController extends Controller
                     [
                         'allow' => false,
                         'roles' => ['@'],
-                        'actions' => ['diff', 'diffdata'],
+                        'actions' => ['diff', 'diff-columns', 'diff-data', 'diff-export'],
                         'matchCallback' => function ($rule, $action) {
                             return !UserLk::IsAdmin(Yii::$app->user);
                         }
