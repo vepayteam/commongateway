@@ -46,7 +46,6 @@ use yii\web\NotFoundHttpException;
 use yii\web\Response;
 use yii\web\UploadedFile;
 
-use function count;
 use function serialize;
 
 class StatController extends Controller
@@ -208,29 +207,80 @@ class StatController extends Controller
         }
     }
 
-    public function actionListexport()
+    /**
+     * Sends Excel file to client
+     * @return void
+     * @throws \app\models\partner\stat\exceptions\ExportExcelRawException
+     */
+    public function actionListexport(): void
     {
-		ini_set('memory_limit', '1024M');
-        $MfoStat = new MfoStat();
-        $MfoStat->ExportOpListRaw(Yii::$app->request->get());
+		ini_set('memory_limit', '8096M');
+        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+        $payShetStat = new PayShetStat();
+        try {
+            if ($payShetStat->load(Yii::$app->request->get(), '') && $payShetStat->validate()) {
+                $data = $payShetStat->getList2($IsAdmin, 0, 1);
+                if (isset($data['data'])) {
+                    $exportExcel = new ExportExcel();
+                    $exportExcel->CreateXlsRaw(
+                        "Экспорт",
+                        $IsAdmin ? MfoStat::HEAD_ADMIN : MfoStat::HEAD_USER,
+                        MfoStat::getDataGenerator($data['data'], $IsAdmin),
+                        $IsAdmin ? MfoStat::ITOGS_ADMIN_EXCEL : MfoStat::ITOGS_USER_EXCEL
+                    );
+                }
+            };
+        } catch (Exception $e) {
+            Yii::error(
+                [
+                    $e->getMessage(),
+                    $e->getFile(),
+                    $e->getLine(),
+                    $e->getTrace(),
+                    $e->getPrevious(),
+                    $payShetStat->getErrors(),
+                    $payShetStat,
+                    Yii::$app->request->get()
+                ],
+                __METHOD__
+            );
+            throw $e;
+        }
     }
 
+    /**
+     * Responses Csv file to client
+     * @return void|Response
+     * @throws Exception
+     */
     public function actionListExportCsv()
     {
 		ini_set('memory_limit', '8096M');
         $isAdmin = UserLk::IsAdmin(Yii::$app->user);
-        $payschet = new PayShetStat(); //загрузить
+        $payShetStat = new PayShetStat();
         try {
-            if ($payschet->load(Yii::$app->request->get(), '') && $payschet->validate()) {
-                $data = $payschet->getList2($isAdmin, 0, 1);
+            if ($payShetStat->load(Yii::$app->request->get(), '') && $payShetStat->validate()) {
+                $data = $payShetStat->getList2($isAdmin, 0, 1);
                 if ($data) {
-                    $file = new OtchToCSV($data);
-                    $file->export();
-                    return Yii::$app->response->sendFile($file->fullpath());
+                    $exportCsv = new OtchToCSV($data);
+                    $exportCsv->export();
+                    return Yii::$app->response->sendFile($exportCsv->fullpath());
                 }
             }
         } catch (Exception $e) {
-            Yii::error([$e->getMessage(), $e->getFile(), $e->getLine(), $e->getTrace(), $e->getPrevious(), $payschet->getErrors(), $payschet, Yii::$app->request->get()], __METHOD__);
+            Yii::error(
+                [
+                    $e->getMessage(),
+                    $e->getFile(),
+                    $e->getLine(),
+                    $e->getTrace(),
+                    $e->getPrevious(),
+                    $payShetStat->getErrors(),
+                    $payShetStat,
+                    Yii::$app->request->get()
+                ],
+                __METHOD__
+            );
             throw $e;
         }
     }
