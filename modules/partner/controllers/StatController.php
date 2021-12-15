@@ -23,12 +23,18 @@ use app\models\partner\UserLk;
 use app\models\payonline\Partner;
 use app\models\SendEmail;
 use app\models\TU;
+use app\modules\partner\models\DiffColumns;
 use app\modules\partner\models\DiffData;
 use app\modules\partner\models\DiffExport;
+use app\modules\partner\models\forms\DiffColumnsForm;
+use app\modules\partner\models\forms\DiffDataForm;
+use app\modules\partner\models\forms\DiffExportForm;
 use app\modules\partner\models\PaySchetLogForm;
 use app\services\ident\forms\IdentStatisticForm;
 use app\services\ident\IdentService;
+use app\services\partners\StatDiffSettingsService;
 use app\services\payment\jobs\RefundPayJob;
+use app\services\payment\models\Bank;
 use app\services\payment\models\PaySchet;
 use app\services\payment\PaymentService;
 use Exception;
@@ -78,7 +84,7 @@ class StatController extends Controller
                     [
                         'allow' => false,
                         'roles' => ['@'],
-                        'actions' => ['diff', 'diffdata'],
+                        'actions' => ['diff', 'diff-columns', 'diff-data', 'diff-export'],
                         'matchCallback' => function ($rule, $action) {
                             return !UserLk::IsAdmin(Yii::$app->user);
                         }
@@ -96,7 +102,9 @@ class StatController extends Controller
             'verbs' => [
                 'class' => VerbFilter::class,
                 'actions' => [
-                    'diffdata' => ['POST'],
+                    'diffColumns' => ['POST'],
+                    'diffData' => ['POST'],
+                    'diffExport' => ['POST'],
                 ],
             ],
         ];
@@ -104,25 +112,61 @@ class StatController extends Controller
 
     public function actionDiff()
     {
-        return $this->render('diff');
+        $banks = Bank::find()->all();
+
+        return $this->render('diff', [
+            'banks' => $banks,
+        ]);
     }
 
-    public function actionDiffdata()
+    public function actionDiffColumns()
     {
-        $registryFile = UploadedFile::getInstanceByName('registryFile');
+        $form = new DiffColumnsForm();
+        $form->load(Yii::$app->request->post(), '');
+
+        if (!$form->validate()) {
+            return $this->asJson([
+                'status' => 0,
+                'errors' => $form->getErrors(),
+            ]);
+        }
+
+        $diffColumns = new DiffColumns();
+        $dbColumns = $diffColumns->getDbColumns();
+
+        $statDiffSettingsService = new StatDiffSettingsService();
+        $settings = $statDiffSettingsService->getByBankId($form->bank);
+
+        return $this->asJson([
+            'status' => 1,
+            'dbColumns' => $dbColumns,
+            'settings' => $settings,
+        ]);
+    }
+
+    public function actionDiffData()
+    {
+        $form = new DiffDataForm();
+        $form->load(Yii::$app->request->post(), '');
+        $form->registryFile = UploadedFile::getInstanceByName('registryFile');
+
+        if (!$form->validate()) {
+            return $this->asJson([
+                'status' => 0,
+                'errors' => $form->getErrors(),
+            ]);
+        }
 
         try {
-            $diffData = new DiffData();
-            $diffData->read($registryFile->tempName);
-
+            $diffData = new DiffData($form);
             [$badStatus, $notFound] = $diffData->execute();
-        } catch (Exception $e) {
-            Yii::warning('Stat diffData exception '
-                . $registryFile->tempName
-                . ': ' . $e->getMessage()
-            );
-            throw new BadRequestHttpException();
+        } catch (\Exception $e) {
+            Yii::$app->errorHandler->logException($e);
+            throw $e;
         }
+
+        $statDiffSettingsService = new StatDiffSettingsService();
+        $statDiffSettingsService->saveByForm($form);
 
         return $this->asJson([
             'status' => 1,
@@ -133,22 +177,28 @@ class StatController extends Controller
         ]);
     }
 
-    public function actionDiffexport()
+    public function actionDiffExport()
     {
-        $badStatus = json_decode(Yii::$app->request->post('badStatus'), true);
-        $notFound = json_decode(Yii::$app->request->post('notFound'), true);
-        $format = Yii::$app->request->post('format');
+        $form = new DiffExportForm();
+        $form->load(Yii::$app->request->post(), '');
 
-        $diffExport = new DiffExport($badStatus, $notFound);
-        $diffExport->prepareData();
+        if (!$form->validate()) {
+            return $this->asJson([
+                'status' => 0,
+                'errors' => $form->getErrors(),
+            ]);
+        }
 
-        if ($format === 'csv') {
+        $diffExport = new DiffExport($form->getBadStatus(), $form->getNotFound());
+        $diffExport->loadData();
+
+        if ($form->format === 'csv') {
             $data = $diffExport->exportCsv();
 
             return Yii::$app->response->sendContentAsFile($data, 'export.csv', [
                 'mimeType' => 'text/csv'
             ]);
-        } else if ($format === 'xlsx') {
+        } else if ($form->format === 'xlsx') {
             $data = $diffExport->exportXlsx();
 
             return Yii::$app->response->sendContentAsFile($data, 'export.xlsx', [
