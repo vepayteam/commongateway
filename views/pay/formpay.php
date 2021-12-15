@@ -281,7 +281,7 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
     </div>
 </div>
 
-<div><img src="https://mc.yandex.ru/watch/66552382" style="position:absolute; left:-9999px;" alt="" /></div>
+<noscript><div><img src="https://mc.yandex.ru/watch/66552382" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <?php
 $this->registerJs('payform.init();');
 $this->registerJs('payform.checkIframe();');
