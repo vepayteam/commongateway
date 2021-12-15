@@ -17,17 +17,18 @@ class CallbackList extends Model
     public $partner;
     public $id = 0;
     public $Extid = '';
-    public $httpCode = 0;
+    public $httpCode = [];
     public $testMode = false;
 
     public function rules()
     {
         return [
-            [['partner', 'notifstate', 'id', 'httpCode'], 'integer'],
+            [['partner', 'notifstate', 'id'], 'integer'],
             [['Extid'], 'string', 'max' => 40],
             [['datefrom', 'dateto'], 'date', 'format' => 'php:d.m.Y H:i'],
             [['datefrom', 'dateto'], 'required'],
             [['testMode'], 'boolean'],
+            ['httpCode', 'each', 'rule' => ['integer']],
         ];
     }
 
@@ -83,8 +84,8 @@ class CallbackList extends Model
             $query->andWhere(['ps.Extid' => $this->Extid]);
         }
 
-        if (!empty($this->httpCode) && $this->httpCode > 0) {
-            $query->andWhere(['n.HttpCode' => $this->httpCode]);
+        if (!empty($this->httpCode)) {
+            $query->andWhere(['in', 'n.HttpCode', $this->httpCode]);
         }
 
         $totalCount = (int) (clone $query)->select(['COUNT(*) as cnt'])->scalar();

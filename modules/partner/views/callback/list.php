@@ -2,6 +2,8 @@
 
 /* @var yii\web\View $this */
 /* @var $idpartner int */
+/* @var $httpCodeList array */
+/* @var $IsAdmin bool */
 
 $this->title = "коллбэки";
 
@@ -34,8 +36,7 @@ use yii\web\View; ?>
                             <div class="form-group">
                                 <label class="col-sm-2 control-label">HTTP-код статуса</label>
                                 <div class="col-sm-4">
-                                    <select class="form-control" name="httpCode">
-                                        <option value="-1">Все</option>
+                                    <select class="form-control multiselect-field" multiple name="httpCode[]">
                                         <?php foreach ($httpCodeList as $httpCode) : ?>
                                             <option value="<?=Html::encode($httpCode)?>"><?=Html::encode($httpCode)?></option>
                                         <?php endforeach; ?>
