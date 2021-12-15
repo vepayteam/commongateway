@@ -73,35 +73,18 @@ class CallbackController extends Controller
     /**
      * Список коллбэков МФО
      * @return string
-     * @throws \yii\db\Exception
      */
     public function actionList()
     {
         $fltr = new CallbackFilter();
 
-        if (UserLk::IsAdmin(Yii::$app->user)) {
-            $sel = $this->selectPartner($idpartner, false, false);
-            if (empty($sel)) {
-                return $this->render('list', [
-                    'idpartner' => $idpartner,
-                    'httpCodeList' => $fltr->getCallbackHTTPResponseStatusList(),
-                    'IsAdmin' => true,
-                    'partnerlist' => $fltr->getPartnersList(),
-                ]);
-            } else {
-                return $sel;
-            }
-        } else {
+        $isAdmin = UserLk::IsAdmin(Yii::$app->user);
 
-            $idpartner = UserLk::getPartnerId(Yii::$app->user);
-
-            return $this->render('list', [
-                'idpartner' => $idpartner,
-                'httpCodeList' => $fltr->getCallbackHTTPResponseStatusList(),
-                'IsAdmin' => false,
-                'partnerlist' => $fltr->getPartnersList(),
-            ]);
-        }
+        return $this->render('list', [
+            'httpCodeList' => $fltr->getCallbackHTTPResponseStatusList(),
+            'IsAdmin' => $isAdmin,
+            'partnerlist' => $isAdmin ? $fltr->getPartnersList() : []
+        ]);
     }
 
     public function actionListitems()
