@@ -20,6 +20,8 @@ class CallbackList extends Model
     public $httpCode = 0;
     public $testMode = false;
 
+    public const MAX_BATCH_CALLBACK_COUNT = 1000;
+
     public function rules()
     {
         return [
