@@ -373,6 +373,10 @@ class PaySchet extends \yii\db\ActiveRecord
             return false;
         }
 
+        if (is_string($this->ErrorInfo)) {
+            $this->ErrorInfo = mb_substr($this->ErrorInfo, 0, 250);
+        }
+
         $this->DateLastUpdate = time();
 
         if ($insert) {

@@ -13,47 +13,39 @@ use Yii;
  */
 class UslugatovarType extends \yii\db\ActiveRecord
 {
-    const JKH = 0; //оплата жкх
-    const REGCARD = 1; //регистрация карты
-    const ECOM = 2; //оплата еком
+    public const JKH = 0; // Оплата ЖКХ
+    public const REGCARD = 1; // Привязка карты
+    public const ECOM = 2; // Оплата товара/услуги
+    public const POGASHATF = 10; // Платёж AFT
+    public const TOSCHET = 11; // Выплата на счет
+    public const AVTOPLATATF = 12; // Автоплатёж AFT
+    public const TOCARD = 13; // Выплата на карту
+    public const POGASHECOM = 14; // Платёж ECOM
+    public const AVTOPLATECOM = 16; // Автоплатёж ECOM
+    public const VYPLATVOZN = 17; // Вывод комиссии VEPAY
+    public const VYVODPAYS = 19; // Вывод средств на р/сч
+    public const REVERSCOMIS = 21; // Возмещение комисии
+    public const PEREVPAYS = 23; // Внутренний перевод между счетами
+    public const IDENT = 24; // Упрощенная идентификация пользователей
+    public const P2P = 26; // P2P перевод с карты на карту
+    public const JKHPARTS = 100; // Оплата ЖКХ с разбивкой
+    public const ECOMPARTS = 102; // Оплата товара/услуги с разбивкой
+    public const POGASHATFPARTS = 110; // Платёж AFT с разбивкой
+    public const AVTOPLATATFPARTS = 112; // Автоплатёж AFT с разбивкой
+    public const POGASHECOMPARTS = 114; // Платёж ECOM с разбивкой
+    public const AVTOPLATECOMPARTS = 116; // Автоплатёж ECOM с разбивкой
+    public const VYVODPAYSPARTS = 119; // Перечисление по разбивке
+    public const H2H_POGASH_AFT = 200; // H2H платёж AFT
+    public const H2H_POGASH_ECOM = 201; // H2H платёж ECOM
+    public const H2H_ECOM = 202; // H2H оплата товаров и услуг
+    public const TRANSFER_B2C_SBP = 203; // Выплата через СБП
 
-    const TOSCHET = 11; //выдача займа на счет физ. лица
-    const TOCARD = 13; // выдача займа на карту физ. лица.
-    const POGASHATF = 10; //покашение афт
-    const AVTOPLATATF = 12; //автоплатеж афт
-    const POGASHECOM = 14; //покашение еком
-    const AVTOPLATECOM = 16; //автоплатеж еком
-    const VYPLATVOZN = 17; //вывод вознаграждения
-    const VYVODPAYS = 19; //перечисление платежей
-    const REVERSCOMIS = 21; //возмещение комиссии
-    const PEREVPAYS = 23; //перевод на выдачу
-    const IDENT = 24; //идентификация
-    const P2P = 26; //с карты на карту
-
-    const JKHPARTS = 100; //оплата жкх с разбивкой
-    const ECOMPARTS = 102; //оплата еком с разбивкой
-    const POGASHATFPARTS = 110; //покашение афт с разбивкой
-    const AVTOPLATATFPARTS = 112; //автоплатеж афт с разбивкой
-    const POGASHECOMPARTS = 114; //покашение еком с разбивкой
-    const AVTOPLATECOMPARTS = 116; //автоплатеж еком с разбивкой
-    const VYVODPAYSPARTS = 119; //перечисление по разбивке
-
-    /** H2H Погашение займа AFT  */
-    public const H2H_POGASH_AFT = 200;
-    /** H2H погашение займа ECOM */
-    public const H2H_POGASH_ECOM = 201;
-    /** H2H оплата товаров и услуг */
-    public const H2H_ECOM = 202;
-
-    /** Перевод B2C СБП  */
-    public const TRANSFER_B2C_SBP = 203;
-
-    const OUT_TYPES = [
+    public const OUT_TYPES = [
         self::TOSCHET,
         self::TOCARD,
     ];
 
-    const AUTO_TYPES = [
+    public const AUTO_TYPES = [
         self::AVTOPLATECOM,
         self::AVTOPLATATF,
     ];
@@ -61,34 +53,32 @@ class UslugatovarType extends \yii\db\ActiveRecord
     public static function getAll()
     {
         return [
-            self::REGCARD => 'Регистрация карты',
-            self::TOSCHET => 'Выплата на счет',
-            self::TOCARD => 'Выдача займа на карту',
-            self::POGASHATF => 'Погашение займа AFT',
-            self::POGASHECOM => 'Погашение займа ECOM',
-            self::AVTOPLATECOM => 'Автоплатеж по займу ECOM',
-            self::AVTOPLATATF => 'Автоплатеж по займу AFT',
-            self::ECOM => 'Оплата товара/услуги',
             self::JKH => 'Оплата ЖКХ',
-            self::VYPLATVOZN => 'Комиссия',
-            self::VYVODPAYS => 'Вывод средств',
+            self::REGCARD => 'Привязка карты',
+            self::ECOM => 'Оплата товара/услуги',
+            self::POGASHATF => 'Платёж AFT',
+            self::TOSCHET => 'Выплата на счет',
+            self::AVTOPLATATF => 'Автоплатёж AFT',
+            self::TOCARD => 'Выплата на карту',
+            self::POGASHECOM => 'Платёж ECOM',
+            self::AVTOPLATECOM => 'Автоплатёж ECOM',
+            self::VYPLATVOZN => 'Вывод комиссии VEPAY',
+            self::VYVODPAYS => 'Вывод средств на р/сч',
             self::REVERSCOMIS => 'Возмещение комисии',
             self::PEREVPAYS => 'Внутренний перевод между счетами',
             self::IDENT => 'Упрощенная идентификация пользователей',
-            self::P2P => 'Перевод с карты на карту',
-
-            self::POGASHATFPARTS => 'Погашение займа AFT с разбивкой',
-            self::POGASHECOMPARTS => 'Погашение займа ECOM с разбивкой',
-            self::AVTOPLATECOMPARTS => 'Автоплатеж по займу ECOM с разбивкой',
-            self::AVTOPLATATFPARTS => 'Автоплатеж по займу AFT с разбивкой',
-            self::ECOMPARTS => 'Оплата товара/услуги с разбивкой',
+            self::P2P => 'P2P перевод с карты на карту',
             self::JKHPARTS => 'Оплата ЖКХ с разбивкой',
+            self::ECOMPARTS => 'Оплата товара/услуги с разбивкой',
+            self::POGASHATFPARTS => 'Платёж AFT с разбивкой',
+            self::AVTOPLATATFPARTS => 'Автоплатёж AFT с разбивкой',
+            self::POGASHECOMPARTS => 'Платёж ECOM с разбивкой',
+            self::AVTOPLATECOMPARTS => 'Автоплатёж ECOM с разбивкой',
             self::VYVODPAYSPARTS => 'Перечисление по разбивке',
-
-            self::H2H_POGASH_AFT => 'H2H Погашение займа AFT',
-            self::H2H_POGASH_ECOM => 'H2H погашение займа ECOM',
+            self::H2H_POGASH_AFT => 'H2H платёж AFT',
+            self::H2H_POGASH_ECOM => 'H2H платёж ECOM',
             self::H2H_ECOM => 'H2H оплата товаров и услуг',
-            self::TRANSFER_B2C_SBP => 'Перевод B2C SBP',
+            self::TRANSFER_B2C_SBP => 'Выплата через СБП',
         ];
     }
 

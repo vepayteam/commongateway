@@ -1,8 +1,10 @@
 <?php
+
+use yii\helpers\Html;
 ?>
 
 <form action="/partner/admin/exec" method="post">
-    <input type="hidden" name="<?=Yii::$app->request->csrfParam; ?>" value="<?=Yii::$app->request->getCsrfToken(); ?>" />
+    <?= Html::hiddenInput(Yii::$app->request->csrfParam, Yii::$app->request->csrfToken) ?>
     <div class="form-group">
         <input type="text" name="name" class="form-control" placeholder="Name">
     </div>

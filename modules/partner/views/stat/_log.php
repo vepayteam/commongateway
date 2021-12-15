@@ -4,6 +4,7 @@
  */
 
 use app\services\payment\models\PaySchet;
+use yii\helpers\Html;
 
 ?>
 
@@ -11,8 +12,8 @@ use app\services\payment\models\PaySchet;
     <?php foreach($data as $row): ?>
     <tr>
         <th><?=date('d.m.Y H:i:s', $row['DateCreate'])?></th>
-        <th><?=PaySchet::STATUSES[$row->Status]?></th>
-        <th><?=$row->ErrorInfo?></th>
+        <th><?=Html::encode(PaySchet::STATUSES[$row->Status])?></th>
+        <th><?=Html::encode($row->ErrorInfo)?></th>
     </tr>
     <?php endforeach; ?>
 </table>

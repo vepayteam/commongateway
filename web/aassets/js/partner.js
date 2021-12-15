@@ -2,6 +2,14 @@
 
     "use strict";
 
+    toastr.options = {
+        closeButton: true,
+        progressBar: true,
+        showMethod: 'slideDown',
+        timeOut: 1000,
+        escapeHtml: true
+    };
+
     let linklink = 0;
     let loginNav = {
         login: function () {
@@ -10,7 +18,8 @@
                 closeButton: true,
                 progressBar: true,
                 showMethod: 'slideDown',
-                timeOut: 1000
+                timeOut: 1000,
+                escapeHtml: true
             };
 
             if (linklink) {
@@ -61,7 +70,8 @@
                     closeButton: true,
                     progressBar: true,
                     showMethod: 'slideDown',
-                    timeOut: 1000
+                    timeOut: 1000,
+                    escapeHtml: true
                 };
 
                 if (linklink) {
@@ -484,7 +494,7 @@
                             $('.pdf-modal .modal-footer').show();
                             $('.pdf-modal .modal-footer input:first-child').attr('data-id', id);
                             $('.pdf-modal .modal-footer input:last-child').attr('data-id', id);
-                            $('.pdf-modal .modal-header h3').html('Операция «' + answer.message + '»');
+                            $('.pdf-modal .modal-header h3').text('Операция «' + answer.message + '»');
                             $('.pdf-modal').modal('show');
                         } else {
                             $('#statlistform').closest('.ibox-content').toggleClass('sk-loading');
@@ -1013,7 +1023,8 @@
                     closeButton: true,
                     progressBar: true,
                     showMethod: 'slideDown',
-                    timeOut: 1000
+                    timeOut: 1000,
+                    escapeHtml: true
                 };
 
                 if (linklink) {
@@ -1054,7 +1065,8 @@
                     closeButton: true,
                     progressBar: true,
                     showMethod: 'slideDown',
-                    timeOut: 1000
+                    timeOut: 1000,
+                    escapeHtml: true
                 };
 
                 if (linklink) {
@@ -1185,7 +1197,8 @@
                     closeButton: true,
                     progressBar: true,
                     showMethod: 'slideDown',
-                    timeOut: 1000
+                    timeOut: 1000,
+                    escapeHtml: true
                 };
 
                 if (linklink) {
@@ -1390,7 +1403,8 @@
                     closeButton: true,
                     progressBar: true,
                     showMethod: 'slideDown',
-                    timeOut: 1000
+                    timeOut: 1000,
+                    escapeHtml: true
                 };
 
                 let idPartner = $(this).attr('data-id');
@@ -1620,7 +1634,8 @@
                 closeButton: true,
                 progressBar: true,
                 showMethod: 'slideDown',
-                timeOut: 1000
+                timeOut: 1000,
+                escapeHtml: true
             };
 
             $('#formEditCommonCont').on('submit', function () {
@@ -2012,7 +2027,8 @@
                 closeButton: true,
                 progressBar: true,
                 showMethod: 'slideDown',
-                timeOut: 1000
+                timeOut: 1000,
+                escapeHtml: true
             };
 
             $('#saveUser').on('click', function () {
@@ -2108,7 +2124,8 @@
                     closeButton: true,
                     progressBar: true,
                     showMethod: 'slideDown',
-                    timeOut: 1000
+                    timeOut: 1000,
+                    escapeHtml: true
                 };
 
                 let form = $('form[name="EditUsluga"]').serialize();

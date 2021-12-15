@@ -30,7 +30,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 
                         <div class="form-group">
                             <div class="col-sm-12">
-                                <h4>Оповещения <?=$IsAdmin ? 'ID=' . $IdPartner : ''?>:</h4>
+                                <h4>Оповещения <?=Html::encode($IsAdmin ? 'ID=' . $IdPartner : '')?>:</h4>
                             </div>
                         </div>
                         <div class="form-group">
@@ -83,6 +83,20 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         </div>
 
                         <div class="form-group">
+                            <label class="col-sm-2 text-right">Отправлять маску карты</label>
+                            <div class="col-sm-10 col-md-6">
+                                <input type="checkbox" name="Settings[CallbackSendCardMask]" <?=$settings->CallbackSendCardMask ? 'checked':''?> value="1" class="form-check-input">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-sm-2 text-right">Отправлять код ошибки</label>
+                            <div class="col-sm-10 col-md-6">
+                                <input type="checkbox" name="Settings[CallbackSendErrorCode]" <?=$settings->CallbackSendErrorCode ? 'checked':''?> value="1" class="form-check-input">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
                             <div class="col-sm-12">
                                 <h4>Адрес возврата:</h4>
                             </div>
@@ -122,8 +136,8 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 
                         <div class="form-group">
                             <div class="col-sm-offset-2 col-sm-4">
-                                <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
-                                <input name="IdPartner" type="hidden" value="<?= $IdPartner ?>">
+                                <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
+                                <input name="IdPartner" type="hidden" value="<?= Html::encode($IdPartner) ?>">
                                 <input name="paytype" type="hidden" value="-1">
                                 <input name="accountpay" type="hidden" value="">
                                 <button class="btn btn-sm btn-primary" type="submit">Сохранить</button>

@@ -3,6 +3,7 @@
 namespace app\models\payonline;
 
 use app\services\payment\helpers\PaymentHelper;
+use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
 
 /**
@@ -23,6 +24,8 @@ use yii\db\ActiveRecord;
  * @property string $IdPaySchet ID pay_schet
  * @property int $IdDeleted Удалено
  * @property string $OrderTo Корзина
+ *
+ * @property-read Partner|null $partner {@see OrderPay::getPartner()}
  */
 class OrderPay extends ActiveRecord
 {
@@ -101,8 +104,8 @@ class OrderPay extends ActiveRecord
         return parent::beforeSave($insert);
     }
 
-    public function getPartner()
+    public function getPartner(): ActiveQuery
     {
-        return $this->hasOne(Partner::class, ['ID' => 'IdPartner'])->one();
+        return $this->hasOne(Partner::class, ['ID' => 'IdPartner']);
     }
 }

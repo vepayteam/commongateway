@@ -2,6 +2,7 @@
 
 use app\models\partner\stat\StatFilter;
 use app\models\payonline\Partner;
+use yii\helpers\Html;
 
 /**
  * @var \yii\web\View $this
@@ -23,14 +24,14 @@ echo $this->render('@app/modules/partner/views/selectpartner', [
             </div>
             <div class="ibox-content">
                 <form method="post" id="partner-distribution">
-                    <? foreach ($partners as $partner) : ?>
+                    <?php foreach ($partners as $partner) : ?>
                         <div class="row form-group" style="display: flex;">
                             <div class="col-md-2 ">
-                                <p><?= $partner['Name'] ?></p>
+                                <p><?= Html::encode($partner['Name']) ?></p>
                             </div>
                             <div class="col-md-5">
                                 <input class="form-control" type="email" placeholder='example@online.ru'
-                                       name="email[<?= $partner['ID'] ?>]" value="<?= isset($partner->distribution->email) ?$partner->distribution->email : "" ?>">
+                                       name="email[<?= Html::encode($partner['ID']) ?>]" value="<?= Html::encode(isset($partner->distribution->email) ?$partner->distribution->email : "") ?>">
                             </div>
                             <?php
                             $payment = isset($partner->distribution->payment)? $partner->distribution->payment : false;
@@ -40,7 +41,7 @@ echo $this->render('@app/modules/partner/views/selectpartner', [
                                 <label>
                                     Выдача
                                     <input type="checkbox" <?= $payment ? "checked" : '' ?> value="1"
-                                           name="payment[<?= $partner['ID'] ?>]">
+                                           name="payment[<?= Html::encode($partner['ID']) ?>]">
                                 </label>
                             </div>
                             <div class="col-md-3">
@@ -48,7 +49,7 @@ echo $this->render('@app/modules/partner/views/selectpartner', [
                                     Погашение
                                     <input type="checkbox" <?= $repayment ? "checked" : '' ?>
                                            value="1"
-                                           name="repayment[<?= $partner['ID'] ?>]">
+                                           name="repayment[<?= Html::encode($partner['ID']) ?>]">
                                 </label>
                             </div>
                         </div>

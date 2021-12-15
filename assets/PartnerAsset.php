@@ -27,7 +27,7 @@ class PartnerAsset extends AssetBundle
         'aassets/fonts/roboto/css/roboto/roboto-fontface.css',
 
         'insasset/css/plugins/select2/select2.min.css',
-        'insasset/css/plugins/toastr/toastr.min.css',
+        'insasset/css/plugins/toastr/toastr.css',
         'insasset/css/animate.css',
         'insasset/css/plugins/iCheck/custom.css',
         'insasset/js/plugins/gritter/jquery.gritter.css',
@@ -84,7 +84,7 @@ class PartnerAsset extends AssetBundle
         'insasset/js/plugins/sparkline/jquery.sparkline.min.js',
 
         //Toastr
-        'insasset/js/plugins/toastr/toastr.min.js',
+        'insasset/js/plugins/toastr/toastr.js',
 
         //iCheck
         'insasset/js/plugins/iCheck/icheck.min.js',

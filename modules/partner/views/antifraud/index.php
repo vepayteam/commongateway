@@ -11,6 +11,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 
 use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
+use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\widgets\Pjax;
 ?>
@@ -46,7 +47,7 @@ use yii\widgets\Pjax;
                                     <select class="form-control" name="IdPart">
                                         <option value="-1" data-ismfo="-1">Все</option>
                                         <?php foreach ($partnerlist as $partner) : ?>
-                                            <option value="<?=$partner->ID?>" data-ismfo="<?=$partner->IsMfo?>"><?=$partner->nameWithId?></option>
+                                            <option value="<?=Html::encode($partner->ID)?>" data-ismfo="<?=Html::encode($partner->IsMfo)?>"><?=Html::encode($partner->nameWithId)?></option>
                                         <?php endforeach; ?>
                                     </select>
                                 </div>
@@ -58,7 +59,7 @@ use yii\widgets\Pjax;
                                 <select class="form-control multiselect-field" multiple name="usluga[]">
                                     <!--                                <option value="-1">Все</option>-->
                                     <?php foreach ($uslugilist as $usl) : ?>
-                                        <option value="<?=$usl->ID?>" data-partner="<?= $usl->IsMfo ?>"><?=$usl->Name?></option>
+                                        <option value="<?=Html::encode($usl->ID)?>" data-partner="<?=Html::encode($usl->IsMfo)?>"><?=Html::encode($usl->Name)?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -92,7 +93,7 @@ use yii\widgets\Pjax;
                         <input type="hidden" name="paytype" value="-1">
                         <div class="form-group">
                             <div class="col-sm-offset-2 col-sm-4">
-                                <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
+                                <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
                                 <button class="btn btn-sm btn-primary" type="submit">Найти</button>
                             </div>
                         </div>
