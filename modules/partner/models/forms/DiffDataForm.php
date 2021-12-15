@@ -49,7 +49,10 @@ class DiffDataForm extends Model
     public function rules(): array
     {
         return [
-            [['bank', 'registryFile', 'registrySelectColumn', 'registryStatusColumn', 'dbColumn'], 'required'],
+            [['bank', 'registryFile', 'registrySelectColumn', 'dbColumn'], 'required'],
+            [['registryStatusColumn'], 'required', 'when' => function ($model) {
+                return !$model->allRegistryStatusSuccess;
+            }],
             [['bank', 'registrySelectColumn', 'registryStatusColumn'], 'number'],
             [['bank'], 'exist', 'targetClass' => Bank::class, 'targetAttribute' => 'ID'],
             [['allRegistryStatusSuccess'], 'boolean'],
