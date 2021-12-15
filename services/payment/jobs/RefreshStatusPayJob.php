@@ -7,19 +7,20 @@ namespace app\services\payment\jobs;
 use app\helpers\DebugHelper;
 use app\models\TU;
 use app\services\notifications\NotificationsService;
-use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\models\PaySchet;
 use app\services\payment\payment_strategies\RefreshStatusPayStrategy;
-use Carbon\Carbon;
 use Yii;
 use yii\base\BaseObject;
-use yii\helpers\Json;
-use yii\queue\Queue;
 
 class RefreshStatusPayJob extends BaseObject implements \yii\queue\JobInterface
 {
     public $paySchetId;
+
+    /**
+     * @var int|null Refresh interval in seconds.
+     */
+    public $interval = null;
 
     /**
      * VPBC-1013: нужно узнать, где была добавлена задача для очереди.
@@ -68,9 +69,12 @@ class RefreshStatusPayJob extends BaseObject implements \yii\queue\JobInterface
                     $delay = 120 * 60; // 120 min
                 }
 
-                Yii::$app->queue->delay($delay)->push(new RefreshStatusPayJob([
-                    'paySchetId' =>  $paySchet->ID,
-                ]));
+                Yii::$app->queue
+                    ->delay($this->interval ?? $delay)
+                    ->push(new RefreshStatusPayJob([
+                        'paySchetId' => $paySchet->ID,
+                        'interval' => $this->interval,
+                    ]));
             }
         }
 

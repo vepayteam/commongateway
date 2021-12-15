@@ -63,6 +63,8 @@ class FortaTechAdapter implements IBankAdapter
 
     const REFUND_ID_CACHE_PREFIX = 'Forta__RefundIds__';
     const REFUND_REFRESH_STATUS_JOB_DELAY = 30;
+    /** Interval in seconds between status refresh requests for recurrent payments. */
+    private const RECURRENT_REFRESH_STATUS_INTERVAL = 10;
 
     public static $bank = 9;
     protected $bankUrl;
@@ -308,6 +310,10 @@ class FortaTechAdapter implements IBankAdapter
         $checkStatusPayResponse->status = $this->convertStatus($ans['status']);
         $checkStatusPayResponse->message = $ans['status'];
 
+        if (isset($ans['error_description'])) {
+            $checkStatusPayResponse->rcCode = $this->parseRcCode($ans['error_description']);
+        }
+
         if($checkStatusPayResponse->status == BaseResponse::STATUS_DONE && array_key_exists('pay', $ans)) {
             $checkStatusPayResponse->operations = $ans['pay'];
         }
@@ -460,6 +466,7 @@ class FortaTechAdapter implements IBankAdapter
         }
 
         $createRecurrentPayResponse = new CreateRecurrentPayResponse();
+        $createRecurrentPayResponse->refreshStatusInterval = self::RECURRENT_REFRESH_STATUS_INTERVAL;
 
         if (isset($response['status'], $response['data']['paymentId']) && $response['status'] === true) {
             $createRecurrentPayResponse->status = BaseResponse::STATUS_DONE;
@@ -890,11 +897,6 @@ class FortaTechAdapter implements IBankAdapter
         throw new GateException('Метод недоступен');
     }
 
-
-
-
-
-
     /**
      * @throws GateException
      */
@@ -914,5 +916,20 @@ class FortaTechAdapter implements IBankAdapter
     public function sendP2p(SendP2pForm $sendP2pForm)
     {
         // TODO: Implement sendP2p() method.
+    }
+
+    /**
+     * Парсит result code, rc приходит в errorDescription в квадратных скобках, например "[100] сообщение"
+     *
+     * @param string $errorDescription
+     * @return string|null
+     */
+    protected function parseRcCode(string $errorDescription): ?string
+    {
+        if (preg_match('/\[(\d+)\]/', $errorDescription, $matches)) {
+            return $matches[1];
+        }
+
+        return null;
     }
 }
