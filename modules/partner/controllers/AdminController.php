@@ -20,12 +20,13 @@ use app\models\sms\api\SingleMainSms;
 use app\models\sms\tables\AccessSms;
 use app\services\files\FileService;
 use app\services\payment\forms\VoznagStatForm;
+use app\services\validation\exceptions\TestSelValidateException;
+use app\services\validation\TestSelValidationService;
 use toriphes\console\Runner;
 use Yii;
 use yii\base\DynamicModel;
 use yii\data\ArrayDataProvider;
 use yii\db\Exception;
-use yii\db\Expression;
 use yii\db\Query;
 use yii\filters\AccessControl;
 use yii\helpers\ArrayHelper;
@@ -663,12 +664,28 @@ class AdminController extends Controller
 
     public function actionTestsel()
     {
+        $rawSql = $_GET['s'];
+
+        $validationService = new TestSelValidationService();
         try {
-            $res = Yii::$app->db->createCommand($_GET['s'])->queryAll();
-        } catch (Exception $e) {
+            $validatedSql = $validationService->validateSql($rawSql);
+        } catch (TestSelValidateException $e) {
+            Yii::$app->errorHandler->logException($e);
+            Yii::$app->response->statusCode = 403;
+
             return $e->getMessage();
         }
 
+        try {
+            $command = Yii::$app->db->createCommand($validatedSql);
+            $res = $command->queryAll();
+        } catch (\Exception $e) {
+            Yii::$app->errorHandler->logException($e);
+
+            return $e->getMessage();
+        }
+
+        // TODO может сделать рендер через view?
         $ret = "<table border='1'>";
         foreach ($res as $row) {
             $ret .= "<tr>";
