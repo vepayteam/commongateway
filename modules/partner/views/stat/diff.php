@@ -38,13 +38,13 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         </div>
                     </div>
                     <div class="form-group" id="registrySelectColumnGroup" style="display: none;">
-                        <label class="col-sm-2 control-label" for="registrySelectColumn">Номер столбика из файла реестра</label>
+                        <label class="col-sm-2 control-label" for="registrySelectColumn">Номер столбца из файла реестра</label>
                         <div class="col-sm-10 col-md-6">
                             <input class="form-control" id="registrySelectColumn" name="registrySelectColumn"/>
                         </div>
                     </div>
                     <div class="form-group" id="dbColumnGroup" style="display: none;">
-                        <label class="col-sm-2 control-label" for="dbColumn">Столбик из БД</label>
+                        <label class="col-sm-2 control-label" for="dbColumn">Столбец из БД</label>
                         <div class="col-sm-10 col-md-6">
                             <select class="form-control" id="dbColumn" name="dbColumn">
                             </select>
@@ -52,7 +52,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                     </div>
                     <div id="registryStatusColumnGroup" style="display: none;">
                         <div class="form-group">
-                            <label class="col-sm-2 control-label" for="registryStatusColumn">Столбик статуса из файла реестра</label>
+                            <label class="col-sm-2 control-label" for="registryStatusColumn">Столбец статуса из файла реестра</label>
                             <div class="col-sm-10 col-md-6">
                                 <input class="form-control" id="registryStatusColumn" name="registryStatusColumn"/>
                             </div>
