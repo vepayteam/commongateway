@@ -77,6 +77,14 @@ class StatController extends Controller
                         }
                     ],
                     [
+                        'allow' => false,
+                        'roles' => ['@'],
+                        'actions' => ['diff', 'diffdata'],
+                        'matchCallback' => function ($rule, $action) {
+                            return !UserLk::IsAdmin(Yii::$app->user);
+                        }
+                    ],
+                    [
                         'allow' => true,
                         'roles' => ['@'],
                         'denyCallback' => function ($rule, $action) {
