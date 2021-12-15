@@ -310,6 +310,10 @@ class FortaTechAdapter implements IBankAdapter
         $checkStatusPayResponse->status = $this->convertStatus($ans['status']);
         $checkStatusPayResponse->message = $ans['status'];
 
+        if (isset($ans['error_description'])) {
+            $checkStatusPayResponse->rcCode = $this->parseRcCode($ans['error_description']);
+        }
+
         if($checkStatusPayResponse->status == BaseResponse::STATUS_DONE && array_key_exists('pay', $ans)) {
             $checkStatusPayResponse->operations = $ans['pay'];
         }
@@ -893,11 +897,6 @@ class FortaTechAdapter implements IBankAdapter
         throw new GateException('Метод недоступен');
     }
 
-
-
-
-
-
     /**
      * @throws GateException
      */
@@ -917,5 +916,20 @@ class FortaTechAdapter implements IBankAdapter
     public function sendP2p(SendP2pForm $sendP2pForm)
     {
         // TODO: Implement sendP2p() method.
+    }
+
+    /**
+     * Парсит result code, rc приходит в errorDescription в квадратных скобках, например "[100] сообщение"
+     *
+     * @param string $errorDescription
+     * @return string|null
+     */
+    protected function parseRcCode(string $errorDescription): ?string
+    {
+        if (preg_match('/\[(\d+)\]/', $errorDescription, $matches)) {
+            return $matches[1];
+        }
+
+        return null;
     }
 }
