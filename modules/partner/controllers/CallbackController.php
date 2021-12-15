@@ -120,8 +120,8 @@ class CallbackController extends Controller
 
                 return ['status' => 1, 'data' => $this->renderPartial('_listitems', [
                     'reqdata' => $reqData,
+                    'pagination' => $data['pagination'],
                     'data' => $data['data'],
-                    'payLoad' => $data['payLoad']->toArray(),
                     'IsAdmin' => $IsAdmin
                 ])];
             } else {
