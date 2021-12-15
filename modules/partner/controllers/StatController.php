@@ -2,7 +2,6 @@
 
 namespace app\modules\partner\controllers;
 
-use app\helpers\LogHelper;
 use app\models\kkt\OnlineKassa;
 use app\models\mfo\MfoStat;
 use app\models\partner\admin\VyvodVoznag;
@@ -47,7 +46,6 @@ use yii\web\NotFoundHttpException;
 use yii\web\Response;
 use yii\web\UploadedFile;
 
-use function array_keys;
 use function count;
 use function serialize;
 
@@ -426,15 +424,6 @@ class StatController extends Controller
 
     public function actionSale()
     {
-
-        try {
-            throw new Exception('error');
-        } catch (Exception $e) {
-            LogHelper::info(['merchant_id' => 1, 'user_id' => 2], 'lk/out', $e);
-        } finally {
-            LogHelper::error(['merchant_id' => 1, 'user_id' => 2], 'lk/out', $e);
-        }
-
         $fltr = new StatFilter();
         $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
         return $this->render('sale', [
