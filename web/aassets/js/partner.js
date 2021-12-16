@@ -1251,6 +1251,10 @@
                         $('#notiflistform').closest('.ibox-content').toggleClass('sk-loading');
                         if (result.status == 1) {
                             $('#notiflistresult').html(result.data);
+                            $('.pagination a').each(function(){
+                                $(this).removeAttr('href');
+                                $(this).attr('onclick', 'lk.notiflistreq('+(parseInt($(this).attr('data-page'))+1)+');');
+                            });
                         } else {
                             $('#notiflistresult').html(result.message);
                         }
@@ -1321,6 +1325,38 @@
                 });
                 return false;
             });
+        },
+
+        notiflistreq: function (page) {
+
+            if (linklink) {
+                linklink.abort();
+            }
+            linklink = $.ajax({
+                type: "POST",
+                url: '/partner/callback/listitems?page=' + page,
+                data: $('#notiflistform').serialize(),
+                beforeSend: function () {
+                    $('#notiflistform').closest('.ibox-content').toggleClass('sk-loading');
+                },
+                success: function (result) {
+                    $('#notiflistform').closest('.ibox-content').toggleClass('sk-loading');
+                    if (result.status == 1) {
+                        $('#notiflistresult').html(result.data);
+                        $('.pagination a').each(function(){
+                            $(this).removeAttr('href');
+                            $(this).attr('onclick', 'lk.notiflistreq('+(parseInt($(this).attr('data-page'))+1)+');');
+                        });
+                    } else {
+                        $('#notiflistresult').html("<p class='text-center'>" + data.message + "</p>");
+                    }
+                },
+                error: function () {
+                    $('#notiflistform').closest('.ibox-content').toggleClass('sk-loading');
+                    $('#notiflistresult').html("Ошибка запроса");
+                }
+            });
+
         },
 
         comisotchet: function () {

@@ -3,10 +3,10 @@
 namespace app\models\partner\callback;
 
 use app\models\partner\UserLk;
-use app\modules\partner\controllers\structures\PaginationPayLoad;
 use app\services\notifications\models\NotificationPay;
 use Yii;
 use yii\base\Model;
+use yii\data\Pagination;
 use yii\db\Query;
 
 class CallbackList extends Model
@@ -130,10 +130,9 @@ class CallbackList extends Model
 
         return [
             'data'    => $isGeneratorResult ? self::mapQueryPaymentResult($query) : $query->all(),
-            'payLoad' => new PaginationPayLoad([
+            'pagination' => new Pagination([
                 'totalCount' => $totalCount,
-                'page'       => $page,
-                'pageLimit'  => $pageLimit,
+                'pageSize' => $pageLimit,
             ]),
         ];
     }
