@@ -2,6 +2,9 @@
 
 /* @var yii\web\View $this */
 /* @var $idpartner int */
+/* @var $httpCodeList array */
+/* @var $partnerlist array */
+/* @var $IsAdmin bool */
 
 $this->title = "коллбэки";
 
@@ -20,6 +23,18 @@ use yii\web\View; ?>
                 <div class="ibox-content">
 
                     <form class="form-horizontal" id="notiflistform">
+                        <?php if ($IsAdmin) : ?>
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">Мерчант</label>
+                                <div class="col-sm-4">
+                                    <select class="form-control multiselect-field" multiple name="partner[]">
+                                        <?php foreach ($partnerlist as $partn) : ?>
+                                            <option value="<?=Html::encode($partn->ID)?>" data-ismfo="<?= $partn->ID == 1 ? 2 : Html::encode($partn->IsMfo)?>"><?=Html::encode($partn->ID)?> | <?=Html::encode($partn->Name)?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                            </div>
+                        <?php endif; ?>
                         <div class="form-group">
                             <label class="col-sm-2 control-label">Дата</label>
                             <div class="col-md-4">
@@ -34,8 +49,7 @@ use yii\web\View; ?>
                             <div class="form-group">
                                 <label class="col-sm-2 control-label">HTTP-код статуса</label>
                                 <div class="col-sm-4">
-                                    <select class="form-control" name="httpCode">
-                                        <option value="-1">Все</option>
+                                    <select class="form-control multiselect-field" multiple name="httpCode[]">
                                         <?php foreach ($httpCodeList as $httpCode) : ?>
                                             <option value="<?=Html::encode($httpCode)?>"><?=Html::encode($httpCode)?></option>
                                         <?php endforeach; ?>
@@ -73,7 +87,6 @@ use yii\web\View; ?>
 
                         <div class="form-group">
                             <div class="col-sm-offset-2 col-sm-4">
-                                <input name="partner" type="hidden" value="<?= Html::encode($idpartner) ?>">
                                 <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
                                 <button class="btn btn-sm btn-primary" type="submit">Сформировать</button>
                             </div>
