@@ -343,4 +343,14 @@ class GratapayAdapter implements IBankAdapter
             'Sign' => $sign,
         ];
     }
+
+    public function sendP2p(SendP2pForm $sendP2pForm)
+    {
+        throw new GateException('Метод недоступен');
+    }
+
+    public function registrationBenific(RegistrationBenificForm $registrationBenificForm)
+    {
+        throw new GateException('Метод недоступен');
+    }
 }
