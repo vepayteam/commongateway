@@ -8,21 +8,15 @@ class CheckStatusPayResponse extends BaseResponse
     public $rrn = '';
     public $transId;
 
+    /**
+     * @var string|null
+     */
+    public $rcCode;
+
     public $cardNumber;
     public $cardRefId;
     public $expYear;
     public $expMonth;
     public $cardHolder;
     public $operations;
-
-    /**
-     * проверка полученного внешнего идентификатора карты
-     * @return array[]
-     */
-    public function rules(): array
-    {
-        return [
-            [['cardRefId'], 'required'],
-        ];
-    }
 }

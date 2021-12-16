@@ -24,6 +24,7 @@ use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
+use app\services\payment\forms\SendP2pForm;
 use app\services\payment\forms\RegistrationBenificForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
@@ -368,6 +369,11 @@ class WallettoBankAdapter implements IBankAdapter
         }
 
         return join(PHP_EOL, $messages);
+    }
+
+    public function sendP2p(SendP2pForm $sendP2pForm)
+    {
+        // TODO: Implement sendP2p() method.
     }
 
     /**

@@ -2,6 +2,14 @@
 
     "use strict";
 
+    toastr.options = {
+        closeButton: true,
+        progressBar: true,
+        showMethod: 'slideDown',
+        timeOut: 1000,
+        escapeHtml: true
+    };
+
     let linklink = 0;
     let loginNav = {
         login: function () {
@@ -10,7 +18,8 @@
                 closeButton: true,
                 progressBar: true,
                 showMethod: 'slideDown',
-                timeOut: 1000
+                timeOut: 1000,
+                escapeHtml: true
             };
 
             if (linklink) {
@@ -61,7 +70,8 @@
                     closeButton: true,
                     progressBar: true,
                     showMethod: 'slideDown',
-                    timeOut: 1000
+                    timeOut: 1000,
+                    escapeHtml: true
                 };
 
                 if (linklink) {
@@ -317,38 +327,156 @@
             });
         },
 
-        diffdatareq: function () {
+        getErrors: function (errors) {
+            let arrayErrors = []
+            for (const errorKey in errors) {
+                arrayErrors.push(errors[errorKey].join('<br/>'))
+            }
+
+            return arrayErrors.join('<br/>')
+        },
+
+        diffHideAll: function () {
+            $('#registrySelectColumnGroup').css('display', 'none')
+            $('#registryStatusColumnGroup').css('display', 'none')
+            $('#dbColumnGroup').css('display', 'none')
+            $('#registryStatuses').css('display', 'none')
+            $('#allRegistryStatusSuccess').css('display', 'none')
+        },
+
+        diffDataReq: function () {
             $.ajax({
                 type: 'POST',
                 enctype: 'multipart/form-data',
-                url: '/partner/stat/diffdata',
-                // data: $('#diffdataform').serialize(),
-                data: new FormData($('#diffdataform')[0]),
+                url: '/partner/stat/diff-data',
+                data: new FormData($('#diffForm')[0]),
                 processData: false,
                 contentType: false,
                 beforeSend: function () {
-                    $('#diffdataform').closest('.ibox-content').toggleClass('sk-loading');
+                    $('#diffForm').closest('.ibox-content').toggleClass('sk-loading');
                 },
                 success: function (data) {
-                    $('#diffdataform').closest('.ibox-content').toggleClass('sk-loading');
+                    $('#diffForm').closest('.ibox-content').toggleClass('sk-loading');
+
                     if (data.status === 1) {
-                        $('#diffdataresult').html(data.data)
+                        $('#diffDataResult').html(data.data)
                     } else {
-                        $('#diffdataresult').html("<p class='text-center'>" + data.message + "</p>")
+                        if (data.errors) {
+                            $('#diffDataResult').html("<p class='text-center'>" + lk.getErrors(data.errors) + "</p>")
+                        } else {
+                            $('#diffDataResult').html("<p class='text-center'>Ошибка</p>")
+                        }
                     }
                 },
                 error: function () {
-                    $('#diffdataform').closest('.ibox-content').toggleClass('sk-loading');
-                    $('#diffdataresult').html("<p class='text-center'>Ошибка</p>");
+                    $('#diffForm').closest('.ibox-content').toggleClass('sk-loading');
+                    $('#diffDataResult').html("<p class='text-center'>Ошибка</p>");
                 }
             })
         },
 
-        diffdata: function () {
-            $('#diffdataform').on('submit', function (e) {
+        diffColumnsReq: function () {
+            $.ajax({
+                type: 'POST',
+                enctype: 'multipart/form-data',
+                url: '/partner/stat/diff-columns',
+                data: new FormData($('#diffForm')[0]),
+                processData: false,
+                contentType: false,
+                beforeSend: function () {
+                    $('#diffForm').closest('.ibox-content').toggleClass('sk-loading');
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        $('#diffForm').closest('.ibox-content').toggleClass('sk-loading');
+
+                        if (data.errors) {
+                            $('#diffDataResult').html("<p class='text-center'>" + lk.getErrors(data.errors) + "</p>")
+                        } else {
+                            $('#diffDataResult').html("<p class='text-center'>Ошибка</p>")
+                        }
+
+                        return
+                    }
+
+                    const dbColumns = data.dbColumns
+                    const settings = data.settings
+
+                    $('#registrySelectColumn').val(settings ? settings.RegistrySelectColumn : '')
+                    $('#registryStatusColumn').val(settings ? settings.RegistryStatusColumn : '')
+
+                    const dbColumnElement = $('#dbColumn')
+                    dbColumnElement.empty()
+
+                    for (const dbColumnName of dbColumns) {
+                        const dbColumnSettings = settings ? settings.DbColumn : ''
+
+                        dbColumnElement.append($('<option>', {
+                            value: dbColumnName,
+                            text: dbColumnName,
+                            selected: dbColumnName === dbColumnSettings,
+                        }))
+                    }
+
+                    if (settings && settings.Statuses) {
+                        const statuses = JSON.parse(settings.Statuses)
+                        for (const key in statuses) {
+                            $('#status' + key).val(statuses[key])
+                        }
+                    }
+
+                    $('#registrySelectColumnGroup').css('display', 'block')
+                    $('#registryStatusColumnGroup').css('display', 'block')
+                    $('#dbColumnGroup').css('display', 'block')
+                    $('#registryStatuses').css('display', 'block')
+
+                    if (settings && settings.AllRegistryStatusSuccess) {
+                        $('#allRegistryStatusSuccess').prop('checked', true)
+                        $('#registryStatuses').css('display', 'none')
+                    } else {
+                        $('#allRegistryStatusSuccess').prop('checked', false)
+                    }
+
+                    $('#diffForm').closest('.ibox-content').toggleClass('sk-loading');
+                },
+                error: function () {
+                    $('#diffForm').closest('.ibox-content').toggleClass('sk-loading');
+                    $('#diffDataResult').html("<p class='text-center'>Ошибка</p>");
+                }
+            })
+        },
+
+        diffFunc: function () {
+            $('#diffForm').on('submit', function (e) {
                 e.preventDefault();
 
-                lk.diffdatareq();
+                lk.diffDataReq();
+            })
+
+            $('#bank').change(function () {
+                if ($('#registryFile').val()) {
+                    $('#diffDataResult').html('')
+                    lk.diffColumnsReq()
+                }
+            })
+
+            $('#registryFile').change(function (e) {
+                if (!$(e.target).val()) {
+                    lk.diffHideAll()
+                    return
+                }
+
+                $('#diffDataResult').html('')
+                lk.diffColumnsReq()
+            })
+
+            $('#allRegistryStatusSuccess').change(function () {
+                if (this.checked) {
+                    $('#registryStatuses').css('display', 'none')
+                }
+                else {
+                    $('#registryStatuses').css('display', 'block')
+                }
             })
         },
 
@@ -366,7 +494,7 @@
                             $('.pdf-modal .modal-footer').show();
                             $('.pdf-modal .modal-footer input:first-child').attr('data-id', id);
                             $('.pdf-modal .modal-footer input:last-child').attr('data-id', id);
-                            $('.pdf-modal .modal-header h3').html('Операция «' + answer.message + '»');
+                            $('.pdf-modal .modal-header h3').text('Операция «' + answer.message + '»');
                             $('.pdf-modal').modal('show');
                         } else {
                             $('#statlistform').closest('.ibox-content').toggleClass('sk-loading');
@@ -895,7 +1023,8 @@
                     closeButton: true,
                     progressBar: true,
                     showMethod: 'slideDown',
-                    timeOut: 1000
+                    timeOut: 1000,
+                    escapeHtml: true
                 };
 
                 if (linklink) {
@@ -936,7 +1065,8 @@
                     closeButton: true,
                     progressBar: true,
                     showMethod: 'slideDown',
-                    timeOut: 1000
+                    timeOut: 1000,
+                    escapeHtml: true
                 };
 
                 if (linklink) {
@@ -1067,7 +1197,8 @@
                     closeButton: true,
                     progressBar: true,
                     showMethod: 'slideDown',
-                    timeOut: 1000
+                    timeOut: 1000,
+                    escapeHtml: true
                 };
 
                 if (linklink) {
@@ -1272,7 +1403,8 @@
                     closeButton: true,
                     progressBar: true,
                     showMethod: 'slideDown',
-                    timeOut: 1000
+                    timeOut: 1000,
+                    escapeHtml: true
                 };
 
                 let idPartner = $(this).attr('data-id');
@@ -1502,7 +1634,8 @@
                 closeButton: true,
                 progressBar: true,
                 showMethod: 'slideDown',
-                timeOut: 1000
+                timeOut: 1000,
+                escapeHtml: true
             };
 
             $('#formEditCommonCont').on('submit', function () {
@@ -1894,7 +2027,8 @@
                 closeButton: true,
                 progressBar: true,
                 showMethod: 'slideDown',
-                timeOut: 1000
+                timeOut: 1000,
+                escapeHtml: true
             };
 
             $('#saveUser').on('click', function () {
@@ -1990,7 +2124,8 @@
                     closeButton: true,
                     progressBar: true,
                     showMethod: 'slideDown',
-                    timeOut: 1000
+                    timeOut: 1000,
+                    escapeHtml: true
                 };
 
                 let form = $('form[name="EditUsluga"]').serialize();

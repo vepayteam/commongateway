@@ -29,6 +29,7 @@ use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
+use app\services\payment\forms\SendP2pForm;
 use app\services\payment\forms\RegistrationBenificForm;
 use app\services\payment\helpers\DectaHelper;
 use app\services\payment\models\PartnerBankGate;
@@ -437,6 +438,11 @@ class DectaAdapter implements IBankAdapter
     private function throwGateException(): void
     {
         throw new GateException(self::ERROR_METHOD_NOT_ALLOWED_MSG);
+    }
+
+    public function sendP2p(SendP2pForm $sendP2pForm)
+    {
+        // TODO: Implement sendP2p() method.
     }
 
     /**

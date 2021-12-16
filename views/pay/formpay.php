@@ -34,7 +34,7 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
     <?php if ($params['IdUsluga'] == 1) : ?>
         <?php if($partnerCardRegTextHeaderOption): ?>
             <div class="infotop">
-                <?= $partnerCardRegTextHeaderOption['Value'] ?>
+                <?= Html::encode($partnerCardRegTextHeaderOption['Value']) ?>
             </div>
         <?php else: ?>
             <div class="infotop">
@@ -44,7 +44,7 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
     <?php else: ?>
         <div class="row margin-top24">
             <div class="col-xs-12">
-                <div class="info">Оплата в<span class="pull-right blacksumm"><?=$params['NamePartner']?></span></div>
+                <div class="info">Оплата в<span class="pull-right blacksumm"><?=Html::encode($params['NamePartner'])?></span></div>
             </div>
         </div>
     <?php endif; ?>
@@ -55,14 +55,14 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
                     <span>Сумма </span>
                     <span class="pull-right blacksumm">
                         <?= PaymentHelper::formatSum($params['amountPay']) ?>
-                        <?= $params['currencySymbol'] ?>
+                        <?= Html::encode($params['currencySymbol']) ?>
                     </span>
                 </div>
                 <div class="info">
                     <span>Комиссия </span>
                     <span class="pull-right blacksumm">
                         <?= PaymentHelper::formatSum($params['amountCommission']) ?>
-                        <?= $params['currencySymbol'] ?>
+                        <?= Html::encode($params['currencySymbol']) ?>
                     </span>
                 </div>
 
@@ -123,7 +123,7 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
                 ]); ?>
             </div>
             <div class="cvcblock">
-                <img src="/imgs/info.svg" alt="info" class="infocvc" data-toggle="tooltip" data-placement="top" title="Последние 3 цифры на белой полосе карты с обратной стороны">
+                <img src="/imgs/info.svg" alt="info" class="infocvc" data-toggle="tooltip" data-placement="top" title="Трехзначный код на обратной стороне карты">
                 <?= $form->field($payform, 'CardCVC')->passwordInput([
                     'data-inputmask-placeholder' => '_',
                     'data-inputmask-jitMasking' => 'true',
@@ -164,7 +164,7 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
 
     <div class="row nopadding margin-top24">
         <div class="col-xs-12">
-            <input type="hidden" class="idPay" name="PayForm[IdPay]" value="<?=$params['ID']?>">
+            <input type="hidden" class="idPay" name="PayForm[IdPay]" value="<?=Html::encode($params['ID'])?>">
             <input type="hidden" class="user_hash" name="user_hash" value="">
             <?=
                 Html::submitButton(
@@ -182,7 +182,7 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
 
     <div class="row nopadding margin-top24" id="applepay" style="display: none">
         <div class="col-xs-12">
-            <input type="hidden" class="idPay" name="PayForm[IdPay]" value="<?=$params['ID']?>">
+            <input type="hidden" class="idPay" name="PayForm[IdPay]" value="<?=Html::encode($params['ID'])?>">
             <input type="hidden" class="user_hash" name="user_hash" value="">
             <?= Html::button('<i class="fa fa-apple" aria-hidden="true"></i> PAY', [
                 'class' => 'btn btn-success paybtn',
@@ -192,7 +192,7 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
     </div>
     <div class="row nopadding margin-top24" id="googlepay" style="display: none">
         <div class="col-xs-12">
-            <input type="hidden" class="idPay" name="PayForm[IdPay]" value="<?=$params['ID']?>">
+            <input type="hidden" class="idPay" name="PayForm[IdPay]" value="<?=Html::encode($params['ID'])?>">
             <input type="hidden" class="user_hash" name="user_hash" value="">
             <?= Html::button('<i class="fa fa-google" aria-hidden="true"></i> PAY', [
                 'class' => 'btn btn-success paybtn',
@@ -202,7 +202,7 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
     </div>
     <div class="row nopadding margin-top24" id="samsungpay" style="display: none">
         <div class="col-xs-12">
-            <input type="hidden" class="idPay" name="PayForm[IdPay]" value="<?=$params['ID']?>">
+            <input type="hidden" class="idPay" name="PayForm[IdPay]" value="<?=Html::encode($params['ID'])?>">
             <input type="hidden" class="user_hash" name="user_hash" value="">
             <?= Html::button('SAMSUNG PAY', [
                 'class' => 'btn btn-success paybtn',
@@ -238,6 +238,8 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
         </div>
     <?php endif; ?>
     <input id="client_data" type="hidden" name="client_data" value="{}">
+    <?php /* Crutch for Walletto, which need real client_data_accept from client in 3DS 2.0 */ ?>
+    <input id="client_data_accept" type="hidden" name="client_data_accept" value="<?= Yii::$app->request->headers->get('accept') ?>">
     <?php ActiveForm::end(); ?>
 
     <iframe name="threDS" id="confirm3dsV2TKBFrame" style="height: 1px; display: none">
@@ -302,5 +304,4 @@ if (isset($samsung['IsUseSamsungpay']) && $samsung['IsUseSamsungpay']) {
 }
 $this->registerJs('$("#client_data").val(JSON.stringify({ "browser_screen_height": window.innerHeight, "browser_screen_width": window.innerWidth, "browser_timezone": (new Date()).getTimezoneOffset(), "browser_java_enabled": navigator.javaEnabled(), "window_height": window.outerHeight, "window_width": window.outerWidth, "browser_color_depth": screen.colorDepth }))');
 $this->registerJs('setTimeout(tracking.sendToServer, 500)', \yii\web\View::POS_READY);
-$this->registerJsFile('/payasset/js/ym.js');
 ?>

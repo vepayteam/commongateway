@@ -5,6 +5,8 @@
 /* @var array $data */
 /* @var $IsAdmin bool */
 
+use yii\helpers\Html;
+
 ?>
 
 <?php
@@ -12,8 +14,8 @@
 $queryLink = http_build_query($reqdata);
 
 ?>
-<?php if (count($data) > 0) : ?>
-<input class='btn btn-white btn-xs' data-action="repeatnotif-batch" data-params="<?=$queryLink?>" type='button' value='Массово повторить запрос'>
+<?php if ($IsAdmin && count($data) > 0) : ?>
+<input class='btn btn-white btn-xs' data-action="repeatnotif-batch" data-params="<?=Html::encode($queryLink)?>" type='button' value='Массово повторить запрос'>
 <?php endif; ?>
 
 <table class="table table-striped tabledata" style="font-size: 0.9em">
@@ -31,15 +33,15 @@ $queryLink = http_build_query($reqdata);
     <tbody>
         <?php foreach ($data as $row) : ?>
             <tr>
-                <td><?=$row['IdPay']?></td>
+                <td><?=Html::encode($row['IdPay'])?></td>
                 <td><?=date("d.m.Y H:i:s", $row['DateCreate'])?></td>
-                <td><?=!empty($row['FullReq']) ? $row['FullReq'] : $row['Email']?></td>
+                <td><?=Html::encode(!empty($row['FullReq']) ? $row['FullReq'] : $row['Email'])?></td>
                 <td><?=$row['DateSend'] > 1 ? date("d.m.Y H:i:s", $row['DateSend']) : 'в очереди'?></td>
                 <td>
-                    <div>HTTP code: <?=$row['HttpCode']?></div>
-                    <div><code><?=$row['HttpAns']?></code></div>
+                    <div>HTTP code: <?=Html::encode($row['HttpCode'])?></div>
+                    <div><code><?=Html::encode($row['HttpAns'])?></code></div>
                 </td>
-                <td><input class='btn btn-white btn-xs' data-action="repeatnotif" data-id='<?= $row['ID'] ?>' type='button' value='Повторить запрос'></td>
+                <td><input class='btn btn-white btn-xs' data-action="repeatnotif" data-id='<?=Html::encode($row['ID'])?>' type='button' value='Повторить запрос'></td>
             </tr>
         <?php endforeach; ?>
     </tbody>
@@ -50,7 +52,7 @@ $queryLink = http_build_query($reqdata);
         <th colspan='6'>
 
             <a class="btn btn-white btn-xs" target="_blank"
-               href="/partner/callback/listexport?<?=$queryLink?>">
+               href="/partner/callback/listexport?<?=Html::encode($queryLink)?>">
                 <i class="fa fa-share"></i>&nbsp;Экспорт xls
             </a>
         </th>

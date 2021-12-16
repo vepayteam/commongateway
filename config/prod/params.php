@@ -60,6 +60,16 @@ return [
             'channel' => 'queue',
             'attempts' => 10,
         ],
+        'reportQueue' => [
+            'class' => \yii\queue\redis\Queue::class,
+            'redis' => 'redis',
+            'channel' => 'report_queue',
+            'on afterError' => function (\yii\queue\ExecEvent $event) {
+                if ($event->error) {
+                    Yii::$app->errorHandler->logException($event->error);
+                }
+            }
+        ],
         'cache' => [
             'class' => 'yii\redis\Cache',
             'redis' => [
@@ -81,6 +91,8 @@ return [
             'BRS' => [
                 'url' => 'https://securepay.rsb.ru:9443',
                 'url_3ds' => 'https://securepay.rsb.ru/ecomm2/ClientHandler',
+                'url_p2p' => 'https://securepay.rsb.ru:9443',
+                'url_p2p_3ds' => 'https://securepay.rsb.ru/ecomm2/ClientHandler',
                 'url_xml' => 'https://194.67.29.215:8443',
                 'url_b2c' => 'https://212.46.217.150:7603',
             ],

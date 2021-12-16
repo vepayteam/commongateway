@@ -59,9 +59,6 @@ trait PayPartsTrait
      */
     private function payPartsSenderToRecipient(Partner $senderPartner, Partner $recipientPartner, Carbon $dateFrom, Carbon $dateTo)
     {
-        /** @var PaySchetService $paySchetService */
-        $paySchetService = \Yii::$app->get(PaySchetService::class);
-
         $transaction = Yii::$app->db->beginTransaction();
 
         $transactionOk = true;
@@ -132,6 +129,7 @@ trait PayPartsTrait
             $outPayAccountForm->extid = '';
             $outPayAccountForm->name = $recipientPartner->partner_bank_rekviz[0]->NamePoluchat;
             $outPayAccountForm->account = $recipientPartner->partner_bank_rekviz[0]->RaschShetPolushat;
+            $outPayAccountForm->inn = $recipientPartner->partner_bank_rekviz[0]->INNPolushat;
             $outPayAccountForm->bic = $recipientPartner->partner_bank_rekviz[0]->BIKPoluchat;
             $outPayAccountForm->descript = $descript;
             $outPayAccountForm->amount = $vyvodParts->Amount;

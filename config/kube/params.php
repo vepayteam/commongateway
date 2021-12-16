@@ -59,6 +59,16 @@ return [
             'channel' => 'queue',
             'attempts' => 10,
         ],
+        'reportQueue' => [
+            'class' => \yii\queue\redis\Queue::class,
+            'redis' => 'redis',
+            'channel' => 'report_queue',
+            'on afterError' => function (\yii\queue\ExecEvent $event) {
+                if ($event->error) {
+                    Yii::$app->errorHandler->logException($event->error);
+                }
+            }
+        ],
         'cache' => [
             'class' => 'yii\redis\Cache',
             'redis' => [
@@ -80,6 +90,8 @@ return [
             'BRS' => [
                 'url' => getenv('PARAMS_PAYMENTS_BRS_URL', true),
                 'url_3ds' => getenv('PARAMS_PAYMENTS_BRS_URL_3DS', true),
+                'url_p2p' => getenv('PARAMS_PAYMENTS_BRS_URL_P2P', true),
+                'url_p2p_3ds' => getenv('PARAMS_PAYMENTS_BRS_URL_P2P_3DS', true),
                 'url_xml' => getenv('PARAMS_PAYMENTS_BRS_URL_XML', true),
                 'url_b2c' => getenv('PARAMS_PAYMENTS_BRS_URL_B2C', true),
             ],

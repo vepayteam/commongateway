@@ -9,6 +9,9 @@ use yii\base\Model;
 
 class DonePayForm extends Model
 {
+    /** @var PaySchet */
+    private $paySchet;
+
     public $IdPay;
     public $md;
     public $paRes;
@@ -44,7 +47,14 @@ class DonePayForm extends Model
      */
     public function getPaySchet()
     {
-        return PaySchet::findOne(['ID' => $this->IdPay]);
+        if(!$this->paySchet) {
+            if($this->IdPay) {
+                $this->paySchet = PaySchet::findOne(['ID' => $this->IdPay]);
+            } elseif($this->trans) {
+                $this->paySchet = PaySchet::findOne(['ExtBillNumber' => $this->trans]);
+            }
+        }
+        return $this->paySchet;
     }
 
 

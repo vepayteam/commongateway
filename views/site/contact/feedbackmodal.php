@@ -1,6 +1,7 @@
 <?php
 
 use app\models\site\ContactForm;
+use yii\helpers\Html;
 use yii\web\View;
 
 /**
@@ -98,7 +99,7 @@ use yii\web\View;
                     </div>
                 </div>
                 <input type="hidden" name="ContactForm[type]" value="feedback">
-                <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
+                <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
             </div>
         </form>
     </div>

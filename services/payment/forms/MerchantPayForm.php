@@ -27,6 +27,11 @@ class MerchantPayForm extends BaseForm implements AmountFormInterface
     public $postbackurl = '';
     public $postbackurl_v2 = '';
     public $client;
+    /**
+     * @var int Значения: 1 или 0. Если 1, производится регистрация карты на рекуррентные платежи и выплаты.
+     */
+    public $regcard = 0;
+
     public const REQUIRED = 'required';
     public const NOT_SUPPORTED = 'not supported';
 
@@ -59,6 +64,7 @@ class MerchantPayForm extends BaseForm implements AmountFormInterface
             [['amount', 'card'], 'required'],
             [['client'], 'validateClient'],
             [['currency'], 'validateCurrency'],
+            [['regcard'], 'in', 'range' => [1, 0], 'strict' => true],
         ];
     }
 

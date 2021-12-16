@@ -61,7 +61,7 @@ class CreatePayPartsStrategy extends MfoPayLkCreateStrategy
             $payschetPart = new PayschetPart();
             $payschetPart->PayschetId = $paySchet->ID;
             $payschetPart->PartnerId = $part['merchant_id'];
-            $payschetPart->Amount = $part['amount'];
+            $payschetPart->Amount = $part['amount'] * 100;
             $payschetPart->save(false);
         }
     }
