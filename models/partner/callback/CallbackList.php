@@ -14,21 +14,23 @@ class CallbackList extends Model
     public $datefrom;
     public $dateto;
     public $notifstate;
-    public $partner;
+    public $partner = [];
     public $id = 0;
     public $Extid = '';
-    public $httpCode = [];
+    public $httpCode = 0;
     public $testMode = false;
+
+    public const MAX_BATCH_CALLBACK_COUNT = 1000;
 
     public function rules()
     {
         return [
-            [['partner', 'notifstate', 'id'], 'integer'],
+            [['notifstate', 'id', 'httpCode'], 'integer'],
             [['Extid'], 'string', 'max' => 40],
             [['datefrom', 'dateto'], 'date', 'format' => 'php:d.m.Y H:i'],
             [['datefrom', 'dateto'], 'required'],
             [['testMode'], 'boolean'],
-            ['httpCode', 'each', 'rule' => ['integer']],
+            ['partner', 'each', 'rule' => ['integer']],
         ];
     }
 
@@ -73,8 +75,8 @@ class CallbackList extends Model
                 ],
             ]);
 
-        if ( $idpartner > 0 ) {
-            $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $idpartner]);
+        if ( !empty($idpartner) ) {
+            $query->andWhere(['in', 'ps.IdOrg', $idpartner]);
         }
 
         if ($this->id > 0) {
@@ -84,8 +86,8 @@ class CallbackList extends Model
             $query->andWhere(['ps.Extid' => $this->Extid]);
         }
 
-        if (!empty($this->httpCode)) {
-            $query->andWhere(['in', 'n.HttpCode', $this->httpCode]);
+        if (!empty($this->httpCode) && $this->httpCode > 0) {
+            $query->andWhere(['n.HttpCode' => $this->httpCode]);
         }
 
         $totalCount = (int) (clone $query)->select(['COUNT(*) as cnt'])->scalar();
