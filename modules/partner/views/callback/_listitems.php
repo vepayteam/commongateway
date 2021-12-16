@@ -15,7 +15,7 @@ use yii\helpers\Html;
 $queryLink = http_build_query($reqdata);
 
 ?>
-<?php if (count($data) > 0) : ?>
+<?php if ($IsAdmin && count($data) > 0) : ?>
 <input class='btn btn-white btn-xs' data-action="repeatnotif-batch" data-params="<?=Html::encode($queryLink)?>" type='button' value='Массово повторить запрос'>
 <?php endif; ?>
 

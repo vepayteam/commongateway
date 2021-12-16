@@ -25,10 +25,19 @@ class ReverspayJob extends BaseObject implements \yii\queue\JobInterface
     public $idpay;
 
     /**
+     * @var string|null
+     */
+    public $initiator;
+
+    /**
      * @param \yii\queue\Queue $queue
      */
     public function execute($queue)
     {
+        if ($this->initiator) {
+            Yii::info("ReversPayJob start ID={$this->idpay} Initiator={$this->initiator}");
+        }
+
         $paySchet = PaySchet::findOne(['ID' => $this->idpay]);
 
         $bankAdapterBuilder = new BankAdapterBuilder();
