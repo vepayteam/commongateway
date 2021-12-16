@@ -1,10 +1,11 @@
 <?php
+/**
+ * @var $this \yii\web\View
+ * @var $content string
+ */
 
-/* @var $this \yii\web\View */
-/* @var $content string */
-
-use yii\helpers\Html;
 use app\assets\SwaggerAsset;
+use yii\helpers\Html;
 
 $title = $this->params['title'] ?? 'Vepay API';
 
@@ -20,6 +21,25 @@ SwaggerAsset::register($this);
         <?= Html::csrfMetaTags() ?>
         <title><?= Html::encode($title) ?></title>
         <?php $this->head() ?>
+
+        <style>
+            html {
+                box-sizing: border-box;
+                overflow: -moz-scrollbars-vertical;
+                overflow-y: scroll;
+            }
+
+            *,
+            *:before,
+            *:after {
+                box-sizing: inherit;
+            }
+
+            body {
+                margin: 0;
+                background: #fafafa;
+            }
+        </style>
     </head>
     <body>
     <?php $this->beginBody() ?>

@@ -83,8 +83,15 @@ class RefreshStatusPayStrategy extends OkPayStrategy
         $paySchet->Status = $checkStatusPayResponse->status;
         $paySchet->ErrorInfo = $checkStatusPayResponse->message;
         $paySchet->RRN = $checkStatusPayResponse->rrn;
-        $paySchet->RCCode = $checkStatusPayResponse->xml['orderadditionalinfo']['rc'] ?? '';
         $paySchet->Operations = Json::encode($checkStatusPayResponse->operations ?? []);
+
+        // xml['orderadditionalinfo']['rc'] это ТКБшный result code TODO может перенести в $checkStatusPayResponse->rcCode?
+        if (isset($checkStatusPayResponse->xml['orderadditionalinfo']['rc'])) {
+            $paySchet->RCCode = $checkStatusPayResponse->xml['orderadditionalinfo']['rc'];
+        } else if ($checkStatusPayResponse->rcCode) {
+            $paySchet->RCCode = $checkStatusPayResponse->rcCode;
+        }
+
         $paySchet->save(false);
 
         $this->getNotificationsService()->sendPostbacks($paySchet);

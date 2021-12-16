@@ -37,7 +37,7 @@ function renderProv($row, $IsAdmin)
 ?>
     <tr>
         <td></td>
-        <td><strong><?= Html::encode($row['bankName']) ?? '' ?></strong></td>
+        <td><strong><?= Html::encode($row['bankName'] ?? '') ?></strong></td>
         <td class="text-right"></td>
         <td class="text-right"></td>
         <td class="text-right"></td>

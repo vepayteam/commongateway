@@ -34,26 +34,30 @@ class ExportExcel
 
             $rowCellCount = null;
 
-           try {
+            try {
                 // данные
                 foreach ($data as $row) {
-
-                    if ( $rowCellCount === null ) {
+                    if ($rowCellCount === null) {
                         $rowCellCount = count($row);
                     }
 
                     $exporter->addRow($row);
 
-                    if ( count($totalRules) > 0 ) {
-
+                    if (count($totalRules) > 0) {
                         foreach ($row as $i => $item) {
-                            if ( isset($totalRules[$i]) ) {
+                            if (isset($totalRules[$i]) && is_numeric($item)) {
                                 @$totals[$i] += $item;
                             }
                         }
                     }
                 }
-            } catch (\Throwable $e) { }
+            } catch (\Throwable $e) {
+                Yii::error(
+                    'Message: ' . $e->getMessage() . "\n" . 'File: ' . $e->getFile() . "\n" . 'Line: ' . $e->getLine() . "\n" . 'StackTrace: ' .
+                    $e->getTraceAsString() . "\n"
+                );
+                throw new ExportExcelRawException($e->getMessage(), $e->getCode(), $e->getPrevious());
+            }
 
             //итого
             if ($rowCellCount !== null && count($totalRules) > 0) {
