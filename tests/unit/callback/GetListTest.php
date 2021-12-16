@@ -4,10 +4,10 @@ namespace callback;
 
 use app\models\partner\callback\CallbackList;
 use app\models\payonline\Partner;
-use app\modules\partner\controllers\structures\PaginationPayLoad;
 use app\services\notifications\models\NotificationPay;
 use app\services\payment\models\PaySchet;
 use Codeception\Test\Unit;
+use yii\data\Pagination;
 use yii\db\Expression;
 
 /**
@@ -50,8 +50,8 @@ class GetListTest extends Unit
 
         self::assertArrayHasKey('data', $data);
         self::assertIsArray($data['data']);
-        self::assertArrayHasKey('payLoad', $data);
-        self::assertInstanceOf(PaginationPayLoad::class, $data['payLoad']);
+        self::assertArrayHasKey('pagination', $data);
+        self::assertInstanceOf(Pagination::class, $data['pagination']);
     }
 
     // Тестирование фильтрации коллбэков по дате
