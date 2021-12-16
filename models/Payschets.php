@@ -563,7 +563,8 @@ class Payschets
     private function reversPay($idpay)
     {
         Yii::$app->queue->push(new ReverspayJob([
-            'idpay' => $idpay
+            'idpay' => $idpay,
+            'initiator' => 'Payschets.reversPay',
         ]));
     }
 

@@ -305,14 +305,11 @@ class FortaTechAdapter implements IBankAdapter
         if(array_key_exists('error_description', $ans) && !empty($ans['error_description'])) {
             $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
             $checkStatusPayResponse->message = $ans['error_description'];
+            $checkStatusPayResponse->rcCode = $this->parseRcCode($ans['error_description']);
             return $checkStatusPayResponse;
         }
         $checkStatusPayResponse->status = $this->convertStatus($ans['status']);
         $checkStatusPayResponse->message = $ans['status'];
-
-        if (isset($ans['error_description'])) {
-            $checkStatusPayResponse->rcCode = $this->parseRcCode($ans['error_description']);
-        }
 
         if($checkStatusPayResponse->status == BaseResponse::STATUS_DONE && array_key_exists('pay', $ans)) {
             $checkStatusPayResponse->operations = $ans['pay'];
