@@ -102,10 +102,11 @@ class CallbackList extends Model
             'n.HttpCode',
             'n.HttpAns',
             'n.FullReq',
+            'ps.Extid',
         ];
 
         if ($this->testMode === true) {
-            $select = array_merge($select, ['ps.IdOrg', 'ps.Extid']);
+            $select = array_merge($select, ['ps.IdOrg']);
         }
 
         $query->select($select);

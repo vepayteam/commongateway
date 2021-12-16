@@ -23,6 +23,7 @@ $queryLink = http_build_query($reqdata);
     <tr>
         <th>Операция</th>
         <th>Дата создания</th>
+        <th>ExtID</th>
         <th>Адрес запроса</th>
         <th>Дата выполнения</th>
         <th>Результат</th>
@@ -35,6 +36,7 @@ $queryLink = http_build_query($reqdata);
             <tr>
                 <td><?=Html::encode($row['IdPay'])?></td>
                 <td><?=date("d.m.Y H:i:s", $row['DateCreate'])?></td>
+                <td><?=Html::encode($row['Extid'])?></td>
                 <td><?=Html::encode(!empty($row['FullReq']) ? $row['FullReq'] : $row['Email'])?></td>
                 <td><?=$row['DateSend'] > 1 ? date("d.m.Y H:i:s", $row['DateSend']) : 'в очереди'?></td>
                 <td>
