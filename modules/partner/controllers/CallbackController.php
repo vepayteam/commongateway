@@ -149,6 +149,11 @@ class CallbackController extends Controller
             if ($CallbackList->load(Yii::$app->request->post(), '') && $CallbackList->validate()) {
 
                 $data = $CallbackList->GetList($IsAdmin, 0, true);
+
+                if($data['payLoad']->getTotalCount() > CallbackList::MAX_BATCH_CALLBACK_COUNT) {
+                    return ['status' => 0, 'message' => 'За раз можно отправить не более ' . CallbackList::MAX_BATCH_CALLBACK_COUNT . ' коллбэков'];
+                }
+
                 $notificationPayIdList = array_column($data['data'], 'ID');
 
                 if (count($notificationPayIdList) > 0) {
