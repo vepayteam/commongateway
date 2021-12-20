@@ -12,7 +12,10 @@ class m211220_180545_create_index_datecreated_on_payschet extends Migration
      */
     public function safeUp()
     {
-        $this->createIndex('DateCreate_idx', 'pay_schet', 'DateCreate');
+        try {
+            $this->createIndex('DateCreate_idx', 'pay_schet', 'DateCreate');
+        } catch (Exception $e) {
+        }
     }
 
     /**
@@ -20,6 +23,6 @@ class m211220_180545_create_index_datecreated_on_payschet extends Migration
      */
     public function safeDown()
     {
-        $this->dropIndex('DateCreate_idx', 'pay_schet');
+//        $this->dropIndex('DateCreate_idx', 'pay_schet');
     }
 }
