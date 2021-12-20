@@ -5,6 +5,7 @@ namespace app\models\payonline;
 use app\helpers\Validators;
 use app\models\payonline\active_query\CardActiveQuery;
 use app\services\cards\models\PanToken;
+use app\services\payment\models\active_query\PaySchetQuery;
 use app\services\payment\models\Bank;
 use app\services\payment\models\PaySchet;
 use Exception;
@@ -34,6 +35,8 @@ use yii\helpers\Json;
  * @property User $user
  * @property Bank $bank
  * @property PanToken $panToken
+ *
+ * @property-read PaySchet[] $paySchets {@see Cards::getPaySchets()}
  */
 class Cards extends ActiveRecord
 {
@@ -130,15 +133,19 @@ class Cards extends ActiveRecord
     }
 
     /**
-     * Gets query for [[PaySchets]].
+     * @return PaySchetQuery
      */
     public function getPaySchets(): ActiveQuery
     {
-        return $this->hasMany(PaySchet::className(), ['IdKard' => 'ID']);
+        return $this->hasMany(PaySchet::class, ['IdKard' => 'ID']);
     }
 
+    /**
+     * @todo Rename to "getUslugatovars". Add a readonly class property for this relation.
+     */
     public function getUslugatovar(): ActiveQuery
     {
+        /** {@see Cards::paySchets} */
         return $this->hasMany(Uslugatovar::class, ['ID' => 'IdUsluga'])->via('paySchets');
     }
 
