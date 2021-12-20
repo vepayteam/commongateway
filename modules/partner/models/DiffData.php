@@ -2,107 +2,134 @@
 
 namespace app\modules\partner\models;
 
+use app\modules\partner\models\forms\DiffDataForm;
+use app\modules\partner\models\readers\DiffDataReadFilter;
 use app\services\payment\models\PaySchet;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 use Yii;
 use yii\db\Query;
 
 class DiffData
 {
-    private const CSV_READER_TYPE = 'Csv';
-    private const CSV_DELIMITER = ';';
+    /**
+     * @var DiffDataForm
+     */
+    private $form;
 
-    private $registry;
-
-    public function read($filename)
+    /**
+     * @param DiffDataForm $form
+     */
+    public function __construct(DiffDataForm $form)
     {
-        $fileFormat = IOFactory::identify($filename);
-        Yii::warning('Stat diffData file format ' . $filename
-            . ': format=' . $fileFormat
-        );
-
-        $reader = IOFactory::createReader($fileFormat);
-        $reader->setReadDataOnly(true);
-        $reader->setReadFilter(new DiffReadFilter());
-
-        if ($fileFormat === self::CSV_READER_TYPE) {
-            $reader->setDelimiter(self::CSV_DELIMITER);
-        }
-
-        $spreadsheet = $reader->load($filename);
-        Yii::warning('Stat diffData spreadsheet loaded ' . $filename);
-
-        $rows = $spreadsheet->getActiveSheet()->toArray();
-        Yii::warning('Stat diffData rows loaded' . $filename
-            . ': rows_count=' . count($rows)
-        );
-
-        $this->registry = [];
-
-        $n = 0;
-        foreach ($rows as $row) {
-            if ($n > 2) {
-                $this->registry[] = [
-                    'ExtBillNumber' => strval($row[1]),
-                    'Status' => $row[12],
-                ];
-            }
-
-            $n++;
-        }
-
-        Yii::warning('Stat diffData registry ready: count=' . count($this->registry));
+        $this->form = $form;
     }
 
+    /**
+     * @return array[]
+     * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
+     */
     public function execute(): array
     {
+        $registry = $this->getRegistry();
+
         $query = new Query();
-        $paySchets = $query->select(['ps.ID', 'ps.Extid', 'ps.Status', 'ps.DateCreate', 'ps.DateOplat', 'ps.ExtBillNumber', 'ut.NameUsluga'])
+        $paySchets = $query->select(['ps.ID', 'ps.Extid', 'ps.Status', 'ps.DateCreate', 'ps.DateOplat', 'ps.ExtBillNumber', 'ps.RRN', 'ut.NameUsluga'])
             ->from('pay_schet as ps')
-            ->where(['in', 'ps.ExtBillNumber', array_column($this->registry, 'ExtBillNumber')])
+            ->where(['Bank' => $this->form->bank])
+            ->andWhere(['in', 'ps.' . $this->form->dbColumn, array_column($registry, 'Identifier')])
             ->leftJoin('uslugatovar as ut', 'ut.Id=ps.IdUsluga')
             ->all();
 
-        Yii::warning('Stat diffData paySchets loaded: count=' . count($paySchets));
+        Yii::info('Stat diffData paySchets loaded: count=' . count($paySchets));
 
-        $map = self::getMap($paySchets);
-        Yii::warning('Stat diffData map ready: count=' . count($map));
+        $map = $this->getMap($paySchets);
 
-        return self::getData($map);
+        return self::getData($registry, $map);
     }
 
-    private function getData(array $map): array
+    /**
+     * @param array $registry
+     * @param array $map
+     * @return array[]
+     */
+    private function getData(array $registry, array $map): array
     {
         $badStatus = [];
         $notFound = [];
-        foreach ($this->registry as $record) {
-            if (!array_key_exists($record['ExtBillNumber'], $map)) {
+        foreach ($registry as $record) {
+            if (!array_key_exists($record['Identifier'], $map)) {
                 $notFound[] = $record;
                 continue;
             }
 
             /** @var PaySchet $paySchet */
-            $paySchet = $map[$record['ExtBillNumber']];
-            if (intval($paySchet['Status']) !== PaySchet::STATUS_DONE || $record['Status'] !== 'Успешно') {
-                $badStatus[] = [
-                    'record' => $record,
-                    'paySchet' => $paySchet,
-                ];
+            $paySchet = $map[$record['Identifier']];
+
+            if ($this->form->allRegistryStatusSuccess) {
+                if (intval($paySchet['Status']) !== PaySchet::STATUS_DONE) {
+                    $badStatus[] = [
+                        'record' => $record,
+                        'paySchet' => $paySchet,
+                    ];
+                }
+            } else {
+                $registryStatus = $this->form->getStatusFor($paySchet['Status']);
+                if ($record['Status'] !== $registryStatus) {
+                    $badStatus[] = [
+                        'record' => $record,
+                        'paySchet' => $paySchet,
+                    ];
+                }
             }
         }
 
-        Yii::warning('Stat diffData data ready: badStatus=' . count($badStatus)
+        Yii::info('Stat diffData data ready: badStatus=' . count($badStatus)
             . ' notFound=' . count($notFound)
         );
 
         return [$badStatus, $notFound];
     }
 
+    /**
+     * @return array
+     * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
+     */
+    private function getRegistry(): array
+    {
+        $reader = new DiffReader($this->form->registryFile->tempName);
+        $rows = $reader->readActiveSheet(new DiffDataReadFilter());
+
+        $registry = [];
+
+        foreach ($rows as $row) {
+            $identifier = strval($row[$this->form->registrySelectColumn - 1]);
+            $status = $this->form->allRegistryStatusSuccess
+                ? PaySchet::STATUSES[PaySchet::STATUS_DONE]
+                : strval($row[$this->form->registryStatusColumn - 1]);
+
+            if (empty($identifier) || empty($status)) {
+                continue;
+            }
+
+            $registry[] = [
+                'Identifier' => $identifier,
+                'Status' => $status,
+            ];
+        }
+
+        Yii::info('Stat diffData registry ready: count=' . count($registry));
+
+        return $registry;
+    }
+
+    /**
+     * @param array $paySchets
+     * @return array
+     */
     private function getMap(array $paySchets): array
     {
         $map = [];
         foreach ($paySchets as $paySchet) {
-            $map[$paySchet['ExtBillNumber']] = $paySchet;
+            $map[$paySchet[$this->form->dbColumn]] = $paySchet;
         }
 
         return $map;
