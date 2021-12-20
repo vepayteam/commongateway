@@ -91,7 +91,11 @@ $partsBalanceAccess = PartUserAccess::checkPartsBalanceAccess();
                         <li class="<?= $act[0] ?>"><a href="/partner/stat/list">Список операций</a></li>
                         <li class="<?= $act[55] ?>"><a href="/partner/stat/recalc">Пересчет комиссий</a></li>
                         <li class="<?= $act[18] ?>"><a href="/partner/payment-orders/list">Платежные поручения</a></li>
-                        <li class="<?= $act[24] ?>"><a href="/partner/stat/diff">Сверка операций с Банком</a></li>
+                        <?php if ($IsAdmin): ?>
+                            <li class="<?= $act[24] ?>">
+                                <a href="/partner/stat/diff">Сверка операций с провайдером</a>
+                            </li>
+                        <?php endif; ?>
                     </ul>
                 </li>
             <?php endif; ?>

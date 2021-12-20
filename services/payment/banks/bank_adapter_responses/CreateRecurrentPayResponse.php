@@ -9,4 +9,8 @@ class CreateRecurrentPayResponse extends BaseResponse
     public $rrn;
     public $transac;
 
+    /**
+     * @var int|null Interval in seconds between status refresh requests for recurrent payments.
+     */
+    public $refreshStatusInterval = null;
 }
