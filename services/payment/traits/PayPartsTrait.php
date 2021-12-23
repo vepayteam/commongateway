@@ -4,16 +4,11 @@
 namespace app\services\payment\traits;
 
 
-use app\models\bank\TCBank;
-use app\models\bank\TcbGate;
 use app\models\partner\admin\VyvodParts;
 use app\models\payonline\CreatePay;
 use app\models\payonline\Partner;
-use app\models\payonline\PartnerBankRekviz;
-use app\models\payonline\Provparams;
 use app\models\payonline\Uslugatovar;
 use app\models\PayschetPart;
-use app\models\Payschets;
 use app\models\TU;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\BankAdapterBuilder;
@@ -21,7 +16,6 @@ use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\forms\CreatePartsOutPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\models\PaySchet;
-use app\services\PaySchetService;
 use Carbon\Carbon;
 use Yii;
 use yii\db\Query;
@@ -103,12 +97,21 @@ trait PayPartsTrait
             }
 
             // TODO: multibank
-            $descript = sprintf(
-                'Перечисление сумм разбивок для %s (%d) за %s',
-                $recipientPartner->Name,
-                $recipientPartner->ID,
-                $dateFrom->locale('ru')->format('d-m-Y')
-            );
+            if (isset($recipientPartner->bankRekviz->NaznachenPlatez)) {
+                $descript = str_ireplace(
+                    '%date%',
+                    $dateFrom->format('d.m.Y'),
+                    $recipientPartner->bankRekviz->NaznachenPlatez
+                );
+            } else {
+                Yii::error("\"NaznachenPlatez\" is not set (partner ID: {$recipientPartner->ID}).");
+                $descript = sprintf(
+                    'Перечисление сумм разбивок для %s (%d) за %s',
+                    $recipientPartner->Name,
+                    $recipientPartner->ID,
+                    $dateFrom->locale('ru')->format('d-m-Y')
+                );
+            }
 
             $bankAdapterBuilder = new BankAdapterBuilder();
             $bankAdapterBuilder->build($senderPartner, $uslugatovar);
@@ -118,7 +121,8 @@ trait PayPartsTrait
             $createPartsOutPayForm->partnerBankGate = $bankAdapterBuilder->getPartnerBankGate();
             $createPartsOutPayForm->uslugatovar = $uslugatovar;
             $createPartsOutPayForm->amount = $vyvodParts->Amount;
-            $createPartsOutPayForm->partnerBankRekviz = $recipientPartner->partner_bank_rekviz[0];
+            $createPartsOutPayForm->partnerBankRekviz = $recipientPartner->bankRekviz;
+            $createPartsOutPayForm->description = $descript;
 
             $paySchet = $this->createPartsOutPay($createPartsOutPayForm);
 
@@ -127,10 +131,10 @@ trait PayPartsTrait
             $outPayAccountForm->paySchet = $paySchet;
             $outPayAccountForm->partner = $senderPartner;
             $outPayAccountForm->extid = '';
-            $outPayAccountForm->name = $recipientPartner->partner_bank_rekviz[0]->NamePoluchat;
-            $outPayAccountForm->account = $recipientPartner->partner_bank_rekviz[0]->RaschShetPolushat;
-            $outPayAccountForm->inn = $recipientPartner->partner_bank_rekviz[0]->INNPolushat;
-            $outPayAccountForm->bic = $recipientPartner->partner_bank_rekviz[0]->BIKPoluchat;
+            $outPayAccountForm->name = $recipientPartner->bankRekviz->NamePoluchat;
+            $outPayAccountForm->account = $recipientPartner->bankRekviz->RaschShetPolushat;
+            $outPayAccountForm->inn = $recipientPartner->bankRekviz->INNPolushat;
+            $outPayAccountForm->bic = $recipientPartner->bankRekviz->BIKPoluchat;
             $outPayAccountForm->descript = $descript;
             $outPayAccountForm->amount = $vyvodParts->Amount;
 
@@ -233,28 +237,31 @@ trait PayPartsTrait
     {
         $paySchet = new PaySchet();
 
-        $paySchet->IdUsluga       = $createPartsOutPayForm->uslugatovar->ID;
-        $paySchet->IdUser         = 0;
-        $paySchet->SummPay        = $createPartsOutPayForm->amount;
-        $paySchet->UserClickPay   = 0;
-        $paySchet->DateCreate     = time();
-        $paySchet->Status         = 0;
-        $paySchet->DateOplat      = 0;
+        $paySchet->IdUsluga = $createPartsOutPayForm->uslugatovar->ID;
+        $paySchet->IdUser = 0;
+        $paySchet->SummPay = $createPartsOutPayForm->amount;
+        $paySchet->UserClickPay = 0;
+        $paySchet->DateCreate = time();
+        $paySchet->Status = 0;
+        $paySchet->DateOplat = 0;
         $paySchet->DateLastUpdate = time();
-        $paySchet->PayType        = 0;
-        $paySchet->TimeElapsed    = 86400;
-        $paySchet->ExtKeyAcces    = 0;
-        $paySchet->CountSendOK    = 0;
-        $paySchet->Period         = 0;
+        $paySchet->PayType = 0;
+        $paySchet->TimeElapsed = 86400;
+        $paySchet->ExtKeyAcces = 0;
+        $paySchet->CountSendOK = 0;
+        $paySchet->Period = 0;
+        $paySchet->QrParams = 'Номер счета: ' . $createPartsOutPayForm->partnerBankRekviz->RaschShetPolushat
+            . ' | Бик: ' . $createPartsOutPayForm->partnerBankRekviz->BIKPoluchat
+            . ' | Назначение: ' . $createPartsOutPayForm->description;
 
-        $paySchet->Schetcheks     = '';
-        $paySchet->IdAgent        = 0;
-        $paySchet->IsAutoPay      = 0;
-        $paySchet->AutoPayIdGate  = 0;
-        $paySchet->TypeWidget     = 0;
-        $paySchet->Bank           = $createPartsOutPayForm->partnerBankGate->BankId;
-        $paySchet->IdOrg          = $createPartsOutPayForm->partnerBankGate->PartnerId;
-        $paySchet->sms_accept     = 1;
+        $paySchet->Schetcheks = '';
+        $paySchet->IdAgent = 0;
+        $paySchet->IsAutoPay = 0;
+        $paySchet->AutoPayIdGate = 0;
+        $paySchet->TypeWidget = 0;
+        $paySchet->Bank = $createPartsOutPayForm->partnerBankGate->BankId;
+        $paySchet->IdOrg = $createPartsOutPayForm->partnerBankGate->PartnerId;
+        $paySchet->sms_accept = 1;
 
         if(!$paySchet->save()) {
             throw new CreatePayException('Не удалось создать счет');
