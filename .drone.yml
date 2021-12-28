@@ -169,7 +169,7 @@ steps:
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
-- name: helm-values-generator-cc32efdea353aacefe0be1faaf65ef8b
+- name: helm-values-generator-d289ba2b8b49611d595136874245c8d2
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
@@ -182,7 +182,7 @@ steps:
   - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-cf-wildcard-certificate" -i
   - yq write values.yaml "redis.enabled" "true" -i
   - yq write values.yaml "config.reportQueue.enabled" "true" -i
-  - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+50000000))" -i
+  - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+300000000))" -i
   - yq write values.yaml "config.payments.brs.url_xml" "https://194.67.29.216:8443" -i
   - echo "=>>>" && cat values.yaml
 
@@ -444,7 +444,7 @@ steps:
     GITEA_TOKEN:
       from_secret: GITEA_TOKEN
 
-- name: helm-values-generator-dcaaa0868cc4385d563f8b7cd852d59b
+- name: helm-values-generator-6b6a27756f75d59c764af031fd33a26e
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
@@ -453,7 +453,7 @@ steps:
   - yq write values.yaml "ingress.hosts[0].paths[0]" "/" -i
   - yq write values.yaml "ingress.tls[0].hosts[0]" "${DRONE_BRANCH}-${DRONE_REPO_NAME}.backend.vepay.cf" -i
   - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-cf-wildcard-certificate" -i
-  - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+150000000))" -i
+  - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+400000000))" -i
   - echo "=>>>" && cat values.yaml
 
 - name: helm-deployment-upgrade-3606237ab0fb9dcc2c35d0bef846fdb8
@@ -678,6 +678,8 @@ image_pull_secrets:
 - dockerconfig
 
 trigger:
+  branch:
+  - master
   event:
   - promote
   target:
@@ -725,6 +727,6 @@ get:
 
 ---
 kind: signature
-hmac: 059d1f4475ae72af749f2ea49b3e183868ec50794f4a289be66d12edddae99da
+hmac: 8a37f8095fe9b311ebfd6b9748e4d9db4a1da4b698bbf17494cc71c47cbd20a8
 
 ...
