@@ -58,7 +58,7 @@ class DectaHelper
                 'title' => DectaAdapter::PRODUCT_TITLE,
             ],
         ];
-        $paymentRequest->response_type = 'minimal';
+        $paymentRequest->response_type = 'standard';
         $paymentRequest->success_redirect = $paySchet->getOrderdoneUrl();
         $paymentRequest->failure_redirect = $paySchet->getOrderfailUrl();
 

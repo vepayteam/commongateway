@@ -4,7 +4,9 @@
 /* @var bool $IsAdmin */
 /* @var array $requestToExport*/
 
-use app\models\TU; ?>
+use app\models\TU;
+use yii\helpers\Html;
+?>
 
 <?php
 function renderRow($row, $IsAdmin)
@@ -13,7 +15,7 @@ function renderRow($row, $IsAdmin)
 ?>
     <tr>
         <td><?= ($i++) ?></td>
-        <td><?= $row['NameUsluga'] ?></td>
+        <td>- <?= Html::encode($row['NameUsluga']) ?></td>
         <td class="text-right"><?= number_format($row['SummPay'] / 100.0,2,'.','&nbsp;') ?></td>
         <td class="text-right"><?= number_format($row['ComissSumm'] / 100.0,2,'.','&nbsp;') ?></td>
         <td class="text-right"><?= number_format(($row['SummPay'] + $row['ComissSumm']) / 100.0,2,'.','&nbsp;') ?></td>
@@ -25,6 +27,28 @@ function renderRow($row, $IsAdmin)
             <td class="text-right"><?= number_format($row['MerchVozn'] / 100.0,2,'.','&nbsp;') ?></td>
         <?php endif; ?>
         <td class="text-right"><?= number_format($row['CntPays'],0,'.','&nbsp;') ?></td>
+        <td></td>
+    </tr>
+<?php
+}
+
+function renderProv($row, $IsAdmin)
+{
+?>
+    <tr>
+        <td></td>
+        <td><strong><?= Html::encode($row['bankName'] ?? '') ?></strong></td>
+        <td class="text-right"></td>
+        <td class="text-right"></td>
+        <td class="text-right"></td>
+        <?php if ($IsAdmin) : ?>
+            <td class="text-right"></td>
+            <td class="text-right"></td>
+            <td class="text-right"></td>
+        <?php else : ?>
+            <td class="text-right"></td>
+        <?php endif; ?>
+        <td class="text-right"></td>
         <td></td>
     </tr>
 <?php
@@ -46,6 +70,7 @@ function renderItog($itog, $IsAdmin)
             <th class="text-right"><?= number_format(round($itog['merchvozn'] / 100.0, 2),2,'.','&nbsp;') ?></th>
         <?php endif; ?>
         <th class="text-right"><?= number_format($itog['cnt'],0,'.','&nbsp;') ?></th>
+        <th></th>
     </tr>
 <?php
 }
@@ -55,12 +80,12 @@ function renderItog($itog, $IsAdmin)
     <thead>
     <tr>
         <th>#</th>
-        <th>Услуга</th>
+        <th>Провайдер / Услуга</th>
         <th class="text-right">К зачислению</th>
         <th class="text-right">Комиссия с клиента</th>
         <th class="text-right">К оплате</th>
         <?php if ($IsAdmin) : ?>
-            <th class="text-right">Комиссия банка</th>
+            <th class="text-right">Комиссия провайдера</th>
             <th class="text-right">Комиссия с мерчанта</th>
             <th class="text-right">Возн. Vepay</th>
         <?php else : ?>
@@ -74,7 +99,7 @@ function renderItog($itog, $IsAdmin)
     <?php
 
     $dataIn = $dataOut = $dataVyvod = [];
-    $itog1 = $itog2 = $itog3 = ['summ' => 0, 'comiss' => 0, 'cnt' => 0, 'bankcomis' => 0, 'merchvozn' => 0, 'voznagsum' => 0];
+    $itog1 = $itog2 = $itog3 = $itogProm = ['summ' => 0, 'comiss' => 0, 'cnt' => 0, 'bankcomis' => 0, 'merchvozn' => 0, 'voznagsum' => 0];
     foreach ($data as $d) {
         if (TU::IsOutMfo($d['IsCustom'])) {
             $dataOut[] = $d;
@@ -86,7 +111,18 @@ function renderItog($itog, $IsAdmin)
     }
 
     if (count($dataIn) > 0) {
+        $provider = '';
         foreach ($dataIn as $row) {
+            if ($provider != $row['bankName']) {
+                if ($provider != '') {
+                    renderItog($itogProm, $IsAdmin);
+                }
+                $itogProm = ['summ' => 0, 'comiss' => 0, 'cnt' => 0, 'bankcomis' => 0, 'merchvozn' => 0, 'voznagsum' => 0];
+                renderProv($row, $IsAdmin);
+            }
+
+            $provider = $row['bankName'];
+
             $itog1['summ'] += $row['SummPay'];
             $itog1['comiss'] += $row['ComissSumm'];
             $itog1['cnt'] += $row['CntPays'];
@@ -94,9 +130,18 @@ function renderItog($itog, $IsAdmin)
             $itog1['merchvozn'] += $row['MerchVozn'];
             $itog1['voznagsum'] += $row['VoznagSumm'];
 
+            $itogProm['summ'] += $row['SummPay'];
+            $itogProm['comiss'] += $row['ComissSumm'];
+            $itogProm['cnt'] += $row['CntPays'];
+            $itogProm['bankcomis'] += $row['BankComis'];
+            $itogProm['merchvozn'] += $row['MerchVozn'];
+            $itogProm['voznagsum'] += $row['VoznagSumm'];
+
             renderRow($row, $IsAdmin);
         }
-        renderItog($itog1, $IsAdmin);
+
+        renderItog($itogProm, $IsAdmin);
+
     }
     if (count($dataOut) > 0) {
         foreach ($dataOut as $row) {
@@ -137,9 +182,10 @@ function renderItog($itog, $IsAdmin)
     <?php if (!count($dataIn) && !count($dataOut) && !count($dataVyvod)) : ?>
         <tr><td colspan='9' style='text-align:center;'>Операции не найдены</td></tr>
     <?php else: ?>
+        <?php renderProv([], $IsAdmin); ?>
         <?php renderItog($itog, $IsAdmin); ?>
         <tr>
-            <th colspan='9'>
+            <th colspan='10'>
                 <?php
                 $exportLink = 'datefrom='. $requestToExport['datefrom'];
                 $exportLink .= '&dateto=' . $requestToExport['dateto'];
@@ -150,7 +196,7 @@ function renderItog($itog, $IsAdmin)
                 }
                 $exportLink .= '&IdPart='.$requestToExport['IdPart'];
                 ?>
-                <a class="btn btn-white btn-xs pull-right" target="_blank" href="/partner/stat/export-otch?<?=$exportLink?>"><i class="fa fa-share"></i>&nbsp;Экспорт</a>
+                <a class="btn btn-white btn-xs pull-right" target="_blank" href="/partner/stat/export-otch?<?=Html::encode($exportLink)?>"><i class="fa fa-share"></i>&nbsp;Экспорт</a>
             </th>
         </tr>
     <?php endif; ?>

@@ -39,8 +39,6 @@ class CallbackFilter
 
         sort($result);
 
-        return array_filter($result, static function(int $v) {
-            return $v !== 0;
-        });
+        return $result;
     }
 }

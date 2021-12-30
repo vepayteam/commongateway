@@ -3,6 +3,9 @@
 /* @var array $dataOut */
 /* @var $this \yii\web\View */
 /* @var bool $IsAdmin */
+
+use yii\helpers\Html;
+
 ?>
 
 <?php
@@ -18,7 +21,7 @@ function renderRow(array $row, $type, &$itog)
     ?>
     <tr>
         <td><?= ($i++) ?></td>
-        <td><?= $row['NamePartner'] ?></td>
+        <td><?= Html::encode($row['NamePartner']) ?></td>
         <td class="text-right"><?= number_format($row['SummPay'] / 100.0, 2, '.', '&nbsp;') ?></td>
         <td class="text-right"><?= number_format($row['ComissSumm'] / 100.0, 2, '.', '&nbsp;') ?></td>
         <td class="text-right"><?= number_format(($row['SummPay'] + $row['ComissSumm']) / 100.0, 2, '.', '&nbsp;') ?></td>
@@ -35,14 +38,14 @@ function renderRow(array $row, $type, &$itog)
                 <div class="text-muted">по <?=date("d.m.Y", $row['DataPerechisl'])?></div>
             <?php endif; ?>
         </td>
-        <td class="text-right"><?= $row['CntPays'] ?></td>
+        <td class="text-right"><?= Html::encode($row['CntPays']) ?></td>
         <td class="text-right">
             <?php if (!($type == 1 && $row['VoznagVyplatDirect'] == 0)): ?>
             <a href="#"
                class="btn btn-default btn-sm"
                data-action="vyvyodsum"
-               data-type="<?=$type?>"
-               data-id="<?=$row['IDPartner']?>"
+               data-type="<?=Html::encode($type)?>"
+               data-id="<?=Html::encode($row['IDPartner'])?>"
                 <?php if ($row['VoznagSumm'] - $row['SummVyveden'] <= 0) : ?>
                     disabled="disabled"
                 <?php endif; ?>
@@ -94,7 +97,7 @@ function renderRow(array $row, $type, &$itog)
         <th class="text-right"><?= number_format(round($itog['bankvozn'] / 100.0, 2), 2, '.', '&nbsp;') ?></th>
         <th class="text-right"><?= number_format(round($itog['summvyveden'] / 100.0, 2), 2, '.', '&nbsp;') ?></th>
         <th class="text-right"><?= number_format(round($itog['summperechislen'] / 100.0, 2), 2, '.', '&nbsp;') ?></th>
-        <th class="text-right"><?= $itog['cnt'] ?></th>
+        <th class="text-right"><?= Html::encode($itog['cnt']) ?></th>
     </tr>
     </tfoot>
     <?php

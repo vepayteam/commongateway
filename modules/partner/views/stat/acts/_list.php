@@ -4,6 +4,7 @@
 /* @var $IsAdmin */
 
 use app\models\partner\stat\ActMfo;
+use yii\helpers\Html;
 use yii\helpers\Url;
 
 $pubdone = 0;
@@ -48,9 +49,9 @@ foreach ($acts as $act) {
                 <?php foreach ($acts as $act) : ?>
                 <tr>
                     <?php if ($IsAdmin) : ?>
-                        <td><a href="/partner/stat/act-edit/<?=$act->ID?>"><?=$act->ID?></a></td>
+                        <td><a href="/partner/stat/act-edit/<?=Html::encode($act->ID)?>"><?=Html::encode($act->ID)?></a></td>
                     <?php else: ?>
-                        <td><?=$act->ID?></td>
+                        <td><?=Html::encode($act->ID)?></td>
                     <?php endif; ?>
                     <td><?=$act->getPartner()->Name?></td>
                     <td class="text-right"><span style="color: darkgreen"><?=number_format($act->ComisPerevod/100.0, 2, '.', '&nbsp;')?></span></td>
@@ -62,14 +63,14 @@ foreach ($acts as $act) {
                         </td>
                         <td>
                             <?php if (($schet = $act->getActSchet()) != null) : ?>
-                                <a href="<?= Url::to(['stat/acts-schetget'])?>/<?=$schet->ID?>" target=_blank> Скачать счет</a>
+                                <a href="<?=Url::to(['stat/acts-schetget'])?>/<?=Html::encode($schet->ID)?>" target=_blank> Скачать счет</a>
                             <?php elseif ($act->getPartner()->IsMfo && !$act->getPartner()->VoznagVyplatDirect) : ?>
-                                <a href="javascript::void()" class="btn btn-white btn-xs" data-click="schetsend" data-id="<?=$act->ID?>"> Выставить счет</a>
+                                <a href="javascript::void()" class="btn btn-white btn-xs" data-click="schetsend" data-id="<?=Html::encode($act->ID)?>"> Выставить счет</a>
                             <?php endif; ?>
                         </td>
                         <td>
                             <?php if ($act->ComisPerevod < 0) : ?>
-                                <a href="<?= Url::to(['stat/acts-pp'])?>/<?=$act->ID?>" target=_blank> Скачать п/п</a>
+                                <a href="<?= Url::to(['stat/acts-pp'])?>/<?=Html::encode($act->ID)?>" target=_blank> Скачать п/п</a>
                             <?php else: ?>
                                 n/a
                             <?php endif; ?>

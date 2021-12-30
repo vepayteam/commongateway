@@ -3,6 +3,7 @@
 namespace app\services\payment\models;
 
 use app\helpers\EnvHelper;
+use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
@@ -15,6 +16,7 @@ use app\services\payment\models\active_query\PaySchetQuery;
 use app\services\payment\payment_strategies\mfo\MfoCardRegStrategy;
 use Carbon\Carbon;
 use Yii;
+use yii\db\ActiveQuery;
 
 /**
  * This is the model class for table "pay_schet".
@@ -92,7 +94,6 @@ use Yii;
  * @property PaySchetLog[] $log
  * @property User $user
  * @property Bank $bank
- *
  * @property string $Version3DS
  * @property int $IsNeed3DSVerif
  * @property string $DsTransId
@@ -342,9 +343,9 @@ class PaySchet extends \yii\db\ActiveRecord
         return $this->hasOne(Bank::class, ['ID' => 'Bank']);
     }
 
-    public function getCurrency()
+    public function getCurrency(): ActiveQuery
     {
-        return $this->hasOne(Currency::class, ['Id' => 'CurrencyId'])->one();
+        return $this->hasOne(Currency::class, ['Id' => 'CurrencyId']);
     }
 
     public function getLog()
@@ -357,6 +358,11 @@ class PaySchet extends \yii\db\ActiveRecord
         return $this->hasMany(NotificationPay::class, ['IdPay' => 'ID']);
     }
 
+    public function getCards(): ActiveQuery
+    {
+        return $this->hasOne(Cards::className(), ['ID' => 'IdKard']);
+    }
+
     /**
      * {@inheritDoc}
      * @throws \Exception
@@ -365,6 +371,10 @@ class PaySchet extends \yii\db\ActiveRecord
     {
         if (!parent::beforeSave($insert)) {
             return false;
+        }
+
+        if (is_string($this->ErrorInfo)) {
+            $this->ErrorInfo = mb_substr($this->ErrorInfo, 0, 250);
         }
 
         $this->DateLastUpdate = time();
@@ -459,6 +469,14 @@ class PaySchet extends \yii\db\ActiveRecord
     public function getOrderfailUrl()
     {
         return Yii::$app->params['domain'] . '/pay/orderfail/' . $this->ID;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCallbackUrl(): string
+    {
+        return Yii::$app->params['domain'] . '/mfo/pay/callback';
     }
 
     /**

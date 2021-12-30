@@ -7,13 +7,14 @@
 
 use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
+use yii\helpers\Html;
 use yii\web\View;
 
 ?>
 
 <div class="row">
     <div class="m-md">
-        <a href="/partner/partner/uslugi-add/<?= $partner->ID ?>" id="UslugiAddBtn" class="btn btn-primary">Добавить</a>
+        <a href="/partner/partner/uslugi-add/<?= Html::encode($partner->ID) ?>" id="UslugiAddBtn" class="btn btn-primary">Добавить</a>
     </div>
 </div>
 
@@ -31,22 +32,22 @@ use yii\web\View;
         <tbody>
         <?php if (is_array($uslugi) && count($uslugi) > 0) : ?>
             <?php foreach ($uslugi as $usl) : ?>
-                <tr data-partner="<?= $usl->IDPartner ?>">
-                    <td class="project-title"><?= $usl->ID ?></td>
-                    <td class="project-title"><?= $usl->NameUsluga ?></td>
-                    <? /*<td class="project-title"><?=($usl->IsCustom ? 'виджет' : $usl['Labels'])?></td>
+                <tr data-partner="<?= Html::encode($usl->IDPartner) ?>">
+                    <td class="project-title"><?= Html::encode($usl->ID) ?></td>
+                    <td class="project-title"><?= Html::encode($usl->NameUsluga) ?></td>
+                    <?php /*<td class="project-title"><?=($usl->IsCustom ? 'виджет' : $usl['Labels'])?></td>
                         <td class="project-title"><?=($usl->qr_group ? $usl->qr_group->NameGroup : '')?></td>
                         <td class="project-title"><?=($usl->uslugi_regions ? $usl->uslugi_regions->NameRegion : 'Все')?></td>*/ ?>
                     <td class="project-title"><?= $usl->MinSumm / 100.0 ?><?= ($usl->MaxSumm != $usl->MinSumm ? "- " . $usl->MaxSumm / 100.0 : "") ?></td>
-                    <td class="project-title"><?= $usl->PcComission ?>%</td>
-                    <td class="project-title"><?= ($usl->MinsumComiss > 0 ? "не менее " . $usl->MinsumComiss . " руб" : "") ?></td>
-                    <? /*<td class="project-title"><?=Uslugatovar::$TypeExport_str[$usl->TypeExport]?></td>*/ ?>
+                    <td class="project-title"><?= Html::encode($usl->PcComission) ?>%</td>
+                    <td class="project-title"><?= Html::encode($usl->MinsumComiss > 0 ? "не менее " . $usl->MinsumComiss . " руб" : "") ?></td>
+                    <?php /*<td class="project-title"><?=Uslugatovar::$TypeExport_str[$usl->TypeExport]?></td>*/ ?>
                     <td class="project-actions">
-                        <a href="/partner/partner/uslugi-edit/<?= $usl->ID ?>"
+                        <a href="/partner/partner/uslugi-edit/<?= Html::encode($usl->ID) ?>"
                            class="btn btn-sm btn-default" title="Изменить">
                             <i class="fa fa-pencil" aria-hidden="true"></i>
                         </a>
-                        <a data-id="<?= $usl->ID ?>" data-action="delUsluga"
+                        <a data-id="<?= Html::encode($usl->ID) ?>" data-action="delUsluga"
                            class="btn btn-sm btn-default" title="Удалить">
                             <i class="fa fa-trash" aria-hidden="true"></i>
                         </a>

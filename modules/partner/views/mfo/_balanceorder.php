@@ -9,6 +9,8 @@
 /* @var $istransit */
 /* @var $IdPartner */
 
+use yii\helpers\Html;
+
 $sumIn = $sumOut = 0;
 
 ?>
@@ -33,8 +35,8 @@ $sumIn = $sumOut = 0;
             <td data-datesort="<?=date('YmdHis', $row['DatePP'])?>"><?= date('d.m.Y H:i:s', $row['DatePP']) ?></td>
             <td class="text-right"><?= $row['IsCredit'] ? number_format($row['SummPP']/100.0,2,'.','&nbsp;') : ''?></td>
             <td class="text-right"><?= !$row['IsCredit'] ? number_format($row['SummPP']/100.0,2,'.','&nbsp;') : ''?></td>
-            <td><?= $row['Description'] ?></td>
-            <td><?= $row['Name'] ?></td>
+            <td><?= Html::encode($row['Description']) ?></td>
+            <td><?= Html::encode($row['Name']) ?></td>
         </tr>
         <?php if ($row['IsCredit']) $sumIn += $row['SummPP']; ?>
         <?php if (!$row['IsCredit']) {
@@ -53,7 +55,7 @@ $sumIn = $sumOut = 0;
     <tr>
         <td colspan='6'>
             <a class="btn btn-white btn-xs pull-right" target="_blank"
-               href="/partner/mfo/exportvyp?istransit=<?=$istransit?>&dateFrom=<?=$dateFrom?>&dateTo=<?=$dateTo?><?=($IsAdmin?'&idpartner='.$IdPartner:'')?>"
+               href="<?= Html::encode("/partner/mfo/exportvyp?istransit={$istransit}&dateFrom={$dateFrom}&dateTo={$dateTo}" . ($IsAdmin ? "&idpartner={$IdPartner}" : '')) ?>"
             ><i class="fa fa-share"></i>&nbsp;Экспорт</a></div>
         </td>
     </tr>
