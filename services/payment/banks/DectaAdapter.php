@@ -30,6 +30,7 @@ use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\forms\SendP2pForm;
 use app\services\payment\helpers\DectaHelper;
+use app\services\payment\models\Bank;
 use app\services\payment\models\PartnerBankGate;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
@@ -385,7 +386,7 @@ class DectaAdapter implements IBankAdapter
      */
     public function getAftMinSum(): int
     {
-        return self::AFT_MIN_SUM;
+        return Bank::findOne(self::$bank)->AftMinSum ?? self::AFT_MIN_SUM;
     }
 
     /**

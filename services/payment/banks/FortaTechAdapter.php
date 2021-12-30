@@ -44,6 +44,7 @@ use app\services\payment\forms\RefundPayForm;
 use app\services\payment\forms\SendP2pForm;
 use app\services\payment\helpers\TimeHelper;
 use app\services\payment\jobs\RefreshStatusPayJob;
+use app\services\payment\models\Bank;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use app\services\payment\traits\MaskableTrait;
@@ -692,7 +693,7 @@ class FortaTechAdapter implements IBankAdapter
      */
     public function getAftMinSum()
     {
-        return self::AFT_MIN_SUMM;
+        return Bank::findOne(self::$bank)->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**

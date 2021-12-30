@@ -36,6 +36,7 @@ use yii\db\ActiveQuery;
  * @property \yii\db\ActiveQuery|PaySchet[] $paySchets
  * @property string $name
  * @property int $SortOrder
+ * @property int $AftMinSum Minimal sum to use AFT gate, in fractional currency units e.g. cents.
  */
 class Bank extends \yii\db\ActiveRecord
 {

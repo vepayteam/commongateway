@@ -56,6 +56,7 @@ use app\services\payment\forms\tkb\RefundPayRequest;
 use app\services\payment\forms\tkb\TransferToAccountRequest;
 use app\services\payment\interfaces\Cache3DSv2Interface;
 use app\services\payment\interfaces\Issuer3DSVersionInterface;
+use app\services\payment\models\Bank;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use app\services\payment\exceptions\reRequestingStatusException;
@@ -1549,7 +1550,7 @@ class TKBankAdapter implements IBankAdapter
 
     public function getAftMinSum()
     {
-        return self::AFT_MIN_SUMM;
+        return Bank::findOne(self::$bank)->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**
