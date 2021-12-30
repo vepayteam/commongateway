@@ -16,10 +16,19 @@ class RefundPayJob extends BaseObject implements JobInterface
     public $paySchetId;
 
     /**
+     * @var string|null
+     */
+    public $initiator;
+
+    /**
      * @inheritDoc
      */
     public function execute($queue)
     {
+        if ($this->initiator) {
+            Yii::info("RefundPayJob start ID={$this->paySchetId} Initiator={$this->initiator}");
+        }
+
         Yii::warning('RefundPayJob execute: ID=' . $this->paySchetId);
         $paySchet = PaySchet::findOne(['ID' => $this->paySchetId]);
 

@@ -10,6 +10,7 @@ use app\models\partner\UserLk;
 use app\models\queue\JobPriorityInterface;
 use app\services\notifications\jobs\CallbackSendJob;
 use app\services\notifications\models\NotificationPay;
+use app\services\payment\models\PaySchet;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
@@ -72,35 +73,18 @@ class CallbackController extends Controller
     /**
      * Список коллбэков МФО
      * @return string
-     * @throws \yii\db\Exception
      */
     public function actionList()
     {
         $fltr = new CallbackFilter();
 
-        if (UserLk::IsAdmin(Yii::$app->user)) {
-            $sel = $this->selectPartner($idpartner, false, false);
-            if (empty($sel)) {
-                return $this->render('list', [
-                    'idpartner' => $idpartner,
-                    'httpCodeList' => $fltr->getCallbackHTTPResponseStatusList(),
-                    'IsAdmin' => true,
-                    'partnerlist' => $fltr->getPartnersList(),
-                ]);
-            } else {
-                return $sel;
-            }
-        } else {
+        $isAdmin = UserLk::IsAdmin(Yii::$app->user);
 
-            $idpartner = UserLk::getPartnerId(Yii::$app->user);
-
-            return $this->render('list', [
-                'idpartner' => $idpartner,
-                'httpCodeList' => $fltr->getCallbackHTTPResponseStatusList(),
-                'IsAdmin' => false,
-                'partnerlist' => $fltr->getPartnersList(),
-            ]);
-        }
+        return $this->render('list', [
+            'httpCodeList' => $fltr->getCallbackHTTPResponseStatusList(),
+            'IsAdmin' => $isAdmin,
+            'partnerlist' => $isAdmin ? $fltr->getPartnersList() : []
+        ]);
     }
 
     public function actionListitems()
@@ -119,8 +103,8 @@ class CallbackController extends Controller
 
                 return ['status' => 1, 'data' => $this->renderPartial('_listitems', [
                     'reqdata' => $reqData,
+                    'pagination' => $data['pagination'],
                     'data' => $data['data'],
-                    'payLoad' => $data['payLoad']->toArray(),
                     'IsAdmin' => $IsAdmin
                 ])];
             } else {
@@ -165,6 +149,11 @@ class CallbackController extends Controller
             if ($CallbackList->load(Yii::$app->request->post(), '') && $CallbackList->validate()) {
 
                 $data = $CallbackList->GetList($IsAdmin, 0, true);
+
+                if(count($data['data']) > CallbackList::MAX_BATCH_CALLBACK_COUNT) {
+                    return ['status' => 0, 'message' => 'За раз можно отправить не более ' . CallbackList::MAX_BATCH_CALLBACK_COUNT . ' коллбэков'];
+                }
+
                 $notificationPayIdList = array_column($data['data'], 'ID');
 
                 if (count($notificationPayIdList) > 0) {
@@ -197,14 +186,16 @@ class CallbackController extends Controller
 
     private function repeatIteration(NotificationPay $notificationPay): void
     {
-        $notificationPay->HttpCode = 0;
-        $notificationPay->DateLastReq = 0;
-        $notificationPay->DateSend = 0;
-        $notificationPay->HttpAns = null;
-        $notificationPay->save(false);
+        if (in_array($notificationPay->paySchet->Status, [PaySchet::STATUS_DONE, PaySchet::STATUS_ERROR])) {
+            $notificationPay->HttpCode = 0;
+            $notificationPay->DateLastReq = 0;
+            $notificationPay->DateSend = 0;
+            $notificationPay->HttpAns = null;
+            $notificationPay->save(false);
 
-        \Yii::$app->queue->push(new CallbackSendJob([
-            'notificationPayId' => $notificationPay->ID,
-        ]));
+            \Yii::$app->queue->push(new CallbackSendJob([
+                'notificationPayId' => $notificationPay->ID,
+            ]));
+        }
     }
 }

@@ -1,16 +1,13 @@
 <?php
+use yii\helpers\Html;
 
 /* @var yii\web\View $this */
 /* @var array $uslugilist */
 
 $this->title = "продажи";
-
 $this->params['breadtitle'] = "Продажи";
 $this->params['breadcrumbs'][] = $this->params['breadtitle'];
-
-use yii\web\View;
 ?>
-
 <div class="row">
     <div class="col-sm-12">
         <div class="ibox float-e-margins">
@@ -41,7 +38,7 @@ use yii\web\View;
                         <div class="col-sm-10 col-md-6">
                             <select class="form-control multiselect-sale" multiple name="TypeUslug[]">
                                 <?php foreach ($uslugilist as $usl) : ?>
-                                    <option value="<?=$usl->ID?>"><?=$usl->Name?></option>
+		                            <option value="<?= Html::encode($usl->ID) ?>"><?= Html::encode($usl->Name) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>

@@ -134,8 +134,30 @@ use yii\db\ActiveRecord;
  * @property int $BankForTransferToCardId
  * @property int $RunaBankCid
  * @property Uslugatovar[] $uslugatovars
- * @property PartnerBankRekviz $partner_bank_rekviz
+ * @property PartnerBankRekviz[] $partner_bank_rekviz Deprecated, use {@see Partner::$bankRekviz} instead.
+ * @property string $Apple_displayName [varchar(100)]
+ * @property string $MtsLoginEcom [varchar(255)]
+ * @property string $MtsPasswordEcom [varchar(255)]
+ * @property string $MtsTokenEcom [varchar(255)]
+ * @property string $MtsLoginVyvod [varchar(255)]
+ * @property string $MtsPasswordVyvod [varchar(255)]
+ * @property string $MtsTokenVyvod [varchar(255)]
+ * @property string $MtsLoginAuto [varchar(255)]
+ * @property string $MtsPasswordAuto [varchar(255)]
+ * @property string $MtsTokenAuto [varchar(255)]
+ * @property string $MtsLoginPerevod [varchar(255)]
+ * @property string $MtsPasswordPerevod [varchar(255)]
+ * @property string $MtsTokenPerevod [varchar(255)]
+ * @property string $MtsLoginOctVyvod [varchar(255)]
+ * @property string $MtsPasswordOctVyvod [varchar(255)]
+ * @property string $MtsTokenOctVyvod [varchar(255)]
+ * @property string $MtsLoginOctPerevod [varchar(255)]
+ * @property string $MtsPasswordOctPerevod [varchar(255)]
+ * @property string $MtsTokenOctPerevod [varchar(255)]
+ * @property string $MtsLoginParts [varchar(255)]
  * @property string $nameWithId
+ *
+ * @property-read PartnerBankRekviz $bankRekviz {@see Partner::getBankRekviz()}
  */
 class Partner extends ActiveRecord
 {
@@ -359,9 +381,21 @@ class Partner extends ActiveRecord
         ];
     }
 
+    /**
+     * @deprecated Use {@see Partner::getBankRekviz()} instead.
+     */
     public function getPartner_bank_rekviz(): ActiveQuery
     {
         return $this->hasMany(PartnerBankRekviz::class, ['IdPartner' => 'ID']);
+    }
+
+    /**
+     * @return ActiveQuery
+     * @see PartnerBankRekviz::getPartner()
+     */
+    public function getBankRekviz(): ActiveQuery
+    {
+        return $this->hasOne(PartnerBankRekviz::class, ['IdPartner' => 'ID'])->inverseOf('partner');
     }
 
     public function getPartnerDogovor(): ActiveQuery
@@ -413,7 +447,7 @@ class Partner extends ActiveRecord
     {
         return $this->hasMany(VyvodReestr::class, ['IdPartner' => 'ID']);
     }
-    
+
     public function getNameWithId(): string
     {
         return $this->ID . ' | ' . $this->Name;

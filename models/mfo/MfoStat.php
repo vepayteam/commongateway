@@ -14,20 +14,22 @@ use Yii;
 class MfoStat
 {
     /** Ширина колонок в таблице */
-    const SIZES_ADMIN = [15, 20, 20, 25, 15, 15, 10, 10, 10, 10, 10, 18, 12, 18, 12, 20, 20, 20, 20, 20, 20];
+    public const SIZES_ADMIN = [15, 20, 20, 25, 15, 15, 10, 10, 10, 10, 10, 18, 12, 18, 12, 20, 20, 20, 20, 20, 20];
     /** Ширина колонок в таблице */
-    const SIZES_USER = [15, 20, 20, 25, 15, 15, 10, 10, 10, 18, 12, 18, 12, 20, 20, 20, 20, 20, 20];
-
-    const ITOGS_ADMIN = [6 => 1, 7 => 1, 8 => 1, 9 => 1, 10 => 1];
-    const ITOGS_USER = [6 => 1, 7 => 1, 8 => 1];
-
-    const HEAD_ADMIN = [
-        'ID Vepay', 'ExtID', 'Услуга', 'Реквизиты', 'Договор', 'ФИО', 'Сумма', 'Комиссия', 'К оплате',
+    public const SIZES_USER = [15, 20, 20, 25, 15, 15, 10, 10, 10, 18, 12, 18, 12, 20, 20, 20, 20, 20, 20];
+    public const ITOGS_ADMIN = [6 => 1, 7 => 1, 8 => 1, 9 => 1, 10 => 1];
+    /** For excel we need move ITOGO ot one cell right */
+    public const ITOGS_ADMIN_EXCEL = [7 => 1, 8 => 1, 9 => 1, 10 => 1, 11 => 1];
+    public const ITOGS_USER = [6 => 1, 7 => 1, 8 => 1];
+    /** For excel we need move ITOGO ot one cell right */
+    public const ITOGS_USER_EXCEL = [7 => 1, 8 => 1, 9 => 1];
+    public const HEAD_ADMIN = [
+        'ID Vepay', 'ExtID', 'Код ответа', 'Услуга', 'Реквизиты', 'Договор', 'ФИО', 'Сумма', 'Комиссия', 'К оплате',
         'Комис. банка', 'Возн. Vepay', 'Дата создания', 'Статус', 'Ошибка', 'Дата оплаты', 'Номер транзакции',
         'ID мерчанта', 'Маска карты', 'Держатель карты', 'RRN', 'Хэш от номера карты', 'Наименование банка-эквайера',
     ];
-    const HEAD_USER = [
-        'ID Vepay', 'ExtID', 'Услуга', 'Реквизиты', 'Договор', 'ФИО', 'Сумма', 'Комиссия', 'К оплате',
+    public const HEAD_USER = [
+        'ID Vepay', 'ExtID', 'Код ответа', 'Услуга', 'Реквизиты', 'Договор', 'ФИО', 'Сумма', 'Комиссия', 'К оплате',
         'Дата создания', 'Статус', 'Ошибка', 'Дата оплаты', 'Номер операции',
         'ID мерчанта', 'Маска карты', 'Держатель карты', 'RRN', 'Хэш от номера карты', 'Наименование банка-эквайера',
     ];
@@ -108,13 +110,7 @@ class MfoStat
         return $ExportExcel->CreateXls("Экспорт", $head, $data, $sizes, $itogs);
     }
 
-    /**
-     * @param \Generator $data
-     * @param bool|null  $isAdmin
-     *
-     * @return \Generator
-     */
-    private static function getDataGenerator(\Generator $data, ?bool $isAdmin): \Generator
+    public static function getDataGenerator(\Generator $data, ?bool $isAdmin): \Generator
     {
         foreach ($data as $k => $row) {
 
@@ -127,6 +123,7 @@ class MfoStat
                     [
                         $row['ID'],
                         $row['Extid'],
+                        $row['RCCode'],
                         $row['NameUsluga'],
                         $row['QrParams'],
                         $row['Dogovor'],
@@ -155,6 +152,8 @@ class MfoStat
 
     /**
      * Получение отчёта с использованием "сырой" записи в xls, в обход PHPSpreadsheet, для сохранения больших XLS-файлов
+     *
+     * @TODO: Probably @deprecated
      *
      * @param array $input
      */

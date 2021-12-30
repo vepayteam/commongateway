@@ -1,6 +1,7 @@
 <?php
 /* @var yii\web\View $this */
 
+use yii\helpers\Html;
 use yii\web\View; ?>
 
 <div id="modal-regpartner" class="modal fade" aria-hidden="true" style="display: none;">
@@ -66,7 +67,7 @@ use yii\web\View; ?>
                     </div>
                     <div class="form-group row">
                         <div class="col-sm-12">
-                            <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
+                            <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
                             <input type="submit" id="submitregpartner" value="Зарегистрировать" class="btn btn-primary">
                         </div>
                     </div>

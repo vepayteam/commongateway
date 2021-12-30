@@ -10,6 +10,7 @@ use app\services\payment\models\Currency;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\repositories\CurrencyRepository;
+use Yii;
 
 class BankAdapterBuilder
 {
@@ -100,6 +101,7 @@ class BankAdapterBuilder
             ])->orderBy('Priority DESC')->one();
 
         if (!$this->partnerBankGate) {
+            Yii::error(Yii::$app->request->getRawBody(), 'buildByBank');
             throw new GateException("Нет шлюза. partnerId=$partner->ID uslugatovarId=$uslugatovar->ID bankId=$bank->ID");
         }
         return $this->buildAdapter();
@@ -166,7 +168,8 @@ class BankAdapterBuilder
         try {
             $this->bankAdapter = Banks::getBankAdapter($this->partnerBankGate->BankId);
         } catch (\Exception $e) {
-            throw new GateException($e->getMessage());
+            Yii::error([$e->getMessage(), $e->getTrace(), $e->getFile()], 'buildAdapter');
+            throw new GateException('Cant get Bank Adapter');
         }
         $this->bankAdapter->setGate($this->partnerBankGate);
         return $this;

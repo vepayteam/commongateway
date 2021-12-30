@@ -1,6 +1,7 @@
 <?php
 
 use yii\bootstrap\ActiveForm;
+use yii\helpers\Html;
 
 /* @var $this \yii\web\View */
 /* @var $order \app\models\payonline\OrderPay */
@@ -104,9 +105,9 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 
                     <div class="row">
                         <div class="col-sm-8 col-sm-offset-3">
-                            <input type="hidden" name="ID" value="<?=$order->ID?>">
-                            <input type="hidden" name="OrderPay[IdPartner]" value="<?=$order->IdPartner?>">
-                            <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
+                            <input type="hidden" name="ID" value="<?=Html::encode($order->ID)?>">
+                            <input type="hidden" name="OrderPay[IdPartner]" value="<?=Html::encode($order->IdPartner)?>">
+                            <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
                             <button type="button" class="btn btn-primary" id="saveorder">Создать</button>
                         </div>
                     </div>
