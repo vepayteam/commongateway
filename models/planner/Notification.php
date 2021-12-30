@@ -8,6 +8,7 @@ use app\models\TU;
 use Yii;
 use app\models\kkt\OnlineKassa;
 use app\models\SendEmail;
+use yii\helpers\StringHelper;
 use yii\helpers\VarDumper;
 use yii\mutex\FileMutex;
 
@@ -22,6 +23,8 @@ use yii\mutex\FileMutex;
  */
 class Notification
 {
+    const HTTP_ANS_MAX_LENGTH = 200;
+    const HTTP_ANS_SUFFIX = '...';
 
     public $httpCode;
     public $httpAns;
@@ -231,7 +234,7 @@ class Notification
 
                 $this->fullReq = $http->fullReq;
                 $this->httpCode = $http->resultCode;
-                $this->httpAns = $http->resultText;
+                $this->httpAns = StringHelper::truncate($http->resultText, self::HTTP_ANS_MAX_LENGTH, self::HTTP_ANS_SUFFIX);
 
                 Yii::warning("sendReversHttp: " . $value['UrlInform'] . " - " . $IdSchet . "\r\n", 'rsbcron');
                 return $res;
@@ -266,7 +269,7 @@ class Notification
 
             $this->fullReq = $http->fullReq;
             $this->httpCode = $http->resultCode;
-            $this->httpAns = $http->resultText;
+            $this->httpAns = StringHelper::truncate($http->resultText, self::HTTP_ANS_MAX_LENGTH, self::HTTP_ANS_SUFFIX);
 
             Yii::warning("sendUserReversHttp: " . $value['UserUrlInform'] . " - " . $IdSchet . "\r\n", 'rsbcron');
             return $res;

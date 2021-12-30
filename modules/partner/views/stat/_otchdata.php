@@ -4,7 +4,9 @@
 /* @var bool $IsAdmin */
 /* @var array $requestToExport*/
 
-use app\models\TU; ?>
+use app\models\TU;
+use yii\helpers\Html;
+?>
 
 <?php
 function renderRow($row, $IsAdmin)
@@ -13,7 +15,7 @@ function renderRow($row, $IsAdmin)
 ?>
     <tr>
         <td><?= ($i++) ?></td>
-        <td>- <?= $row['NameUsluga'] ?></td>
+        <td>- <?= Html::encode($row['NameUsluga']) ?></td>
         <td class="text-right"><?= number_format($row['SummPay'] / 100.0,2,'.','&nbsp;') ?></td>
         <td class="text-right"><?= number_format($row['ComissSumm'] / 100.0,2,'.','&nbsp;') ?></td>
         <td class="text-right"><?= number_format(($row['SummPay'] + $row['ComissSumm']) / 100.0,2,'.','&nbsp;') ?></td>
@@ -35,7 +37,7 @@ function renderProv($row, $IsAdmin)
 ?>
     <tr>
         <td></td>
-        <td><strong><?= $row['bankName'] ?? '' ?></strong></td>
+        <td><strong><?= Html::encode($row['bankName'] ?? '') ?></strong></td>
         <td class="text-right"></td>
         <td class="text-right"></td>
         <td class="text-right"></td>
@@ -194,7 +196,7 @@ function renderItog($itog, $IsAdmin)
                 }
                 $exportLink .= '&IdPart='.$requestToExport['IdPart'];
                 ?>
-                <a class="btn btn-white btn-xs pull-right" target="_blank" href="/partner/stat/export-otch?<?=$exportLink?>"><i class="fa fa-share"></i>&nbsp;Экспорт</a>
+                <a class="btn btn-white btn-xs pull-right" target="_blank" href="/partner/stat/export-otch?<?=Html::encode($exportLink)?>"><i class="fa fa-share"></i>&nbsp;Экспорт</a>
             </th>
         </tr>
     <?php endif; ?>

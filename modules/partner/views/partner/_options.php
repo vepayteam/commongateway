@@ -3,6 +3,7 @@
 use app\models\payonline\Partner;
 use app\services\partners\models\PartnerOption;
 use yii\bootstrap\ActiveForm;
+use yii\helpers\Html;
 
 /**
  * @var Partner $partner
@@ -22,22 +23,27 @@ $form = ActiveForm::begin([
             $partnerOption = $partner->getOptions()->where(['Name' => $k])->one();
         ?>
         <input type="hidden" name="PartnerId" value="<?=(int)$partner->ID?>">
-        <label class="control-label col-sm-3" for="partner-kpp"><?= $optionVariable['title'] ?></label>
+        <label class="control-label col-sm-3" for="partner-kpp"><?= Html::encode($optionVariable['title']) ?></label>
         <div class="col-sm-8">
             <?php if ($optionVariable['type'] === 'textarea'): ?>
-                <textarea class="form-control partner-options__input" name="<?= $k ?>" rows="5"><?= $partnerOption ? $partnerOption->Value : PartnerOption::LIST[$k]['default'] ?></textarea>
+                <?=
+                Html::textarea($k, $partnerOption ? $partnerOption->Value : PartnerOption::LIST[$k]['default'], [
+                    'class' => 'form-control partner-options__input',
+                    'rows' => 5,
+                ])
+                ?>
             <?php elseif ($optionVariable['type'] === 'checkbox'): ?>
-                <input type="hidden" name="<?= $k ?>" value="false">
+                <?= Html::hiddenInput($k, 'false') ?>
                 <input type="checkbox" id="partner-kpp" class="form-check-input"
-                       name="<?= $k ?>"
+                       name="<?= Html::encode($k) ?>"
                        <?=($partnerOption && $partnerOption->Value === 'true') ? 'checked="checked"' : ''?>
                        value="true"
                        aria-invalid="false"
                 >
             <?php else: ?>
-                <input type="<?=$optionVariable['type']?>" id="partner-kpp" class="form-control partner-options__input"
-                       name="<?= $k ?>"
-                       value="<?= $partnerOption ? $partnerOption->Value : PartnerOption::LIST[$k]['default'] ?>"
+                <input type="<?=Html::encode($optionVariable['type'])?>" id="partner-kpp" class="form-control partner-options__input"
+                       name="<?= Html::encode($k) ?>"
+                       value="<?= Html::encode($partnerOption ? $partnerOption->Value : PartnerOption::LIST[$k]['default']) ?>"
                        aria-invalid="false"
                 >
             <?php endif; ?>

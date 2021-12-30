@@ -73,35 +73,18 @@ class CallbackController extends Controller
     /**
      * Список коллбэков МФО
      * @return string
-     * @throws \yii\db\Exception
      */
     public function actionList()
     {
         $fltr = new CallbackFilter();
 
-        if (UserLk::IsAdmin(Yii::$app->user)) {
-            $sel = $this->selectPartner($idpartner, false, false);
-            if (empty($sel)) {
-                return $this->render('list', [
-                    'idpartner' => $idpartner,
-                    'httpCodeList' => $fltr->getCallbackHTTPResponseStatusList(),
-                    'IsAdmin' => true,
-                    'partnerlist' => $fltr->getPartnersList(),
-                ]);
-            } else {
-                return $sel;
-            }
-        } else {
+        $isAdmin = UserLk::IsAdmin(Yii::$app->user);
 
-            $idpartner = UserLk::getPartnerId(Yii::$app->user);
-
-            return $this->render('list', [
-                'idpartner' => $idpartner,
-                'httpCodeList' => $fltr->getCallbackHTTPResponseStatusList(),
-                'IsAdmin' => false,
-                'partnerlist' => $fltr->getPartnersList(),
-            ]);
-        }
+        return $this->render('list', [
+            'httpCodeList' => $fltr->getCallbackHTTPResponseStatusList(),
+            'IsAdmin' => $isAdmin,
+            'partnerlist' => $isAdmin ? $fltr->getPartnersList() : []
+        ]);
     }
 
     public function actionListitems()
@@ -120,8 +103,8 @@ class CallbackController extends Controller
 
                 return ['status' => 1, 'data' => $this->renderPartial('_listitems', [
                     'reqdata' => $reqData,
+                    'pagination' => $data['pagination'],
                     'data' => $data['data'],
-                    'payLoad' => $data['payLoad']->toArray(),
                     'IsAdmin' => $IsAdmin
                 ])];
             } else {
@@ -166,6 +149,11 @@ class CallbackController extends Controller
             if ($CallbackList->load(Yii::$app->request->post(), '') && $CallbackList->validate()) {
 
                 $data = $CallbackList->GetList($IsAdmin, 0, true);
+
+                if(count($data['data']) > CallbackList::MAX_BATCH_CALLBACK_COUNT) {
+                    return ['status' => 0, 'message' => 'За раз можно отправить не более ' . CallbackList::MAX_BATCH_CALLBACK_COUNT . ' коллбэков'];
+                }
+
                 $notificationPayIdList = array_column($data['data'], 'ID');
 
                 if (count($notificationPayIdList) > 0) {

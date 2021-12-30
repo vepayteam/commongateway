@@ -122,7 +122,7 @@ echo $form->field($partner, 'SchetTcbParts')->textInput(['class' => 'form-contro
 ?>
 <div class="row">
     <div class="col-sm-8 col-sm-offset-3">
-        <input type="hidden" name="Partner_ID" value="<?=$partner->ID?>">
+        <?= Html::hiddenInput('Partner_ID', $partner->ID) ?>
         <button type="button" class="btn btn-primary" id="btnEditPartnerTkb">Сохранить</button>
     </div>
 </div>
@@ -195,7 +195,7 @@ echo $form->field($partner, 'Apple_MerchIdentCert')->fileInput(['class' => 'form
 
 <div class="row">
     <div class="col-sm-8 col-sm-offset-3">
-        <input type="hidden" name="Partner_ID" value="<?=$partner->ID?>">
+        <?= Html::hiddenInput('Partner_ID', $partner->ID) ?>
         <button type="button" class="btn btn-primary" id="btnEditPartnerApplepay">Сохранить</button>
     </div>
 </div>
@@ -247,7 +247,7 @@ echo $form->field($partner, 'IpAccesApi')->textInput(['class' => 'form-control']
 
 <div class="row">
     <div class="col-sm-8 col-sm-offset-3">
-        <input type="hidden" name="Partner_ID" value="<?=$partner->ID?>">
+        <?= Html::hiddenInput('Partner_ID', $partner->ID) ?>
         <button type="button" class="btn btn-primary" id="btnEditPartnerIntegr">Сохранить</button>
     </div>
 </div>
@@ -310,7 +310,7 @@ echo $form->field($bankrecv,'MaxIntervalOplat')->textInput(['class'=>'form-contr
 
 <div class="row">
     <div class="col-sm-8 col-sm-offset-3">
-        <input type="hidden" value="<?= $bankrecv->ID ?>" name="IdRecviz"/>
+        <?= Html::hiddenInput('IdRecviz', $bankrecv->ID) ?>
         <button type="button" class="btn btn-primary" id="btnEditRekviz">Сохранить</button>
     </div>
 </div>
@@ -362,7 +362,7 @@ echo $form->field($partner, 'OrangeDataConCert')->fileInput(['class' => 'form-co
 
 <div class="row">
     <div class="col-sm-8 col-sm-offset-3">
-        <input type="hidden" name="Partner_ID" value="<?=$partner->ID?>">
+        <?= Html::hiddenInput('Partner_ID', $partner->ID) ?>
         <button type="button" class="btn btn-primary" id="btnEditPartnerKkm">Сохранить</button>
     </div>
 </div>
@@ -430,6 +430,20 @@ ActiveForm::end();
     </div>
 
     <div class="form-group">
+        <label class="col-sm-3 text-right">Отправлять маску карты</label>
+        <div class="col-sm-8 col-md-6">
+            <input type="checkbox" name="Settings[CallbackSendCardMask]" <?=$settings->CallbackSendCardMask ? 'checked':''?> value="1" class="form-check-input">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-3 text-right">Отправлять код ошибки</label>
+        <div class="col-sm-8 col-md-6">
+            <input type="checkbox" name="Settings[CallbackSendErrorCode]" <?=$settings->CallbackSendErrorCode ? 'checked':''?> value="1" class="form-check-input">
+        </div>
+    </div>
+
+    <div class="form-group">
         <div class="col-sm-12">
             <h4>Адрес возврата:</h4>
         </div>
@@ -469,8 +483,8 @@ ActiveForm::end();
 
     <div class="form-group">
         <div class="col-sm-offset-3 col-sm-4">
-            <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
-            <input name="IdPartner" type="hidden" value="<?= $partner->ID ?>">
+            <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
+            <?= Html::hiddenInput('IdPartner', $partner->ID) ?>
             <input name="paytype" type="hidden" value="-1">
             <input name="accountpay" type="hidden" value="">
             <button class="btn btn-primary" type="button" id="btnOpoveshSettings">Сохранить</button>
@@ -491,7 +505,7 @@ ActiveForm::end();
         <label class="control-label col-sm-3">Адрес почты</label>
         <div class="col-sm-8">
             <input class="form-control" type="email" placeholder='example@online.ru'
-                   name="email" value="<?= isset($partner->distribution->email) ?$partner->distribution->email : "" ?>">
+                   name="email" value="<?= Html::encode(isset($partner->distribution->email) ?$partner->distribution->email : "") ?>">
         </div>
     </div>
     <div class="form-group row">
@@ -516,9 +530,9 @@ ActiveForm::end();
 
     <div class="form-group row">
         <div class="col-sm-8 col-sm-offset-3">
-            <input name="partner_id" type="hidden" value="<?= isset($partner) ? $partner->ID : 0 ?>">
-            <input name="distribution_id" type="hidden" value="<?= isset($partner->distribution->payment) ? $partner->distribution->id : 0 ?>">
-            <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
+            <input name="partner_id" type="hidden" value="<?= isset($partner) ? Html::encode($partner->ID) : 0 ?>">
+            <input name="distribution_id" type="hidden" value="<?= isset($partner->distribution->payment) ? Html::encode($partner->distribution->id) : 0 ?>">
+            <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
             <input type="button" class="btn btn-primary" value="Сохранить" id="btnEditDistribution">
         </div>
     </div>
@@ -535,19 +549,19 @@ ActiveForm::end();
     <div class="form-group">
         <label class="col-sm-3 control-label">Имя проекта:</label>
         <div class="col-sm-6">
-            <input type="text" maxlength="200" class="form-control" name="publicKey" value="<?= $publicKey ?>">
+            <input type="text" maxlength="200" class="form-control" name="publicKey" value="<?= Html::encode($publicKey) ?>">
         </div>
     </div>
     <div class="form-group">
         <label class="col-sm-3 control-label">APIKEY (ключ проекта):</label>
         <div class="col-sm-6">
-            <input type="text" maxlength="50" class="form-control" name="secretKey" value="<?= $secretKey ?>">
+            <input type="text" maxlength="50" class="form-control" name="secretKey" value="<?= Html::encode($secretKey) ?>">
         </div>
     </div>
     <div class="form-group">
         <div class="col-sm-offset-3 col-sm-6">
-            <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
-            <input type="hidden" name="idPartner" value="<?= $partner->ID ?>">
+            <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
+            <?= Html::hiddenInput('idPartner', $partner->ID) ?>
             <button class="btn btn-primary" id="#saveMainsms" type="submit">Сохранить</button>
         </div>
     </div>

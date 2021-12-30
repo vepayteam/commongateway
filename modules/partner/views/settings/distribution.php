@@ -4,6 +4,7 @@
 /* @var bool $IsAdmin */
 
 use app\models\payonline\Partner;
+use yii\helpers\Html;
 
 $this->title = "настройка рассылок";
 
@@ -32,11 +33,11 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                     <?php foreach ($partners as $partner) : ?>
                         <div class="form-group">
                             <div class="col-sm-4">
-                                <p><?= $partner['Name'] ?></p>
+                                <p><?= Html::encode($partner['Name']) ?></p>
                             </div>
                             <div class="col-md-4">
                                 <input class="form-control" type="email" placeholder='example@online.ru'
-                                       name="email[<?= $partner['ID'] ?>]" value="<?= isset($partner->distribution->email) ?$partner->distribution->email : "" ?>">
+                                       name="email[<?= Html::encode($partner['ID']) ?>]" value="<?= Html::encode(isset($partner->distribution->email) ?$partner->distribution->email : "") ?>">
                             </div>
                             <?php
                             $payment = isset($partner->distribution->payment)? $partner->distribution->payment : false;
@@ -46,7 +47,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                 <label>
                                     Выдача
                                     <input type="checkbox" <?= $payment ? "checked" : '' ?> value="1"
-                                           name="payment[<?= $partner['ID'] ?>]">
+                                           name="payment[<?= Html::encode($partner['ID']) ?>]">
                                 </label>
                             </div>
                             <div class="col-md-2">
@@ -54,7 +55,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                     Погашение
                                     <input type="checkbox" <?= $repayment ? "checked" : '' ?>
                                            value="1"
-                                           name="repayment[<?= $partner['ID'] ?>]">
+                                           name="repayment[<?= Html::encode($partner['ID']) ?>]">
                                 </label>
                             </div>
                         </div>
@@ -62,7 +63,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 
                     <div class="form-group">
                         <div class="col-md-6">
-                            <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
+                            <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
                             <input type="submit" class="btn btn-primary" value="Сохранить данные">
                         </div>
                     </div>

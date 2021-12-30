@@ -20,5 +20,8 @@ class CreatePartsOutPayForm extends Model
     public $partnerBankRekviz;
 
     public $amount;
-
+    /**
+     * @var string
+     */
+    public $description;
 }

@@ -8,6 +8,11 @@ class CheckStatusPayResponse extends BaseResponse
     public $rrn = '';
     public $transId;
 
+    /**
+     * @var string|null
+     */
+    public $rcCode;
+
     public $cardNumber;
     public $cardRefId;
     public $expYear;
