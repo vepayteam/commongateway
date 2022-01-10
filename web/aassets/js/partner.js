@@ -1924,7 +1924,12 @@
 
             // bank gates
             $('#partner-edit__bank-gates-table__add-button').on('click', function(e) {
-                $('#partner-edit__bank-gates-edit-modal__gate-form').trigger('reset');
+
+                let $form = $('#partner-edit__bank-gates-edit-modal__gate-form');
+
+                $form.trigger('reset');
+                $form.find('input[name=Id]').val('');
+
                 $('#partner-edit__bank-gates-edit-modal').modal('show');
 
                 return false;
