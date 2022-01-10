@@ -64,7 +64,7 @@ class FortaTechAdapter implements IBankAdapter
     const REFUND_ID_CACHE_PREFIX = 'Forta__RefundIds__';
     const REFUND_REFRESH_STATUS_JOB_DELAY = 30;
     /** Interval in seconds between status refresh requests for recurrent payments. */
-    private const RECURRENT_REFRESH_STATUS_INTERVAL = 10;
+    private const RECURRENT_REFRESH_STATUS_INTERVAL = 5;
 
     public static $bank = 9;
     protected $bankUrl;
