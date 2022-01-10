@@ -13,10 +13,10 @@ use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\BRSAdapter;
 use app\services\payment\exceptions\BankAdapterResponseException;
-use app\services\payment\exceptions\Check3DSv2DuplicatedException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\DuplicateCreatePayException;
+use app\services\payment\exceptions\FailPaymentException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
 use app\services\payment\forms\CreatePayForm;
@@ -66,6 +66,7 @@ class CreatePayStrategy
      * @throws CreatePayException
      * @throws GateException
      * @throws DuplicateCreatePayException
+     * @throws FailPaymentException
      */
     public function exec(): PaySchet
     {
