@@ -22,13 +22,13 @@ steps:
   image: aevea/commitsar:0.15.0
   commands:
   - commitsar -v -s
-  failure: ignore
 
-- name: notify-conventional-commits-7ac2812fb6deba1062e461c7b277016c
+- name: notify-conventional-commits-4cef185a33ba84b7ecf260d3a5806c23
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
-  - gitea-status -t "conventional-commits" -m "-ignored-" -s "warning" -u "https://www.conventionalcommits.org/en/v1.0.0/#why-use-conventional-commits"
+  - export BUILD_STATUS=$$(cat /run/drone/env | grep DRONE_STAGE_STATUS | cut -d '=' -f 2 | tr -d \")
+  - gitea-status -t "conventional-commits" -m "$$BUILD_STATUS" -s "$$BUILD_STATUS" -u "https://www.conventionalcommits.org/en/v1.0.0/#why-use-conventional-commits"
   environment:
     GITEA_TOKEN:
       from_secret: GITEA_TOKEN
@@ -727,6 +727,6 @@ get:
 
 ---
 kind: signature
-hmac: 62cbe1474435d43591d81f24b26d87fd2b740ab0a6f8d923f804bb1421f3e951
+hmac: c19bfa89ce5b1badcd9a8470438ab3414566589c0671cae454c7a3fe27429c7f
 
 ...
