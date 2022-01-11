@@ -177,7 +177,7 @@ class TKBankAdapter implements IBankAdapter
                 $queryData['CardRefID'] = $card['ExtCardIDP'];
             } else {
                 //оплата без привязки карты
-                $action = "/api/tcbpay/gate/registerorderfromunregisteredcard";
+                $action = "/api/v1/card/unregistered/debit";
             }
 
             $queryData = Json::encode($queryData);
@@ -219,7 +219,7 @@ class TKBankAdapter implements IBankAdapter
      */
     public function reRequestingStatus( PaySchet $paySchet):void
     {
-        $action = '/api/tcbpay/gate/getorderstate';
+        $action = '/api/v1/order/state';
 
         $checkStatusPayRequest = new CheckStatusPayRequest();
         $checkStatusPayRequest->OrderID = $paySchet->ID;
@@ -269,8 +269,7 @@ class TKBankAdapter implements IBankAdapter
      */
     private function checkStatusOrder($params, $isCron)
     {
-        //$action = '/api/v1/order/state';
-        $action = '/api/tcbpay/gate/getorderstate';
+        $action = '/api/v1/order/state';
 
         $queryData = [
             'OrderID' => $params['ID'],
@@ -859,7 +858,7 @@ class TKBankAdapter implements IBankAdapter
 
     public function StateActivateCard($Id)
     {
-        $action = '/api/tcbpay/gate/getactivatecardstate';
+        $action = '/api/v1/service/order/state';
         $queryData = [
             "OrderID" => $Id
         ];
@@ -919,7 +918,7 @@ class TKBankAdapter implements IBankAdapter
      */
     public function PayXml(array $params)
     {
-        $action = '/api/tcbpay/gate/registerorderfromunregisteredcardwof';
+        $action = '/api/v1/card/unregistered/debit/wof';
 
         $queryData = [
             'OrderID' => $params['ID'],
@@ -1000,7 +999,7 @@ class TKBankAdapter implements IBankAdapter
      */
     public function ConfirmXml(array $params)
     {
-        $action = '/api/tcbpay/gate/registerorderfromcardfinish';
+        $action = '/api/v1/card/unregistered/debit/wof/finish';
 
         $queryData = [
             'OrderID' => $params['ID'],
@@ -1152,7 +1151,7 @@ class TKBankAdapter implements IBankAdapter
      */
     protected function createPay3DSv1($createPayForm, $check3DSVersionResponse)
     {
-        $action = '/api/tcbpay/gate/registerorderfromunregisteredcardwof';
+        $action = '/api/v1/card/unregistered/debit/wof';
 
         $paySchet = $createPayForm->getPaySchet();
         $createPayRequest = new CreatePayRequest();
@@ -1232,7 +1231,7 @@ class TKBankAdapter implements IBankAdapter
 
     protected function confirmBy3DSv1(DonePayForm $donePayForm)
     {
-        $action = '/api/tcbpay/gate/registerorderfromcardfinish';
+        $action = '/api/v1/card/unregistered/debit/wof/finish';
 
         $paySchet = $donePayForm->getPaySchet();
         $donePayRequest = new DonePayRequest();
@@ -1385,7 +1384,7 @@ class TKBankAdapter implements IBankAdapter
      */
     public function checkStatusPay(OkPayForm $okPayForm)
     {
-        $action = '/api/tcbpay/gate/getorderstate';
+        $action = '/api/v1/order/state';
 
         /**
          * VPBC-1013: добавлено логирование для того, чтобы выяснить что вызывает getorderstate.
@@ -1517,7 +1516,7 @@ class TKBankAdapter implements IBankAdapter
      */
     public function outCardPay(OutCardPayForm $outCardPayForm)
     {
-        $action = '/api/tcbpay/gate/registerordertounregisteredcard';
+        $action = '/api/v1/card/unregistered/credit';
 
         $outCardPayRequest = new OutCardPayRequest();
         $outCardPayRequest->OrderId = $outCardPayForm->paySchet->ID;
@@ -1582,7 +1581,7 @@ class TKBankAdapter implements IBankAdapter
      */
     public function transferToAccount(OutPayAccountForm $outPayaccForm)
     {
-        $action = '/api/tcbpay/gate/registerordertoexternalaccount';
+        $action = '/api/v1/account/external/credit';
 
         $outAccountPayRequest = new TransferToAccountRequest();
         $outAccountPayRequest->Inn = $outPayaccForm->inn;
