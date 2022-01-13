@@ -62,6 +62,7 @@ class PartUserAccess extends \yii\db\ActiveRecord
     private static $razdelActFull = [
         '' => -1,
         'stat/list' => 0,
+        'stat/recalc' => 55,
         'stat/otch' => 1,
         'stat/sale' => 10,
         'stat/saledraft' => 11,
