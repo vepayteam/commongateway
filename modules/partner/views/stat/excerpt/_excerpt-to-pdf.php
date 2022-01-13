@@ -1,6 +1,7 @@
 <?php
 
 use app\assets\PartnerAsset;
+use yii\helpers\Html;
 
 //PartnerAsset::register($this);
 $this->beginPage();
@@ -37,19 +38,19 @@ $status = [0 => "Создан", 1 => "Оплачен", 2 => "Отмена", 3 =>
     </tr>
     <tr>
         <td>Номер заказа</td>
-        <td ><?=!$data['ExtBillNumber'] ? "Не указано" : $data['ExtBillNumber']?></td>
+        <td ><?=!$data['ExtBillNumber'] ? "Не указано" : Html::encode($data['ExtBillNumber'])?></td>
     </tr>
     <tr>
         <td>ID заказа</td>
-        <td><?= $data['ID'] ?></td>
+        <td><?= Html::encode($data['ID']) ?></td>
     </tr>
     <tr>
         <td>Дата / Время</td>
-        <td><?= $data['DateCreate'] ?></td>
+        <td><?= Html::encode($data['DateCreate']) ?></td>
     </tr>
     <tr>
         <td>Исполнен</td>
-        <td><?= !$data['DateOplat'] ? "Не исполнен" : $data['DateOplat'] ?></td>
+        <td><?= !$data['DateOplat'] ? "Не исполнен" : Html::encode($data['DateOplat']) ?></td>
     </tr>
 
     <tr>
@@ -58,7 +59,7 @@ $status = [0 => "Создан", 1 => "Оплачен", 2 => "Отмена", 3 =>
     </tr>
     <tr>
         <td>Статус</td>
-        <td><?= $status[$data['Status']] ?></td>
+        <td><?= Html::encode($status[$data['Status']]) ?></td>
     </tr>
     <tr>
         <td class="sub-header" style="border-bottom: none; color:#042bcd; padding-left: 30px; font-weight: bold;">Информация о клиенте</td>
@@ -66,15 +67,15 @@ $status = [0 => "Создан", 1 => "Оплачен", 2 => "Отмена", 3 =>
     </tr>
     <tr>
         <td>Фио владельца</td>
-        <td><?= (!isset($data['CardHolder']) || empty($data['CardHolder'])) ? "Не указано" : $data['CardHolder'] ?></td>
+        <td><?= (!isset($data['CardHolder']) || empty($data['CardHolder'])) ? "Не указано" : Html::encode($data['CardHolder']) ?></td>
     </tr>
     <tr>
         <td>Номер карты</td>
-        <td><?= !$data['CardNum'] ? "Не указано" : $data['CardNum'] ?></td>
+        <td><?= !$data['CardNum'] ? "Не указано" : Html::encode($data['CardNum']) ?></td>
     </tr>
     <tr>
         <td>Тип карты</td>
-        <td><?= !$data['CardType'] ? "Не указано" : $data['CardType'] ?></td>
+        <td><?= !$data['CardType'] ? "Не указано" : Html::encode($data['CardType']) ?></td>
     </tr>
     <tr>
         <td>Срок действия</td>
@@ -82,7 +83,7 @@ $status = [0 => "Создан", 1 => "Оплачен", 2 => "Отмена", 3 =>
     </tr>
     <tr>
         <td>RRN</td>
-        <td><?= !$data['RRN'] ? "Не указано" : $data['RRN'] ?></td>
+        <td><?= !$data['RRN'] ? "Не указано" : Html::encode($data['RRN']) ?></td>
     </tr>
 
     <tr>
@@ -90,7 +91,7 @@ $status = [0 => "Создан", 1 => "Оплачен", 2 => "Отмена", 3 =>
         <td style="border-bottom: none;"></td>
     </tr>
     <tr>
-        <td><?= $data['ErrorInfo'] ?></td>
+        <td><?= Html::encode($data['ErrorInfo']) ?></td>
         <td></td>
     </tr>
 

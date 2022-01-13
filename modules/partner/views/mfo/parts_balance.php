@@ -14,6 +14,7 @@
 use app\models\partner\UserLk;
 use app\models\payonline\Partner;
 use app\services\balance\models\PartsBalanceForm;
+use yii\helpers\Html;
 use yii\web\View;
 
 $this->title = "Баланс по разбивке (Платформа)";
@@ -67,16 +68,16 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                 <select id="part-balance__form__partnerId" class="form-control"
                                         id="parts-balance__form__partner-select">
                                     <?php foreach ($partners as $partner): ?>
-                                        <option value="<?= $partner->ID ?>">
-                                            <?= $partner->nameWithId ?>
+                                        <option value="<?= Html::encode($partner->ID) ?>">
+                                            <?= Html::encode($partner->nameWithId) ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
                             <?php else: ?>
                                 <input name="partnerId" type="hidden"
-                                       value="<?= UserLk::getPartnerId(Yii::$app->user) ?>">
+                                       value="<?= Html::encode(UserLk::getPartnerId(Yii::$app->user)) ?>">
                             <?php endif; ?>
-                            <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
+                            <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
                             <button id="parts-balance__form__submit" type="submit" class="btn btn-sm btn-primary" style="margin-top: 20px">Найти</button>
                         </div>
                     </div>
@@ -111,22 +112,26 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
         {
             column_number: 0,
             filter_type: "text",
-            filter_delay: 500
+            filter_delay: 500,
+            filter_default_label: ""
         },
         {
             column_number: 1,
             filter_type: "text",
-            filter_delay: 500
+            filter_delay: 500,
+            filter_default_label: ""
         },
         {
             column_number: 4,
             filter_type: "text",
-            filter_delay: 500
+            filter_delay: 500,
+            filter_default_label: ""
         },
         {
             column_number: 14,
             filter_type: "text",
-            filter_delay: 500
+            filter_delay: 500,
+            filter_default_label: ""
         },
 
     ];

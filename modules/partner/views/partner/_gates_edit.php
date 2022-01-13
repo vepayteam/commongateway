@@ -6,6 +6,7 @@ use app\services\payment\models\repositories\CurrencyRepository;
 use app\services\payment\models\UslugatovarType;
 use app\services\payment\types\AccountTypes;
 use yii\helpers\ArrayHelper;
+use yii\helpers\Html;
 
 /**
  * @var Partner $partner
@@ -47,22 +48,22 @@ $currencyList = ArrayHelper::merge(['' => ''], ArrayHelper::map(CurrencyReposito
     <?php
     /** @var \app\services\payment\models\PartnerBankGate $bankGate */
     foreach ($bankGates as $bankGate):?>
-        <tr data-gate='<?= json_encode($bankGate->getAttributes()) ?>'>
-            <td><?= $bankGate->uslugatovarType->Name ?></td>
-            <td><?= $bankGate->bank->Name ?></td>
-            <td><?= $bankGate->Priority ?></td>
-            <td><?= $bankGate->Enable ?></td>
-            <td><?= AccountTypes::ALL_TYPES[$bankGate->SchetType] ?></td>
-            <td><?= $bankGate->SchetNumber ?></td>
-            <td><?= $bankGate->currency->Code ?></td>
-            <td><?= $bankGate->Login ?></td>
+        <tr data-gate="<?= Html::encode(json_encode($bankGate->getAttributes())) ?>">
+            <td><?= Html::encode($bankGate->uslugatovarType->Name) ?></td>
+            <td><?= Html::encode($bankGate->bank->Name) ?></td>
+            <td><?= Html::encode($bankGate->Priority) ?></td>
+            <td><?= Html::encode($bankGate->Enable) ?></td>
+            <td><?= Html::encode(AccountTypes::ALL_TYPES[$bankGate->SchetType]) ?></td>
+            <td><?= Html::encode($bankGate->SchetNumber) ?></td>
+            <td><?= Html::encode($bankGate->currency->Code) ?></td>
+            <td><?= Html::encode($bankGate->Login) ?></td>
             <td>
                 <button class="btn btn-primary partner-edit__bank-gates-table__edit-button">
                     <i class="glyphicon glyphicon-edit"></i>
                 </button>
             </td>
             <td>
-                <button class="btn btn-danger partner-edit__bank-gates-table__delete-button" data-id="<?=$bankGate->Id?>">
+                <button class="btn btn-danger partner-edit__bank-gates-table__delete-button" data-id="<?=Html::encode($bankGate->Id)?>">
                     <i class="glyphicon glyphicon-remove"></i>
                 </button>
             </td>
@@ -85,7 +86,7 @@ $currencyList = ArrayHelper::merge(['' => ''], ArrayHelper::map(CurrencyReposito
             <div class="modal-body">
 
                 <form id="partner-edit__bank-gates-edit-modal__gate-form">
-                    <input name="PartnerId" value="<?= $partner->ID ?>" type="hidden">
+                    <input name="PartnerId" value="<?= Html::encode($partner->ID) ?>" type="hidden">
                     <input name="Id" type="hidden">
 
                     <div class="form-group">
@@ -103,8 +104,8 @@ $currencyList = ArrayHelper::merge(['' => ''], ArrayHelper::map(CurrencyReposito
                             <?php
                             /** @var Banks $bank */
                             foreach (Banks::find()->all() as $bank): ?>
-                                <option value="<?= $bank->ID ?>">
-                                    <?= $bank->Name ?>
+                                <option value="<?= Html::encode($bank->ID) ?>">
+                                    <?= Html::encode($bank->Name) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -115,8 +116,8 @@ $currencyList = ArrayHelper::merge(['' => ''], ArrayHelper::map(CurrencyReposito
                             <?php
                             /** @var UslugatovarType $uslugatovarType */
                             foreach (UslugatovarType::find()->all() as $uslugatovarType): ?>
-                                <option value="<?= $uslugatovarType->Id ?>">
-                                    <?= $uslugatovarType->Name ?>
+                                <option value="<?= Html::encode($uslugatovarType->Id) ?>">
+                                    <?= Html::encode($uslugatovarType->Name) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -128,8 +129,8 @@ $currencyList = ArrayHelper::merge(['' => ''], ArrayHelper::map(CurrencyReposito
                             <?php
                             /** @var CurrencyRepository */
                             foreach (CurrencyRepository::getAll() as $currency) : ?>
-                                <option value="<?= $currency->Id ?>">
-                                    <?= $currency->Name ?>
+                                <option value="<?= Html::encode($currency->Id) ?>">
+                                    <?= Html::encode($currency->Name) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -141,8 +142,8 @@ $currencyList = ArrayHelper::merge(['' => ''], ArrayHelper::map(CurrencyReposito
                             <?php
                             /** @var AccountTypes */
                             foreach (AccountTypes::ALL_TYPES as $key => $type) : ?>
-                                <option value="<?= $key ?>">
-                                    <?= $type ?>
+                                <option value="<?= Html::encode($key) ?>">
+                                    <?= Html::encode($type) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -196,7 +197,7 @@ $currencyList = ArrayHelper::merge(['' => ''], ArrayHelper::map(CurrencyReposito
                         <label>Валюта фиксированной комиссии</label>
                         <select class="form-control" name="FeeCurrencyId">
                             <?php foreach ($currencyList as $id => $code) : ?>
-                                <option value="<?= $id ?>"><?= $code ?></option>
+                                <option value="<?= Html::encode($id) ?>"><?= Html::encode($code) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -204,7 +205,7 @@ $currencyList = ArrayHelper::merge(['' => ''], ArrayHelper::map(CurrencyReposito
                         <label>Валюта минимальной комиссии</label>
                         <select class="form-control" name="MinimalFeeCurrencyId">
                             <?php foreach ($currencyList as $id => $code) : ?>
-                                <option value="<?= $id ?>"><?= $code ?></option>
+                                <option value="<?= Html::encode($id) ?>"><?= Html::encode($code) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>

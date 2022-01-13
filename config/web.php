@@ -14,7 +14,7 @@ $config = [
     'language' => 'ru_RU',
     'timezone' => 'Europe/Moscow',
     'defaultRoute' => 'site',
-    'bootstrap' => ['log', 'queue'],
+    'bootstrap' => ['log', 'queue', 'reportQueue'],
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
         '@npm' => '@vendor/npm-asset',
@@ -122,7 +122,9 @@ $config = [
             'class' => 'yii\web\User',
             'identityClass' => 'app\models\partner\UserLk',
             'loginUrl' => ['partner'],
-            'enableAutoLogin' => false
+            'enableAutoLogin' => false,
+            'authTimeout' => 60 * 30,
+            'absoluteAuthTimeout' => 60 * 60 * 24,
         ],
         'errorHandler' => [
             'errorAction' => 'site/error',
@@ -150,12 +152,14 @@ $config = [
         'cache' => $params['components']['cache'],
         'redis' => $params['components']['redis'],
         'queue' => $params['components']['queue'],
+        'reportQueue' => $params['components']['reportQueue'],
 
         // Сервисы
         \app\services\PartnerService::class => \app\services\PartnerService::class,
         \app\services\PaySchetService::class => \app\services\PaySchetService::class,
         \app\services\CompensationService::class => \app\services\CompensationService::class,
         \app\services\RecurrentPaymentPartsService::class => \app\services\RecurrentPaymentPartsService::class,
+        \app\services\ReportService::class => \app\services\ReportService::class,
     ],
     'params' => $params,
     'container' => [

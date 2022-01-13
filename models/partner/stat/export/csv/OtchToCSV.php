@@ -41,6 +41,7 @@ class OtchToCSV extends ToCSV
             [
                 'ID Vepay',
                 'ExtID',
+                'Код ответа',
                 'Услуга',
                 'Реквизиты',
                 'Договор',
@@ -126,6 +127,7 @@ class OtchToCSV extends ToCSV
                     [
                         $data['ID'],
                         $data['Extid'],
+                        $data['RCCode'],
                         str_replace('"', "", $data['NameUsluga']),
                         $data['QrParams'],
                         $data['Dogovor'],

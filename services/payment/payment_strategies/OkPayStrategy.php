@@ -5,23 +5,17 @@ namespace app\services\payment\payment_strategies;
 
 
 use app\models\antifraud\AntiFraud;
-use app\models\api\Reguser;
 use app\models\bank\BankCheck;
-use app\models\crypt\CardToken;
 use app\models\payonline\Cards;
-use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
 use app\models\queue\DraftPrintJob;
-use app\models\queue\JobPriorityInterface;
 use app\models\queue\ReverspayJob;
 use app\models\TU;
 use app\services\balance\BalanceService;
-use app\services\cards\models\PanToken;
 use app\services\notifications\NotificationsService;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\BankAdapterBuilder;
-use app\services\payment\exceptions\CardTokenException;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\SetPayOkForm;
 use app\services\payment\models\PayCard;
@@ -80,8 +74,15 @@ class OkPayStrategy
             $paySchet->Status = $checkStatusPayResponse->status;
             $paySchet->ErrorInfo = $checkStatusPayResponse->message;
             $paySchet->RRN = $checkStatusPayResponse->rrn;
-            $paySchet->RCCode = $checkStatusPayResponse->xml['orderadditionalinfo']['rc'] ?? '';
             $paySchet->Operations = Json::encode($checkStatusPayResponse->operations ?? []);
+
+            // xml['orderadditionalinfo']['rc'] это ТКБшный result code TODO может перенести в $checkStatusPayResponse->rcCode?
+            if (isset($checkStatusPayResponse->xml['orderadditionalinfo']['rc'])) {
+                $paySchet->RCCode = $checkStatusPayResponse->xml['orderadditionalinfo']['rc'];
+            } else if ($checkStatusPayResponse->rcCode) {
+                $paySchet->RCCode = $checkStatusPayResponse->rcCode;
+            }
+
             $paySchet->save(false);
 
             $this->getNotificationsService()->sendPostbacks($paySchet);
@@ -110,14 +111,17 @@ class OkPayStrategy
     protected function isNeedLinkCard(PaySchet $paySchet, CheckStatusPayResponse $checkStatusPayResponse)
     {
         return (
-            $checkStatusPayResponse->status != BaseResponse::STATUS_CREATED
-            && $paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD
-                || (
-                    $paySchet->IdUser > 0
-                    && in_array($paySchet->uslugatovar->IsCustom, [TU::$JKH, TU::$ECOM])
-                )
+                $paySchet->RegisterCard
+                ||
+                $checkStatusPayResponse->status != BaseResponse::STATUS_CREATED
+                && $paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD
+                ||
+                /** @todo Проверить нужен ли этот блок условий, когда есть {@see PaySchet::$RegisterCard} */
+                $paySchet->IdUser > 0
+                && in_array($paySchet->uslugatovar->IsCustom, [TU::$JKH, TU::$ECOM, TU::$POGASHECOM, TU::$POGASHATF])
             )
-            && $checkStatusPayResponse->validate();
+            &&
+            !empty($checkStatusPayResponse->cardRefId);
     }
 
     /**
@@ -203,6 +207,7 @@ class OkPayStrategy
                     if($paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD) {
                         Yii::$app->queue->push(new ReverspayJob([
                             'idpay' => $paySchet->ID,
+                            'initiator' => 'OkPayStrategy confirmPay',
                         ]));
                     } else {
                         /** @var BalanceService $balanceService */

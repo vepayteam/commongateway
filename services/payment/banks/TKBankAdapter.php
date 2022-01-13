@@ -36,6 +36,7 @@ use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
 use app\services\payment\exceptions\RefundPayException;
 use app\services\payment\exceptions\reRequestingStatusException;
 use app\services\payment\exceptions\reRequestingStatusOkException;
+use app\services\payment\exceptions\TKBankRefusalException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\CreatePaySecondStepForm;
@@ -44,6 +45,7 @@ use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
+use app\services\payment\forms\SendP2pForm;
 use app\services\payment\forms\tkb\CheckStatusPayRequest;
 use app\services\payment\forms\tkb\Confirm3DSv2Request;
 use app\services\payment\forms\tkb\CreatePayRequest;
@@ -79,6 +81,8 @@ class TKBankAdapter implements IBankAdapter
 
     const BANK_URL_XML = 'https://193.232.101.14:8204';
     const BANK_URL_XML_TEST = 'https://193.232.101.14:8203';
+
+    const PS_GENERAL_REFUSAL = 'PS_GENERAL_REFUSAL';
 
     /** @var PartnerBankGate */
     protected $gate;
@@ -1282,6 +1286,7 @@ class TKBankAdapter implements IBankAdapter
      * @return ConfirmPayResponse
      * @throws BankAdapterResponseException
      * @throws CreatePayException
+     * @throws TKBankRefusalException
      */
     protected function confirmBy3DSv2(DonePayForm $donePayForm)
     {
@@ -1301,6 +1306,7 @@ class TKBankAdapter implements IBankAdapter
      * @param DonePayForm $donePayForm
      * @return bool
      * @throws BankAdapterResponseException
+     * @throws TKBankRefusalException
      */
     protected function validateBy3DSv2(DonePayForm $donePayForm)
     {
@@ -1326,6 +1332,9 @@ class TKBankAdapter implements IBankAdapter
 
         $queryData = Json::encode($confirm3DSv2Request->getAttributes());
         $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+        if (isset($ans['httperror']) && $ans['httperror']['Code'] === self::PS_GENERAL_REFUSAL) {
+            throw new TKBankRefusalException($ans['httperror']['Message']);
+        }
 
         if (isset($ans['xml']['AuthenticationData']) && !empty($ans['xml']['AuthenticationData'])) {
             Yii::$app->cache->set(
@@ -1719,5 +1728,10 @@ class TKBankAdapter implements IBankAdapter
     public function currencyExchangeRates()
     {
         throw new GateException('Метод недоступен');
+    }
+
+    public function sendP2p(SendP2pForm $sendP2pForm)
+    {
+        // TODO: Implement sendP2p() method.
     }
 }

@@ -227,6 +227,7 @@ class PaymentService
         foreach ($generator as $paySchet) {
             Yii::$app->queue->push(new RefundPayJob([
                 'paySchetId' => $paySchet->ID,
+                'initiator' => 'PaymentService.massRevert',
             ]));
             Yii::warning('PaymentService massRevert pushed: ID=' . $paySchet->ID);
         }

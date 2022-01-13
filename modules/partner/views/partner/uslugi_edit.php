@@ -8,6 +8,7 @@ use app\models\payonline\UslugiRegions;
 use app\services\payment\models\UslugatovarType;
 use yii\bootstrap\ActiveForm;
 use yii\helpers\ArrayHelper;
+use yii\helpers\Html;
 use yii\web\View;
 
 /* @var View $this */
@@ -37,7 +38,7 @@ $rekviz = ArrayHelper::map($rekviz, 'ID', 'NamePoluchat');
                 <div class="ibox-title">
                     <h5>Редактирование услуги</h5>
                     <div class="ibox-tools">
-                        <a class="btn btn-xs btn-default" href="/partner/partner/partner-edit/<?=$usl->IDPartner?>#tab-2"><i class="fa fa-close" aria-hidden="true"></i> Назад</a>
+                        <a class="btn btn-xs btn-default" href="/partner/partner/partner-edit/<?=Html::encode($usl->IDPartner)?>#tab-2"><i class="fa fa-close" aria-hidden="true"></i> Назад</a>
                     </div>
                 </div>
                 <div class="ibox-content">
@@ -58,7 +59,7 @@ $rekviz = ArrayHelper::map($rekviz, 'ID', 'NamePoluchat');
                             ],
                         ],
                     ]); ?>
-                    <h3>Компания: <?=$usl->partner->Name?></h3>
+                    <h3>Компания: <?=Html::encode($usl->partner->Name)?></h3>
                     <?= $form->field($usl, 'NameUsluga')->textInput(['class' => 'form-control']); ?>
                     <?= $form->field($usl, 'InfoUsluga')->textInput(['class' => 'form-control']); ?>
                     <?= $form->field($usl, 'LogoProv')->textInput(['class' => 'form-control']); ?>
@@ -125,8 +126,8 @@ $rekviz = ArrayHelper::map($rekviz, 'ID', 'NamePoluchat');
 
                     <div class="row">
                         <div class="col-sm-8 col-sm-offset-3">
-                            <input type="hidden" name="ID" value="<?= $usl->ID ?>">
-                            <input type="hidden" name="IdPartner" value="<?= $usl->IDPartner ?>">
+                            <input type="hidden" name="ID" value="<?=Html::encode($usl->ID)?>">
+                            <input type="hidden" name="IdPartner" value="<?=Html::encode($usl->IDPartner)?>">
                             <button type="button" class="btn btn-primary" id="saveUsluga">Сохранить
                             </button>
                         </div>

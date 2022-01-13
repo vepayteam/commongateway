@@ -10,14 +10,15 @@ use app\models\payonline\PayForm;
 use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\TU;
+use app\services\cards\CacheCardService;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\TKBankAdapter;
 use app\services\payment\exceptions\BankAdapterResponseException;
-use app\services\payment\exceptions\Check3DSv2DuplicatedException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\DuplicateCreatePayException;
+use app\services\payment\exceptions\FailPaymentException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
 use app\services\payment\exceptions\reRequestingStatusException;
@@ -117,12 +118,11 @@ class PayController extends Controller
      * Форма оплаты своя (PCI DSS)
      *
      * @param $id
-     * @param string|null $cardNumber
      * @return string|Response
      * @throws Exception
      * @throws NotFoundHttpException
      */
-    public function actionForm($id, $cardNumber = null)
+    public function actionForm($id)
     {
         Yii::warning("PayForm open id={$id}");
         $payschets = new Payschets();
@@ -130,10 +130,6 @@ class PayController extends Controller
 
         //данные счета для оплаты
         $params = $payschets->getSchetData($id, null);
-        $payform = new PayForm();
-        if ($cardNumber !== null) {
-            $payform->CardNumber = $cardNumber;
-        }
 
         if ($params && TU::IsInPay($params['IsCustom'])) {
             if (
@@ -141,6 +137,14 @@ class PayController extends Controller
                 && $params['UserClickPay'] == 0
                 && $params['DateCreate'] + $params['TimeElapsed'] > time()
             ) {
+                $payForm = new PayForm();
+
+                $cacheCardService = new CacheCardService($params['ID']);
+                if ($cacheCardService->cardExists()) {
+                    $payForm->CardNumber = $cacheCardService->getCard();
+                    $cacheCardService->deleteCard();
+                }
+
                 $payschets->SetIpAddress($params['ID']);
 
                 //разрешить открытие во фрейме на сайте мерчанта
@@ -162,7 +166,7 @@ class PayController extends Controller
                     'apple' => (new ApplePay())->GetConf($params['IDPartner']),
                     'google' => (new GooglePay())->GetConf($params['IDPartner']),
                     'samsung' => (new SamsungPay())->GetConf($params['IDPartner']),
-                    'payform' => $payform,
+                    'payform' => $payForm,
                 ]);
 
             } else {
@@ -203,13 +207,16 @@ class PayController extends Controller
             $paySchet = $createPayStrategy->exec();
         } catch (DuplicateCreatePayException $e) {
             // releaseLock сюда не надо, эксепшен вызывается при попытке провести платеж, который уже проведен
+            Yii::$app->errorHandler->logException($e);
 
             return ['status' => 0, 'message' => $e->getMessage()];
         } catch (CreatePayException | GateException | reRequestingStatusException | BankAdapterResponseException | Exception $e) {
+            Yii::$app->errorHandler->logException($e);
             $createPayStrategy->releaseLock();
 
             return ['status' => 0, 'message' => $e->getMessage()];
         } catch (reRequestingStatusOkException $e) {
+            Yii::$app->errorHandler->logException($e);
             $createPayStrategy->releaseLock();
 
             return [
@@ -217,16 +224,18 @@ class PayController extends Controller
                 'message' => $e->getMessage(),
                 'url' => Yii::$app->params['domain'] . '/pay/orderok?id=' . $form->IdPay,
             ];
-        } catch (Check3DSv2DuplicatedException $e) {
+        } catch (FailPaymentException $e)   {
+            // The payment has failed: client redirect to orderok which, in turn, will redirect to the fail page
+            Yii::$app->errorHandler->logException($e);
             $createPayStrategy->releaseLock();
 
-            // отменить счет
             return [
                 'status' => 2,
                 'message' => $e->getMessage(),
-                'url' => Yii::$app->params['domain'] . '/pay/orderok?id=' . $form->IdPay,
+                'url' => Url::to(['orderok', 'id' => $form->IdPay]),
             ];
         } catch (Check3DSv2Exception $e) {
+            Yii::$app->errorHandler->logException($e);
             $createPayStrategy->releaseLock();
 
             return ['status' => 0, 'message' => 'Карта не поддерживается, обратитесь в банк'];

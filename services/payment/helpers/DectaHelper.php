@@ -58,7 +58,7 @@ class DectaHelper
                 'title' => DectaAdapter::PRODUCT_TITLE,
             ],
         ];
-        $paymentRequest->response_type = 'minimal';
+        $paymentRequest->response_type = 'standard';
         $paymentRequest->success_redirect = $paySchet->getOrderdoneUrl();
         $paymentRequest->failure_redirect = $paySchet->getOrderfailUrl();
 
@@ -186,10 +186,11 @@ class DectaHelper
 
         $checkStatusPayResponse = self::handleOrderStatus($statusData, $checkStatusPayResponse);
 
-        $transactionDetails = $response->json('transaction_details') ?? [];
-        $checkStatusPayResponse->message =
-            (isset($transactionDetails['errors']['description']) && is_string($transactionDetails['errors']['description']))
-            ? $transactionDetails['errors']['description'] : '';
+        $transactionDetails = $response->json('transaction_details', []);
+
+        $error = reset($transactionDetails['errors']);
+
+        $checkStatusPayResponse->message = (is_array($error) && isset($error['description'])) ? $error['description'] : '';
 
         return $checkStatusPayResponse;
     }

@@ -39,6 +39,8 @@ class IdentStatisticForm extends Model
         return [
             [['draw', 'columns', 'length', 'order', 'start', 'filters'], 'required'],
             ['filters', 'validatePartner'],
+            ['length', 'integer', 'min' => 0, 'max' => 1000],
+            ['start', 'integer', 'min' => 0],
         ];
     }
 

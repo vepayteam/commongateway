@@ -1,12 +1,14 @@
 <?php
+use app\services\payment\models\Bank;
+use app\models\payonline\Partner;
+use yii\helpers\Html;
 
 /* @var yii\web\View $this */
 /* @var array $uslugilist */
 /* @var array $magazlist */
 /* @var Partner[] $partnerlist  */
 /* @var $IsAdmin bool */
-
-use app\models\payonline\Partner;
+/* @var $bankList Bank[] */
 
 $this->title = "отчет по платежам";
 
@@ -22,13 +24,24 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
             </div>
             <div class="ibox-content">
                 <form class="form-horizontal" id="otchlistform">
-                    <div class="form-group"><label class="col-sm-2 control-label">Дата</label>
+                    <div class="form-group">
+	                    <label class="col-sm-2 control-label">Дата</label>
                         <div class="col-sm-4">
                             <div class="input-daterange input-group">
                                 <input type="text" name="datefrom" value="<?=date("d.m.Y")?> 00:00" maxlength="10" class="form-control">
                                 <span class="input-group-addon">по</span>
                                 <input type="text" name="dateto" value="<?=date("d.m.Y")?> 23:59" maxlength="10" class="form-control">
                             </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">Провайдер</label>
+                        <div class="col-sm-4">
+                            <select class="form-control multiselect-field" multiple name="idBank[]">
+                                <?php foreach ($bankList as $bank) : ?>
+                                    <option value="<?= Html::encode($bank->ID) ?>"><?= Html::encode($bank->Name) ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                     </div>
                     <?php if ($IsAdmin) : ?>
@@ -38,7 +51,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                                 <select class="form-control" name="IdPart">
                                     <option value="-1" data-ismfo="-1">Все</option>
                                     <?php foreach ($partnerlist as $partner) : ?>
-                                        <option value="<?=$partner->ID?>" data-ismfo="<?= $partner->ID == 1 ? 2 : $partner->IsMfo?>"><?=$partner->nameWithId?></option>
+                                        <option value="<?=Html::encode($partner->ID)?>" data-ismfo="<?= $partner->ID == 1 ? 2 : $partner->IsMfo?>"><?=Html::encode($partner->nameWithId)?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -49,14 +62,14 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         <div class="col-sm-4">
                             <select class="form-control multiselect-field" multiple name="TypeUslug[]">
                                 <?php foreach ($uslugilist as $usl) : ?>
-                                    <option value="<?=$usl->ID?>" data-partner="<?= $usl->IsMfo ?>"><?=$usl->Name?></option>
+                                    <option value="<?=Html::encode($usl->ID) ?>" data-partner="<?=Html::encode($usl->IsMfo) ?>"><?=Html::encode($usl->Name) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="col-sm-offset-2 col-sm-4">
-                            <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
+                            <?=Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf'])?>
                             <button class="btn btn-sm btn-primary" type="submit">Сформировать</button>
                         </div>
                         <div class="col-sm-offset-2 col-sm-4">

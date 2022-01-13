@@ -23,6 +23,7 @@ use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
+use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\PaySchet;
 use app\services\payment\payment_strategies\mfo\MfoOutCardStrategy;
 use app\services\payment\payment_strategies\mfo\MfoOutPayAccountStrategy;
@@ -74,17 +75,12 @@ class OutController extends Controller
     public function afterAction($action, $result)
     {
         $result = parent::afterAction($action, $result);
-
-        try {
-            Yii::info([
-                'endpoint' => $action->uniqueId,
-                'header' => Yii::$app->request->headers->toArray(),
-                'body' => Yii::$app->request->post(),
-                'return' => (array) $result,
-            ], 'mfo_' . $action->controller->id . '_' . $action->id);
-        } catch (\Exception $e) {
-            Yii::error([$e->getMessage(), $e->getTrace(), $e->getFile(), $e->getLine()], 'mfo_out');
-        }
+        Yii::info([
+            'endpoint' => $action->uniqueId,
+            'header' => Yii::$app->request->headers->toArray(),
+            'body' => Cards::maskCardUni(Yii::$app->request->post()),
+            'return' => (array) $result,
+        ], 'mfo_' . $action->controller->id . '_' . $action->id);
 
         return $result;
     }
@@ -122,7 +118,7 @@ class OutController extends Controller
                 return ['status' => 0, 'message' => $outCardPayForm->GetError()];
             }
             // рубли в коп
-            $outCardPayForm->amount *= 100;
+            $outCardPayForm->amount = PaymentHelper::convertToPenny($outCardPayForm->amount);
             $mfoOutCardStrategy = new MfoOutCardStrategy($outCardPayForm);
             $paySchet = $mfoOutCardStrategy->exec();
             return ['status' => 1, 'id' => $paySchet->ID, 'message' => ''];

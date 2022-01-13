@@ -9,6 +9,7 @@ use app\services\balance\response\BalanceResponse;
 use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\types\AccountTypes;
 use yii\helpers\ArrayHelper;
+use yii\helpers\Html;
 use yii\web\View;
 
 $this->title = "баланс";
@@ -72,8 +73,8 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
 
                         <div class="form-group">
                             <div class="col-sm-offset-2 col-sm-4">
-                                <input name="idpartner" type="hidden" value="<?= $Partner->ID ?>">
-                                <input name="_csrf" type="hidden" id="_csrf" value="<?= Yii::$app->request->csrfToken ?>">
+                                <input name="idpartner" type="hidden" value="<?= Html::encode($Partner->ID) ?>">
+                                <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
                                 <input name="sort" type="hidden" id="sortstatem" value="0">
                                 <button class="btn btn-sm btn-primary" type="submit">Найти</button>
                             </div>
@@ -102,25 +103,25 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                 <div class="ibox-content">
                     <div class="row">
                         <div class="col-sm-12">
-                            <h5><?=$Partner->Name?></h5>
+                            <h5><?=Html::encode($Partner->Name)?></h5>
                         </div>
                     </div>
 
                     <div class="row">
                         <?php foreach (ArrayHelper::index($BalanceResponse->balance, null, 'bank_name') as $bankName => $balances): ?>
                             <div class="col-sm-12">
-                                <b><?= $bankName ?></b>
+                                <b><?= Html::encode($bankName) ?></b>
                                 <div class="form-group">
                                     <div class="inline">
                                         <?php foreach ($balances as $balance): ?>
                                             <div class="full-width">
                                                 <?php if ($balance->account_type !== AccountTypes::TYPE_DEFAULT): ?>
-                                                <span style="margin-right: 5px;"><?= AccountTypes::ALL_TYPES[$balance->account_type] ?>:</span>
+                                                <span style="margin-right: 5px;"><?= Html::encode(AccountTypes::ALL_TYPES[$balance->account_type]) ?>:</span>
                                                 <?php endif; ?>
 
                                                 <b class="pull-right">
                                                     <?= PaymentHelper::formatSum($balance->amount) ?>
-                                                    <?= $balance->currency ?>
+                                                    <?= Html::encode($balance->currency) ?>
                                                 </b>
                                             </div>
                                         <?php endforeach; ?>

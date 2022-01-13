@@ -19,10 +19,6 @@ class RecurrentPayRequest extends Model
      */
     public $amount;
     /**
-     * @var string $walletId
-     */
-    public $walletId;
-    /**
      * @var string $callbackUrl
      */
     public $callbackUrl;
@@ -30,4 +26,14 @@ class RecurrentPayRequest extends Model
      * @var string $currency
      */
     public $currency = 'RUB';
+
+
+    public function rules()
+    {
+        return [
+            [['amount', 'cardToken', 'orderId'], 'required'],
+            [['cardToken', 'orderId'], 'string'],
+            ['amount', 'integer'],
+        ];
+    }
 }

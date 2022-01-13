@@ -167,6 +167,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /p2p/create:
+    post:
+      tags:
+        - Pay
+      summary: Перевод с карыт на карту
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/P2pCreate"
+        description: Параметры транзакции
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusIdUrl"
+        default:
+          description: Error (40X,500)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /callback:
     get:
       tags:
@@ -203,11 +228,23 @@ paths:
           required: true
           description: банк-эквайер, через который была совершена транзакция
           schema:
-            type: integer
+            type: string
+        - name: card
+          in: query
+          required: true
+          description: маска карты в формате 411111******1111
+          schema:
+              type: string
+        - name: errorCode
+          in: query
+          required: true
+          description: код ошибки
+          schema:
+              type: string
         - name: key
           in: query
           required: true
-          description: Ключ формируется, как хеш суммы строк параметров md5(extid + id + sum + status + channel + ключ обратного запроса)
+          description: Ключ формируется, как хеш суммы строк параметров md5(extid + id + sum + status + channel + card + errorCode + ключ обратного запроса)
           schema:
             type: string
       responses:
@@ -320,6 +357,43 @@ components:
         regcard:
           type: integer
           description: (опционально) 1 – регистрация карты после платежа
+        postbackurl:
+          type: string
+          format: url
+          description: Адрес Url для обратного вызова
+        postbackurl_v2:
+          type: string
+          format: url
+          description: Дополнительный адрес Url для обратного вызова
+    P2pCreate:
+      type: object
+      properties:
+        extid:
+          type: string
+          description: Внешний идентификатор запроса
+        descript:
+          type: string
+          description: Описание платежа
+        currency:
+          type: string
+          description: Валюта, по умолчанию RUB
+        timeout:
+          type: integer
+          minimum: 10
+          maximum: 60
+          description: Тайм-аут ожидания оплаты, от 10 до 60 минут
+        successurl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после заверщения платежа (успех)
+        failurl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после заверщения платежа (ошибка)
+        cancelurl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после отказа от оплаты
         postbackurl:
           type: string
           format: url

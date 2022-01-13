@@ -3,10 +3,13 @@
 namespace app\models\payonline;
 
 use app\models\partner\admin\VoznagStat;
+use app\models\payonline\active_query\UslugatovarQuery;
 use app\models\TU;
+use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
 use Yii;
 use yii\caching\TagDependency;
+use yii\db\ActiveQuery;
 
 /**
  * This is the model class for table "uslugatovar".
@@ -71,6 +74,11 @@ use yii\caching\TagDependency;
  * @property string $EmailShablon tekst shablona uvedmlenia
  * @property string $ColorWdtMain [varchar(10)]  ocnovnoi cvet v vidgete
  * @property string $ColorWdtActive [varchar(10)]  cvet vydelenia v vidgete
+ * @property PaySchet[] $paySchets
+ * @property string $TypeExport [tinyint unsigned]  tip eksporta plateja: 0 - v teleport 1 - po banky po reestram 2 - online
+ * @property string $TypeReestr [int unsigned]  tip reestra: 0 - teleport 1 - sber full 2 - sber gv 3 - sber hv 4 - kes 5 - ds kirov 6 - fkr43 7 - gaz 8 -
+ *     sber new
+ * @property string $IsKommunal [tinyint unsigned]  1 - jkh 0 - ecomm
  */
 class Uslugatovar extends \yii\db\ActiveRecord
 {
@@ -249,6 +257,38 @@ class Uslugatovar extends \yii\db\ActiveRecord
     public function getType()
     {
         return $this->hasOne(UslugatovarType::className(), ['Id' => 'IsCustom']);
+    }
+
+    /**
+     * Gets query for [[PaySchets]].
+     */
+    public function getPaySchets(): ActiveQuery
+    {
+        return $this->hasMany(PaySchet::className(), ['IdUsluga' => 'ID']);
+    }
+
+    /**
+     * Gets query for [[PaySchets]].
+     */
+    public function getCards(): ActiveQuery
+    {
+        return $this->hasOne(Cards::className(), ['ID' => 'IdKard'])->via('paySchets');
+    }
+
+    /**
+     * Gets query for [[PaySchets]].
+     */
+    public function getPaySchetsBetween(): ActiveQuery
+    {
+        return $this->hasMany(PaySchet::className(), ['IdUsluga' => 'ID']);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public static function find(): UslugatovarQuery
+    {
+        return new UslugatovarQuery(get_called_class());
     }
 
     public function save($runValidation = true, $attributeNames = null)
