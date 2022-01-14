@@ -67,7 +67,7 @@ class FortaTechAdapter implements IBankAdapter
     const ERROR_MESSAGE_COMMON = 'Ошибка проведения платежа. Пожалуйста, повторите попытку позже';
 
     /** Interval in seconds between status refresh requests for recurrent payments. */
-    private const RECURRENT_REFRESH_STATUS_INTERVAL = 5;
+    private const RECURRENT_REFRESH_STATUS_INTERVAL = 2;
 
     public static $bank = 9;
     protected $bankUrl;
