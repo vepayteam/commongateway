@@ -18,6 +18,8 @@ tags:
     description: Информационные запросы
   - name: Callback
     description: Оповещения
+  - name: Document
+    description: Файлы документов
 servers:
   - url: https://api.vepay.online/mfo
   - url: https://test.vepay.online/mfo
@@ -766,6 +768,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /document/confirmation:
+      get:
+          tags:
+              - Document
+          summary: Документ подтверждения перевода денежных средств в формате PDF
+          parameters:
+              - in: path
+                name: id
+                description: ID платежа
+                schema:
+                  type: integer
+          responses:
+              "200":
+                  description: Файл PDF
+                  content:
+                      application/pdf:
+                          schema:
+                              type: string
+                              format: binary
+              default:
+                  description: Error (40X,500)
+                  content:
+                      application/json:
+                          schema:
+                              $ref: "#/components/schemas/Error"
 
 components:
   securitySchemes:
