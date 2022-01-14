@@ -2,6 +2,7 @@
 
 namespace app\models\partner\stat;
 
+use app\models\ModelHelper;
 use app\models\partner\UserLk;
 use app\models\payonline\Cards;
 use app\services\payment\models\PaySchet;
@@ -13,6 +14,8 @@ use yii\db\Query;
 
 class AutopayStat extends Model
 {
+    use ModelHelper;
+
     public $IdPart;
     public $datefrom;
     public $dateto;
@@ -41,9 +44,9 @@ class AutopayStat extends Model
      *
      * @return int[]
      */
-    public function getData($isAdmin): array
+    public function getData($isAdmin = null): array
     {
-        $IdPart = ($isAdmin ? $this->IdPart : UserLk::getPartnerId(Yii::$app->user));
+        $IdPart = ($this->isAdmin ? $this->IdPart : UserLk::getPartnerId(Yii::$app->user));
         $idPart = $IdPart > 0 ? $IdPart : null;
 
         $datefrom = strtotime($this->datefrom . ' 00:00:00');
@@ -59,14 +62,15 @@ class AutopayStat extends Model
         ];
 
         //Количество новых карт
-        $queryNewCards = Cards::find()
-            ->joinWith('user')
-            ->andWhere(['TypeCard' => 0])
-            ->andWhere(['!=', 'ExtCardIDP', 0])
-            ->andWhere(['between', 'DateAdd', $datefrom, $dateto])
-            ->andFilterWhere(['ExtOrg' => $idPart]);
+        $queryPayShet = PaySchet::find()
+            ->orWhere(['IdUsluga' => 1])
+            ->orWhere(['RegisterCard' => 1])
+            ->andWhere(['!=', 'Bank', '0'])
+            ->andWhere(['Status' => [1,3]])
+            ->andWhere(['between', 'DateCreate', $datefrom, $dateto])
+            ->andFilterWhere(['IDPartner' => $idPart]);
 
-        $ret['cntnewcards'] = $queryNewCards->count();
+        $ret['cntnewcards'] = $queryPayShet->count();
 
         //сколько активных привязанных карт
         $queryAciveCards = Uslugatovar::find()
