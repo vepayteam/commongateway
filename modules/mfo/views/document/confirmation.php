@@ -7,12 +7,13 @@
 use app\models\payonline\Partner;
 use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\PaySchet;
+use Carbon\Carbon;
 use yii\helpers\Html;
 
 $imageDir = __DIR__ . '/confirmation';
 
-$dateTime = Yii::$app->formatter->asDatetime($paySchet->DateLastUpdate, 'php: d.m.Y H:i:s');
-$sum = Yii::$app->formatter->asCurrency(PaymentHelper::convertToFullAmount($paySchet->SummPay), $paySchet->currency->Code);
+$dateTime = (new Carbon($paySchet->DateLastUpdate))->format('d.m.Y H:i:s');
+$sum = PaymentHelper::formatSum(PaymentHelper::convertToFullAmount($paySchet->SummPay));
 ?>
 <!doctype html>
 <html lang="ru">
@@ -136,7 +137,7 @@ $sum = Yii::$app->formatter->asCurrency(PaymentHelper::convertToFullAmount($payS
         <br/>
         Дата и время: <?= $dateTime ?>
         <br/>
-        Сумма перевода: <?= $sum ?>
+        Сумма перевода: <?= $sum ?> <?= Html::encode($paySchet->currency->Code) ?>
         <br/>
         Номер карты: <?= Html::encode($paySchet->CardNum) ?>
     </p>
