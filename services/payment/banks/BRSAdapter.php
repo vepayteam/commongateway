@@ -317,6 +317,7 @@ class BRSAdapter implements IBankAdapter
             $checkStatusPayResponse->status = $this->getStatusResponse($ans['RESULT']);
             $this->checkStatusPayResponseFiller($checkStatusPayResponse, $ans);
             $checkStatusPayResponse->rrn = (array_key_exists('RRN', $ans) ? $ans['RRN'] : '');
+            $checkStatusPayResponse->rcCode = $ans['RESULT_CODE'] ?? null;
         } catch (BankAdapterResponseException $e) {
             $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
             $checkStatusPayResponse->message = BankAdapterResponseException::REQUEST_ERROR_MSG;

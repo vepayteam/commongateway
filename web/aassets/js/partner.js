@@ -135,6 +135,36 @@
                 }
             });
         },
+        statrecalcreq: function (page) {
+
+            if (linklink) {
+                linklink.abort();
+            }
+            linklink = $.ajax({
+                type: "POST",
+                url: '/partner/stat/recalcdata?page=' + page,
+                data: $('#statrecalcform').serialize(),
+                beforeSend: function () {
+                    $('#statrecalcform').closest('.ibox-content').toggleClass('sk-loading');
+                },
+                success: function (data) {
+                    $('#statrecalcform').closest('.ibox-content').toggleClass('sk-loading');
+                    if (data.status == 1) {
+                        $('#statlistresult').html(data.data);
+                        $('.pagination a').each(function(){
+                            $(this).removeAttr('href');
+                            $(this).attr('onclick', 'lk.statrecalcreq('+(parseInt($(this).attr('data-page'))+1)+');');
+                        });
+                    } else {
+                        $('#statlistresult').html("<p class='text-center'>" + data.message + "</p>");
+                    }
+                },
+                error: function () {
+                    $('#statrecalcform').closest('.ibox-content').toggleClass('sk-loading');
+                    $('#statlistresult').html("<p class='text-center'>Ошибка</p>");
+                }
+            });
+        },
 
         statlist: function () {
 
@@ -170,6 +200,11 @@
 
             $('#statlistform').on('submit', function () {
                 lk.statlistreq(1);
+                return false;
+            });
+
+            $('#statrecalcform').on('submit', function () {
+                lk.statrecalcreq(1);
                 return false;
             });
 
@@ -2341,4 +2376,3 @@
 
 
 }(jQuery || $));
-

@@ -8,9 +8,9 @@ use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\Check3DSVersionResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\exceptions\BankAdapterResponseException;
-use app\services\payment\exceptions\Check3DSv2DuplicatedException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
+use app\services\payment\exceptions\FailPaymentException;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\tkb\Authenticate3DSv2Request;
 use app\services\payment\forms\tkb\Check3DSVersionRequest;
@@ -26,6 +26,7 @@ trait TKBank3DSTrait
      * @param CreatePayForm $createPayForm
      * @return Check3DSVersionResponse
      * @throws BankAdapterResponseException
+     * @throws FailPaymentException
      */
     protected function check3DSVersion(CreatePayForm $createPayForm)
     {
@@ -62,12 +63,18 @@ trait TKBank3DSTrait
                 } catch (\Exception $e) {
                     $message = 'Ошибка данных 3ds2check';
                     $paySchet->setError($message);
-                    throw new Check3DSv2DuplicatedException($message);
+                    throw new FailPaymentException($message);
                 }
             } elseif ($ans['httperror']['Code'] == 'OPERATION_DUPLICATED') {
                 $message = 'Ошибка дублирования запроса 3ds2check';
                 $paySchet->setError($message);
-                throw new Check3DSv2DuplicatedException($message);
+                throw new FailPaymentException($message);
+            }
+
+            if ($ans['httperror']['Code'] === 'BinInfoError') {
+                $message = 'Бин не найден.';
+                $paySchet->setError($message);
+                throw new FailPaymentException($message);
             }
 
             throw new BankAdapterResponseException('Сервис временно недоступен. Попробуйте позже.');

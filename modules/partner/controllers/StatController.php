@@ -84,7 +84,7 @@ class StatController extends Controller
                     [
                         'allow' => false,
                         'roles' => ['@'],
-                        'actions' => ['diff', 'diff-columns', 'diff-data', 'diff-export'],
+                        'actions' => ['diff', 'diff-columns', 'diff-data', 'diff-export', 'recalc', 'recalcdata', 'recalc-save'],
                         'matchCallback' => function ($rule, $action) {
                             return !UserLk::IsAdmin(Yii::$app->user);
                         }
@@ -333,6 +333,76 @@ class StatController extends Controller
             );
             throw $e;
         }
+    }
+
+    public function actionRecalc()
+    {
+        $fltr = new StatFilter();
+        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+        return $this->render('recalc', [
+            'IsAdmin' => $IsAdmin,
+            'partnerlist' => $fltr->getPartnersList(),
+            'uslugilist' => $fltr->getTypeUslugLiust(),
+            'bankList' => $fltr->getBankList(),
+        ]);
+    }
+
+    public function actionRecalcdata()
+    {
+        if (Yii::$app->request->isAjax) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+            $data = Yii::$app->request->post();
+            $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+            $page = Yii::$app->request->get('page', 0);
+            $payShetList = new PayShetStat();
+            if ($payShetList->load($data, '') && $payShetList->validate()) {
+                $list = $payShetList->getList2($IsAdmin, $page);
+                return [
+                    'status' => 1, 'data' => $this->renderPartial('_recalcdata', [
+                        'reqdata' => $data,
+                        'data' => $list['data'],
+                        'cntpage' => $list['cntpage'],
+                        'cnt' => $list['cnt'],
+                        'pagination' => $list['pagination'],
+                        'sumpay' => $list['sumpay'],
+                        'sumcomis' => $list['sumcomis'],
+                        'bankcomis' => $list['bankcomis'],
+                        'voznagps' => $list['voznagps'],
+                        'page' => $page,
+                        'IsAdmin' => $IsAdmin
+                    ])
+                ];
+            } else {
+                return ['status' => 0, 'message' => $payShetList->GetError()];
+            }
+        } else {
+            return $this->redirect('/partner');
+        }
+    }
+
+    public function actionRecalcSave()
+    {
+        if (Yii::$app->request->isAjax) {
+            $payShetList = new PayShetStat();
+            if ($payShetList->load(Yii::$app->request->get(), '')) {
+                $data = $payShetList->getList2(UserLk::IsAdmin(Yii::$app->user), 0, 1);
+                $paySchets = PaySchet::findAll(ArrayHelper::getColumn($data['data'], 'ID'));
+                foreach ($paySchets as $paySchet) {
+                    $paySchet->recalcComiss(array_map('floatval', Yii::$app->request->post()));
+                    $paySchet->save(false);
+                }
+                return $this->asJson([
+                    'status' => 1,
+                    'count' => count($paySchets),
+                ]);
+            }
+            return $this->asJson([
+                'status' => 0,
+                'count' => 0,
+            ]);
+
+        }
+        return $this->redirect('/partner');
     }
 
     /**
