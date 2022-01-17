@@ -12,6 +12,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use yii\base\BaseObject;
 use yii\base\InvalidArgumentException;
+use yii\helpers\ArrayHelper;
 use yii\helpers\Json;
 
 /**
@@ -57,8 +58,16 @@ class TcbClient extends BaseObject
     {
         $requestJson = Json::encode($requestData);
 
-        $client = new Client();
+        $logData = [
+            'Message' => '',
+            'Login' => $this->login,
+            'Url' => $this->bankUrl . $endpoint,
+            'Request Data' => Cards::MaskCardLog($requestJson),
+        ];
 
+        \Yii::info(ArrayHelper::merge($logData, ['Message' => 'TCB request.']));
+
+        $client = new Client();
         $headers = [
             'Content-type' => 'application/json',
             'TCB-Header-Login' => $this->login,
@@ -66,6 +75,7 @@ class TcbClient extends BaseObject
             'TCB-Header-SerializerType' => 'Default',
         ];
 
+        \Yii::info(ArrayHelper::merge($logData, ['Message' => 'TCB request start.']));
         $response = $client->request('POST', $this->bankUrl . $endpoint, [
             'timeout' => self::TIMEOUT,
             'connect_timeout' => self::TIMEOUT,
@@ -77,16 +87,16 @@ class TcbClient extends BaseObject
             ],
             'body' => $requestJson,
         ]);
+        \Yii::info(ArrayHelper::merge($logData, ['Message' => 'TCB request end.']));
 
         $responseBody = $response->getBody()->getContents();
 
         if ($response->getStatusCode() === 500) {
-            \Yii::error([
-                'Message' => 'Bank internal server error 500.',
+            \Yii::error(ArrayHelper::merge($logData, [
+                'Message' => 'TCB bank internal server error 500.',
                 'Headers' => $headers,
-                'Request Data' => Cards::MaskCardLog($requestJson),
                 'Response' => $responseBody,
-            ]);
+            ]));
             throw new TcbInternalException('Bank internal server error 500.');
         }
 
@@ -94,12 +104,11 @@ class TcbClient extends BaseObject
             $responseData = Json::decode($responseBody);
         } catch (InvalidArgumentException $e) {
             /** @todo Выяснить в каких случаях не удается декодировать тело ответа в JSON и правильно обработь. */
-            \Yii::error([
+            \Yii::error(ArrayHelper::merge($logData, [
                 'Message' => 'Unable to parse response.',
                 'Headers' => $headers,
-                'Request Data' => Cards::MaskCardLog($requestJson),
                 'Response' => $responseBody,
-            ]);
+            ]));
             throw new TcbParsingException('Unable to parse response.');
         }
 
