@@ -22,9 +22,6 @@ use yii\db\Query;
 
 trait PayPartsTrait
 {
-    /**
-     *
-     */
     public function sendPartsToPartners()
     {
         $dateFrom = Carbon::now()->addDays(-1)->startOfDay();
@@ -32,12 +29,14 @@ trait PayPartsTrait
 
         $senderPartners = $this->getPartsSenderPartners($dateFrom, $dateTo);
 
-        /** @var Partner $senderPartner */
         foreach ($senderPartners as $senderPartner) {
             $recipientPartners = $this->getPartsRecipientPartners($senderPartner, $dateFrom, $dateTo);
 
-            /** @var Partner $recipientPartner */
             foreach ($recipientPartners as $recipientPartner) {
+                if ($senderPartner->ID === $recipientPartner->ID) {
+                    continue;
+                }
+
                 $this->payPartsSenderToRecipient($senderPartner, $recipientPartner, $dateFrom, $dateTo);
             }
         }
