@@ -347,7 +347,7 @@ class TCBank implements IBank
             }
 
             $queryData = [
-                'OrderID' => $params['ID'],
+                'ExtID' => $params['ID'],
                 'Amount' => $params['SummFull'],
                 'Description' => $order_description,
                 'ClientInfo' => [
@@ -363,10 +363,10 @@ class TCBank implements IBank
 
             if ($user && $idCard == -1) {
                 //привязка карты
-                $action = "/api/tcbpay/gate/registercardbegin";
+                $action = "/api/v1/card/unregistered/bind";
             } elseif ($card && $idCard >= 0) {
                 //реккурентный платеж с карты
-                $action = "/api/tcbpay/gate/registerdirectorderfromregisteredcard";
+                $action = "/api/v1/card/registered/direct";
                 $isRecurrent = 1;
                 $queryData['CardRefID'] = $card['ExtCardIDP'];
             } else {
@@ -956,10 +956,10 @@ class TCBank implements IBank
      */
     public function createAutoPay(array $params)
     {
-        $action = '/api/tcbpay/gate/registerdirectorderfromregisteredcard';
+        $action = '/api/v1/card/registered/direct';
 
         $queryData = [
-            'OrderID' => $params['IdPay'],
+            'ExtID' => $params['IdPay'],
             'CardRefID' => $params['CardFrom'],
             'Amount' => $params['summ'],
             'Description' => 'Оплата по счету ' . $params['IdPay']
@@ -1297,7 +1297,7 @@ class TCBank implements IBank
 
     public function SimpleActivateCard($Id, array $params)
     {
-        $action = '/api/tcbpay/gate/simpleactivatecard';
+        $action = '/api/v1/card/registered/activate';
         $queryData = [
             "OrderID" => $Id,
             "EAN" => $params["cardnum"],

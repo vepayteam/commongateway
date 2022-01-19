@@ -156,7 +156,7 @@ class TKBankAdapter implements IBankAdapter
             }
 
             $queryData = [
-                'OrderID' => $params['ID'],
+                'ExtID' => $params['ID'],
                 'Amount' => $params['SummFull'],
                 'Description' => $order_description,
                 'ClientInfo' => [
@@ -172,10 +172,10 @@ class TKBankAdapter implements IBankAdapter
 
             if ($user && $idCard == -1) {
                 //привязка карты
-                $action = "/api/tcbpay/gate/registercardbegin";
+                $action = "/api/v1/card/unregistered/bind";
             } elseif ($card && $idCard >= 0) {
                 //реккурентный платеж с карты
-                $action = "/api/tcbpay/gate/registerdirectorderfromregisteredcard";
+                $action = '/api/v1/card/registered/direct';
                 $isRecurrent = 1;
                 $queryData['CardRefID'] = $card['ExtCardIDP'];
             } else {
@@ -553,6 +553,8 @@ class TKBankAdapter implements IBankAdapter
 
         if (isset($ret['errorinfo'])) {
             $ret['Status'] = $ret['errorinfo']['errorcode'];
+        } else {
+            $ret['Status'] = 0;
         }
 
         return $ret;
@@ -828,7 +830,7 @@ class TKBankAdapter implements IBankAdapter
 
     public function SimpleActivateCard($Id, array $params)
     {
-        $action = '/api/tcbpay/gate/simpleactivatecard';
+        $action = '/api/v1/card/registered/activate';
         $queryData = [
             "OrderID" => $Id,
             "EAN" => $params["cardnum"],
@@ -934,7 +936,7 @@ class TKBankAdapter implements IBankAdapter
         $action = '/api/v1/card/unregistered/debit/wof';
 
         $queryData = [
-            'OrderID' => $params['ID'],
+            'ExtId' => $params['ID'],
             'Amount' => $params['SummFull'],
             'Description' => 'Оплата по счету ' . $params['ID'],
             'CardInfo' => [
@@ -1168,7 +1170,7 @@ class TKBankAdapter implements IBankAdapter
 
         $paySchet = $createPayForm->getPaySchet();
         $createPayRequest = new CreatePayRequest();
-        $createPayRequest->OrderId = $paySchet->ID;
+        $createPayRequest->ExtId = $paySchet->ID;
         $createPayRequest->Amount = $paySchet->getSummFull();
         $createPayRequest->Description = 'Оплата по счету ' . $paySchet->ID;
         $createPayRequest->TTL = '00.00:' . ($paySchet->TimeElapsed / 60) . ':00';
@@ -1408,7 +1410,7 @@ class TKBankAdapter implements IBankAdapter
         Yii::info("Request TKB getorderstate. PaySchet ID: {$okPayForm->IdPay}, Route: {$route}). Stack trace: \n{$stackTrace}");
 
         $checkStatusPayRequest = new CheckStatusPayRequest();
-        $checkStatusPayRequest->OrderID = $okPayForm->IdPay;
+        $checkStatusPayRequest->ExtID = $okPayForm->IdPay;
 
         $queryData = Json::encode($checkStatusPayRequest->getAttributes());
         $response = $this->curlXmlReq($queryData, $this->bankUrl . $action);
@@ -1463,10 +1465,10 @@ class TKBankAdapter implements IBankAdapter
      */
     public function recurrentPay(AutoPayForm $autoPayForm)
     {
-        $action = '/api/tcbpay/gate/registerdirectorderfromregisteredcard';
+        $action = '/api/v1/card/registered/direct';
 
         $createRecurrentPayRequest = new CreateRecurrentPayRequest();
-        $createRecurrentPayRequest->OrderId = $autoPayForm->paySchet->ID;
+        $createRecurrentPayRequest->ExtId = $autoPayForm->paySchet->ID;
         $createRecurrentPayRequest->Amount = $autoPayForm->paySchet->getSummFull();
         $createRecurrentPayRequest->Description = 'Оплата по счету ' . $autoPayForm->paySchet->ID;
 

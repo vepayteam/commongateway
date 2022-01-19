@@ -8,13 +8,13 @@ use yii\base\Model;
 
 class CheckStatusPayRequest extends Model
 {
-    public $OrderID;
+    public $ExtID;
 
     public function rules()
     {
         return [
-            ['OrderID', 'required'],
-            ['OrderID', 'number'],
+            ['ExtID', 'required'],
+            ['ExtID', 'number'],
         ];
     }
 
