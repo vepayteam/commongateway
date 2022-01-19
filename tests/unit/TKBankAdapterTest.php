@@ -137,7 +137,7 @@ class TKBankAdapterTest extends \Codeception\Test\Unit
         $tKBankAdapterReflectionClass = new ReflectionClass(TKBankAdapter::class);
         $parseAns = $tKBankAdapterReflectionClass->getMethod('parseAns');
         $parseAns->setAccessible(true);
-        $this->assertEquals(['test' => 'TEST'], $parseAns->invoke($tKBankAdapter, ['TEST' => 'TEST']));
+        $this->assertEquals(['test' => 'TEST', 'Status' => 0], $parseAns->invoke($tKBankAdapter,    ['TEST' => 'TEST']));
     }
 
     public function testArrayChangeKeyCaseRecursive()
