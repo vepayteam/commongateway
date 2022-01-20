@@ -1481,9 +1481,9 @@ class TKBankAdapter implements IBankAdapter
         $createRecurrentPayResponse = new CreateRecurrentPayResponse();
         if (isset($ans['xml']) && !empty($ans['xml'])) {
             $xml = $this->parseAns($ans['xml']);
-            if (isset($xml['ordernumber'])) {
+            if (isset($xml['orderid'])) {
                 $createRecurrentPayResponse->status = BaseResponse::STATUS_DONE;
-                $createRecurrentPayResponse->transac = $xml['ordernumber'];
+                $createRecurrentPayResponse->transac = $xml['orderid'];
                 return $createRecurrentPayResponse;
             }
         }
@@ -1540,18 +1540,18 @@ class TKBankAdapter implements IBankAdapter
             'CardNumber' => $outCardPayForm->cardnum,
         ];
 
-        $ans = $this->curlXmlReq(Json::encode($outCardPayRequest->getAttributes()), $this->bankUrl . $action);
+        $ans = $this->parseAns($this->curlXmlReq(Json::encode($outCardPayRequest->getAttributes()), $this->bankUrl . $action));
 
         $outCardPayResponse = new OutCardPayResponse();
 
         if(isset($ans['xml'])) {
-            if(isset($ans['xml']['errorinfo']['errorcode']) && $ans['xml']['errorinfo']['errorcode'] == 0) {
+            if(!array_key_exists('errorinfo', $ans['xml']) || (isset($ans['xml']['errorinfo']['errorcode']) && $ans['xml']['errorinfo']['errorcode'] == 0)) {
                 $outCardPayResponse->status = BaseResponse::STATUS_DONE;
-                $outCardPayResponse->trans = $ans['xml']['ordernumber'];
-                $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'];
+                $outCardPayResponse->trans = $ans['xml']['orderid'];
+                $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'] ?? 'Ошибка запроса';
             } else {
                 $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
-                $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'];
+                $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'] ?? 'Ошибка запроса';
             }
         } else {
             $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
@@ -1607,11 +1607,11 @@ class TKBankAdapter implements IBankAdapter
         $outAccountPayRequest->Amount = $outPayaccForm->amount;
         $outAccountPayRequest->Description = $outPayaccForm->descript;
 
-        $ans = $this->curlXmlReq(Json::encode($outAccountPayRequest->getAttributes()), $this->bankUrl . $action);
+        $ans = $this->parseAns($this->curlXmlReq(Json::encode($outAccountPayRequest->getAttributes()), $this->bankUrl . $action));
 
         $outAccountPayResponse = new TransferToAccountResponse();
         if (isset($ans['xml']) && !empty($ans['xml'])) {
-            if(isset($ans['xml']['errorinfo']['errorcode']) && $ans['xml']['errorinfo']['errorcode'] == 0) {
+            if(!array_key_exists('errorinfo', $ans['xml']) || (isset($ans['xml']['errorinfo']['errorcode']) && $ans['xml']['errorinfo']['errorcode'] == 0)) {
                 $outAccountPayResponse->status = BaseResponse::STATUS_DONE;
                 $outAccountPayResponse->trans = $ans['xml']['ordernumber'];
             } elseif (isset($ans['xml']['errorinfo']['errorcode'])) {
