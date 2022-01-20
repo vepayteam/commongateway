@@ -1479,6 +1479,9 @@ class TKBankAdapter implements IBankAdapter
         $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
 
         $createRecurrentPayResponse = new CreateRecurrentPayResponse();
+
+        Yii::info("recurcurlans: " . Json::encode($ans), 'merchant');
+
         if (isset($ans['xml']) && !empty($ans['xml'])) {
             $xml = $this->parseAns($ans['xml']);
             if (isset($xml['orderid'])) {
