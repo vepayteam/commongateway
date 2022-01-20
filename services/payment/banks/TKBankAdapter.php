@@ -1534,7 +1534,7 @@ class TKBankAdapter implements IBankAdapter
         $action = '/api/v1/card/unregistered/credit';
 
         $outCardPayRequest = new OutCardPayRequest();
-        $outCardPayRequest->OrderId = $outCardPayForm->paySchet->ID;
+        $outCardPayRequest->ExtId = $outCardPayForm->paySchet->ID;
         $outCardPayRequest->Amount = $outCardPayForm->paySchet->getSummFull();
         $outCardPayRequest->CardInfo = [
             'CardNumber' => $outCardPayForm->cardnum,
@@ -1602,7 +1602,7 @@ class TKBankAdapter implements IBankAdapter
         $outAccountPayRequest->Inn = $outPayaccForm->inn;
         $outAccountPayRequest->OrderId = (string)$outPayaccForm->paySchet->ID;
         $outAccountPayRequest->Name = ($outPayaccForm->scenario == OutPayAccountForm::SCENARIO_FL ? $outPayaccForm->fio : $outPayaccForm->name);
-        $outAccountPayRequest->Bik = strval($outPayaccForm->bic);
+        $outAccountPayRequest->Bic = strval($outPayaccForm->bic);
         $outAccountPayRequest->Account = strval($outPayaccForm->account);
         $outAccountPayRequest->Amount = $outPayaccForm->amount;
         $outAccountPayRequest->Description = $outPayaccForm->descript;
