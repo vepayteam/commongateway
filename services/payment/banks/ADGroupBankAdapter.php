@@ -95,6 +95,7 @@ class ADGroupBankAdapter implements IBankAdapter
 
         $url = $this->bankUrl . $action;
         curl_setopt_array($curl, array(
+            CURLOPT_VERBOSE => Yii::$app->params['VERBOSE'] === 'Y',
             CURLOPT_URL => $url,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => "",

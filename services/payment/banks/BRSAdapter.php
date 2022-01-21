@@ -455,6 +455,7 @@ class BRSAdapter implements IBankAdapter
         $url = $domain . $uri;
         $request = http_build_query($data);
         curl_setopt_array($curl, array(
+            CURLOPT_VERBOSE => Yii::$app->params['VERBOSE'] === 'Y',
             CURLOPT_URL => $url,
             CURLOPT_HEADER => false,
             CURLOPT_POST => true,
@@ -610,6 +611,7 @@ class BRSAdapter implements IBankAdapter
         $curl = curl_init();
 
         curl_setopt_array($curl, array(
+            CURLOPT_VERBOSE => Yii::$app->params['VERBOSE'] === 'Y',
             CURLOPT_URL => $this->bankUrlXml,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
@@ -798,6 +800,7 @@ class BRSAdapter implements IBankAdapter
         $curl = curl_init();
 
         $optArray = [
+            CURLOPT_VERBOSE => Yii::$app->params['VERBOSE'] === 'Y',
             CURLOPT_URL => $this->bankUrlB2C . $uri,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
@@ -872,9 +875,9 @@ class BRSAdapter implements IBankAdapter
 
         $sslData->sslcerttype = 'PEM';
         $sslData->sslkeytype = 'PEM';
-        $sslData->cainfo = Yii::getAlias(self::KEYS_PATH . 'ca_' . $this->gate->Login . '.pem');
+        $sslData->cainfo = Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.ca.crt');
         $sslData->sslcert = Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.pem');
-        $sslData->sslkey = Yii::getAlias(self::KEYS_PATH . 'key_' . $this->gate->Login . '.pem');
+        $sslData->sslkey = Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.key');
 
         return $sslData;
     }
@@ -934,7 +937,7 @@ class BRSAdapter implements IBankAdapter
         $transferToAccountRequest->sourceId = $id;
 
         $requestData = $transferToAccountRequest->getAttributes();
-        $requestData['msgSign'] = $transferToAccountRequest->getMsgSign($this->gate, 'key_' . $this->gate->Login . '.pem');
+        $requestData['msgSign'] = $transferToAccountRequest->getMsgSign($this->gate, $this->gate->Login . '.key');
 
         return $requestData;
     }

@@ -59,6 +59,7 @@ class AllAsn
         if (is_null($this->content)){
             $curl = curl_init();
             curl_setopt_array($curl, [
+                CURLOPT_VERBOSE => Yii::$app->params['VERBOSE'] === 'Y',
                 CURLOPT_URL => $this->link,
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_HEADER =>false,
