@@ -10,6 +10,7 @@ return [
     'dectaProxy' => getenv("DECTA_PROXY_URL", true),
     'DEVMODE' => boolval(getenv('DEVMODE', true)) ? 'Y' : 'N',
     'TESTMODE' => 'Y',
+    'VERBOSE' => boolval(getenv('CURL_VERBOSE', true)) ? 'Y' : 'N',
     'accountServiceUrl' => '',
 	'key' => '4l80z8E9s0',
     'keycancel' => 'Q0YimN4R5rPL3uld8094Rz85E4E5h93sR0',

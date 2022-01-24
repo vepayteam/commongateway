@@ -1166,6 +1166,9 @@ components:
         kpp:
           type: string
           description: КПП получателя
+        fio:
+          type: string
+          description: ФИО получателя
         account:
           type: string
           description: Счет в банке
@@ -1185,6 +1188,9 @@ components:
     OutF:
       type: object
       properties:
+        inn:
+          type: string
+          description: ИНН получателя
         fio:
           type: string
           description: ФИО получателя

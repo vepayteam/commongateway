@@ -103,8 +103,8 @@ class CallbackController extends Controller
 
                 return ['status' => 1, 'data' => $this->renderPartial('_listitems', [
                     'reqdata' => $reqData,
+                    'pagination' => $data['pagination'],
                     'data' => $data['data'],
-                    'payLoad' => $data['payLoad']->toArray(),
                     'IsAdmin' => $IsAdmin
                 ])];
             } else {
@@ -150,7 +150,7 @@ class CallbackController extends Controller
 
                 $data = $CallbackList->GetList($IsAdmin, 0, true);
 
-                if($data['payLoad']->getTotalCount() > CallbackList::MAX_BATCH_CALLBACK_COUNT) {
+                if(count($data['data']) > CallbackList::MAX_BATCH_CALLBACK_COUNT) {
                     return ['status' => 0, 'message' => 'За раз можно отправить не более ' . CallbackList::MAX_BATCH_CALLBACK_COUNT . ' коллбэков'];
                 }
 

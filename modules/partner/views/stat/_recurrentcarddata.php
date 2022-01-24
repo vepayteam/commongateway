@@ -10,7 +10,7 @@
     <div class="col-lg-4 col-sm-6">
         <div class="ibox ">
             <div class="ibox-title">
-                <h5>Количество новых карт</h5>
+                <h5>Количество новых привязок карт</h5>
             </div>
             <div class="ibox-content">
                 <h2 class="no-margins"><?=number_format($data['cntnewcards'], 0, '.', ' ')?></h2>
