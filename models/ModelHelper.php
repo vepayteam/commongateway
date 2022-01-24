@@ -2,54 +2,78 @@
 
 namespace app\models;
 
+use app\models\partner\UserLk;
+use Yii;
+use yii\db\ActiveRecord;
+
 /**
- *
+ * @see ActiveRecord
+ * @property bool $isAdmin
  */
 trait ModelHelper
 {
     /**
-     * @var bool
+     * @proretry bool $loaded
      */
-    public $isTrue = true;
+    public $loaded = false;
+    /**
+     * @proretry bool $_isAdmin
+     */
+    private $_isAdmin = null;
 
     /**
-     * @param $data
-     * @param null $formName
-     * @param false $validate
-     * @param null $attributeNamesToValidate
-     * @param bool $clearValidateErrors
+     * @param array $data
+     * @param string|null $formName
+     * @param bool $validate
+     * @param string|array|null $attributeNames
+     * @param bool $clearErrors
      *
      * @return bool
      */
-    public function loadAndValidate($data, $formName = null, bool $validate = false, $attributeNamesToValidate = null, bool $clearValidateErrors = true)
+    public function load($data, $formName = null, bool $validate = false, $attributeNames = null, bool $clearErrors = true): bool
     {
-        $loaded = parent::load($data, $formName);
-        return $validate ? $loaded && $loaded->validate($attributeNamesToValidate, $clearValidateErrors) : $loaded;
+        return $validate ? parent::load($data, $formName) && parent::validate($attributeNames, $clearErrors) : parent::load($data, $formName);
     }
 
     /**
-     * @param $data
-     * @param null $formName
+     * @param string|array|null $attributeNames
+     * @param bool $clearErrors
+     * @param array|null $data
+     * @param string|null $formName
      *
-     * @return $this
+     * @return bool
      */
-    public function load($data, $formName = null)
+    public function validate($attributeNames = null, $clearErrors = true, ?array $data = null, ?string $formName = null): bool
     {
-        $this->isTrue = $this->isTrue ? parent::load($data, $formName) : false;
-
-        return $this;
+        return $data ? parent::load($data, $formName) && parent::validate($attributeNames, $clearErrors) : parent::validate($attributeNames, $clearErrors);
     }
 
     /**
-     * @param bool $runValidation
-     * @param null $attributeNames
+     * @param array $data
+     * @param string|null $formName
+     * @param null|string|array $attributeNames
+     * @param bool $clearErrors
      *
-     * @return $this
+     * @return bool
      */
-    public function save(bool $runValidation = true, $attributeNames = null)
+    public function loadAndValidate(array $data, ?string $formName = null, $attributeNames = null, bool $clearErrors = true): bool
     {
-        $this->isTrue = $this->isTrue ? parent::save($runValidation, $attributeNames) : false;
+        return $this->load($data, $formName, true, $attributeNames, $clearErrors);
+    }
 
-        return $this;
+    public function isLoaded(): bool
+    {
+        return $this->loaded;
+    }
+
+    public function setLoaded(bool $loaded): void
+    {
+        $this->loaded = $loaded;
+    }
+
+    public function getIsAdmin(): ?bool
+    {
+        $this->_isAdmin = $this->_isAdmin ?? (bool)UserLk::IsAdmin(Yii::$app->user);
+        return $this->_isAdmin;
     }
 }
