@@ -73,7 +73,7 @@ $rekviz = ArrayHelper::map($rekviz, 'ID', 'NamePoluchat');
                     <?= $form->field($usl, 'QrcodeExportFormat')->textInput(['class' => 'form-control']); ?>
                     <hr>
                     <h3>Группа:</h3>
-                    <?= $form->field($usl, 'IsCustom')->dropDownList(UslugatovarType::getAll(), ['class' => 'form-control']); ?>
+                    <?= $form->field($usl, 'IsCustom')->dropDownList(UslugatovarType::typeList(), ['class' => 'form-control']); ?>
                     <div class="col-sm-8 col-sm-offset-3">
                         <?php
                         echo $form->field($usl, 'HideFromList')->checkbox([

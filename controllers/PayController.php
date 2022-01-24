@@ -15,10 +15,10 @@ use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\TKBankAdapter;
 use app\services\payment\exceptions\BankAdapterResponseException;
-use app\services\payment\exceptions\Check3DSv2DuplicatedException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\DuplicateCreatePayException;
+use app\services\payment\exceptions\FailPaymentException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
 use app\services\payment\exceptions\reRequestingStatusException;
@@ -215,7 +215,7 @@ class PayController extends Controller
             $createPayStrategy->releaseLock();
 
             return ['status' => 0, 'message' => $e->getMessage()];
-        } catch (reRequestingStatusOkException | Check3DSv2DuplicatedException $e) {
+        } catch (reRequestingStatusOkException $e) {
             Yii::$app->errorHandler->logException($e);
             $createPayStrategy->releaseLock();
 
@@ -223,6 +223,16 @@ class PayController extends Controller
                 'status' => 2,
                 'message' => $e->getMessage(),
                 'url' => Yii::$app->params['domain'] . '/pay/orderok?id=' . $form->IdPay,
+            ];
+        } catch (FailPaymentException $e)   {
+            // The payment has failed: client redirect to orderok which, in turn, will redirect to the fail page
+            Yii::$app->errorHandler->logException($e);
+            $createPayStrategy->releaseLock();
+
+            return [
+                'status' => 2,
+                'message' => $e->getMessage(),
+                'url' => Url::to(['orderok', 'id' => $form->IdPay]),
             ];
         } catch (Check3DSv2Exception $e) {
             Yii::$app->errorHandler->logException($e);

@@ -126,7 +126,7 @@ class CompensationService extends Component
     public function calculateForBank(PaySchet $paySchet, PartnerBankGate $gate): float
     {
         // Считаем от общей суммы, уплаченной клиентом
-        $amount = intval(round($paySchet->SummPay + round($this->calculateForClient($paySchet, $gate))));
+        $amount = (int) round($paySchet->SummPay + round($this->calculateForClient($paySchet, $gate)));
 
         /**
          * Используем шлюз или услугу в качестве источника значений для подсчета компенсации.
