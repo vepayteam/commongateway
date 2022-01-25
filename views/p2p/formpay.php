@@ -5,8 +5,6 @@ use Carbon\Carbon;
 use yii\helpers\Html;
 
 /* @var PaySchet $paySchet */
-\app\assets\P2pAsset::register($this);
-
 const MAX_EXP_CARD_YEARS = 10;
 ?>
 <?php $this->beginPage() ?>
@@ -17,6 +15,7 @@ const MAX_EXP_CARD_YEARS = 10;
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?= Html::csrfMetaTags() ?>
+    <link href="/payasset/css/p2pform.css" rel="stylesheet">
     <title>Перевод с карты на карту</title>
 
     <script>
@@ -175,6 +174,9 @@ const MAX_EXP_CARD_YEARS = 10;
     </div>
 </div>
 </body>
+<script src="/payasset/js/ua-parser.js"></script>
+<script src="/payasset/js/jquery.inputmask.min.js"></script>
+<script src="/payasset/js/p2pform.js"></script>
 <?php $this->endBody() ?>
 </html>
 <?php $this->endPage() ?>
