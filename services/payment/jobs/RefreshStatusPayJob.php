@@ -53,7 +53,7 @@ class RefreshStatusPayJob extends BaseObject implements \yii\queue\JobInterface
 
                 Yii::$app->queue
                     ->delay($this->interval ?? $delay)
-                    ->push(new RefreshStatusPayJob([
+                    ->push(new static([
                         'paySchetId' => $paySchet->ID,
                         'interval' => $this->interval,
                     ]));

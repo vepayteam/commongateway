@@ -100,9 +100,15 @@ $config = [
                 '/admin/syncbalance/<id:\d+>' => 'admin/syncbalance',
                 '/mfo/getsbpbankreceiver' => 'mfo/default/getsbpbankreceiver',
 
+
                 'POST /h2hapi/v1/invoices' => '/h2hapi/v1/invoice/post',
                 'GET /h2hapi/v1/invoices/<id:\d+>' => '/h2hapi/v1/invoice/get',
                 'PUT /h2hapi/v1/invoices/<paySchetId:\d+>/payment' => '/h2hapi/v1/payment/put',
+                'PUT /h2hapi/v1/invoices/<paySchetId:\d+>/payment/reversed' => '/h2hapi/v1/payment/put-reversed',
+
+                'POST /h2hapi/v1/invoices/<paySchetId:\d+>/payment/refunds' => '/h2hapi/v1/refund/post',
+                'GET /h2hapi/v1/refunds/<refundPayschetId:\d+>' => '/h2hapi/v1/refund/get',
+
 
                 '<controller>/<id:\d+>' => '<controller>/index',
                 '<controller>/<action>' => '<controller>/<action>',
@@ -160,6 +166,7 @@ $config = [
         \app\services\CompensationService::class => \app\services\CompensationService::class,
         \app\services\RecurrentPaymentPartsService::class => \app\services\RecurrentPaymentPartsService::class,
         \app\services\ReportService::class => \app\services\ReportService::class,
+        \app\services\PaymentService::class => \app\services\PaymentService::class,
     ],
     'params' => $params,
     'container' => [
