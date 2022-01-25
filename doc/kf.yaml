@@ -14,7 +14,7 @@ tags:
   - name: Account
     description: Запросы баланса
   - name: Benific
-    description: Бенифициары
+    description: Бенефициры
   - name: Callback
     description: Оповещения
 servers:
@@ -286,8 +286,8 @@ paths:
     post:
       tags:
         - Benific
-      summary: Регистрация бенифициара
-      description: Запрос регистрации бенифициара
+      summary: Регистрация бенефицира
+      description: Запрос регистрации бенефицира
       requestBody:
         content:
           application/json:

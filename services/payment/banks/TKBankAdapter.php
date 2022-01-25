@@ -1042,7 +1042,7 @@ class TKBankAdapter implements IBankAdapter
     }
 
     /**
-     * Регистрация бенифициаров
+     * Регистрация бенефициров
      *
      * @param array $params
      * @return array

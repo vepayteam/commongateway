@@ -15,7 +15,7 @@ class m210922_081213_add_benific_gate extends Migration
     {
         $uslugatovarType = new UslugatovarType();
         $uslugatovarType->Id = UslugatovarType::REGISTRATION_BENIFIC;
-        $uslugatovarType->Name = 'Регистрация бенифициата';
+        $uslugatovarType->Name = 'Регистрация бенефицира';
         $uslugatovarType->save(false);
     }
 
