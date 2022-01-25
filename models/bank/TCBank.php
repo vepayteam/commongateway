@@ -787,7 +787,7 @@ class TCBank implements IBank
         $queryData = [
             'OrderID' => $data['IdPay'],
             'Account' => strval($data['account']),
-            'Bik' => strval($data['bic']),
+            'Bic' => strval($data['bic']),
             'Amount' => $data['summ'],
             'Name' => $data['name'],
             'Description' => $data['descript']
