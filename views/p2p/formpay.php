@@ -174,10 +174,7 @@ const MAX_EXP_CARD_YEARS = 10;
     </div>
 </div>
 </body>
-<script
-    src="https://code.jquery.com/jquery-1.12.4.min.js"
-    integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ="
-    crossorigin="anonymous"></script>
+<script src="/payasset/js/jquery-1.12.4.min.js"></script>
 <script src="/payasset/js/ua-parser.js"></script>
 <script src="/payasset/js/jquery.inputmask.min.js"></script>
 <script src="/payasset/js/p2pform.js"></script>
