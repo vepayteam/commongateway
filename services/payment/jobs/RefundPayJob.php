@@ -21,7 +21,14 @@ class RefundPayJob extends BaseObject implements JobInterface
     public $initiator;
 
     /**
-     * @inheritdoc
+     * Сумма в копейках/центах {@see \app\services\payment\helpers\PaymentHelper::convertToPenny()}
+     *
+     * @var int|null
+     */
+    public $refundSum;
+
+    /**
+     * @inheritDoc
      */
     public function execute($queue)
     {
@@ -36,7 +43,7 @@ class RefundPayJob extends BaseObject implements JobInterface
         $service = Yii::$app->get(PaymentService::class);
 
         try {
-            $service->refund($paySchet);
+            $service->refund($paySchet, $this->refundSum);
         } catch (\Exception $e) {
             Yii::error(['RefundPayJob refund exception', $e]);
         }
