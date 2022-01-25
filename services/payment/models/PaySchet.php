@@ -438,8 +438,10 @@ class PaySchet extends \yii\db\ActiveRecord
             /**
              * Calculate compensation.
              * Needed only when bank is not 0 ({@see MfoCardRegStrategy::createPaySchet()}).
+             *
+             * No need to calculate commissions for refund operations
              */
-            if ($this->Bank !== 0) {
+            if ($this->Bank !== 0 && !$this->isRefund) {
                 $gate = (new BankAdapterBuilder())
                     ->buildByBank($this->partner, $this->uslugatovar, $this->bank, $this->currency)
                     ->getPartnerBankGate();
@@ -511,7 +513,7 @@ class PaySchet extends \yii\db\ActiveRecord
      */
     public function getSummFull()
     {
-        return $this->SummPay + $this->ComissSumm;
+        return intval(round($this->SummPay + $this->ComissSumm));
     }
 
     /**
