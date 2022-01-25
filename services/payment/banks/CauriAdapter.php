@@ -406,9 +406,11 @@ class CauriAdapter implements IBankAdapter
      */
     public function refundPay(RefundPayForm $refundPayForm): RefundPayResponse
     {
+        $paySchet = $refundPayForm->paySchet;
+
         $refundPayRequest = new RefundPayRequest();
-        $refundPayRequest->id = $refundPayForm->paySchet->ExtBillNumber; // Banks transaction ID
-        $refundPayRequest->amount = PaymentHelper::convertToFullAmount($refundPayForm->paySchet->getSummFull());
+        $refundPayRequest->id = $paySchet->refundSource->ExtBillNumber; // Banks transaction ID
+        $refundPayRequest->amount = PaymentHelper::convertToFullAmount($paySchet->getSummFull());
         $refundPayResponse = new RefundPayResponse();
 
         try {
