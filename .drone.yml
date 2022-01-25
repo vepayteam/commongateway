@@ -578,7 +578,7 @@ steps:
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
-- name: helm-values-generator-01a0b2c18cf654533ae67808a87ff707
+- name: helm-values-generator-1edac64fdd83adebcfd318c9b6ecaa92
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
@@ -587,14 +587,14 @@ steps:
   - yq write values.yaml "image.tag" "${DRONE_BUILD_NUMBER}" -i
   - yq write values.yaml "ingress.testVepayEnabled" "true" -i
   - yq write values.yaml "ingress.annotations.\"nginx.ingress.kubernetes.io/whitelist-source-range\"" "null" -i
-  - yq write values.yaml "ingress.hosts[0].host" "test-${DRONE_REPO_NAME}.backend.vepay.cf" -i
+  - yq write values.yaml "ingress.hosts[0].host" "${DRONE_REPO_NAME}.backend.vepay.dev" -i
   - yq write values.yaml "ingress.hosts[0].paths[0]" "/" -i
-  - yq write values.yaml "ingress.hosts[1].host" "${DRONE_REPO_NAME}.backend.vepay.dev" -i
+  - yq write values.yaml "ingress.hosts[1].host" "test-${DRONE_REPO_NAME}.backend.vepay.cf" -i
   - yq write values.yaml "ingress.hosts[1].paths[0]" "/" -i
-  - yq write values.yaml "ingress.tls[0].hosts[0]" "test-${DRONE_REPO_NAME}.backend.vepay.cf" -i
-  - yq write values.yaml "ingress.tls[1].hosts[0]" "${DRONE_REPO_NAME}.backend.vepay.dev" -i
-  - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-cf-wildcard-certificate" -i
-  - yq write values.yaml "ingress.tls[1].secretName" "backend-vepay-dev-wildcard-certificate" -i
+  - yq write values.yaml "ingress.tls[0].hosts[0]" "${DRONE_REPO_NAME}.backend.vepay.dev" -i
+  - yq write values.yaml "ingress.tls[1].hosts[0]" "test-${DRONE_REPO_NAME}.backend.vepay.cf" -i
+  - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-dev-wildcard-certificate" -i
+  - yq write values.yaml "ingress.tls[1].secretName" "backend-vepay-cf-wildcard-certificate" -i
   - yq write values.yaml "config.reportQueue.enabled" "true" -i
   - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+500000000))" -i
   - yq write values.yaml "config.payments.brs.url_xml" "https://194.67.29.216:8443" -i
@@ -730,6 +730,6 @@ get:
 
 ---
 kind: signature
-hmac: becb343abfcdf462b6436f1dd7b47df11f230120dfedf62de7cc3efed540cf5a
+hmac: 6563e09fc75fc5bae344083ef5525ee411481c1b87ca0f481c3f59c7e37aa003
 
 ...
