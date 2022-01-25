@@ -594,7 +594,6 @@ class TCBank implements IBank
         Yii::warning("req: login = " . $this->shopId . " url = " . $url . "\r\n" . Cards::MaskCardLog($post), 'merchant');
         try {
             $curl->reset()
-                ->setOption(CURLOPT_VERBOSE, Yii::$app->params['VERBOSE'] === 'Y')
                 ->setOption(CURLOPT_TIMEOUT, $timout)
                 ->setOption(CURLOPT_CONNECTTIMEOUT, $timout)
                 ->setOption(CURLOPT_HTTPHEADER, array_merge([

@@ -35,7 +35,6 @@ abstract class BaseClient
         $curl = curl_init();
 
         curl_setopt_array($curl, array(
-            CURLOPT_VERBOSE => Yii::$app->params['VERBOSE'] === 'Y',
             CURLOPT_URL => $this->url.$this->uri,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => "",

@@ -6,7 +6,6 @@ return [
     'robotEmail' => 'robot@vepay.online',
     'infoEmail' => 'support@vepay.online',
     'buhEmail' => 'support@vepay.online',
-    'VERBOSE' => 'N',
     'DEVMODE' => 'N',
     'TESTMODE' => 'N',
     'accountServiceUrl' => '',

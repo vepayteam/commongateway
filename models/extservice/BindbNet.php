@@ -3,7 +3,6 @@
 namespace app\models\extservice;
 
 use qfsx\yii2\curl\Curl;
-use Yii;
 use yii\helpers\Json;
 
 class BindbNet
@@ -20,7 +19,6 @@ class BindbNet
         $curl->reset();
 
         $curl
-            ->setOption(CURLOPT_VERBOSE, Yii::$app->params['VERBOSE'] === 'Y')
             ->setOption(CURLOPT_SSL_VERIFYHOST, 0)
             ->setOption(CURLOPT_SSL_CIPHER_LIST, 'TLSv1')
             ->setOption(CURLOPT_SSL_VERIFYPEER, false);

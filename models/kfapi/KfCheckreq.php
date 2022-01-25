@@ -43,7 +43,6 @@ class KfCheckreq
         $curl->reset();
         if (mb_stripos($url, "https://") !== false) {
             $curl
-                ->setOption(CURLOPT_VERBOSE, Yii::$app->params['VERBOSE'] === 'Y')
                 ->setOption(CURLOPT_SSL_VERIFYHOST, 0)
                 ->setOption(CURLOPT_SSL_CIPHER_LIST, 'TLSv1')
                 ->setOption(CURLOPT_SSL_VERIFYPEER, false);

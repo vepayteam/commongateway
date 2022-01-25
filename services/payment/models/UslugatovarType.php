@@ -126,13 +126,9 @@ class UslugatovarType extends \yii\db\ActiveRecord
     public static function ecomTypes(): array
     {
         return [
-            self::REGCARD,
             self::ECOM,
-            self::JKH,
-            self::JKHPARTS,
             self::ECOMPARTS,
             self::POGASHECOM,
-            self::POGASHECOMPARTS,
             self::AVTOPLATECOM,
             self::AVTOPLATECOMPARTS,
             self::H2H_POGASH_ECOM,

@@ -75,7 +75,6 @@ class ReceiveTelegram
             $fst = "&";
         }
         if (Yii::$app->params['DEVMODE'] != 'Y' && Yii::$app->params['TESTMODE'] != 'Y' && !empty($this->proxyHost)) {
-            $curl->setOption(CURLOPT_VERBOSE, Yii::$app->params['VERBOSE'] === 'Y');
             $curl->setOption(CURLOPT_PROXY, $this->proxyHost);
             $curl->setOption(CURLOPT_PROXYUSERPWD, $this->proxyUser);
         }

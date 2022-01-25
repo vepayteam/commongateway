@@ -392,7 +392,6 @@ class OrangedataClient
             "X-Signature: " . $sign
         );
         curl_setopt_array($curl, array(
-            CURLOPT_VERBOSE => Yii::$app->params['VERBOSE'] === 'Y',
             CURLOPT_POST => true,
             CURLOPT_HTTPHEADER => $headers,
             CURLOPT_POSTFIELDS => $jsonstring
@@ -437,7 +436,6 @@ class OrangedataClient
             throw new Exception('Invalid order identifier');
         }
         $curl = is_int($this->api_url) ? $this->prepare_curl($this->edit_url($this->api_url, TRUE) . $this->inn . '/status/' . $id) : $this->prepare_curl($this->api_url . '/api/v2/documents/' . $this->inn . '/status/' . $id);
-        curl_setopt($curl,CURLOPT_VERBOSE , Yii::$app->params['VERBOSE'] === 'Y');
         curl_setopt($curl, CURLOPT_POST, false);
         $answer = curl_exec($curl);
         $info = curl_getinfo($curl);
@@ -498,7 +496,6 @@ class OrangedataClient
     {
         $curl = curl_init($url);
         $options = [
-            CURLOPT_VERBOSE => Yii::$app->params['VERBOSE'] === 'Y',
             CURLOPT_SSLKEY => $this->client_pkey,
             CURLOPT_SSLCERT => $this->client_cert,
             CURLOPT_SSLCERTPASSWD => $this->client_cert_pass,
@@ -517,7 +514,7 @@ class OrangedataClient
         curl_setopt_array($curl, $options);
         if ($this->debug) {
             curl_setopt_array($curl, array(
-                CURLOPT_VERBOSE => Yii::$app->params['VERBOSE'] === 'Y',
+                CURLOPT_VERBOSE => 1,
                 CURLOPT_STDERR => fopen($this->debug_file, 'a'),
             ));
         }
@@ -658,7 +655,6 @@ class OrangedataClient
             "X-Signature: " . $sign
         );
         curl_setopt_array($curl, array(
-            CURLOPT_VERBOSE => Yii::$app->params['VERBOSE'] === 'Y',
             CURLOPT_POST => true,
             CURLOPT_HTTPHEADER => $headers,
             CURLOPT_POSTFIELDS => $jsonstring
@@ -704,8 +700,6 @@ class OrangedataClient
         }
         $curl = is_numeric($this->api_url) ? $this->prepare_curl($this->edit_url($this->api_url,FALSE) . $this->inn . '/status/' . $id) : $this->prepare_curl($this->api_url . '/api/v2/corrections/' . $this->inn . '/status/' . $id);
         curl_setopt($curl, CURLOPT_POST, false);
-        curl_setopt($curl, CURLOPT_VERBOSE, Yii::$app->params['VERBOSE'] === 'Y');
-
         $answer = curl_exec($curl);
         $info = curl_getinfo($curl);
         switch ($info['http_code']) {

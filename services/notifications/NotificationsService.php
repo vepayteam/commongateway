@@ -133,7 +133,6 @@ class NotificationsService
         $curl = curl_init();
 
         curl_setopt_array($curl, array(
-            CURLOPT_VERBOSE => Yii::$app->params['VERBOSE'] === 'Y',
             CURLOPT_URL => $url,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => "",

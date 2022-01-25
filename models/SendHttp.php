@@ -103,7 +103,6 @@ class SendHttp
         $curl->reset();
         if (mb_stripos($url, "https://") !== false) {
             $curl
-                ->setOption(CURLOPT_VERBOSE, Yii::$app->params['VERBOSE'] === 'Y')
                 ->setOption(CURLOPT_TIMEOUT, 120)
                 ->setOption(CURLOPT_CONNECTTIMEOUT, 120)
                 ->setOption(CURLOPT_SSL_VERIFYHOST, 0)
