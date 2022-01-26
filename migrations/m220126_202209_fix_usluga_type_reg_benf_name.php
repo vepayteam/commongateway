@@ -13,9 +13,8 @@ class m220126_202209_fix_usluga_type_reg_benf_name extends Migration
      */
     public function safeUp()
     {
-        $uslugatovarType = UslugatovarType::findOne(['Id' => UslugatovarType::REGISTRATION_BENIFIC]);
-        $uslugatovarType->Name = 'Регистрация бенефицара';
-        $uslugatovarType->save(false);
+        $q = 'UPDATE `vepay`.`uslugatovar_types` SET `Name` = \'Регистрация бенефицара\' WHERE `Id` = ' . UslugatovarType::REGISTRATION_BENIFIC;
+        Yii::$app->db->createCommand($q)->execute();
     }
 
     /**
@@ -23,8 +22,7 @@ class m220126_202209_fix_usluga_type_reg_benf_name extends Migration
      */
     public function safeDown()
     {
-        $uslugatovarType = UslugatovarType::findOne(['Id' => UslugatovarType::REGISTRATION_BENIFIC]);
-        $uslugatovarType->Name = 'Регистрация бенифициата';
-        $uslugatovarType->save(false);
+        $q = 'UPDATE `vepay`.`uslugatovar_types` SET `Name` = \'Регистрация бенифициата\' WHERE `Id` = ' . UslugatovarType::REGISTRATION_BENIFIC;
+        Yii::$app->db->createCommand($q)->execute();
     }
 }
