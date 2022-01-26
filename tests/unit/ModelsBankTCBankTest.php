@@ -191,7 +191,7 @@ class ModelsBankTCBankTest extends \Codeception\Test\Unit
         $tCBankReflectionClass = new ReflectionClass(TCBank::class);
         $curlXmlReq = $tCBankReflectionClass->getMethod('curlXmlReq');
         $curlXmlReq->setAccessible(true);
-        $this->tester->assertEquals(['error' => '3: '], $curlXmlReq->invoke($tCBank, '', ''));
+        $this->tester->assertEquals(['error' => ': '], $curlXmlReq->invoke($tCBank, '', ''));
     }
 
     public function testLogArr()
@@ -209,7 +209,7 @@ class ModelsBankTCBankTest extends \Codeception\Test\Unit
         $tCBankReflectionClass = new ReflectionClass(TCBank::class);
         $parseAns = $tCBankReflectionClass->getMethod('parseAns');
         $parseAns->setAccessible(true);
-        $this->tester->assertEquals(['test' => 'TEST'], $parseAns->invoke($tCBank, ['TEST' => 'TEST']));
+        $this->tester->assertEquals(['test' => 'TEST', 'Status' => 0], $parseAns->invoke($tCBank, ['TEST' => 'TEST']));
     }
 
     public function testArrayChangeKeyCaseRecursive()
