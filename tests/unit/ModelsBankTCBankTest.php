@@ -191,7 +191,7 @@ class ModelsBankTCBankTest extends \Codeception\Test\Unit
         $tCBankReflectionClass = new ReflectionClass(TCBank::class);
         $curlXmlReq = $tCBankReflectionClass->getMethod('curlXmlReq');
         $curlXmlReq->setAccessible(true);
-        $this->tester->assertEquals(['error' => ': '], $curlXmlReq->invoke($tCBank, '', ''));
+        $this->tester->assertEquals(['error' => '3: '], $curlXmlReq->invoke($tCBank, '', ''));
     }
 
     public function testLogArr()
