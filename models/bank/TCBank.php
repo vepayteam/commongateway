@@ -681,6 +681,8 @@ class TCBank implements IBank
 
         if (isset($ret['errorinfo'])) {
             $ret['Status'] = $ret['errorinfo']['errorcode'];
+        } else {
+            $ret['Status'] = 0;
         }
 
         return $ret;
