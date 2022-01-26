@@ -149,7 +149,7 @@ const MAX_EXP_CARD_YEARS = 10;
                 <div class="emailAndButtonBlock">
                     <div class="center">
                         <input id="emailInput" placeholder="укажите email" type="text"
-                               data-inputmask-regex="[a-zA-Z0-9._%-]+@[a-zA-Z0-9-]+\.[a-zA-Z]{2,4}"
+                               data-inputmask-regex="[a-zA-Z0-9._%-]+@[a-zA-Z0-9-]+\.[a-zA-Z]{2,10}"
                         >
                     </div>
                     <div class="center">
@@ -165,7 +165,7 @@ const MAX_EXP_CARD_YEARS = 10;
                             Необходимо подтвердить оферту
                         </div>
                         <div id="formErrorMessage" style="display: none; color: red">
-                            Подсвеченные поля обязательны для заполнения
+                            Подсвеченные поля обязательны для заполнения или заполнены некорректно
                         </div>
                     </div>
                 </div>
