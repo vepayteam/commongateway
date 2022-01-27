@@ -615,11 +615,11 @@ steps:
     - values.yaml
     wait_for_upgrade: true
 
-- name: notify-app-url-5dc7117a4ef896a5d383eb7dd1684284
+- name: notify-app-url-9469898d4f9dd92dd107433d19dc4d8e
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
-  - gitea-status -t "app/url" -m "https://test-${DRONE_REPO_NAME}.backend.vepay.cf/" -s "success" -u "https://test-${DRONE_REPO_NAME}.backend.vepay.cf/"
+  - gitea-status -t "app/url" -m "${DRONE_REPO_NAME}.backend.vepay.dev" -s "success" -u "${DRONE_REPO_NAME}.backend.vepay.dev"
   environment:
     GITEA_TOKEN:
       from_secret: GITEA_TOKEN
@@ -722,6 +722,6 @@ get:
 
 ---
 kind: signature
-hmac: 3f81a60b024e9794c74a6ac730084f45be0cdd17ffcb98b5ad1b94570036a67e
+hmac: 70023947e93262060c8be1d48248a0c1ed8a42518737b28a08fc9e6fb59d723f
 
 ...
