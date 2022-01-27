@@ -12,7 +12,7 @@ class TransferToAccountRequest extends Model
     public $Name;
     public $Inn = '';
     // public $Kpp = '';
-    public $Bik;
+    public $Bic;
     public $Account;
     public $Amount;
     public $Description;
