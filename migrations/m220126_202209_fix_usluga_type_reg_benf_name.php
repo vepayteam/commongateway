@@ -13,7 +13,7 @@ class m220126_202209_fix_usluga_type_reg_benf_name extends Migration
      */
     public function safeUp()
     {
-        $q = 'UPDATE `vepay`.`uslugatovar_types` SET `Name` = \'Регистрация бенефицара\' WHERE `Id` = ' . UslugatovarType::REGISTRATION_BENIFIC;
+        $q = 'UPDATE `vepay`.`uslugatovar_types` SET `Name` = \'Регистрация бенефициара\' WHERE `Id` = ' . UslugatovarType::REGISTRATION_BENIFIC;
         Yii::$app->db->createCommand($q)->execute();
     }
 

@@ -1509,7 +1509,7 @@ class TCBank implements IBank
     }
 
     /**
-     * Регистрация бенефициров
+     * Регистрация бенефициаров
      *
      * @param array $params
      * @return array

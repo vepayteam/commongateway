@@ -55,7 +55,7 @@ class BenificController extends Controller
     }
 
     /**
-     * Регистрация бенефициров
+     * Регистрация бенефициаров
      *
      * @return array
      * @throws BadRequestHttpException
@@ -90,7 +90,7 @@ class BenificController extends Controller
     }
 
     /**
-     * Регистрация бенефициров файлом
+     * Регистрация бенефициаров файлом
      *
      * @return array
      * @throws BadRequestHttpException
