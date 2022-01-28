@@ -169,7 +169,7 @@ steps:
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
-- name: helm-values-generator-d289ba2b8b49611d595136874245c8d2
+- name: helm-values-generator-bd4fa9073d0850a2ce63f55fe1288060
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
@@ -181,7 +181,6 @@ steps:
   - yq write values.yaml "ingress.tls[0].hosts[0]" "`replace-slash ${DRONE_SOURCE_BRANCH}`-${DRONE_REPO_NAME}.backend.vepay.cf" -i
   - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-cf-wildcard-certificate" -i
   - yq write values.yaml "redis.enabled" "true" -i
-  - yq write values.yaml "config.reportQueue.enabled" "true" -i
   - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+300000000))" -i
   - yq write values.yaml "config.payments.brs.url_xml" "https://194.67.29.216:8443" -i
   - echo "=>>>" && cat values.yaml
@@ -396,7 +395,7 @@ steps:
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
-- name: helm-values-generator-40ed613a9cb3bdc57bce5008c3c6b953
+- name: helm-values-generator-dab11392559271a4811fcc50bdb986f2
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
@@ -407,7 +406,6 @@ steps:
   - yq write values.yaml "ingress.hosts[0].paths[0]" "/" -i
   - yq write values.yaml "ingress.tls[0].hosts[0]" "${DRONE_BRANCH}-test-${DRONE_REPO_NAME}.backend.vepay.cf" -i
   - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-cf-wildcard-certificate" -i
-  - yq write values.yaml "config.reportQueue.enabled" "true" -i
   - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+400000000))" -i
   - yq write values.yaml "config.payments.brs.url_xml" "https://194.67.29.216:8443" -i
   - echo "=>>>" && cat values.yaml
@@ -578,21 +576,18 @@ steps:
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
-- name: helm-values-generator-bd651a79900d146c31b337e2dc818b21
+- name: helm-values-generator-75b99479f797d8e602cf9b1bb5c03594
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
   - touch values.yaml
   - yq write values.yaml "image.repository" "registry.vepay.cf/${DRONE_REPO,,}" -i
   - yq write values.yaml "image.tag" "${DRONE_BUILD_NUMBER}" -i
-  - yq write values.yaml "ingress.hosts[0].host" "test-${DRONE_REPO_NAME}.backend.vepay.cf" -i
+  - yq write values.yaml "ingress.enabled" "false" -i
+  - yq write values.yaml "ingress.hosts[0].host" "${DRONE_REPO_NAME}.backend.vepay.dev" -i
   - yq write values.yaml "ingress.hosts[0].paths[0]" "/" -i
-  - yq write values.yaml "ingress.hosts[1].host" "test.vepay.online" -i
-  - yq write values.yaml "ingress.hosts[1].paths[0]" "/" -i
-  - yq write values.yaml "ingress.tls[0].hosts[0]" "test-${DRONE_REPO_NAME}.backend.vepay.cf" -i
-  - yq write values.yaml "ingress.tls[0].hosts[1]" "test.vepay.online" -i
-  - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-cf-wildcard-certificate" -i
-  - yq write values.yaml "config.reportQueue.enabled" "true" -i
+  - yq write values.yaml "ingress.tls[0].hosts[0]" "${DRONE_REPO_NAME}.backend.vepay.dev" -i
+  - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-dev-wildcard-certificate" -i
   - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+500000000))" -i
   - yq write values.yaml "config.payments.brs.url_xml" "https://194.67.29.216:8443" -i
   - echo "=>>>" && cat values.yaml
@@ -620,11 +615,11 @@ steps:
     - values.yaml
     wait_for_upgrade: true
 
-- name: notify-app-url-5dc7117a4ef896a5d383eb7dd1684284
+- name: notify-app-url-9469898d4f9dd92dd107433d19dc4d8e
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
-  - gitea-status -t "app/url" -m "https://test-${DRONE_REPO_NAME}.backend.vepay.cf/" -s "success" -u "https://test-${DRONE_REPO_NAME}.backend.vepay.cf/"
+  - gitea-status -t "app/url" -m "${DRONE_REPO_NAME}.backend.vepay.dev" -s "success" -u "${DRONE_REPO_NAME}.backend.vepay.dev"
   environment:
     GITEA_TOKEN:
       from_secret: GITEA_TOKEN
@@ -727,6 +722,6 @@ get:
 
 ---
 kind: signature
-hmac: 62cbe1474435d43591d81f24b26d87fd2b740ab0a6f8d923f804bb1421f3e951
+hmac: 70023947e93262060c8be1d48248a0c1ed8a42518737b28a08fc9e6fb59d723f
 
 ...
