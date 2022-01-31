@@ -69,7 +69,8 @@ class OtchToCSV extends ToCSV
 
     private function preparationData(array $list): \Generator
     {
-        $isAdmin = UserLk::IsAdmin(Yii::$app->user);
+        // В консольном окружении ругается на Yii::$app->user
+        $isAdmin = isset(Yii::$app, Yii::$app->user) ? UserLk::IsAdmin(Yii::$app->user) : false;
 
         $listData = $this->listData($list['data'], $isAdmin);
 
@@ -120,35 +121,35 @@ class OtchToCSV extends ToCSV
 
             if($this->checkData($data)) {
                 $ret_admin = $isAdmin ? [
-                    number_format($data['BankComis'] / 100.0, 2, '.', ''),
-                    number_format($data['VoznagSumm'] / 100.0, 2, '.', ''),
+                    number_format($data->BankComis / 100.0, 2, '.', ''),
+                    number_format($data->VoznagSumm / 100.0, 2, '.', ''),
                 ] : [];
                 $result[] = array_merge(
                     [
-                        $data['ID'],
-                        $data['Extid'],
-                        $data['RCCode'],
-                        str_replace('"', "", $data['NameUsluga']),
-                        $data['QrParams'],
-                        $data['Dogovor'],
-                        $data['FIO'],
-                        number_format($data['SummPay'] / 100.0, 2, '.', ''),
-                        number_format($data['ComissSumm'] / 100.0, 2, '.', ''),
-                        number_format(($data['SummPay'] + $data['ComissSumm']) / 100.0, 2, '.', ''),
+                        $data->ID,
+                        $data->Extid,
+                        $data->RCCode,
+                        str_replace('"', "", $data->NameUsluga),
+                        $data->QrParams,
+                        $data->Dogovor,
+                        $data->FIO,
+                        number_format($data->SummPay / 100.0, 2, '.', ''),
+                        number_format($data->ComissSumm / 100.0, 2, '.', ''),
+                        number_format(($data->SummPay + $data->ComissSumm) / 100.0, 2, '.', ''),
                     ],
                     $ret_admin,
                     [
-                        date("d.m.Y H:i:s", $data['DateCreate']),
-                        PaySchet::getStatusTitle($data['Status']),
-                        $data['ErrorInfo'],
-                        $data['DateOplat'] > 0 ? date("d.m.Y H:i:s", $data['DateOplat']) : '',
-                        $data['ExtBillNumber'],
-                        $data['IdOrg'],
-                        $data['CardNum'],
-                        $data['CardHolder'],
-                        $data['RRN'],
-                        $data['IdKard'],
-                        $data['BankName'],
+                        date("d.m.Y H:i:s", $data->DateCreate),
+                        PaySchet::getStatusTitle($data->Status),
+                        $data->ErrorInfo,
+                        $data->DateOplat > 0 ? date("d.m.Y H:i:s", $data->DateOplat) : '',
+                        $data->ExtBillNumber,
+                        $data->IdOrg,
+                        $data->CardNum,
+                        $data->CardHolder,
+                        $data->RRN,
+                        $data->IdKard,
+                        $data->BankName,
                     ]
 
                 );
@@ -158,12 +159,12 @@ class OtchToCSV extends ToCSV
         return $result;
     }
 
-    private function checkData(array $data): bool
+    private function checkData(PaySchet $data): bool
     {
         if ($this->payment === null && $this->repayment === null){ //в случае когда делается обычный экспорт.
             return true;
         }
-        $cust = $data['IsCustom'];
+        $cust = $data->IsCustom;
         //если стоит задача отправить "выдачу" и (тип операции выдача на карту или тип операции выдача на счет)
         if ($this->payment && ($cust == TU::$TOCARD || $cust == TU::$TOSCHET)) {
             return true;

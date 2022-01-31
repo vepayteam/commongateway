@@ -39,7 +39,7 @@ class MfoStat
         $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
         $payShetList = new PayShetStat();
         $payShetList->load($post, '');
-        $list = $payShetList->getList2($IsAdmin, 0, 1);
+        $list = $payShetList->getList($IsAdmin, 0, null);
 
         $data = [];
 
@@ -110,6 +110,12 @@ class MfoStat
         return $ExportExcel->CreateXls("Экспорт", $head, $data, $sizes, $itogs);
     }
 
+    /**
+     * @param \Generator $data
+     * @param bool|null  $isAdmin
+     *
+     * @return \Generator
+     */
     public static function getDataGenerator(\Generator $data, ?bool $isAdmin): \Generator
     {
         foreach ($data as $k => $row) {
@@ -153,8 +159,6 @@ class MfoStat
     /**
      * Получение отчёта с использованием "сырой" записи в xls, в обход PHPSpreadsheet, для сохранения больших XLS-файлов
      *
-     * @TODO: Probably @deprecated
-     *
      * @param array $input
      */
     public function ExportOpListRaw(array $input): void
@@ -162,7 +166,7 @@ class MfoStat
         $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
         $paySchetList = new PayShetStat();
         $paySchetList->load($input, '');
-        $list = $paySchetList->getList2($IsAdmin, 0, 1);
+        $list = $paySchetList->getList($IsAdmin, 0, null, true);
 
         $data = self::getDataGenerator($list['data'], $IsAdmin);
 

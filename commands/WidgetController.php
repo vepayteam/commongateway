@@ -227,10 +227,15 @@ class WidgetController extends Controller
     /**
      * Otpravka otchetov v mfo (at 7:00)
      */
-    public function actionSendOtch()
+    public function actionSendOtch($dateFrom, $dateTo, $emailList)
     {
         echo "Run Send Otch in csv files. \n";
-        $sender = new OtchToEmail(new DistributionReports());
+
+        $dateFrom = $dateFrom !== '' ? $dateFrom : 'yesterday';
+        $dateTo = $dateTo !== '' ? $dateTo : 'today';
+
+        $sender = new OtchToEmail(new DistributionReports(), $dateFrom, $dateTo, $emailList);
+
         $sender->run();
         echo "End operation. \n";
     }
