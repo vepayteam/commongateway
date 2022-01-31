@@ -219,7 +219,7 @@
                     text: 'Послу возврата платежа средства будут возвращены клиенту!\nПолная сумма платежа: ' + fullSum + '\n\nВозвращено: ' + refundAmount + '\nОсталось: ' + remainingAmount,
                     type: "input",
                     inputType: "number",
-                    inputValue: fullSum,
+                    inputValue: remainingAmount,
                     showCancelButton: true,
                     confirmButtonColor: "#DD6B55",
                     confirmButtonText: "Вернуть",
