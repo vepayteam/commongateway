@@ -112,7 +112,9 @@ use yii\widgets\LinkPager;
                         <input class="btn btn-white btn-xs"
                                data-action="cancelpay"
                                data-id="<?= Html::encode($row['ID']) ?>"
-                               data-fullsum="<?= Html::encode(PaymentHelper::convertToFullAmount($row['RemainingRefundAmount'])) ?>"
+                               data-full-amount="<?= Html::encode(PaymentHelper::convertToFullAmount($row['SummPay'] + $row['ComissSumm'])) ?>"
+                               data-remaining-amount="<?= Html::encode(PaymentHelper::convertToFullAmount($row['RemainingRefundAmount'])) ?>"
+                               data-refund-amount="<?= Html::encode(PaymentHelper::convertToFullAmount($row['RefundAmount'])) ?>"
                                type="button"
                                value="Возврат"
                         >

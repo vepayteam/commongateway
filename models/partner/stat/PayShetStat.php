@@ -338,8 +338,8 @@ class PayShetStat extends Model
                 $row['VoznagSumm'] = $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
                 $row['Currency'] = CurrencyRepository::getCurrencyCodeById($row['CurrencyId'])->Code;
 
-                $refundAmount = $row['RefundAmount'] ?? 0;
-                $row['RemainingRefundAmount'] = $row['SummPay'] + $row['ComissSumm'] - $refundAmount;
+                $row['RefundAmount'] = $row['RefundAmount'] ?? 0;
+                $row['RemainingRefundAmount'] = $row['SummPay'] + $row['ComissSumm'] - $row['RefundAmount'];
                 $data[] = $row;
             }
         }
@@ -380,8 +380,8 @@ class PayShetStat extends Model
             $row['VoznagSumm'] = $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
             $row['Currency'] = CurrencyRepository::getCurrencyCodeById($row['CurrencyId'])->Code;
 
-            $refundAmount = $row['RefundAmount'] ?? 0;
-            $row['RemainingRefundAmount'] = $row['SummPay'] + $row['ComissSumm'] - $refundAmount;
+            $row['RefundAmount'] = $row['RefundAmount'] ?? 0;
+            $row['RemainingRefundAmount'] = $row['SummPay'] + $row['ComissSumm'] - $row['RefundAmount'];
             yield $row;
         }
     }

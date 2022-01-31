@@ -210,18 +210,20 @@
 
             $('#statlistresult').on('click', '[data-action="cancelpay"]', function () {
                 let idpay = parseInt($(this).attr('data-id'));
-                let fullSum = $(this).attr('data-fullsum') || '0'
+                let remainingAmount = $(this).attr('data-remaining-amount') || '0'
+                let refundAmount = $(this).attr('data-refund-amount') || '0'
+                let fullSum = $(this).attr('data-full-amount') || '0'
 
                 swal({
                     title: "Подтвердите возврат платежа",
-                    text: 'Послу возврата платежа средства будут возвращены клиенту!\nПолная сумма платежа: ' + fullSum + '\n\nВозврат:',
+                    text: 'Послу возврата платежа средства будут возвращены клиенту!\nПолная сумма платежа: ' + fullSum + '\n\nВозвращено: ' + refundAmount + '\nОсталось: ' + remainingAmount,
                     type: "input",
                     inputType: "number",
                     inputValue: fullSum,
                     showCancelButton: true,
                     confirmButtonColor: "#DD6B55",
-                    confirmButtonText: "Да, вернуть!",
-                    cancelButtonText: "Не возвращать",
+                    confirmButtonText: "Вернуть",
+                    cancelButtonText: "Отмена",
                     closeOnConfirm: false
                 }, function (refundSum) {
                     refundSum = parseFloat(refundSum)
