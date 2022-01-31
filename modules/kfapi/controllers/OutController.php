@@ -218,6 +218,7 @@ class OutController extends Controller
         $kf->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody());
 
         $outPayAccountForm = new OutPayAccountForm();
+        $outPayAccountForm->setScenario(OutPayAccountForm::SCENARIO_UL);
         $outPayAccountForm->load($kf->req, '');
         $outPayAccountForm->partner = $kf->partner;
         if (!$outPayAccountForm->validate()) {
