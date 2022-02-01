@@ -11,6 +11,7 @@ use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentInitResponse;
+use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
@@ -31,6 +32,7 @@ use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\forms\SendP2pForm;
+use app\services\payment\forms\RegistrationBenificForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use Vepay\Gateway\Client\Validator\ValidationException;
@@ -128,4 +130,10 @@ interface IBankAdapter
     public function currencyExchangeRates();
 
     public function sendP2p(SendP2pForm $sendP2pForm);
+
+    /**
+     * @param RegistrationBenificForm $registrationBenificForm
+     * @return RegistrationBenificResponse
+     */
+    public function registrationBenific(RegistrationBenificForm $registrationBenificForm);
 }

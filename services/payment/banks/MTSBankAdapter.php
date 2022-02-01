@@ -17,6 +17,7 @@ use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
+use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
@@ -37,6 +38,7 @@ use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\forms\SendP2pForm;
+use app\services\payment\forms\RegistrationBenificForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use Carbon\Carbon;
@@ -983,5 +985,13 @@ class MTSBankAdapter implements IBankAdapter
     public function sendP2p(SendP2pForm $sendP2pForm)
     {
         // TODO: Implement sendP2p() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function registrationBenific(RegistrationBenificForm $registrationBenificForm)
+    {
+        throw new GateException('Метод недоступен');
     }
 }

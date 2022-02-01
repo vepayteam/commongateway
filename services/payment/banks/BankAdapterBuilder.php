@@ -69,6 +69,7 @@ class BankAdapterBuilder
         return $this->buildAdapter();
     }
 
+    // TODO: не используется
     public function buildByPartnerBankGate(Partner $partner, PartnerBankGate $partnerBankGate) {
         $this->partner = $partner;
         $this->partnerBankGate = $partnerBankGate;
