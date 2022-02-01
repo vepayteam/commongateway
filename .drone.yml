@@ -193,6 +193,7 @@ steps:
     - vepay=http://charts.service.vepay:8080/
     atomic_upgrade: true
     chart: ${DRONE_REPO_NAME}
+    chart_version: 2.2.1
     cleanup_failed_upgrade: true
     kube_api_server: https://kubernetes.default.svc
     kube_service_account: deploy-app-user
@@ -418,6 +419,7 @@ steps:
     - vepay=http://charts.service.vepay:8080/
     atomic_upgrade: true
     chart: ${DRONE_REPO_NAME}
+    chart_version: 2.2.1
     cleanup_failed_upgrade: true
     kube_api_server: https://kubernetes.default.svc
     kube_service_account: deploy-app-user
@@ -462,6 +464,7 @@ steps:
     - vepay=http://charts.service.vepay:8080/
     atomic_upgrade: true
     chart: ${DRONE_REPO_NAME}
+    chart_version: 2.2.1
     cleanup_failed_upgrade: true
     kube_api_server: https://kubernetes.default.svc
     kube_service_account: deploy-app-user
@@ -604,6 +607,7 @@ steps:
     - vepay=http://charts.service.vepay:8080/
     atomic_upgrade: true
     chart: ${DRONE_REPO_NAME}
+    chart_version: 2.2.1
     cleanup_failed_upgrade: true
     kube_api_server: https://kubernetes.default.svc
     kube_service_account: deploy-app-user
@@ -726,6 +730,6 @@ get:
 
 ---
 kind: signature
-hmac: 756238d30f8c23487fff18c22a16509303dd53876b13be958df1e85d7b4eeae2
+hmac: 4793ed3b584fc408212e5a2007007cb5cbecbde249d9bf3315c37ae1c0b85a68
 
 ...
