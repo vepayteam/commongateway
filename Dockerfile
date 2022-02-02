@@ -16,8 +16,10 @@ RUN set -ex \
     \
     && mkdir -p web/shopdata \
     && mkdir -p runtime/logs/console \
+    && touch runtime/feed.json \
     && chmod -R g+w runtime \
-    && chmod -R g+w web/shopdata
+    && chmod -R g+w web/shopdata \
+    && chown -Rh ${RUN_USER}:${RUN_GROUP} runtime
 
 USER ${RUN_USER}:${RUN_GROUP}
 
