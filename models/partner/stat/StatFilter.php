@@ -23,7 +23,7 @@ class StatFilter
         $sqlfltr = '';
         $par = [];
         if ($IdPartner > 0) {
-            $sqlfltr .= ' AND IDPartner = :IDPART';
+            $sqlfltr .= ' AND IdOrg = :IDPART';
             $par[":IDPART"] = $IdPartner;
         }
         if (is_array($IsCustom)) {
