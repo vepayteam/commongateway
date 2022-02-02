@@ -20,6 +20,7 @@ use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentInitResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
+use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
@@ -36,6 +37,7 @@ use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\forms\SendP2pForm;
+use app\services\payment\forms\RegistrationBenificForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use Vepay\Gateway\Client\Validator\ValidationException;
@@ -232,6 +234,7 @@ class RunaBankAdapter implements IBankAdapter
 
         Yii::warning('RunaBank req: ' . $url . ' ' . json_encode($data));
         curl_setopt_array($curl, array(
+            CURLOPT_VERBOSE => Yii::$app->params['VERBOSE'] === 'Y',
             CURLOPT_SSLVERSION => CURL_SSLVERSION_TLSv1_2,
             CURLOPT_SSLCERT => $certPath . '/vepay.crt',
             CURLOPT_SSLKEY => $certPath . '/vepay.key',
@@ -291,5 +294,13 @@ class RunaBankAdapter implements IBankAdapter
     public function sendP2p(SendP2pForm $sendP2pForm)
     {
         // TODO: Implement sendP2p() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function registrationBenific(RegistrationBenificForm $registrationBenificForm)
+    {
+        throw new GateException('Метод недоступен');
     }
 }

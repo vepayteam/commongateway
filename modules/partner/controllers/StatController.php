@@ -58,6 +58,8 @@ class StatController extends Controller
 {
     public $enableCsrfValidation = false;
 
+    public const PAGINATION_LIMIT = 100;
+
     public function behaviors()
     {
         return [
@@ -84,7 +86,7 @@ class StatController extends Controller
                     [
                         'allow' => false,
                         'roles' => ['@'],
-                        'actions' => ['diff', 'diff-columns', 'diff-data', 'diff-export'],
+                        'actions' => ['diff', 'diff-columns', 'diff-data', 'diff-export', 'recalc', 'recalcdata', 'recalc-save'],
                         'matchCallback' => function ($rule, $action) {
                             return !UserLk::IsAdmin(Yii::$app->user);
                         }
@@ -231,9 +233,11 @@ class StatController extends Controller
             $data = Yii::$app->request->post();
             $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
             $page = Yii::$app->request->get('page', 0);
+            $offset = ($page - 1) * self::PAGINATION_LIMIT;
+
             $payShetList = new PayShetStat();
             if ($payShetList->load($data, '') && $payShetList->validate()) {
-                $list = $payShetList->getList2($IsAdmin, $page);
+                $list = $payShetList->getList($IsAdmin, $offset, self::PAGINATION_LIMIT, true);
                 return [
                     'status' => 1, 'data' => $this->renderPartial('_listdata', [
                         'reqdata' => $data,
@@ -269,7 +273,7 @@ class StatController extends Controller
         $payShetStat = new PayShetStat();
         try {
             if ($payShetStat->load(Yii::$app->request->get(), '') && $payShetStat->validate()) {
-                $data = $payShetStat->getList2($IsAdmin, 0, 1);
+                $data = $payShetStat->getList($IsAdmin, 0, null, true);
                 if (isset($data['data'])) {
                     $exportExcel = new ExportExcel();
                     $exportExcel->CreateXlsRaw(
@@ -310,7 +314,7 @@ class StatController extends Controller
         $payShetStat = new PayShetStat();
         try {
             if ($payShetStat->load(Yii::$app->request->get(), '') && $payShetStat->validate()) {
-                $data = $payShetStat->getList2($isAdmin, 0, 1);
+                $data = $payShetStat->getList($isAdmin, 0, null);
                 if ($data) {
                     $exportCsv = new OtchToCSV($data);
                     $exportCsv->export();
@@ -333,6 +337,76 @@ class StatController extends Controller
             );
             throw $e;
         }
+    }
+
+    public function actionRecalc()
+    {
+        $fltr = new StatFilter();
+        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+        return $this->render('recalc', [
+            'IsAdmin' => $IsAdmin,
+            'partnerlist' => $fltr->getPartnersList(),
+            'uslugilist' => $fltr->getTypeUslugLiust(),
+            'bankList' => $fltr->getBankList(),
+        ]);
+    }
+
+    public function actionRecalcdata()
+    {
+        if (Yii::$app->request->isAjax) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+            $data = Yii::$app->request->post();
+            $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+            $page = Yii::$app->request->get('page', 0);
+            $payShetList = new PayShetStat();
+            if ($payShetList->load($data, '') && $payShetList->validate()) {
+                $list = $payShetList->getList2($IsAdmin, $page);
+                return [
+                    'status' => 1, 'data' => $this->renderPartial('_recalcdata', [
+                        'reqdata' => $data,
+                        'data' => $list['data'],
+                        'cntpage' => $list['cntpage'],
+                        'cnt' => $list['cnt'],
+                        'pagination' => $list['pagination'],
+                        'sumpay' => $list['sumpay'],
+                        'sumcomis' => $list['sumcomis'],
+                        'bankcomis' => $list['bankcomis'],
+                        'voznagps' => $list['voznagps'],
+                        'page' => $page,
+                        'IsAdmin' => $IsAdmin
+                    ])
+                ];
+            } else {
+                return ['status' => 0, 'message' => $payShetList->GetError()];
+            }
+        } else {
+            return $this->redirect('/partner');
+        }
+    }
+
+    public function actionRecalcSave()
+    {
+        if (Yii::$app->request->isAjax) {
+            $payShetList = new PayShetStat();
+            if ($payShetList->load(Yii::$app->request->get(), '')) {
+                $data = $payShetList->getList2(UserLk::IsAdmin(Yii::$app->user), 0, 1);
+                $paySchets = PaySchet::findAll(ArrayHelper::getColumn($data['data'], 'ID'));
+                foreach ($paySchets as $paySchet) {
+                    $paySchet->recalcComiss(array_map('floatval', Yii::$app->request->post()));
+                    $paySchet->save(false);
+                }
+                return $this->asJson([
+                    'status' => 1,
+                    'count' => count($paySchets),
+                ]);
+            }
+            return $this->asJson([
+                'status' => 0,
+                'count' => 0,
+            ]);
+
+        }
+        return $this->redirect('/partner');
     }
 
     /**
@@ -666,19 +740,14 @@ class StatController extends Controller
     public function actionRecurrentcarddata()
     {
         if (Yii::$app->request->isAjax) {
-            $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-            Yii::$app->response->format = Response::FORMAT_JSON;
             $AutopayStat = new AutopayStat();
-            $AutopayStat->load(Yii::$app->request->post(), '');
-            if ($AutopayStat->validate()) {
-                return [
+            if ($AutopayStat->loadAndValidate(Yii::$app->request->post(), '')) {
+                return $this->asJson([
                     'status' => 1,
-                    'data' => $this->renderPartial('_recurrentcarddata', [
-                        'data' => $AutopayStat->getData($IsAdmin)
-                    ])
-                ];
+                    'data' => $this->renderPartial('_recurrentcarddata', ['data' => $AutopayStat->getData()])
+                ]);
             }
-            return ['status' => 0, 'message' => $AutopayStat->GetError()];
+            return $this->asJson(['status' => 0, 'message' => $AutopayStat->GetError()]);
         }
         return $this->redirect('/partner');
     }
