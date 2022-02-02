@@ -2,31 +2,26 @@
 
 namespace app\modules\mfo\controllers;
 
-use app\models\api\CorsTrait;
 use app\models\mfo\MfoReq;
 use app\models\Report;
+use app\modules\mfo\components\BaseApiController;
 use app\modules\mfo\jobs\FillReportJob;
 use app\modules\mfo\models\CreateReportForm;
 use app\services\ReportService;
 use yii\base\InvalidConfigException;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
-use yii\filters\ContentNegotiator;
-use yii\helpers\ArrayHelper;
 use yii\queue\redis\Queue;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
-use yii\web\Response;
 use yii\web\UnauthorizedHttpException;
 
 /**
  * Transaction report.
  */
-class ReportController extends \yii\rest\Controller
+class ReportController extends BaseApiController
 {
-    use CorsTrait;
-
     private const CREATION_TIMEOUT = 60 * 5; // 5 minutes
 
     /**
@@ -37,21 +32,6 @@ class ReportController extends \yii\rest\Controller
      * @var Queue
      */
     private $reportQueue;
-
-    /**
-     * {@inheritDoc}
-     */
-    public function behaviors(): array
-    {
-        return ArrayHelper::merge(parent::behaviors(), [
-            'contentNegotiator' => [
-                'class' => ContentNegotiator::class,
-                'formats' => [
-                    'text/html' => Response::FORMAT_JSON,
-                ],
-            ],
-        ]);
-    }
 
     /**
      * {@inheritDoc}

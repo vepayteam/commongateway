@@ -2,35 +2,16 @@
 
 namespace app\modules\mfo\controllers;
 
-use app\models\api\CorsTrait;
 use app\models\mfo\MfoReq;
 use app\models\payonline\Partner;
+use app\modules\mfo\components\BaseApiController;
 use app\services\payment\models\PaySchet;
 use kartik\mpdf\Pdf;
-use yii\filters\ContentNegotiator;
-use yii\helpers\ArrayHelper;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
-class DocumentController extends \yii\rest\Controller
+class DocumentController extends BaseApiController
 {
-    use CorsTrait;
-
-    /**
-     * {@inheritDoc}
-     */
-    public function behaviors(): array
-    {
-        return ArrayHelper::merge(parent::behaviors(), [
-            'contentNegotiator' => [
-                'class' => ContentNegotiator::class,
-                'formats' => [
-                    'text/html' => Response::FORMAT_JSON,
-                ],
-            ],
-        ]);
-    }
-
     /**
      * Outputs confirmation PDF document.
      *
