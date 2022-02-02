@@ -24,9 +24,10 @@ use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentInitResponse;
+use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
+use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
-use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\interfaces\ITKBankAdapterResponseErrors;
 use app\services\payment\banks\traits\TKBank3DSTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
@@ -47,6 +48,7 @@ use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\forms\SendP2pForm;
+use app\services\payment\forms\RegistrationBenificForm;
 use app\services\payment\forms\tkb\CheckStatusPayRequest;
 use app\services\payment\forms\tkb\Confirm3DSv2Request;
 use app\services\payment\forms\tkb\CreatePayRequest;
@@ -1041,7 +1043,7 @@ class TKBankAdapter implements IBankAdapter
     }
 
     /**
-     * Регистрация бенифициаров
+     * Регистрация бенефициаров
      *
      * @param array $params
      * @return array
@@ -1755,5 +1757,35 @@ class TKBankAdapter implements IBankAdapter
     public function sendP2p(SendP2pForm $sendP2pForm)
     {
         // TODO: Implement sendP2p() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function registrationBenific(RegistrationBenificForm $registrationBenificForm)
+    {
+        $action = '/cxf/CftNominalService';
+
+        $queryData = $registrationBenificForm->buildSoapForm($this->gate);
+        $this->UserKey = Yii::getAlias('@app/config/tcbcert/vepay.key');
+        $this->UserCert = Yii::getAlias('@app/config/tcbcert/vepay.crt');
+
+        $ans = $this->curlXmlReq($queryData,
+            $this->bankUrlXml . $action,
+            ['SOAPAction: "http://cft.transcapital.ru/CftNominalIntegrator/SetBeneficiary"'],
+            false
+        );
+
+        $registrationBenificResponse = new RegistrationBenificResponse();
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            $registrationBenificResponse->status = BaseResponse::STATUS_DONE;
+            $registrationBenificResponse->message = 'Успешно';
+            $registrationBenificResponse->response = $ans['xml'];
+        } elseif (isset($ans['httperror']) && !empty($ans['httperror'])) {
+            $registrationBenificResponse->status = BaseResponse::STATUS_ERROR;
+            $registrationBenificResponse->message = $ans['httperror'];
+        }
+
+        return $registrationBenificResponse;
     }
 }
