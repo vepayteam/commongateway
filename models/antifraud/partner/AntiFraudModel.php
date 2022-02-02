@@ -20,9 +20,7 @@ class AntiFraudModel extends PayShetStat
     private $pay_schet;
     private $record_model;
 
-    public const PAGINATION_LIMIT = 10;
-
-    public function getList(bool $IsAdmin, int $offset = 0, ?int $limit = 100, bool $forList = true): array
+    public function getList($IsAdmin, $page = 0, $nolimit = 0)
     {
         $query = new Query();
         $query->select([
@@ -76,29 +74,20 @@ class AntiFraudModel extends PayShetStat
 
         $query->orderBy('ps.ID desc');
 
-        if ($limit) {
-
-            if($offset > 0) {
-                $query->offset($offset);
-            }
-
-            $query->orderBy('`ID` DESC')->limit($limit);
+        if (!$nolimit) {
+            $query->orderBy('`ID` DESC')->limit(100);
         }
         return $query->all();
     }
 
     public function getDataProviderList($IsAdmin, $page = 0, $nolimit = 0): ArrayDataProvider
     {
-        $limit = $nolimit != 0 ? self::PAGINATION_LIMIT : null;
-        $offset = (($page - 1) * $limit);
-
-        $list = $this->getList($IsAdmin, $offset, $limit);
-
+        $list = $this->getList($IsAdmin, $page, $nolimit);
         return new ArrayDataProvider([
             'allModels' => $list,
             'pagination' => [
-                'pageSize' => $limit,
-                'page'=> $page
+                'pageSize' => 10,
+                'page'=>$page
             ]
         ]);
     }
