@@ -18,25 +18,19 @@ class OtchToEmail
 {
     private $now;
     private $partners;
-    private $dateFrom;
-    private $dateTo;
-    private $emailList;
 
     /**
      * @param DistributionReports $partners - партнеры которым можно сделать рассылку
      */
-    public function __construct(DistributionReports $partners, ?string $dateFrom = null, ?string $dateTo = null, ?string $emailList = null)
+    public function __construct(DistributionReports $partners)
     {
         $this->partners = $partners->validPartners();
-        $this->dateFrom = $dateFrom ?? 'yesterday';
-        $this->dateTo = $dateTo ?? 'today';
-        $this->emailList = $emailList ?? '';
     }
 
     public function run()
     {
-        $dateFrom = date('d.m.Y H:i', strtotime($this->dateFrom));
-        $dateTo = date('d.m.Y H:i', strtotime($this->dateTo));
+        $dateFrom = date('d.m.Y H:i', strtotime('yesterday')-1);
+        $dateTo = date('d.m.Y H:i', strtotime('today')-1);
         echo "from ".$dateFrom." to ".$dateTo."\r\n";
         Yii::warning("from ".$dateFrom." to ".$dateTo, "rsbcron");
 
@@ -53,7 +47,7 @@ class OtchToEmail
                 'dateto' => $dateTo,
             ]);
             if ($partner->payment || $partner->repayment) {
-                $list = $payschet->getList(true, 0, null);
+                $list = $payschet->getList(1, 0, 1);
             } else {
                 $list = ['data' => []];
             }
@@ -68,17 +62,6 @@ class OtchToEmail
                 ]]);
                 Yii::warning("OtchToEmail: send to " . $partner->email . " result = " . $res, "rsbcron");
                 echo "OtchToEmail: send to " . $partner->email . " result = " . $res . "\r\n";
-
-                if(!empty($this->emailList)) {
-
-                    $res = $sender->sendReestr($this->emailList, $subject, 'Отчет предоставлен в виде прикрепленного файла csv.', [[
-                        'data' => file_get_contents($otch->fullpath()),
-                        'name' => time().$i. '.csv'
-                    ]]);
-
-                    Yii::warning("OtchToEmail: send to " . $this->emailList . " result = " . $res, "rsbcron");
-                    echo "OtchToEmail: send to " . $this->emailList . " result = " . $res . "\r\n";
-                }
 
                 if (file_exists($otch->fullpath())){
                     unlink($otch->fullpath());

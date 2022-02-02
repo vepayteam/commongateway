@@ -58,8 +58,6 @@ class StatController extends Controller
 {
     public $enableCsrfValidation = false;
 
-    public const PAGINATION_LIMIT = 100;
-
     public function behaviors()
     {
         return [
@@ -233,11 +231,9 @@ class StatController extends Controller
             $data = Yii::$app->request->post();
             $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
             $page = Yii::$app->request->get('page', 0);
-            $offset = ($page - 1) * self::PAGINATION_LIMIT;
-
             $payShetList = new PayShetStat();
             if ($payShetList->load($data, '') && $payShetList->validate()) {
-                $list = $payShetList->getList($IsAdmin, $offset, self::PAGINATION_LIMIT, true);
+                $list = $payShetList->getList2($IsAdmin, $page);
                 return [
                     'status' => 1, 'data' => $this->renderPartial('_listdata', [
                         'reqdata' => $data,
@@ -273,7 +269,7 @@ class StatController extends Controller
         $payShetStat = new PayShetStat();
         try {
             if ($payShetStat->load(Yii::$app->request->get(), '') && $payShetStat->validate()) {
-                $data = $payShetStat->getList($IsAdmin, 0, null, true);
+                $data = $payShetStat->getList2($IsAdmin, 0, 1);
                 if (isset($data['data'])) {
                     $exportExcel = new ExportExcel();
                     $exportExcel->CreateXlsRaw(
@@ -314,7 +310,7 @@ class StatController extends Controller
         $payShetStat = new PayShetStat();
         try {
             if ($payShetStat->load(Yii::$app->request->get(), '') && $payShetStat->validate()) {
-                $data = $payShetStat->getList($isAdmin, 0, null);
+                $data = $payShetStat->getList2($isAdmin, 0, 1);
                 if ($data) {
                     $exportCsv = new OtchToCSV($data);
                     $exportCsv->export();
