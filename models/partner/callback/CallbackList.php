@@ -3,10 +3,10 @@
 namespace app\models\partner\callback;
 
 use app\models\partner\UserLk;
-use app\modules\partner\controllers\structures\PaginationPayLoad;
 use app\services\notifications\models\NotificationPay;
 use Yii;
 use yii\base\Model;
+use yii\data\Pagination;
 use yii\db\Query;
 
 class CallbackList extends Model
@@ -14,20 +14,24 @@ class CallbackList extends Model
     public $datefrom;
     public $dateto;
     public $notifstate;
-    public $partner;
+    public $partner = [];
     public $id = 0;
     public $Extid = '';
-    public $httpCode = 0;
+    public $httpCode = [];
     public $testMode = false;
+
+    public const MAX_BATCH_CALLBACK_COUNT = 1000;
 
     public function rules()
     {
         return [
-            [['partner', 'notifstate', 'id', 'httpCode'], 'integer'],
+            [['notifstate', 'id'], 'integer'],
             [['Extid'], 'string', 'max' => 40],
             [['datefrom', 'dateto'], 'date', 'format' => 'php:d.m.Y H:i'],
             [['datefrom', 'dateto'], 'required'],
             [['testMode'], 'boolean'],
+            ['partner', 'each', 'rule' => ['integer']],
+            ['httpCode', 'each', 'rule' => ['integer']],
         ];
     }
 
@@ -72,8 +76,8 @@ class CallbackList extends Model
                 ],
             ]);
 
-        if ( $idpartner > 0 ) {
-            $query->andWhere('ps.IdOrg = :IDPARTNER', [':IDPARTNER' => $idpartner]);
+        if ( !empty($idpartner) ) {
+            $query->andWhere(['in', 'ps.IdOrg', $idpartner]);
         }
 
         if ($this->id > 0) {
@@ -83,8 +87,8 @@ class CallbackList extends Model
             $query->andWhere(['ps.Extid' => $this->Extid]);
         }
 
-        if (!empty($this->httpCode) && $this->httpCode > 0) {
-            $query->andWhere(['n.HttpCode' => $this->httpCode]);
+        if (!empty($this->httpCode)) {
+            $query->andWhere(['in', 'n.HttpCode', $this->httpCode]);
         }
 
         $totalCount = (int) (clone $query)->select(['COUNT(*) as cnt'])->scalar();
@@ -98,10 +102,11 @@ class CallbackList extends Model
             'n.HttpCode',
             'n.HttpAns',
             'n.FullReq',
+            'ps.Extid',
         ];
 
         if ($this->testMode === true) {
-            $select = array_merge($select, ['ps.IdOrg', 'ps.Extid']);
+            $select = array_merge($select, ['ps.IdOrg']);
         }
 
         $query->select($select);
@@ -125,10 +130,9 @@ class CallbackList extends Model
 
         return [
             'data'    => $isGeneratorResult ? self::mapQueryPaymentResult($query) : $query->all(),
-            'payLoad' => new PaginationPayLoad([
+            'pagination' => new Pagination([
                 'totalCount' => $totalCount,
-                'page'       => $page,
-                'pageLimit'  => $pageLimit,
+                'pageSize' => $pageLimit,
             ]),
         ];
     }

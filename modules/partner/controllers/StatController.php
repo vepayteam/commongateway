@@ -23,12 +23,18 @@ use app\models\partner\UserLk;
 use app\models\payonline\Partner;
 use app\models\SendEmail;
 use app\models\TU;
+use app\modules\partner\models\DiffColumns;
 use app\modules\partner\models\DiffData;
 use app\modules\partner\models\DiffExport;
+use app\modules\partner\models\forms\DiffColumnsForm;
+use app\modules\partner\models\forms\DiffDataForm;
+use app\modules\partner\models\forms\DiffExportForm;
 use app\modules\partner\models\PaySchetLogForm;
 use app\services\ident\forms\IdentStatisticForm;
 use app\services\ident\IdentService;
+use app\services\partners\StatDiffSettingsService;
 use app\services\payment\jobs\RefundPayJob;
+use app\services\payment\models\Bank;
 use app\services\payment\models\PaySchet;
 use app\services\payment\PaymentService;
 use Exception;
@@ -46,7 +52,6 @@ use yii\web\NotFoundHttpException;
 use yii\web\Response;
 use yii\web\UploadedFile;
 
-use function count;
 use function serialize;
 
 class StatController extends Controller
@@ -77,6 +82,14 @@ class StatController extends Controller
                         }
                     ],
                     [
+                        'allow' => false,
+                        'roles' => ['@'],
+                        'actions' => ['diff', 'diff-columns', 'diff-data', 'diff-export', 'recalc', 'recalcdata', 'recalc-save'],
+                        'matchCallback' => function ($rule, $action) {
+                            return !UserLk::IsAdmin(Yii::$app->user);
+                        }
+                    ],
+                    [
                         'allow' => true,
                         'roles' => ['@'],
                         'denyCallback' => function ($rule, $action) {
@@ -89,7 +102,9 @@ class StatController extends Controller
             'verbs' => [
                 'class' => VerbFilter::class,
                 'actions' => [
-                    'diffdata' => ['POST'],
+                    'diffColumns' => ['POST'],
+                    'diffData' => ['POST'],
+                    'diffExport' => ['POST'],
                 ],
             ],
         ];
@@ -97,25 +112,61 @@ class StatController extends Controller
 
     public function actionDiff()
     {
-        return $this->render('diff');
+        $banks = Bank::find()->all();
+
+        return $this->render('diff', [
+            'banks' => $banks,
+        ]);
     }
 
-    public function actionDiffdata()
+    public function actionDiffColumns()
     {
-        $registryFile = UploadedFile::getInstanceByName('registryFile');
+        $form = new DiffColumnsForm();
+        $form->load(Yii::$app->request->post(), '');
+
+        if (!$form->validate()) {
+            return $this->asJson([
+                'status' => 0,
+                'errors' => $form->getErrors(),
+            ]);
+        }
+
+        $diffColumns = new DiffColumns();
+        $dbColumns = $diffColumns->getDbColumns();
+
+        $statDiffSettingsService = new StatDiffSettingsService();
+        $settings = $statDiffSettingsService->getByBankId($form->bank);
+
+        return $this->asJson([
+            'status' => 1,
+            'dbColumns' => $dbColumns,
+            'settings' => $settings,
+        ]);
+    }
+
+    public function actionDiffData()
+    {
+        $form = new DiffDataForm();
+        $form->load(Yii::$app->request->post(), '');
+        $form->registryFile = UploadedFile::getInstanceByName('registryFile');
+
+        if (!$form->validate()) {
+            return $this->asJson([
+                'status' => 0,
+                'errors' => $form->getErrors(),
+            ]);
+        }
 
         try {
-            $diffData = new DiffData();
-            $diffData->read($registryFile->tempName);
-
+            $diffData = new DiffData($form);
             [$badStatus, $notFound] = $diffData->execute();
-        } catch (Exception $e) {
-            Yii::warning('Stat diffData exception '
-                . $registryFile->tempName
-                . ': ' . $e->getMessage()
-            );
-            throw new BadRequestHttpException();
+        } catch (\Exception $e) {
+            Yii::$app->errorHandler->logException($e);
+            throw $e;
         }
+
+        $statDiffSettingsService = new StatDiffSettingsService();
+        $statDiffSettingsService->saveByForm($form);
 
         return $this->asJson([
             'status' => 1,
@@ -126,22 +177,28 @@ class StatController extends Controller
         ]);
     }
 
-    public function actionDiffexport()
+    public function actionDiffExport()
     {
-        $badStatus = json_decode(Yii::$app->request->post('badStatus'), true);
-        $notFound = json_decode(Yii::$app->request->post('notFound'), true);
-        $format = Yii::$app->request->post('format');
+        $form = new DiffExportForm();
+        $form->load(Yii::$app->request->post(), '');
 
-        $diffExport = new DiffExport($badStatus, $notFound);
-        $diffExport->prepareData();
+        if (!$form->validate()) {
+            return $this->asJson([
+                'status' => 0,
+                'errors' => $form->getErrors(),
+            ]);
+        }
 
-        if ($format === 'csv') {
+        $diffExport = new DiffExport($form->getBadStatus(), $form->getNotFound());
+        $diffExport->loadData();
+
+        if ($form->format === 'csv') {
             $data = $diffExport->exportCsv();
 
             return Yii::$app->response->sendContentAsFile($data, 'export.csv', [
                 'mimeType' => 'text/csv'
             ]);
-        } else if ($format === 'xlsx') {
+        } else if ($form->format === 'xlsx') {
             $data = $diffExport->exportXlsx();
 
             return Yii::$app->response->sendContentAsFile($data, 'export.xlsx', [
@@ -200,31 +257,152 @@ class StatController extends Controller
         }
     }
 
-    public function actionListexport()
+    /**
+     * Sends Excel file to client
+     * @return void
+     * @throws \app\models\partner\stat\exceptions\ExportExcelRawException
+     */
+    public function actionListexport(): void
     {
-		ini_set('memory_limit', '1024M');
-        $MfoStat = new MfoStat();
-        $MfoStat->ExportOpListRaw(Yii::$app->request->get());
+		ini_set('memory_limit', '8096M');
+        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+        $payShetStat = new PayShetStat();
+        try {
+            if ($payShetStat->load(Yii::$app->request->get(), '') && $payShetStat->validate()) {
+                $data = $payShetStat->getList2($IsAdmin, 0, 1);
+                if (isset($data['data'])) {
+                    $exportExcel = new ExportExcel();
+                    $exportExcel->CreateXlsRaw(
+                        "Экспорт",
+                        $IsAdmin ? MfoStat::HEAD_ADMIN : MfoStat::HEAD_USER,
+                        MfoStat::getDataGenerator($data['data'], $IsAdmin),
+                        $IsAdmin ? MfoStat::ITOGS_ADMIN_EXCEL : MfoStat::ITOGS_USER_EXCEL
+                    );
+                }
+            };
+        } catch (Exception $e) {
+            Yii::error(
+                [
+                    $e->getMessage(),
+                    $e->getFile(),
+                    $e->getLine(),
+                    $e->getTrace(),
+                    $e->getPrevious(),
+                    $payShetStat->getErrors(),
+                    $payShetStat,
+                    Yii::$app->request->get()
+                ],
+                __METHOD__
+            );
+            throw $e;
+        }
     }
 
+    /**
+     * Responses Csv file to client
+     * @return void|Response
+     * @throws Exception
+     */
     public function actionListExportCsv()
     {
 		ini_set('memory_limit', '8096M');
         $isAdmin = UserLk::IsAdmin(Yii::$app->user);
-        $payschet = new PayShetStat(); //загрузить
+        $payShetStat = new PayShetStat();
         try {
-            if ($payschet->load(Yii::$app->request->get(), '') && $payschet->validate()) {
-                $data = $payschet->getList2($isAdmin, 0, 1);
+            if ($payShetStat->load(Yii::$app->request->get(), '') && $payShetStat->validate()) {
+                $data = $payShetStat->getList2($isAdmin, 0, 1);
                 if ($data) {
-                    $file = new OtchToCSV($data);
-                    $file->export();
-                    return Yii::$app->response->sendFile($file->fullpath());
+                    $exportCsv = new OtchToCSV($data);
+                    $exportCsv->export();
+                    return Yii::$app->response->sendFile($exportCsv->fullpath());
                 }
             }
         } catch (Exception $e) {
-            Yii::error([$e->getMessage(), $e->getFile(), $e->getLine(), $e->getTrace(), $e->getPrevious(), $payschet->getErrors(), $payschet, Yii::$app->request->get()], __METHOD__);
+            Yii::error(
+                [
+                    $e->getMessage(),
+                    $e->getFile(),
+                    $e->getLine(),
+                    $e->getTrace(),
+                    $e->getPrevious(),
+                    $payShetStat->getErrors(),
+                    $payShetStat,
+                    Yii::$app->request->get()
+                ],
+                __METHOD__
+            );
             throw $e;
         }
+    }
+
+    public function actionRecalc()
+    {
+        $fltr = new StatFilter();
+        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+        return $this->render('recalc', [
+            'IsAdmin' => $IsAdmin,
+            'partnerlist' => $fltr->getPartnersList(),
+            'uslugilist' => $fltr->getTypeUslugLiust(),
+            'bankList' => $fltr->getBankList(),
+        ]);
+    }
+
+    public function actionRecalcdata()
+    {
+        if (Yii::$app->request->isAjax) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+            $data = Yii::$app->request->post();
+            $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+            $page = Yii::$app->request->get('page', 0);
+            $payShetList = new PayShetStat();
+            if ($payShetList->load($data, '') && $payShetList->validate()) {
+                $list = $payShetList->getList2($IsAdmin, $page);
+                return [
+                    'status' => 1, 'data' => $this->renderPartial('_recalcdata', [
+                        'reqdata' => $data,
+                        'data' => $list['data'],
+                        'cntpage' => $list['cntpage'],
+                        'cnt' => $list['cnt'],
+                        'pagination' => $list['pagination'],
+                        'sumpay' => $list['sumpay'],
+                        'sumcomis' => $list['sumcomis'],
+                        'bankcomis' => $list['bankcomis'],
+                        'voznagps' => $list['voznagps'],
+                        'page' => $page,
+                        'IsAdmin' => $IsAdmin
+                    ])
+                ];
+            } else {
+                return ['status' => 0, 'message' => $payShetList->GetError()];
+            }
+        } else {
+            return $this->redirect('/partner');
+        }
+    }
+
+    public function actionRecalcSave()
+    {
+        if (Yii::$app->request->isAjax) {
+            $payShetList = new PayShetStat();
+            if ($payShetList->load(Yii::$app->request->get(), '')) {
+                $data = $payShetList->getList2(UserLk::IsAdmin(Yii::$app->user), 0, 1);
+                $paySchets = PaySchet::findAll(ArrayHelper::getColumn($data['data'], 'ID'));
+                foreach ($paySchets as $paySchet) {
+                    $paySchet->recalcComiss(array_map('floatval', Yii::$app->request->post()));
+                    $paySchet->save(false);
+                }
+                return $this->asJson([
+                    'status' => 1,
+                    'count' => count($paySchets),
+                ]);
+            }
+            return $this->asJson([
+                'status' => 0,
+                'count' => 0,
+            ]);
+
+        }
+        return $this->redirect('/partner');
     }
 
     /**
@@ -248,6 +426,7 @@ class StatController extends Controller
             if(PaySchet::find()->where($where)->exists()) {
                 Yii::$app->queue->push(new RefundPayJob([
                     'paySchetId' => Yii::$app->request->post('id', 0),
+                    'initiator' => Yii::$app->user->getId() ?? 'actionReversOrder',
                 ]));
             }
 
@@ -557,19 +736,14 @@ class StatController extends Controller
     public function actionRecurrentcarddata()
     {
         if (Yii::$app->request->isAjax) {
-            $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-            Yii::$app->response->format = Response::FORMAT_JSON;
             $AutopayStat = new AutopayStat();
-            $AutopayStat->load(Yii::$app->request->post(), '');
-            if ($AutopayStat->validate()) {
-                return [
+            if ($AutopayStat->loadAndValidate(Yii::$app->request->post(), '')) {
+                return $this->asJson([
                     'status' => 1,
-                    'data' => $this->renderPartial('_recurrentcarddata', [
-                        'data' => $AutopayStat->getData($IsAdmin)
-                    ])
-                ];
+                    'data' => $this->renderPartial('_recurrentcarddata', ['data' => $AutopayStat->getData()])
+                ]);
             }
-            return ['status' => 0, 'message' => $AutopayStat->GetError()];
+            return $this->asJson(['status' => 0, 'message' => $AutopayStat->GetError()]);
         }
         return $this->redirect('/partner');
     }

@@ -49,7 +49,7 @@ use yii\helpers\Html;
     <tbody>
     <?php foreach ($notFound as $row): ?>
         <tr>
-            <td><?= Html::encode($row['ExtBillNumber']) ?></td>
+            <td><?= Html::encode($row['Identifier']) ?></td>
         </tr>
     <?php endforeach; ?>
     </tbody>

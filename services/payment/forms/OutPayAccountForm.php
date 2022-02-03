@@ -55,8 +55,8 @@ class OutPayAccountForm extends Model
             [['account', 'bic', 'amount'], 'required', 'on' => self::SCENARIO_BRS_CHECK],
             [['sms'], 'integer', 'on' => [self::SCENARIO_UL, self::SCENARIO_FL]],
 
-            ['fio', 'required', 'on' => [self::SCENARIO_FL, self::SCENARIO_UL]],
-            ['fio', 'string', 'max' => 150, 'on' => [self::SCENARIO_FL, self::SCENARIO_UL]],
+            ['fio', 'required', 'on' => [self::SCENARIO_FL]],
+            ['fio', 'string', 'max' => 150, 'on' => [self::SCENARIO_FL]],
 
             ['phone', 'match', 'pattern' => '/^7\d{10}$/', 'message' => 'Неверный номер телефона'],
             ['client', 'validateClient'],

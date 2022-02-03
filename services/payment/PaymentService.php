@@ -227,6 +227,7 @@ class PaymentService
         foreach ($generator as $paySchet) {
             Yii::$app->queue->push(new RefundPayJob([
                 'paySchetId' => $paySchet->ID,
+                'initiator' => 'PaymentService.massRevert',
             ]));
             Yii::warning('PaymentService massRevert pushed: ID=' . $paySchet->ID);
         }
@@ -258,7 +259,7 @@ class PaymentService
         $generator = $this->generatorPaySchetsForWhere($where, $limit);
         /** @var PaySchet $paySchet */
         foreach ($generator as $paySchet) {
-            if(!in_array($paySchet->uslugatovar->IsCustom, UslugatovarType::getRecurrent())) {
+            if(!in_array($paySchet->uslugatovar->IsCustom, UslugatovarType::recurrentTypes())) {
                 continue;
             }
 

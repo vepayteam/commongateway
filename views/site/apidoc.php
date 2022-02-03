@@ -1,6 +1,11 @@
 <?php
-/* @var $this \yii\web\View */
-/* @var $url string */
+/**
+ * @var $this \yii\web\View
+ * @var $url string
+ */
+
+use yii\helpers\Json;
+
 ?>
 
 <div class="api-default-index">
@@ -8,22 +13,22 @@
 </div>
 
 <?php
-$this->registerJs("
-      // Begin Swagger UI call region
-      const ui = SwaggerUIBundle({
-        url: \"".$url."\",
-        dom_id: '#swagger-ui',
-        deepLinking: true,
-        presets: [
-          SwaggerUIBundle.presets.apis,
-          SwaggerUIStandalonePreset
-        ],
-        plugins: [
-          SwaggerUIBundle.plugins.DownloadUrl
-        ],
-        layout: \"StandaloneLayout\"
-      });
-      // End Swagger UI call region
-      window.ui = ui;
- ");
+$js = <<<JS
+window.ui = SwaggerUIBundle({
+    url: url,
+    dom_id: '#swagger-ui',
+    deepLinking: true,
+    presets: [
+        SwaggerUIBundle.presets.apis,
+        SwaggerUIStandalonePreset
+    ],
+    plugins: [
+        SwaggerUIBundle.plugins.DownloadUrl
+    ],
+    layout: "StandaloneLayout"
+});
+JS;
+
+$jsUrl = Json::encode($url);
+$this->registerJs("(function (url) { {$js} } ( {$jsUrl} ));");
 ?>

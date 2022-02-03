@@ -135,6 +135,36 @@
                 }
             });
         },
+        statrecalcreq: function (page) {
+
+            if (linklink) {
+                linklink.abort();
+            }
+            linklink = $.ajax({
+                type: "POST",
+                url: '/partner/stat/recalcdata?page=' + page,
+                data: $('#statrecalcform').serialize(),
+                beforeSend: function () {
+                    $('#statrecalcform').closest('.ibox-content').toggleClass('sk-loading');
+                },
+                success: function (data) {
+                    $('#statrecalcform').closest('.ibox-content').toggleClass('sk-loading');
+                    if (data.status == 1) {
+                        $('#statlistresult').html(data.data);
+                        $('.pagination a').each(function(){
+                            $(this).removeAttr('href');
+                            $(this).attr('onclick', 'lk.statrecalcreq('+(parseInt($(this).attr('data-page'))+1)+');');
+                        });
+                    } else {
+                        $('#statlistresult').html("<p class='text-center'>" + data.message + "</p>");
+                    }
+                },
+                error: function () {
+                    $('#statrecalcform').closest('.ibox-content').toggleClass('sk-loading');
+                    $('#statlistresult').html("<p class='text-center'>Ошибка</p>");
+                }
+            });
+        },
 
         statlist: function () {
 
@@ -170,6 +200,11 @@
 
             $('#statlistform').on('submit', function () {
                 lk.statlistreq(1);
+                return false;
+            });
+
+            $('#statrecalcform').on('submit', function () {
+                lk.statrecalcreq(1);
                 return false;
             });
 
@@ -327,38 +362,156 @@
             });
         },
 
-        diffdatareq: function () {
+        getErrors: function (errors) {
+            let arrayErrors = []
+            for (const errorKey in errors) {
+                arrayErrors.push(errors[errorKey].join('<br/>'))
+            }
+
+            return arrayErrors.join('<br/>')
+        },
+
+        diffHideAll: function () {
+            $('#registrySelectColumnGroup').css('display', 'none')
+            $('#registryStatusColumnGroup').css('display', 'none')
+            $('#dbColumnGroup').css('display', 'none')
+            $('#registryStatuses').css('display', 'none')
+            $('#allRegistryStatusSuccess').css('display', 'none')
+        },
+
+        diffDataReq: function () {
             $.ajax({
                 type: 'POST',
                 enctype: 'multipart/form-data',
-                url: '/partner/stat/diffdata',
-                // data: $('#diffdataform').serialize(),
-                data: new FormData($('#diffdataform')[0]),
+                url: '/partner/stat/diff-data',
+                data: new FormData($('#diffForm')[0]),
                 processData: false,
                 contentType: false,
                 beforeSend: function () {
-                    $('#diffdataform').closest('.ibox-content').toggleClass('sk-loading');
+                    $('#diffForm').closest('.ibox-content').toggleClass('sk-loading');
                 },
                 success: function (data) {
-                    $('#diffdataform').closest('.ibox-content').toggleClass('sk-loading');
+                    $('#diffForm').closest('.ibox-content').toggleClass('sk-loading');
+
                     if (data.status === 1) {
-                        $('#diffdataresult').html(data.data)
+                        $('#diffDataResult').html(data.data)
                     } else {
-                        $('#diffdataresult').html("<p class='text-center'>" + data.message + "</p>")
+                        if (data.errors) {
+                            $('#diffDataResult').html("<p class='text-center'>" + lk.getErrors(data.errors) + "</p>")
+                        } else {
+                            $('#diffDataResult').html("<p class='text-center'>Ошибка</p>")
+                        }
                     }
                 },
                 error: function () {
-                    $('#diffdataform').closest('.ibox-content').toggleClass('sk-loading');
-                    $('#diffdataresult').html("<p class='text-center'>Ошибка</p>");
+                    $('#diffForm').closest('.ibox-content').toggleClass('sk-loading');
+                    $('#diffDataResult').html("<p class='text-center'>Ошибка</p>");
                 }
             })
         },
 
-        diffdata: function () {
-            $('#diffdataform').on('submit', function (e) {
+        diffColumnsReq: function () {
+            $.ajax({
+                type: 'POST',
+                enctype: 'multipart/form-data',
+                url: '/partner/stat/diff-columns',
+                data: new FormData($('#diffForm')[0]),
+                processData: false,
+                contentType: false,
+                beforeSend: function () {
+                    $('#diffForm').closest('.ibox-content').toggleClass('sk-loading');
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        $('#diffForm').closest('.ibox-content').toggleClass('sk-loading');
+
+                        if (data.errors) {
+                            $('#diffDataResult').html("<p class='text-center'>" + lk.getErrors(data.errors) + "</p>")
+                        } else {
+                            $('#diffDataResult').html("<p class='text-center'>Ошибка</p>")
+                        }
+
+                        return
+                    }
+
+                    const dbColumns = data.dbColumns
+                    const settings = data.settings
+
+                    $('#registrySelectColumn').val(settings ? settings.RegistrySelectColumn : '')
+                    $('#registryStatusColumn').val(settings ? settings.RegistryStatusColumn : '')
+
+                    const dbColumnElement = $('#dbColumn')
+                    dbColumnElement.empty()
+
+                    for (const dbColumnName of dbColumns) {
+                        const dbColumnSettings = settings ? settings.DbColumn : ''
+
+                        dbColumnElement.append($('<option>', {
+                            value: dbColumnName,
+                            text: dbColumnName,
+                            selected: dbColumnName === dbColumnSettings,
+                        }))
+                    }
+
+                    if (settings && settings.Statuses) {
+                        const statuses = JSON.parse(settings.Statuses)
+                        for (const key in statuses) {
+                            $('#status' + key).val(statuses[key])
+                        }
+                    }
+
+                    $('#registrySelectColumnGroup').css('display', 'block')
+                    $('#registryStatusColumnGroup').css('display', 'block')
+                    $('#dbColumnGroup').css('display', 'block')
+                    $('#registryStatuses').css('display', 'block')
+
+                    if (settings && settings.AllRegistryStatusSuccess) {
+                        $('#allRegistryStatusSuccess').prop('checked', true)
+                        $('#registryStatuses').css('display', 'none')
+                    } else {
+                        $('#allRegistryStatusSuccess').prop('checked', false)
+                    }
+
+                    $('#diffForm').closest('.ibox-content').toggleClass('sk-loading');
+                },
+                error: function () {
+                    $('#diffForm').closest('.ibox-content').toggleClass('sk-loading');
+                    $('#diffDataResult').html("<p class='text-center'>Ошибка</p>");
+                }
+            })
+        },
+
+        diffFunc: function () {
+            $('#diffForm').on('submit', function (e) {
                 e.preventDefault();
 
-                lk.diffdatareq();
+                lk.diffDataReq();
+            })
+
+            $('#bank').change(function () {
+                if ($('#registryFile').val()) {
+                    $('#diffDataResult').html('')
+                    lk.diffColumnsReq()
+                }
+            })
+
+            $('#registryFile').change(function (e) {
+                if (!$(e.target).val()) {
+                    lk.diffHideAll()
+                    return
+                }
+
+                $('#diffDataResult').html('')
+                lk.diffColumnsReq()
+            })
+
+            $('#allRegistryStatusSuccess').change(function () {
+                if (this.checked) {
+                    $('#registryStatuses').css('display', 'none')
+                }
+                else {
+                    $('#registryStatuses').css('display', 'block')
+                }
             })
         },
 
@@ -1133,6 +1286,10 @@
                         $('#notiflistform').closest('.ibox-content').toggleClass('sk-loading');
                         if (result.status == 1) {
                             $('#notiflistresult').html(result.data);
+                            $('.pagination a').each(function(){
+                                $(this).removeAttr('href');
+                                $(this).attr('onclick', 'lk.notiflistreq('+(parseInt($(this).attr('data-page'))+1)+');');
+                            });
                         } else {
                             $('#notiflistresult').html(result.message);
                         }
@@ -1203,6 +1360,38 @@
                 });
                 return false;
             });
+        },
+
+        notiflistreq: function (page) {
+
+            if (linklink) {
+                linklink.abort();
+            }
+            linklink = $.ajax({
+                type: "POST",
+                url: '/partner/callback/listitems?page=' + page,
+                data: $('#notiflistform').serialize(),
+                beforeSend: function () {
+                    $('#notiflistform').closest('.ibox-content').toggleClass('sk-loading');
+                },
+                success: function (result) {
+                    $('#notiflistform').closest('.ibox-content').toggleClass('sk-loading');
+                    if (result.status == 1) {
+                        $('#notiflistresult').html(result.data);
+                        $('.pagination a').each(function(){
+                            $(this).removeAttr('href');
+                            $(this).attr('onclick', 'lk.notiflistreq('+(parseInt($(this).attr('data-page'))+1)+');');
+                        });
+                    } else {
+                        $('#notiflistresult').html("<p class='text-center'>" + data.message + "</p>");
+                    }
+                },
+                error: function () {
+                    $('#notiflistform').closest('.ibox-content').toggleClass('sk-loading');
+                    $('#notiflistresult').html("Ошибка запроса");
+                }
+            });
+
         },
 
         comisotchet: function () {
@@ -1770,11 +1959,20 @@
 
             // bank gates
             $('#partner-edit__bank-gates-table__add-button').on('click', function(e) {
-                $('#partner-edit__bank-gates-edit-modal__gate-form').trigger('reset');
+
+                let $form = $('#partner-edit__bank-gates-edit-modal__gate-form');
+
+                $form.trigger('reset');
+                $form.find('input[name=Id]').val('');
+
                 $('#partner-edit__bank-gates-edit-modal').modal('show');
 
                 return false;
             })
+
+            $('#partner-edit__bank-gates-edit-modal__cancel-button').on('click', function(e) {
+                $('#partner-edit__bank-gates-edit-modal__gate-form [name="Id"]').val('');
+            });
 
             $('.partner-edit__bank-gates-table__edit-button').on('click', function(e) {
                 let $form = $('#partner-edit__bank-gates-edit-modal__gate-form');
@@ -2178,4 +2376,3 @@
 
 
 }(jQuery || $));
-
