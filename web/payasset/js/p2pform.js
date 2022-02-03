@@ -28,6 +28,10 @@ $(document).ready(function() {
         showMaskOnHover: false,
         showMaskOnFocus: false
     });
+    $("input").tooltipster({
+        position: 'bottom',
+        content: $('<span><strong>Поле заполнено некорректно</strong></span>')
+    });
 
     $("#btnClose").click(function() {
         window.location = $(this).data('url');
@@ -56,6 +60,7 @@ $(document).ready(function() {
         var csrfToken = $('meta[name=csrf-token]').attr("content");
 
         var valid = true;
+        var tooltipIsShow = false;
         var amount = parseFloat($('#paymentAmount').val());
         var expMonth = parseFloat($('#expMonth').val());
         var expYear = parseFloat($('#expYear').val());
@@ -89,6 +94,10 @@ $(document).ready(function() {
             if(!$(this).inputmask('isComplete')) {
                 valid = false;
                 $(this).css({'border-color': 'red'});
+                if(!tooltipIsShow) {
+                    tooltipIsShow = true;
+                    $(this).tooltipster('show');
+                }
             } else {
                 $(this).css({'border-color': 'rgb(230, 230, 230)'});
             }

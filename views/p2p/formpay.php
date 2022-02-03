@@ -16,6 +16,8 @@ const MAX_EXP_CARD_YEARS = 10;
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?= Html::csrfMetaTags() ?>
     <link href="/payasset/css/p2pform.css" rel="stylesheet">
+    <link href="/payasset/css/tooltipster.main.min.css" rel="stylesheet">
+    <link href="/payasset/css/tooltipster.bundle.min.css" rel="stylesheet">
     <title>Перевод с карты на карту</title>
 
     <script>
@@ -60,10 +62,10 @@ const MAX_EXP_CARD_YEARS = 10;
                         </div>
                         <span class="cardTopText">Номер карты отправителя:</span>
                         <div class="cardNubmerBlock">
-                            <input placeholder="XXXX" id="cardPan1" data-inputmask="'mask': '9999'" type="text">
-                            <input placeholder="XXXX" id="cardPan2" data-inputmask="'mask': '9999'" type="text">
-                            <input placeholder="XXXX" id="cardPan3" data-inputmask="'mask': '9999'" type="text">
-                            <input placeholder="XXXX" id="cardPan4" data-inputmask="'mask': '9999'" type="text">
+                            <input required placeholder="XXXX" id="cardPan1" data-inputmask="'mask': '9999'" type="text">
+                            <input required placeholder="XXXX" id="cardPan2" data-inputmask="'mask': '9999'" type="text">
+                            <input required placeholder="XXXX" id="cardPan3" data-inputmask="'mask': '9999'" type="text">
+                            <input required placeholder="XXXX" id="cardPan4" data-inputmask="'mask': '9999'" type="text">
                         </div>
                         <div class="expiryBlock">
                             <select name="expMonth" id="expMonth">
@@ -105,10 +107,10 @@ const MAX_EXP_CARD_YEARS = 10;
                     <div class="card gray">
                         <span class="cardTopText">Номер карты получателя:</span>
                         <div class="cardNubmerBlock">
-                            <input placeholder="XXXX" id="outCardPan1" data-inputmask="'mask': '9999'" type="text">
-                            <input placeholder="XXXX" id="outCardPan2" data-inputmask="'mask': '9999'" type="text">
-                            <input placeholder="XXXX" id="outCardPan3" data-inputmask="'mask': '9999'" type="text">
-                            <input placeholder="XXXX" id="outCardPan4" data-inputmask="'mask': '9999'" type="text">
+                            <input required placeholder="XXXX" id="outCardPan1" data-inputmask="'mask': '9999'" type="text">
+                            <input required placeholder="XXXX" id="outCardPan2" data-inputmask="'mask': '9999'" type="text">
+                            <input required placeholder="XXXX" id="outCardPan3" data-inputmask="'mask': '9999'" type="text">
+                            <input required placeholder="XXXX" id="outCardPan4" data-inputmask="'mask': '9999'" type="text">
                         </div>
                         <div class="expiryBlock">
                             <span class="grayCardValidThru">00 / 00</span>
@@ -177,6 +179,8 @@ const MAX_EXP_CARD_YEARS = 10;
 <script src="/payasset/js/jquery-1.12.4.min.js"></script>
 <script src="/payasset/js/ua-parser.js"></script>
 <script src="/payasset/js/jquery.inputmask.min.js"></script>
+<script src="/payasset/js/tooltipster.main.min.js"></script>
+<script src="/payasset/js/tooltipster.bundle.min.js"></script>
 <script src="/payasset/js/p2pform.js"></script>
 <?php $this->endBody() ?>
 </html>
