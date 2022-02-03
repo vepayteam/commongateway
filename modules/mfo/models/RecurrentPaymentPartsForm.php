@@ -75,7 +75,8 @@ class RecurrentPaymentPartsForm extends Model implements PaymentData
     {
         return [
             [['card', 'parts'], 'required'],
-            [['document_id', 'fullname', 'extid'], 'string', 'max' => 40],
+            [['document_id', 'extid'], 'string', 'max' => 40],
+            [['fullname'], 'string', 'max' => 80],
             [['card'], 'integer'],
             [['descript'], 'string', 'max' => 200],
             [
