@@ -81,7 +81,13 @@ class RefreshStatusPayStrategy extends OkPayStrategy
         $this->confirmPay($paySchet, $checkStatusPayResponse);
 
         if ($paySchet->isRefund && $checkStatusPayResponse->status === BaseResponse::STATUS_DONE) {
-            $paySchet->Status = PaySchet::STATUS_REFUND_DONE;
+            $paySchet->Status = PaySchet::getDoneStatusByRefundType($paySchet->RefundType);
+
+            if ($paySchet->RefundType === PaySchet::REFUND_TYPE_REVERSE) {
+                $sourcePaySchet = $paySchet->refundSource;
+                $sourcePaySchet->ErrorInfo = 'Операция отменена. Номер отмены: ' . $paySchet->ID;
+                $sourcePaySchet->save(false);
+            }
         } else {
             $paySchet->Status = $checkStatusPayResponse->status;
         }

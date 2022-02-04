@@ -345,10 +345,11 @@ class PayShetStat extends Model
         }
 
         /**
-         * Подсчитываем общую сумму всех операций со статусом refund
+         * Подсчитываем общую сумму всех операций со статусом refund/reverse
          */
         $refundTotalSum = array_reduce($data, function ($carry, $item) {
-            if (intval($item['Status']) === PaySchet::STATUS_REFUND_DONE) {
+            if (intval($item['Status']) === PaySchet::STATUS_REFUND_DONE
+                || intval($item['Status']) === PaySchet::STATUS_REVERSE_DONE) {
                 return $carry + intval($item['SummPay']);
             }
 

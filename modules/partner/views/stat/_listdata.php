@@ -108,7 +108,11 @@ use yii\widgets\LinkPager;
                 <td><?= Html::encode($row['BankName']) ?></td>
                 <td>
                     <input class='btn btn-white btn-xs' data-action="logpay" data-id='<?= Html::encode($row['ID']) ?>' type='button' value='Лог'>
-                    <?php if ($row['Status'] == 1 && (TU::IsInPay($row['IsCustom']) || TU::IsInAutoAll($row['IsCustom']))): ?>
+                    <?php if (
+                        $row['Status'] == PaySchet::STATUS_DONE
+                        && (TU::IsInPay($row['IsCustom']) || TU::IsInAutoAll($row['IsCustom']))
+                        && $row['RemainingRefundAmount'] > 0
+                    ): ?>
                         <input class="btn btn-white btn-xs"
                                data-action="cancelpay"
                                data-id="<?= Html::encode($row['ID']) ?>"

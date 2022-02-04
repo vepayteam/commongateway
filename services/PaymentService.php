@@ -9,6 +9,7 @@ use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\RefundPayException;
 use app\services\payment\forms\RefundPayForm;
+use app\services\payment\jobs\RefreshStatusPayJob;
 use app\services\payment\jobs\RefundPayJob;
 use app\services\payment\models\PaySchet;
 use app\services\paymentService\CreateRefundException;
@@ -30,7 +31,7 @@ class PaymentService extends Component
         $refundPayResponse = $this->bankRefundPay($paySchet);
 
         if ($refundPayResponse->status == BaseResponse::STATUS_DONE) {
-            $paySchet->Status = PaySchet::STATUS_CANCEL;
+            $paySchet->Status = PaySchet::STATUS_REVERSE_DONE;
             $paySchet->ErrorInfo = 'Платеж отменен';
         } else {
             $paySchet->ErrorInfo = $refundPayResponse->message;
@@ -115,12 +116,30 @@ class PaymentService extends Component
     {
         $refundPayResponse = $this->bankRefundPay($refundPayschet);
 
+        $refundPayschet->RefundType = $refundPayResponse->refundType;
+        if ($refundPayResponse->transactionId) {
+            $refundPayschet->ExtBillNumber = $refundPayResponse->transactionId;
+        }
+        if ($refundPayResponse->extId) {
+            $refundPayschet->RefundExtId = $refundPayResponse->extId;
+        }
+
         if ($refundPayResponse->status == BaseResponse::STATUS_DONE) {
-            $refundPayschet->Status = PaySchet::STATUS_REFUND_DONE;
+            $refundPayschet->Status = PaySchet::getDoneStatusByRefundType($refundPayResponse->refundType);
             $refundPayschet->ErrorInfo = 'Возврат произведен.';
-        } elseif(BaseResponse::STATUS_CREATED){
+
+            if ($refundPayResponse->refundType === PaySchet::REFUND_TYPE_REVERSE) {
+                $sourcePaySchet = $refundPayschet->refundSource;
+                $sourcePaySchet->ErrorInfo = 'Операция отменена. Номер отмены: ' . $refundPayschet->ID;
+                $sourcePaySchet->save(false);
+            }
+        } elseif ($refundPayResponse->status == BaseResponse::STATUS_CREATED) {
             $refundPayschet->Status = PaySchet::STATUS_WAITING;
-            $refundPayschet->ErrorInfo = 'Возврат произведен.';
+            $refundPayschet->ErrorInfo = 'В обработке.';
+
+            \Yii::$app->queue->push(new RefreshStatusPayJob([
+                'paySchetId' => $refundPayschet->ID,
+            ]));
         } else {
             $refundPayschet->Status = PaySchet::STATUS_ERROR;
             $refundPayschet->ErrorInfo = $refundPayResponse->message;
