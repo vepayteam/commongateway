@@ -1520,15 +1520,18 @@ class TKBankAdapter implements IBankAdapter
         $refundPayResponse = new RefundPayResponse();
 
         $paySchet = $refundPayForm->paySchet;
-        if($paySchet->Status != PaySchet::STATUS_DONE) {
+        $sourcePaySchet = $paySchet->refundSource;
+
+        if($sourcePaySchet->Status != PaySchet::STATUS_DONE) {
             throw new RefundPayException('Невозможно отменить незавершенный платеж');
         }
 
         $refundPayRequest = new RefundPayRequest();
-        $refundPayRequest->ExtId = $paySchet->ID;
+        $refundPayRequest->ExtId = $sourcePaySchet->ID;
 
         $action = '/api/v1/card/unregistered/debit/reverse';
-        if($paySchet->DateCreate < Carbon::now()->startOfDay()->timestamp) {
+
+        if($sourcePaySchet->DateCreate < Carbon::now()->startOfDay()->timestamp) {
             $refundPayRequest->amount = $paySchet->getSummFull();
             $action = '/api/v1/card/unregistered/debit/refund';
         }

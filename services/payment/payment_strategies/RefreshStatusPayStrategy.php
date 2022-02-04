@@ -80,7 +80,11 @@ class RefreshStatusPayStrategy extends OkPayStrategy
         Yii::warning("RefreshStatusPayStrategy beforeConfirmPay: " . Json::encode($checkStatusPayResponse->getAttributes()));
         $this->confirmPay($paySchet, $checkStatusPayResponse);
 
-        $paySchet->Status = $checkStatusPayResponse->status;
+        if ($paySchet->isRefund && $checkStatusPayResponse->status === BaseResponse::STATUS_DONE) {
+            $paySchet->Status = PaySchet::STATUS_REFUND_DONE;
+        } else {
+            $paySchet->Status = $checkStatusPayResponse->status;
+        }
         $paySchet->ErrorInfo = $checkStatusPayResponse->message;
         $paySchet->RRN = $checkStatusPayResponse->rrn;
         $paySchet->Operations = Json::encode($checkStatusPayResponse->operations ?? []);
