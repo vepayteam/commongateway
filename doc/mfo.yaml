@@ -711,10 +711,21 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                description: Массив из ID типов услуги
-                items:
-                  type: integer
+                type: object
+                properties:
+                    status:
+                        type: integer
+                        description: Статус выполения запроса. 0 - успех.
+                        example: 0
+                    service_types:
+                        type: object
+                        description: Объект - ассоциативный массив с ID типов услуги в качестве ключей и названиями в качестве значений.
+                        additionalProperties:
+                            type: string
+                        example:
+                            "2": "Оплата товара"
+                            "10": "Платёж AFT"
+                            "11": "Выплата на счет"
         default:
           description: Error (40X,500)
           content:
