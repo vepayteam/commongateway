@@ -1,6 +1,6 @@
 <?php
 
-namespace clients\tcbClient\requests\objects;
+namespace app\clients\tcbClient\requests\objects;
 
 use yii\base\BaseObject;
 
