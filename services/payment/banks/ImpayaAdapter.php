@@ -83,7 +83,6 @@ class ImpayaAdapter implements IBankAdapter
         $createPayRequest->cc_expire_y = '20' . $createPayForm->CardYear;
         $createPayRequest->cc_cvc = $createPayForm->CardCVC;
         $createPayRequest->buildHash($this->gate->Token);
-        $createPayRequest->cl_fname = $paySchet->ID;
         $createPayRequest->cl_email = $paySchet->ID . '@vepay.online';
 
         $uri = '/h2h/';
