@@ -15,7 +15,7 @@ trait SoftDelete
      */
     public function notSoftDeleted(): ActiveQuery
     {
-        $this->isDeleted(true);
+        $this->isDeleted(false);
         return $this;
     }
 
@@ -24,7 +24,7 @@ trait SoftDelete
      */
     public function softDeleted(): ActiveQuery
     {
-        $this->isDeleted(false);
+        $this->isDeleted(true);
         return $this;
     }
 
