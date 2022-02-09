@@ -209,25 +209,38 @@
             });
 
             $('#statlistresult').on('click', '[data-action="cancelpay"]', function () {
-                let idpay = $(this).attr('data-id');
+                let idpay = parseInt($(this).attr('data-id'));
+                let remainingAmount = $(this).attr('data-remaining-amount') || '0'
+                let refundAmount = $(this).attr('data-refund-amount') || '0'
+                let fullSum = $(this).attr('data-full-amount') || '0'
+
                 swal({
-                    title: "Подтвердите отмену платежа",
-                    text: "Послу отмены платежи средства будут возвращены клиенту!",
-                    type: "warning",
+                    title: "Подтвердите возврат платежа",
+                    text: 'Послу возврата платежа средства будут возвращены клиенту!\nПолная сумма платежа: ' + fullSum + '\n\nВозвращено: ' + refundAmount + '\nОсталось: ' + remainingAmount,
+                    type: "input",
+                    inputType: "number",
+                    inputValue: remainingAmount,
                     showCancelButton: true,
                     confirmButtonColor: "#DD6B55",
-                    confirmButtonText: "Да, отменить!",
-                    cancelButtonText: "Не отменять",
+                    confirmButtonText: "Вернуть",
+                    cancelButtonText: "Отмена",
                     closeOnConfirm: false
-                }, function () {
+                }, function (refundSum) {
+                    refundSum = parseFloat(refundSum)
+                    if (isNaN(refundSum)) {
+                        swal.showInputError('Укажите сумму возврата!')
+                        return false
+                    }
 
                     if (linklink) {
                         linklink.abort();
                     }
                     linklink = $.ajax({
-                        type: "POST",
+                        type: 'POST',
                         url: '/partner/stat/reversorder',
-                        data: {'id': idpay},
+                        data: JSON.stringify({'id': idpay, 'refundSum': refundSum}),
+                        dataType: 'json',
+                        contentType: 'application/json',
                         beforeSend: function () {
                             $('#statlistform').closest('.ibox-content').toggleClass('sk-loading');
                         },
@@ -242,9 +255,13 @@
                                     $('#statlistform').trigger('submit');
                                 });
                             } else {
+                                let errors = data.errors
+                                    ? Object.values(data.errors).map(function (i) {return i.join('\n')}).join('\n')
+                                    : 'Ошибка выполнения'
+
                                 swal({
                                     title: "Ошибка",
-                                    text: data.message,
+                                    text: errors,
                                     type: "error"
                                 }, function () {
                                     $('#statlistform').trigger('submit');
