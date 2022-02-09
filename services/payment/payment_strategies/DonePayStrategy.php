@@ -6,6 +6,7 @@ use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\TKBankRefusalException;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\jobs\RefreshStatusPayJob;
+use app\services\payment\models\Currency;
 use app\services\payment\models\PaySchet;
 use Yii;
 use yii\helpers\Json;
@@ -77,7 +78,7 @@ class DonePayStrategy
                 . ' partner=' . $paySchet->partner->ID
                 . ' uslugatovar=' . $paySchet->uslugatovar->ID
                 . ' bank=' . $paySchet->bank->ID
-                . ' currency=' . $paySchet->currency->Id);
+                . ' currency=' . ($paySchet->currency ? $paySchet->currency->Id : Currency::findOne(['Code' => Currency::MAIN_CURRENCY])->Id));
 
             try {
                 $bankAdapterBuilder = new BankAdapterBuilder();
