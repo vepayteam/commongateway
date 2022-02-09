@@ -1,6 +1,6 @@
 <?php
 
-namespace clients\tcbClient;
+namespace app\clients\tcbClient;
 
 /**
  * Невозможно разобрать ответ сервера.

@@ -9,6 +9,7 @@ use app\services\payment\jobs\RefreshStatusPayJob;
 use app\services\payment\models\PaySchet;
 use Yii;
 use yii\helpers\Json;
+use yii\redis\Mutex;
 use yii\web\NotFoundHttpException;
 
 class DonePayStrategy
@@ -18,6 +19,15 @@ class DonePayStrategy
 
     /** @var array|null */
     protected $donePayResponse;
+
+    /**
+     * @param PaySchet $paySchet
+     * @return string
+     */
+    public static function getMutexKey(PaySchet $paySchet): string
+    {
+        return 'DonePayStrategy_' . $paySchet->ID;
+    }
 
     /**
      * DonePayStrategy constructor.
@@ -35,14 +45,31 @@ class DonePayStrategy
         // для случаев, если пользователь возвращается к нам без ИД счета, но с транзакцией
         if (!empty($this->donePayForm->trans)) {
             Yii::info('DonePayStrategy exec. IdPay=' . $this->donePayForm->IdPay . ' trans=' . $this->donePayForm->trans);
-
             $paySchet = PaySchet::find()
-                ->where(['ExtBillNumber' => $this->donePayForm->trans])
-                ->orderBy('ID DESC')->one();
+                ->andWhere(['ExtBillNumber' => $this->donePayForm->trans])
+                ->orderBy('ID DESC')
+                ->one();
         } else {
             $paySchet = $this->donePayForm->getPaySchet();
         }
 
+        $mutex = new Mutex();
+        $mutexKey = static::getMutexKey($paySchet);
+        if ($mutex->acquire($mutexKey)) {
+            try {
+                $this->execInternal($paySchet);
+            } finally {
+                $mutex->release($mutexKey);
+            }
+        } else {
+            Yii::info('DonePayStrategy exec. Mutex locked. PaySchet ID=' . $paySchet->ID);
+        }
+
+        return $paySchet;
+    }
+
+    private function execInternal(PaySchet $paySchet)
+    {
         Yii::info('DonePayStrategy exec. PaySchet ID=' . $paySchet->ID . ' Status=' . $paySchet->Status);
 
         if ($paySchet && $paySchet->Status == PaySchet::STATUS_WAITING) {
