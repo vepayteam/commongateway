@@ -22,7 +22,7 @@ if (!Math.ceil10) {
     };
 }
 $(document).ready(function() {
-
+    var tooltipIsShow = false;
     $("input").inputmask({
         "placeholder": "",
         showMaskOnHover: false,
@@ -30,8 +30,21 @@ $(document).ready(function() {
     });
     $("input").tooltipster({
         position: 'bottom',
-        content: $('<span><strong>Поле заполнено некорректно</strong></span>')
+        content: null
     });
+
+    $("input").on('keyup', function() {
+        if(tooltipIsShow) {
+            $('input').tooltipster('content', null);
+            $('input').css({'border-color': 'rgb(230, 230, 230)'});
+            tooltipIsShow = false;
+        }
+
+        if($(this).inputmask('isComplete')) {
+            var sequence = parseInt($(this).data('sequence')) + 1;
+            $(`input[data-sequence=${sequence}]`).focus();
+        }
+    })
 
     $("#btnClose").click(function() {
         window.location = $(this).data('url');
@@ -60,7 +73,6 @@ $(document).ready(function() {
         var csrfToken = $('meta[name=csrf-token]').attr("content");
 
         var valid = true;
-        var tooltipIsShow = false;
         var amount = parseFloat($('#paymentAmount').val());
         var expMonth = parseFloat($('#expMonth').val());
         var expYear = parseFloat($('#expYear').val());
@@ -95,10 +107,13 @@ $(document).ready(function() {
                 valid = false;
                 $(this).css({'border-color': 'red'});
                 if(!tooltipIsShow) {
-                    tooltipIsShow = true;
+                    $(this).tooltipster('content', 'Поле заполнено некорректно');
                     $(this).tooltipster('show');
+                    tooltipIsShow = true;
+
                 }
             } else {
+                $(this).tooltipster('content', null);
                 $(this).css({'border-color': 'rgb(230, 230, 230)'});
             }
         })

@@ -57,15 +57,15 @@ const MAX_EXP_CARD_YEARS = 10;
                             </div>
                             <span class="center d-block CVV-text"
                                   title="3 цифры на оборотной строне карточки">CVC2/CVV2</span>
-                            <input class="CVV-input" id="cvv" placeholder="XXX" data-inputmask="'mask': '999'"
+                            <input class="CVV-input" id="cvv" placeholder="XXX" data-sequence="5" data-inputmask="'mask': '999'"
                                    type="text">
                         </div>
                         <span class="cardTopText">Номер карты отправителя:</span>
                         <div class="cardNubmerBlock">
-                            <input required placeholder="XXXX" id="cardPan1" data-inputmask="'mask': '9999'" type="text">
-                            <input required placeholder="XXXX" id="cardPan2" data-inputmask="'mask': '9999'" type="text">
-                            <input required placeholder="XXXX" id="cardPan3" data-inputmask="'mask': '9999'" type="text">
-                            <input required placeholder="XXXX" id="cardPan4" data-inputmask="'mask': '9999'" type="text">
+                            <input required placeholder="XXXX" id="cardPan1" data-sequence="1" data-inputmask="'mask': '9999'" type="text">
+                            <input required placeholder="XXXX" id="cardPan2" data-sequence="2" data-inputmask="'mask': '9999'" type="text">
+                            <input required placeholder="XXXX" id="cardPan3" data-sequence="3" data-inputmask="'mask': '9999'" type="text">
+                            <input required placeholder="XXXX" id="cardPan4" data-sequence="4" data-inputmask="'mask': '9999'" type="text">
                         </div>
                         <div class="expiryBlock">
                             <select name="expMonth" id="expMonth">
@@ -107,10 +107,10 @@ const MAX_EXP_CARD_YEARS = 10;
                     <div class="card gray">
                         <span class="cardTopText">Номер карты получателя:</span>
                         <div class="cardNubmerBlock">
-                            <input required placeholder="XXXX" id="outCardPan1" data-inputmask="'mask': '9999'" type="text">
-                            <input required placeholder="XXXX" id="outCardPan2" data-inputmask="'mask': '9999'" type="text">
-                            <input required placeholder="XXXX" id="outCardPan3" data-inputmask="'mask': '9999'" type="text">
-                            <input required placeholder="XXXX" id="outCardPan4" data-inputmask="'mask': '9999'" type="text">
+                            <input required placeholder="XXXX" id="outCardPan1" data-sequence="7" data-inputmask="'mask': '9999'" type="text">
+                            <input required placeholder="XXXX" id="outCardPan2" data-sequence="8" data-inputmask="'mask': '9999'" type="text">
+                            <input required placeholder="XXXX" id="outCardPan3" data-sequence="9" data-inputmask="'mask': '9999'" type="text">
+                            <input required placeholder="XXXX" id="outCardPan4" data-sequence="10" data-inputmask="'mask': '9999'" type="text">
                         </div>
                         <div class="expiryBlock">
                             <span class="grayCardValidThru">00 / 00</span>
@@ -150,7 +150,7 @@ const MAX_EXP_CARD_YEARS = 10;
                 <span class="center d-block greenText">Укажите свою почту, и мы отправим Вам справку о совершенной операции</span>
                 <div class="emailAndButtonBlock">
                     <div class="center">
-                        <input id="emailInput" placeholder="укажите email" type="text"
+                        <input id="emailInput" placeholder="укажите email" data-sequence="12" type="text"
                                data-inputmask-regex="[a-zA-Z0-9._%-]+@[a-zA-Z0-9-]+\.[a-zA-Z]{2,10}"
                         >
                     </div>
