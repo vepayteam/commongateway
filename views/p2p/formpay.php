@@ -71,7 +71,7 @@ const MAX_EXP_CARD_YEARS = 10;
                             <select name="expMonth" id="expMonth">
                                 <?php $currMonth = Carbon::now()->month ?>
                                 <?php $month = 1;
-                                while ($month < 12): ?>
+                                while ($month <= 12): ?>
                                     <option <?= $month == $currMonth ? 'selected' : '' ?>
                                             value="<?= $month ?>"
                                     >
