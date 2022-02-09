@@ -18,12 +18,14 @@ return [
         [
             'class' => 'app\services\logs\targets\SecurityStdOutTarget',
             'levels' => ['warning', 'info'],
-            'maskVars' => $maskVars
+            'maskVars' => $maskVars,
+            'microtime' => true
         ],
         [
             'class' => 'app\services\logs\targets\SecurityStdErrTarget',
             'levels' => ['error'],
-            'maskVars' => $maskVars
+            'maskVars' => $maskVars,
+            'microtime' => true
         ],
     ],
 ];

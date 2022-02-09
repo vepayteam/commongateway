@@ -7,6 +7,7 @@ use app\models\mfo\MfoReq;
 use app\models\Report;
 use app\modules\mfo\jobs\FillReportJob;
 use app\modules\mfo\models\CreateReportForm;
+use app\services\payment\models\UslugatovarType;
 use app\services\ReportService;
 use yii\base\InvalidConfigException;
 use yii\base\Model;
@@ -157,7 +158,10 @@ class ReportController extends \yii\rest\Controller
         $mfo = new MfoReq();
         $mfo->LoadData(\Yii::$app->request->getRawBody());
 
-        return $this->reportService->getAllowedServiceTypeIds($mfo->getPartner());
+        return [
+            'status' => 0,
+            'service_types' => $this->reportService->getAllowedServiceTypes($mfo->getPartner()),
+        ];
     }
 
     /**
