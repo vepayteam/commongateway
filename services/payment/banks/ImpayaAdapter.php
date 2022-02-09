@@ -5,6 +5,7 @@ namespace app\services\payment\banks;
 use app\models\payonline\Cards;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
+use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
@@ -72,7 +73,7 @@ class ImpayaAdapter implements IBankAdapter
         $paySchet = $createPayForm->getPaySchet();
         $createPayRequest = new CreatePayRequest();
         $createPayRequest->merchant_id = $this->gate->Login;
-        $createPayRequest->amount = $paySchet->getSummFull() / 100;
+        $createPayRequest->amount = $paySchet->getSummFull();
         $createPayRequest->currency = $paySchet->currency->Code;
         $createPayRequest->invoice = $paySchet->ID;
         $createPayRequest->cl_ip = Yii::$app->request->remoteIP;
@@ -83,10 +84,32 @@ class ImpayaAdapter implements IBankAdapter
         $createPayRequest->cc_expire_y = '20' . $createPayForm->CardYear;
         $createPayRequest->cc_cvc = $createPayForm->CardCVC;
         $createPayRequest->buildHash($this->gate->Token);
-        $createPayRequest->cl_email = $paySchet->ID . '@vepay.online';
+        $createPayRequest->cl_email = $paySchet->UserEmail ?? $paySchet->ID . '@vepay.online';
+        $createPayRequest->cl_phone = $paySchet->PhoneUser;
 
         $uri = '/h2h/';
-        $this->sendRequest($uri, $createPayRequest->getAttributes());
+        $ans = $this->sendRequest($uri, $createPayRequest->getAttributes());
+
+        $createPayResponse = new CreatePayResponse();
+        if($ans['status'] != BaseResponse::STATUS_DONE) {
+            $createPayResponse->status = BaseResponse::STATUS_ERROR;
+            $createPayResponse->message = $ans['message'] ?? '';
+            return $createPayResponse;
+        }
+
+        if($ans['data']['status_id'] != 2) {
+            $createPayResponse->status = BaseResponse::STATUS_ERROR;
+            $createPayResponse->message = 'Ошибка запроса';
+            return $createPayResponse;
+        }
+
+        $createPayResponse->status = BaseResponse::STATUS_DONE;
+        $createPayResponse->url = $ans['data']['3ds']['url'];
+        if($ans['data']['3ds']['method'] == 'post') {
+            $createPayResponse->params3DS = $ans['data']['3ds']['params'];
+        }
+
+        return $createPayResponse;
     }
 
     public function checkStatusPay(OkPayForm $okPayForm)
@@ -146,33 +169,27 @@ class ImpayaAdapter implements IBankAdapter
 
     private function sendRequest ($url, $post) {
         foreach ($post as $k => $v) {
-            $post_l[] = $k."=".$v;
+            $post[] = $k."=".$v;
         }
 
+        Yii::warning('Impaya req: ' . $url . ' ' . json_encode($post));
         $ch = curl_init($this->bankUrl . $url);
         curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, implode('&', $post_l));
+        curl_setopt($ch, CURLOPT_POSTFIELDS, implode('&', $post));
         #curl_setopt($ch, CURLOPT_FOLLOWLOCATION  	, 1);
         curl_setopt($ch, CURLOPT_HEADER, 0);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        $curl = curl_exec($ch);
 
         $ans = [];
-        switch ($curl->responseCode) {
-            case 200:
-
-            case 202:
-                $ans['xml'] = Json::decode($curl->response);
-                break;
-            case 500:
-                $ans['error'] = $curl->responseCode;
-                $ans['httperror'] = Json::decode($curl->response);
-                break;
-            default:
-                $ans['error'] = $curl->errorCode;
-                break;
+        try {
+            $curl = curl_exec($ch);
+            Yii::warning('Impaya res: ' . $url . ' ' . $curl);
+            $ans['status'] = BaseResponse::STATUS_DONE;
+            $ans['data'] = Json::decode($curl);
+        } catch (\Exception $e) {
+            $ans['status'] = BaseResponse::STATUS_ERROR;
+            $ans['message'] = $e->getMessage();
         }
-
 
         return $ans;
     }
