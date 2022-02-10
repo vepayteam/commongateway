@@ -38,7 +38,8 @@ $config = [
                 $request = Yii::$app->request;
                 $routesXFrameOptionsNone = [
                     '/widget/',
-                    '/pay/'
+                    '/pay/',
+                    '/p2p/',
                 ];
 
                 $sendXFrame = true;

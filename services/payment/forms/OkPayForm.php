@@ -7,12 +7,15 @@ namespace app\services\payment\forms;
 use app\services\payment\models\PaySchet;
 use yii\base\Model;
 
+/**
+ * @property-read PaySchet $paySchet
+ */
 class OkPayForm extends Model
 {
     public $IdPay;
 
     /** @var PaySchet */
-    protected $paySchet;
+    private $_paySchet;
 
     public function rules()
     {
@@ -23,22 +26,13 @@ class OkPayForm extends Model
     }
 
     /**
-     * @return bool
+     * @return PaySchet|null
      */
-    public function existPaySchet()
+    public function getPaySchet(): ?PaySchet
     {
-        return PaySchet::find()->where(['ID' => $this->IdPay])->exists();
-    }
-
-    /**
-     * @return PaySchet
-     */
-    public function getPaySchet()
-    {
-        if(!$this->paySchet) {
-            $this->paySchet = PaySchet::findOne(['ID' => $this->IdPay]);
+        if ($this->_paySchet === null) {
+            $this->_paySchet = PaySchet::findOne(['ID' => $this->IdPay]);
         }
-        return $this->paySchet;
+        return $this->_paySchet;
     }
-
 }
