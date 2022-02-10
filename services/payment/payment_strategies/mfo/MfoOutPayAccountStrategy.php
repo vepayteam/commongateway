@@ -68,7 +68,6 @@ class MfoOutPayAccountStrategy
                 $this->outPayaccForm->paySchet->ErrorInfo = $this->transferToAccountResponse->message;
             }
         } else {
-            $this->transferToAccountResponse->status = BaseResponse::STATUS_CREATED;
             $this->outPayaccForm->paySchet->sms_accept = 0;
         }
 
