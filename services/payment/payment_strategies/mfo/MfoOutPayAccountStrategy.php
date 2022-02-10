@@ -52,7 +52,7 @@ class MfoOutPayAccountStrategy
         }
 
         $this->outPayaccForm->paySchet = $this->createPaySchet($bankAdapterBuilder);
-        if ($this->outPayaccForm->sms === 0) {
+        if (!$this->outPayaccForm->sms || $this->outPayaccForm->sms === 0) {
             $this->transferToAccountResponse = $bankAdapterBuilder->getBankAdapter()->transferToAccount($this->outPayaccForm);
 
             if($this->transferToAccountResponse->status == BaseResponse::STATUS_DONE) {
