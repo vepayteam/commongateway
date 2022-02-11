@@ -52,19 +52,23 @@ class MfoOutPayAccountStrategy
         }
 
         $this->outPayaccForm->paySchet = $this->createPaySchet($bankAdapterBuilder);
-        $this->transferToAccountResponse = $bankAdapterBuilder->getBankAdapter()->transferToAccount($this->outPayaccForm);
+        if (!$this->outPayaccForm->sms || $this->outPayaccForm->sms === 0) {
+            $this->transferToAccountResponse = $bankAdapterBuilder->getBankAdapter()->transferToAccount($this->outPayaccForm);
 
-        if($this->transferToAccountResponse->status == BaseResponse::STATUS_DONE) {
-            $this->outPayaccForm->paySchet->Status = PaySchet::STATUS_WAITING_CHECK_STATUS;
-            $this->outPayaccForm->paySchet->ExtBillNumber = $this->transferToAccountResponse->trans;
-            $this->outPayaccForm->paySchet->ErrorInfo = 'Ожидает запрос статуса';
+            if($this->transferToAccountResponse->status == BaseResponse::STATUS_DONE) {
+                $this->outPayaccForm->paySchet->Status = PaySchet::STATUS_WAITING_CHECK_STATUS;
+                $this->outPayaccForm->paySchet->ExtBillNumber = $this->transferToAccountResponse->trans;
+                $this->outPayaccForm->paySchet->ErrorInfo = 'Ожидает запрос статуса';
 
-            Yii::$app->queue->push(new RefreshStatusPayJob([
-                'paySchetId' =>  $this->outPayaccForm->paySchet->ID,
-            ]));
+                Yii::$app->queue->push(new RefreshStatusPayJob([
+                    'paySchetId' =>  $this->outPayaccForm->paySchet->ID,
+                ]));
+            } else {
+                $this->outPayaccForm->paySchet->Status = PaySchet::STATUS_ERROR;
+                $this->outPayaccForm->paySchet->ErrorInfo = $this->transferToAccountResponse->message;
+            }
         } else {
-            $this->outPayaccForm->paySchet->Status = PaySchet::STATUS_ERROR;
-            $this->outPayaccForm->paySchet->ErrorInfo = $this->transferToAccountResponse->message;
+            $this->outPayaccForm->paySchet->sms_accept = 0;
         }
 
         $this->outPayaccForm->paySchet->save(false);
@@ -104,7 +108,7 @@ class MfoOutPayAccountStrategy
         $paySchet->IdUsluga = $bankAdapterBuilder->getUslugatovar()->ID;
         $paySchet->IdOrg = $this->outPayaccForm->partner->ID;
         $paySchet->Extid = $this->outPayaccForm->extid;
-        $paySchet->QrParams = $this->outPayaccForm->descript;
+        $paySchet->QrParams = $this->buildQrParams();
         $paySchet->SummPay = $this->outPayaccForm->amount;
         $paySchet->DateCreate = time();
         $paySchet->DateLastUpdate = time();
@@ -117,6 +121,19 @@ class MfoOutPayAccountStrategy
         }
 
         return $paySchet;
+    }
+
+    protected function buildQrParams()
+    {
+        return sprintf(
+            '%s|%s|%s|%s|%s|%s',
+            $this->outPayaccForm->account,
+            $this->outPayaccForm->bic,
+            $this->outPayaccForm->name,
+            $this->outPayaccForm->inn,
+            $this->outPayaccForm->kpp,
+            $this->outPayaccForm->descript
+        );
     }
 
     /**

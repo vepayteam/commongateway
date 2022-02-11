@@ -8,7 +8,7 @@ use yii\base\Model;
 
 class OutCardPayRequest extends Model
 {
-    public $OrderId;
+    public $ExtId;
     public $Amount;
     public $Description;
     public $CardInfo;

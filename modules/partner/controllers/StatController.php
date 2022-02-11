@@ -736,19 +736,14 @@ class StatController extends Controller
     public function actionRecurrentcarddata()
     {
         if (Yii::$app->request->isAjax) {
-            $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-            Yii::$app->response->format = Response::FORMAT_JSON;
             $AutopayStat = new AutopayStat();
-            $AutopayStat->load(Yii::$app->request->post(), '');
-            if ($AutopayStat->validate()) {
-                return [
+            if ($AutopayStat->loadAndValidate(Yii::$app->request->post(), '')) {
+                return $this->asJson([
                     'status' => 1,
-                    'data' => $this->renderPartial('_recurrentcarddata', [
-                        'data' => $AutopayStat->getData($IsAdmin)
-                    ])
-                ];
+                    'data' => $this->renderPartial('_recurrentcarddata', ['data' => $AutopayStat->getData()])
+                ]);
             }
-            return ['status' => 0, 'message' => $AutopayStat->GetError()];
+            return $this->asJson(['status' => 0, 'message' => $AutopayStat->GetError()]);
         }
         return $this->redirect('/partner');
     }

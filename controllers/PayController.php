@@ -40,6 +40,7 @@ use Yii;
 use yii\db\Exception;
 use yii\helpers\Json;
 use yii\helpers\Url;
+use yii\redis\Mutex;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\web\ErrorAction;
@@ -410,10 +411,15 @@ class PayController extends Controller
 
         $okPayForm = new OkPayForm();
         $okPayForm->IdPay = $id;
-
-        if (!$okPayForm->existPaySchet()) {
+        if ($okPayForm->paySchet === null) {
             throw new NotFoundHttpException();
         }
+
+        // Wait until the "order done" mutex lock released.
+        $mutexKey = DonePayStrategy::getMutexKey($okPayForm->getPaySchet());
+        $mutex = new Mutex(['retryDelay' => 250]);
+        $mutex->acquire($mutexKey, 15);
+        $mutex->release($mutexKey);
 
         $okPayStrategy = new OkPayStrategy($okPayForm);
         $paySchet = $okPayStrategy->exec();

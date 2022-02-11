@@ -8,6 +8,7 @@ use app\models\mfo\VyvodSystem;
 use app\models\partner\admin\structures\VyvodSystemFilterParams;
 use app\models\partner\admin\VoznagStat;
 use app\models\partner\UserLk;
+use app\models\payonline\active_query\UslugatovarQuery;
 use app\models\sms\tables\AccessSms;
 use app\services\partners\models\PartnerOption;
 use app\services\payment\models\PartnerBankGate;
@@ -421,6 +422,9 @@ class Partner extends ActiveRecord
         return $this->hasOne(DistributionReports::class, ['partner_id' => 'ID']);
     }
 
+    /**
+     * @return UslugatovarQuery
+     */
     public function getUslugatovars(): ActiveQuery
     {
         return $this->hasMany(Uslugatovar::class, ['IDPartner' => 'ID']);

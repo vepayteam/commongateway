@@ -209,7 +209,7 @@ class ModelsBankTCBankTest extends \Codeception\Test\Unit
         $tCBankReflectionClass = new ReflectionClass(TCBank::class);
         $parseAns = $tCBankReflectionClass->getMethod('parseAns');
         $parseAns->setAccessible(true);
-        $this->tester->assertEquals(['test' => 'TEST'], $parseAns->invoke($tCBank, ['TEST' => 'TEST']));
+        $this->tester->assertEquals(['test' => 'TEST', 'Status' => 0], $parseAns->invoke($tCBank, ['TEST' => 'TEST']));
     }
 
     public function testArrayChangeKeyCaseRecursive()

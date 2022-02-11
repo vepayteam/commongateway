@@ -3,7 +3,11 @@
 
 namespace app\models;
 
-
+/**
+ * Class TU
+ * @package app\models
+ * @deprecated
+ */
 class TU
 {
     // TODO: merge with UslugatovarType

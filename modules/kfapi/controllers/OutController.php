@@ -12,6 +12,8 @@ use app\models\kfapi\KfRequest;
 use app\models\mfo\MfoTestError;
 use app\models\payonline\Cards;
 use app\models\Payschets;
+use app\services\payment\forms\OutPayAccountForm;
+use app\services\payment\payment_strategies\mfo\MfoOutPayAccountStrategy;
 use app\services\PaySchetService;
 use Yii;
 use yii\base\Exception;
@@ -214,85 +216,31 @@ class OutController extends Controller
     {
         $kf = new KfRequest();
         $kf->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody());
-        $kfOut = new KfOut();
-        $kfOut->scenario = KfOut::SCENARIO_UL;
-        $kfOut->load($kf->req, '');
-        if (!$kfOut->validate()) {
-            return ['status' => 0, 'message' => $kfOut->GetError()];
+
+        $outPayAccountForm = new OutPayAccountForm();
+        $outPayAccountForm->setScenario(OutPayAccountForm::SCENARIO_UL);
+        $outPayAccountForm->load($kf->req, '');
+        $outPayAccountForm->partner = $kf->partner;
+        if (!$outPayAccountForm->validate()) {
+            return ['status' => 0, 'message' => $outPayAccountForm->GetError()];
         }
 
-        $TcbGate = new TcbGate($kf->IdPartner, TCBank::$SCHETGATE);
-        $usl = $kfOut->GetUslug($kf->IdPartner);
-        if (!$usl || !$TcbGate->IsGate()) {
-            return ['status' => 0, 'message' => 'Услуга не найдена'];
+        $mfoOutPayAccountStrategy = new MfoOutPayAccountStrategy($outPayAccountForm);
+
+        try {
+            /** @var PaySchet $paySchet */
+            $paySchet = $mfoOutPayAccountStrategy->exec();
+            return [
+                'status' => 1,
+                'id' => $paySchet->ID,
+                'message' => '',
+            ];
+        } catch (\Exception $e) {
+            return [
+                'status' => 0,
+                'message' => $e->getMessage(),
+            ];
         }
-
-        $kfOut->descript = str_replace(" ", " ", $kfOut->descript); //0xA0 пробел на 0x20
-
-        $mutex = new FileMutex();
-        if (!empty($kfOut->extid)) {
-            //проверка на повторный запрос
-            if (!$mutex->acquire('getPaySchetExt' . $kfOut->extid, 30)) {
-                throw new Exception('getPaySchetExt: error lock!');
-            }
-            $params = $this->paySchetService->getPaySchetExt($kfOut->extid, $usl, $kf->IdPartner);
-            if ($params) {
-                if ($kfOut->amount == $params['sumin']) {
-                    return ['status' => 1, 'id' => (int)$params['IdPay'], 'message' => ''];
-                } else {
-                    return ['status' => 0, 'id' => 0, 'message' => 'Нарушение уникальности запроса'];
-                }
-            }
-        }
-
-        Yii::warning('/out/ul kfmfo='. $kf->IdPartner . " sum=".$kfOut->amount . " extid=".$kfOut->extid, 'mfo');
-
-        $params = $this->paySchetService->payToCard(
-            null,
-            [$kfOut->account, $kfOut->bic, $kfOut->name, $kfOut->inn, $kfOut->kpp, $kfOut->descript],
-            $kfOut,
-            $usl,
-            TCBank::$bank,
-            $kf->IdPartner,
-            $kfOut->sms
-        );
-        if (!empty($kfOut->extid)) {
-            $mutex->release('getPaySchetExt' . $kfOut->extid);
-        }
-        $params['name'] = $kfOut->name;
-        $params['inn'] = trim($kfOut->inn);
-        $params['kpp'] = $kfOut->kpp;
-        $params['bic'] = $kfOut->bic;
-        $params['account'] = $kfOut->account;
-        $params['descript'] = $kfOut->descript;
-
-        /*if (Yii::$app->params['TESTMODE'] == 'Y' && $kfOut->sms === 0) {
-            //заглушка - тест выплаты на счет
-            $test = new MfoTestError();
-            if (!$test->TestCancelSchet($kfOut->account, $params['IdPay'])) {
-                $test->ConfirmOut($params['IdPay']);
-            }
-            return ['status' => 1, 'id' => (int)$params['IdPay'], 'message' => ''];
-        }*/
-        if ($kfOut->sms === 0) {
-            $tcBank = new TCBank($TcbGate);
-            $ret = $tcBank->transferToAccount($params);
-
-            if ($ret && $ret['status'] == 1) {
-                //сохранение номера транзакции
-                $payschets = new Payschets();
-                $payschets->SetBankTransact([
-                    'idpay' => $params['IdPay'],
-                    'trx_id' => $ret['transac'],
-                    'url' => ''
-                ]);
-
-            } else {
-                $this->paySchetService->cancelReq($params['IdPay'],'Платеж не проведен');
-            }
-        }
-
-        return ['status' => 1, 'id' => (int)$params['IdPay'], 'message' => ''];
     }
 
     /**
