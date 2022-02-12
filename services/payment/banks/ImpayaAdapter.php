@@ -26,7 +26,9 @@ use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
+use app\services\payment\forms\impaya\CheckStatusPayRequest;
 use app\services\payment\forms\impaya\CreatePayRequest;
+use app\services\payment\forms\impaya\OutCardPayRequest;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
@@ -65,7 +67,9 @@ class ImpayaAdapter implements IBankAdapter
 
     public function confirm(DonePayForm $donePayForm)
     {
-        // TODO: Implement confirm() method.
+        $confirmPayResponse = new ConfirmPayResponse();
+        $confirmPayResponse->status = BaseResponse::STATUS_DONE;
+        return $confirmPayResponse;
     }
 
     public function createPay(CreatePayForm $createPayForm)
@@ -105,6 +109,7 @@ class ImpayaAdapter implements IBankAdapter
 
         $createPayResponse->status = BaseResponse::STATUS_DONE;
         $createPayResponse->url = $ans['data']['3ds']['url'];
+        $createPayResponse->transac = $ans['data']['transaction']['transaction_id'] ?? '';
         if($ans['data']['3ds']['method'] == 'post') {
             $createPayResponse->params3DS = $ans['data']['3ds']['params'];
         }
@@ -114,7 +119,14 @@ class ImpayaAdapter implements IBankAdapter
 
     public function checkStatusPay(OkPayForm $okPayForm)
     {
-        // TODO: Implement checkStatusPay() method.
+        $checkStatusPayRequest = new CheckStatusPayRequest();
+        $checkStatusPayRequest->invoice = $okPayForm->getPaySchet()->ID;
+        $checkStatusPayRequest->buildHash($this->gate->Login, $this->gate->Token);
+        $uri = '/h2h/';
+        $ans = $this->sendRequest($uri, $checkStatusPayRequest->getAttributes());
+        $checkStatusPayResponse = new CheckStatusPayResponse();
+
+        return $checkStatusPayResponse;
     }
 
     public function recurrentPay(AutoPayForm $autoPayForm)
@@ -129,7 +141,19 @@ class ImpayaAdapter implements IBankAdapter
 
     public function outCardPay(OutCardPayForm $outCardPayForm)
     {
-        // TODO: Implement outCardPay() method.
+        $outCardPayRequest = new OutCardPayRequest();
+        $outCardPayRequest->merchant_id = $this->gate->Login;
+        $outCardPayRequest->invoice = $outCardPayForm->paySchet->ID;
+        $outCardPayRequest->amount = (int)$outCardPayForm->paySchet->getSummFull();
+        $outCardPayRequest->currency = $outCardPayForm->paySchet->currency->Code;
+        $outCardPayRequest->cc_num = $outCardPayForm->cardnum;
+        $outCardPayRequest->buildHash($this->gate->Token);
+        $uri = '/api3/';
+        $ans = $this->sendRequest($uri, $outCardPayRequest->getAttributes());
+
+        $outCardPayResponse = new OutCardPayResponse;
+
+        return $outCardPayResponse;
     }
 
     public function getAftMinSum()
@@ -167,12 +191,12 @@ class ImpayaAdapter implements IBankAdapter
         // TODO: Implement sendP2p() method.
     }
 
-    private function sendRequest ($url, $post) {
-        foreach ($post as $k => $v) {
+    private function sendRequest ($url, $data) {
+        foreach ($data as $k => $v) {
             $post[] = $k."=".$v;
         }
 
-        Yii::warning('Impaya req: ' . $url . ' ' . json_encode($post));
+        Yii::warning('Impaya req: ' . $url . ' ' . json_encode($data));
         $ch = curl_init($this->bankUrl . $url);
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, implode('&', $post));
