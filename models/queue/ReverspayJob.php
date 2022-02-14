@@ -1,27 +1,21 @@
 <?php
 
-
 namespace app\models\queue;
 
-
-use app\models\bank\BankMerchant;
-use app\models\bank\TCBank;
-use app\models\bank\TcbGate;
-use app\models\mfo\statements\ReceiveStatemets;
-use app\models\payonline\Partner;
-use app\models\Payschets;
-use app\models\TU;
-use app\services\payment\banks\bank_adapter_responses\BaseResponse;
-use app\services\payment\banks\BankAdapterBuilder;
-use app\services\payment\forms\RefundPayForm;
 use app\services\payment\models\PaySchet;
-use app\services\payment\PaymentService;
+use app\services\PaymentService;
 use Yii;
 use yii\base\BaseObject;
-use yii\db\Exception;
+use yii\queue\JobInterface;
 
-class ReverspayJob extends BaseObject implements \yii\queue\JobInterface
+/**
+ * @deprecated Вместо ReverspayJob использовать RefundPayJob
+ */
+class ReverspayJob extends BaseObject implements JobInterface
 {
+    /**
+     * @var int
+     */
     public $idpay;
 
     /**
@@ -30,7 +24,7 @@ class ReverspayJob extends BaseObject implements \yii\queue\JobInterface
     public $initiator;
 
     /**
-     * @param \yii\queue\Queue $queue
+     * @inheritdoc
      */
     public function execute($queue)
     {
@@ -38,29 +32,17 @@ class ReverspayJob extends BaseObject implements \yii\queue\JobInterface
             Yii::info("ReversPayJob start ID={$this->idpay} Initiator={$this->initiator}");
         }
 
+        Yii::info('ReversePayJob execute ID=' . $this->idpay);
         $paySchet = PaySchet::findOne(['ID' => $this->idpay]);
 
-        $bankAdapterBuilder = new BankAdapterBuilder();
-        $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank, $paySchet->currency);
+        /** @var PaymentService $service */
+        $service = Yii::$app->get(PaymentService::class);
 
-        $refundPayForm = new RefundPayForm();
-        $refundPayForm->paySchet = $paySchet;
-        $refundResponse = $bankAdapterBuilder->getBankAdapter()->refundPay($refundPayForm);
-
-        if($refundResponse->status == BaseResponse::STATUS_DONE) {
-            $this->getPaymentService()->doneReversPay($paySchet);
-        } else {
-            throw new \Exception('ReverspayJob Ошибка возврата ID=' . $paySchet->ID);
+        try {
+            $reversePaySchet = $service->createRefundPayment($paySchet);
+            $service->reverse($reversePaySchet);
+        } catch (\Exception $e) {
+            Yii::error(['ReversPayJob reverse exception', $e]);
         }
-    }
-
-    /**
-     * @return PaymentService
-     * @throws \yii\base\InvalidConfigException
-     * @throws \yii\di\NotInstantiableException
-     */
-    protected function getPaymentService()
-    {
-        return Yii::$container->get('PaymentService');
     }
 }
