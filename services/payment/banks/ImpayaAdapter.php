@@ -29,6 +29,7 @@ use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\impaya\CheckStatusPayRequest;
 use app\services\payment\forms\impaya\CreatePayRequest;
 use app\services\payment\forms\impaya\OutCardPayRequest;
+use app\services\payment\forms\impaya\RefundPayRequest;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
@@ -38,6 +39,7 @@ use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use Vepay\Gateway\Client\Validator\ValidationException;
 use Yii;
+use yii\base\InvalidArgumentException;
 use yii\helpers\Json;
 
 class ImpayaAdapter implements IBankAdapter
@@ -72,7 +74,7 @@ class ImpayaAdapter implements IBankAdapter
         return $confirmPayResponse;
     }
 
-    public function createPay(CreatePayForm $createPayForm)
+    public function createPay(CreatePayForm $createPayForm): CreatePayResponse
     {
         $paySchet = $createPayForm->getPaySchet();
         $createPayRequest = new CreatePayRequest();
@@ -117,15 +119,18 @@ class ImpayaAdapter implements IBankAdapter
         return $createPayResponse;
     }
 
-    public function checkStatusPay(OkPayForm $okPayForm)
+    public function checkStatusPay(OkPayForm $okPayForm): CheckStatusPayResponse
     {
         $checkStatusPayRequest = new CheckStatusPayRequest();
-        $checkStatusPayRequest->invoice = $okPayForm->getPaySchet()->ID;
-        $checkStatusPayRequest->buildHash($this->gate->Login, $this->gate->Token);
-        $uri = '/h2h/';
+        $checkStatusPayRequest->invoice = $okPayForm->getPaySchet()->ExtBillNumber;
+        $checkStatusPayRequest->merchant_id = $this->gate->Login;
+        $checkStatusPayRequest->buildHash($this->gate->Token);
+        $uri = '/gateway/';
         $ans = $this->sendRequest($uri, $checkStatusPayRequest->getAttributes());
         $checkStatusPayResponse = new CheckStatusPayResponse();
 
+        $checkStatusPayResponse->message = $ans['data']['payment_system_status'] ?? '';
+        $checkStatusPayResponse->status = $this->convertStatus($ans['data']['status_id']);
         return $checkStatusPayResponse;
     }
 
@@ -134,12 +139,26 @@ class ImpayaAdapter implements IBankAdapter
         // TODO: Implement recurrentPay() method.
     }
 
-    public function refundPay(RefundPayForm $refundPayForm)
+    public function refundPay(RefundPayForm $refundPayForm): RefundPayResponse
     {
-        // TODO: Implement refundPay() method.
+        $refundPayRequest = new RefundPayRequest();
+        $refundPayRequest->merchant_id = $this->gate->Login;
+        $refundPayRequest->transaction_id = $refundPayForm->paySchet->ExtBillNumber;
+        $refundPayRequest->amount = $refundPayForm->paySchet->getSummFull();
+        $refundPayRequest->buildHash($this->gate->Token);
+        $uri = '/api/';
+        $ans = $this->sendRequest($uri, $refundPayRequest->getAttributes());
+
+        $refundPayResponse = new RefundPayResponse();
+        if($ans['data'] == "OK") {
+            $refundPayResponse->status = BaseResponse::STATUS_DONE;
+        } else {
+            $refundPayResponse->status = BaseResponse::STATUS_ERROR;
+        }
+        return $refundPayResponse;
     }
 
-    public function outCardPay(OutCardPayForm $outCardPayForm)
+    public function outCardPay(OutCardPayForm $outCardPayForm): OutCardPayResponse
     {
         $outCardPayRequest = new OutCardPayRequest();
         $outCardPayRequest->merchant_id = $this->gate->Login;
@@ -147,51 +166,64 @@ class ImpayaAdapter implements IBankAdapter
         $outCardPayRequest->amount = (int)$outCardPayForm->paySchet->getSummFull();
         $outCardPayRequest->currency = $outCardPayForm->paySchet->currency->Code;
         $outCardPayRequest->cc_num = $outCardPayForm->cardnum;
+        $outCardPayRequest->phone = $outCardPayForm->phone;
+        $outCardPayRequest->fname = $outCardPayForm->getFirstName();
+        $outCardPayRequest->lname = $outCardPayForm->getLastName();
         $outCardPayRequest->buildHash($this->gate->Token);
         $uri = '/api3/';
         $ans = $this->sendRequest($uri, $outCardPayRequest->getAttributes());
 
         $outCardPayResponse = new OutCardPayResponse;
+        $outCardPayResponse->message = $ans['data']['status_descr'] ?? '';
+        $baseStatus = $this->convertStatus($ans['data']['status_id']);
+
+        if($baseStatus == BaseResponse::STATUS_DONE || $baseStatus == BaseResponse::STATUS_CREATED) {
+            $outCardPayResponse->status = BaseResponse::STATUS_DONE;
+            $outCardPayResponse->trans = $ans['data']['transaction']['transaction_id'];
+        } else {
+            $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
+        }
 
         return $outCardPayResponse;
     }
 
     public function getAftMinSum()
     {
-        // TODO: Implement getAftMinSum() method.
+        throw new GateException('Метод недоступен');
     }
 
     public function getBalance(GetBalanceRequest $getBalanceRequest)
     {
-        // TODO: Implement getBalance() method.
+        throw new GateException('Метод недоступен');
     }
 
     public function transferToAccount(OutPayAccountForm $outPayaccForm)
     {
-        // TODO: Implement transferToAccount() method.
+        throw new GateException('Метод недоступен');
     }
 
     public function identInit(Ident $ident)
     {
-        // TODO: Implement identInit() method.
+        throw new GateException('Метод недоступен');
     }
 
     public function identGetStatus(Ident $ident)
     {
-        // TODO: Implement identGetStatus() method.
+        throw new GateException('Метод недоступен');
     }
 
     public function currencyExchangeRates()
     {
-        // TODO: Implement currencyExchangeRates() method.
+        throw new GateException('Метод недоступен');
     }
 
     public function sendP2p(SendP2pForm $sendP2pForm)
     {
-        // TODO: Implement sendP2p() method.
+        throw new GateException('Метод недоступен');
     }
 
-    private function sendRequest ($url, $data) {
+    private function sendRequest ($url, $data): array
+    {
         foreach ($data as $k => $v) {
             $post[] = $k."=".$v;
         }
@@ -200,7 +232,6 @@ class ImpayaAdapter implements IBankAdapter
         $ch = curl_init($this->bankUrl . $url);
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, implode('&', $post));
-        #curl_setopt($ch, CURLOPT_FOLLOWLOCATION  	, 1);
         curl_setopt($ch, CURLOPT_HEADER, 0);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 
@@ -209,12 +240,35 @@ class ImpayaAdapter implements IBankAdapter
             $curl = curl_exec($ch);
             Yii::warning('Impaya res: ' . $url . ' ' . $curl);
             $ans['status'] = BaseResponse::STATUS_DONE;
-            $ans['data'] = Json::decode($curl);
+            try {
+                $ans['data'] = Json::decode($curl);
+            } catch (InvalidArgumentException $e) {
+                $ans['data'] = $curl;
+            }
+
         } catch (\Exception $e) {
             $ans['status'] = BaseResponse::STATUS_ERROR;
             $ans['message'] = $e->getMessage();
         }
 
         return $ans;
+    }
+
+    private function convertStatus(int $status): int {
+        switch ($status) {
+            case 0:
+            case 2:
+            case 3:
+            case 4:
+            case 11:
+                return BaseResponse::STATUS_CREATED;
+            case 1:
+            case 10:
+                return BaseResponse::STATUS_DONE;
+            case 5:
+                return BaseResponse::STATUS_CANCEL;
+            default:
+                return BaseResponse::STATUS_ERROR;
+        }
     }
 }

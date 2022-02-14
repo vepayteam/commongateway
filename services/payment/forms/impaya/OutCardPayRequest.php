@@ -12,20 +12,20 @@ class OutCardPayRequest extends Model
     public $amount;
     public $currency;
     public $cc_num;
-    public $phone = '';
-    public $hash = '';
+    public $phone;
+    public $hash;
+    public $fname;
+    public $lname;
 
     public function buildHash($secret)
     {
-        $a = 0;
-        $this->hash = md5(
-            $this->invoice
+        $hashStr = $this->invoice
             . $this->cc_num
             . $this->amount
             . $this->currency
             . $this->merchant_id
-            . $secret
-        );
+            . $secret;
+        $this->hash = md5($hashStr);
     }
 
 
