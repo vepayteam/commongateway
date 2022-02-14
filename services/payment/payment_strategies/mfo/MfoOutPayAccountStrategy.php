@@ -11,6 +11,7 @@ use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
+use app\services\payment\exceptions\NotUniquePayException;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\jobs\RefreshStatusPayJob;
 use app\services\payment\models\PartnerBankGate;
@@ -36,6 +37,7 @@ class MfoOutPayAccountStrategy
      * @return PaySchet
      * @throws CreatePayException
      * @throws GateException
+     * @throws NotUniquePayException
      */
     public function exec()
     {
@@ -77,7 +79,7 @@ class MfoOutPayAccountStrategy
 
     /**
      * @return PaySchet|null
-     * @throws CreatePayException
+     * @throws NotUniquePayException
      */
     protected function getReplyPaySchet()
     {
@@ -89,7 +91,7 @@ class MfoOutPayAccountStrategy
         {
             return $paySchet;
         } elseif($paySchet) {
-            throw new CreatePayException('Нарушение уникальности запроса');
+            throw new NotUniquePayException($paySchet->ID, $paySchet->Extid);
         } else {
             return null;
         }
