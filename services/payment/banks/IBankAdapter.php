@@ -3,19 +3,20 @@
 namespace app\services\payment\banks;
 
 
+use app\clients\tcbClient\TcbOrderNotExistException;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentInitResponse;
-use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
-use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
-use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
+use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
+use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
@@ -26,13 +27,12 @@ use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
-use app\services\payment\forms\GetBalanceForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
-use app\services\payment\forms\SendP2pForm;
 use app\services\payment\forms\RegistrationBenificForm;
+use app\services\payment\forms\SendP2pForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use Vepay\Gateway\Client\Validator\ValidationException;
@@ -72,6 +72,7 @@ interface IBankAdapter
     /**
      * @param CheckStatusPayForm $checkStatusPayForm
      * @return CheckStatusPayResponse
+     * @throws TcbOrderNotExistException
      */
     public function checkStatusPay(OkPayForm $okPayForm);
 
