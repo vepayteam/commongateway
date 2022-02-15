@@ -22,13 +22,13 @@ steps:
   image: aevea/commitsar:0.15.0
   commands:
   - commitsar -v -s
-  failure: ignore
 
-- name: notify-conventional-commits-7ac2812fb6deba1062e461c7b277016c
+- name: notify-conventional-commits-4cef185a33ba84b7ecf260d3a5806c23
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
-  - gitea-status -t "conventional-commits" -m "-ignored-" -s "warning" -u "https://www.conventionalcommits.org/en/v1.0.0/#why-use-conventional-commits"
+  - export BUILD_STATUS=$$(cat /run/drone/env | grep DRONE_STAGE_STATUS | cut -d '=' -f 2 | tr -d \")
+  - gitea-status -t "conventional-commits" -m "$$BUILD_STATUS" -s "$$BUILD_STATUS" -u "https://www.conventionalcommits.org/en/v1.0.0/#why-use-conventional-commits"
   environment:
     GITEA_TOKEN:
       from_secret: GITEA_TOKEN
@@ -576,7 +576,7 @@ steps:
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
-- name: helm-values-generator-75b99479f797d8e602cf9b1bb5c03594
+- name: helm-values-generator-681d01c5b68af0e4c692f66bee7c9ff3
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
@@ -584,10 +584,14 @@ steps:
   - yq write values.yaml "image.repository" "registry.vepay.cf/${DRONE_REPO,,}" -i
   - yq write values.yaml "image.tag" "${DRONE_BUILD_NUMBER}" -i
   - yq write values.yaml "ingress.enabled" "false" -i
-  - yq write values.yaml "ingress.hosts[0].host" "${DRONE_REPO_NAME}.backend.vepay.dev" -i
+  - yq write values.yaml "ingress.hosts[0].host" "test.vepay.online" -i
   - yq write values.yaml "ingress.hosts[0].paths[0]" "/" -i
-  - yq write values.yaml "ingress.tls[0].hosts[0]" "${DRONE_REPO_NAME}.backend.vepay.dev" -i
-  - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-dev-wildcard-certificate" -i
+  - yq write values.yaml "ingress.hosts[1].host" "${DRONE_REPO_NAME}.backend.vepay.dev" -i
+  - yq write values.yaml "ingress.hosts[1].paths[0]" "/" -i
+  - yq write values.yaml "ingress.tls[0].hosts[0]" "test.vepay.online" -i
+  - yq write values.yaml "ingress.tls[0].secretName" "test-vepay-online-certificate" -i
+  - yq write values.yaml "ingress.tls[1].hosts[0]" "${DRONE_REPO_NAME}.backend.vepay.dev" -i
+  - yq write values.yaml "ingress.tls[1].secretName" "backend-vepay-dev-wildcard-certificate" -i
   - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+500000000))" -i
   - yq write values.yaml "config.payments.brs.url_xml" "https://194.67.29.216:8443" -i
   - echo "=>>>" && cat values.yaml
@@ -722,6 +726,6 @@ get:
 
 ---
 kind: signature
-hmac: 70023947e93262060c8be1d48248a0c1ed8a42518737b28a08fc9e6fb59d723f
+hmac: be144d487e0824e5f3bad686c9d56b1a70a11cc051a4cb32d5dac8115f93b3ba
 
 ...
