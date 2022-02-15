@@ -54,12 +54,7 @@ class ImpayaAdapter implements IBankAdapter
     public function setGate(PartnerBankGate $partnerBankGate)
     {
         $this->gate = $partnerBankGate;
-        if(Yii::$app->params['TESTMODE'] === 'Y') {
-            $this->bankUrl = 'https://www.impaya.online/new';
-        } else {
-            $this->bankUrl = 'https://www.impaya.online/new';
-        }
-
+        $this->bankUrl = 'https://www.impaya.online/new';
     }
 
     public function getBankId()
