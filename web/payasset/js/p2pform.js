@@ -50,6 +50,14 @@ $(document).ready(function() {
         window.location = $(this).data('url');
     })
 
+    $('#agreeOffer').change(function() {
+        if($(this).is(":checked")) {
+            $('.submitBtn').prop( "disabled", false);
+        } else {
+            $('.submitBtn').prop( "disabled", true);
+        }
+    })
+
     $('#paymentAmount').on('change keyup', function() {
         var amount = parseInt($(this).val());
         var comiss = amount * (pcComission/100);
@@ -61,6 +69,10 @@ $(document).ready(function() {
 
     $('#sendForm').click(function(e) {
         e.preventDefault();
+
+        if($('.submitBtn').prop( "disabled")) {
+            return false;
+        }
 
         if(!$("#agreeOffer").prop('checked')) {
             $("#formErrorOfferMessage").show();
