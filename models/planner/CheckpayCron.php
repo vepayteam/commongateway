@@ -17,9 +17,6 @@ use yii\db\Expression;
  */
 class CheckpayCron
 {
-    const DEFAULT_CANCEL_OLD_PAYMENT_RCCODE = 'TL';
-    const DEFAULT_CANCEL_OLD_PAYMENT_MESSAGE = 'Время оплаты истекло';
-
     //private $timeOutMin = 15;
 
     public function execute()
@@ -157,8 +154,8 @@ class CheckpayCron
                     'idgroup' => $paySchet->IdGroupOplat,
                     'trx_id' => $paySchet->ExtBillNumber,
                     'result_code' => 2,
-                    'message' => self::DEFAULT_CANCEL_OLD_PAYMENT_MESSAGE,
-                    'RCCode' => self::DEFAULT_CANCEL_OLD_PAYMENT_RCCODE, // VPBC-1293 для операций с таймаутом устанавливать RCCode=TL
+                    'message' => PaySchet::DEFAULT_CANCEL_OLD_PAYMENT_MESSAGE,
+                    'RCCode' => PaySchet::DEFAULT_CANCEL_OLD_PAYMENT_RCCODE, // VPBC-1293 для операций с таймаутом устанавливать RCCode=TL
                     'ApprovalCode' => '',
                     'RRN' => '',
                 ]);
