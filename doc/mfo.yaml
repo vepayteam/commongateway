@@ -23,6 +23,7 @@ tags:
 servers:
   - url: https://api.vepay.online/mfo
   - url: https://test.vepay.online/mfo
+  - url: {{current_host}}/mfo
 paths:
   /card/info:
     post:
@@ -785,7 +786,7 @@ paths:
               - Document
           summary: Документ подтверждения перевода денежных средств в формате PDF
           parameters:
-              - in: path
+              - in: query
                 name: id
                 description: ID платежа
                 schema:

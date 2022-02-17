@@ -7,11 +7,26 @@ use app\models\payonline\Partner;
 use app\modules\mfo\components\BaseApiController;
 use app\services\payment\models\PaySchet;
 use kartik\mpdf\Pdf;
+use yii\helpers\ArrayHelper;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
 class DocumentController extends BaseApiController
 {
+    /**
+     * {@inheritDoc}
+     */
+    public function behaviors(): array
+    {
+        return ArrayHelper::merge(parent::behaviors(), [
+            'contentNegotiator' => [
+                'formats' => [
+                    'application/pdf' => Response::FORMAT_RAW,
+                ],
+            ],
+        ]);
+    }
+
     /**
      * Outputs confirmation PDF document.
      *
