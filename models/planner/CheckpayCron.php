@@ -154,8 +154,8 @@ class CheckpayCron
                     'idgroup' => $paySchet->IdGroupOplat,
                     'trx_id' => $paySchet->ExtBillNumber,
                     'result_code' => 2,
-                    'message' => PaySchet::DEFAULT_CANCEL_OLD_PAYMENT_MESSAGE,
-                    'RCCode' => PaySchet::DEFAULT_CANCEL_OLD_PAYMENT_RCCODE, // VPBC-1293 для операций с таймаутом устанавливать RCCode=TL
+                    'message' => PaySchet::ERROR_INFO_PAYMENT_TIMEOUT,
+                    'RCCode' => PaySchet::RCCODE_CANCEL_PAYMENT, // VPBC-1293 для операций с таймаутом устанавливать RCCode=TL
                     'ApprovalCode' => '',
                     'RRN' => '',
                 ]);
