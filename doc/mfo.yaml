@@ -73,6 +73,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CardRegAns"
+        "400":
+          description: Операция с передаваемым extid уже существует
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotUniquePayError"
         default:
           description: Error (40X,500)
           content:
@@ -152,6 +158,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StatusIdUrl"
+        "400":
+          description: Операция с передаваемым extid уже существует
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotUniquePayError"
         default:
           description: Error (40X,500)
           content:
@@ -178,6 +190,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StatusIdUrl"
+        "400":
+          description: Операция с передаваемым extid уже существует
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotUniquePayError"
         default:
           description: Error (40X,500)
           content:
@@ -220,6 +238,12 @@ paths:
                     type: integer
                     description: ID платежа. Присутствует, если операция прошла успешно
                     example: 12345
+        "400":
+          description: Операция с передаваемым extid уже существует
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotUniquePayError"
         default:
           description: Error (40X,500)
           content:
@@ -246,6 +270,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StatusId"
+        "400":
+          description: Операция с передаваемым extid уже существует
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotUniquePayError"
         default:
           description: Error (40X,500)
           content:
@@ -298,6 +328,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StatusId"
+        "400":
+          description: Операция с передаваемым extid уже существует
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotUniquePayError"
         default:
           description: Error (40X,500)
           content:
@@ -324,6 +360,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StatusId"
+        "400":
+          description: Операция с передаваемым extid уже существует
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotUniquePayError"
         default:
           description: Error (40X,500)
           content:
@@ -350,6 +392,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StatusId"
+        "400":
+          description: Операция с передаваемым extid уже существует
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotUniquePayError"
         default:
           description: Error (40X,500)
           content:
@@ -402,6 +450,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StatusId"
+        "400":
+          description: Операция с передаваемым extid уже существует
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotUniquePayError"
         default:
           description: Error (40X,500)
           content:
@@ -1376,6 +1430,25 @@ components:
         status:
           type: integer
           description: Код ошибки
+    NotUniquePayError:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Код ошибки
+          default: 0
+        message:
+          type: string
+          description: Сообщение ошибки
+          default: Операция с передаваемым extid уже существует
+        id:
+          type: integer
+          description: ID операции
+          example: 12345
+        extid:
+          type: string
+          description: Внешний идентификатор запроса
+          example: ABCD1234
     IdentReq:
       type: object
       properties:

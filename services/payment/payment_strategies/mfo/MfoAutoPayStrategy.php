@@ -3,6 +3,7 @@
 
 namespace app\services\payment\payment_strategies\mfo;
 
+use app\services\payment\exceptions\NotUniquePayException;
 use app\services\payment\jobs\RecurrentPayJob;
 use app\services\payment\PaymentService;
 use Yii;
@@ -36,6 +37,7 @@ class MfoAutoPayStrategy
      * @return PaySchet
      * @throws CreatePayException
      * @throws GateException
+     * @throws NotUniquePayException
      */
     public function exec()
     {
@@ -79,7 +81,7 @@ class MfoAutoPayStrategy
         } elseif ($replyPaySchet && $replyPaySchet->SummPay != $this->autoPayForm->amount) {
             $mutex->release($mutexKey);
             Yii::error('getReplyRequest, a non-unique query', 'mfo');
-            throw new CreatePayException('Нарушение уникальности запроса');
+            throw new NotUniquePayException($replyPaySchet->ID, $replyPaySchet->Extid);
         }
 
         if (!$mutex->acquire($mutexKey, 30)) {
