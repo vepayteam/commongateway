@@ -8,6 +8,7 @@ use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\CreatePayException;
+use app\services\payment\exceptions\NotUniquePayException;
 use app\services\payment\forms\CardRegForm;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
@@ -27,13 +28,14 @@ class MfoCardRegStrategy
      * @return PaySchet
      * @throws CreatePayException
      * @throws \app\services\payment\exceptions\GateException
+     * @throws NotUniquePayException
      * @throws \Exception
      */
     public function exec()
     {
         $duplicatePaySchet = $this->getDuplicateRequest();
         if(!empty($duplicatePaySchet)) {
-            return $duplicatePaySchet;
+            throw new NotUniquePayException($duplicatePaySchet->ID, $duplicatePaySchet->Extid);
         }
 
         $user = $this->createUser();
