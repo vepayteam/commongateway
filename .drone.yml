@@ -181,7 +181,7 @@ steps:
   - yq write values.yaml "ingress.tls[0].hosts[0]" "`replace-slash ${DRONE_SOURCE_BRANCH}`-${DRONE_REPO_NAME}.backend.vepay.cf" -i
   - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-cf-wildcard-certificate" -i
   - yq write values.yaml "redis.enabled" "true" -i
-  - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+300000000))" -i
+  - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+550000000))" -i
   - yq write values.yaml "config.payments.brs.url_xml" "https://194.67.29.216:8443" -i
   - echo "=>>>" && cat values.yaml
 
@@ -406,7 +406,7 @@ steps:
   - yq write values.yaml "ingress.hosts[0].paths[0]" "/" -i
   - yq write values.yaml "ingress.tls[0].hosts[0]" "${DRONE_BRANCH}-test-${DRONE_REPO_NAME}.backend.vepay.cf" -i
   - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-cf-wildcard-certificate" -i
-  - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+400000000))" -i
+  - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+650000000))" -i
   - yq write values.yaml "config.payments.brs.url_xml" "https://194.67.29.216:8443" -i
   - echo "=>>>" && cat values.yaml
 
@@ -447,11 +447,11 @@ steps:
   image: registry.vepay.cf/ci-tools
   commands:
   - touch values.yaml
-  - yq write values.yaml "ingress.hosts[0].host" "${DRONE_BRANCH}-${DRONE_REPO_NAME}.backend.vepay.cf" -i
+  - yq write values.yaml "ingress.āhosts[0].host" "${DRONE_BRANCH}-${DRONE_REPO_NAME}.backend.vepay.cf" -i
   - yq write values.yaml "ingress.hosts[0].paths[0]" "/" -i
   - yq write values.yaml "ingress.tls[0].hosts[0]" "${DRONE_BRANCH}-${DRONE_REPO_NAME}.backend.vepay.cf" -i
   - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-cf-wildcard-certificate" -i
-  - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+450000000))" -i
+  - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+700000000))" -i
   - echo "=>>>" && cat values.yaml
 
 - name: helm-deployment-upgrade-3606237ab0fb9dcc2c35d0bef846fdb8
@@ -592,7 +592,7 @@ steps:
   - yq write values.yaml "ingress.tls[0].secretName" "test-vepay-online-certificate" -i
   - yq write values.yaml "ingress.tls[1].hosts[0]" "${DRONE_REPO_NAME}.backend.vepay.dev" -i
   - yq write values.yaml "ingress.tls[1].secretName" "backend-vepay-dev-wildcard-certificate" -i
-  - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+500000000))" -i
+  - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+750000000))" -i
   - yq write values.yaml "config.payments.brs.url_xml" "https://194.67.29.216:8443" -i
   - echo "=>>>" && cat values.yaml
 
@@ -726,6 +726,6 @@ get:
 
 ---
 kind: signature
-hmac: be144d487e0824e5f3bad686c9d56b1a70a11cc051a4cb32d5dac8115f93b3ba
+hmac: 5c4ca094906b3c398d53d61b228b9251731fa41537ce5883d2777e81736077a7
 
 ...
