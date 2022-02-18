@@ -4,6 +4,7 @@
 namespace app\services\payment\banks;
 
 use app\clients\TcbClient;
+use app\clients\tcbClient\requests\Debit3ds2FinishRequest;
 use app\clients\tcbClient\requests\DebitFinishRequest;
 use app\clients\tcbClient\responses\DebitFinishResponse;
 use app\clients\tcbClient\responses\ErrorResponse;
@@ -52,8 +53,6 @@ use app\services\payment\forms\tkb\CheckStatusPayRequest;
 use app\services\payment\forms\tkb\Confirm3DSv2Request;
 use app\services\payment\forms\tkb\CreatePayRequest;
 use app\services\payment\forms\tkb\CreateRecurrentPayRequest;
-use app\services\payment\forms\tkb\DonePay3DSv2Request;
-use app\services\payment\forms\tkb\DonePayRequest;
 use app\services\payment\forms\tkb\OutCardPayRequest;
 use app\services\payment\forms\tkb\RefundPayRequest;
 use app\services\payment\forms\tkb\TransferToAccountRequest;
@@ -63,8 +62,9 @@ use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
 use Carbon\Carbon;
-use clients\tcbClient\TcbInternalException;
-use clients\tcbClient\TcbParsingException;
+use app\clients\tcbClient\requests\objects\AuthenticationData;
+use app\clients\tcbClient\TcbInternalException;
+use app\clients\tcbClient\TcbParsingException;
 use GuzzleHttp\Exception\GuzzleException;
 use qfsx\yii2\curl\Curl;
 use SimpleXMLElement;
@@ -1361,36 +1361,51 @@ class TKBankAdapter implements IBankAdapter
         }
     }
 
-
     protected function finishBy3DSv2(DonePayForm $donePayForm)
     {
-        $action = '/api/v1/card/unregistered/debit/3ds2/wof/finish';
-
+        $client = $this->getClient();
         $paySchet = $donePayForm->getPaySchet();
-        $donePay3DSv2Request = new DonePay3DSv2Request();
-        $donePay3DSv2Request->ExtId = $paySchet->ID;
-        $donePay3DSv2Request->Amount = $paySchet->getSummFull();
-        $donePay3DSv2Request->Description = 'Оплата по счету ' . $paySchet->ID;
-        $donePay3DSv2Request->CardInfo = [
-            'CardRefId' => $paySchet->CardRefId3DS,
-        ];
 
-        $donePay3DSv2Request->AuthenticationData = json_decode(Yii::$app->cache->get('PaySchet_3DSv2_AuthData_' . $paySchet->ID), true);
-        $confirmPayResponse = new ConfirmPayResponse();
+        $forceGate = in_array($paySchet->uslugatovar->IsCustom, UslugatovarType::ecomTypes())
+            ? Debit3ds2FinishRequest::FORCE_GATE_ECOM
+            : Debit3ds2FinishRequest::FORCE_GATE_AFT;
+        $authData = json_decode(
+            Yii::$app->cache->get(Cache3DSv2Interface::CACHE_PREFIX_AUTH_DATA . $paySchet->ID),
+            true
+        );
+        $request = new Debit3ds2FinishRequest(
+            $paySchet->ID,
+            $paySchet->CardRefId3DS,
+            $paySchet->getSummFull(),
+            $forceGate,
+            new AuthenticationData(
+                $authData['Status'],
+                $authData['AuthenticationValue'] ?? null,
+                $authData['DsTransID'] ?? null,
+                $authData['Eci'] ?? null
+            ),
+            'Оплата по счету ' . $paySchet->ID
+        );
 
-        $queryData = Json::encode($donePay3DSv2Request->getAttributes());
-        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+        try {
+            $response = $client->debit3ds2Finish($request);
+        } catch (TcbParsingException|TcbInternalException|GuzzleException $e) {
+            \Yii::$app->errorHandler->logException($e);
+            throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее.');
+        }
 
-        if(!isset($ans['xml']['OrderId'])) {
+        if ($response instanceof ErrorResponse) {
+            // legacy logic
             throw new CreatePayException('Ошибка подтверждения платежа 3DS v2');
         }
 
-        $paySchet->ExtBillNumber = $ans['xml']['OrderId'];
+        $paySchet->ExtBillNumber = $response->orderId;
         $paySchet->save(false);
 
+        $confirmPayResponse = new ConfirmPayResponse();
         $confirmPayResponse->status = BaseResponse::STATUS_DONE;
         $confirmPayResponse->message = 'Успешно';
-        $confirmPayResponse->transac = $ans['xml']['OrderId'];
+        $confirmPayResponse->transac = $response->orderId;
 
         return $confirmPayResponse;
     }

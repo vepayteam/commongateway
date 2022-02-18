@@ -68,7 +68,7 @@ class AutopayStat extends Model
             ->andWhere(['!=', 'Bank', '0'])
             ->andWhere(['Status' => [1,3]])
             ->andWhere(['between', 'DateCreate', $datefrom, $dateto])
-            ->andFilterWhere(['IDPartner' => $idPart]);
+            ->andFilterWhere(['IdOrg' => $idPart]);
 
         $ret['cntnewcards'] = $queryPayShet->count();
 

@@ -47,7 +47,8 @@ return [
                 'yii\web\HttpException:404',
             ],
             'maskVars' => $maskVars,
-            'logVars' => $logVars
+            'logVars' => $logVars,
+            'microtime' => true
         ],
         [
             'class' => 'app\services\logs\targets\SecurityStdErrJSONTarget',
@@ -57,7 +58,8 @@ return [
                 'yii\web\HttpException:404',
             ],
             'maskVars' => $maskVars,
-            'logVars' => $logVars
+            'logVars' => $logVars,
+            'microtime' => true
         ],
     ],
 ];

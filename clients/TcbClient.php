@@ -2,12 +2,14 @@
 
 namespace app\clients;
 
+use app\clients\tcbClient\requests\Debit3ds2FinishRequest;
 use app\clients\tcbClient\requests\DebitFinishRequest;
+use app\clients\tcbClient\responses\Debit3ds2FinishResponse;
 use app\clients\tcbClient\responses\DebitFinishResponse;
 use app\clients\tcbClient\responses\ErrorResponse;
+use app\clients\tcbClient\TcbInternalException;
+use app\clients\tcbClient\TcbParsingException;
 use app\models\payonline\Cards;
-use clients\tcbClient\TcbInternalException;
-use clients\tcbClient\TcbParsingException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use yii\base\BaseObject;
@@ -16,7 +18,7 @@ use yii\helpers\ArrayHelper;
 use yii\helpers\Json;
 
 /**
- * Клиент к банку ТКБ.
+ * TCB bank client.
  */
 class TcbClient extends BaseObject
 {
@@ -116,7 +118,7 @@ class TcbClient extends BaseObject
     }
 
     /**
-     * Осуществляет процедуру завершения операции по протоколу ECOM.
+     * DebitFinishECOM method.
      *
      * @param DebitFinishRequest $request
      * @return DebitFinishResponse|ErrorResponse
@@ -131,7 +133,7 @@ class TcbClient extends BaseObject
     }
 
     /**
-     * Осуществляет процедуру завершения операции по протоколу AFT.
+     * DebitFinishAFT method.
      *
      * @param DebitFinishRequest $request
      * @return DebitFinishResponse|ErrorResponse
@@ -165,10 +167,52 @@ class TcbClient extends BaseObject
         if (isset($responseData['ErrorInfo']['ErrorCode'])) {
             $errorCode = (int)$responseData['ErrorInfo']['ErrorCode'];
             if ($errorCode !== 0) {
-                return new ErrorResponse($responseData['ErrorInfo']['ErrorInfo'] ?? '', $errorCode);
+                return new ErrorResponse($responseData['ErrorInfo']['ErrorMessage'] ?? '', $errorCode);
             }
         }
 
         return new DebitFinishResponse($responseData['OrderId'], $responseData['ExtId']);
+    }
+
+    /**
+     * DebitUnregisteredCard3ds2WofFinish method.
+     *
+     * @param Debit3ds2FinishRequest $request
+     * @return Debit3ds2FinishResponse|ErrorResponse
+     * @throws GuzzleException
+     * @throws TcbInternalException
+     * @throws TcbParsingException
+     */
+    public function debit3ds2Finish(Debit3ds2FinishRequest $request)
+    {
+        $auth = $request->authenticationData;
+        $authData = ['Status' => $auth->status];
+        if ($auth->authenticationValue !== null) {
+            $authData['AuthenticationValue'] = $auth->authenticationValue;
+        }
+        if ($auth->eci !== null) {
+            $authData['Eci'] = $auth->eci;
+        }
+        if ($auth->dsTransId !== null) {
+            $authData['DsTransID'] = $auth->dsTransId;
+        }
+
+        $responseData = $this->doRequest('/api/v1/card/unregistered/debit/3ds2/wof/finish', [
+            'ExtId' => $request->extId,
+            'Amount' => $request->amount,
+            'ForceGate' => $request->forceGate,
+            'Description' => $request->description,
+            'CardInfo' => ['CardRefId' => $request->cardRefId],
+            'AuthenticationData' => $authData,
+        ]);
+
+        if (isset($responseData['ErrorInfo']['Code'])) {
+            $errorCode = (int)$responseData['ErrorInfo']['Code'];
+            if ($errorCode !== 0) {
+                return new ErrorResponse($responseData['ErrorInfo']['Message'] ?? '', $errorCode);
+            }
+        }
+
+        return new Debit3ds2FinishResponse($responseData['OrderId'], $responseData['ExtId']);
     }
 }
