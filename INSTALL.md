@@ -16,7 +16,7 @@
         
         Установить пакеты:
         
-        npm install uglify-es -g
+        npm install uglify-js@3.14.5 -g
         
         npm i clean-css-cli -g    
         

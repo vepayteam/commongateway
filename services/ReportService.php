@@ -88,14 +88,20 @@ class ReportService extends Component
     }
 
     /**
-     * Returns a list of service type IDs which allowed for the specified merchant (partner) to create a report with.
+     * Returns a list of service types which allowed for the specified merchant (partner) to create a report with.
      *
      * @param Partner $partner
-     * @return array
+     * @return array An associative array with service type IDs as keys
+     * and service type names (specific for the merchant) as values.
      */
-    public function getAllowedServiceTypeIds(Partner $partner): array
+    public function getAllowedServiceTypes(Partner $partner): array
     {
-        return array_values(array_unique(ArrayHelper::getColumn($partner->getUslugatovars()->all(), 'IsCustom')));
+        $uslugatovars = $partner->getUslugatovars()
+            ->notSoftDeleted()
+            ->all();
+
+        /** {@see Uslugatovar::$IsCustom} - service type ID */
+        return ArrayHelper::map($uslugatovars, 'IsCustom', 'NameUsluga');
     }
 
     /**

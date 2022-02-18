@@ -2,7 +2,7 @@
 
 namespace app\clients\tcbClient\requests;
 
-use clients\tcbClient\requests\objects\AuthenticationData;
+use app\clients\tcbClient\requests\objects\AuthenticationData;
 use yii\base\BaseObject;
 
 /**
