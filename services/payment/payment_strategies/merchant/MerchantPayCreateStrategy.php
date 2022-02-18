@@ -9,6 +9,7 @@ use app\models\payonline\Uslugatovar;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
+use app\services\payment\exceptions\NotUniquePayException;
 use app\services\payment\forms\MerchantPayForm;
 use app\services\payment\models\Currency;
 use app\services\payment\models\PaySchet;
@@ -35,6 +36,7 @@ class MerchantPayCreateStrategy
      * @throws GateException
      * @throws \yii\base\InvalidConfigException
      * @throws \yii\di\NotInstantiableException
+     * @throws NotUniquePayException
      */
     public function exec(): PaySchet
     {
@@ -62,7 +64,7 @@ class MerchantPayCreateStrategy
         if ($replyPaySchet && $replyPaySchet->SummPay == $this->payForm->amount) {
             return $replyPaySchet;
         } elseif ($replyPaySchet && $replyPaySchet->SummPay != $this->payForm->amount) {
-            throw new CreatePayException('Нарушение уникальности запроса');
+            throw new NotUniquePayException($replyPaySchet->ID, $replyPaySchet->Extid);
         }
         Yii::warning('createPaySchet extid=' . $this->payForm->extid, 'merchant');
         $paySchet = $this->createPaySchet($bankAdapterBuilder);
