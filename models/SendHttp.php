@@ -3,6 +3,8 @@
 namespace app\models;
 
 use app\models\extservice\HttpProxy;
+use app\models\payonline\Cards;
+use app\services\CurlLogger;
 use qfsx\yii2\curl\Curl;
 use Yii;
 
@@ -123,6 +125,8 @@ class SendHttp
         $curl->get($url . $fst . $params);
 
         $this->fullReq = $url . $fst . $params;
+
+        (new CurlLogger($curl, $this->fullReq, [], [], Cards::MaskCardLog($curl->response)))();
 
         Yii::warning("sendCurlGet-url: " . $url . $fst . $params . "\r\n", 'rsbcron');
         if ($curl->errorCode) {

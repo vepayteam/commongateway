@@ -9,6 +9,7 @@ use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\Payschets;
 use app\models\TU;
+use app\services\CurlLogger;
 use qfsx\yii2\curl\Curl;
 use SoapClient;
 use SoapHeader;
@@ -687,14 +688,15 @@ class MTSBank implements IBank
         $timout = 110;
         $curl = new Curl();
         Yii::warning("req: login = " . $this->shopId . " url = " . $url . "\r\n" . $this->MaskLog($post), 'merchant');
+        $headers = array_merge([
+            'Content-Type: application/x-www-form-urlencoded; charset=utf-8'
+        ], $addHeader);
         try {
             $curl->reset()
                 ->setOption(CURLOPT_VERBOSE, Yii::$app->params['VERBOSE'] === 'Y')
                 ->setOption(CURLOPT_TIMEOUT, $timout)
                 ->setOption(CURLOPT_CONNECTTIMEOUT, $timout)
-                ->setOption(CURLOPT_HTTPHEADER, array_merge([
-                    'Content-Type: application/x-www-form-urlencoded; charset=utf-8'
-                ], $addHeader))
+                ->setOption(CURLOPT_HTTPHEADER, $headers)
                 ->setOption(CURLOPT_SSL_VERIFYHOST, false)
                 ->setOption(CURLOPT_SSL_CIPHER_LIST, 'TLSv1')
                 //->setOption(CURLOPT_SSLKEY, $this->keyFile)
@@ -703,6 +705,9 @@ class MTSBank implements IBank
                 ->setOption(CURLOPT_SSL_VERIFYPEER, false)
                 ->setOption(CURLOPT_POSTFIELDS, $post)
                 ->post($url);
+
+            (new CurlLogger($curl, $url, $headers, $this->MaskLog($post), Cards::MaskCardLog($curl->response)))();
+
         } catch (\Exception $e) {
             Yii::warning("curlerror: " . $curl->responseCode . ":" . Cards::MaskCardLog($curl->response), 'merchant');
             $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;

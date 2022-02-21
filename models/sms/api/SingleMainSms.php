@@ -4,12 +4,14 @@
 namespace app\models\sms\api;
 
 
+use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\sms\ISms;
 use app\models\sms\Message;
 use app\models\sms\PaymentOrders;
 use app\models\sms\Stop;
 use app\models\sms\tables\AccessSms;
+use app\services\CurlLogger;
 use qfsx\yii2\curl\Curl;
 use app\models\extservice\HttpProxy;
 use Yii;
@@ -86,6 +88,9 @@ class SingleMainSms implements ISms
         try {
             $curl->get('https://mainsms.ru/api/mainsms/message/send?' . $this->fields());
             $this->response = $curl->response;
+
+            (new CurlLogger($curl, 'https://mainsms.ru/api/mainsms/message/send?' . $this->fields(), [], [], Cards::MaskCardLog($curl->response)))();
+
             if ($curl->errorCode) {
                 Yii::warning('MainSms error: ' . $curl->errorCode . ":" . $curl->errorText, 'mfo');
             }

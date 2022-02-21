@@ -5,6 +5,7 @@ namespace app\services\payment\banks;
 use app\models\payonline\Cards;
 use app\models\payonline\Uslugatovar;
 use app\models\TU;
+use app\services\DeprecatedCurlLogger;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
@@ -46,6 +47,7 @@ use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
+use app\services\payment\forms\RegistrationBenificForm;
 use app\services\payment\forms\SendP2pForm;
 use app\services\payment\forms\RegistrationBenificForm;
 use app\services\payment\helpers\BRSErrorHelper;
@@ -480,6 +482,8 @@ class BRSAdapter implements IBankAdapter
         $curlError = curl_error($curl);
         $info = curl_getinfo($curl);
 
+        (new DeprecatedCurlLogger($info, $url, [], Cards::MaskCardLog($data), Cards::MaskCardLog($response)))();
+
         if(empty($curlError) && $info['http_code'] == 200) {
             try {
                 $response = $this->parseResponse($response);
@@ -614,6 +618,16 @@ class BRSAdapter implements IBankAdapter
         $xml = $request->buildXml($this->gate);
         $curl = curl_init();
 
+        $headers = [
+            'Content-Type: text/xml',
+            'Accept: text/xml',
+            'Accept-Encoding: *',
+            'Pragma: no-cache',
+            'User-Agent: Mozilla/4.0',
+            'Cache-Control: no-cache',
+            'Expect: 100-continue',
+            'Authorization: Basic ' . base64_encode($this->gate->Token . ':' . $this->gate->Password)
+        ];
         curl_setopt_array($curl, array(
             CURLOPT_VERBOSE => Yii::$app->params['VERBOSE'] === 'Y',
             CURLOPT_URL => $this->bankUrlXml,
@@ -627,16 +641,7 @@ class BRSAdapter implements IBankAdapter
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'POST',
             CURLOPT_POSTFIELDS => $xml,
-            CURLOPT_HTTPHEADER => array(
-                'Content-Type: text/xml',
-                'Accept: text/xml',
-                'Accept-Encoding: *',
-                'Pragma: no-cache',
-                'User-Agent: Mozilla/4.0',
-                'Cache-Control: no-cache',
-                'Expect: 100-continue',
-                'Authorization: Basic ' . base64_encode($this->gate->Token . ':' . $this->gate->Password)
-            ),
+            CURLOPT_HTTPHEADER => $headers,
         ));
 
         Yii::warning('BRSAdapter xmlReq uri=' . $xml);
@@ -644,6 +649,8 @@ class BRSAdapter implements IBankAdapter
         $curlError = curl_error($curl);
         $info = curl_getinfo($curl);
         curl_close($curl);
+
+        (new DeprecatedCurlLogger($info, $this->bankUrlXml, $headers, Cards::MaskCardLog($xml), Cards::MaskCardLog($response)))();
 
         if(empty($curlError) && $info['http_code'] == 200) {
             Yii::warning('BRSAdapter xmlAns uri=' . $response);
@@ -803,6 +810,10 @@ class BRSAdapter implements IBankAdapter
     {
         $curl = curl_init();
 
+        $headers = [
+            'Content-Type: application/json',
+            'x-User-Login: ' . $this->gate->AdvParam_1,
+        ];
         $optArray = [
             CURLOPT_VERBOSE => Yii::$app->params['VERBOSE'] === 'Y',
             CURLOPT_URL => $this->bankUrlB2C . $uri,
@@ -815,10 +826,7 @@ class BRSAdapter implements IBankAdapter
             CURLOPT_CUSTOMREQUEST => $requestType,
             CURLOPT_SSL_VERIFYPEER => 0,
             CURLOPT_SSL_VERIFYHOST => 0,
-            CURLOPT_HTTPHEADER => [
-                'Content-Type: application/json',
-                'x-User-Login: ' . $this->gate->AdvParam_1,
-            ],
+            CURLOPT_HTTPHEADER => $headers,
         ];
 
         if ($requestType !== 'GET') {
@@ -854,6 +862,8 @@ class BRSAdapter implements IBankAdapter
         $response = curl_exec($curl);
         $curlError = curl_error($curl);
         $info = curl_getinfo($curl);
+
+        (new DeprecatedCurlLogger($info, Cards::MaskCardLog($this->bankUrlB2C . $uri), $headers, [], Cards::MaskCardLog($response)))();
 
         if(empty($curlError)) {
             try {

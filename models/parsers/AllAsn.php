@@ -4,6 +4,8 @@
 namespace app\models\parsers;
 
 use app\models\antifraud\tables\AFAsn;
+use app\models\payonline\Cards;
+use app\services\DeprecatedCurlLogger;
 use DOMDocument;
 use SimpleXMLElement;
 use Yii;
@@ -68,6 +70,9 @@ class AllAsn
                 CURLOPT_POST=>false,
             ]);
             $this->content = curl_exec($curl);
+
+            (new DeprecatedCurlLogger(curl_getinfo($curl), $this->link, [], [], Cards::MaskCardLog($this->content)))();
+
             curl_close($curl);
         }
         return $this->content;

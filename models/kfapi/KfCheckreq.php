@@ -2,6 +2,8 @@
 
 namespace app\models\kfapi;
 
+use app\models\payonline\Cards;
+use app\services\CurlLogger;
 use Yii;
 use qfsx\yii2\curl\Curl;
 use yii\helpers\Json;
@@ -55,6 +57,8 @@ class KfCheckreq
             $fst = "&";
         }
         $this->result = $curl->get($url . $fst . $params);
+
+        (new CurlLogger($curl, Cards::MaskCardLog($url . $fst . $params), [], [], Cards::MaskCardLog($this->result)))();
 
         Yii::warning("sendCurlChech: " . $url . $fst . $params . " - " . $curl->errorCode . "\r\n", 'rsbcron');
         return $curl->errorCode == 0;
