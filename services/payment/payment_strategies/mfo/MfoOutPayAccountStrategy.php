@@ -85,12 +85,10 @@ class MfoOutPayAccountStrategy
     {
         $paySchet = PaySchet::findOne([
             'Extid' => $this->outPayaccForm->extid,
+            'IdOrg' => $this->outPayaccForm->partner->ID,
         ]);
 
-        if($paySchet && $paySchet->SummPay == $this->outPayaccForm->amount * 100)
-        {
-            return $paySchet;
-        } elseif($paySchet) {
+        if($paySchet) {
             throw new NotUniquePayException($paySchet->ID, $paySchet->Extid);
         } else {
             return null;
