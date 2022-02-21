@@ -363,6 +363,7 @@ class PaymentService
      * @return PaySchet
      * @throws GateException
      * @throws exceptions\CreatePayException
+     * @throws exceptions\NotUniquePayException
      */
     public function sbpTransfer(OutPayAccountForm $outPayAccountForm): PaySchet
     {

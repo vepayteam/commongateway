@@ -14,6 +14,7 @@ use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\CardTokenException;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
+use app\services\payment\exceptions\NotUniquePayException;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\models\Currency;
 use app\services\payment\models\PayCard;
@@ -46,6 +47,7 @@ class MfoOutCardStrategy
      * @throws Exception
      * @throws GateException
      * @throws \Vepay\Gateway\Client\Validator\ValidationException
+     * @throws NotUniquePayException
      */
     public function exec()
     {
@@ -57,7 +59,7 @@ class MfoOutCardStrategy
         $replyPay = $this->getReplyPay();
         if($replyPay && $this->outCardPayForm->extid) {
             $mutex->release($this->outCardPayForm->getMutexKey());
-            throw new CreatePayException('Нарушение уникальности запроса');
+            throw new NotUniquePayException($replyPay->ID, $replyPay->Extid);
         }
 
         $uslugatovar = $this->getUslugatovar();

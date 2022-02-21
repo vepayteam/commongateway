@@ -292,7 +292,7 @@ class PayController extends Controller
 
         if ($createPayResponse->isNeed3DSVerif) {
             Yii::info('PayController createpaySecondStep render client-submit-form: ' . $paySchet->ID . ', Headers: ' . Json::encode(Yii::$app->request->headers));
-            return $this->render('client-submit-form', [
+            return $this->renderPartial('client-submit-form', [
                 'method' => 'POST',
                 'url' => $createPayResponse->url,
                 'fields' => [
@@ -301,7 +301,7 @@ class PayController extends Controller
             ]);
         } else {
             Yii::info('PayController createpaySecondStep render client-redirect: ' . $paySchet->ID . ', Headers: ' . Json::encode(Yii::$app->request->headers));
-            return $this->render('client-redirect', [
+            return $this->renderPartial('client-redirect', [
                 'redirectUrl' => Url::to('/pay/orderdone/' . $paySchet->ID),
             ]);
         }
