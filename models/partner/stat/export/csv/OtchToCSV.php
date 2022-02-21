@@ -30,7 +30,7 @@ class OtchToCSV extends ToCSV
         parent::__construct($generator, $path, $filename);
     }
 
-    private function header(?bool $isAdmin): array
+    protected function header(bool $isAdmin = false): array
     {
         $header_admin = $isAdmin ? [
             'Комис. банка',
@@ -67,9 +67,12 @@ class OtchToCSV extends ToCSV
         );
     }
 
-    private function preparationData(array $list): \Generator
+    protected function preparationData(array $list): \Generator
     {
-        $isAdmin = UserLk::IsAdmin(Yii::$app->user);
+        $isAdmin = true;
+        if(isset(Yii::$app->user)) {
+            $isAdmin = UserLk::IsAdmin(Yii::$app->user);
+        }
 
         $listData = $this->listData($list['data'], $isAdmin);
 
@@ -85,7 +88,7 @@ class OtchToCSV extends ToCSV
         parent::export();
     }
 
-    private function totalString(array $list): array
+    protected function totalString(array $list, ?FooterInfo $footerInfo = null): array
     {
         $totalSum = $totalFee = $totalReward = 0;
         $t = [];
@@ -108,7 +111,7 @@ class OtchToCSV extends ToCSV
         ];
     }
 
-    private function listData($list, ?bool $isAdmin): array
+    protected function listData($list, bool $isAdmin = false): array
     {
         if ((is_array($list) || $list instanceof \Generator) === false) {
             throw new \InvalidArgumentException('list должен быть массивом или генератором');
@@ -158,7 +161,7 @@ class OtchToCSV extends ToCSV
         return $result;
     }
 
-    private function checkData(array $data): bool
+    protected function checkData(array $data): bool
     {
         if ($this->payment === null && $this->repayment === null){ //в случае когда делается обычный экспорт.
             return true;
