@@ -113,14 +113,7 @@ use yii\db\ActiveQuery;
  */
 class PaySchet extends \yii\db\ActiveRecord
 {
-    public $count;
-    public $Currency;
-    public $CardNumber;
-    public $CurrencyId;
     public $CntPays;
-    public $VoznagSumm;
-    public $NameUsluga;
-    public $IsCustom;
 
     const STATUS_WAITING = 0;
     const STATUS_DONE = 1;
@@ -151,6 +144,10 @@ class PaySchet extends \yii\db\ActiveRecord
     ];
 
     const CHECK_3DS_CACHE_PREFIX = 'pay_schet__check-3ds-response';
+
+    const RCCODE_CANCEL_PAYMENT = 'TL';
+
+    const ERROR_INFO_PAYMENT_TIMEOUT = 'Время оплаты истекло';
 
     /**
      * {@inheritdoc}

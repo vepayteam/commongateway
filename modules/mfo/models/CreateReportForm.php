@@ -57,7 +57,7 @@ class CreateReportForm extends Model implements CreateReportData
             [
                 ['serviceType'], 'in',
                 'allowArray' => true,
-                'range' => $reportService->getAllowedServiceTypeIds($this->partner),
+                'range' => array_keys($reportService->getAllowedServiceTypes($this->partner)),
                 'message' => 'Недопустимый тип услуги.',
             ],
         ];

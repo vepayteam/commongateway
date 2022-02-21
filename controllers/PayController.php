@@ -40,6 +40,7 @@ use Yii;
 use yii\db\Exception;
 use yii\helpers\Json;
 use yii\helpers\Url;
+use yii\redis\Mutex;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\web\ErrorAction;
@@ -291,7 +292,7 @@ class PayController extends Controller
 
         if ($createPayResponse->isNeed3DSVerif) {
             Yii::info('PayController createpaySecondStep render client-submit-form: ' . $paySchet->ID . ', Headers: ' . Json::encode(Yii::$app->request->headers));
-            return $this->render('client-submit-form', [
+            return $this->renderPartial('client-submit-form', [
                 'method' => 'POST',
                 'url' => $createPayResponse->url,
                 'fields' => [
@@ -300,7 +301,7 @@ class PayController extends Controller
             ]);
         } else {
             Yii::info('PayController createpaySecondStep render client-redirect: ' . $paySchet->ID . ', Headers: ' . Json::encode(Yii::$app->request->headers));
-            return $this->render('client-redirect', [
+            return $this->renderPartial('client-redirect', [
                 'redirectUrl' => Url::to('/pay/orderdone/' . $paySchet->ID),
             ]);
         }
@@ -410,10 +411,15 @@ class PayController extends Controller
 
         $okPayForm = new OkPayForm();
         $okPayForm->IdPay = $id;
-
-        if (!$okPayForm->existPaySchet()) {
+        if ($okPayForm->paySchet === null) {
             throw new NotFoundHttpException();
         }
+
+        // Wait until the "order done" mutex lock released.
+        $mutexKey = DonePayStrategy::getMutexKey($okPayForm->getPaySchet());
+        $mutex = new Mutex(['retryDelay' => 250]);
+        $mutex->acquire($mutexKey, 15);
+        $mutex->release($mutexKey);
 
         $okPayStrategy = new OkPayStrategy($okPayForm);
         $paySchet = $okPayStrategy->exec();
