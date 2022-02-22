@@ -447,7 +447,7 @@ steps:
   image: registry.vepay.cf/ci-tools
   commands:
   - touch values.yaml
-  - yq write values.yaml "ingress.āhosts[0].host" "${DRONE_BRANCH}-${DRONE_REPO_NAME}.backend.vepay.cf" -i
+  - yq write values.yaml "ingress.hosts[0].host" "${DRONE_BRANCH}-${DRONE_REPO_NAME}.backend.vepay.cf" -i
   - yq write values.yaml "ingress.hosts[0].paths[0]" "/" -i
   - yq write values.yaml "ingress.tls[0].hosts[0]" "${DRONE_BRANCH}-${DRONE_REPO_NAME}.backend.vepay.cf" -i
   - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-cf-wildcard-certificate" -i
@@ -726,6 +726,6 @@ get:
 
 ---
 kind: signature
-hmac: 5c4ca094906b3c398d53d61b228b9251731fa41537ce5883d2777e81736077a7
+hmac: 17d8759a3ad434c44d65dcc945cc3f68066fa40b074d10acbb4865caa937c14d
 
 ...

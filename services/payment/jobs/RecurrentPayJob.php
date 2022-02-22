@@ -6,6 +6,7 @@ use app\models\crypt\CardToken;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\CreatePayException;
+use app\services\payment\exceptions\FailedRecurrentPaymentException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\models\PaySchet;
@@ -30,7 +31,11 @@ class RecurrentPayJob extends BaseObject implements \yii\queue\JobInterface
         try {
             Yii::warning('RecurrentPayJob autoPay=' . $paySchet->ID . ' ' . $autoPayForm->extid, 'mfo');
             $createRecurrentPayResponse = $bankAdapter->recurrentPay($autoPayForm);
-        } catch (GateException $e) {
+        } catch (GateException|FailedRecurrentPaymentException $e) {
+            if ($e instanceof FailedRecurrentPaymentException) {
+                $paySchet->RCCode = $e->getRcCode();
+            }
+
             $paySchet->Status = PaySchet::STATUS_ERROR;
             $paySchet->ErrorInfo = $e->getMessage();
             $paySchet->save(false);
