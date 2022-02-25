@@ -15,6 +15,7 @@ use yii\base\BaseObject;
 
 class RefreshStatusPayJob extends BaseObject implements \yii\queue\JobInterface
 {
+    /** @todo Remove, hack for TCB (VPBC-1298). */
     private const TCB_ORDER_NOT_EXIST_INTERVAL = 5 * 60; // 5 minutes
     private const TCB_ORDER_NOT_EXIST_TIMEOUT = 2 * 60 * 60; // 2 hours
 
@@ -54,7 +55,7 @@ class RefreshStatusPayJob extends BaseObject implements \yii\queue\JobInterface
                     ->push(new static(['paySchetId' => $paySchet->ID]));
             } else {
                 $paySchet->Status = PaySchet::STATUS_ERROR;
-                $paySchet->RCCode = 'TL';
+                $paySchet->RCCode = PaySchet::RCCODE_CANCEL_PAYMENT;
                 $paySchet->ErrorInfo = 'Операция не завершена / пользователь не завершил проверку 3DS';
                 $paySchet->save(false);
             }

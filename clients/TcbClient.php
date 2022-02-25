@@ -98,12 +98,12 @@ class TcbClient extends BaseObject
             \Yii::error(ArrayHelper::merge($logData, [
                 'Message' => "TCB bad response error. Status code: {$e->getResponse()->getStatusCode()}.",
                 'Headers' => $headers,
-                'Response' => Cards::MaskCardLog($e->getResponse()->getBody()->getContents()),
+                'Response' => Cards::MaskCardLog((string)$e->getResponse()->getBody()),
             ]));
             throw $e;
         }
 
-        $responseBody = $response->getBody()->getContents();
+        $responseBody = (string)$response->getBody();
 
         \Yii::info(ArrayHelper::merge($logData, [
             'Message' => 'TCB request end.',
@@ -234,7 +234,7 @@ class TcbClient extends BaseObject
 
         } catch (ServerException $e) {
             /** @todo Remove, hack VPBC-1298. */
-            $errorData = $this->tryJsonDecode($e->getResponse()->getBody()->getContents());
+            $errorData = $this->tryJsonDecode((string)$e->getResponse()->getBody());
             if (is_array($errorData) && $errorData['Code'] === 'OrderNotExist') {
                 \Yii::$app->errorHandler->logException($e);
                 throw new TcbOrderNotExistException();
