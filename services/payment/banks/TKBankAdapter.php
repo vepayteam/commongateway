@@ -101,15 +101,10 @@ class TKBankAdapter implements IBankAdapter
     public function setGate(PartnerBankGate $partnerBankGate)
     {
         $this->gate = $partnerBankGate;
-        $config = Yii::$app->params['services']['payments']['TCB'];
 
-        if (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] == 'Y') {
-            $this->bankUrl = $config['url_test'];
-            $this->bankUrlXml = $config['url_xml_test'];
-        } else {
-            $this->bankUrl = $config['url'];
-            $this->bankUrlXml = $config['url_xml'];
-        }
+        $config = Yii::$app->params['services']['payments']['TCB'];
+        $this->bankUrl = $config['url'];
+        $this->bankUrlXml = $config['url_xml'];
     }
 
     /**

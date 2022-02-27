@@ -100,8 +100,6 @@ return [
             'TCB' => [
                 'url' => 'https://pay.tkbbank.ru',
                 'url_xml' => 'https://pay.tkbbank.ru:8204',
-                'url_test' => 'https://paytest.online.tkbbank.ru',
-                'url_xml_test' => 'https://193.232.101.14:8203',
             ],
         ],
     ],
