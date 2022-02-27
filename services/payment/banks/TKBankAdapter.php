@@ -78,11 +78,6 @@ class TKBankAdapter implements IBankAdapter
     const AFT_MIN_SUMM = 185000;
 
     public const BIC = '044525388';
-    const BANK_URL = 'https://pay.tkbbank.ru';
-    const BANK_URL_TEST = 'https://paytest.online.tkbbank.ru';
-
-    const BANK_URL_XML = 'https://193.232.101.14:8204';
-    const BANK_URL_XML_TEST = 'https://193.232.101.14:8203';
 
     const PS_GENERAL_REFUSAL = 'PS_GENERAL_REFUSAL';
 
@@ -106,13 +101,14 @@ class TKBankAdapter implements IBankAdapter
     public function setGate(PartnerBankGate $partnerBankGate)
     {
         $this->gate = $partnerBankGate;
+        $config = Yii::$app->params['services']['payments']['TCB'];
 
         if (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] == 'Y') {
-            $this->bankUrl = self::BANK_URL_TEST;
-            $this->bankUrlXml = self::BANK_URL_XML_TEST;
+            $this->bankUrl = $config['url_test'];
+            $this->bankUrlXml = $config['url_xml_test'];
         } else {
-            $this->bankUrl = self::BANK_URL;
-            $this->bankUrlXml = self::BANK_URL_XML;
+            $this->bankUrl = $config['url'];
+            $this->bankUrlXml = $config['url_xml'];
         }
     }
 

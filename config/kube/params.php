@@ -96,6 +96,12 @@ return [
                 'url_xml' => getenv('PARAMS_PAYMENTS_BRS_URL_XML', true),
                 'url_b2c' => getenv('PARAMS_PAYMENTS_BRS_URL_B2C', true),
             ],
+            'TCB' => [
+                'url' => getenv('PARAMS_PAYMENTS_TCB_URL', true),
+                'url_xml' => getenv('PARAMS_PAYMENTS_TCB_URL_XML', true),
+                'url_test' => getenv('PARAMS_PAYMENTS_TCB_URL_TEST', true),
+                'url_xml_test' => getenv('PARAMS_PAYMENTS_TCB_URL_XML_TEST', true),
+            ],
         ],
     ],
     'login_user_token_valid_time' => 60*60,
