@@ -59,13 +59,11 @@ class MerchantPayCreateStrategy
         $bankAdapterBuilder->build($this->payForm->partner, $uslugatovar, $currency);
 
         Yii::warning('getReplyRequest extid=' . $this->payForm->extid, 'merchant');
-        $replyPaySchet = $this->getReplyRequest($bankAdapterBuilder);
-
-        if ($replyPaySchet && $replyPaySchet->SummPay == $this->payForm->amount) {
-            return $replyPaySchet;
-        } elseif ($replyPaySchet && $replyPaySchet->SummPay != $this->payForm->amount) {
+        $replyPaySchet = $this->getReplyRequest();
+        if ($replyPaySchet) {
             throw new NotUniquePayException($replyPaySchet->ID, $replyPaySchet->Extid);
         }
+
         Yii::warning('createPaySchet extid=' . $this->payForm->extid, 'merchant');
         $paySchet = $this->createPaySchet($bankAdapterBuilder);
         return $paySchet;
@@ -85,11 +83,10 @@ class MerchantPayCreateStrategy
             ->one();
     }
 
-    protected function getReplyRequest(BankAdapterBuilder $bankAdapterBuilder)
+    protected function getReplyRequest()
     {
         $paySchet = PaySchet::findOne([
             'IdOrg' => $this->payForm->partner->ID,
-            'IdUsluga' => $bankAdapterBuilder->getUslugatovar()->ID,
             'Extid' => $this->payForm->extid,
         ]);
 
