@@ -33,6 +33,7 @@ use yii\db\ActiveRecord;
  * @property string $DateDogovor [varchar(20)]  -
  * @property string $PodpisantFull [varchar(100)]  -
  * @property string $PodpisantShort [varchar(50)]  -
+ * @property string $SignatoryShortDative [varchar(63)] - Short form of dative signatory
  * @property string $PodpDoljpost [varchar(100)]  -
  * @property string $PodpDoljpostRod [varchar(100)]  -
  * @property string $PodpOsnovan [varchar(100)]  -
@@ -209,6 +210,7 @@ class Partner extends ActiveRecord
                 'Apple_MerchantID', 'Apple_displayName', 'Apple_KeyPasswd', 'Apple_MerchIdentKey', 'Apple_MerchIdentCert',
                 'GoogleMerchantID', 'SamsungMerchantID'
             ], 'string', 'max' => 100],
+            [['SignatoryShortDative'], 'string', 'max' => 63],
             [['KeyTkbAft', 'KeyTkbEcom', 'KeyTkbVyvod', 'KeyTkbPerevod', 'KeyTkbAuto1', 'KeyTkbAuto2',
                 'KeyTkbAuto3', 'KeyTkbAuto4', 'KeyTkbAuto5', 'KeyTkbAuto6', 'KeyTkbAuto7', 'IpAccesApi', 'KeyTkbJkh',
                 'KeyTkbOct', 'KeyTkbOctVyvod', 'KeyTkbOctPerevod', 'KeyTkbParts'
@@ -255,6 +257,7 @@ class Partner extends ActiveRecord
             'DateDogovor' => 'Дата заключения договора',
             'PodpisantFull' => 'ФИО подписанта полное',
             'PodpisantShort' => 'ФИО подписанта сокращенное',
+            'SignatoryShortDative' => 'ФИО подписанта сокращенное дательном падеже (кому?)',
             'PodpDoljpost' => 'Должность',
             'PodpDoljpostRod' => 'В лице (должность)',
             'PodpOsnovan' => 'Основание подписи',
