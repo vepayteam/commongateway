@@ -97,6 +97,10 @@ return [
                 'url_xml' => 'https://194.67.29.215:8443',
                 'url_b2c' => 'https://212.46.217.150:7603',
             ],
+            'TCB' => [
+                'url' => 'https://pay.tkbbank.ru',
+                'url_xml' => 'https://pay.tkbbank.ru:8204',
+            ],
         ],
     ],
     'login_user_token_valid_time' => 60*60,
