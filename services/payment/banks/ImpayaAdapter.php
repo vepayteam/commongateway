@@ -186,7 +186,8 @@ class ImpayaAdapter implements IBankAdapter
 
     public function getAftMinSum()
     {
-        throw new GateException('Метод недоступен');
+        // aft недоступен
+        return PHP_INT_MAX;
     }
 
     public function getBalance(GetBalanceRequest $getBalanceRequest)
