@@ -220,6 +220,11 @@ class Cards extends ActiveRecord
             $post = str_ireplace($m[1], "***", $post);
         }
 
+        // Impaya
+        if (preg_match('/\"cc_cvc\":\"(\d+)\"/ius', $post, $m)) {
+            $post = str_ireplace($m[1], "***", $post);
+        }
+
         return $post;
     }
 
