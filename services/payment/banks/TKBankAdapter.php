@@ -476,10 +476,7 @@ class TKBankAdapter implements IBankAdapter
                     ->setOption(CURLOPT_SSLKEY, $this->UserKey)
                     ->setOption(CURLOPT_SSLCERT, $this->UserCert);
             }
-            Yii::warning("req startReq: login = " . $this->gate->Login . " url = " . $url . "\r\n" . Cards::MaskCardLog($post), 'merchant');
             $curl->post($url);
-            Yii::warning("req finishReq: login = " . $this->gate->Login . " url = " . $url . "\r\n" . Cards::MaskCardLog($post), 'merchant');
-
         } catch (\Exception $e) {
             Yii::warning("req curlerror: login = " . $this->gate->Login . " url = " . $url . "\r\n" . Cards::MaskCardLog($post), 'merchant');
             Yii::warning("curlerror: " . $curl->responseCode . ":" . Cards::MaskCardLog($curl->response), 'merchant');
