@@ -649,7 +649,7 @@ paths:
         - name: errorCode
           in: query
           required: true
-          description: код ошибки
+          description: код ошибки. 0 - обозначает успешный статус операции, TL - закончился срок жизни платежа, X - неизвестная ошибка. Остальные коды варьируются в зависимости от провайдера.
           schema:
             type: string
         - name: key
