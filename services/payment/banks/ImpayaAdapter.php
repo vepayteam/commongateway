@@ -228,7 +228,7 @@ class ImpayaAdapter implements IBankAdapter
             $post[] = $k."=".$v;
         }
 
-        Yii::warning(Modifiers::searchAndReplaceSecurity('Impaya req: ' . $url . ' ' . json_encode($data)));
+        Yii::warning('Impaya req: ' . $url . ' ' . json_encode($data));
         $ch = curl_init($this->bankUrl . $url);
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, implode('&', $post));
