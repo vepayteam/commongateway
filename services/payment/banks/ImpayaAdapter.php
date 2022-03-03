@@ -2,6 +2,7 @@
 
 namespace app\services\payment\banks;
 
+use app\helpers\Modifiers;
 use app\models\payonline\Cards;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
@@ -46,6 +47,7 @@ use yii\helpers\Json;
 
 class ImpayaAdapter implements IBankAdapter
 {
+    private const PHONE_DEFAULT_VALUE = '79009000000';
 
     public static $bank = 15;
     protected $bankUrl;
@@ -133,7 +135,7 @@ class ImpayaAdapter implements IBankAdapter
 
     public function recurrentPay(AutoPayForm $autoPayForm)
     {
-        // TODO: Implement recurrentPay() method.
+        throw new GateException('Метод недоступен');
     }
 
     public function refundPay(RefundPayForm $refundPayForm): RefundPayResponse
@@ -163,7 +165,7 @@ class ImpayaAdapter implements IBankAdapter
         $outCardPayRequest->amount = (int)$outCardPayForm->paySchet->getSummFull();
         $outCardPayRequest->currency = $outCardPayForm->paySchet->currency->Code;
         $outCardPayRequest->cc_num = $outCardPayForm->cardnum;
-        $outCardPayRequest->phone = $outCardPayForm->phone;
+        $outCardPayRequest->phone = $outCardPayForm->phone ?? self::PHONE_DEFAULT_VALUE;
         $outCardPayRequest->fname = $outCardPayForm->getFirstName();
         $outCardPayRequest->lname = $outCardPayForm->getLastName();
         $outCardPayRequest->buildHash($this->gate->Token);
@@ -226,7 +228,7 @@ class ImpayaAdapter implements IBankAdapter
             $post[] = $k."=".$v;
         }
 
-        Yii::warning(Cards::MaskCardLog('Impaya req: ' . $url . ' ' . json_encode($data)));
+        Yii::warning(Modifiers::searchAndReplaceSecurity('Impaya req: ' . $url . ' ' . json_encode($data)));
         $ch = curl_init($this->bankUrl . $url);
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, implode('&', $post));

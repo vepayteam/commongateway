@@ -47,7 +47,7 @@ class OutCardPayForm extends Model implements AmountFormInterface
     public $birthPlace;
     public $documentSeries;
     public $documentNumber;
-    public $phone = '79009000000';
+    public $phone;
 
     public function rules()
     {
