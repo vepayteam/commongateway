@@ -2,7 +2,6 @@
 
 namespace app\services\payment\banks;
 
-use app\helpers\Modifiers;
 use app\models\payonline\Cards;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
