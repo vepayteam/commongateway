@@ -4,7 +4,6 @@ namespace app\services;
 
 use app\services\compensationService\CompensationException;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
-use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\RefundPayException;
@@ -27,15 +26,11 @@ class PaymentService extends Component
      */
     public function reverse(PaySchet $paySchet)
     {
-        $refundPayResponse = $this->bankRefundPay($paySchet);
-
-        if ($refundPayResponse->status == BaseResponse::STATUS_DONE) {
-            $paySchet->Status = PaySchet::STATUS_CANCEL;
-            $paySchet->ErrorInfo = 'Платеж отменен';
-        } else {
-            $paySchet->ErrorInfo = $refundPayResponse->message;
-        }
-        $paySchet->save(false);
+        $this->refundInternal(
+            $paySchet,
+            PaySchet::STATUS_CANCEL,
+            'Платеж отменен'
+        );
     }
 
     /**
@@ -113,14 +108,37 @@ class PaymentService extends Component
      */
     public function executRefundPayment(PaySchet $refundPayschet)
     {
-        $refundPayResponse = $this->bankRefundPay($refundPayschet);
+        $this->refundInternal(
+            $refundPayschet,
+            PaySchet::STATUS_REFUND_DONE,
+            'Возврат произведен.'
+        );
+    }
+
+    /**
+     * @param PaySchet $refundPayschet
+     * @param $successStatus
+     * @param $successErrorInfo
+     * @throws GateException
+     * @throws RefundPayException
+     */
+    private function refundInternal(PaySchet $refundPayschet, $successStatus, $successErrorInfo)
+    {
+        $refundPayResponse = (new BankAdapterBuilder())
+            ->build($refundPayschet->partner, $refundPayschet->uslugatovar)
+            ->getBankAdapter()
+            ->refundPay(new RefundPayForm(['paySchet' => $refundPayschet]));
 
         if ($refundPayResponse->status == BaseResponse::STATUS_DONE) {
-            $refundPayschet->Status = PaySchet::STATUS_REFUND_DONE;
-            $refundPayschet->ErrorInfo = 'Возврат произведен.';
-        } elseif(BaseResponse::STATUS_CREATED){
-            $refundPayschet->Status = PaySchet::STATUS_WAITING;
-            $refundPayschet->ErrorInfo = 'Возврат произведен.';
+            $refundPayschet->Status = $successStatus;
+            $refundPayschet->ErrorInfo = $successErrorInfo;
+        } elseif ($refundPayResponse->status == BaseResponse::STATUS_CREATED) {
+            /**
+             * Logic copied from {@see RefundPayJob::execute()}.
+             * @todo Add correct status processing.
+             */
+            $refundPayschet->Status = PaySchet::STATUS_WAITING_CHECK_STATUS;
+            $refundPayschet->ErrorInfo = $refundPayResponse->message;
         } else {
             $refundPayschet->Status = PaySchet::STATUS_ERROR;
             $refundPayschet->ErrorInfo = $refundPayResponse->message;
@@ -141,19 +159,5 @@ class PaymentService extends Component
     {
         $refundPayschet = $this->createRefundPayment($paySchet, $amountFractional);
         $this->executRefundPayment($refundPayschet);
-    }
-
-    /**
-     * @param PaySchet $paySchet
-     * @return RefundPayResponse
-     * @throws GateException
-     * @throws RefundPayException
-     */
-    private function bankRefundPay(PaySchet $paySchet): RefundPayResponse
-    {
-        return (new BankAdapterBuilder())
-            ->build($paySchet->partner, $paySchet->uslugatovar)
-            ->getBankAdapter()
-            ->refundPay(new RefundPayForm(['paySchet' => $paySchet]));
     }
 }
