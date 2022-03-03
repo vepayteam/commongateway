@@ -46,6 +46,7 @@ use yii\helpers\Json;
 
 class ImpayaAdapter implements IBankAdapter
 {
+    private const PHONE_DEFAULT_VALUE = '79009000000';
 
     public static $bank = 15;
     protected $bankUrl;
@@ -133,7 +134,7 @@ class ImpayaAdapter implements IBankAdapter
 
     public function recurrentPay(AutoPayForm $autoPayForm)
     {
-        // TODO: Implement recurrentPay() method.
+        throw new GateException('Метод недоступен');
     }
 
     public function refundPay(RefundPayForm $refundPayForm): RefundPayResponse
@@ -163,7 +164,7 @@ class ImpayaAdapter implements IBankAdapter
         $outCardPayRequest->amount = (int)$outCardPayForm->paySchet->getSummFull();
         $outCardPayRequest->currency = $outCardPayForm->paySchet->currency->Code;
         $outCardPayRequest->cc_num = $outCardPayForm->cardnum;
-        $outCardPayRequest->phone = $outCardPayForm->phone;
+        $outCardPayRequest->phone = $outCardPayForm->phone ?? self::PHONE_DEFAULT_VALUE;
         $outCardPayRequest->fname = $outCardPayForm->getFirstName();
         $outCardPayRequest->lname = $outCardPayForm->getLastName();
         $outCardPayRequest->buildHash($this->gate->Token);
