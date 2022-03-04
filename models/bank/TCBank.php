@@ -20,8 +20,8 @@ class TCBank implements IBank
 {
     public const BIC = '044525388';
 
-    private $bankUrl = 'https://pay.tkbbank.ru';
-    private $bankUrlXml = 'https://193.232.101.14:8204';
+    private $bankUrl;
+    private $bankUrlXml;
     private $bankUrlClient = 'https://pay.tkbbank.ru';
     private $shopId;
     private $UserCert;
@@ -59,10 +59,9 @@ class TCBank implements IBank
         $this->UserCert = Yii::$app->basePath . '/config/tcbcert/vepay.crt';
         $this->UserKey = Yii::$app->basePath . '/config/tcbcert/vepay.key';
 
-        if (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] == 'Y') {
-            $this->bankUrl = 'https://paytest.online.tkbbank.ru';
-            $this->bankUrlXml = 'https://193.232.101.14:8203';
-        }
+        $config = Yii::$app->params['services']['payments']['TCB'];
+        $this->bankUrl = $config['url'];
+        $this->bankUrlXml = $config['url_xml'];
 
         if ($tcbGate) {
             $this->SetMfoGate($tcbGate->typeGate, $tcbGate->GetGates());

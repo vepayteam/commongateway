@@ -3,6 +3,9 @@
 /* @var null|string $message */
 /* @var null|string $returl */
 /* @var \yii\web\View $this */
+
+use yii\helpers\Html;
+
 ?>
 <section class="container">
 
@@ -20,7 +23,7 @@
 
     <div class="row">
         <div class="col-xs-12 text-center">
-            <p class="infoend"><?=isset($message) && !empty($message) ? $message : 'Ошибка в процессе оплаты, указаны неверные данные карты.'?></p>
+            <p class="infoend"><?=isset($message) && !empty($message) ? Html::encode($message) : 'Ошибка в процессе оплаты, указаны неверные данные карты.'?></p>
         </div>
     </div>
 
