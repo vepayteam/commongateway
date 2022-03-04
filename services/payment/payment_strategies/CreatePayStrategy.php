@@ -90,6 +90,9 @@ class CreatePayStrategy
         }
 
         if (in_array($this->createPayResponse->status, [BaseResponse::STATUS_CANCEL, BaseResponse::STATUS_ERROR])) {
+            if($this->createPayResponse->transac) {
+                $paySchet->ExtBillNumber = $this->createPayResponse->transac;
+            }
             $this->paymentService->cancelPay($paySchet, $this->createPayResponse->message);
             return $paySchet;
         }

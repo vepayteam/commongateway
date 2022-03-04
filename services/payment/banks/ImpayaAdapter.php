@@ -103,6 +103,7 @@ class ImpayaAdapter implements IBankAdapter
 
         if($ans['data']['status_id'] != 2) {
             $createPayResponse->status = BaseResponse::STATUS_ERROR;
+            $createPayResponse->transac = $ans['data']['transaction']['transaction_id'] ?? '';
             $createPayResponse->message = $ans['data']['status_descr'] ?? 'Ошибка запроса';
             return $createPayResponse;
         }
