@@ -103,7 +103,7 @@ class ImpayaAdapter implements IBankAdapter
 
         if($ans['data']['status_id'] != 2) {
             $createPayResponse->status = BaseResponse::STATUS_ERROR;
-            $createPayResponse->message = 'Ошибка запроса';
+            $createPayResponse->message = $ans['data']['status_descr'] ?? 'Ошибка запроса';
             return $createPayResponse;
         }
 
@@ -257,8 +257,6 @@ class ImpayaAdapter implements IBankAdapter
         switch ($status) {
             case 0:
             case 2:
-            case 3:
-            case 4:
             case 11:
                 return BaseResponse::STATUS_CREATED;
             case 1:
