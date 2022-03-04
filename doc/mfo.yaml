@@ -74,7 +74,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/CardRegAns"
         "400":
-          description: Операция с передаваемым extid уже существует
+          description: Транзакция с передаваемым extid уже существует
           content:
             application/json:
               schema:
@@ -159,7 +159,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/StatusIdUrl"
         "400":
-          description: Операция с передаваемым extid уже существует
+          description: Транзакция с передаваемым extid уже существует
           content:
             application/json:
               schema:
@@ -191,7 +191,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/StatusIdUrl"
         "400":
-          description: Операция с передаваемым extid уже существует
+          description: Транзакция с передаваемым extid уже существует
           content:
             application/json:
               schema:
@@ -239,7 +239,7 @@ paths:
                     description: ID платежа. Присутствует, если операция прошла успешно
                     example: 12345
         "400":
-          description: Операция с передаваемым extid уже существует
+          description: Транзакция с передаваемым extid уже существует
           content:
             application/json:
               schema:
@@ -271,7 +271,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/StatusId"
         "400":
-          description: Операция с передаваемым extid уже существует
+          description: Транзакция с передаваемым extid уже существует
           content:
             application/json:
               schema:
@@ -329,7 +329,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/StatusId"
         "400":
-          description: Операция с передаваемым extid уже существует
+          description: Транзакция с передаваемым extid уже существует
           content:
             application/json:
               schema:
@@ -361,7 +361,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/StatusId"
         "400":
-          description: Операция с передаваемым extid уже существует
+          description: Транзакция с передаваемым extid уже существует
           content:
             application/json:
               schema:
@@ -393,7 +393,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/StatusId"
         "400":
-          description: Операция с передаваемым extid уже существует
+          description: Транзакция с передаваемым extid уже существует
           content:
             application/json:
               schema:
@@ -451,7 +451,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/StatusId"
         "400":
-          description: Операция с передаваемым extid уже существует
+          description: Транзакция с передаваемым extid уже существует
           content:
             application/json:
               schema:
@@ -649,7 +649,7 @@ paths:
         - name: errorCode
           in: query
           required: true
-          description: код ошибки
+          description: код ошибки. 0 - обозначает успешный статус операции, TL - закончился срок жизни платежа, X - неизвестная ошибка. Остальные коды варьируются в зависимости от провайдера.
           schema:
             type: string
         - name: key
@@ -1440,7 +1440,7 @@ components:
         message:
           type: string
           description: Сообщение ошибки
-          default: Операция с передаваемым extid уже существует
+          default: Транзакция с передаваемым extid уже существует
         id:
           type: integer
           description: ID операции
