@@ -38,13 +38,11 @@ class BrsReportToEmail extends OtchToEmail
         echo "from ".$dateFrom." to ".$dateTo."\r\n";
         Yii::warning("from ".$dateFrom." to ".$dateTo, "rsbcron");
 
-        $i = 0;
         foreach ($this->partners as $partner) {
 
             Yii::warning("BrsReportToEmail: send to " . $partner->partner_id, "rsbcron");
             echo "BrsReportToEmail: send to " . $partner->partner_id . "\r\n";
 
-            $i++;
             $payschet = new BrsPaySchetStat([
                 'IdPart' => $partner->partner_id,
                 'datefrom' => $dateFrom,
@@ -67,7 +65,7 @@ class BrsReportToEmail extends OtchToEmail
 
                 $sender = new SendEmail();
                 $subject = "Отчет по реестру БРС за период " . $dateFrom . ' - ' . $dateTo;
-                $fileName = 'PRT' . $partnerBankGateAdvParam1 . date('Y-m-d') . $i . '.csv';
+                $fileName = 'PRT' . $partnerBankGateAdvParam1 . date('Y-m-d') . '.csv';
                 $emailBody = 'Отчет предоставлен в виде прикрепленного файла csv.';
 
                 $res = $sender->sendReestr($partner->email, $subject, $emailBody, [[
@@ -81,7 +79,7 @@ class BrsReportToEmail extends OtchToEmail
 
                     $res = $sender->sendReestr($this->emailList, $subject, 'Отчет предоставлен в виде прикрепленного файла csv.', [[
                         'data' => file_get_contents($otch->fullpath()),
-                        'name' => time().$i. '.csv'
+                        'name' => time() . '.csv'
                     ]]);
 
                     Yii::warning("BrsReportToEmail: send to " . $this->emailList . " result = " . $res, "rsbcron");
