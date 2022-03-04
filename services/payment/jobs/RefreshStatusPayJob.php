@@ -58,6 +58,10 @@ class RefreshStatusPayJob extends BaseObject implements \yii\queue\JobInterface
                 $paySchet->RCCode = PaySchet::RCCODE_CANCEL_PAYMENT;
                 $paySchet->ErrorInfo = 'Операция не завершена / пользователь не завершил проверку 3DS';
                 $paySchet->save(false);
+
+                /** @var NotificationsService $notificationsService */
+                $notificationsService = Yii::$container->get('NotificationsService');
+                $notificationsService->addNotificationByPaySchet($paySchet);
             }
         }
 
