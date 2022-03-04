@@ -96,6 +96,7 @@ echo $form->field($partner,'NumDogovor')->textInput(['class'=>'form-control']);
 echo $form->field($partner,'DateDogovor')->textInput(['class'=>'form-control']);
 echo $form->field($partner,'PodpisantFull')->textInput(['class'=>'form-control']);
 echo $form->field($partner,'PodpisantShort')->textInput(['class'=>'form-control']);
+echo $form->field($partner,'SignatoryShortDative')->textInput(['class'=>'form-control']);
 echo $form->field($partner,'PodpDoljpost')->textInput(['class'=>'form-control']);
 echo $form->field($partner,'PodpDoljpostRod')->textInput(['class'=>'form-control']);
 echo $form->field($partner,'PodpOsnovan')->textInput(['class'=>'form-control']);

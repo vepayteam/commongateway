@@ -36,7 +36,7 @@ class RefundPayJob extends BaseObject implements JobInterface
         $refundPayForm->paySchet = $paySchet;
 
         $bankAdapterBuilder = new BankAdapterBuilder();
-        $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar);
+        $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar, $paySchet->currency);
 
         $refundPayResponse = $bankAdapterBuilder->getBankAdapter()->refundPay($refundPayForm);
 

@@ -16,6 +16,7 @@ use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\NotUniquePayException;
 use app\services\payment\forms\OutCardPayForm;
+use app\services\payment\models\Currency;
 use app\services\payment\models\PayCard;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
@@ -71,7 +72,7 @@ class MfoOutCardStrategy
         }
 
         $bankAdapterBuilder = new BankAdapterBuilder();
-        $bankAdapterBuilder->build($this->outCardPayForm->partner, $uslugatovar);
+        $bankAdapterBuilder->build($this->outCardPayForm->partner, $uslugatovar, $this->outCardPayForm->getCurrency());
 
         if(!$this->outCardPayForm->cardnum) {
             throw new CardTokenException('Ошибка при получение номера карты');
@@ -209,6 +210,7 @@ class MfoOutCardStrategy
         $paySchet->IdOrg = $this->outCardPayForm->partner->ID;
         $paySchet->Extid = $this->outCardPayForm->extid;
         $paySchet->SummPay = $this->outCardPayForm->amount;
+        $paySchet->CurrencyId = $this->outCardPayForm->getCurrency()->Id;
 
         $paySchet->DateCreate = time();
         $paySchet->DateLastUpdate = time();
