@@ -225,16 +225,6 @@ echo $form->field($partner, 'IpAccesApi')->textInput(['class' => 'form-control']
 
 ?>
 
-<div class="row no-margins">
-    <div class="col-sm-8 col-sm-offset-3">
-        <?php
-        echo $form->field($partner,'IsAftOnly')->checkbox([
-            'template' => "<div class=\"checkbox m-l-sm\">\n{input}\n{beginLabel}\n{labelTitle}\n{endLabel}\n{error}\n{hint}\n</div>"
-        ]);
-        ?>
-    </div>
-</div>
-
 <div class="row">
     <div class="col-sm-8 col-sm-offset-3">
         <?= Html::hiddenInput('Partner_ID', $partner->ID) ?>
