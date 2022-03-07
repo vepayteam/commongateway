@@ -36,6 +36,8 @@ class Banks
                 return new GratapayAdapter();
             case MonetixAdapter::$bank:
                 return new MonetixAdapter();
+            case ImpayaAdapter::$bank:
+                return new ImpayaAdapter();
             default:
                 throw new \Exception('Ошибка выбора банка');
         }

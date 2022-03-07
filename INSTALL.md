@@ -16,7 +16,7 @@
         
         Установить пакеты:
         
-        npm install uglify-es -g
+        npm install uglify-js@3.14.5 -g
         
         npm i clean-css-cli -g    
         
@@ -69,8 +69,6 @@
     yii widget/queue - 1 раз в минуту
     
     yii widget/updatestatm - 1 раз в час
-    
-    yii widget/vyvod - в 12.30 пн-пт
     
     yii widget/send-otch - в 7.00
     

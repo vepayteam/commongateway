@@ -96,6 +96,10 @@ return [
                 'url_xml' => 'https://194.67.29.216:8443',
                 'url_b2c' => 'https://212.46.217.150:7601',
             ],
+            'TCB' => [
+                'url' => 'https://paytest.online.tkbbank.ru',
+                'url_xml' => 'https://193.232.101.14:8203',
+            ],
         ],
     ],
     'login_user_token_valid_time' => 60*60,

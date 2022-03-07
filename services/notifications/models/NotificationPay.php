@@ -117,7 +117,7 @@ class NotificationPay extends \yii\db\ActiveRecord
         }
 
         if ($settings->SendErrorCode) {
-            $params['errorCode'] = $this->paySchet->RCCode ?? '0';
+            $params['errorCode'] = $this->getRcCode();
         }
 
         $params['key'] = $this->buildKey($settings);
@@ -173,7 +173,7 @@ class NotificationPay extends \yii\db\ActiveRecord
         }
 
         if ($settings->SendErrorCode) {
-            $params[] = $this->paySchet->RCCode ?? '0';
+            $params[] = $this->getRcCode();
         }
 
         $params[] = $this->paySchet->uslugatovar->KeyInform;
@@ -195,5 +195,26 @@ class NotificationPay extends \yii\db\ActiveRecord
         }
 
         return implode('&', $resultArr);
+    }
+
+    /**
+     * Возвращает RCCode
+     *
+     * @return string
+     */
+    private function getRcCode(): string
+    {
+        /**
+         * VPBC-1294
+         * Для успешных операций всегда возвращаем '0'
+         * Если статус операции не успех и rcCode пустой, то возвращаем 'X'
+         */
+        if ($this->paySchet->Status === PaySchet::STATUS_DONE) {
+            return '0';
+        } else if (empty($this->paySchet->RCCode)) {
+            return 'X';
+        }
+
+        return $this->paySchet->RCCode;
     }
 }

@@ -11,9 +11,11 @@ use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CurrencyExchangeRatesResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
+use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\traits\WallettoRequestTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CreatePayException;
+use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\RefundPayException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CreatePayForm;
@@ -23,6 +25,7 @@ use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\forms\SendP2pForm;
+use app\services\payment\forms\RegistrationBenificForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use Carbon\Carbon;
@@ -174,11 +177,24 @@ class WallettoBankAdapter implements IBankAdapter
                 $checkStatusPayResponse->message = BankAdapterResponseException::setErrorMsg($failureMessage);
                 return $checkStatusPayResponse;
             }
-            $responseData = $response->json('orders');
-            $checkStatusPayResponse->status = $this->convertStatus($responseData[0]['status']);
-            $checkStatusPayResponse->message = $responseData[0]['failure_message'] ?? '';
+
+            /**
+             * При запросе на /orders/<transaction_id> всегда приходит массив orders с одним элементом
+             */
+            [$order] = $response->json('orders');
+
+            $checkStatusPayResponse->status = $this->convertStatus($order['status']);
+            $checkStatusPayResponse->message = $order['failure_message'] ?? '';
+
+            $operations = $order['operations'];
+            if ($operations && is_array($operations)) {
+                Yii::info('Walletto checkStatusPay operations count=' . count($operations));
+
+                $lastOperation = array_pop($operations);
+                $checkStatusPayResponse->rcCode = $lastOperation['iso_response_code'] ?? null;
+            }
         } catch (GuzzleException $e) {
-            Yii::error(' Walletto checkStatusPay err:' . $e->getMessage());
+            Yii::error([' Walletto checkStatusPay exception', $e]);
             throw new BankAdapterResponseException(
                 BankAdapterResponseException::REQUEST_ERROR_MSG . ' : ' . self::ERROR_EXCEPTION_MSG
             );
@@ -371,5 +387,13 @@ class WallettoBankAdapter implements IBankAdapter
     public function sendP2p(SendP2pForm $sendP2pForm)
     {
         // TODO: Implement sendP2p() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function registrationBenific(RegistrationBenificForm $registrationBenificForm)
+    {
+        throw new GateException('Метод недоступен');
     }
 }

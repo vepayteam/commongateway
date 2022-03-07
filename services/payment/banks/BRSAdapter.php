@@ -16,10 +16,12 @@ use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\SendP2pResponse;
+use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\CurlSSLStructure;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\BRSAdapterExeception;
+use app\services\payment\exceptions\FailedRecurrentPaymentException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\brs\CheckStatusB2cRequest;
@@ -45,6 +47,7 @@ use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\forms\SendP2pForm;
+use app\services\payment\forms\RegistrationBenificForm;
 use app\services\payment\helpers\BRSErrorHelper;
 use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\PartnerBankGate;
@@ -387,19 +390,20 @@ class BRSAdapter implements IBankAdapter
 
         $createRecurrentPayResponse = new CreateRecurrentPayResponse;
         try {
-            $ans = $this->sendRequest($uri, $recurrentPayRequest->getAttributes()); // todo fix there
+            $ans = $this->sendRequest($uri, $recurrentPayRequest->getAttributes());
+
             if (isset($ans['RESULT_CODE']) && intval($ans['RESULT_CODE']) === self::BRS_RESPONSE_SYSTEM_ERROR_CODE) {
                 Yii::error('BRSAdapter recurrentPay paySchet.ID=' . $paySchet->ID
                     . ' bad response result code 1001');
 
-                // Вызываем GateException, чтобы в RecurrentPayJob платежу присвоился статус ERROR и не было опроса статуса
-                throw new GateException(BRSErrorHelper::getMessage($ans));
-            } else {
-                $createRecurrentPayResponse->message = BRSErrorHelper::getMessage($ans);
-                $createRecurrentPayResponse->status = $this->getStatusResponse($ans['RESULT']);
-                $createRecurrentPayResponse->transac = isset($ans['TRANSACTION_ID']) ? $ans['TRANSACTION_ID'] : '';
-                $createRecurrentPayResponse->rrn = isset($ans['RRN']) ? $ans['RRN'] : '';
+                // Вызываем FailedRecurrentPaymentException, чтобы в RecurrentPayJob платежу присвоился статус ERROR и не было опроса статуса
+                throw new FailedRecurrentPaymentException(BRSErrorHelper::getMessage($ans), $ans['RESULT_CODE']);
             }
+
+            $createRecurrentPayResponse->message = BRSErrorHelper::getMessage($ans);
+            $createRecurrentPayResponse->status = $this->getStatusResponse($ans['RESULT']);
+            $createRecurrentPayResponse->transac = isset($ans['TRANSACTION_ID']) ? $ans['TRANSACTION_ID'] : '';
+            $createRecurrentPayResponse->rrn = isset($ans['RRN']) ? $ans['RRN'] : '';
         } catch (BankAdapterResponseException $e) {
             $createRecurrentPayResponse->status = BaseResponse::STATUS_ERROR;
             $createRecurrentPayResponse->message = BankAdapterResponseException::REQUEST_ERROR_MSG;
@@ -1082,5 +1086,13 @@ class BRSAdapter implements IBankAdapter
             );
             throw new BankAdapterResponseException(BankAdapterResponseException::REQUEST_ERROR_MSG);
         }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function registrationBenific(RegistrationBenificForm $registrationBenificForm)
+    {
+        throw new GateException('Метод недоступен');
     }
 }
