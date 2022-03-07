@@ -19,6 +19,7 @@ use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
+use app\services\payment\exceptions\FailedRecurrentPaymentException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
 use app\services\payment\exceptions\RefundPayException;
@@ -79,6 +80,7 @@ interface IBankAdapter
      * @param AutoPayForm $autoPayForm
      * @return CreateRecurrentPayResponse
      * @throws GateException
+     * @throws FailedRecurrentPaymentException
      */
     public function recurrentPay(AutoPayForm $autoPayForm);
 

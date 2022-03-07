@@ -78,11 +78,6 @@ class TKBankAdapter implements IBankAdapter
     const AFT_MIN_SUMM = 185000;
 
     public const BIC = '044525388';
-    const BANK_URL = 'https://pay.tkbbank.ru';
-    const BANK_URL_TEST = 'https://paytest.online.tkbbank.ru';
-
-    const BANK_URL_XML = 'https://193.232.101.14:8204';
-    const BANK_URL_XML_TEST = 'https://193.232.101.14:8203';
 
     const PS_GENERAL_REFUSAL = 'PS_GENERAL_REFUSAL';
 
@@ -107,13 +102,9 @@ class TKBankAdapter implements IBankAdapter
     {
         $this->gate = $partnerBankGate;
 
-        if (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] == 'Y') {
-            $this->bankUrl = self::BANK_URL_TEST;
-            $this->bankUrlXml = self::BANK_URL_XML_TEST;
-        } else {
-            $this->bankUrl = self::BANK_URL;
-            $this->bankUrlXml = self::BANK_URL_XML;
-        }
+        $config = Yii::$app->params['services']['payments']['TCB'];
+        $this->bankUrl = $config['url'];
+        $this->bankUrlXml = $config['url_xml'];
     }
 
     /**
@@ -485,10 +476,7 @@ class TKBankAdapter implements IBankAdapter
                     ->setOption(CURLOPT_SSLKEY, $this->UserKey)
                     ->setOption(CURLOPT_SSLCERT, $this->UserCert);
             }
-            Yii::warning("req startReq: login = " . $this->gate->Login . " url = " . $url . "\r\n" . Cards::MaskCardLog($post), 'merchant');
             $curl->post($url);
-            Yii::warning("req finishReq: login = " . $this->gate->Login . " url = " . $url . "\r\n" . Cards::MaskCardLog($post), 'merchant');
-
         } catch (\Exception $e) {
             Yii::warning("req curlerror: login = " . $this->gate->Login . " url = " . $url . "\r\n" . Cards::MaskCardLog($post), 'merchant');
             Yii::warning("curlerror: " . $curl->responseCode . ":" . Cards::MaskCardLog($curl->response), 'merchant');

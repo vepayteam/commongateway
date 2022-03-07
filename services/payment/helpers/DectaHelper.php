@@ -191,6 +191,7 @@ class DectaHelper
         $error = reset($transactionDetails['errors']);
 
         $checkStatusPayResponse->message = (is_array($error) && isset($error['description'])) ? $error['description'] : '';
+        $checkStatusPayResponse->rcCode = $error['code'] ?? null;
 
         return $checkStatusPayResponse;
     }

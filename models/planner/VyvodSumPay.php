@@ -23,6 +23,8 @@ class VyvodSumPay
      * Вывод платежей МФО на их счет
      * (в рабочие дни, и в пн за пт+сб+вс)
      *
+     * @deprecated вызывался командой yii widget/vyvod, таска удалена в рамках задачи VPBC-1245, метод больше не используется
+     *
      * @throws \yii\db\Exception
      * @throws \app\services\payment\exceptions\CreatePayException
      */
@@ -68,7 +70,6 @@ class VyvodSumPay
                 r.BIKPoluchat,
                 r.RaschShetPolushat,
                 r.NaznachenPlatez,
-                p.IsAutoPerevodToVydacha,
                 p.SchetTcb,
                 p.Name,
                 p.UrLico,
@@ -76,10 +77,10 @@ class VyvodSumPay
                 p.KPP,
                 p.NumDogovor,
                 p.DateDogovor
-            FROM 
+            FROM
                 `partner` AS p
                 LEFT JOIN partner_bank_rekviz AS r ON p.ID = r.IdPartner
-            WHERE 
+            WHERE
                 p.`IsDeleted` = 0
                 AND p.`IsBlocked` = 0
                 AND p.`IsCommonSchetVydacha` = 0
@@ -89,8 +90,7 @@ class VyvodSumPay
 
         while ($rowPart = $res->read()) {
 
-            if ((empty($rowPart['LoginTkbVyvod']) && $rowPart['IsAutoPerevodToVydacha'] == 0) ||
-                (empty($rowPart['LoginTkbPerevod']) && $rowPart['IsAutoPerevodToVydacha'] == 1)
+            if (empty($rowPart['LoginTkbVyvod']) || empty($rowPart['LoginTkbPerevod'])
             ) {
                 continue;
             }
@@ -113,28 +113,15 @@ class VyvodSumPay
 
             if ($sumPays > 0) {
 
-                if ($rowPart['IsAutoPerevodToVydacha'] == 1) {
-                   //перевод на счект выдачи
-                    $recviz = [
-                        'BIK' => TCBank::BIC,
-                        'RS' => $rowPart['SchetTcb'],
-                        'NamePoluchat' => $rowPart['UrLico'],
-                        'INNPolushat' => $rowPart['INN'],
-                        'KPPPoluchat' => $rowPart['KPP'],
-                        'NaznachenPlatez' => 'Перевод средств между своими счетами согласно условий договора '.$rowPart['NumDogovor'].
-                            ' от '.$rowPart['DateDogovor'].' согласно реестру за %date% г.'
-                    ];
-                } else {
-                    //перевод на р.счект из реквизитов
-                    $recviz = [
-                        'BIK' => $rowPart['BIKPoluchat'],
-                        'RS' => $rowPart['RaschShetPolushat'],
-                        'NamePoluchat' => $rowPart['NamePoluchat'],
-                        'INNPolushat' => $rowPart['INNPolushat'],
-                        'KPPPoluchat' => $rowPart['KPPPoluchat'],
-                        'NaznachenPlatez' => $rowPart['NaznachenPlatez']
-                    ];
-                }
+                //перевод на р.счект из реквизитов
+                $recviz = [
+                    'BIK' => $rowPart['BIKPoluchat'],
+                    'RS' => $rowPart['RaschShetPolushat'],
+                    'NamePoluchat' => $rowPart['NamePoluchat'],
+                    'INNPolushat' => $rowPart['INNPolushat'],
+                    'KPPPoluchat' => $rowPart['KPPPoluchat'],
+                    'NaznachenPlatez' => $rowPart['NaznachenPlatez']
+                ];
 
                 $TcbGate = new TcbGate($rowPart['ID'], $recviz['BIK'] == TCBank::BIC ? TCBank::$PEREVODGATE : TCBank::$VYVODGATE);
                 $tkb = new TCBank($TcbGate);
@@ -291,7 +278,7 @@ class VyvodSumPay
                 `vyvod_reestr`
             WHERE
                 `IdPartner` = :IDMFO
-                AND `DateFrom` >= :DATEFROM AND `DateTo` <= :DATETO                            
+                AND `DateFrom` >= :DATEFROM AND `DateTo` <= :DATETO
         ", [':IDMFO' => $IdPartner, ':DATEFROM' => $dateFrom,':DATETO' => $dateTo])->queryScalar();
 
         if (!$existPay) {
@@ -338,14 +325,14 @@ class VyvodSumPay
     public function GetUslug($mfo, $TypeUsl)
     {
         return Yii::$app->db->createCommand("
-            SELECT 
+            SELECT
                 `ID`
-            FROM 
+            FROM
                 `uslugatovar`
             WHERE
-                `IDPartner` = 1 
-                AND `ExtReestrIDUsluga` = :IDMFO 
-                AND `IsCustom` = :TYPEUSL 
+                `IDPartner` = 1
+                AND `ExtReestrIDUsluga` = :IDMFO
+                AND `IsCustom` = :TYPEUSL
                 AND `IsDeleted` = 0
         ", [':IDMFO' => $mfo, ':TYPEUSL' => $TypeUsl])->queryScalar();
     }
