@@ -89,7 +89,7 @@ class ImpayaAdapter implements IBankAdapter
         $createPayRequest->cc_cvc = $createPayForm->CardCVC;
         $createPayRequest->buildHash($this->gate->Token);
         $createPayRequest->cl_email = $paySchet->UserEmail ?? $paySchet->ID . '@vepay.online';
-        $createPayRequest->cl_phone = $paySchet->PhoneUser;
+        $createPayRequest->cl_phone = $paySchet->PhoneUser ?? self::PHONE_DEFAULT_VALUE;
 
         $uri = '/h2h/';
         $ans = $this->sendRequest($uri, $createPayRequest->getAttributes());
