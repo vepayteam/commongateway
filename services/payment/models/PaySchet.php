@@ -383,7 +383,7 @@ class PaySchet extends \yii\db\ActiveRecord
          * Calculate compensation.
          * Needed only when bank is not 0 ({@see MfoCardRegStrategy::createPaySchet()}).
          */
-        if ($this->Bank !== 0) {
+        if ($this->Bank !== 0 && $this->partner && $this->uslugatovar) {
             $gate = (new BankAdapterBuilder())
                 ->buildByBank($this->partner, $this->uslugatovar, $this->bank, $this->currency)
                 ->getPartnerBankGate();
