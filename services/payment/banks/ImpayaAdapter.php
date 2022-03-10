@@ -89,7 +89,7 @@ class ImpayaAdapter implements IBankAdapter
         $createPayRequest->cc_cvc = $createPayForm->CardCVC;
         $createPayRequest->buildHash($this->gate->Token);
         $createPayRequest->cl_email = $paySchet->UserEmail ?? $paySchet->ID . '@vepay.online';
-        $createPayRequest->cl_phone = $paySchet->PhoneUser;
+        $createPayRequest->cl_phone = $paySchet->PhoneUser ?? self::PHONE_DEFAULT_VALUE;
 
         $uri = '/h2h/';
         $ans = $this->sendRequest($uri, $createPayRequest->getAttributes());
@@ -103,7 +103,8 @@ class ImpayaAdapter implements IBankAdapter
 
         if($ans['data']['status_id'] != 2) {
             $createPayResponse->status = BaseResponse::STATUS_ERROR;
-            $createPayResponse->message = 'Ошибка запроса';
+            $createPayResponse->transac = $ans['data']['transaction']['transaction_id'] ?? '';
+            $createPayResponse->message = $ans['data']['status_descr'] ?? 'Ошибка запроса';
             return $createPayResponse;
         }
 
@@ -257,8 +258,6 @@ class ImpayaAdapter implements IBankAdapter
         switch ($status) {
             case 0:
             case 2:
-            case 3:
-            case 4:
             case 11:
                 return BaseResponse::STATUS_CREATED;
             case 1:

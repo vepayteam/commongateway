@@ -183,7 +183,7 @@ class Partner extends ActiveRecord
     {
         return [
             [['Name'], 'required', 'on' => self::SCENARIO_DEFAULT],
-            [['IsBlocked', 'UrState', 'IsMfo', 'IsAftOnly', 'IsUnreserveComis', 'TypeMerchant', 'VoznagVyplatDirect',
+            [['IsBlocked', 'UrState', 'IsMfo', 'IsUnreserveComis', 'TypeMerchant', 'VoznagVyplatDirect',
                 'IsCommonSchetVydacha', 'IsUseKKmPrint',
                 'IsUseApplepay', 'IsUseGooglepay', 'IsUseSamsungpay', 'BankForPaymentId'], 'integer'],
             [['UrAdres', 'PostAdres'], 'string', 'max' => 1000],
@@ -297,7 +297,6 @@ class Partner extends ActiveRecord
             'SchetTcbTransit' => 'Номер транзитного счета ТКБ на погашение',
             'SchetTcbNominal' => 'Номер номинального счета ТКБ',
             'IsDeleted' => '0 - rabotaet 1 - udalen',
-            'IsAftOnly' => 'Только AFT шлюз',
             'BankName' => 'Наименование банка',
             'BikBank' => 'БИК банка',
             'RSchet' => 'Расчетный счет',
