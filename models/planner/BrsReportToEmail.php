@@ -65,7 +65,7 @@ class BrsReportToEmail extends OtchToEmail
 
                 $sender = new SendEmail();
                 $subject = "Отчет по реестру БРС за период " . $dateFrom . ' - ' . $dateTo;
-                $fileName = 'PRT' . $partnerBankGateAdvParam1 . date('Y-m-d') . '.csv';
+                $fileName = 'PRT' . $partnerBankGateAdvParam1 . date('Ymd') . '.csv';
                 $emailBody = 'Отчет предоставлен в виде прикрепленного файла csv.';
 
                 $res = $sender->sendReestr($partner->email, $subject, $emailBody, [[
@@ -79,7 +79,7 @@ class BrsReportToEmail extends OtchToEmail
 
                     $res = $sender->sendReestr($this->emailList, $subject, 'Отчет предоставлен в виде прикрепленного файла csv.', [[
                         'data' => file_get_contents($otch->fullpath()),
-                        'name' => time() . '.csv'
+                        'name' => $fileName
                     ]]);
 
                     Yii::warning("BrsReportToEmail: send to " . $this->emailList . " result = " . $res, "rsbcron");
