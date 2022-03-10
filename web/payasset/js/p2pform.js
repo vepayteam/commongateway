@@ -107,7 +107,7 @@ $(document).ready(function() {
             $('#expYear').css({'border-color': 'rgb(230, 230, 230)'});
         }
 
-        if(amount < 1 || amount > 75000) {
+        if(amount < minSum || amount > maxSum) {
             $('#paymentAmount').css({'border-color': 'red'});
             valid = false;
         } else {

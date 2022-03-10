@@ -26,7 +26,8 @@ const MAX_EXP_CARD_YEARS = 10;
         var minsumComiss = <?=$paySchet->uslugatovar->MinsumComiss?>;
         var currMonth = <?=Carbon::now()->month?>;
         var currYear = <?=Carbon::now()->year?>;
-
+        var minSum = <?=$paySchet->uslugatovar->MinSumm / 100?>;
+        var maxSum = <?=$paySchet->uslugatovar->MaxSumm / 100?>;
 
     </script>
 
