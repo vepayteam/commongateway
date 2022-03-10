@@ -29,13 +29,13 @@ class BrsReportToCSV extends OtchToCSV
         $currentDate = null;
 
         $dateList = array_unique(array_map(static function($v): string {
-            return date('Y-m-d', $v);
+            return date('Ymd', $v);
         }, array_column($list, 'DateCreate')));
 
         foreach ($list as $item) {
 
-            if ($currentDate !== date('Y-m-d', $item->DateCreate)) {
-                $currentDate = date('Y-m-d', $item->DateCreate);
+            if ($currentDate !== date('Ymd', $item->DateCreate)) {
+                $currentDate = date('Ymd', $item->DateCreate);
             }
 
             $listFormatted[$currentDate][] = $item;
@@ -46,7 +46,7 @@ class BrsReportToCSV extends OtchToCSV
             foreach ($listFormatted[$date] as $v) {
                 /** @var PaySchet $v */
                 $result[] = [
-                    date('Y-m-d', $v->DateCreate),
+                    date('Ymd', $v->DateCreate),
                     $v->ExtBillNumber,
                     'B2C',
                     $v->GateLogin,
