@@ -79,6 +79,16 @@ class TKBankAdapter implements IBankAdapter
 
     const AFT_MIN_SUMM = 185000;
 
+    /**
+     * Стандартное время ожидания запроса
+     */
+    const CURL_DEFAULT_TIMEOUT = 110;
+
+    /**
+     * Время ожидания запроса регистрации бенефициара
+     */
+    const CURL_REGISTER_BENEFICIAL_TIMEOUT = 300;
+
     public const BIC = '044525388';
 
     const PS_GENERAL_REFUSAL = 'PS_GENERAL_REFUSAL';
@@ -447,21 +457,19 @@ class TKBankAdapter implements IBankAdapter
      * @param string $url
      * @param array $addHeader
      * @param bool $jsonReq
+     * @param int $timeout таймаут запроса в секундах
      * @return array [xml, error]
      * @todo Выделить в отдельный (транспортный) слой.
      */
-    private function curlXmlReq($post, $url, $addHeader = [], $jsonReq = true)
+    private function curlXmlReq($post, $url, $addHeader = [], $jsonReq = true, int $timeout = self::CURL_DEFAULT_TIMEOUT)
     {
-
-        $timout = 110;
-
         $curl = new Curl();
         Yii::warning("req: login = " . $this->gate->Login . " url = " . $url . "\r\n" . Cards::MaskCardLog($post), 'merchant');
         try {
             $curl->reset()
                 ->setOption(CURLOPT_VERBOSE, Yii::$app->params['VERBOSE'] === 'Y')
-                ->setOption(CURLOPT_TIMEOUT, $timout)
-                ->setOption(CURLOPT_CONNECTTIMEOUT, $timout)
+                ->setOption(CURLOPT_TIMEOUT, $timeout)
+                ->setOption(CURLOPT_CONNECTTIMEOUT, $timeout)
                 ->setOption(CURLOPT_HTTPHEADER, array_merge([
                         $jsonReq ? 'Content-type: application/json' : 'Content-Type: application/soap+xml; charset=utf-8',
                         'TCB-Header-Login: ' . $this->gate->Login,
@@ -1762,7 +1770,8 @@ class TKBankAdapter implements IBankAdapter
         $ans = $this->curlXmlReq($queryData,
             $this->bankUrlXml . $action,
             ['SOAPAction: "http://cft.transcapital.ru/CftNominalIntegrator/SetBeneficiary"'],
-            false
+            false,
+            self::CURL_REGISTER_BENEFICIAL_TIMEOUT
         );
 
         $registrationBenificResponse = new RegistrationBenificResponse();
