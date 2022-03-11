@@ -292,7 +292,7 @@ class PayController extends Controller
 
         if ($createPayResponse->isNeed3DSVerif) {
             Yii::info('PayController createpaySecondStep render client-submit-form: ' . $paySchet->ID . ', Headers: ' . Json::encode(Yii::$app->request->headers));
-            return $this->render('client-submit-form', [
+            return $this->renderPartial('client-submit-form', [
                 'method' => 'POST',
                 'url' => $createPayResponse->url,
                 'fields' => [
@@ -301,7 +301,7 @@ class PayController extends Controller
             ]);
         } else {
             Yii::info('PayController createpaySecondStep render client-redirect: ' . $paySchet->ID . ', Headers: ' . Json::encode(Yii::$app->request->headers));
-            return $this->render('client-redirect', [
+            return $this->renderPartial('client-redirect', [
                 'redirectUrl' => Url::to('/pay/orderdone/' . $paySchet->ID),
             ]);
         }
@@ -355,6 +355,11 @@ class PayController extends Controller
         $donePayForm = new DonePayForm();
         $donePayForm->IdPay = $id;
         $donePayForm->trans = Yii::$app->request->post('trans_id', null);
+
+        // Impaya
+        if($paySchetId = Yii::$app->request->get('transaction_id', null)) {
+            $donePayForm->IdPay = $paySchetId;
+        }
 
         // Для тестирования, добавляем возможность передать ид транзакции GET параметром
         if (!empty($trans = Yii::$app->request->get('trans_id', null))) {

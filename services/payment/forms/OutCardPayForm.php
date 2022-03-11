@@ -9,7 +9,9 @@ use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\traits\ValidateFormTrait;
 use app\services\payment\interfaces\AmountFormInterface;
+use app\services\payment\models\Currency;
 use app\services\payment\models\PaySchet;
+use app\services\payment\models\repositories\CurrencyRepository;
 use yii\base\Model;
 
 class OutCardPayForm extends Model implements AmountFormInterface
@@ -28,6 +30,7 @@ class OutCardPayForm extends Model implements AmountFormInterface
     public $extid = '';
     public $document_id = '';
     public $fullname = '';
+    public $currency = 'RUB';
 
     public $card = 0;
     public $cardnum;
@@ -71,6 +74,7 @@ class OutCardPayForm extends Model implements AmountFormInterface
                 'documentSeries',
                 'documentNumber',
                 'phone',
+                'currency',
             ], 'safe'],
             ['card', 'validateCard'],
         ];
@@ -135,5 +139,13 @@ class OutCardPayForm extends Model implements AmountFormInterface
     public function getAmount()
     {
         return $this->amount;
+    }
+
+    /**
+     * @return Currency|null
+     */
+    public function getCurrency()
+    {
+        return Currency::findOne(['Code' => $this->currency]);
     }
 }

@@ -88,7 +88,7 @@ class DonePayStrategy
 
                 Yii::info('DonePayStrategy exec. PaySchet ID=' . $paySchet->ID . ' donePayResponse=' . Json::encode($this->donePayResponse));
             } catch (TKBankRefusalException $e) {
-                Yii::error(['DonePayStrategy tkbank refusal exception paySchet.ID=' . $paySchet->ID, $e]);
+                Yii::warning(['DonePayStrategy tkbank refusal exception paySchet.ID=' . $paySchet->ID, $e]);
 
                 $paySchet->Status = PaySchet::STATUS_ERROR;
                 $paySchet->ErrorInfo = $e->getMessage();
