@@ -103,10 +103,6 @@ use yii\db\ActiveQuery;
  */
 class PaySchet extends \yii\db\ActiveRecord
 {
-    public $count;
-    public $Currency;
-    public $CardNumber;
-    public $CurrencyId;
     public $CntPays;
     public $VoznagSumm;
     public $NameUsluga;
