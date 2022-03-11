@@ -9,6 +9,18 @@
 
             $('[data-toggle="tooltip"]').tooltip();
 
+            $("#client_data").val(JSON.stringify({
+                'screenColorDepth': screen.colorDepth,
+                'screenWidth': screen.width,
+                'screenHeight': screen.height,
+                'windowInnerWidth': window.innerWidth,
+                'windowInnerHeight': window.innerHeight,
+                'navigatorLanguage': navigator.language,
+                'timezoneOffset': new Date().getTimezoneOffset(),
+                'navigatorJavaEnabled': navigator.javaEnabled(),
+                'navigatorUserAgent': navigator.userAgent
+            }));
+
             Inputmask.extendDefinitions({
                 'C': {
                     validator: "[A-Za-z ]",
