@@ -21,6 +21,7 @@ use app\models\TU;
 use app\services\payment\exceptions\CardTokenException;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
+use app\services\payment\exceptions\NotUniquePayException;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\helpers\PaymentHelper;
@@ -122,6 +123,13 @@ class OutController extends Controller
             $mfoOutCardStrategy = new MfoOutCardStrategy($outCardPayForm);
             $paySchet = $mfoOutCardStrategy->exec();
             return ['status' => 1, 'id' => $paySchet->ID, 'message' => ''];
+        } catch (NotUniquePayException $e) {
+            return $this->asJson([
+                'status' => 0,
+                'message' => $e->getMessage(),
+                'id' => $e->getPaySchetId(),
+                'extid' => $e->getPaySchetExtId(),
+            ])->setStatusCode(400);
         } catch (CardTokenException $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
         } catch (CreatePayException $e) {
@@ -177,6 +185,13 @@ class OutController extends Controller
         try {
             $result = $this->getPaymentService()->sbpTransfer($outPayaccForm);
             return ['status' => $result->Status, 'message' => $result->ErrorInfo, 'id' => $result->ID];
+        } catch (NotUniquePayException $e) {
+            return $this->asJson([
+                'status' => 0,
+                'message' => $e->getMessage(),
+                'id' => $e->getPaySchetId(),
+                'extid' => $e->getPaySchetExtId(),
+            ])->setStatusCode(400);
         } catch (GateException | NotInstantiableException | InvalidConfigException $e) {
             Yii::error([$e->getMessage(), $e->getTrace(), $e->getFile(), $e->getLine()], 'mfo_out');
             return ['status' => 0, 'message' => 'Ошибка запроса'];
@@ -209,6 +224,13 @@ class OutController extends Controller
         $mfoOutPayaccStrategy = new MfoOutPayAccountStrategy($outPayaccForm);
         try {
             $paySchet = $mfoOutPayaccStrategy->exec();
+        } catch (NotUniquePayException $e) {
+            return $this->asJson([
+                'status' => 0,
+                'message' => $e->getMessage(),
+                'id' => $e->getPaySchetId(),
+                'extid' => $e->getPaySchetExtId(),
+            ])->setStatusCode(400);
         } catch (CreatePayException $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
         } catch (GateException $e) {
@@ -255,6 +277,13 @@ class OutController extends Controller
                 'id' => $paySchet->ID,
                 'message' => $paySchet->ErrorInfo,
             ];
+        } catch (NotUniquePayException $e) {
+            return $this->asJson([
+                'status' => 0,
+                'message' => $e->getMessage(),
+                'id' => $e->getPaySchetId(),
+                'extid' => $e->getPaySchetExtId(),
+            ])->setStatusCode(400);
         } catch (CreatePayException $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
         } catch (GateException $e) {

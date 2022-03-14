@@ -31,9 +31,13 @@ class SetPayOkForm extends Model
      */
     public function loadByCheckStatusPayResponse(CheckStatusPayResponse $checkStatusPayResponse)
     {
-        $this->rrn = $checkStatusPayResponse->xml['orderadditionalinfo']['rrn'] ?? '';
-        $this->message = $checkStatusPayResponse->xml['orderinfo']['statedescription'] ?? '';
-        $this->rcCode = $checkStatusPayResponse->xml['orderadditionalinfo']['rc'] ?? '';
+//        $this->rrn = $checkStatusPayResponse->xml['orderadditionalinfo']['rrn'] ?? '';
+//        $this->message = $checkStatusPayResponse->xml['orderinfo']['statedescription'] ?? '';
+//        $this->rcCode = $checkStatusPayResponse->xml['orderadditionalinfo']['rc'] ?? '';
+        $this->rrn = $checkStatusPayResponse->rrn;
+        $this->message = $checkStatusPayResponse->message;
+        $this->rcCode = $checkStatusPayResponse->rcCode;
+
         return true;
     }
 

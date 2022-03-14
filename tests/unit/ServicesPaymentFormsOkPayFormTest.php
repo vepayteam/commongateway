@@ -9,7 +9,7 @@ class ServicesPaymentFormsOkPayFormTest extends \Codeception\Test\Unit
      * @var \UnitTester
      */
     protected $tester;
-    
+
     protected function _before()
     {
     }
@@ -27,13 +27,6 @@ class ServicesPaymentFormsOkPayFormTest extends \Codeception\Test\Unit
         $this->assertEquals('Id Pay cannot be blank.', $errors['IdPay'][0]);
         $form->IdPay = 1;
         $this->assertTrue($form->validate());
-    }
-
-    public function testExistPaySchet()
-    {
-        $form = new OkPayForm();
-        $form->IdPay = 0;
-        $this->tester->assertEquals(false,  $form->existPaySchet());
     }
 
     public function testGetPaySchet()

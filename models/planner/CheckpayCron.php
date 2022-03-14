@@ -2,19 +2,13 @@
 
 namespace app\models\planner;
 
-use app\models\bank\BankMerchant;
-use app\models\bank\TCBank;
-use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
-//use app\models\protocol\OnlineProv;
-use app\models\queue\JobPriorityInterface;
-use app\models\TU;
 use app\services\payment\jobs\RefreshStatusPayJob;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
-use Carbon\Carbon;
 use Yii;
-
+use yii\db\ActiveQuery;
+use yii\db\Expression;
 
 /**
  * Class CheckpayCron
@@ -31,7 +25,7 @@ class CheckpayCron
         $this->checkStatePay();
 
         //отмена старых
-        $this->cancelOldsPay();
+        $this->cancelOldPayments();
 
         //экспорт оплаченных, но не выгруженных
         //$this->checkToExport();
@@ -100,7 +94,7 @@ class CheckpayCron
                         m.ID
                     FROM
                         pay_schet AS m
-                        INNER JOIN uslugatovar AS us 
+                        INNER JOIN uslugatovar AS us
                           ON (us.ID = m.IdUsluga AND us.`TypeExport` = 0 AND us.ProfitIdProvider > 0)
                     WHERE
                         m.Status = 1
@@ -136,76 +130,86 @@ class CheckpayCron
     /**
      * Отменить старые платежи (не отправленные в банк)
      */
-    private function cancelOldsPay()
+    private function cancelOldPayments()
     {
         try {
+            $paySchets = PaySchet::find()
+                ->andWhere(['=', 'Status', PaySchet::STATUS_WAITING])
+                ->andWhere(['is', 'ExtBillNumber', null])
+                ->andWhere(['<', 'DateLastUpdate', new Expression('UNIX_TIMESTAMP() - (TimeElapsed * 2)')])
+                ->joinWith(['uslugatovar' => function (ActiveQuery $query) {
+                    return $query->andWhere(['!=', 'uslugatovar.IsCustom', UslugatovarType::TOCARD]);
+                }])
+                ->all();
 
-            $res = Yii::$app->db->createCommand('
-                SELECT
-                    m.ID,
-                    m.IdGroupOplat,
-                    m.Status,
-                    m.DateLastUpdate,
-                    m.ExtBillNumber,
-                    m.sms_accept,
-                    m.DateCreate,
-                    us.IsCustom
-                FROM
-                    pay_schet AS m
-                    LEFT JOIN uslugatovar AS us ON us.ID = m.IdUsluga
-                WHERE
-                    m.Status = 0  
-                    AND m.ExtBillNumber IS NULL
-                    AND m.DateLastUpdate < UNIX_TIMESTAMP() - m.TimeElapsed * 2                    
-                    AND us.IsCustom != :toCardType
-            ', [':toCardType' => UslugatovarType::TOCARD])->query();
-
-            while ($row = $res->read()) {
-                if ($row['sms_accept'] == 0) {
-                    //По операциям на вывод средств инвесторами, выполненным после 18.00, прошу установить время подтверждения операции по СМС  – 20 часов (вместо 4-х).
-                    //Если при этом следующий день является не рабочим суббота или воскресенье, то к 20 часам необходимо прибавить 24 ч или 48 ч соответственно .
-                    $wd = date('w', $row['DateCreate']);
-                    $h = date('G', $row['DateCreate']);
-                    $smsTimer = 4 * 3600;
-                    if (($h >= 18 || $h < 9) && $wd >= 1 && $wd < 5) {
-                        //пн-чт после 18
-                        $smsTimer = 20 * 3600;
-                    } elseif ($wd == 5 && $h >= 18) {
-                        //пт после 18
-                        $smsTimer = (20 + 72) * 3600;
-                    } elseif ($wd == 6) {
-                        //сб
-                        $smsTimer = (20 + 48) * 3600;
-                    } elseif ($wd == 0) {
-                        //вс
-                        $smsTimer = (20 + 24) * 3600;
-                    }
-
-                    if ($row['DateCreate'] > time() - $smsTimer) {
-                        continue;
-                    }
+            /** @var PaySchet $paySchet */
+            foreach ($paySchets as $paySchet) {
+                if (self::delayPaymentCancellation($paySchet)) {
+                    continue;
                 }
 
                 $ps = new Payschets();
                 $ps->confirmPay([
-                    'idpay' => $row['ID'],
-                    'idgroup' => $row['IdGroupOplat'],
+                    'idpay' => $paySchet->ID,
+                    'idgroup' => $paySchet->IdGroupOplat,
+                    'trx_id' => $paySchet->ExtBillNumber,
                     'result_code' => 2,
-                    'trx_id' => $row['ExtBillNumber'],
+                    'message' => PaySchet::ERROR_INFO_PAYMENT_TIMEOUT,
+                    'RCCode' => PaySchet::RCCODE_CANCEL_PAYMENT, // VPBC-1293 для операций с таймаутом устанавливать RCCode=TL
                     'ApprovalCode' => '',
                     'RRN' => '',
-                    'message' => 'Время оплаты истекло'
                 ]);
-                Yii::warning("cancelOldsPay: " . $row['ID'], 'rsbcron');
+                Yii::info('CheckpayCron cancelOldPayments cancel payment paySchet.ID=' . $paySchet->ID, 'rsbcron');
             }
-        } catch (\yii\db\Exception $e) {
-            // в случае возникновения ошибки при выполнении одного из запросов выбрасывается исключение
-            Yii::warning("checkToExport-error: " . $e->getMessage(), 'rsbcron');
-            Yii::warning($e->getTraceAsString(), 'rsbcron');
         } catch (\Exception $e) {
-            // в случае возникновения ошибки при выполнении одного из запросов выбрасывается исключение
-            Yii::warning("checkToExport-error: " . $e->getMessage(), 'rsbcron');
-            Yii::warning($e->getTraceAsString(), 'rsbcron');
+            Yii::error(['CheckpayCron cancelOldPayments exception', $e], 'rsbcron');
         }
+    }
+
+    /**
+     * Проверяет нужно ли отложить отмену платежа
+     *
+     * @param PaySchet $paySchet
+     * @return bool Если нужно пропустить отмену платежа - true, иначе false
+     */
+    private static function delayPaymentCancellation(PaySchet $paySchet): bool
+    {
+        if ($paySchet->sms_accept !== 0) {
+            return false;
+        }
+
+        // По операциям на вывод средств инвесторами, выполненным после 18.00, прошу установить время подтверждения операции по СМС – 20 часов (вместо 4-х).
+        // Если при этом следующий день является не рабочим суббота или воскресенье, то к 20 часам необходимо прибавить 24 ч или 48 ч соответственно.
+
+        /**
+         * Порядковый номер недели от 0 (воскресенье) до 6 (суббота)
+         */
+        $week = (int)date('w', $paySchet->DateCreate);
+
+        /**
+         * Часы в 24-часовом формате без ведущего нуля
+         */
+        $hour = (int)date('G', $paySchet->DateCreate);
+
+        $smsTimer = 4 * 3600;
+        if (($week >= 1 && $week < 5) && ($hour >= 18 || $hour < 9)) {
+            // пн-чт после 18
+            $smsTimer = 20 * 3600;
+        } elseif ($week == 5 && $hour >= 18) {
+            // пт после 18
+            $smsTimer = (20 + 72) * 3600;
+        } elseif ($week == 6) {
+            // сб
+            $smsTimer = (20 + 48) * 3600;
+        } elseif ($week == 0) {
+            // вс
+            $smsTimer = (20 + 24) * 3600;
+        }
+
+        if ($paySchet->DateCreate > time() - $smsTimer) {
+            return true;
+        }
+
+        return false;
     }
 }

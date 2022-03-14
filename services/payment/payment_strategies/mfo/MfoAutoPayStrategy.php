@@ -3,6 +3,7 @@
 
 namespace app\services\payment\payment_strategies\mfo;
 
+use app\services\payment\exceptions\NotUniquePayException;
 use app\services\payment\jobs\RecurrentPayJob;
 use app\services\payment\PaymentService;
 use Yii;
@@ -36,6 +37,7 @@ class MfoAutoPayStrategy
      * @return PaySchet
      * @throws CreatePayException
      * @throws GateException
+     * @throws NotUniquePayException
      */
     public function exec()
     {
@@ -72,14 +74,11 @@ class MfoAutoPayStrategy
 
         Yii::warning('getReplyRequest autoPay=' . $this->autoPayForm->partner->ID . $this->autoPayForm->extid, 'mfo');
 
-        $replyPaySchet = $this->getReplyRequest($bankAdapterBuilder);
-        if($replyPaySchet && $replyPaySchet->SummPay == $this->autoPayForm->amount) {
-            Yii::warning('getReplyRequest, the payment which is', 'mfo');
-            return $replyPaySchet;
-        } elseif ($replyPaySchet && $replyPaySchet->SummPay != $this->autoPayForm->amount) {
+        $replyPaySchet = $this->getReplyRequest();
+        if($replyPaySchet) {
             $mutex->release($mutexKey);
             Yii::error('getReplyRequest, a non-unique query', 'mfo');
-            throw new CreatePayException('Нарушение уникальности запроса');
+            throw new NotUniquePayException($replyPaySchet->ID, $replyPaySchet->Extid);
         }
 
         if (!$mutex->acquire($mutexKey, 30)) {
@@ -120,14 +119,12 @@ class MfoAutoPayStrategy
     }
 
     /**
-     * @param BankAdapterBuilder $bankAdapterBuilder
      * @return PaySchet|null
      */
-    protected function getReplyRequest(BankAdapterBuilder $bankAdapterBuilder)
+    protected function getReplyRequest()
     {
         $paySchet = PaySchet::findOne([
             'IdOrg' => $this->autoPayForm->partner->ID,
-            'IdUsluga' => $bankAdapterBuilder->getUslugatovar()->ID,
             'Extid' => $this->autoPayForm->extid,
         ]);
 

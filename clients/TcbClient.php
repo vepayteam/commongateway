@@ -2,21 +2,29 @@
 
 namespace app\clients;
 
+use app\clients\tcbClient\requests\Debit3ds2FinishRequest;
 use app\clients\tcbClient\requests\DebitFinishRequest;
+use app\clients\tcbClient\requests\GetOrderStateRequest;
+use app\clients\tcbClient\responses\Debit3ds2FinishResponse;
 use app\clients\tcbClient\responses\DebitFinishResponse;
 use app\clients\tcbClient\responses\ErrorResponse;
+use app\clients\tcbClient\responses\GetOrderStateResponse;
+use app\clients\tcbClient\responses\objects\OrderAdditionalInfo;
+use app\clients\tcbClient\responses\objects\OrderInfo;
+use app\clients\tcbClient\TcbOrderNotExistException;
 use app\models\payonline\Cards;
-use clients\tcbClient\TcbInternalException;
-use clients\tcbClient\TcbParsingException;
+use Carbon\Carbon;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\ServerException;
 use yii\base\BaseObject;
 use yii\base\InvalidArgumentException;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Json;
 
 /**
- * Клиент к банку ТКБ.
+ * TCB bank client.
  */
 class TcbClient extends BaseObject
 {
@@ -51,8 +59,6 @@ class TcbClient extends BaseObject
 
     /**
      * @throws GuzzleException
-     * @throws TcbParsingException
-     * @throws TcbInternalException
      */
     protected function doRequest(string $endpoint, array $requestData)
     {
@@ -67,7 +73,6 @@ class TcbClient extends BaseObject
 
         \Yii::info(ArrayHelper::merge($logData, ['Message' => 'TCB request.']));
 
-        $client = new Client();
         $headers = [
             'Content-type' => 'application/json',
             'TCB-Header-Login' => $this->login,
@@ -76,54 +81,55 @@ class TcbClient extends BaseObject
         ];
 
         \Yii::info(ArrayHelper::merge($logData, ['Message' => 'TCB request start.']));
-        $response = $client->request('POST', $this->bankUrl . $endpoint, [
-            'timeout' => self::TIMEOUT,
-            'connect_timeout' => self::TIMEOUT,
-            'headers' => $headers,
-            'verify' => false,
-            'curl' => [
-                CURLOPT_SSL_CIPHER_LIST => 'TLSv1',
-                CURLOPT_SSL_VERIFYPEER => false,
-            ],
-            'body' => $requestJson,
-        ]);
-        \Yii::info(ArrayHelper::merge($logData, ['Message' => 'TCB request end.']));
-
-        $responseBody = $response->getBody()->getContents();
-
-        if ($response->getStatusCode() === 500) {
-            \Yii::error(ArrayHelper::merge($logData, [
-                'Message' => 'TCB bank internal server error 500.',
-                'Headers' => $headers,
-                'Response' => $responseBody,
-            ]));
-            throw new TcbInternalException('Bank internal server error 500.');
-        }
 
         try {
-            $responseData = Json::decode($responseBody);
-        } catch (InvalidArgumentException $e) {
-            /** @todo Выяснить в каких случаях не удается декодировать тело ответа в JSON и правильно обработь. */
+            $response = (new Client())->request('POST', $this->bankUrl . $endpoint, [
+                'timeout' => self::TIMEOUT,
+                'connect_timeout' => self::TIMEOUT,
+                'headers' => $headers,
+                'verify' => false,
+                'curl' => [
+                    CURLOPT_SSL_CIPHER_LIST => 'TLSv1',
+                    CURLOPT_SSL_VERIFYPEER => false,
+                ],
+                'body' => $requestJson,
+            ]);
+        } catch (BadResponseException $e) {
             \Yii::error(ArrayHelper::merge($logData, [
-                'Message' => 'Unable to parse response.',
+                'Message' => "TCB bad response error. Status code: {$e->getResponse()->getStatusCode()}.",
                 'Headers' => $headers,
-                'Response' => $responseBody,
+                'Response' => Cards::MaskCardLog((string)$e->getResponse()->getBody()),
             ]));
-            throw new TcbParsingException('Unable to parse response.');
+            throw $e;
         }
 
-        return $responseData;
+        $responseBody = (string)$response->getBody();
+
+        \Yii::info(ArrayHelper::merge($logData, [
+            'Message' => 'TCB request end.',
+            'Response' => Cards::MaskCardLog($responseBody),
+        ]));
+
+        return $this->tryJsonDecode($responseBody);
+    }
+
+    private function tryJsonDecode(string $json)
+    {
+        try {
+            return Json::decode($json);
+        } catch (InvalidArgumentException $e) {
+            \Yii::error('Unable to parse JSON: ' . Cards::MaskCardLog($json));
+        }
+        return null;
     }
 
     /**
-     * Осуществляет процедуру завершения операции по протоколу ECOM.
+     * DebitFinishECOM method.
      *
      * @param DebitFinishRequest $request
      * @return DebitFinishResponse|ErrorResponse
      *
      * @throws GuzzleException
-     * @throws TcbParsingException
-     * @throws TcbInternalException
      */
     public function debitFinishEcom(DebitFinishRequest $request)
     {
@@ -131,14 +137,12 @@ class TcbClient extends BaseObject
     }
 
     /**
-     * Осуществляет процедуру завершения операции по протоколу AFT.
+     * DebitFinishAFT method.
      *
      * @param DebitFinishRequest $request
      * @return DebitFinishResponse|ErrorResponse
      *
      * @throws GuzzleException
-     * @throws TcbParsingException
-     * @throws TcbInternalException
      */
     public function debitFinishAft(DebitFinishRequest $request)
     {
@@ -151,8 +155,6 @@ class TcbClient extends BaseObject
      * @return DebitFinishResponse|ErrorResponse
      *
      * @throws GuzzleException
-     * @throws TcbParsingException
-     * @throws TcbInternalException
      */
     private function debitFinishInternal(string $endpoint, DebitFinishRequest $request)
     {
@@ -165,10 +167,122 @@ class TcbClient extends BaseObject
         if (isset($responseData['ErrorInfo']['ErrorCode'])) {
             $errorCode = (int)$responseData['ErrorInfo']['ErrorCode'];
             if ($errorCode !== 0) {
-                return new ErrorResponse($responseData['ErrorInfo']['ErrorInfo'] ?? '', $errorCode);
+                return new ErrorResponse($responseData['ErrorInfo']['ErrorMessage'] ?? '', $errorCode);
             }
         }
 
         return new DebitFinishResponse($responseData['OrderId'], $responseData['ExtId']);
+    }
+
+    /**
+     * DebitUnregisteredCard3ds2WofFinish method.
+     *
+     * @param Debit3ds2FinishRequest $request
+     * @return Debit3ds2FinishResponse|ErrorResponse
+     * @throws GuzzleException
+     */
+    public function debit3ds2Finish(Debit3ds2FinishRequest $request)
+    {
+        $auth = $request->authenticationData;
+        $authData = ['Status' => $auth->status];
+        if ($auth->authenticationValue !== null) {
+            $authData['AuthenticationValue'] = $auth->authenticationValue;
+        }
+        if ($auth->eci !== null) {
+            $authData['Eci'] = $auth->eci;
+        }
+        if ($auth->dsTransId !== null) {
+            $authData['DsTransID'] = $auth->dsTransId;
+        }
+
+        $responseData = $this->doRequest('/api/v1/card/unregistered/debit/3ds2/wof/finish', [
+            'ExtId' => $request->extId,
+            'Amount' => $request->amount,
+            'ForceGate' => $request->forceGate,
+            'Description' => $request->description,
+            'CardInfo' => ['CardRefId' => $request->cardRefId],
+            'AuthenticationData' => $authData,
+        ]);
+
+        if (isset($responseData['ErrorInfo']['Code'])) {
+            $errorCode = (int)$responseData['ErrorInfo']['Code'];
+            if ($errorCode !== 0) {
+                return new ErrorResponse($responseData['ErrorInfo']['Message'] ?? '', $errorCode);
+            }
+        }
+
+        return new Debit3ds2FinishResponse($responseData['OrderId'], $responseData['ExtId']);
+    }
+
+    /**
+     * GetOrderState method.
+     *
+     * Throws special exception {@see TcbOrderNotExistException}.
+     *
+     * @param GetOrderStateRequest $request
+     * @return GetOrderStateResponse|ErrorResponse
+     * @throws GuzzleException
+     * @throws TcbOrderNotExistException
+     */
+    public function getOrderState(GetOrderStateRequest $request)
+    {
+        try {
+
+            $responseData = $this->doRequest('/api/v1/order/state', [
+                'ExtID' => $request->extId,
+            ]);
+
+        } catch (ServerException $e) {
+            /** @todo Remove, hack VPBC-1298. */
+            $errorData = $this->tryJsonDecode((string)$e->getResponse()->getBody());
+            if (is_array($errorData) && $errorData['Code'] === 'OrderNotExist') {
+                \Yii::$app->errorHandler->logException($e);
+                throw new TcbOrderNotExistException();
+            }
+            throw $e;
+        }
+
+        $errorCode = (int)$responseData['ErrorInfo']['ErrorCode'];
+        if ($errorCode !== 0) {
+            return new ErrorResponse($responseData['ErrorInfo']['ErrorMessage'] ?? '', $errorCode);
+        }
+
+        $infoData = $responseData['OrderInfo'];
+        $info = new OrderInfo(
+            $infoData['ExtId'],
+            $infoData['OrderId'],
+            $infoData['State'],
+            $infoData['StateDescription'],
+            $infoData['Type'],
+            $infoData['Amount'],
+            new Carbon($infoData['DateTime']),
+            new Carbon($infoData['StateUpdateDateTime'])
+        );
+
+        if (isset($responseData['OrderAdditionalInfo'])) {
+            $additionalInfoData = $responseData['OrderAdditionalInfo'];
+            $additionalInfo = new OrderAdditionalInfo(
+                $additionalInfoData['CardExpYear'] ?? null,
+                $additionalInfoData['CardExpMonth'] ?? null,
+                $additionalInfoData['CardIssuingBank'] ?? null,
+                $additionalInfoData['CardBrand'] ?? null,
+                $additionalInfoData['CardType'] ?? null,
+                $additionalInfoData['CardLevel'] ?? null,
+                $additionalInfoData['LastStateDate'] ?? null,
+                $additionalInfoData['CardNumber'] ?? null,
+                $additionalInfoData['CardHolder'] ?? null,
+                $additionalInfoData['CardRefID'] ?? null,
+                $additionalInfoData['ActionCodeDescription'] ?? null,
+                $additionalInfoData['ECI'] ?? null,
+                $additionalInfoData['CardNumberHash'] ?? null,
+                $additionalInfoData['RC'] ?? null,
+                $additionalInfoData['Fee'] ?? null,
+                $additionalInfoData['RRN'] ?? null
+            );
+        } else {
+            $additionalInfo = null;
+        }
+
+        return new GetOrderStateResponse($info, $additionalInfo);
     }
 }

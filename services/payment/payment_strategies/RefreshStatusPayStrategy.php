@@ -4,6 +4,7 @@
 namespace app\services\payment\payment_strategies;
 
 
+use app\clients\tcbClient\TcbOrderNotExistException;
 use app\models\antifraud\AntiFraud;
 use app\models\bank\BankCheck;
 use app\models\payonline\Cards;
@@ -34,6 +35,7 @@ class RefreshStatusPayStrategy extends OkPayStrategy
      * @return PaySchet
      * @throws Exception
      * @throws \app\services\payment\exceptions\GateException
+     * @throws TcbOrderNotExistException
      */
     public function exec()
     {
