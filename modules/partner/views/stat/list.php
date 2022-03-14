@@ -141,6 +141,9 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
         </div>
     </div>
 </div>
+
+<div id="transaction-edit-wrapper"></div>
+
 <?=$this->render('excerpt/_modal_pdf')?>
 <?php $this->registerJs('
 lk.statlist();

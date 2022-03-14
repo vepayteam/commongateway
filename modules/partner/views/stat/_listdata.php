@@ -119,6 +119,17 @@ use yii\widgets\LinkPager;
                             Обновить статус
                         </a>
                     <?php endif; ?>
+
+                    <?php if ($IsAdmin): ?>
+                        <button
+                            data-action="transaction-edit"
+                            data-id="<?= Html::encode($row['ID']) ?>"
+                            class="btn btn-white btn-xs"
+                            type="button"
+                        >
+                            Редактировать
+                        </button>
+                    <?php endif; ?>
                 </td>
             </tr>
 <?php endforeach; ?>
