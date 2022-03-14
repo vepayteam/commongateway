@@ -2,9 +2,11 @@
 
 namespace app\services\payment\banks\bank_adapter_responses\decta;
 
-use app\services\payment\banks\bank_adapter_responses\BaseResponse;
-
-class RefundPayResponse extends BaseResponse
+/**
+ * @todo Удалить ненужный класс.
+ * @deprecated
+ */
+class RefundPayResponse extends \app\services\payment\banks\bank_adapter_responses\RefundPayResponse
 {
     //
 }
