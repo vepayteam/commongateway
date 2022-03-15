@@ -56,16 +56,17 @@ class BrsReportToEmail extends OtchToEmail
                 $list = ['data' => []];
             }
 
-            if ($list['data']) {
+            if (!empty($list['data'])) {
 
-                $partnerBankGateAdvParam1 = reset($list['data'])['GateAdvParam_1'] ?? '';
+                $firstItem = reset($list['data']);
+                $partnerBankGateAdvParam1 = $firstItem['GateAdvParam_1'];
 
                 $otch = new BrsReportToCSV($list, $partner->payment, $partner->repayment);
                 $otch->export();
 
                 $sender = new SendEmail();
                 $subject = "Отчет по реестру БРС за период " . $dateFrom . ' - ' . $dateTo;
-                $fileName = 'PRT' . $partnerBankGateAdvParam1 . date('Ymd') . '.csv';
+                $fileName = 'PRT' . $partnerBankGateAdvParam1 . date('Ymd') . '1.csv';
                 $emailBody = 'Отчет предоставлен в виде прикрепленного файла csv.';
 
                 $res = $sender->sendReestr($partner->email, $subject, $emailBody, [[
