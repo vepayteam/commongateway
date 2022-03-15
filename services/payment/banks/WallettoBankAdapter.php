@@ -177,11 +177,24 @@ class WallettoBankAdapter implements IBankAdapter
                 $checkStatusPayResponse->message = BankAdapterResponseException::setErrorMsg($failureMessage);
                 return $checkStatusPayResponse;
             }
-            $responseData = $response->json('orders');
-            $checkStatusPayResponse->status = $this->convertStatus($responseData[0]['status']);
-            $checkStatusPayResponse->message = $responseData[0]['failure_message'] ?? '';
+
+            /**
+             * При запросе на /orders/<transaction_id> всегда приходит массив orders с одним элементом
+             */
+            [$order] = $response->json('orders');
+
+            $checkStatusPayResponse->status = $this->convertStatus($order['status']);
+            $checkStatusPayResponse->message = $order['failure_message'] ?? '';
+
+            $operations = $order['operations'];
+            if ($operations && is_array($operations)) {
+                Yii::info('Walletto checkStatusPay operations count=' . count($operations));
+
+                $lastOperation = array_pop($operations);
+                $checkStatusPayResponse->rcCode = $lastOperation['iso_response_code'] ?? null;
+            }
         } catch (GuzzleException $e) {
-            Yii::error(' Walletto checkStatusPay err:' . $e->getMessage());
+            Yii::error([' Walletto checkStatusPay exception', $e]);
             throw new BankAdapterResponseException(
                 BankAdapterResponseException::REQUEST_ERROR_MSG . ' : ' . self::ERROR_EXCEPTION_MSG
             );

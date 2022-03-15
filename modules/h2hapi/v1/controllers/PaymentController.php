@@ -107,5 +107,7 @@ class PaymentController extends BaseApiController
         $this->queue->push(new ReversePaymentJob([
             'paySchetId' => $paySchet->ID,
         ]));
+
+        \Yii::$app->response->content = '';
     }
 }
