@@ -47,12 +47,12 @@ class PaymentService extends Component
         $refundNumber = (int)max(ArrayHelper::getColumn($sourcePaySchet->refunds, 'refundNumber') + [0]) + 1;
 
         if ($amount === null) {
-            $amount = $sourcePaySchet->SummPay;
+            $amount = $sourcePaySchet->getSummFull();
         }
 
         /** {@see PaySchet::SummPay} */
         $refundedAmount = array_sum(ArrayHelper::getColumn($sourcePaySchet->refunds, 'SummPay'));
-        if (($amount + $refundedAmount) > $sourcePaySchet->SummPay) {
+        if (($amount + $refundedAmount) > $sourcePaySchet->getSummFull()) {
             throw new CreateRefundException('Amount exceeded.', CreateRefundException::AMOUNT_EXCEEDED);
         }
 
