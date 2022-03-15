@@ -3,23 +3,28 @@
 namespace app\modules\h2hapi\v1\controllers;
 
 use app\modules\h2hapi\v1\components\BaseApiController;
+use app\modules\h2hapi\v1\jobs\ReversePaymentJob;
 use app\modules\h2hapi\v1\objects\PaymentObject;
 use app\modules\h2hapi\v1\services\PaymentApiService;
 use app\modules\h2hapi\v1\services\paymentApiService\PaymentCreateException;
+use app\services\payment\models\PaySchet;
+use app\services\PaymentService;
 use yii\base\InvalidConfigException;
+use yii\queue\Queue;
 use yii\web\ConflictHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\ServerErrorHttpException;
 
-/**
- * REST API оплаты.
- */
 class PaymentController extends BaseApiController
 {
     /**
      * @var PaymentApiService
      */
-    private $service;
+    private $apiService;
+    /**
+     * @var Queue
+     */
+    private $queue;
 
     /**
      * {@inheritDoc}
@@ -29,7 +34,8 @@ class PaymentController extends BaseApiController
     {
         parent::init();
 
-        $this->service = \Yii::$app->get(PaymentApiService::class);
+        $this->apiService = \Yii::$app->get(PaymentApiService::class);
+        $this->queue = \Yii::$app->queue;
     }
 
     /**
@@ -39,6 +45,7 @@ class PaymentController extends BaseApiController
     {
         return [
             'put' => ['PUT'],
+            'put-reversed' => ['PUT'],
         ];
     }
 
@@ -54,7 +61,7 @@ class PaymentController extends BaseApiController
     {
         $paySchet = $this->findPaySchet($paySchetId);
 
-        if ($this->service->hasPayment($paySchet)) {
+        if ($this->apiService->hasPayment($paySchet)) {
             throw new ConflictHttpException('Оплата по счету уже произведена.');
         }
 
@@ -63,7 +70,7 @@ class PaymentController extends BaseApiController
 
         try {
             if ($paymentObject->validate()) {
-                return $this->service->create($paySchet, $paymentObject);
+                return $this->apiService->create($paySchet, $paymentObject);
             }
         } catch (PaymentCreateException $e) {
             if ($e->getCode() === PaymentCreateException::INVOICE_EXPIRED) {
@@ -80,5 +87,27 @@ class PaymentController extends BaseApiController
         }
 
         return $paymentObject;
+    }
+
+    /**
+     * Reverses the specified payment.
+     *
+     * @param mixed $paySchetId ID of payment to reverse.
+     * @throws NotFoundHttpException
+     * @throws ConflictHttpException
+     */
+    public function actionPutReversed($paySchetId)
+    {
+        $paySchet = $this->findPaySchet($paySchetId);
+
+        if ($paySchet->Status !== PaySchet::STATUS_DONE) {
+            throw new ConflictHttpException('Платеж не завершен.');
+        }
+
+        $this->queue->push(new ReversePaymentJob([
+            'paySchetId' => $paySchet->ID,
+        ]));
+
+        \Yii::$app->response->content = '';
     }
 }

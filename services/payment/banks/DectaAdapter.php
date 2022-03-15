@@ -186,8 +186,10 @@ class DectaAdapter implements IBankAdapter
      */
     public function refundPay(RefundPayForm $refundPayForm): RefundPayResponse
     {
+        $paySchet = $refundPayForm->paySchet;
+
         $url = $this->getRequestUrl('refund_pay', [
-            'payment_id' => $refundPayForm->paySchet->ExtBillNumber
+            'payment_id' => $paySchet->refundSource->ExtBillNumber
         ]);
 
         try {

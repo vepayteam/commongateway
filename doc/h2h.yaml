@@ -102,6 +102,88 @@ paths:
         "422":
           description: Ошибки валидации. JSON-структура аналогичная запросу, где текст ошибки в значениях атрибутов объекта
 
+  /invoices/{id}/payment/refunds:
+    parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: ID Счета
+    post:
+      summary: Возврат
+      description: Производит возврат средств
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Refund"
+      responses:
+        "201":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Refund"
+        "409":
+          description: Платеж не завершен / Сумма возврата превышена / Не найден шлюз при расчете комиссии / Ошибка расчета комиссии
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConflictError"
+        "404":
+          description: Счет не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotFoundError"
+        "422":
+          description: Ошибки валидации. JSON-структура аналогичная запросу, где текст ошибки в значениях атрибутов объекта
+  /refunds/{id}:
+    parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: ID Возврата
+    get:
+      description: Возвращает объект Возврата Средств по ID
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Refund"
+
+  /invoices/{id}/payment/reversed:
+    parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: ID Счета
+    put:
+      summary: Отмена
+      description: Производит отмену платежа
+      responses:
+        "200":
+          description: OK
+        "409":
+          description: Платеж не завершен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConflictError"
+        "404":
+          description: Счет не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotFoundError"
+
 components:
   securitySchemes:
     User:
@@ -280,6 +362,38 @@ components:
               maxLength: 3
               minLength: 3
               example: "123"
+
+    Refund:
+      type: object
+      properties:
+        amountFractional:
+          type: integer
+          description: Сумма возврата в копейках (центах). NULL - полный возврат.
+          required: false
+          nullable: true
+          minimum: 100
+          maximum: 100000000
+          example: 50000
+        id:
+          type: integer
+          description: ID Возврата
+          example: 1241423
+          readOnly: true
+        status:
+          type: integer
+          enum: [ 2, 4, 6 ]
+          description: >
+            Статус оплаты Счета:
+            * 2 - Ошибка
+            * 4 - Ожидается обработка
+            * 6 - Возврат произведен
+          example: 4
+          readOnly: true
+        message:
+          type: string
+          description: Сообщение и текст ошибки
+          example: "Возврат произведен."
+          readOnly: true
 
     ConflictError:
       type: object

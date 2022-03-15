@@ -109,10 +109,15 @@ abstract class BaseApiController extends Controller
      */
     protected function findPaySchet($id): PaySchet
     {
-        $paySchet = PaySchet::findOne([
-            'ID' => $id,
-            'IdOrg' => $this->partner->ID,
-        ]);
+        /** @var PaySchet $paySchet */
+        $paySchet = PaySchet::find()
+            ->andWhere([
+                'ID' => $id,
+                'IdOrg' => $this->partner->ID,
+            ])
+            ->andWhere(['is', 'RefundSourceId', null]) // Не возврат
+            ->one();
+
         if ($paySchet === null) {
             throw new NotFoundHttpException('Счет не найден.');
         }
