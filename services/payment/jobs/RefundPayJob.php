@@ -2,17 +2,17 @@
 
 namespace app\services\payment\jobs;
 
-use app\services\payment\banks\bank_adapter_responses\BaseResponse;
-use app\services\payment\banks\BankAdapterBuilder;
-use app\services\payment\forms\RefundPayForm;
 use app\services\payment\models\PaySchet;
+use app\services\PaymentService;
 use Yii;
 use yii\base\BaseObject;
-use yii\helpers\Json;
 use yii\queue\JobInterface;
 
 class RefundPayJob extends BaseObject implements JobInterface
 {
+    /**
+     * @var int
+     */
     public $paySchetId;
 
     /**
@@ -21,7 +21,7 @@ class RefundPayJob extends BaseObject implements JobInterface
     public $initiator;
 
     /**
-     * @inheritDoc
+     * @inheritdoc
      */
     public function execute($queue)
     {
@@ -29,42 +29,16 @@ class RefundPayJob extends BaseObject implements JobInterface
             Yii::info("RefundPayJob start ID={$this->paySchetId} Initiator={$this->initiator}");
         }
 
-        Yii::warning('RefundPayJob execute: ID=' . $this->paySchetId);
+        Yii::info('RefundPayJob execute ID=' . $this->paySchetId);
         $paySchet = PaySchet::findOne(['ID' => $this->paySchetId]);
 
-        $refundPayForm = new RefundPayForm();
-        $refundPayForm->paySchet = $paySchet;
+        /** @var PaymentService $service */
+        $service = Yii::$app->get(PaymentService::class);
 
-        $bankAdapterBuilder = new BankAdapterBuilder();
-        $bankAdapterBuilder->build($paySchet->partner, $paySchet->uslugatovar, $paySchet->currency);
-
-        $refundPayResponse = $bankAdapterBuilder->getBankAdapter()->refundPay($refundPayForm);
-
-        if ($refundPayResponse->status == BaseResponse::STATUS_DONE) {
-            $paySchet->Status = PaySchet::STATUS_CANCEL;
-            $paySchet->ErrorInfo = 'Платеж отменен';
-            if ($paySchet->save(false)) {
-                Yii::warning('RefundPayJob refund: ID=' . $this->paySchetId);
-            } else {
-                Yii::error('RefundPayJob error save: ID=' . $this->paySchetId);
-            }
-        } elseif ($refundPayResponse->status == BaseResponse::STATUS_CREATED) {
-            $paySchet->Status = PaySchet::STATUS_WAITING_CHECK_STATUS;
-            $paySchet->ErrorInfo = $refundPayResponse->message;
-            if ($paySchet->save(false)) {
-                Yii::warning('RefundPayJob refund: ID=' . $this->paySchetId);
-            } else {
-                Yii::error('RefundPayJob error save: ID=' . $this->paySchetId);
-            }
+        try {
+            $service->refund($paySchet);
+        } catch (\Exception $e) {
+            Yii::error(['RefundPayJob refund exception', $e]);
         }
-
-        Yii::warning(
-            sprintf(
-                'RefundPayJob result: ID=%s, result=%s',
-                $this->paySchetId,
-                Json::encode($refundPayResponse->getAttributes())
-            ),
-            'RefundPayJob'
-        );
     }
 }

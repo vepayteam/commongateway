@@ -12,7 +12,6 @@ use yii\data\Pagination;
 use yii\db\Expression;
 use yii\db\Query;
 
-use function array_map;
 use function array_walk;
 
 class PayShetStat extends Model
@@ -333,12 +332,28 @@ class PayShetStat extends Model
             }
         }
 
+        /**
+         * Подсчитываем общую сумму всех операций со статусом refund
+         */
+        $refundTotalSum = array_reduce($data, function ($carry, $item) {
+            if (intval($item['Status']) === PaySchet::STATUS_REFUND_DONE) {
+                return $carry + intval($item['SummPay']);
+            }
+
+            return $carry;
+        }, 0);
+
+        /**
+         * Из суммы всех платежей вычитаем возвраты
+         */
+        $resultSumPay = $sumPay - $refundTotalSum;
+
         $pagination = new Pagination([
             'totalCount' => $query->count(),
             'pageSize' => $CNTPAGE,
         ]);
 
-        return ['data' => $data, 'pagination' => $pagination, 'cnt' => $cnt, 'cntpage' => $CNTPAGE, 'sumpay' => $sumPay, 'sumcomis' => $sumComis, 'bankcomis' => $bankcomis, 'voznagps' => $voznagps];
+        return ['data' => $data, 'pagination' => $pagination, 'cnt' => $cnt, 'cntpage' => $CNTPAGE, 'sumpay' => $resultSumPay, 'sumcomis' => $sumComis, 'bankcomis' => $bankcomis, 'voznagps' => $voznagps];
     }
 
     /**

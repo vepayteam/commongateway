@@ -8,14 +8,17 @@ use app\models\payonline\Partner;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
 use app\services\CompensationService;
+use app\services\compensationService\CompensationException;
 use app\services\notifications\models\NotificationPay;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\Banks;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\models\active_query\PaySchetQuery;
 use app\services\payment\payment_strategies\mfo\MfoCardRegStrategy;
+use app\services\PaymentService;
 use Carbon\Carbon;
 use Yii;
+use yii\base\InvalidConfigException;
 use yii\db\ActiveQuery;
 
 /**
@@ -87,6 +90,7 @@ use yii\db\ActiveQuery;
  * @property string|null $RCCode
  * @property string|null $Operations
  * @property int $RegisterCard Регистрировать ли карту для рекуррентных платежей при оплате. Значения: 1, 0. По умолчанию 0.
+ * @property int|null $RefundSourceId ID исходной записи для дополнительных записей возврата платежа
  *
  * @property Uslugatovar $uslugatovar
  * @property Partner $partner
@@ -94,12 +98,18 @@ use yii\db\ActiveQuery;
  * @property PaySchetLog[] $log
  * @property User $user
  * @property Bank $bank
+ * @property PaySchet $refundSource {@see PaySchet::getRefundSource()}
+ * @property PaySchet[] $refunds {@see PaySchet::getRefunds()}
+ *
  * @property string $Version3DS
  * @property int $IsNeed3DSVerif
  * @property string $DsTransId
  * @property string $Eci
  * @property string $AuthValue3DS
  * @property string $CardRefId3DS
+ *
+ * @property-read int|null $refundNumber {@see PaySchet::getRefundNumber()}
+ * @property-read bool $isRefund {@see PaySchet::getIsRefund()}
  */
 class PaySchet extends \yii\db\ActiveRecord
 {
@@ -113,6 +123,7 @@ class PaySchet extends \yii\db\ActiveRecord
     const STATUS_CANCEL = 3;
     const STATUS_NOT_EXEC = 4;
     const STATUS_WAITING_CHECK_STATUS = 5;
+    const STATUS_REFUND_DONE = 6;
 
     const STATUSES = [
         self::STATUS_WAITING => 'В обработке',
@@ -121,6 +132,7 @@ class PaySchet extends \yii\db\ActiveRecord
         self::STATUS_CANCEL => 'Возврат',
         self::STATUS_NOT_EXEC => 'Ожидается обработка',
         self::STATUS_WAITING_CHECK_STATUS => 'Ожидается запрос статуса',
+        self::STATUS_REFUND_DONE => 'Платеж возвращен',
     ];
 
     const STATUS_COLORS = [
@@ -130,6 +142,7 @@ class PaySchet extends \yii\db\ActiveRecord
         self::STATUS_CANCEL => '#FF3E00',
         self::STATUS_NOT_EXEC => 'blue',
         self::STATUS_WAITING_CHECK_STATUS => 'blue',
+        self::STATUS_REFUND_DONE => '#FFE600',
     ];
 
     const CHECK_3DS_CACHE_PREFIX = 'pay_schet__check-3ds-response';
@@ -163,7 +176,7 @@ class PaySchet extends \yii\db\ActiveRecord
                 'SummPay', 'ComissSumm', 'MerchVozn', 'BankComis', 'Status', 'DateCreate', 'DateOplat', 'DateLastUpdate',
                 'PayType', 'TimeElapsed', 'ExtKeyAcces', 'CardExp', 'UserClickPay', 'CountSendOK', 'SendKvitMail',
                 'IdAgent', 'TypeWidget', 'Bank', 'IsAutoPay', 'AutoPayIdGate', 'sms_accept', 'CurrencyId',
-                'RegisterCard',
+            'RegisterCard',
                 ],
                 'integer'
             ],
@@ -334,6 +347,30 @@ class PaySchet extends \yii\db\ActiveRecord
         return $bankFee;
     }
 
+    public function getRefundNumber(): ?int
+    {
+        $numberPrefix = "{$this->refundSource->Extid} R";
+        if ($this->refundSource !== null && strpos($this->Extid, $numberPrefix) === 0) {
+            $number = mb_substr($this->Extid, mb_strlen($numberPrefix));
+            if ($number == (int)$number) {
+                return (int)$number;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns TRUE if this record is a refund - an additional record created be the refund operation.
+     *
+     * @see PaymentService::createRefundPayment()
+     * @return bool
+     */
+    public function getIsRefund(): bool
+    {
+        return $this->RefundSourceId !== null;
+    }
+
     public function getUser()
     {
         return $this->hasOne(User::class, ['ID' => 'IdUser']);
@@ -364,6 +401,22 @@ class PaySchet extends \yii\db\ActiveRecord
         return $this->hasMany(NotificationPay::class, ['IdPay' => 'ID']);
     }
 
+    /**
+     * @see RefundSourceId
+     */
+    public function getRefundSource(): ActiveQuery
+    {
+        return $this->hasOne(PaySchet::class, ['ID' => 'RefundSourceId'])->inverseOf('refunds');
+    }
+
+    /**
+     * @see RefundSourceId
+     */
+    public function getRefunds(): ActiveQuery
+    {
+        return $this->hasMany(PaySchet::class, ['RefundSourceId' => 'ID'])->inverseOf('refundSource');
+    }
+
     public function getCards(): ActiveQuery
     {
         return $this->hasOne(Cards::className(), ['ID' => 'IdKard']);
@@ -371,7 +424,9 @@ class PaySchet extends \yii\db\ActiveRecord
 
     /**
      * {@inheritDoc}
-     * @throws \Exception
+     * @throws GateException
+     * @throws CompensationException
+     * @throws InvalidConfigException
      */
     public function beforeSave($insert): bool
     {
@@ -389,8 +444,10 @@ class PaySchet extends \yii\db\ActiveRecord
             /**
              * Calculate compensation.
              * Needed only when bank is not 0 ({@see MfoCardRegStrategy::createPaySchet()}).
+             *
+             * No need to calculate commissions for refund operations
              */
-            if ($this->Bank !== 0) {
+            if ($this->Bank !== 0 && !$this->isRefund) {
                 $gate = (new BankAdapterBuilder())
                     ->buildByBank($this->partner, $this->uslugatovar, $this->bank, $this->currency)
                     ->getPartnerBankGate();
@@ -462,7 +519,7 @@ class PaySchet extends \yii\db\ActiveRecord
      */
     public function getSummFull()
     {
-        return $this->SummPay + $this->ComissSumm;
+        return intval(round($this->SummPay + $this->ComissSumm));
     }
 
     /**
