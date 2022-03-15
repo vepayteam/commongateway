@@ -17,6 +17,7 @@ use Yii;
 use yii\base\InvalidConfigException;
 use yii\di\NotInstantiableException;
 use yii\filters\auth\HttpBasicAuth;
+use yii\helpers\Url;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -52,11 +53,16 @@ class DefaultController extends Controller
 
     /**
      * Renders the index view for the module
-     * @return string
+     *
+     * @return \yii\console\Response|Response
+     * @throws \yii\web\RangeNotSatisfiableHttpException
      */
     public function actionSwagger()
     {
-        return Yii::$app->response->sendFile(Yii::$app->basePath . '/doc/mfo.yaml', '', ['inline' => true, 'mimeType' => 'application/yaml']);
+        $content = file_get_contents(Yii::$app->basePath . '/doc/mfo.yaml');
+        $content = str_replace('{{current_host}}', Url::base(true), $content);
+
+        return Yii::$app->response->sendContentAsFile($content, 'mfo.yaml', ['inline' => true, 'mimeType' => 'application/yaml']);
     }
 
     /**

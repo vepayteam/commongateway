@@ -4,7 +4,7 @@
 namespace app\services\payment\jobs;
 
 
-use app\helpers\DebugHelper;
+use app\clients\tcbClient\TcbOrderNotExistException;
 use app\models\TU;
 use app\services\notifications\NotificationsService;
 use app\services\payment\forms\OkPayForm;
@@ -15,6 +15,10 @@ use yii\base\BaseObject;
 
 class RefreshStatusPayJob extends BaseObject implements \yii\queue\JobInterface
 {
+    /** @todo Remove, hack for TCB (VPBC-1298). */
+    private const TCB_ORDER_NOT_EXIST_INTERVAL = 5 * 60; // 5 minutes
+    private const TCB_ORDER_NOT_EXIST_TIMEOUT = 2 * 60 * 60; // 2 hours
+
     public $paySchetId;
 
     /**
@@ -23,29 +27,11 @@ class RefreshStatusPayJob extends BaseObject implements \yii\queue\JobInterface
     public $interval = null;
 
     /**
-     * VPBC-1013: нужно узнать, где была добавлена задача для очереди.
-     * @var string
-     * @todo Удалить после дебага.
-     */
-    public $stackTrace;
-
-    /**
-     * {@inheritDoc}
-     */
-    public function init()
-    {
-        parent::init();
-
-        // Инициализируется при каждом создании объекта.
-        $this->stackTrace = DebugHelper::getStackTrace();
-    }
-
-    /**
      * @inheritDoc
      */
     public function execute($queue)
     {
-        Yii::warning("RefreshStatusPayJob execute: ID={$this->paySchetId}, stackTrace: {$this->stackTrace}", 'RefreshStatusPayJob');
+        Yii::warning("RefreshStatusPayJob execute ID={$this->paySchetId}", 'RefreshStatusPayJob');
         $paySchet = PaySchet::findOne(['ID' => $this->paySchetId]);
 
         Yii::warning('RefreshStatusPayJob execute isHavePayschet=' . !empty($paySchet), 'RefreshStatusPayJob');
@@ -55,7 +41,29 @@ class RefreshStatusPayJob extends BaseObject implements \yii\queue\JobInterface
         $okPayForm->IdPay = $this->paySchetId;
 
         $refreshStatusPayStrategy = new RefreshStatusPayStrategy($okPayForm);
-        $paySchet = $refreshStatusPayStrategy->exec();
+        try {
+            $paySchet = $refreshStatusPayStrategy->exec();
+        } catch (TcbOrderNotExistException $e) {
+            /** @todo Remove, hack for TCB (VPBC-1298). */
+            $paySchet = $okPayForm->getPaySchet();
+            if (time() < $paySchet->DateCreate + self::TCB_ORDER_NOT_EXIST_TIMEOUT) {
+                $paySchet->Status = PaySchet::STATUS_WAITING_CHECK_STATUS;
+                $paySchet->ErrorInfo = 'Ожидает запрос статуса';
+                $paySchet->save(false);
+                $queue
+                    ->delay(self::TCB_ORDER_NOT_EXIST_INTERVAL)
+                    ->push(new static(['paySchetId' => $paySchet->ID]));
+            } else {
+                $paySchet->Status = PaySchet::STATUS_ERROR;
+                $paySchet->RCCode = PaySchet::RCCODE_CANCEL_PAYMENT;
+                $paySchet->ErrorInfo = 'Операция не завершена / пользователь не завершил проверку 3DS';
+                $paySchet->save(false);
+
+                /** @var NotificationsService $notificationsService */
+                $notificationsService = Yii::$container->get('NotificationsService');
+                $notificationsService->addNotificationByPaySchet($paySchet);
+            }
+        }
 
         if($paySchet->Status == PaySchet::STATUS_WAITING) {
             $paySchet->Status = PaySchet::STATUS_WAITING_CHECK_STATUS;
@@ -71,7 +79,7 @@ class RefreshStatusPayJob extends BaseObject implements \yii\queue\JobInterface
 
                 Yii::$app->queue
                     ->delay($this->interval ?? $delay)
-                    ->push(new RefreshStatusPayJob([
+                    ->push(new static([
                         'paySchetId' => $paySchet->ID,
                         'interval' => $this->interval,
                     ]));
