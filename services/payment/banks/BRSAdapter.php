@@ -540,7 +540,10 @@ class BRSAdapter implements IBankAdapter
                 return BaseResponse::STATUS_DONE;
             case 'REVERSED':
             case 'AUTOREVERSED':
-            return BaseResponse::STATUS_CANCEL;
+                /**
+                 * Для refund/reverse возвращать STATUS_DONE тк начальная транзакция остается в статусе успешно
+                 */
+                return BaseResponse::STATUS_DONE;
             default:
                 return BaseResponse::STATUS_ERROR;
         }
@@ -559,7 +562,10 @@ class BRSAdapter implements IBankAdapter
                 return BaseResponse::STATUS_DONE;
             case 'cancelled':
             case 'returned':
-                return BaseResponse::STATUS_CANCEL;
+                /**
+                 * Для refund/reverse возвращать STATUS_DONE тк начальная транзакция остается в статусе успешно
+                 */
+                return BaseResponse::STATUS_DONE;
             default:
                 return BaseResponse::STATUS_ERROR;
         }

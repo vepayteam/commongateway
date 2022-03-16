@@ -1469,14 +1469,17 @@ class TKBankAdapter implements IBankAdapter
      */
     private function statusMap(): array
     {
+        /**
+         * Для refund/reverse возвращать STATUS_DONE тк начальная транзакция остается в статусе успешно
+         */
         return [
             OrderInfo::STATE_CREDIT_SUCCESS => BaseResponse::STATUS_DONE,
             OrderInfo::STATE_IN_PROCESS => BaseResponse::STATUS_CREATED,
             OrderInfo::STATE_HOLD => BaseResponse::STATUS_DONE,
             OrderInfo::STATE_DEBIT_SUCCESS => BaseResponse::STATUS_DONE,
-            OrderInfo::STATE_FULL_REFUND => BaseResponse::STATUS_CANCEL,
             OrderInfo::STATE_ERROR => BaseResponse::STATUS_ERROR,
-            OrderInfo::STATE_CANCEL => BaseResponse::STATUS_CANCEL,
+            OrderInfo::STATE_FULL_REFUND => BaseResponse::STATUS_DONE,
+            OrderInfo::STATE_CANCEL => BaseResponse::STATUS_DONE,
         ];
     }
 

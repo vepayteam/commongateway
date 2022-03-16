@@ -29,7 +29,7 @@ class PaymentService extends Component
     {
         $this->refundInternal(
             $paySchet,
-            PaySchet::STATUS_CANCEL,
+            PaySchet::STATUS_REVERSE_DONE,
             'Платеж отменен'
         );
     }
