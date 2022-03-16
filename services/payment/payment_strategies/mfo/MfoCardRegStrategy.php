@@ -54,7 +54,6 @@ class MfoCardRegStrategy
         if(!empty($this->cardRegByPayForm->extid)) {
             $duplicatePaySchet = PaySchet::findOne([
                 'Extid' => $this->cardRegByPayForm->extid,
-                'IdUsluga' => Uslugatovar::TYPE_REG_CARD,
                 'IdOrg' => $this->cardRegByPayForm->partner->ID,
             ]);
             return $duplicatePaySchet;

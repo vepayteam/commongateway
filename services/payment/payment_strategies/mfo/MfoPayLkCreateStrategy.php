@@ -32,11 +32,12 @@ class MfoPayLkCreateStrategy extends MerchantPayCreateStrategy
      */
     protected function isAftGate()
     {
-        if($this->payForm->partner->IsAftOnly) {
-            return true;
-        }
+        $ecomGateExists = $this->payForm->partner->getBankGates()->where([
+            'TU' => UslugatovarType::POGASHECOM,
+            'Enable' => 1,
+        ])->exists();
 
-        if($this->payForm->amount < $this->getAftMinSum()) {
+        if ($ecomGateExists && $this->payForm->amount < $this->getAftMinSum()) {
             return false;
         }
         if ($this->payForm->partner->getBankGates()->where([

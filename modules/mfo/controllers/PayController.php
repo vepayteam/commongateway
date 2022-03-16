@@ -295,8 +295,9 @@ class PayController extends Controller
      * @throws BadRequestHttpException
      * @throws \yii\db\Exception
      * @throws Exception
+     * @return array|Response
      */
-    public function actionAutoParts(): array
+    public function actionAutoParts()
     {
         $mfo = new MfoReq();
         $mfo->LoadData(Yii::$app->request->getRawBody());
@@ -313,6 +314,17 @@ class PayController extends Controller
             $this->queue->push(new ExecutePaymentJob(['paySchetId' => $paySchet->ID]));
 
             return ['status' => 1, 'message' => '', 'id' => $paySchet->ID];
+        } catch (NotUniquePayException $e) {
+            /**
+             * Обработка NotUniquePayException {@see RecurrentPaymentPartsForm::validateExtId()}
+             */
+
+            return $this->asJson([
+                'status' => 0,
+                'message' => $e->getMessage(),
+                'id' => $e->getPaySchetId(),
+                'extid' => $e->getPaySchetExtId(),
+            ])->setStatusCode(400);
         } catch (PaymentException $e) {
             switch ($e->getCode()) {
                 case PaymentException::CARD_EXPIRED:
