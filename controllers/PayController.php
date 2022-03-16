@@ -357,8 +357,11 @@ class PayController extends Controller
         $donePayForm->trans = Yii::$app->request->post('trans_id', null);
 
         // Impaya
-        if($paySchetId = Yii::$app->request->get('transaction_id', null)) {
-            $donePayForm->IdPay = $paySchetId;
+        if($trans = Yii::$app->request->get('transaction_id', null)) {
+            $donePayForm->trans = $trans;
+        }
+        if($trans = Yii::$app->request->post('transaction_id', null)) {
+            $donePayForm->trans = $trans;
         }
 
         // Для тестирования, добавляем возможность передать ид транзакции GET параметром
