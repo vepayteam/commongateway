@@ -8,7 +8,7 @@ use app\services\payment\banks\bank_adapter_responses\CancelPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\decta\OutCardTransactionResponse;
-use app\services\payment\banks\bank_adapter_responses\decta\RefundPayResponse;
+use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\DectaAdapter;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CreatePayException;
