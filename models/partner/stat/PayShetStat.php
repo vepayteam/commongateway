@@ -349,7 +349,7 @@ class PayShetStat extends Model
          */
         $refundTotalSum = array_reduce($data, function ($carry, $item) {
             if (intval($item['Status']) === PaySchet::STATUS_REFUND_DONE
-                || intval($item['Status']) === PaySchet::STATUS_REVERSE_DONE) {
+                || intval($item['Status']) === PaySchet::STATUS_CANCEL) {
                 return $carry + intval($item['SummPay']);
             }
 

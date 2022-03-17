@@ -127,17 +127,15 @@ class PaySchet extends \yii\db\ActiveRecord
     const STATUS_NOT_EXEC = 4;
     const STATUS_WAITING_CHECK_STATUS = 5;
     const STATUS_REFUND_DONE = 6;
-    const STATUS_REVERSE_DONE = 7;
 
     const STATUSES = [
-        self::STATUS_WAITING => 'В обработке',
-        self::STATUS_DONE => 'Оплачен',
-        self::STATUS_ERROR => 'Отмена',
-        self::STATUS_CANCEL => 'Возврат',
-        self::STATUS_NOT_EXEC => 'Ожидается обработка',
-        self::STATUS_WAITING_CHECK_STATUS => 'Ожидается запрос статуса',
-        self::STATUS_REFUND_DONE => 'Платеж возвращен',
-        self::STATUS_REVERSE_DONE => 'Отмена операции',
+        self::STATUS_WAITING => 'Processing... (0)',
+        self::STATUS_DONE => 'Success',
+        self::STATUS_ERROR => 'Decline',
+        self::STATUS_CANCEL => 'Reversed',
+        self::STATUS_NOT_EXEC => 'Processing... (4)',
+        self::STATUS_WAITING_CHECK_STATUS => 'Processing... (5)',
+        self::STATUS_REFUND_DONE => 'Refunded',
     ];
 
     const STATUS_COLORS = [
@@ -148,7 +146,6 @@ class PaySchet extends \yii\db\ActiveRecord
         self::STATUS_NOT_EXEC => 'blue',
         self::STATUS_WAITING_CHECK_STATUS => 'blue',
         self::STATUS_REFUND_DONE => '#FFE600',
-        self::STATUS_REVERSE_DONE => '#AC5B0B',
     ];
 
     const REFUND_TYPE_REFUND = 1;
@@ -676,7 +673,7 @@ class PaySchet extends \yii\db\ActiveRecord
             case self::REFUND_TYPE_REFUND:
                 return self::STATUS_REFUND_DONE;
             case self::REFUND_TYPE_REVERSE:
-                return self::STATUS_REVERSE_DONE;
+                return self::STATUS_CANCEL;
             default:
                 throw new InvalidArgumentException('Incorrect refundType value: ' . $refundType);
         }
