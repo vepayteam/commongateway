@@ -129,7 +129,7 @@ class ImpayaAdapter implements IBankAdapter
         $checkStatusPayResponse = new CheckStatusPayResponse();
 
         $checkStatusPayResponse->message = $ans['data']['payment_system_status'] ?? '';
-        $checkStatusPayResponse->status = $this->convertStatus($ans['data']['status_id']);
+        $checkStatusPayResponse->status = self::convertStatus($ans['data']['status_id']);
         return $checkStatusPayResponse;
     }
 
@@ -174,7 +174,7 @@ class ImpayaAdapter implements IBankAdapter
 
         $outCardPayResponse = new OutCardPayResponse;
         $outCardPayResponse->message = $ans['data']['status_descr'] ?? '';
-        $baseStatus = $this->convertStatus($ans['data']['status_id']);
+        $baseStatus = self::convertStatus($ans['data']['status_id']);
 
         if($baseStatus == BaseResponse::STATUS_DONE || $baseStatus == BaseResponse::STATUS_CREATED) {
             $outCardPayResponse->status = BaseResponse::STATUS_DONE;
@@ -254,7 +254,7 @@ class ImpayaAdapter implements IBankAdapter
         return $ans;
     }
 
-    private function convertStatus(int $status): int {
+    public static function convertStatus(int $status): int {
         switch ($status) {
             case 0:
             case 2:
