@@ -29,10 +29,12 @@ use app\modules\partner\models\DiffExport;
 use app\modules\partner\models\forms\DiffColumnsForm;
 use app\modules\partner\models\forms\DiffDataForm;
 use app\modules\partner\models\forms\DiffExportForm;
+use app\modules\partner\models\forms\ReverseOrderForm;
 use app\modules\partner\models\PaySchetLogForm;
 use app\services\ident\forms\IdentStatisticForm;
 use app\services\ident\IdentService;
 use app\services\partners\StatDiffSettingsService;
+use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\jobs\RefundPayJob;
 use app\services\payment\models\Bank;
 use app\services\payment\models\PaySchet;
@@ -84,7 +86,7 @@ class StatController extends Controller
                     [
                         'allow' => false,
                         'roles' => ['@'],
-                        'actions' => ['diff', 'diff-columns', 'diff-data', 'diff-export'],
+                        'actions' => ['diff', 'diff-columns', 'diff-data', 'diff-export', 'recalc', 'recalcdata', 'recalc-save'],
                         'matchCallback' => function ($rule, $action) {
                             return !UserLk::IsAdmin(Yii::$app->user);
                         }
@@ -335,35 +337,105 @@ class StatController extends Controller
         }
     }
 
-    /**
-     * Отменить платеж
-     * @return array|Response
-     * @throws \yii\db\Exception
-     */
-    public function actionReversorder()
+    public function actionRecalc()
+    {
+        $fltr = new StatFilter();
+        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+        return $this->render('recalc', [
+            'IsAdmin' => $IsAdmin,
+            'partnerlist' => $fltr->getPartnersList(),
+            'uslugilist' => $fltr->getTypeUslugLiust(),
+            'bankList' => $fltr->getBankList(),
+        ]);
+    }
+
+    public function actionRecalcdata()
     {
         if (Yii::$app->request->isAjax) {
             Yii::$app->response->format = Response::FORMAT_JSON;
-            $org = UserLk::IsAdmin(Yii::$app->user) ? 0 : UserLk::getPartnerId(Yii::$app->user);
-
-            $where = [
-                'ID' => Yii::$app->request->post('id', 0),
-            ];
-
-            if($org) {
-                $where['IdOrg'] = $org;
+            $data = Yii::$app->request->post();
+            $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+            $page = Yii::$app->request->get('page', 0);
+            $payShetList = new PayShetStat();
+            if ($payShetList->load($data, '') && $payShetList->validate()) {
+                $list = $payShetList->getList2($IsAdmin, $page);
+                return [
+                    'status' => 1, 'data' => $this->renderPartial('_recalcdata', [
+                        'reqdata' => $data,
+                        'data' => $list['data'],
+                        'cntpage' => $list['cntpage'],
+                        'cnt' => $list['cnt'],
+                        'pagination' => $list['pagination'],
+                        'sumpay' => $list['sumpay'],
+                        'sumcomis' => $list['sumcomis'],
+                        'bankcomis' => $list['bankcomis'],
+                        'voznagps' => $list['voznagps'],
+                        'page' => $page,
+                        'IsAdmin' => $IsAdmin
+                    ])
+                ];
+            } else {
+                return ['status' => 0, 'message' => $payShetList->GetError()];
             }
-            if(PaySchet::find()->where($where)->exists()) {
-                Yii::$app->queue->push(new RefundPayJob([
-                    'paySchetId' => Yii::$app->request->post('id', 0),
-                    'initiator' => Yii::$app->user->getId() ?? 'actionReversOrder',
-                ]));
-            }
-
-            return ['status' => 1, 'message' => 'Ожидается отменена'];
         } else {
             return $this->redirect('/partner');
         }
+    }
+
+    public function actionRecalcSave()
+    {
+        if (Yii::$app->request->isAjax) {
+            $payShetList = new PayShetStat();
+            if ($payShetList->load(Yii::$app->request->get(), '')) {
+                $data = $payShetList->getList2(UserLk::IsAdmin(Yii::$app->user), 0, 1);
+                $paySchets = PaySchet::findAll(ArrayHelper::getColumn($data['data'], 'ID'));
+                foreach ($paySchets as $paySchet) {
+                    $paySchet->recalcComiss(array_map('floatval', Yii::$app->request->post()));
+                    $paySchet->save(false);
+                }
+                return $this->asJson([
+                    'status' => 1,
+                    'count' => count($paySchets),
+                ]);
+            }
+            return $this->asJson([
+                'status' => 0,
+                'count' => 0,
+            ]);
+
+        }
+        return $this->redirect('/partner');
+    }
+
+    /**
+     * Отменить платеж
+     * @return array|Response
+     */
+    public function actionReversorder()
+    {
+        if (!Yii::$app->request->isAjax) {
+            return $this->redirect('/partner');
+        }
+
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $form = new ReverseOrderForm();
+        $form->load(Yii::$app->request->bodyParams, '');
+        $form->idOrg = UserLk::IsAdmin(Yii::$app->user) ? 0 : UserLk::getPartnerId(Yii::$app->user);
+        if (!$form->validate()) {
+            return $this->asJson([
+                'status' => 0,
+                'errors' => $form->getErrors(),
+            ]);
+        }
+
+        Yii::$app->queue->push(new RefundPayJob([
+            'paySchetId' => $form->id,
+            'refundSum' => $form->refundSum,
+            'initiator' => Yii::$app->user->getId() ?? 'actionReversOrder',
+        ]));
+
+        return ['status' => 1, 'message' => 'Ожидается отменена'];
     }
 
     /**
@@ -666,19 +738,14 @@ class StatController extends Controller
     public function actionRecurrentcarddata()
     {
         if (Yii::$app->request->isAjax) {
-            $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-            Yii::$app->response->format = Response::FORMAT_JSON;
             $AutopayStat = new AutopayStat();
-            $AutopayStat->load(Yii::$app->request->post(), '');
-            if ($AutopayStat->validate()) {
-                return [
+            if ($AutopayStat->loadAndValidate(Yii::$app->request->post(), '')) {
+                return $this->asJson([
                     'status' => 1,
-                    'data' => $this->renderPartial('_recurrentcarddata', [
-                        'data' => $AutopayStat->getData($IsAdmin)
-                    ])
-                ];
+                    'data' => $this->renderPartial('_recurrentcarddata', ['data' => $AutopayStat->getData()])
+                ]);
             }
-            return ['status' => 0, 'message' => $AutopayStat->GetError()];
+            return $this->asJson(['status' => 0, 'message' => $AutopayStat->GetError()]);
         }
         return $this->redirect('/partner');
     }

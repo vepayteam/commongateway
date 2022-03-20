@@ -23,8 +23,10 @@ class CreatePayForm extends Model
     public $Phone = '';
     public $Email = '';
     public $LinkPhone = false;
+    public $client = '';
 
     public $IdPay;
+
 
     public function rules()
     {

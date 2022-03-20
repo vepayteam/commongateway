@@ -7,8 +7,8 @@ use Yii;
 class Modifiers
 {
     private static $cvvReplaceRegexp = [
-        ['/(cvv|csc)(.+?)\\\"(\d{3,4})\\\"/i', '$1$2\"***\"'],
-        ['/(cvv|csc)(.+?)\"(\d{3,4})\"/i', '$1$2"***"'],
+        ['/(cvv|csc|cc_cvc)(.+?)\\\"(\d{3,4})\\\"/i', '$1$2\"***\"'],
+        ['/(cvv|csc|cc_cvc)(.+?)\"(\d{3,4})\"/i', '$1$2"***"'],
     ];
 
     public static function searchAndReplaceCvv(string $input): string

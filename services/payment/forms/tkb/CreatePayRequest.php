@@ -10,7 +10,7 @@ use yii\base\Model;
 class CreatePayRequest extends Model
 {
     /** @var int */
-    public $OrderId;
+    public $ExtId;
     /** @var int */
     public $Amount;
     /** @var string */

@@ -15,10 +15,10 @@ use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\TKBankAdapter;
 use app\services\payment\exceptions\BankAdapterResponseException;
-use app\services\payment\exceptions\Check3DSv2DuplicatedException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\DuplicateCreatePayException;
+use app\services\payment\exceptions\FailPaymentException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
 use app\services\payment\exceptions\reRequestingStatusException;
@@ -40,6 +40,7 @@ use Yii;
 use yii\db\Exception;
 use yii\helpers\Json;
 use yii\helpers\Url;
+use yii\redis\Mutex;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\web\ErrorAction;
@@ -215,7 +216,7 @@ class PayController extends Controller
             $createPayStrategy->releaseLock();
 
             return ['status' => 0, 'message' => $e->getMessage()];
-        } catch (reRequestingStatusOkException | Check3DSv2DuplicatedException $e) {
+        } catch (reRequestingStatusOkException $e) {
             Yii::$app->errorHandler->logException($e);
             $createPayStrategy->releaseLock();
 
@@ -223,6 +224,16 @@ class PayController extends Controller
                 'status' => 2,
                 'message' => $e->getMessage(),
                 'url' => Yii::$app->params['domain'] . '/pay/orderok?id=' . $form->IdPay,
+            ];
+        } catch (FailPaymentException $e)   {
+            // The payment has failed: client redirect to orderok which, in turn, will redirect to the fail page
+            Yii::$app->errorHandler->logException($e);
+            $createPayStrategy->releaseLock();
+
+            return [
+                'status' => 2,
+                'message' => $e->getMessage(),
+                'url' => Url::to(['orderok', 'id' => $form->IdPay]),
             ];
         } catch (Check3DSv2Exception $e) {
             Yii::$app->errorHandler->logException($e);
@@ -281,7 +292,7 @@ class PayController extends Controller
 
         if ($createPayResponse->isNeed3DSVerif) {
             Yii::info('PayController createpaySecondStep render client-submit-form: ' . $paySchet->ID . ', Headers: ' . Json::encode(Yii::$app->request->headers));
-            return $this->render('client-submit-form', [
+            return $this->renderPartial('client-submit-form', [
                 'method' => 'POST',
                 'url' => $createPayResponse->url,
                 'fields' => [
@@ -290,7 +301,7 @@ class PayController extends Controller
             ]);
         } else {
             Yii::info('PayController createpaySecondStep render client-redirect: ' . $paySchet->ID . ', Headers: ' . Json::encode(Yii::$app->request->headers));
-            return $this->render('client-redirect', [
+            return $this->renderPartial('client-redirect', [
                 'redirectUrl' => Url::to('/pay/orderdone/' . $paySchet->ID),
             ]);
         }
@@ -344,6 +355,14 @@ class PayController extends Controller
         $donePayForm = new DonePayForm();
         $donePayForm->IdPay = $id;
         $donePayForm->trans = Yii::$app->request->post('trans_id', null);
+
+        // Impaya
+        if($trans = Yii::$app->request->get('transaction_id', null)) {
+            $donePayForm->trans = $trans;
+        }
+        if($trans = Yii::$app->request->post('transaction_id', null)) {
+            $donePayForm->trans = $trans;
+        }
 
         // Для тестирования, добавляем возможность передать ид транзакции GET параметром
         if (!empty($trans = Yii::$app->request->get('trans_id', null))) {
@@ -400,10 +419,15 @@ class PayController extends Controller
 
         $okPayForm = new OkPayForm();
         $okPayForm->IdPay = $id;
-
-        if (!$okPayForm->existPaySchet()) {
+        if ($okPayForm->paySchet === null) {
             throw new NotFoundHttpException();
         }
+
+        // Wait until the "order done" mutex lock released.
+        $mutexKey = DonePayStrategy::getMutexKey($okPayForm->getPaySchet());
+        $mutex = new Mutex(['retryDelay' => 250]);
+        $mutex->acquire($mutexKey, 15);
+        $mutex->release($mutexKey);
 
         $okPayStrategy = new OkPayStrategy($okPayForm);
         $paySchet = $okPayStrategy->exec();

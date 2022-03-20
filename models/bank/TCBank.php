@@ -19,8 +19,8 @@ class TCBank implements IBank
 {
     public const BIC = '044525388';
 
-    private $bankUrl = 'https://pay.tkbbank.ru';
-    private $bankUrlXml = 'https://193.232.101.14:8204';
+    private $bankUrl;
+    private $bankUrlXml;
     private $bankUrlClient = 'https://pay.tkbbank.ru';
     private $shopId;
     private $UserCert;
@@ -58,10 +58,9 @@ class TCBank implements IBank
         $this->UserCert = Yii::$app->basePath . '/config/tcbcert/vepay.crt';
         $this->UserKey = Yii::$app->basePath . '/config/tcbcert/vepay.key';
 
-        if (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] == 'Y') {
-            $this->bankUrl = 'https://paytest.online.tkbbank.ru';
-            $this->bankUrlXml = 'https://193.232.101.14:8203';
-        }
+        $config = Yii::$app->params['services']['payments']['TCB'];
+        $this->bankUrl = $config['url'];
+        $this->bankUrlXml = $config['url_xml'];
 
         if ($tcbGate) {
             $this->SetMfoGate($tcbGate->typeGate, $tcbGate->GetGates());
@@ -347,7 +346,7 @@ class TCBank implements IBank
             }
 
             $queryData = [
-                'OrderID' => $params['ID'],
+                'ExtID' => $params['ID'],
                 'Amount' => $params['SummFull'],
                 'Description' => $order_description,
                 'ClientInfo' => [
@@ -363,15 +362,15 @@ class TCBank implements IBank
 
             if ($user && $idCard == -1) {
                 //привязка карты
-                $action = "/api/tcbpay/gate/registercardbegin";
+                $action = "/api/v1/card/unregistered/bind";
             } elseif ($card && $idCard >= 0) {
                 //реккурентный платеж с карты
-                $action = "/api/tcbpay/gate/registerdirectorderfromregisteredcard";
+                $action = "/api/v1/card/registered/direct";
                 $isRecurrent = 1;
                 $queryData['CardRefID'] = $card['ExtCardIDP'];
             } else {
                 //оплата без привязки карты
-                $action = "/api/tcbpay/gate/registerorderfromunregisteredcard";
+                $action = "/api/v1/card/unregistered/debit";
             }
 
             $queryData = Json::encode($queryData);
@@ -413,8 +412,7 @@ class TCBank implements IBank
      */
     private function checkStatusOrder($params, $isCron)
     {
-        //$action = '/api/v1/order/state';
-        $action = '/api/tcbpay/gate/getorderstate';
+        $action = '/api/v1/order/state';
 
         $queryData = [
             'OrderID' => $params['ID'],
@@ -594,6 +592,7 @@ class TCBank implements IBank
         Yii::warning("req: login = " . $this->shopId . " url = " . $url . "\r\n" . Cards::MaskCardLog($post), 'merchant');
         try {
             $curl->reset()
+                ->setOption(CURLOPT_VERBOSE, Yii::$app->params['VERBOSE'] === 'Y')
                 ->setOption(CURLOPT_TIMEOUT, $timout)
                 ->setOption(CURLOPT_CONNECTTIMEOUT, $timout)
                 ->setOption(CURLOPT_HTTPHEADER, array_merge([
@@ -681,6 +680,8 @@ class TCBank implements IBank
 
         if (isset($ret['errorinfo'])) {
             $ret['Status'] = $ret['errorinfo']['errorcode'];
+        } else {
+            $ret['Status'] = 0;
         }
 
         return $ret;
@@ -752,10 +753,10 @@ class TCBank implements IBank
         ];
 
         if (isset($data['CardTo'])) {
-            $action = "/api/tcbpay/gate/registerordertoregisteredcard";
+            $action = "/api/v1/card/registered/credit";
             $queryData['CardRefID'] = $data['CardTo'];
         } else {
-            $action = "/api/tcbpay/gate/registerordertounregisteredcard";
+            $action = "/api/v1/card/unregistered/credit";
             $queryData['CardInfo'] = [
                 'CardNumber' => strval($data['CardNum']),
             ];
@@ -782,12 +783,12 @@ class TCBank implements IBank
      */
     public function transferToAccount(array $data)
     {
-        $action = "/api/tcbpay/gate/registerordertoexternalaccount";
+        $action = "/api/v1/account/external/credit";
 
         $queryData = [
             'OrderID' => $data['IdPay'],
             'Account' => strval($data['account']),
-            'Bik' => strval($data['bic']),
+            'Bic' => strval($data['bic']),
             'Amount' => $data['summ'],
             'Name' => $data['name'],
             'Description' => $data['descript']
@@ -924,7 +925,7 @@ class TCBank implements IBank
      */
     public function formPayOnly(array $params)
     {
-        $action = "/api/tcbpay/gate/registerorderfromunregisteredcard";
+        $action = "/api/v1/card/unregistered/debit";
 
         $queryData = [
             'OrderID' => $params['IdPay'],
@@ -957,10 +958,10 @@ class TCBank implements IBank
      */
     public function createAutoPay(array $params)
     {
-        $action = '/api/tcbpay/gate/registerdirectorderfromregisteredcard';
+        $action = '/api/v1/card/registered/direct';
 
         $queryData = [
-            'OrderID' => $params['IdPay'],
+            'ExtID' => $params['IdPay'],
             'CardRefID' => $params['CardFrom'],
             'Amount' => $params['summ'],
             'Description' => 'Оплата по счету ' . $params['IdPay']
@@ -1298,7 +1299,7 @@ class TCBank implements IBank
 
     public function SimpleActivateCard($Id, array $params)
     {
-        $action = '/api/tcbpay/gate/simpleactivatecard';
+        $action = '/api/v1/card/registered/activate';
         $queryData = [
             "OrderID" => $Id,
             "EAN" => $params["cardnum"],
@@ -1341,7 +1342,7 @@ class TCBank implements IBank
 
     public function StateActivateCard($Id)
     {
-        $action = '/api/tcbpay/gate/getactivatecardstate';
+        $action = '/api/v1/service/order/state';
         $queryData = [
             "OrderID" => $Id
         ];
@@ -1401,7 +1402,7 @@ class TCBank implements IBank
      */
     public function PayXml(array $params)
     {
-        $action = '/api/tcbpay/gate/registerorderfromunregisteredcardwof';
+        $action = '/api/v1/card/unregistered/debit/wof';
 
         $queryData = [
             'OrderID' => $params['ID'],
@@ -1482,7 +1483,7 @@ class TCBank implements IBank
      */
     public function ConfirmXml(array $params)
     {
-        $action = '/api/tcbpay/gate/registerorderfromcardfinish';
+        $action = '/api/v1/card/unregistered/debit/wof/finish';
 
         $queryData = [
             'OrderID' => $params['ID'],
@@ -1508,7 +1509,7 @@ class TCBank implements IBank
     }
 
     /**
-     * Регистрация бенифициаров
+     * Регистрация бенефициаров
      *
      * @param array $params
      * @return array

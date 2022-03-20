@@ -22,13 +22,13 @@ steps:
   image: aevea/commitsar:0.15.0
   commands:
   - commitsar -v -s
-  failure: ignore
 
-- name: notify-conventional-commits-7ac2812fb6deba1062e461c7b277016c
+- name: notify-conventional-commits-4cef185a33ba84b7ecf260d3a5806c23
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
-  - gitea-status -t "conventional-commits" -m "-ignored-" -s "warning" -u "https://www.conventionalcommits.org/en/v1.0.0/#why-use-conventional-commits"
+  - export BUILD_STATUS=$$(cat /run/drone/env | grep DRONE_STAGE_STATUS | cut -d '=' -f 2 | tr -d \")
+  - gitea-status -t "conventional-commits" -m "$$BUILD_STATUS" -s "$$BUILD_STATUS" -u "https://www.conventionalcommits.org/en/v1.0.0/#why-use-conventional-commits"
   environment:
     GITEA_TOKEN:
       from_secret: GITEA_TOKEN
@@ -169,7 +169,7 @@ steps:
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
-- name: helm-values-generator-cc32efdea353aacefe0be1faaf65ef8b
+- name: helm-values-generator-bd4fa9073d0850a2ce63f55fe1288060
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
@@ -181,8 +181,7 @@ steps:
   - yq write values.yaml "ingress.tls[0].hosts[0]" "`replace-slash ${DRONE_SOURCE_BRANCH}`-${DRONE_REPO_NAME}.backend.vepay.cf" -i
   - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-cf-wildcard-certificate" -i
   - yq write values.yaml "redis.enabled" "true" -i
-  - yq write values.yaml "config.reportQueue.enabled" "true" -i
-  - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+50000000))" -i
+  - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+550000000))" -i
   - yq write values.yaml "config.payments.brs.url_xml" "https://194.67.29.216:8443" -i
   - echo "=>>>" && cat values.yaml
 
@@ -396,7 +395,7 @@ steps:
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
-- name: helm-values-generator-eec62e26649768d05471a98ecfc3795c
+- name: helm-values-generator-dab11392559271a4811fcc50bdb986f2
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
@@ -407,8 +406,7 @@ steps:
   - yq write values.yaml "ingress.hosts[0].paths[0]" "/" -i
   - yq write values.yaml "ingress.tls[0].hosts[0]" "${DRONE_BRANCH}-test-${DRONE_REPO_NAME}.backend.vepay.cf" -i
   - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-cf-wildcard-certificate" -i
-  - yq write values.yaml "config.reportQueue.enabled" "true" -i
-  - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+100000000))" -i
+  - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+650000000))" -i
   - yq write values.yaml "config.payments.brs.url_xml" "https://194.67.29.216:8443" -i
   - echo "=>>>" && cat values.yaml
 
@@ -444,7 +442,7 @@ steps:
     GITEA_TOKEN:
       from_secret: GITEA_TOKEN
 
-- name: helm-values-generator-dcaaa0868cc4385d563f8b7cd852d59b
+- name: helm-values-generator-04da36af26b8a55fdc21bce3594ee2d0
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
@@ -453,7 +451,7 @@ steps:
   - yq write values.yaml "ingress.hosts[0].paths[0]" "/" -i
   - yq write values.yaml "ingress.tls[0].hosts[0]" "${DRONE_BRANCH}-${DRONE_REPO_NAME}.backend.vepay.cf" -i
   - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-cf-wildcard-certificate" -i
-  - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+150000000))" -i
+  - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+700000000))" -i
   - echo "=>>>" && cat values.yaml
 
 - name: helm-deployment-upgrade-3606237ab0fb9dcc2c35d0bef846fdb8
@@ -578,22 +576,23 @@ steps:
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
-- name: helm-values-generator-b3008e5ef84020b2214813420f40f7d9
+- name: helm-values-generator-681d01c5b68af0e4c692f66bee7c9ff3
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
   - touch values.yaml
   - yq write values.yaml "image.repository" "registry.vepay.cf/${DRONE_REPO,,}" -i
   - yq write values.yaml "image.tag" "${DRONE_BUILD_NUMBER}" -i
-  - yq write values.yaml "ingress.hosts[0].host" "test-${DRONE_REPO_NAME}.backend.vepay.cf" -i
+  - yq write values.yaml "ingress.enabled" "false" -i
+  - yq write values.yaml "ingress.hosts[0].host" "test.vepay.online" -i
   - yq write values.yaml "ingress.hosts[0].paths[0]" "/" -i
-  - yq write values.yaml "ingress.hosts[1].host" "test.vepay.online" -i
+  - yq write values.yaml "ingress.hosts[1].host" "${DRONE_REPO_NAME}.backend.vepay.dev" -i
   - yq write values.yaml "ingress.hosts[1].paths[0]" "/" -i
-  - yq write values.yaml "ingress.tls[0].hosts[0]" "test-${DRONE_REPO_NAME}.backend.vepay.cf" -i
-  - yq write values.yaml "ingress.tls[0].hosts[1]" "test.vepay.online" -i
-  - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-cf-wildcard-certificate" -i
-  - yq write values.yaml "config.reportQueue.enabled" "true" -i
-  - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+200000000))" -i
+  - yq write values.yaml "ingress.tls[0].hosts[0]" "test.vepay.online" -i
+  - yq write values.yaml "ingress.tls[0].secretName" "test-vepay-online-certificate" -i
+  - yq write values.yaml "ingress.tls[1].hosts[0]" "${DRONE_REPO_NAME}.backend.vepay.dev" -i
+  - yq write values.yaml "ingress.tls[1].secretName" "backend-vepay-dev-wildcard-certificate" -i
+  - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+750000000))" -i
   - yq write values.yaml "config.payments.brs.url_xml" "https://194.67.29.216:8443" -i
   - echo "=>>>" && cat values.yaml
 
@@ -620,11 +619,11 @@ steps:
     - values.yaml
     wait_for_upgrade: true
 
-- name: notify-app-url-5dc7117a4ef896a5d383eb7dd1684284
+- name: notify-app-url-9469898d4f9dd92dd107433d19dc4d8e
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
-  - gitea-status -t "app/url" -m "https://test-${DRONE_REPO_NAME}.backend.vepay.cf/" -s "success" -u "https://test-${DRONE_REPO_NAME}.backend.vepay.cf/"
+  - gitea-status -t "app/url" -m "${DRONE_REPO_NAME}.backend.vepay.dev" -s "success" -u "${DRONE_REPO_NAME}.backend.vepay.dev"
   environment:
     GITEA_TOKEN:
       from_secret: GITEA_TOKEN
@@ -678,6 +677,8 @@ image_pull_secrets:
 - dockerconfig
 
 trigger:
+  branch:
+  - master
   event:
   - promote
   target:
@@ -725,6 +726,6 @@ get:
 
 ---
 kind: signature
-hmac: 059d1f4475ae72af749f2ea49b3e183868ec50794f4a289be66d12edddae99da
+hmac: 17d8759a3ad434c44d65dcc945cc3f68066fa40b074d10acbb4865caa937c14d
 
 ...

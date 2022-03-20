@@ -10,6 +10,7 @@ return [
     'dectaProxy' => getenv("DECTA_PROXY_URL", true),
     'DEVMODE' => boolval(getenv('DEVMODE', true)) ? 'Y' : 'N',
     'TESTMODE' => 'Y',
+    'VERBOSE' => boolval(getenv('CURL_VERBOSE', true)) ? 'Y' : 'N',
     'accountServiceUrl' => '',
 	'key' => '4l80z8E9s0',
     'keycancel' => 'Q0YimN4R5rPL3uld8094Rz85E4E5h93sR0',
@@ -94,6 +95,10 @@ return [
                 'url_p2p_3ds' => getenv('PARAMS_PAYMENTS_BRS_URL_P2P_3DS', true),
                 'url_xml' => getenv('PARAMS_PAYMENTS_BRS_URL_XML', true),
                 'url_b2c' => getenv('PARAMS_PAYMENTS_BRS_URL_B2C', true),
+            ],
+            'TCB' => [
+                'url' => getenv('PARAMS_PAYMENTS_TCB_URL', true),
+                'url_xml' => getenv('PARAMS_PAYMENTS_TCB_URL_XML', true),
             ],
         ],
     ],

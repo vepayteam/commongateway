@@ -2,6 +2,7 @@
 
 use app\models\payonline\OrderNotif;
 use app\models\payonline\OrderPay;
+use yii\helpers\Html;
 
 /* @var OrderNotif $orderNotif */
 /* @var OrderPay $orderPay */
@@ -9,8 +10,8 @@ use app\models\payonline\OrderPay;
 
 ?>
 
-<div>Счет № <?= $orderNotif->IdOrder ?> на сумму <?= $orderPay->SumOrder / 100 ?> руб.</div>
-<div><?= $orderPay->Comment ?></div>
+<div>Счет № <?= Html::encode($orderNotif->IdOrder) ?> на сумму <?= $orderPay->SumOrder / 100 ?> руб.</div>
+<div><?= Html::encode($orderPay->Comment) ?></div>
 
 <br>
 
@@ -30,9 +31,9 @@ use app\models\payonline\OrderPay;
         <?php foreach ($orderTo as $key => $value): ?>
             <tr>
                 <td><?= $key + 1 ?></td>
-                <td><?= $value['name'] ?></td>
-                <td><?= $value['qnt'] ?></td>
-                <td><?= $value['sum'] ?></td>
+                <td><?= Html::encode($value['name']) ?></td>
+                <td><?= Html::encode($value['qnt']) ?></td>
+                <td><?= Html::encode($value['sum']) ?></td>
             </tr>
         <?php endforeach; ?>
 
@@ -40,4 +41,4 @@ use app\models\payonline\OrderPay;
     </table>
 <?php endif; ?>
 
-<a href="https://api.vepay.online/widget/order/<?= $orderNotif->IdOrder ?>">Оплатить</a>
+<a href="https://api.vepay.online/widget/order/<?= Html::encode($orderNotif->IdOrder) ?>">Оплатить</a>

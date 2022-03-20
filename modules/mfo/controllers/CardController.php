@@ -13,6 +13,7 @@ use app\models\payonline\Cards;
 use app\services\cards\CacheCardService;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
+use app\services\payment\exceptions\NotUniquePayException;
 use app\services\payment\forms\CardRegForm;
 use app\services\payment\models\PaySchet;
 use app\services\payment\payment_strategies\mfo\MfoCardRegStrategy;
@@ -140,7 +141,7 @@ class CardController extends Controller
     /**
      * Зарегистрировать карту
      *
-     * @return array
+     * @return array|Response
      * @throws BadRequestHttpException
      * @throws \yii\db\Exception
      * @throws \yii\web\UnauthorizedHttpException
@@ -181,6 +182,15 @@ class CardController extends Controller
                 'id' => $paySchet->ID,
                 'url' => $paySchet->getFromUrl(),
             ];
+        } catch (NotUniquePayException $e) {
+            $mutex->release($cardRegForm->getMutexKey());
+
+            return $this->asJson([
+                'status' => 0,
+                'message' => $e->getMessage(),
+                'id' => $e->getPaySchetId(),
+                'extid' => $e->getPaySchetExtId(),
+            ])->setStatusCode(400);
         } catch (CreatePayException $e) {
             \Yii::$app->errorHandler->logException($e);
             $mutex->release($cardRegForm->getMutexKey());
