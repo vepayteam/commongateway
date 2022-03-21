@@ -30,12 +30,16 @@ class CallbackController extends Controller
         return false;
     }
 
-    public function actionImpaya()
+    public function actionImpaya(): Response
     {
         $impayaCallbackForm = new ImpayaCallbackForm();
         if(!$impayaCallbackForm->load(Yii::$app->request->post(), '') || !$impayaCallbackForm->validate()) {
-            $log = sprintf('Callback Impaya error: %s, data=' . Yii::$app->request->post());
-            Yii::warning($log);
+            $log = sprintf(
+                'Callback Impaya error: %s, data=%s',
+                $impayaCallbackForm->GetError(),
+                Json::encode(Yii::$app->request->post())
+            );
+            Yii::info($log);
             return $this->asJson(['status' => 0]);
         } else {
             $log = sprintf(
@@ -44,7 +48,7 @@ class CallbackController extends Controller
                 $impayaCallbackForm->status_id,
                 Json::encode($impayaCallbackForm->getAttributes())
             );
-            Yii::warning($log);
+            Yii::info($log);
             $impayaCallbackService = new ImpayaCallbackService();
             $impayaCallbackService->execCallback($impayaCallbackForm);
             return $this->asJson(['status' => 1]);
