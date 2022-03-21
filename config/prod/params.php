@@ -35,6 +35,7 @@ return [
         'id' => '',
         'key' => '',
     ],
+    'tcbConnectionTimeout' => null,
 
     'kkt' => [
         'urlico' => '',
