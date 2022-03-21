@@ -107,8 +107,6 @@ class CardController extends Controller
             return ['status' => 0, 'message' => 'Нет такой карты'];
         }
 
-        $paySchet = $Card->getPaySchets()->limit(1)->one();
-
         //информация и карте
         if ($Card && $type == 0) {
             return [
@@ -119,7 +117,7 @@ class CardController extends Controller
                     'num' => (string)$Card->CardNumber,
                     'exp' => $Card->getMonth() . '/' . $Card->getYear(),
                     'holder' => $Card->CardHolder,
-                    'payment_system' => $paySchet->CardType ?? null,
+                    'payment_system' => $Card->getPaymentSystemName(),
                 ]
             ];
         } elseif ($Card && $type == 1) {
@@ -131,7 +129,7 @@ class CardController extends Controller
                     'num' => (string)$Card->CardNumber,
                     'exp' => '',
                     'holder' => '',
-                    'payment_system' => $paySchet->CardType ?? null,
+                    'payment_system' => $Card->getPaymentSystemName(),
                 ]
             ];
         }
@@ -254,7 +252,7 @@ class CardController extends Controller
                     'num' => (string)$Card->CardNumber,
                     'exp' => $Card->getMonth() . '/' . $Card->getYear(),
                     'holder' => $Card->CardHolder,
-                    'payment_system' => $paySchet->CardType,
+                    'payment_system' => $Card->getPaymentSystemName(),
                 ]
             ];
 
@@ -267,7 +265,7 @@ class CardController extends Controller
                     'num' => $Card->CardNumber,
                     'exp' => '',
                     'holder' => '',
-                    'payment_system' => $paySchet->CardType,
+                    'payment_system' => $Card->getPaymentSystemName(),
                 ]
             ];
         }

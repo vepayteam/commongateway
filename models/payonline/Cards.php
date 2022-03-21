@@ -37,6 +37,8 @@ use yii\helpers\Json;
  * @property PanToken $panToken
  *
  * @property-read PaySchet[] $paySchets {@see Cards::getPaySchets()}
+ *
+ * @todo Rename class from "Cards" to "Card".
  */
 class Cards extends ActiveRecord
 {
@@ -128,6 +130,8 @@ class Cards extends ActiveRecord
         if ($this->Default == 1) {
             Cards::updateAll(['Default' => 0], ['IdUser' => $this->IdUser, 'IsDeleted' => 0]);
         }
+
+        $this->CardType = Cards::GetTypeCard($this->CardNumber);
 
         return parent::beforeSave($insert);
     }
@@ -306,7 +310,7 @@ class Cards extends ActiveRecord
     /**
      * @return string|null Payment system name in upper case, e.g. MASTERCARD, VISA.
      */
-    public function getCardTypeName(): ?string
+    public function getPaymentSystemName(): ?string
     {
         return self::BRAND_NAMES[$this->CardType] ?? null;
     }

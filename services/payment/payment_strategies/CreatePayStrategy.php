@@ -168,7 +168,6 @@ class CreatePayStrategy
         $card = $this->createUnregisterCard($token, $user, $partnerBankGate);
         $paySchet->IdKard = $card->ID;
         $paySchet->CardNum = Cards::MaskCard($this->createPayForm->CardNumber);
-        $paySchet->CardType = Cards::GetCardBrand(Cards::GetTypeCard($this->createPayForm->CardNumber));
         $paySchet->CardHolder = mb_substr($this->createPayForm->CardHolder, 0, 99);
         $paySchet->CardExp = $this->createPayForm->CardMonth . $this->createPayForm->CardYear;
         $paySchet->IdShablon = $token;

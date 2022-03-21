@@ -93,7 +93,6 @@ class SendP2pStrategy
         $card = $this->createUnregisterCard($token, $user, $partnerBankGate);
         $paySchet->IdKard = $card->ID;
         $paySchet->CardNum = Cards::MaskCard($this->sendP2pForm->cardPan);
-        $paySchet->CardType = Cards::GetCardBrand(Cards::GetTypeCard($this->sendP2pForm->cardPan));
         $paySchet->CardHolder = mb_substr($this->sendP2pForm->cardHolder, 0, 99);
         $paySchet->CardExp = $this->sendP2pForm->cardExpMonth . $this->sendP2pForm->cardExpYear;
         $paySchet->IdShablon = $token;

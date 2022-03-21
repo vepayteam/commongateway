@@ -56,7 +56,7 @@ use yii\helpers\ArrayHelper;
  * @property string|null $RRN nomer RRN
  * @property string|null $CardNum nomer karty
  * @property string|null $OutCardPan nomer karty
- * @property string|null $CardType tip karty
+ * @property string|null $CardType tip karty @deprecated Use {@see PaySchet::$cards} instead.
  * @property string|null $CardHolder derjatel karty
  * @property int $CardExp srok deistvia karty - MMYY
  * @property string|null $BankName bank karty
@@ -101,6 +101,7 @@ use yii\helpers\ArrayHelper;
  * @property Bank $bank
  * @property PaySchet $refundSource {@see PaySchet::getRefundSource()}
  * @property PaySchet[] $refunds {@see PaySchet::getRefunds()}
+ * @property-read Cards $cards {@see PaySchet::getCards()}
  *
  * @property string $Version3DS
  * @property int $IsNeed3DSVerif
@@ -424,7 +425,7 @@ class PaySchet extends \yii\db\ActiveRecord
 
     public function getCards(): ActiveQuery
     {
-        return $this->hasOne(Cards::className(), ['ID' => 'IdKard']);
+        return $this->hasOne(Cards::class, ['ID' => 'IdKard']);
     }
 
     /**
@@ -444,6 +445,10 @@ class PaySchet extends \yii\db\ActiveRecord
         }
 
         $this->DateLastUpdate = time();
+
+        if ($this->isAttributeChanged('CardNum') && $this->CardNum) {
+            $this->CardType = Cards::GetCardBrand(Cards::GetTypeCard($this->CardNum));
+        }
 
         if ($insert) {
             /**

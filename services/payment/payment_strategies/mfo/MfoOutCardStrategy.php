@@ -200,7 +200,6 @@ class MfoOutCardStrategy
         $paySchet->IdKard = $card->ID;
         $paySchet->IdUser = $user->ID;
         $paySchet->CardNum = Cards::MaskCard($this->outCardPayForm->cardnum);
-        $paySchet->CardType = Cards::GetCardBrand(Cards::GetTypeCard($this->outCardPayForm->cardnum));
         $paySchet->CardHolder = mb_substr($card->CardHolder, 0, 99);
         $paySchet->CardExp = $card->getMonth() . $card->getYear();
         $paySchet->Status = PaySchet::STATUS_WAITING;
