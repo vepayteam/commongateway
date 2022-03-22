@@ -444,7 +444,16 @@ class PaySchet extends \yii\db\ActiveRecord
         }
         $this->DateLastUpdate = time();
 
-        if ($this->isNeedUpdateComissBeforeSave($insert)) {
+        /**
+         * Calculate compensation.
+         * Needed only when bank is not 0 ({@see MfoCardRegStrategy::createPaySchet()}).
+         *
+         * No need to calculate commissions for refund operations
+         */
+        if (
+            ($insert || $this->uslugatovar->IsCustom == Uslugatovar::P2P)
+            && $this->Bank !== 0 && !$this->isRefund
+        ) {
             $gate = (new BankAdapterBuilder())
                 ->buildByBank($this->partner, $this->uslugatovar, $this->bank, $this->currency)
                 ->getPartnerBankGate();
@@ -457,18 +466,6 @@ class PaySchet extends \yii\db\ActiveRecord
         }
 
         return true;
-    }
-
-    /**
-     * Calculate compensation.
-     * Needed only when bank is not 0 ({@see MfoCardRegStrategy::createPaySchet()}).
-     *
-     * No need to calculate commissions for refund operations
-     */
-    private function isNeedUpdateComissBeforeSave(bool $insert): bool
-    {
-        return ($insert || $this->uslugatovar->IsCustom == Uslugatovar::P2P)
-            && $this->Bank !== 0 && !$this->isRefund;
     }
 
     /**
