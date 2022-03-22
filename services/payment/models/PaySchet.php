@@ -20,6 +20,7 @@ use Carbon\Carbon;
 use Yii;
 use yii\base\InvalidConfigException;
 use yii\db\ActiveQuery;
+use yii\helpers\ArrayHelper;
 
 /**
  * This is the model class for table "pay_schet".
@@ -110,6 +111,7 @@ use yii\db\ActiveQuery;
  *
  * @property-read int|null $refundNumber {@see PaySchet::getRefundNumber()}
  * @property-read bool $isRefund {@see PaySchet::getIsRefund()}
+ * @property-read int $refundedAmount {@see PaySchet::getRefundedAmount()}
  */
 class PaySchet extends \yii\db\ActiveRecord
 {
@@ -367,6 +369,11 @@ class PaySchet extends \yii\db\ActiveRecord
     public function getIsRefund(): bool
     {
         return $this->RefundSourceId !== null;
+    }
+
+    public function getRefundedAmount(): int
+    {
+        return array_sum(ArrayHelper::getColumn($this->refunds, 'SummPay'));
     }
 
     public function getUser()
