@@ -34,6 +34,7 @@ return [
         'id' => '',
         'key' => '',
     ],
+    'tcbConnectionTimeout' => getenv('PARAMS_PAYMENTS_TCB_CONNECTION_TIMEOUT', true),
     'kkt' => [
         'urlico' => '',
         'inn' => "",
