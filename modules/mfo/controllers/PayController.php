@@ -386,6 +386,42 @@ class PayController extends Controller
         }
     }
 
+    public function actionInfo()
+    {
+        $mfo = new MfoReq();
+        $mfo->LoadData(Yii::$app->request->getRawBody());
+
+        // TODO: DRY
+        $paySchetId = $mfo->GetReq('id');
+        $paySchet = PaySchet::findOne([
+            'ID' => $paySchetId,
+            'IdOrg' => $mfo->mfo,
+        ]);
+
+        if(!$paySchet) {
+            return ['status' => 0, 'message' => 'Счет не найден'];
+        }
+
+        if($paySchet->Status == PaySchet::STATUS_WAITING) {
+            return [
+                'status' => 0,
+                'message' => 'В обработке',
+                'rc' => '',
+                'channel' => $paySchet->bank->ChannelName,
+                'gate_transaction_id' => $paySchet->ExtBillNumber,
+            ];
+        } else {
+            return [
+                'status' => (int)$paySchet->Status,
+                'message' => (string)$paySchet->ErrorInfo,
+                'rc' => $paySchet->RCCode,
+                'channel' => $paySchet->bank->ChannelName,
+                'gate_transaction_id' => $paySchet->ExtBillNumber,
+            ];
+        }
+
+    }
+
     /**
      * Callback-action после оплаты
      * @return array

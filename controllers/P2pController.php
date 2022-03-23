@@ -30,6 +30,7 @@ class P2pController extends Controller
     {
         if (in_array($action->id, [
             'create',
+            'send',
         ])) {
             $this->enableCsrfValidation = false;
         }
