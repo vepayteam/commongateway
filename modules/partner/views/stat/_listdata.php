@@ -141,6 +141,7 @@ use yii\widgets\LinkPager;
         <th class="text-right"><?= number_format(round($sumcomis / 100.0, 2),2,'.','&nbsp;')?></th>
         <th class="text-right"><?= number_format(round(($sumpay+$sumcomis) / 100.0, 2),2,'.','&nbsp;')?></th>
         <?php if ($IsAdmin) : ?>
+            <th></th>
             <th class="text-right"><?=number_format(round($bankcomis/100.0, 2),2,'.','&nbsp;')?></th>
             <th class="text-right"><?=number_format(round($voznagps/100.0, 2),2,'.','&nbsp;')?></th>
         <?php endif; ?>

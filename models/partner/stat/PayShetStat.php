@@ -12,6 +12,7 @@ use yii\data\Pagination;
 use yii\db\Expression;
 use yii\db\Query;
 
+use yii\helpers\ArrayHelper;
 use function array_walk;
 
 class PayShetStat extends Model
@@ -339,34 +340,55 @@ class PayShetStat extends Model
                 $row['Currency'] = CurrencyRepository::getCurrencyCodeById($row['CurrencyId'])->Code;
 
                 $row['RefundAmount'] = $row['RefundAmount'] ?? 0;
-                $row['RemainingRefundAmount'] = $row['SummPay'] + $row['ComissSumm'] - $row['RefundAmount'];
+                $row['RemainingRefundAmount'] = $row['SummPay'] - $row['RefundAmount'];
                 $data[] = $row;
             }
         }
 
-        /**
-         * Подсчитываем общую сумму всех операций со статусом refund/reverse
-         */
-        $refundTotalSum = array_reduce($data, function ($carry, $item) {
-            if (intval($item['Status']) === PaySchet::STATUS_REFUND_DONE
-                || intval($item['Status']) === PaySchet::STATUS_CANCEL) {
-                return $carry + intval($item['SummPay']);
-            }
+        $refundTotalPaymentSum = 0;
+        $refundTotalClientCommission = 0;
+        $refundTotalBankCommission = 0;
+        $refundTotalAward = 0;
+        foreach ($data as &$item) {
+            if (
+                intval($item['Status']) === PaySchet::STATUS_REFUND_DONE ||
+                intval($item['Status']) === PaySchet::STATUS_CANCEL
+            ) {
+                $refundTotalPaymentSum += (int)$item['SummPay'];
+                $refundTotalClientCommission += (int)$item['ComissSumm'];
+                $refundTotalBankCommission += (int)$item['BankComis'];
+                $refundTotalAward += (int)$item['VoznagSumm'];
 
-            return $carry;
-        }, 0);
+                /**
+                 * Для транзакций в статусе refund/reverse сумма вознаграждения должна быть 0
+                 */
+                $item['VoznagSumm'] = 0;
+            }
+        }
 
         /**
          * Из суммы всех платежей вычитаем возвраты
          */
-        $resultSumPay = $sumPay - $refundTotalSum;
+        $resultPaymentSum = $sumPay - ($refundTotalPaymentSum * 2);
+        $resultClientCommission = $sumComis - ($refundTotalClientCommission * 2);
+        $resultBankCommission = $bankcomis - ($refundTotalBankCommission * 2);
+        $resultAward = $voznagps - ($refundTotalAward);
 
         $pagination = new Pagination([
             'totalCount' => $query->count(),
             'pageSize' => $CNTPAGE,
         ]);
 
-        return ['data' => $data, 'pagination' => $pagination, 'cnt' => $cnt, 'cntpage' => $CNTPAGE, 'sumpay' => $resultSumPay, 'sumcomis' => $sumComis, 'bankcomis' => $bankcomis, 'voznagps' => $voznagps];
+        return [
+            'data' => $data,
+            'pagination' => $pagination,
+            'cnt' => $cnt,
+            'cntpage' => $CNTPAGE,
+            'sumpay' => $resultPaymentSum,
+            'sumcomis' => $resultClientCommission,
+            'bankcomis' => $resultBankCommission,
+            'voznagps' => $resultAward
+        ];
     }
 
     /**
@@ -377,12 +399,11 @@ class PayShetStat extends Model
     private static function mapQueryPaymentResult(array $res): \Generator
     {
         foreach ($res as $row) {
-
             $row['VoznagSumm'] = $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
             $row['Currency'] = CurrencyRepository::getCurrencyCodeById($row['CurrencyId'])->Code;
 
             $row['RefundAmount'] = $row['RefundAmount'] ?? 0;
-            $row['RemainingRefundAmount'] = $row['SummPay'] + $row['ComissSumm'] - $row['RefundAmount'];
+            $row['RemainingRefundAmount'] = $row['SummPay'] - $row['RefundAmount'];
             yield $row;
         }
     }
@@ -486,29 +507,89 @@ class PayShetStat extends Model
      */
     public function getOtch($IsAdmin)
     {
-        $IdPart = $IsAdmin ? $this->IdPart : UserLk::getPartnerId(Yii::$app->user);
+        $allReportRecords = $this->getReportRecords($IsAdmin, [
+            PaySchet::STATUS_DONE,
+            PaySchet::STATUS_REFUND_DONE,
+            PaySchet::STATUS_CANCEL,
+        ]);
+
+        /**
+         * TODO без костылей не обошлось, в идеале все переписать включая view _otchdata.php
+         */
+        $refundRecords = $this->getReportRecords($IsAdmin, [
+            PaySchet::STATUS_REFUND_DONE,
+            PaySchet::STATUS_CANCEL,
+        ]);
+
+        array_walk($allReportRecords, function (&$row) use ($refundRecords) {
+            $search = $this->searchReportRecord($refundRecords, $row);
+            if ($search) {
+                $row['SummPay'] -= ($search['SummPay'] * 2);
+                $row['ComissSumm'] -= ($search['ComissSumm'] * 2);
+                $row['BankComis'] -= ($search['BankComis'] * 2);
+                $row['VoznagSumm'] -= ($search['VoznagSumm'] * 1);
+            }
+        });
+
+        return $allReportRecords;
+    }
+
+    /**
+     * @param array $refunds
+     * @param $row
+     * @return mixed|null
+     */
+    private function searchReportRecord(array $refunds, $row)
+    {
+        foreach ($refunds as $refund) {
+            if (
+                $refund['IdUsluga'] === $row['IdUsluga'] &&
+                $refund['IsCustom'] === $row['IsCustom'] &&
+                $refund['ProvVoznagPC'] === $row['ProvVoznagPC'] &&
+                $refund['ProvVoznagMin'] === $row['ProvVoznagMin'] &&
+                $refund['ProvComisPC'] === $row['ProvComisPC'] &&
+                $refund['ProvComisMin'] === $row['ProvComisMin'] &&
+                $refund['Bank'] === $row['Bank'] &&
+                $refund['Name'] === $row['Name'] &&
+                $refund['NameUsluga'] === $row['NameUsluga']
+            ) {
+                return $refund;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param bool $isAdmin
+     * @param array $inStatuses
+     * @return array
+     */
+    private function getReportRecords(bool $isAdmin, array $inStatuses): array
+    {
+        $IdPart = $isAdmin ? $this->IdPart : UserLk::getPartnerId(Yii::$app->user);
 
         $query = (new Query())
             ->select([
-                '`ut`.`NameUsluga`',
-                '`b`.`Name` as bankName',
-                '`ut`.`ProvVoznagPC`',
-                '`ut`.`ProvVoznagMin`',
                 '`ps`.`IdUsluga`',
                 '`ut`.`IsCustom`',
+                '`ut`.`ProvVoznagPC`',
+                '`ut`.`ProvVoznagMin`',
                 '`ut`.`ProvComisPC`',
                 '`ut`.`ProvComisMin`',
+                '`b`.`Name` as bankName',
+                '`ut`.`NameUsluga`',
                 'SUM(`ps`.`SummPay`) AS `SummPay`',
                 'SUM(`ps`.`ComissSumm`) AS `ComissSumm`',
                 'SUM(`ps`.`MerchVozn`) AS `MerchVozn`',
                 'SUM(`ps`.`BankComis`) AS `BankComis`',
-                'COUNT(*) AS CntPays'
+                'COUNT(*) AS CntPays',
             ])
             ->from('`pay_schet` AS ps')
             ->leftJoin('`uslugatovar` AS ut', 'ps.IdUsluga = ut.ID')
             ->leftJoin('`banks` AS b', 'ps.Bank = b.ID')
             ->andWhere(['between', 'ps.DateCreate', strtotime($this->datefrom . ":00"), strtotime($this->dateto . ":59")])
-            ->andWhere(['ps.Status' => 1])
+            ->andWhere(['in', 'ps.Status', $inStatuses])
             ->groupBy([
                 '`ps`.`IdUsluga`',
                 '`ut`.`IsCustom`',
@@ -526,13 +607,13 @@ class PayShetStat extends Model
         $query->andFilterWhere(['ut.ID' => $this->usluga]);
         $query->andFilterWhere(['ut.IsCustom' => $this->TypeUslug]);
         $query->andFilterWhere(['bank' => $this->idBank]);
-        $res = $query->all();
+        $result = $query->all();
 
-        array_walk($res, static function (&$row) {
+        array_walk($result, static function (&$row) {
             $row['VoznagSumm'] = (string)$row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
         });
 
-        return $res;
+        return $result;
     }
 
     /**
