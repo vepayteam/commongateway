@@ -84,6 +84,7 @@ class Uslugatovar extends \yii\db\ActiveRecord
 {
     const TYPE_REG_CARD = 1;
     const REG_CARD_ID = 1;
+    const P2P = 26;
 
     public static $TypePay_str = [0 => 'Банковская карта', 1 => 'Банковская карта'];
     public static $TypeExport_str = [0 => 'в Vepay', 1 => 'в Банк по реестру', 2 => 'online'];
@@ -109,6 +110,7 @@ class Uslugatovar extends \yii\db\ActiveRecord
         21 => 'Возмещение комисии',
         23 => 'Внутренний перевод между счетами',
         24 => 'Упрощенная идентификация пользователей',
+        self::P2P => 'P2P перевод с карты на карту',
 
         110 => 'Погашение займа AFT с разбивкой',
         114 => 'Погашение займа ECOM с разбивкой',

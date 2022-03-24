@@ -450,7 +450,17 @@ class TKBankAdapter implements IBankAdapter
     private function getClient(): TcbClient
     {
         if ($this->_client === null) {
-            $this->_client = new TcbClient($this->gate->Login, $this->gate->Token, $this->bankUrl);
+            $connectionTimeout = Yii::$app->params['tcbConnectionTimeout'] ?? null;
+            if (!is_int($connectionTimeout)) {
+                $connectionTimeout = self::CURL_DEFAULT_TIMEOUT;
+            }
+
+            $this->_client = new TcbClient(
+                $this->gate->Login,
+                $this->gate->Token,
+                $this->bankUrl,
+                $connectionTimeout
+            );
         }
 
         return $this->_client;
