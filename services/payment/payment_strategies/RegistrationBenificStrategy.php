@@ -62,7 +62,7 @@ class RegistrationBenificStrategy
     }
 
     /**
-     * @return UslugatovarType|null
+     * @return Uslugatovar|null
      */
     protected function getUslugatovar()
     {
