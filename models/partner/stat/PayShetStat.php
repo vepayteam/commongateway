@@ -13,6 +13,7 @@ use yii\db\Expression;
 use yii\db\Query;
 
 use yii\helpers\ArrayHelper;
+use yii\helpers\Json;
 use function array_walk;
 
 class PayShetStat extends Model
@@ -541,23 +542,29 @@ class PayShetStat extends Model
      */
     private function searchReportRecord(array $refunds, $row)
     {
-        foreach ($refunds as $refund) {
-            if (
-                $refund['IdUsluga'] === $row['IdUsluga'] &&
-                $refund['IsCustom'] === $row['IsCustom'] &&
-                $refund['ProvVoznagPC'] === $row['ProvVoznagPC'] &&
-                $refund['ProvVoznagMin'] === $row['ProvVoznagMin'] &&
-                $refund['ProvComisPC'] === $row['ProvComisPC'] &&
-                $refund['ProvComisMin'] === $row['ProvComisMin'] &&
-                $refund['Bank'] === $row['Bank'] &&
-                $refund['Name'] === $row['Name'] &&
-                $refund['NameUsluga'] === $row['NameUsluga']
-            ) {
-                return $refund;
+        try {
+            foreach ($refunds as $refund) {
+                if (
+                    $refund['IdUsluga'] === $row['IdUsluga'] &&
+                    $refund['IsCustom'] === $row['IsCustom'] &&
+                    $refund['ProvVoznagPC'] === $row['ProvVoznagPC'] &&
+                    $refund['ProvVoznagMin'] === $row['ProvVoznagMin'] &&
+                    $refund['ProvComisPC'] === $row['ProvComisPC'] &&
+                    $refund['ProvComisMin'] === $row['ProvComisMin'] &&
+                    $refund['Bank'] === $row['Bank'] &&
+                    $refund['Name'] === $row['Name'] &&
+                    $refund['NameUsluga'] === $row['NameUsluga']
+                ) {
+                    return $refund;
+                }
             }
-        }
 
-        return null;
+            return null;
+        } catch (\Exception $e) {
+            Yii::error(['PayShetStat searchReportRecord exception: ' . Json::encode($refunds), $e]);
+
+            throw $e;
+        }
     }
 
     /**
