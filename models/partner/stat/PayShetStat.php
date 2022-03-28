@@ -360,10 +360,14 @@ class PayShetStat extends Model
                 $refundTotalBankCommission += (int)$item['BankComis'];
                 $refundTotalAward += (int)$item['VoznagSumm'];
 
-                /**
-                 * Для транзакций в статусе refund/reverse сумма вознаграждения должна быть 0
-                 */
-                $item['VoznagSumm'] = 0;
+                if (intval($item['Status']) === PaySchet::STATUS_REFUND_DONE) {
+                    /**
+                     * Для транзакций в статусе refund/reverse сумма вознаграждения должна быть 0
+                     */
+                    $item['VoznagSumm'] = 0;
+                } else {
+                    $refundTotalAward += (int)$item['VoznagSumm'];
+                }
             }
         }
 
@@ -514,21 +518,24 @@ class PayShetStat extends Model
             PaySchet::STATUS_CANCEL,
         ]);
 
-        /**
-         * TODO без костылей не обошлось, в идеале все переписать включая view _otchdata.php
-         */
-        $refundRecords = $this->getReportRecords($IsAdmin, [
-            PaySchet::STATUS_REFUND_DONE,
-            PaySchet::STATUS_CANCEL,
-        ]);
+        $refunds = $this->getReportRecords($IsAdmin, [PaySchet::STATUS_REFUND_DONE]);
+        $reverses = $this->getReportRecords($IsAdmin, [PaySchet::STATUS_CANCEL]);
 
-        array_walk($allReportRecords, function (&$row) use ($refundRecords) {
-            $search = $this->searchReportRecord($refundRecords, $row);
-            if ($search) {
-                $row['SummPay'] -= ($search['SummPay'] * 2);
-                $row['ComissSumm'] -= ($search['ComissSumm'] * 2);
-                $row['BankComis'] -= ($search['BankComis'] * 2);
-                $row['VoznagSumm'] -= ($search['VoznagSumm'] * 1);
+        array_walk($allReportRecords, function (&$row) use ($refunds, $reverses) {
+            $refund = $this->searchReportRecord($refunds, $row);
+            if ($refund) {
+                $row['SummPay'] -= ($refund['SummPay'] * 2);
+                $row['ComissSumm'] -= ($refund['ComissSumm'] * 2);
+                $row['BankComis'] -= ($refund['BankComis'] * 2);
+                $row['VoznagSumm'] -= ($refund['VoznagSumm'] * 1);
+            }
+
+            $revers = $this->searchReportRecord($reverses, $row);
+            if ($revers) {
+                $row['SummPay'] -= ($revers['SummPay'] * 2);
+                $row['ComissSumm'] -= ($revers['ComissSumm'] * 2);
+                $row['BankComis'] -= ($revers['BankComis'] * 2);
+                $row['VoznagSumm'] -= ($revers['VoznagSumm'] * 2);
             }
         });
 
@@ -551,7 +558,6 @@ class PayShetStat extends Model
                     $refund['ProvVoznagMin'] === $row['ProvVoznagMin'] &&
                     $refund['ProvComisPC'] === $row['ProvComisPC'] &&
                     $refund['ProvComisMin'] === $row['ProvComisMin'] &&
-                    $refund['Bank'] === $row['Bank'] &&
                     $refund['Name'] === $row['Name'] &&
                     $refund['NameUsluga'] === $row['NameUsluga']
                 ) {
@@ -606,14 +612,14 @@ class PayShetStat extends Model
                 '`ut`.`ProvComisMin`',
                 '`ps`.`Bank`',
                 '`b`.`Name`',
-                '`ut`.NameUsluga'
+                '`ut`.NameUsluga',
             ])
-            ->orderBy('bank');
+            ->orderBy('ps.Bank');
 
         $query->andFilterWhere(['ut.IDPartner' => $IdPart > 0 ? $IdPart : null]);
         $query->andFilterWhere(['ut.ID' => $this->usluga]);
         $query->andFilterWhere(['ut.IsCustom' => $this->TypeUslug]);
-        $query->andFilterWhere(['bank' => $this->idBank]);
+        $query->andFilterWhere(['ps.Bank' => $this->idBank]);
         $result = $query->all();
 
         array_walk($result, static function (&$row) {
