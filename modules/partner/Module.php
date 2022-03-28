@@ -2,6 +2,7 @@
 
 namespace app\modules\partner;
 
+use app\modules\partner\services\PartService;
 use Yii;
 
 /**
@@ -23,7 +24,9 @@ class Module extends \yii\base\Module
     {
         parent::init();
 
-        // custom initialization code goes here
+        if (!\Yii::$app->has(PartService::class)) {
+            \Yii::$app->set(PartService::class, PartService::class);
+        }
     }
 
     /**

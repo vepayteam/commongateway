@@ -8,7 +8,6 @@ use app\models\payonline\BalancePartner;
 use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
 use app\models\TU;
-use app\services\balance\traits\PartsTrait;
 use app\services\payment\models\PaySchet;
 
 /**
@@ -16,8 +15,6 @@ use app\services\payment\models\PaySchet;
  */
 class BalanceService
 {
-    use PartsTrait;
-
     /**
      * @param PaySchet $paySchet
      * @return bool

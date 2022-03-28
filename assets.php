@@ -10,7 +10,7 @@
 Yii::setAlias('@webroot', __DIR__ . '/web');
 Yii::setAlias('@web', '/');
 Yii::setAlias('@bower', __DIR__ . '/vendor/bower-asset');
-Yii::setAlias('@npm', __DIR__ . '/vendor/npm-asset'); 
+Yii::setAlias('@npm', __DIR__ . '/vendor/npm-asset');
 
 return [
     // Adjust command/callback for JavaScript files compressing:
@@ -18,7 +18,7 @@ return [
     'jsCompressor' => 'uglifyjs {from} -m  -o {to}',
     // Adjust command/callback for CSS files compressing:
     //'cssCompressor' => 'java -jar yuicompressor.jar --type css {from} -o {to}',
-    'cssCompressor' => 'cleancss {from} --output {to}',	
+    'cssCompressor' => 'cleancss {from} --output {to}',
     // Whether to delete asset source after compression:
     'deleteSource' => false,
     // The list of asset bundles to compress:
@@ -26,7 +26,7 @@ return [
         'app\assets\CommonAsset',
         'app\assets\InsAsset',
         'app\assets\SiteAsset',
-        'app\assets\SwaggerAsset',
+//        'app\assets\SwaggerAsset',
         'app\assets\MerchantAsset',
         'app\assets\PartnerAsset',
         'app\assets\PayAsset',
@@ -69,17 +69,17 @@ return [
                 'app\assets\SiteAsset'
             ],
         ],
-        'swagger' => [
-            'class' => 'yii\web\AssetBundle',
-            'basePath' => '@webroot/assets',
-            'baseUrl' => '@web/assets',
-            'js' => 'swagger-{hash}.js',
-            'css' => 'swagger-{hash}.css',
-            'depends' => [
-                // Include only 'backend' assets:
-				'app\assets\SwaggerAsset'
-            ],            
-        ],
+//        'swagger' => [
+//            'class' => 'yii\web\AssetBundle',
+//            'basePath' => '@webroot/assets',
+//            'baseUrl' => '@web/assets',
+//            'js' => 'swagger-{hash}.js',
+//            'css' => 'swagger-{hash}.css',
+//            'depends' => [
+//                // Include only 'backend' assets:
+//				'app\assets\SwaggerAsset'
+//            ],
+//        ],
         'communal' => [
             'class' => 'yii\web\AssetBundle',
             'basePath' => '@webroot/assets',
@@ -89,7 +89,7 @@ return [
             'depends' => [
                 // Include only 'backend' assets:
                 'app\assets\MerchantAsset'
-            ],            
+            ],
         ],
         'partner' => [
             'class' => 'yii\web\AssetBundle',
@@ -100,7 +100,7 @@ return [
             'depends' => [
                 // Include only 'backend' assets:
                 'app\assets\PartnerAsset',
-            ],            
+            ],
         ],
         'pay' => [
             'class' => 'yii\web\AssetBundle',

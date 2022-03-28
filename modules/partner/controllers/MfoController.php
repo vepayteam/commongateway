@@ -2,22 +2,22 @@
 
 namespace app\modules\partner\controllers;
 
+use app\helpers\ExcelHelper;
 use app\models\mfo\MfoBalance;
-use app\models\mfo\MfoReq;
 use app\models\partner\PartUserAccess;
 use app\models\partner\UserLk;
 use app\models\payonline\Partner;
+use app\modules\partner\models\forms\PartListForm;
+use app\modules\partner\models\search\PartListFilter;
+use app\modules\partner\services\PartService;
 use app\services\balance\Balance;
-use app\services\balance\BalanceService;
-use app\services\balance\models\PartsBalanceForm;
-use app\services\balance\models\PartsBalancePartnerForm;
 use Yii;
 use yii\filters\AccessControl;
-use yii\filters\VerbFilter;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
+use yii\web\RangeNotSatisfiableHttpException;
 use yii\web\Response;
 
 class MfoController extends Controller
@@ -25,8 +25,15 @@ class MfoController extends Controller
     use SelectPartnerTrait;
 
     public $enableCsrfValidation = false;
+    /**
+     * @var PartService
+     */
+    private $partService;
 
-    public function behaviors()
+    /**
+     * {@inheritDoc}
+     */
+    public function behaviors(): array
     {
         return [
             'access' => [
@@ -59,20 +66,15 @@ class MfoController extends Controller
                     ],
                 ],
             ],
-            'verbFilter' => [
-                'class' => VerbFilter::className(),
-                'actions' => $this->verbs(),
-            ],
-
         ];
     }
 
-    protected function verbs()
+    /**
+     * {@inheritDoc}
+     */
+    public function init()
     {
-        return [
-            'index' => ['GET', 'POST'],
-            'parts-balance-processing' => ['GET', 'POST'],
-        ];
+        $this->partService = Yii::$app->get(PartService::class);
     }
 
     /**
@@ -107,10 +109,89 @@ class MfoController extends Controller
     }
 
     /**
+     * @param array $columns
+     * @return string|Response
+     * @throws RangeNotSatisfiableHttpException
+     */
+    private function partsInternal(
+        array $columns = [
+            'paySchetId',
+            'partnerName',
+            'partAmount',
+            'createdAt',
+            'extId',
+            'paySchetAmount',
+            'clientCompensation',
+            'partnerCompensation',
+            'bankCompensation',
+            'message',
+            'cardNumber',
+            'cardHolder',
+            'contract',
+            'fio',
+            'withdrawalPayschetId',
+            'withdrawalAmount',
+            'withdrawalCreatedAt',
+        ]
+    )
+    {
+        $model = new PartListForm();
+        if (UserLk::IsAdmin(Yii::$app->user)) {
+            $model->scenario = PartListForm::SCENARIO_ADMIN;
+
+            $partners = Partner::find()
+                ->andWhere(['IsBlocked' => 0, 'IsDeleted' => 0])
+                ->all();
+            $partnerList = ArrayHelper::map($partners, 'ID', function (Partner $partner) {
+                return "{$partner->ID} | {$partner->Name}";
+            });
+        } else {
+            $model->scenario = PartListForm::SCENARIO_PARTNER;
+            $model->partnerId = UserLk::getPartnerId(Yii::$app->user);
+
+            $partnerList = null;
+        }
+
+        $searchModel = null;
+        $dataProvider = null;
+
+        if ($model->load(\Yii::$app->request->queryParams) && $model->validate()) {
+            $searchModel = new PartListFilter();
+            $searchModel->load(\Yii::$app->request->queryParams);
+
+            // return Excel file
+            if (Yii::$app->request->get('excel')) {
+                $dataProvider = $this->partService->search($model, $searchModel, true);
+                $htmlString = $this->renderPartial('parts/grid', [
+                    'searchModel' => null,
+                    'dataProvider' => $dataProvider,
+                    'columns' => $columns,
+                ]);
+                return Yii::$app->response->sendContentAsFile(
+                    ExcelHelper::generateFromHtml($htmlString),
+                    "export_parts_balance_{$model->partnerId}.xlsx",
+                    ['mimeType' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+                );
+            }
+
+            $dataProvider = $this->partService->search($model, $searchModel);
+        }
+
+        return $this->render('parts', [
+            'model' => $model,
+            'searchModel' => $searchModel,
+            'dataProvider' => $dataProvider,
+            'columns' => $columns,
+            'partnerList' => $partnerList,
+        ]);
+    }
+
+    /**
      * Балансы МФО
      *
      * @return string|Response
      * @throws \yii\db\Exception
+     * @throws RangeNotSatisfiableHttpException
      */
     public function actionPartsBalance()
     {
@@ -118,86 +199,31 @@ class MfoController extends Controller
             return $this->redirect('/partner');
         }
 
-        $partners = null;
-        $data = null;
-
-        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-        if ($IsAdmin) {
-            $partners = ArrayHelper::index(
-                Partner::find()->select(['ID', 'Name'])->where(['IsBlocked' => 0, 'IsDeleted' => 0])->all(), 'ID'
-            );
-        } else {
-            $partners = [];
-        }
-
-        return $this->render('parts_balance', compact('partners'));
+        return $this->partsInternal();
     }
 
-    public function actionPartsBalanceProcessing()
-    {
-        if (!UserLk::IsAdmin(Yii::$app->user) && !PartUserAccess::checkPartsBalanceAccess()) {
-            return $this->redirect('/partner');
-        }
-
-        $this->enableCsrfValidation = false;
-        $post = Yii::$app->request->post();
-
-        $partsBalanceForm = new PartsBalanceForm();
-        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-        if (!$IsAdmin) {
-            $post['filters']['partnerId'] = UserLk::getPartnerId(Yii::$app->user);
-        }
-
-        if(!$partsBalanceForm->load($post, '') || !$partsBalanceForm->validate()) {
-            $a = 0;
-        }
-
-        return $this->asJson($this->getBalanceService()->getPartsBalance($partsBalanceForm));
-    }
-
+    /**
+     * @throws RangeNotSatisfiableHttpException
+     */
     public function actionPartsBalancePartner()
     {
         if (!UserLk::IsAdmin(Yii::$app->user) && !PartUserAccess::checkPartsBalanceAccess()) {
             return $this->redirect('/partner');
         }
 
-        $partners = null;
-        $data = null;
-
-        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-        if ($IsAdmin) {
-            $partners = ArrayHelper::index(
-                Partner::find()->select(['ID', 'Name'])->where(['IsBlocked' => 0, 'IsDeleted' => 0])->all(), 'ID'
-            );
-        } else {
-            $partners = [];
-        }
-
-        return $this->render('parts_balance_partner', compact('partners'));
+        return $this->partsInternal([
+            'paySchetId',
+            'partnerName',
+            'partAmount',
+            'createdAt',
+            'message',
+            'contract',
+            'fio',
+            'withdrawalPayschetId',
+            'withdrawalAmount',
+            'withdrawalCreatedAt',
+        ]);
     }
-
-    public function actionPartsBalancePartnerProcessing()
-    {
-        if (!UserLk::IsAdmin(Yii::$app->user) && !PartUserAccess::checkPartsBalanceAccess()) {
-            return $this->redirect('/partner');
-        }
-
-        $this->enableCsrfValidation = false;
-        $post = Yii::$app->request->post();
-
-        $partsBalancePartnerForm = new PartsBalancePartnerForm();
-        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-        if (!$IsAdmin) {
-            $post['filters']['partnerId'] = UserLk::getPartnerId(Yii::$app->user);
-        }
-
-        if(!$partsBalancePartnerForm->load($post, '') || !$partsBalancePartnerForm->validate()) {
-            $a = 0;
-        }
-
-        return $this->asJson($this->getBalanceService()->getPartsBalancePartner($partsBalancePartnerForm));
-    }
-
 
     /**
      * Выписка по счету
@@ -228,8 +254,8 @@ class MfoController extends Controller
             if ($istransit == 10 || $istransit == 11) {
                 $istransit -= 10;
             }
-            $ostBeg = number_format($MfoBalance->GetOstBeg($dateFrom, $dateTo,$istransit)/100.0, 2, '.', ' ');
-            $ostEnd = number_format($MfoBalance->GetOstBeg($dateFrom, $dateTo,$istransit)/100.0, 2, '.', ' ');
+            $ostBeg = number_format($MfoBalance->GetOstBeg($dateFrom, $dateTo, $istransit) / 100.0, 2, '.', ' ');
+            $ostEnd = number_format($MfoBalance->GetOstBeg($dateFrom, $dateTo, $istransit) / 100.0, 2, '.', ' ');
             $data = ($istransit == 10 || $istransit == 11)
                 ? $this->renderPartial('_balanceorderlocal', [
                     'listorder' => $MfoBalance->GetOrdersLocal($istransit - 10, $dateFrom, $dateTo, $sort),
@@ -284,15 +310,5 @@ class MfoController extends Controller
         } else {
             throw new NotFoundHttpException();
         }
-    }
-
-    /**
-     * @return BalanceService
-     * @throws \yii\base\InvalidConfigException
-     * @throws \yii\di\NotInstantiableException
-     */
-    protected function getBalanceService()
-    {
-        return Yii::$container->get('BalanceService');
     }
 }

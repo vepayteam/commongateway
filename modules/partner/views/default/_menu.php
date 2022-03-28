@@ -12,6 +12,8 @@ use yii\helpers\Html;
 $act = PartUserAccess::getSelRazdel(\Yii::$app->controller->action);
 $partsBalanceAccess = PartUserAccess::checkPartsBalanceAccess();
 //\yii\helpers\VarDumper::dump($act);
+
+$route = Yii::$app->controller->route;
 ?>
 
 <nav class="navbar-default navbar-static-side" role="navigation">
@@ -45,18 +47,18 @@ $partsBalanceAccess = PartUserAccess::checkPartsBalanceAccess();
             <?php if ($IsAdmin || $partsBalanceAccess) : ?>
                 <li class="">
                     <a href="/partner/mfo/parts-balance"
-                       aria-expanded="<?= in_array($_SERVER['REQUEST_URI'], ['/partner/mfo/parts-balance', '/partner/mfo/parts-balance-partner']) ? 'true' : 'false' ?>"
+                       aria-expanded="<?= in_array($route, ['partner/mfo/parts-balance', 'partner/mfo/parts-balance-partner']) ? 'true' : 'false' ?>"
                     >
                         <i class="fa fa-list"></i>
                         <span class="nav-label"> Баланс по разбивке</span>
                         <span class="fa arrow"></span>
                     </a>
-                    <ul class="nav nav-second-level collapse <?= in_array($_SERVER['REQUEST_URI'], ['/partner/mfo/parts-balance', '/partner/mfo/parts-balance-partner']) ? 'in' : '' ?>"
+                    <ul class="nav nav-second-level collapse <?= in_array($route, ['partner/mfo/parts-balance', 'partner/mfo/parts-balance-partner']) ? 'in' : '' ?>"
                         aria-expanded="true" style="">
-                        <li class="<?= $_SERVER['REQUEST_URI'] == '/partner/mfo/parts-balance' ? 'active' : '' ?>">
+                        <li class="<?= $route == 'partner/mfo/parts-balance' ? 'active' : '' ?>">
                             <a href="/partner/mfo/parts-balance">Платформа</a>
                         </li>
-                        <li class="<?= $_SERVER['REQUEST_URI'] == '/partner/mfo/parts-balance-partner' ? 'active' : '' ?>">
+                        <li class="<?= $route == 'partner/mfo/parts-balance-partner' ? 'active' : '' ?>">
                             <a href="/partner/mfo/parts-balance-partner">Партнер</a>
                         </li>
                     </ul>
