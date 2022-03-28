@@ -45,7 +45,7 @@ abstract class BaseModel extends \yii\base\Model implements \JsonSerializable
                 $keys[] = $iterator->getSubIterator($i)->key();
             }
             $key_paths = array_reverse($keys);
-            $result[] = implode(':', $key_paths) . ':' . $value;
+            $result[] = implode(':', $key_paths) . ':' . utf8_encode($value);
         }
         sort($result);
         return $result;

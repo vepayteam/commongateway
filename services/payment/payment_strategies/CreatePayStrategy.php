@@ -77,7 +77,7 @@ class CreatePayStrategy
         }
 
         // Проверяем можно ли отправлять запрос в банк
-        $this->checkCreatePayLock($paySchet);
+        // $this->checkCreatePayLock($paySchet);
 
         $bankAdapterBuilder = new BankAdapterBuilder();
         $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank, $paySchet->currency);
@@ -119,6 +119,7 @@ class CreatePayStrategy
         $paySchet->DsTransId = $this->createPayResponse->dsTransId;
         $paySchet->Eci = $this->createPayResponse->eci;
         $paySchet->CardRefId3DS = $this->createPayResponse->cardRefId;
+        $paySchet->IPAddressUser = Yii::$app->request->remoteIP;
 
         $paySchet->save(false);
     }

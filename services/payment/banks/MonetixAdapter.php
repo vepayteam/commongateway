@@ -7,6 +7,7 @@ use app\Api\Client\Client;
 use app\models\extservice\HttpProxy;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
+use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
@@ -33,6 +34,7 @@ use app\services\payment\forms\monetix\models\CardModel;
 use app\services\payment\forms\monetix\models\CustomerModel;
 use app\services\payment\forms\monetix\models\GeneralModel;
 use app\services\payment\forms\monetix\models\PaymentModel;
+use app\services\payment\forms\monetix\models\RedirectDataModel;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
@@ -106,36 +108,49 @@ class MonetixAdapter implements IBankAdapter
         $cardModel->card_holder = $createPayForm->CardHolder;
         $cardModel->cvv = $createPayForm->CardCVC;
 
-        $customerModel = new CustomerModel((string)$createPayForm->getPaySchet()->ID, Yii::$app->request->remoteIP);
+        $customerModel = new CustomerModel(
+            (string)$createPayForm->getPaySchet()->ID,
+            Yii::$app->request->remoteIP
+        );
         $paymentModel = new PaymentModel(
             $createPayForm->getPaySchet()->getSummFull(),
-            'Оплата по счету № ' . $createPayForm->getPaySchet()->ID,
+            'Pay ' . $createPayForm->getPaySchet()->ID,
             $createPayForm->getPaySchet()->currency->Code
         );
-        $createPayRequest = new CreatePayRequest(
-            $generalModel,
-            $cardModel,
-            $customerModel,
-            $paymentModel
-        );
+
+        $createPayRequest = new CreatePayRequest();
+        $createPayRequest->general = $generalModel;
+        $createPayRequest->card = $cardModel;
+        $createPayRequest->customer = $customerModel;
+        $createPayRequest->payment = $paymentModel;
         $generalModel->signature = $createPayRequest->buildSignature($this->gate->Token);
 
+        $createPayResponse = new CreatePayResponse();
+        $createPayResponse->isNeedPingMonetix = true;
         if(!$createPayRequest->validate()) {
             throw new \Exception($createPayRequest->GetError());
         }
         $url = $this->bankUrl . '/v2/payment/card/sale';
-        $bodyJson = Json::encode($createPayRequest);
         try {
             $response = $this->apiClient->request(
                 AbstractClient::METHOD_POST,
                 $url,
                 $createPayRequest->jsonSerialize()
-            );
-            $a = 0;
-        } catch (GuzzleException $e) {
-            $a = 0;
-        }
+            )->json();
 
+            if(isset($response['status']) && $response['status'] == 'success') {
+                $createPayResponse->status = BaseResponse::STATUS_DONE;
+                $createPayResponse->message = $response['status'];
+                $createPayResponse->transac = $response['request_id'];
+            } else {
+                $createPayResponse->status = BaseResponse::STATUS_ERROR;
+                $createPayResponse->message = $response['status'] ?? '';
+            }
+            return $createPayResponse;
+        } catch (\Exception $e) {
+            $createPayResponse->status = BaseResponse::STATUS_ERROR;
+            $createPayResponse->message = $e->getMessage();
+        }
     }
 
     public function checkStatusPay(OkPayForm $okPayForm)

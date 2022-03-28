@@ -337,8 +337,28 @@
 
         },
 
+        pingMonetixCallback: function(interval) {
+            let id = $('[name="PayForm[IdPay]"]').val();
+            $.ajax({
+                type: 'POST',
+                url: "/callback/monetix-ping",
+                data: {
+                    'paySchetId': id,
+                    '_csrf': $('input[name=_csrf]').val(),
+                },
+                success: function (data, textStatus, jqXHR) {
+                    console.log(data);
+
+                }
+            });
+        },
+
         createPaySuccess: function (data, textStatus, jqXHR) {
-            if (data.status == 1 && !data.isNeed3DSRedirect) {
+            if (data.status == 1 && data.isNeedPingMonetix) {
+                var interval = setInterval(function() {
+                    payform.pingMonetixCallback(interval);
+                }, 2000);
+            } else if (data.status == 1 && !data.isNeed3DSRedirect) {
                 if (data.isNeed3DSVerif == 1) {
                     //ок - переход по url банка
                     payform.load3ds(data.url, data.pa, data.md, data.creq, data.termurl, data.threeDSServerTransID, data.html3dsForm);
@@ -349,10 +369,6 @@
                 }
             } else if (data.status == 0 && data.threeDSMethodURL && data.isNeedSendTransIdTKB) {
                 payform.confirm3dsV2TKB(data.threeDSMethodURL, data.threeDSServerTransID, data.termurl);
-
-                // setTimeout(function() {
-                //     window.location = data.termurl;
-                // }, 5000);
             } else if (data.status == 1 && data.url && data.isNeed3DSRedirect) {
                 window.location = data.url;
             } else if (data.status == 2 && data.url) {
