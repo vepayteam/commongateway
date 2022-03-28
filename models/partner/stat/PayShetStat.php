@@ -558,7 +558,7 @@ class PayShetStat extends Model
                     $refund['ProvVoznagMin'] === $row['ProvVoznagMin'] &&
                     $refund['ProvComisPC'] === $row['ProvComisPC'] &&
                     $refund['ProvComisMin'] === $row['ProvComisMin'] &&
-                    $refund['Name'] === $row['Name'] &&
+                    $refund['bankName'] === $row['bankName'] &&
                     $refund['NameUsluga'] === $row['NameUsluga']
                 ) {
                     return $refund;
