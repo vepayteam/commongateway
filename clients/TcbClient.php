@@ -244,7 +244,7 @@ class TcbClient extends BaseObject
             /** @todo Remove, hack VPBC-1298. */
             $errorData = $this->tryJsonDecode((string)$e->getResponse()->getBody());
             if (is_array($errorData) && $errorData['Code'] === 'OrderNotExist') {
-                \Yii::$app->errorHandler->logException($e);
+                \Yii::warning('OrderNotExist exception. Data: ' . $errorData);
                 throw new TcbOrderNotExistException();
             }
             throw $e;
