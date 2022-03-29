@@ -7,6 +7,7 @@ use app\models\Helper;
 use app\models\partner\stat\PayShetStat;
 use app\models\payonline\Partner;
 use app\models\TU;
+use app\services\paymentReport\PaymentReportService;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -257,6 +258,8 @@ class OtchetPsXlsx
 
     private function PogashSum(Partner $partner)
     {
+        $paymentReportService = new PaymentReportService();
+
         $pays = new PayShetStat();
         $pays->setAttributes([
             'IdPart' => $partner->ID,
@@ -264,7 +267,7 @@ class OtchetPsXlsx
             'dateto' => date("d.m.Y H:i", $this->dateto),
             'TypeUslug' => TU::InAll()
         ]);
-        $dataIn = $pays->getOtch(true);
+        $dataIn = $paymentReportService->getLegacyReportEntities(true, $pays);
         $sum = 0;
         foreach ($dataIn as $data) {
             $sum += $data['SummPay'];
@@ -274,6 +277,8 @@ class OtchetPsXlsx
 
     private function VydachSum(Partner $partner)
     {
+        $paymentReportService = new PaymentReportService();
+
         $pays = new PayShetStat();
         $pays->setAttributes([
             'IdPart' => $partner->ID,
@@ -281,7 +286,7 @@ class OtchetPsXlsx
             'dateto' => date("d.m.Y H:i", $this->dateto),
             'TypeUslug' => TU::OutMfo()
         ]);
-        $dataOut = $pays->getOtch(true);
+        $dataOut = $paymentReportService->getLegacyReportEntities(true, $pays);
         $sum = 0;
         foreach ($dataOut as $data) {
             $sum += $data['SummPay'];
@@ -343,6 +348,8 @@ class OtchetPsXlsx
 
     private function ProchSpisanPaySum(Partner $partner, array $typesUsl)
     {
+        $paymentReportService = new PaymentReportService();
+
         $pays = new PayShetStat();
         $pays->setAttributes([
             'IdPart' => $partner->ID,
@@ -350,7 +357,7 @@ class OtchetPsXlsx
             'dateto' => date("d.m.Y H:i", $this->dateto),
             'TypeUslug' => $typesUsl
         ]);
-        $dataIn = $pays->getOtch(true);
+        $dataIn = $paymentReportService->getLegacyReportEntities(true, $pays);
         $sum = 0;
         foreach ($dataIn as $data) {
             $sum += $data['ComissSumm'] + $data['MerchVozn'];
@@ -360,6 +367,8 @@ class OtchetPsXlsx
 
     private function VoznVepayPrevPeriod(Partner $partner)
     {
+        $paymentReportService = new PaymentReportService();
+
         $pays = new PayShetStat();
         $pays->setAttributes([
             'IdPart' => $partner->ID,
@@ -367,7 +376,7 @@ class OtchetPsXlsx
             'dateto' => date("d.m.Y H:i", $this->datefrom - 1),
             'TypeUslug' => array_merge(TU::InAll(), TU::OutMfo())
         ]);
-        $dataIn = $pays->getOtch(true);
+        $dataIn = $paymentReportService->getLegacyReportEntities(true, $pays);
         $sum = 0;
         foreach ($dataIn as $data) {
             $sum += $data['VoznagSumm'];
