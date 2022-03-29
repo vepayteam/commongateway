@@ -450,24 +450,25 @@ class PaySchet extends \yii\db\ActiveRecord
             $this->CardType = Cards::GetCardBrand(Cards::GetTypeCard($this->CardNum));
         }
 
-        if ($insert) {
-            /**
-             * Calculate compensation.
-             * Needed only when bank is not 0 ({@see MfoCardRegStrategy::createPaySchet()}).
-             *
-             * No need to calculate commissions for refund operations
-             */
-            if ($this->Bank !== 0 && !$this->isRefund) {
-                $gate = (new BankAdapterBuilder())
-                    ->buildByBank($this->partner, $this->uslugatovar, $this->bank, $this->currency)
-                    ->getPartnerBankGate();
+        /**
+         * Calculate compensation.
+         * Needed only when bank is not 0 ({@see MfoCardRegStrategy::createPaySchet()}).
+         *
+         * No need to calculate commissions for refund operations
+         */
+        if (
+            ($insert || $this->uslugatovar->IsCustom == Uslugatovar::P2P)
+            && $this->Bank !== 0 && !$this->isRefund
+        ) {
+            $gate = (new BankAdapterBuilder())
+                ->buildByBank($this->partner, $this->uslugatovar, $this->bank, $this->currency)
+                ->getPartnerBankGate();
 
-                /** @var CompensationService $compensationService */
-                $compensationService = \Yii::$app->get(CompensationService::class);
-                $this->ComissSumm = round($compensationService->calculateForClient($this, $gate));
-                $this->BankComis = round($compensationService->calculateForBank($this, $gate));
-                $this->MerchVozn = round($compensationService->calculateForPartner($this, $gate));
-            }
+            /** @var CompensationService $compensationService */
+            $compensationService = \Yii::$app->get(CompensationService::class);
+            $this->ComissSumm = round($compensationService->calculateForClient($this, $gate));
+            $this->BankComis = round($compensationService->calculateForBank($this, $gate));
+            $this->MerchVozn = round($compensationService->calculateForPartner($this, $gate));
         }
 
         return true;

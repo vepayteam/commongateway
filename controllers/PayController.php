@@ -357,10 +357,12 @@ class PayController extends Controller
         $donePayForm->trans = Yii::$app->request->post('trans_id', null);
 
         // Impaya
-        if($trans = Yii::$app->request->get('transaction_id', null)) {
-            $donePayForm->trans = $trans;
-        }
-        if($trans = Yii::$app->request->post('transaction_id', null)) {
+        if(Yii::$app->request->isGet && $trans = Yii::$app->request->get('transaction_id', null)) {
+            // TODO: check hash
+            Yii::info('PayController orderdone GET Impaya data: ' . Json::encode(Yii::$app->request->get()));
+            $donePayForm->IdPay = $trans;
+        } elseif (Yii::$app->request->isPost && $trans = Yii::$app->request->post('transaction_id', null)) {
+            Yii::info('PayController orderdone POST Impaya trans=' . Json::encode(Yii::$app->request->get()));
             $donePayForm->trans = $trans;
         }
 
