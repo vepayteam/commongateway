@@ -37,6 +37,7 @@ use app\services\payment\forms\monetix\models\CustomerModel;
 use app\services\payment\forms\monetix\models\GeneralModel;
 use app\services\payment\forms\monetix\models\PaymentModel;
 use app\services\payment\forms\monetix\models\ReturnUrlModel;
+use app\services\payment\forms\monetix\OutCardPayRequest;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
@@ -220,14 +221,50 @@ class MonetixAdapter implements IBankAdapter
     {
         $generalModel = new GeneralModel(
             0,
-            (string)$outCardPayForm->getPaySchet()->ID
+            (string)$outCardPayForm->paySchet->ID
         );
+        $generalModel->project_id = $this->gate->Login;
         $cardModel = new CardModel();
         $cardModel->setScenario(CardModel::SCENARIO_OUT);
-        $cardModel->setPan($outCardPayForm->getCardOut()->CardNumber);
+        $cardModel->pan = $outCardPayForm->cardnum;
 
-        $customerModel = new CustomerModel(Yii::$app->request->remoteIP);
+        $customerModel = new CustomerModel(
+            (string)$outCardPayForm->paySchet->ID,
+            Yii::$app->request->remoteIP
+        );
+        $customerModel->first_name = $outCardPayForm->getFirstName();
+        $customerModel->last_name = $outCardPayForm->getLastName();
+        $customerModel->middle_name = $outCardPayForm->getMiddleName();
 
+        $outCardPayRequest = new OutCardPayRequest();
+        $outCardPayRequest->general = $generalModel;
+        $outCardPayRequest->card = $cardModel;
+        $outCardPayRequest->customer = $customerModel;
+        $generalModel->signature = $outCardPayRequest->buildSignature($this->gate->Token);
+
+        $url = $this->bankUrl . '/v2/payment/card/payout';
+        $outCardPayResponse = new OutCardPayResponse();
+        try {
+            $response = $this->apiClient->request(
+                AbstractClient::METHOD_POST,
+                $url,
+                $outCardPayRequest->jsonSerialize()
+            )->json();
+
+            if(isset($response['status']) && $response['status'] == 'success') {
+                $outCardPayResponse->status = BaseResponse::STATUS_DONE;
+                $outCardPayResponse->message = $response['status'];
+                $outCardPayResponse->trans = $response['request_id'];
+            } else {
+                $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
+                $outCardPayResponse->message = $response['status'] ?? '';
+            }
+            return $outCardPayResponse;
+        } catch (\Exception $e) {
+            $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
+            $outCardPayResponse->message = $e->getMessage();
+            return $outCardPayResponse;
+        }
     }
 
     public function getAftMinSum()

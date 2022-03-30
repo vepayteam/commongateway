@@ -10,6 +10,12 @@ class CustomerModel extends BaseModel
     public $id;
     /** @var string */
     public $ip_address;
+    /** @var string */
+    public $first_name;
+    /** @var string */
+    public $middle_name;
+    /** @var string */
+    public $last_name ;
 
     /**
      * @param string $ip_address
