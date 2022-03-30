@@ -11,6 +11,12 @@ class GeneralModel extends BaseModel
     /** @var string */
     public $payment_id;
     /** @var string */
+    public $terminal_callback_url;
+    /** @var string */
+    public $referrer_url;
+    /** @var string */
+    public $merchant_callback_url;
+    /** @var string */
     public $signature;
 
     /**

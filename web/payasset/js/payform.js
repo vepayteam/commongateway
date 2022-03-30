@@ -183,6 +183,15 @@
             $('#form3ds').trigger('submit');
         },
 
+        load3dsMonetix: function(url, paReq, md, termUrl) {
+            $('#frame3ds').show();
+            $('#form3dsMonetix').attr('action', url);
+            $('#form3dsMonetix__pa_req').val(paReq);
+            $('#form3dsMonetix__md').val(md);
+            $('#form3dsMonetix__term_url').val(termUrl);
+            $('#form3dsMonetix').trigger('submit');
+        },
+
         confirm3dsV2TKB: function(url, transId, termurl) {
             var json = "{\"threeDSServerTransID\": \"" + transId + "\", \"threeDSMethodNotificationURL\": \"" + termurl + "\"}",
                 html = "<html lang='ru'><body>" +
@@ -346,9 +355,15 @@
                     'paySchetId': id,
                     '_csrf': $('input[name=_csrf]').val(),
                 },
-                success: function (data, textStatus, jqXHR) {
-                    console.log(data);
-
+                success: function (response, textStatus, jqXHR) {
+                    if('status' in response && response['status'] == 'awaiting 3ds result') {
+                        var url = response['data']['acs']['acs_url'];
+                        var md = response['data']['acs']['md'];
+                        var paReq = response['data']['acs']['pa_req'];
+                        var termUrl = response['data']['acs']['term_url'];
+                        payform.load3dsMonetix(url, paReq, md, termUrl);
+                        clearInterval(interval);
+                    }
                 }
             });
         },

@@ -77,7 +77,7 @@ class CreatePayStrategy
         }
 
         // Проверяем можно ли отправлять запрос в банк
-        $this->checkCreatePayLock($paySchet);
+        // $this->checkCreatePayLock($paySchet);
 
         $bankAdapterBuilder = new BankAdapterBuilder();
         $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank, $paySchet->currency);

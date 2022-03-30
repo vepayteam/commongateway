@@ -29,7 +29,7 @@ abstract class BaseModel extends \yii\base\Model implements \JsonSerializable
     public function buildSignature(string $key): string
     {
         $data = implode(";", $this->getFieldsBySignature());
-        $hashBinary = hash_hmac('sha512', $data, $key);
+        $hashBinary = hash_hmac('sha512', $data, $key, true);
         $hashBase64 = base64_encode($hashBinary);
         return $hashBase64;
     }

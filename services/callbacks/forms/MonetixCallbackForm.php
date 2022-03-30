@@ -22,7 +22,8 @@ class MonetixCallbackForm extends Model
     public function rules()
     {
         return [
-            [['paySchetId', 'transId', 'status', 'message', 'data'], 'required'],
+            [['paySchetId', 'transId', 'status', 'data'], 'required'],
+            [['message', 'paySchetId', 'transId', 'status'], 'string'],
             ['paySchetId', 'validatePaySchetId'],
         ];
     }

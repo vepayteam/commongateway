@@ -29,12 +29,14 @@ use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
+use app\services\payment\forms\monetix\CheckStatusPayRequest;
 use app\services\payment\forms\monetix\CreatePayRequest;
+use app\services\payment\forms\monetix\models\AcsReturnUrlModel;
 use app\services\payment\forms\monetix\models\CardModel;
 use app\services\payment\forms\monetix\models\CustomerModel;
 use app\services\payment\forms\monetix\models\GeneralModel;
 use app\services\payment\forms\monetix\models\PaymentModel;
-use app\services\payment\forms\monetix\models\RedirectDataModel;
+use app\services\payment\forms\monetix\models\ReturnUrlModel;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
@@ -95,11 +97,15 @@ class MonetixAdapter implements IBankAdapter
 
     public function createPay(CreatePayForm $createPayForm)
     {
-
+        $callbackUrl = Yii::$app->params['domain'] . '/callback/monetix';
         $generalModel = new GeneralModel(
             (int)$this->gate->Login,
             (string)$createPayForm->getPaySchet()->ID
         );
+        $generalModel->terminal_callback_url = $callbackUrl;
+        $generalModel->referrer_url = $createPayForm->getPaySchet()->getFromUrl();
+        $generalModel->merchant_callback_url = $generalModel->terminal_callback_url;
+
         $cardModel = new CardModel();
         $cardModel->setScenario(CardModel::SCENARIO_IN);
         $cardModel->pan = (string)$createPayForm->CardNumber;
@@ -108,21 +114,20 @@ class MonetixAdapter implements IBankAdapter
         $cardModel->card_holder = $createPayForm->CardHolder;
         $cardModel->cvv = $createPayForm->CardCVC;
 
-        $customerModel = new CustomerModel(
+        $createPayRequest = new CreatePayRequest();
+        $createPayRequest->general = $generalModel;
+        $createPayRequest->card = $cardModel;
+        $createPayRequest->customer = new CustomerModel(
             (string)$createPayForm->getPaySchet()->ID,
             Yii::$app->request->remoteIP
         );
-        $paymentModel = new PaymentModel(
+        $createPayRequest->payment = new PaymentModel(
             $createPayForm->getPaySchet()->getSummFull(),
             'Pay ' . $createPayForm->getPaySchet()->ID,
             $createPayForm->getPaySchet()->currency->Code
         );
-
-        $createPayRequest = new CreatePayRequest();
-        $createPayRequest->general = $generalModel;
-        $createPayRequest->card = $cardModel;
-        $createPayRequest->customer = $customerModel;
-        $createPayRequest->payment = $paymentModel;
+        $createPayRequest->return_url = new ReturnUrlModel($createPayForm->getPaySchet()->getOrderdoneUrl());
+        $createPayRequest->acsReturnUrlModel = new AcsReturnUrlModel($createPayForm->getPaySchet()->getOrderdoneUrl());
         $generalModel->signature = $createPayRequest->buildSignature($this->gate->Token);
 
         $createPayResponse = new CreatePayResponse();
@@ -155,7 +160,50 @@ class MonetixAdapter implements IBankAdapter
 
     public function checkStatusPay(OkPayForm $okPayForm)
     {
-        // TODO: Implement checkStatusPay() method.
+        $checkStatusPayRequest = new CheckStatusPayRequest();
+        $checkStatusPayRequest->general = [
+            'project_id' => intval($this->gate->Login),
+            'payment_id' => strval($okPayForm->getPaySchet()->ID),
+        ];
+        $checkStatusPayRequest->general['signature'] = $checkStatusPayRequest->buildSignature($this->gate->Token);
+        $url = $this->bankUrl . '/v2/payment/status';
+
+        $checkStatusPayResponse = new CheckStatusPayResponse();
+        try {
+            $response = $this->apiClient->request(
+                AbstractClient::METHOD_POST,
+                $url,
+                $checkStatusPayRequest->jsonSerialize()
+            )->json();
+
+            $operation = $response['operations'][count($response['operations']) - 1];
+            $checkStatusPayResponse->status = $this->converStatus($operation['status']);
+            $checkStatusPayResponse->message = $operation['code'] . ': ' . $operation['status'];
+            return $checkStatusPayResponse;
+        } catch (\Exception $e) {
+            $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
+            $checkStatusPayResponse->message = $e->getMessage();
+            return $checkStatusPayResponse;
+        }
+    }
+
+    private function converStatus($status)
+    {
+        $createdStatuses = [
+            'awaiting 3ds result',
+            'awaiting redirect result',
+            'awaiting clarification',
+            'awaiting customer action',
+            'awaiting merchant auth',
+            'processing',
+        ];
+        if($status == 'success') {
+            return BaseResponse::STATUS_DONE;
+        } elseif (in_array($status, $createdStatuses)) {
+            return BaseResponse::STATUS_CREATED;
+        } else {
+            return BaseResponse::STATUS_ERROR;
+        }
     }
 
     public function recurrentPay(AutoPayForm $autoPayForm)
