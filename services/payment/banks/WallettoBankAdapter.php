@@ -211,14 +211,14 @@ class WallettoBankAdapter implements IBankAdapter
     {
         $refundPayResponse = new RefundPayResponse();
 
-        $paySchet = $refundPayForm->paySchet;
-        if ($paySchet->Status != PaySchet::STATUS_DONE) {
+        $sourcePaySchet = $refundPayForm->paySchet->refundSource;
+        if ($sourcePaySchet->Status != PaySchet::STATUS_DONE) {
             throw new RefundPayException('Невозможно отменить незавершенный платеж');
         }
 
-        $uri = '/orders/' . $paySchet->ExtBillNumber . '/cancel';
-        if ($paySchet->DateCreate < Carbon::now()->startOfDay()->timestamp) {
-            $uri = '/orders/' . $paySchet->ExtBillNumber . '/refund';
+        $uri = '/orders/' . $sourcePaySchet->ExtBillNumber . '/cancel';
+        if ($sourcePaySchet->DateCreate < Carbon::now()->startOfDay()->timestamp) {
+            $uri = '/orders/' . $sourcePaySchet->ExtBillNumber . '/refund';
         }
 
         try {

@@ -47,6 +47,7 @@ return [
         \app\services\PaySchetService::class => \app\services\PaySchetService::class,
         \app\services\CompensationService::class => \app\services\CompensationService::class,
         \app\services\RecurrentPaymentPartsService::class => \app\services\RecurrentPaymentPartsService::class,
+        \app\services\PaymentService::class => \app\services\PaymentService::class,
         \app\services\ReportService::class => \app\services\ReportService::class,
     ],
     'params' => $params,
