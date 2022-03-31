@@ -166,8 +166,8 @@ class ImpayaAdapter implements IBankAdapter
         $outCardPayRequest->currency = $outCardPayForm->paySchet->currency->Code;
         $outCardPayRequest->cc_num = $outCardPayForm->cardnum;
         $outCardPayRequest->phone = $outCardPayForm->phone ?? self::PHONE_DEFAULT_VALUE;
-        $outCardPayRequest->fname = $outCardPayForm->getFirstName();
-        $outCardPayRequest->lname = $outCardPayForm->getLastName();
+        $outCardPayRequest->fname = $outCardPayForm->getFirstName(true);
+        $outCardPayRequest->lname = $outCardPayForm->getLastName(true);
         $outCardPayRequest->buildHash($this->gate->Token);
         $uri = '/api3/';
         $ans = $this->sendRequest($uri, $outCardPayRequest->getAttributes());
