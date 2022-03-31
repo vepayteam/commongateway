@@ -143,6 +143,7 @@ class MonetixAdapter implements IBankAdapter
                 $url,
                 $createPayRequest->jsonSerialize()
             )->json();
+            Yii::warning('Monetix createpay response: ' . Json::encode($response));
 
             if(isset($response['status']) && $response['status'] == 'success') {
                 $createPayResponse->status = BaseResponse::STATUS_DONE;
