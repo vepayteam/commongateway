@@ -8,7 +8,7 @@ return [
     'buhEmail' => 'support@vepay.online',
     'dectaApiUrl' => 'https://gate.decta.com',
     'dectaProxy' => getenv("DECTA_PROXY_URL", true),
-    'DEVMODE' => boolval(getenv('DEVMODE', true)) ? 'Y' : 'N',
+    'DEVMODE' => 'Y',
     'TESTMODE' => 'Y',
     'accountServiceUrl' => '',
 	'key' => '4l80z8E9s0',
