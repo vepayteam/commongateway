@@ -21,6 +21,7 @@ use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\CurlSSLStructure;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\BRSAdapterExeception;
+use app\services\payment\exceptions\FailedRecurrentPaymentException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\brs\CheckStatusB2cRequest;
@@ -389,19 +390,20 @@ class BRSAdapter implements IBankAdapter
 
         $createRecurrentPayResponse = new CreateRecurrentPayResponse;
         try {
-            $ans = $this->sendRequest($uri, $recurrentPayRequest->getAttributes()); // todo fix there
+            $ans = $this->sendRequest($uri, $recurrentPayRequest->getAttributes());
+
             if (isset($ans['RESULT_CODE']) && intval($ans['RESULT_CODE']) === self::BRS_RESPONSE_SYSTEM_ERROR_CODE) {
                 Yii::error('BRSAdapter recurrentPay paySchet.ID=' . $paySchet->ID
                     . ' bad response result code 1001');
 
-                // Вызываем GateException, чтобы в RecurrentPayJob платежу присвоился статус ERROR и не было опроса статуса
-                throw new GateException(BRSErrorHelper::getMessage($ans));
-            } else {
-                $createRecurrentPayResponse->message = BRSErrorHelper::getMessage($ans);
-                $createRecurrentPayResponse->status = $this->getStatusResponse($ans['RESULT']);
-                $createRecurrentPayResponse->transac = isset($ans['TRANSACTION_ID']) ? $ans['TRANSACTION_ID'] : '';
-                $createRecurrentPayResponse->rrn = isset($ans['RRN']) ? $ans['RRN'] : '';
+                // Вызываем FailedRecurrentPaymentException, чтобы в RecurrentPayJob платежу присвоился статус ERROR и не было опроса статуса
+                throw new FailedRecurrentPaymentException(BRSErrorHelper::getMessage($ans), $ans['RESULT_CODE']);
             }
+
+            $createRecurrentPayResponse->message = BRSErrorHelper::getMessage($ans);
+            $createRecurrentPayResponse->status = $this->getStatusResponse($ans['RESULT']);
+            $createRecurrentPayResponse->transac = isset($ans['TRANSACTION_ID']) ? $ans['TRANSACTION_ID'] : '';
+            $createRecurrentPayResponse->rrn = isset($ans['RRN']) ? $ans['RRN'] : '';
         } catch (BankAdapterResponseException $e) {
             $createRecurrentPayResponse->status = BaseResponse::STATUS_ERROR;
             $createRecurrentPayResponse->message = BankAdapterResponseException::REQUEST_ERROR_MSG;
@@ -538,7 +540,10 @@ class BRSAdapter implements IBankAdapter
                 return BaseResponse::STATUS_DONE;
             case 'REVERSED':
             case 'AUTOREVERSED':
-            return BaseResponse::STATUS_CANCEL;
+                /**
+                 * Для refund/reverse возвращать STATUS_DONE тк начальная транзакция остается в статусе успешно
+                 */
+                return BaseResponse::STATUS_DONE;
             default:
                 return BaseResponse::STATUS_ERROR;
         }
@@ -557,7 +562,10 @@ class BRSAdapter implements IBankAdapter
                 return BaseResponse::STATUS_DONE;
             case 'cancelled':
             case 'returned':
-                return BaseResponse::STATUS_CANCEL;
+                /**
+                 * Для refund/reverse возвращать STATUS_DONE тк начальная транзакция остается в статусе успешно
+                 */
+                return BaseResponse::STATUS_DONE;
             default:
                 return BaseResponse::STATUS_ERROR;
         }
@@ -1022,7 +1030,7 @@ class BRSAdapter implements IBankAdapter
 
         $paySchet = $sendP2pForm->paySchet;
         $sendP2pRequest = new SendP2pRequest();
-        $sendP2pRequest->amount = $paySchet->getSummFull() / 100;
+        $sendP2pRequest->amount = $paySchet->getSummFull();
         $sendP2pRequest->currency = $paySchet->currency->Number;
         $sendP2pRequest->client_ip_addr = Yii::$app->request->remoteIP;
         $sendP2pRequest->cardname = $sendP2pForm->cardHolder;

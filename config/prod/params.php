@@ -35,6 +35,7 @@ return [
         'id' => '',
         'key' => '',
     ],
+    'tcbConnectionTimeout' => null,
 
     'kkt' => [
         'urlico' => '',
@@ -96,6 +97,10 @@ return [
                 'url_p2p_3ds' => 'https://securepay.rsb.ru/ecomm2/ClientHandler',
                 'url_xml' => 'https://194.67.29.215:8443',
                 'url_b2c' => 'https://212.46.217.150:7603',
+            ],
+            'TCB' => [
+                'url' => 'https://pay.tkbbank.ru',
+                'url_xml' => 'https://pay.tkbbank.ru:8204',
             ],
         ],
     ],

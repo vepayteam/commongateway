@@ -18,9 +18,12 @@ tags:
     description: Информационные запросы
   - name: Callback
     description: Оповещения
+  - name: Document
+    description: Файлы документов
 servers:
   - url: https://api.vepay.online/mfo
   - url: https://test.vepay.online/mfo
+  - url: {{current_host}}/mfo
 paths:
   /card/info:
     post:
@@ -71,7 +74,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/CardRegAns"
         "400":
-          description: Операция с передаваемым extid уже существует
+          description: Транзакция с передаваемым extid уже существует
           content:
             application/json:
               schema:
@@ -156,7 +159,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/StatusIdUrl"
         "400":
-          description: Операция с передаваемым extid уже существует
+          description: Транзакция с передаваемым extid уже существует
           content:
             application/json:
               schema:
@@ -188,7 +191,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/StatusIdUrl"
         "400":
-          description: Операция с передаваемым extid уже существует
+          description: Транзакция с передаваемым extid уже существует
           content:
             application/json:
               schema:
@@ -236,7 +239,7 @@ paths:
                     description: ID платежа. Присутствует, если операция прошла успешно
                     example: 12345
         "400":
-          description: Операция с передаваемым extid уже существует
+          description: Транзакция с передаваемым extid уже существует
           content:
             application/json:
               schema:
@@ -268,7 +271,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/StatusId"
         "400":
-          description: Операция с передаваемым extid уже существует
+          description: Транзакция с передаваемым extid уже существует
           content:
             application/json:
               schema:
@@ -305,6 +308,33 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+
+  /pay/info:
+      post:
+          tags:
+              - Pay
+          summary: Информация по операции pay in
+          description: Возвращает статус проведённой ранее операции pay in.
+          requestBody:
+              content:
+                  application/json:
+                      schema:
+                          $ref: "#/components/schemas/IdState"
+              description: ID платежа
+              required: true
+          responses:
+              "200":
+                  description: OK
+                  content:
+                      application/json:
+                          schema:
+                              $ref: "#/components/schemas/PayInInfo"
+              default:
+                  description: Error (40X,500)
+                  content:
+                      application/json:
+                          schema:
+                              $ref: "#/components/schemas/Error"
   /out/paycard:
     post:
       tags:
@@ -326,7 +356,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/StatusId"
         "400":
-          description: Операция с передаваемым extid уже существует
+          description: Транзакция с передаваемым extid уже существует
           content:
             application/json:
               schema:
@@ -358,7 +388,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/StatusId"
         "400":
-          description: Операция с передаваемым extid уже существует
+          description: Транзакция с передаваемым extid уже существует
           content:
             application/json:
               schema:
@@ -390,7 +420,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/StatusId"
         "400":
-          description: Операция с передаваемым extid уже существует
+          description: Транзакция с передаваемым extid уже существует
           content:
             application/json:
               schema:
@@ -448,7 +478,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/StatusId"
         "400":
-          description: Операция с передаваемым extid уже существует
+          description: Транзакция с передаваемым extid уже существует
           content:
             application/json:
               schema:
@@ -646,7 +676,7 @@ paths:
         - name: errorCode
           in: query
           required: true
-          description: код ошибки
+          description: код ошибки. 0 - обозначает успешный статус операции, TL - закончился срок жизни платежа, X - неизвестная ошибка. Остальные коды варьируются в зависимости от провайдера.
           schema:
             type: string
         - name: key
@@ -831,6 +861,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /document/confirmation:
+      get:
+          tags:
+              - Document
+          summary: Документ подтверждения перевода денежных средств в формате PDF
+          parameters:
+              - in: query
+                name: id
+                description: ID платежа
+                schema:
+                  type: integer
+          responses:
+              "200":
+                  description: Файл PDF
+                  content:
+                      application/pdf:
+                          schema:
+                              type: string
+                              format: binary
+              default:
+                  description: Error (40X,500)
+                  content:
+                      application/json:
+                          schema:
+                              $ref: "#/components/schemas/Error"
 
 components:
   securitySchemes:
@@ -1334,6 +1389,24 @@ components:
         channel:
           type: string
           description: Банк-эквайер, через который была совершена транзакция
+    PayInInfo:
+        type: object
+        properties:
+            status:
+                type: integer
+                description: Статус (0 - в обработке, 1 - успешно, 2 - ошибка, 3 - отменен)
+            message:
+                type: string
+                description: Сообщение ошибки
+            rc:
+                type: string
+                description: Код ошибки банка (может отсутствовать)
+            channel:
+                type: string
+                description: Банк-эквайер, через который была совершена транзакция
+            gate_transaction_id:
+                type: string
+                description: ИД транзакции банка-эквайера
     StatusResult:
       type: object
       properties:
@@ -1412,7 +1485,7 @@ components:
         message:
           type: string
           description: Сообщение ошибки
-          default: Операция с передаваемым extid уже существует
+          default: Транзакция с передаваемым extid уже существует
         id:
           type: integer
           description: ID операции

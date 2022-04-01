@@ -62,7 +62,6 @@ class MerchantPayForm extends BaseForm implements AmountFormInterface
             [['timeout'], 'integer', 'min' => 10, 'max' => 59],
             [['amount', 'currency'], 'required'],
             [['amount', 'card'], 'required'],
-            [['client'], 'validateClient'],
             [['currency'], 'validateCurrency'],
             [['regcard'], 'in', 'range' => [1, 0], 'strict' => true],
         ];
@@ -80,28 +79,6 @@ class MerchantPayForm extends BaseForm implements AmountFormInterface
         }
         if (!$db->hasCurrency($this->currency)) {
             $this->setError($currencyKey, self::NOT_SUPPORTED);
-        }
-    }
-    public function validateClient()
-    {
-        if (!is_array($this->client)) {
-            return;
-        }
-        foreach ($this->client as $key => $clientData) {
-            // check if not client attribute not exist
-            if (!array_key_exists($key, self::CLIENT_FIELDS)) {
-                return;
-            }
-            // check if attribute is required
-            if (self::CLIENT_FIELDS[$key] == self::REQUIRED && empty($clientData)) {
-                $this->setError($key, self::REQUIRED);
-                return;
-            }
-            // check attribute value
-            $clientValidator = $this->getClientValidator($key);
-            if (!$clientValidator->validate($clientData)) {
-                $this->setError($key);
-            }
         }
     }
 

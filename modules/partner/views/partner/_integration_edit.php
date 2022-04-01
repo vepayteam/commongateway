@@ -73,16 +73,6 @@ if ($partner->IsMfo) {
     <div class="row no-margins">
         <div class="col-sm-8 col-sm-offset-3">
             <?php
-            echo $form->field($partner,'IsAutoPerevodToVydacha')->checkbox([
-                'template' => "<div class=\"checkbox m-l-sm\">\n{input}\n{beginLabel}\n{labelTitle}\n{endLabel}\n{error}\n{hint}\n</div>"
-            ]);
-            ?>
-        </div>
-    </div>
-
-    <div class="row no-margins">
-        <div class="col-sm-8 col-sm-offset-3">
-            <?php
             echo $form->field($partner,'IsCommonSchetVydacha')->checkbox([
                 'template' => "<div class=\"checkbox m-l-sm\">\n{input}\n{beginLabel}\n{labelTitle}\n{endLabel}\n{error}\n{hint}\n</div>"
             ]);
@@ -234,16 +224,6 @@ echo $form->field($partner, 'PaaswordApi')->textInput(['class' => 'form-control'
 echo $form->field($partner, 'IpAccesApi')->textInput(['class' => 'form-control']);
 
 ?>
-
-<div class="row no-margins">
-    <div class="col-sm-8 col-sm-offset-3">
-        <?php
-        echo $form->field($partner,'IsAftOnly')->checkbox([
-            'template' => "<div class=\"checkbox m-l-sm\">\n{input}\n{beginLabel}\n{labelTitle}\n{endLabel}\n{error}\n{hint}\n</div>"
-        ]);
-        ?>
-    </div>
-</div>
 
 <div class="row">
     <div class="col-sm-8 col-sm-offset-3">
