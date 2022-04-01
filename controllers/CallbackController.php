@@ -61,10 +61,6 @@ class CallbackController extends Controller
 
     public function actionMonetix()
     {
-//        $ips = Yii::$app->params['services']['payments']['Monetix']['callback_remote_ips'];
-//        if(!in_array(Yii::$app->request->remoteIP, $ips)) {
-//            throw new ForbiddenHttpException();
-//        }
 
         $log = sprintf(
             'Callback Monetix remote=%s data=%s',

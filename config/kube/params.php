@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'domain' => getenv('TEST_URL', true),
+    'domain' => 'https://my03mgefkd7ifomu3kjew5c7.external.vepay.cf',
     'adminEmail' => 'support@vepay.online',
     'robotEmail' => 'robot@vepay.online',
     'infoEmail' => 'support@vepay.online',
