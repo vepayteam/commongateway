@@ -176,6 +176,11 @@ class GratapayAdapter implements IBankAdapter
      */
     public function refundPay(RefundPayForm $refundPayForm)
     {
+        /**
+         * @todo Temporary not available. Remove this exception after fix.
+         */
+        throw new GateException('Метод недоступен');
+
         $paySchet = $refundPayForm->paySchet;
         $sourcePaySchet = $paySchet->refundSource;
 

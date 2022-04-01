@@ -24,6 +24,8 @@ class ErrorResponse extends BaseObject
     public const CODE_DO_NOT_HONOR = 5;
     /** Ошибка транзакции. */
     public const CODE_ERROR = 6;
+    /** {@see ITKBankAdapterResponseErrors::ERROR_CODE_ENGINEERING_WORKS} */
+    public const CODE_ENGINEERING_WORK = 999;
 
     /**
      * @var int

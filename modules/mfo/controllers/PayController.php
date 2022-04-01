@@ -295,8 +295,9 @@ class PayController extends Controller
      * @throws BadRequestHttpException
      * @throws \yii\db\Exception
      * @throws Exception
+     * @return array|Response
      */
-    public function actionAutoParts(): array
+    public function actionAutoParts()
     {
         $mfo = new MfoReq();
         $mfo->LoadData(Yii::$app->request->getRawBody());
@@ -313,6 +314,17 @@ class PayController extends Controller
             $this->queue->push(new ExecutePaymentJob(['paySchetId' => $paySchet->ID]));
 
             return ['status' => 1, 'message' => '', 'id' => $paySchet->ID];
+        } catch (NotUniquePayException $e) {
+            /**
+             * Обработка NotUniquePayException {@see RecurrentPaymentPartsForm::validateExtId()}
+             */
+
+            return $this->asJson([
+                'status' => 0,
+                'message' => $e->getMessage(),
+                'id' => $e->getPaySchetId(),
+                'extid' => $e->getPaySchetExtId(),
+            ])->setStatusCode(400);
         } catch (PaymentException $e) {
             switch ($e->getCode()) {
                 case PaymentException::CARD_EXPIRED:
@@ -372,6 +384,42 @@ class PayController extends Controller
                 'channel' => $paySchet->bank->ChannelName,
             ];
         }
+    }
+
+    public function actionInfo()
+    {
+        $mfo = new MfoReq();
+        $mfo->LoadData(Yii::$app->request->getRawBody());
+
+        // TODO: DRY
+        $paySchetId = $mfo->GetReq('id');
+        $paySchet = PaySchet::findOne([
+            'ID' => $paySchetId,
+            'IdOrg' => $mfo->mfo,
+        ]);
+
+        if(!$paySchet) {
+            return ['status' => 0, 'message' => 'Счет не найден'];
+        }
+
+        if($paySchet->Status == PaySchet::STATUS_WAITING) {
+            return [
+                'status' => 0,
+                'message' => 'В обработке',
+                'rc' => '',
+                'channel' => $paySchet->bank->ChannelName,
+                'gate_transaction_id' => $paySchet->ExtBillNumber,
+            ];
+        } else {
+            return [
+                'status' => (int)$paySchet->Status,
+                'message' => (string)$paySchet->ErrorInfo,
+                'rc' => $paySchet->RCCode,
+                'channel' => $paySchet->bank->ChannelName,
+                'gate_transaction_id' => $paySchet->ExtBillNumber,
+            ];
+        }
+
     }
 
     /**

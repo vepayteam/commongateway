@@ -35,6 +35,7 @@ return [
         'id' => '',
         'key' => '',
     ],
+    'tcbConnectionTimeout' => getenv('PARAMS_PAYMENTS_TCB_CONNECTION_TIMEOUT', true),
     'kkt' => [
         'urlico' => '',
         'inn' => "",
@@ -95,6 +96,10 @@ return [
                 'url_p2p_3ds' => getenv('PARAMS_PAYMENTS_BRS_URL_P2P_3DS', true),
                 'url_xml' => getenv('PARAMS_PAYMENTS_BRS_URL_XML', true),
                 'url_b2c' => getenv('PARAMS_PAYMENTS_BRS_URL_B2C', true),
+            ],
+            'TCB' => [
+                'url' => getenv('PARAMS_PAYMENTS_TCB_URL', true),
+                'url_xml' => getenv('PARAMS_PAYMENTS_TCB_URL_XML', true),
             ],
         ],
     ],

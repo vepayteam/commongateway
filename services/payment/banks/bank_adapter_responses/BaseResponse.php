@@ -14,7 +14,7 @@ abstract class BaseResponse extends Model
     const STATUS_ERROR = PaySchet::STATUS_ERROR;
     const STATUS_CANCEL = PaySchet::STATUS_CANCEL;
     const STATUS_REFUND_DONE = PaySchet::STATUS_REFUND_DONE;
-    const STATUS_REVERSE_DONE = PaySchet::STATUS_REVERSE_DONE;
+    const STATUS_REVERSE_DONE = PaySchet::STATUS_CANCEL;
 
     const STATUSES = [
         self::STATUS_CREATED,

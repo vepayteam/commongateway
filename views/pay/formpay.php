@@ -166,6 +166,7 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
         <div class="col-xs-12">
             <input type="hidden" class="idPay" name="PayForm[IdPay]" value="<?=Html::encode($params['ID'])?>">
             <input type="hidden" class="user_hash" name="user_hash" value="">
+            <input type="hidden" id="client_data" name="PayForm[client]">
             <?=
                 Html::submitButton(
                     $params['IdUsluga'] == 1 ? 'ОТПРАВИТЬ' : "ОПЛАТИТЬ {$sumFormatted} {$params['currencySymbol']}",

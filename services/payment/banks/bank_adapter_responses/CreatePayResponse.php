@@ -34,6 +34,7 @@ class CreatePayResponse extends BaseResponse
     public $threeDSServerTransID = '';
     public $threeDSMethodURL;
     public $html3dsForm;
+    public $params3DS;
 
     /**
      * @param int $paySchetId

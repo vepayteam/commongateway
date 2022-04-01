@@ -127,17 +127,15 @@ class PaySchet extends \yii\db\ActiveRecord
     const STATUS_NOT_EXEC = 4;
     const STATUS_WAITING_CHECK_STATUS = 5;
     const STATUS_REFUND_DONE = 6;
-    const STATUS_REVERSE_DONE = 7;
 
     const STATUSES = [
-        self::STATUS_WAITING => 'В обработке',
-        self::STATUS_DONE => 'Оплачен',
-        self::STATUS_ERROR => 'Отмена',
-        self::STATUS_CANCEL => 'Возврат',
-        self::STATUS_NOT_EXEC => 'Ожидается обработка',
-        self::STATUS_WAITING_CHECK_STATUS => 'Ожидается запрос статуса',
-        self::STATUS_REFUND_DONE => 'Платеж возвращен',
-        self::STATUS_REVERSE_DONE => 'Отмена операции',
+        self::STATUS_WAITING => 'Processing... (0)',
+        self::STATUS_DONE => 'Success',
+        self::STATUS_ERROR => 'Decline',
+        self::STATUS_CANCEL => 'Reversed',
+        self::STATUS_NOT_EXEC => 'Processing... (4)',
+        self::STATUS_WAITING_CHECK_STATUS => 'Processing... (5)',
+        self::STATUS_REFUND_DONE => 'Refunded',
     ];
 
     const STATUS_COLORS = [
@@ -148,13 +146,16 @@ class PaySchet extends \yii\db\ActiveRecord
         self::STATUS_NOT_EXEC => 'blue',
         self::STATUS_WAITING_CHECK_STATUS => 'blue',
         self::STATUS_REFUND_DONE => '#FFE600',
-        self::STATUS_REVERSE_DONE => '#AC5B0B',
     ];
 
     const REFUND_TYPE_REFUND = 1;
     const REFUND_TYPE_REVERSE = 2;
 
     const CHECK_3DS_CACHE_PREFIX = 'pay_schet__check-3ds-response';
+
+    const RCCODE_CANCEL_PAYMENT = 'TL';
+
+    const ERROR_INFO_PAYMENT_TIMEOUT = 'Время оплаты истекло';
 
     /**
      * {@inheritdoc}
@@ -447,17 +448,14 @@ class PaySchet extends \yii\db\ActiveRecord
         if (is_string($this->ErrorInfo)) {
             $this->ErrorInfo = mb_substr($this->ErrorInfo, 0, 250);
         }
-
         $this->DateLastUpdate = time();
 
-        if ($insert) {
+        if ($insert || $this->uslugatovar->IsCustom == Uslugatovar::P2P) {
             /**
              * Calculate compensation.
              * Needed only when bank is not 0 ({@see MfoCardRegStrategy::createPaySchet()}).
-             *
-             * No need to calculate commissions for refund operations
              */
-            if ($this->Bank !== 0 && !$this->isRefund) {
+            if ($this->Bank !== 0) {
                 $gate = (new BankAdapterBuilder())
                     ->buildByBank($this->partner, $this->uslugatovar, $this->bank, $this->currency)
                     ->getPartnerBankGate();
@@ -672,7 +670,7 @@ class PaySchet extends \yii\db\ActiveRecord
             case self::REFUND_TYPE_REFUND:
                 return self::STATUS_REFUND_DONE;
             case self::REFUND_TYPE_REVERSE:
-                return self::STATUS_REVERSE_DONE;
+                return self::STATUS_CANCEL;
             default:
                 throw new InvalidArgumentException('Incorrect refundType value: ' . $refundType);
         }

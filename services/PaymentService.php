@@ -4,7 +4,6 @@ namespace app\services;
 
 use app\services\compensationService\CompensationException;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
-use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\RefundPayException;
@@ -28,15 +27,11 @@ class PaymentService extends Component
      */
     public function reverse(PaySchet $paySchet)
     {
-        $refundPayResponse = $this->bankRefundPay($paySchet);
-
-        if ($refundPayResponse->status == BaseResponse::STATUS_DONE) {
-            $paySchet->Status = PaySchet::STATUS_REVERSE_DONE;
-            $paySchet->ErrorInfo = 'Платеж отменен';
-        } else {
-            $paySchet->ErrorInfo = $refundPayResponse->message;
-        }
-        $paySchet->save(false);
+        $this->refundInternal(
+            $paySchet,
+            PaySchet::STATUS_CANCEL,
+            'Платеж отменен'
+        );
     }
 
     /**
@@ -53,12 +48,12 @@ class PaymentService extends Component
         $refundNumber = (int)max(ArrayHelper::getColumn($sourcePaySchet->refunds, 'refundNumber') + [0]) + 1;
 
         if ($amount === null) {
-            $amount = $sourcePaySchet->getSummFull();
+            $amount = $sourcePaySchet->SummPay;
         }
 
         /** {@see PaySchet::SummPay} */
         $refundedAmount = $sourcePaySchet->refundedAmount;
-        if (($amount + $refundedAmount) > $sourcePaySchet->getSummFull()) {
+        if (($amount + $refundedAmount) > $sourcePaySchet->SummPay) {
             throw new CreateRefundException('Amount exceeded.', CreateRefundException::AMOUNT_EXCEEDED);
         }
 
@@ -75,6 +70,7 @@ class PaymentService extends Component
         $refundPayschet->ComissSumm = 0;
         $refundPayschet->MerchVozn = 0;
         $refundPayschet->BankComis = 0;
+        $refundPayschet->DateCreate = time();
         $refundPayschet->Version3DS = null;
         $refundPayschet->IsNeed3DSVerif = null;
         $refundPayschet->DsTransId = null;
@@ -89,6 +85,8 @@ class PaymentService extends Component
         $refundPayschet->CancelUrl = null;
         $refundPayschet->PostbackUrl = null;
         $refundPayschet->PostbackUrl_v2 = null;
+
+        $refundPayschet->ComissSumm = $this->calculateClientCommission($sourcePaySchet, $refundedAmount, $amount);
 
         try {
             $refundPayschet->save(false);
@@ -114,7 +112,26 @@ class PaymentService extends Component
      */
     public function executRefundPayment(PaySchet $refundPayschet)
     {
-        $refundPayResponse = $this->bankRefundPay($refundPayschet);
+        $this->refundInternal(
+            $refundPayschet,
+            PaySchet::STATUS_REFUND_DONE,
+            'Возврат произведен.'
+        );
+    }
+
+    /**
+     * @param PaySchet $refundPayschet
+     * @param $successStatus
+     * @param $successErrorInfo
+     * @throws GateException
+     * @throws RefundPayException
+     */
+    private function refundInternal(PaySchet $refundPayschet, $successStatus, $successErrorInfo)
+    {
+        $refundPayResponse = (new BankAdapterBuilder())
+            ->build($refundPayschet->partner, $refundPayschet->uslugatovar)
+            ->getBankAdapter()
+            ->refundPay(new RefundPayForm(['paySchet' => $refundPayschet]));
 
         $refundPayschet->RefundType = $refundPayResponse->refundType;
         if ($refundPayResponse->transactionId) {
@@ -124,9 +141,19 @@ class PaymentService extends Component
             $refundPayschet->RefundExtId = $refundPayResponse->extId;
         }
 
+        /**
+         * Для реверсов копируем банковскую комиссию и вознаграждение, тк при реверсе возвращается весь платеж
+         */
+        if ($refundPayResponse->refundType === PaySchet::REFUND_TYPE_REVERSE) {
+            $sourcePaySchet = $refundPayschet->refundSource;
+            $refundPayschet->BankComis = $sourcePaySchet->BankComis;
+            $refundPayschet->MerchVozn = $sourcePaySchet->MerchVozn;
+            $refundPayschet->save(false);
+        }
+
         if ($refundPayResponse->status == BaseResponse::STATUS_DONE) {
             $refundPayschet->Status = PaySchet::getDoneStatusByRefundType($refundPayResponse->refundType);
-            $refundPayschet->ErrorInfo = 'Возврат произведен.';
+            $refundPayschet->ErrorInfo = $successErrorInfo;
 
             if ($refundPayResponse->refundType === PaySchet::REFUND_TYPE_REVERSE) {
                 $sourcePaySchet = $refundPayschet->refundSource;
@@ -134,8 +161,12 @@ class PaymentService extends Component
                 $sourcePaySchet->save(false);
             }
         } elseif ($refundPayResponse->status == BaseResponse::STATUS_CREATED) {
-            $refundPayschet->Status = PaySchet::STATUS_WAITING;
-            $refundPayschet->ErrorInfo = 'В обработке.';
+            /**
+             * Logic copied from {@see RefundPayJob::execute()}.
+             * @todo Add correct status processing.
+             */
+            $refundPayschet->Status = PaySchet::STATUS_WAITING_CHECK_STATUS;
+            $refundPayschet->ErrorInfo = $refundPayResponse->message;
 
             \Yii::$app->queue->push(new RefreshStatusPayJob([
                 'paySchetId' => $refundPayschet->ID,
@@ -163,16 +194,36 @@ class PaymentService extends Component
     }
 
     /**
-     * @param PaySchet $paySchet
-     * @return RefundPayResponse
-     * @throws GateException
-     * @throws RefundPayException
+     * Считает комиссию для клиента
+     *
+     * @param PaySchet $sourcePaySchet
+     * @param int $refundedAmount
+     * @param int $amount
+     * @return int
      */
-    private function bankRefundPay(PaySchet $paySchet): RefundPayResponse
+    private function calculateClientCommission(PaySchet $sourcePaySchet, int $refundedAmount, int $amount): int
     {
-        return (new BankAdapterBuilder())
-            ->build($paySchet->partner, $paySchet->uslugatovar)
-            ->getBankAdapter()
-            ->refundPay(new RefundPayForm(['paySchet' => $paySchet]));
+        if ($sourcePaySchet->ComissSumm <= 0) {
+            return 0;
+        }
+
+        if (($refundedAmount + $amount) === $sourcePaySchet->SummPay) {
+            /**
+             * Если делаем последний возврат, то возвращаем остаточную комиссию
+             */
+
+            $refundedClientCommission = array_sum(ArrayHelper::getColumn($sourcePaySchet->refunds, 'ComissSumm'));
+            return $sourcePaySchet->ComissSumm - $refundedClientCommission;
+        } else {
+            /**
+             * Подсчитываем комиссию для текущего возврата
+             *
+             * Если изначальная транзакция была на 100 рублей и комиссия 5 рублей,
+             * то при возврате 50 рублей комиссия будет составлять 2.5 рубля
+             */
+
+            $percent = $amount / $sourcePaySchet->SummPay;
+            return floor($sourcePaySchet->ComissSumm * $percent);
+        }
     }
 }
