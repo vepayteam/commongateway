@@ -9,12 +9,6 @@ class AcsReturnUrlModel extends BaseModel
     public $return_url;
     public $notification_url_3ds;
 
-    public function __construct($url)
-    {
-        $this->return_url = $url;
-        $this->notification_url_3ds = $url;
-    }
-
     public function attributes()
     {
         return [

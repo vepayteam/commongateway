@@ -124,8 +124,12 @@ class MonetixAdapter implements IBankAdapter
             'Pay ' . $createPayForm->getPaySchet()->ID,
             $createPayForm->getPaySchet()->currency->Code
         );
+        $acsReturnUrlModel = new AcsReturnUrlModel();
+        $acsReturnUrlModel->return_url = $createPayForm->getPaySchet()->getOrderdoneUrl();
+        $acsReturnUrlModel->notification_url_3ds = $callbackUrl;
+
         $createPayRequest->return_url = new ReturnUrlModel($createPayForm->getPaySchet()->getOrderdoneUrl());
-        $createPayRequest->acs_return_url = new AcsReturnUrlModel($createPayForm->getPaySchet()->getOrderdoneUrl());
+        $createPayRequest->acs_return_url = $acsReturnUrlModel;
         $generalModel->signature = $createPayRequest->buildSignature($this->gate->Token);
 
         $createPayResponse = new CreatePayResponse();
