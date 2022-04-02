@@ -26,7 +26,7 @@ class CreatePayRequest extends BaseModel
     /** @var ReturnUrlModel */
     public $return_url;
     /** @var AcsReturnUrlModel */
-    public $acsReturnUrlModel;
+    public $acs_return_url;
 
     public function validate($attributeNames = null, $clearErrors = true): bool
     {

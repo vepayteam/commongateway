@@ -103,9 +103,6 @@ class MonetixAdapter implements IBankAdapter
             (int)$this->gate->Login,
             (string)$createPayForm->getPaySchet()->ID
         );
-        $generalModel->terminal_callback_url = $callbackUrl;
-        $generalModel->referrer_url = $createPayForm->getPaySchet()->getFromUrl();
-        $generalModel->merchant_callback_url = $generalModel->terminal_callback_url;
 
         $cardModel = new CardModel();
         $cardModel->setScenario(CardModel::SCENARIO_IN);
@@ -128,7 +125,7 @@ class MonetixAdapter implements IBankAdapter
             $createPayForm->getPaySchet()->currency->Code
         );
         $createPayRequest->return_url = new ReturnUrlModel($createPayForm->getPaySchet()->getOrderdoneUrl());
-        $createPayRequest->acsReturnUrlModel = new AcsReturnUrlModel($createPayForm->getPaySchet()->getOrderdoneUrl());
+        $createPayRequest->acs_return_url = new AcsReturnUrlModel($createPayForm->getPaySchet()->getOrderdoneUrl());
         $generalModel->signature = $createPayRequest->buildSignature($this->gate->Token);
 
         $createPayResponse = new CreatePayResponse();
