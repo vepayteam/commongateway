@@ -39,6 +39,7 @@ use app\services\payment\forms\monetix\models\GeneralModel;
 use app\services\payment\forms\monetix\models\PaymentModel;
 use app\services\payment\forms\monetix\models\ReturnUrlModel;
 use app\services\payment\forms\monetix\OutCardPayRequest;
+use app\services\payment\forms\monetix\RefundPayRequest;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
@@ -239,7 +240,34 @@ class MonetixAdapter implements IBankAdapter
 
     public function refundPay(RefundPayForm $refundPayForm)
     {
-        // TODO: Implement refundPay() method.
+        $refundPayRequest = new RefundPayRequest();
+        $generalModel = new GeneralModel(
+            $this->gate->Login,
+            $refundPayForm->paySchet->ID
+        );
+        $refundPayRequest->general = $generalModel;
+        $refundPayRequest->amount = $refundPayForm->paySchet->getSummFull();
+        $refundPayRequest->currency = $refundPayForm->paySchet->currency->Code;
+        $generalModel->signature = $refundPayRequest->buildSignature($this->gate->Token);
+
+        $url = $this->bankUrl . '/v2/payment/card/refund';
+        $refundPayResponse = new RefundPayResponse();
+        try {
+            $response = $this->apiClient->request(
+                AbstractClient::METHOD_POST,
+                $url,
+                $refundPayRequest->jsonSerialize()
+            )->json();
+
+            $operation = $response['operations'][count($response['operations']) - 1];
+            $refundPayResponse->status = $this->converStatus($operation['status']);
+            $refundPayResponse->message = $operation['code'] . ': ' . $operation['status'];
+            return $refundPayResponse;
+        } catch (\Exception $e) {
+            $refundPayResponse->status = BaseResponse::STATUS_ERROR;
+            $refundPayResponse->message = $e->getMessage();
+            return $refundPayResponse;
+        }
     }
 
     public function outCardPay(OutCardPayForm $outCardPayForm)
