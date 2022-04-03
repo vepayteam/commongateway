@@ -363,6 +363,8 @@
                         var termUrl = response['data']['acs']['term_url'];
                         payform.load3dsMonetix(url, paReq, md, termUrl);
                         clearInterval(interval);
+                    } else if('status' in response && response['status'] == 'decline') {
+                        window.location = data.termurl;
                     }
                 }
             });

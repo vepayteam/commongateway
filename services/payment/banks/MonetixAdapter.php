@@ -31,6 +31,7 @@ use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\monetix\CheckStatusPayRequest;
 use app\services\payment\forms\monetix\CreatePayRequest;
+use app\services\payment\forms\monetix\DonePayRequest;
 use app\services\payment\forms\monetix\models\AcsReturnUrlModel;
 use app\services\payment\forms\monetix\models\CardModel;
 use app\services\payment\forms\monetix\models\CustomerModel;
@@ -93,7 +94,28 @@ class MonetixAdapter implements IBankAdapter
 
     public function confirm(DonePayForm $donePayForm)
     {
-        // TODO: Implement confirm() method.
+        $donePayRequest = new DonePayRequest();
+        $generalModel = new GeneralModel($this->gate->Login, $donePayForm->getPaySchet()->ID);
+        $donePayRequest->general = $generalModel;
+        $donePayRequest->pares = $donePayForm->paRes;
+        $generalModel->signature = $donePayRequest->buildSignature($this->gate->Token);
+
+        $confirmPayResponse = new ConfirmPayResponse();
+        $url = $this->bankUrl . '/v2/payment/card/3ds_result';
+        try {
+            $response = $this->apiClient->request(
+                AbstractClient::METHOD_POST,
+                $url,
+                $donePayRequest->jsonSerialize()
+            )->json();
+            Yii::warning('Monetix confirm response: ' . Json::encode($response));
+
+            $confirmPayResponse->status = BaseResponse::STATUS_DONE;
+            return $confirmPayResponse;
+        } catch (\Exception $e) {
+            $confirmPayResponse->status = BaseResponse::STATUS_ERROR;
+            $confirmPayResponse->message = $e->getMessage();
+        }
     }
 
     public function createPay(CreatePayForm $createPayForm)
@@ -103,6 +125,7 @@ class MonetixAdapter implements IBankAdapter
             (int)$this->gate->Login,
             (string)$createPayForm->getPaySchet()->ID
         );
+        $generalModel->terminal_callback_url = $callbackUrl;
 
         $cardModel = new CardModel();
         $cardModel->setScenario(CardModel::SCENARIO_IN);
@@ -222,7 +245,7 @@ class MonetixAdapter implements IBankAdapter
     public function outCardPay(OutCardPayForm $outCardPayForm)
     {
         $generalModel = new GeneralModel(
-            0,
+            $this->gate->Login,
             (string)$outCardPayForm->paySchet->ID
         );
         $generalModel->project_id = $this->gate->Login;

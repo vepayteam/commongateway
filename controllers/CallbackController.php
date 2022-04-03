@@ -78,7 +78,7 @@ class CallbackController extends Controller
         $monetixCallbackForm->data = $data;
 
         if(!$monetixCallbackForm->validate()) {
-            throw new BadRequestHttpException();
+            return $this->asJson(['status' => 0]);
         }
 
         $monetixCallbackService = new MonetixCallbackService();

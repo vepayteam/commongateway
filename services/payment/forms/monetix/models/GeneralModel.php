@@ -11,6 +11,8 @@ class GeneralModel extends BaseModel
     /** @var string */
     public $payment_id;
     /** @var string */
+    public $terminal_callback_url;
+    /** @var string */
     public $signature;
 
     /**
