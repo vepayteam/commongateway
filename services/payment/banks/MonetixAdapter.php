@@ -259,9 +259,8 @@ class MonetixAdapter implements IBankAdapter
                 $refundPayRequest->jsonSerialize()
             )->json();
 
-            $operation = $response['operations'][count($response['operations']) - 1];
-            $refundPayResponse->status = $this->converStatus($operation['status']);
-            $refundPayResponse->message = $operation['code'] . ': ' . $operation['status'];
+            $refundPayResponse->status = $this->converStatus($response['status']);
+            $refundPayResponse->message = $response['status'];
             return $refundPayResponse;
         } catch (\Exception $e) {
             $refundPayResponse->status = BaseResponse::STATUS_ERROR;
