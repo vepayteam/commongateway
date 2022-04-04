@@ -101,18 +101,22 @@ class ImpayaAdapter implements IBankAdapter
             return $createPayResponse;
         }
 
-        if($ans['data']['status_id'] != 2) {
+        $status = self::convertStatus($ans['data']['status_id']);
+        if($status === BaseResponse::STATUS_DONE) {
+            $createPayResponse->status = BaseResponse::STATUS_DONE;
+            $createPayResponse->isNeed3DSRedirect = false;
+            $createPayResponse->isNeed3DSVerif = false;
+        } else if ($status === BaseResponse::STATUS_CREATED) {
+            $createPayResponse->status = BaseResponse::STATUS_DONE;
+            $createPayResponse->url = $ans['data']['3ds']['url'];
+            $createPayResponse->transac = $ans['data']['transaction']['transaction_id'] ?? '';
+            if($ans['data']['3ds']['method'] == 'post') {
+                $createPayResponse->params3DS = $ans['data']['3ds']['params'];
+            }
+        } else {
             $createPayResponse->status = BaseResponse::STATUS_ERROR;
             $createPayResponse->transac = $ans['data']['transaction']['transaction_id'] ?? '';
             $createPayResponse->message = $ans['data']['status_descr'] ?? 'Ошибка запроса';
-            return $createPayResponse;
-        }
-
-        $createPayResponse->status = BaseResponse::STATUS_DONE;
-        $createPayResponse->url = $ans['data']['3ds']['url'];
-        $createPayResponse->transac = $ans['data']['transaction']['transaction_id'] ?? '';
-        if($ans['data']['3ds']['method'] == 'post') {
-            $createPayResponse->params3DS = $ans['data']['3ds']['params'];
         }
 
         return $createPayResponse;
