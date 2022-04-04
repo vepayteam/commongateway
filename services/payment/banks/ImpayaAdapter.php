@@ -101,18 +101,22 @@ class ImpayaAdapter implements IBankAdapter
             return $createPayResponse;
         }
 
-        if($ans['data']['status_id'] != 2) {
+        $status = self::convertStatus($ans['data']['status_id']);
+        if($status === BaseResponse::STATUS_DONE) {
+            $createPayResponse->status = BaseResponse::STATUS_DONE;
+            $createPayResponse->isNeed3DSRedirect = false;
+            $createPayResponse->isNeed3DSVerif = false;
+        } else if ($status === BaseResponse::STATUS_CREATED) {
+            $createPayResponse->status = BaseResponse::STATUS_DONE;
+            $createPayResponse->url = $ans['data']['3ds']['url'];
+            $createPayResponse->transac = $ans['data']['transaction']['transaction_id'] ?? '';
+            if($ans['data']['3ds']['method'] == 'post') {
+                $createPayResponse->params3DS = $ans['data']['3ds']['params'];
+            }
+        } else {
             $createPayResponse->status = BaseResponse::STATUS_ERROR;
             $createPayResponse->transac = $ans['data']['transaction']['transaction_id'] ?? '';
             $createPayResponse->message = $ans['data']['status_descr'] ?? 'Ошибка запроса';
-            return $createPayResponse;
-        }
-
-        $createPayResponse->status = BaseResponse::STATUS_DONE;
-        $createPayResponse->url = $ans['data']['3ds']['url'];
-        $createPayResponse->transac = $ans['data']['transaction']['transaction_id'] ?? '';
-        if($ans['data']['3ds']['method'] == 'post') {
-            $createPayResponse->params3DS = $ans['data']['3ds']['params'];
         }
 
         return $createPayResponse;
@@ -159,51 +163,31 @@ class ImpayaAdapter implements IBankAdapter
 
     public function outCardPay(OutCardPayForm $outCardPayForm): OutCardPayResponse
     {
-        $paySchet = $createPayForm->getPaySchet();
-        $createPayRequest = new CreatePayRequest();
-        $createPayRequest->merchant_id = $this->gate->Login;
-        $createPayRequest->amount = $paySchet->getSummFull();
-        $createPayRequest->currency = $paySchet->currency->Code;
-        $createPayRequest->invoice = $paySchet->ID;
-        $createPayRequest->cl_ip = Yii::$app->request->remoteIP;
-        $createPayRequest->description = 'Оплата счета №' . $paySchet->ID;
-        $createPayRequest->cc_name = $createPayForm->CardHolder;
-        $createPayRequest->cc_num = $createPayForm->CardNumber;
-        $createPayRequest->cc_expire_m = $createPayForm->CardMonth;
-        $createPayRequest->cc_expire_y = '20' . $createPayForm->CardYear;
-        $createPayRequest->cc_cvc = $createPayForm->CardCVC;
-        $createPayRequest->buildHash($this->gate->Token);
-        $createPayRequest->cl_email = $paySchet->UserEmail ?? $paySchet->ID . '@vepay.online';
-        $createPayRequest->cl_phone = $paySchet->PhoneUser ?? self::PHONE_DEFAULT_VALUE;
+        $outCardPayRequest = new OutCardPayRequest();
+        $outCardPayRequest->merchant_id = $this->gate->Login;
+        $outCardPayRequest->invoice = $outCardPayForm->paySchet->ID;
+        $outCardPayRequest->amount = (int)$outCardPayForm->paySchet->getSummFull();
+        $outCardPayRequest->currency = $outCardPayForm->paySchet->currency->Code;
+        $outCardPayRequest->cc_num = $outCardPayForm->cardnum;
+        $outCardPayRequest->phone = $outCardPayForm->phone ?? self::PHONE_DEFAULT_VALUE;
+        $outCardPayRequest->fname = $outCardPayForm->getFirstName(true);
+        $outCardPayRequest->lname = $outCardPayForm->getLastName(true);
+        $outCardPayRequest->buildHash($this->gate->Token);
+        $uri = '/api3/';
+        $ans = $this->sendRequest($uri, $outCardPayRequest->getAttributes());
 
-        $uri = '/h2h/';
-        $ans = $this->sendRequest($uri, $createPayRequest->getAttributes());
+        $outCardPayResponse = new OutCardPayResponse;
+        $outCardPayResponse->message = $ans['data']['status_descr'] ?? '';
+        $baseStatus = self::convertStatus($ans['data']['status_id']);
 
-        $createPayResponse = new CreatePayResponse();
-        if($ans['status'] != BaseResponse::STATUS_DONE) {
-            $createPayResponse->status = BaseResponse::STATUS_ERROR;
-            $createPayResponse->message = $ans['message'] ?? '';
-            return $createPayResponse;
-        }
-
-        $status = self::convertStatus($ans['data']['status_id']);
-        if($status === BaseResponse::STATUS_DONE) {
-            $createPayResponse->status = BaseResponse::STATUS_DONE;
-            $createPayResponse->isNeed3DSRedirect = false;
-            $createPayResponse->isNeed3DSVerif = false;
-        } else if ($status === BaseResponse::STATUS_CREATED) {
-            $createPayResponse->status = BaseResponse::STATUS_DONE;
-            $createPayResponse->url = $ans['data']['3ds']['url'];
-            $createPayResponse->transac = $ans['data']['transaction']['transaction_id'] ?? '';
-            if($ans['data']['3ds']['method'] == 'post') {
-                $createPayResponse->params3DS = $ans['data']['3ds']['params'];
-            }
+        if($baseStatus == BaseResponse::STATUS_DONE || $baseStatus == BaseResponse::STATUS_CREATED) {
+            $outCardPayResponse->status = BaseResponse::STATUS_DONE;
+            $outCardPayResponse->trans = $ans['data']['transaction']['transaction_id'];
         } else {
-            $createPayResponse->status = BaseResponse::STATUS_ERROR;
-            $createPayResponse->transac = $ans['data']['transaction']['transaction_id'] ?? '';
-            $createPayResponse->message = $ans['data']['status_descr'] ?? 'Ошибка запроса';
+            $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
         }
-        return $createPayResponse;
+
+        return $outCardPayResponse;
     }
 
     public function getAftMinSum()
