@@ -279,10 +279,13 @@ class TKBankAdapter implements IBankAdapter
     {
         $action = '/api/v1/order/state';
 
-        $queryData = [
-            'OrderID' => $params['ID'],
-            //'ExtId' => $params['ID']
-        ];
+        $queryData = [];
+        if (key_exists('ID', $params)) {
+            $queryData['OrderID'] = $params['ID'];
+        }
+        if (key_exists('ExtID', $params)) {
+            $queryData['ExtID'] = $params['ExtID'];
+        }
 
         $queryData = Json::encode($queryData);
 
@@ -481,11 +484,11 @@ class TKBankAdapter implements IBankAdapter
                 ->setOption(CURLOPT_TIMEOUT, $timeout)
                 ->setOption(CURLOPT_CONNECTTIMEOUT, $timeout)
                 ->setOption(CURLOPT_HTTPHEADER, array_merge([
-                        $jsonReq ? 'Content-type: application/json' : 'Content-Type: application/soap+xml; charset=utf-8',
-                        'TCB-Header-Login: ' . $this->gate->Login,
-                        'TCB-Header-Sign: ' . $this->HmacSha1($post, $this->gate->Token),
-                        'TCB-Header-SerializerType: LowerCase'
-                    ], $addHeader))
+                    $jsonReq ? 'Content-type: application/json' : 'Content-Type: application/soap+xml; charset=utf-8',
+                    'TCB-Header-Login: ' . $this->gate->Login,
+                    'TCB-Header-Sign: ' . $this->HmacSha1($post, $this->gate->Token),
+                    'TCB-Header-SerializerType: LowerCase'
+                ], $addHeader))
                 ->setOption(CURLOPT_SSL_VERIFYHOST, false)
                 ->setOption(CURLOPT_SSL_CIPHER_LIST, 'TLSv1')
                 ->setOption(CURLOPT_SSL_VERIFYPEER, false)
@@ -1585,8 +1588,19 @@ class TKBankAdapter implements IBankAdapter
                 $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'] ?? 'Ошибка запроса';
             }
         } else {
-            $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
-            $outCardPayResponse->message = 'Ошибка запроса';
+            // Прежде чем отваливаться с ошибкой перепроверяем
+            // timeout
+            if ($ans['error'] == 504) {
+                $ans = $this->checkStatusOrder(['ExtID' => $outCardPayRequest->ExtId], false);
+            }
+            if (key_exists('state', $ans) && $ans['state'] == 1) {
+                $outCardPayResponse->status = BaseResponse::STATUS_DONE;
+                $outCardPayResponse->trans = $ans['xml']['orderid'];
+                $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'] ?? 'Ошибка запроса';
+            } else {
+                $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
+                $outCardPayResponse->message = 'Ошибка запроса: ' . var_export($ans, 1);
+            }
         }
 
         return $outCardPayResponse;
