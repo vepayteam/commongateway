@@ -234,6 +234,7 @@ class RunaBankAdapter implements IBankAdapter
 
         Yii::warning('RunaBank req: ' . $url . ' ' . json_encode($data));
         curl_setopt_array($curl, array(
+            CURLOPT_VERBOSE => Yii::$app->params['VERBOSE'] === 'Y',
             CURLOPT_SSLVERSION => CURL_SSLVERSION_TLSv1_2,
             CURLOPT_SSLCERT => $certPath . '/vepay.crt',
             CURLOPT_SSLKEY => $certPath . '/vepay.key',

@@ -49,6 +49,7 @@ class ApplePay
         $curl = new Curl();
         try {
             $curl->reset()
+                ->setOption(CURLOPT_VERBOSE, Yii::$app->params['VERBOSE'] === 'Y')
                 ->setOption(CURLOPT_TIMEOUT, 30)
                 ->setOption(CURLOPT_CONNECTTIMEOUT, 30)
                 ->setOption(CURLOPT_SSL_VERIFYHOST, false)

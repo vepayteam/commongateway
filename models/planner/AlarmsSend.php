@@ -202,6 +202,7 @@ class AlarmsSend
         $ret = 0;
         $curl = new Curl();
         $curl->setOptions([
+            CURLOPT_VERBOSE => Yii::$app->params['VERBOSE'] === 'Y',
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_SSL_CIPHER_LIST => 'TLSv1'
         ]);
