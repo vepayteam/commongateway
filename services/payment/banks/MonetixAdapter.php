@@ -242,8 +242,8 @@ class MonetixAdapter implements IBankAdapter
     {
         $refundPayRequest = new RefundPayRequest();
         $generalModel = new GeneralModel(
-            $this->gate->Login,
-            $refundPayForm->paySchet->ID
+            intval($this->gate->Login),
+            strval($refundPayForm->paySchet->ID)
         );
         $refundPayRequest->general = $generalModel;
         $refundPayRequest->amount = $refundPayForm->paySchet->getSummFull();
@@ -272,13 +272,12 @@ class MonetixAdapter implements IBankAdapter
     public function outCardPay(OutCardPayForm $outCardPayForm)
     {
         $generalModel = new GeneralModel(
-            $this->gate->Login,
-            (string)$outCardPayForm->paySchet->ID
+            intval($this->gate->Login),
+            strval($outCardPayForm->paySchet->ID)
         );
-        $generalModel->project_id = $this->gate->Login;
         $cardModel = new CardModel();
         $cardModel->setScenario(CardModel::SCENARIO_OUT);
-        $cardModel->pan = $outCardPayForm->cardnum;
+        $cardModel->pan = strval($outCardPayForm->cardnum);
 
         $customerModel = new CustomerModel(
             (string)$outCardPayForm->paySchet->ID,
@@ -288,10 +287,17 @@ class MonetixAdapter implements IBankAdapter
         $customerModel->last_name = $outCardPayForm->getLastName();
         $customerModel->middle_name = $outCardPayForm->getMiddleName();
 
+        $paymentModel = new PaymentModel(
+            $outCardPayForm->getAmount(),
+            'PayOut ' . $outCardPayForm->paySchet->ID,
+            $outCardPayForm->paySchet->currency->Code
+        );
+
         $outCardPayRequest = new OutCardPayRequest();
         $outCardPayRequest->general = $generalModel;
         $outCardPayRequest->card = $cardModel;
         $outCardPayRequest->customer = $customerModel;
+        $outCardPayRequest->payment = $paymentModel;
         $generalModel->signature = $outCardPayRequest->buildSignature($this->gate->Token);
 
         $url = $this->bankUrl . '/v2/payment/card/payout';

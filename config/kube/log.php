@@ -40,22 +40,26 @@ return [
     'traceLevel' => YII_DEBUG ? 3 : 0,
     'targets' => [
         [
-            'class' => 'yii\log\FileTarget',
-            'levels' => ['error', 'warning'],
-            'maskVars' => [
-                '_SERVER.HTTP_AUTHORIZATION',
-                '_SERVER.PHP_AUTH_USER',
-                '_SERVER.PHP_AUTH_PW',
-                '_POST.cardnum',
-                '_POST.Provparams',
-                '_POST.PayForm.CardNumber',
-                '_POST.PayForm.CardCVC',
-                '_POST.InsertKey',
-                '_POST.ChangeKeys'
+            'class' => 'app\services\logs\targets\SecurityStdOutJSONTarget',
+            'levels' => array_filter(['warning', 'info', YII_DEBUG ? 'trace' : '']),
+            'except' => [
+                'yii\web\HttpException:401',
+                'yii\web\HttpException:404',
             ],
-            'maxFileSize' => 1024 * 50,
-            'maxLogFiles' => 20,
-            'rotateByCopy' => false
+            'maskVars' => $maskVars,
+            'logVars' => $logVars,
+            'microtime' => true
+        ],
+        [
+            'class' => 'app\services\logs\targets\SecurityStdErrJSONTarget',
+            'levels' => ['error'],
+            'except' => [
+                'yii\web\HttpException:401',
+                'yii\web\HttpException:404',
+            ],
+            'maskVars' => $maskVars,
+            'logVars' => $logVars,
+            'microtime' => true
         ],
     ],
 ];
