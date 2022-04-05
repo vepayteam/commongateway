@@ -235,7 +235,7 @@ class MonetixAdapter implements IBankAdapter
 
     public function recurrentPay(AutoPayForm $autoPayForm)
     {
-        // TODO: Implement recurrentPay() method.
+        throw new GateException('Метод недоступен');
     }
 
     public function refundPay(RefundPayForm $refundPayForm)
@@ -327,41 +327,42 @@ class MonetixAdapter implements IBankAdapter
 
     public function getAftMinSum()
     {
-        // TODO: Implement getAftMinSum() method.
+        // aft недоступен
+        return PHP_INT_MAX;
     }
 
     public function getBalance(GetBalanceRequest $getBalanceRequest)
     {
-        // TODO: Implement getBalance() method.
+        throw new GateException('Метод недоступен');
     }
 
     public function transferToAccount(OutPayAccountForm $outPayaccForm)
     {
-        // TODO: Implement transferToAccount() method.
+        throw new GateException('Метод недоступен');
     }
 
     public function identInit(Ident $ident)
     {
-        // TODO: Implement identInit() method.
+        throw new GateException('Метод недоступен');
     }
 
     public function identGetStatus(Ident $ident)
     {
-        // TODO: Implement identGetStatus() method.
+        throw new GateException('Метод недоступен');
     }
 
     public function currencyExchangeRates()
     {
-        // TODO: Implement currencyExchangeRates() method.
+        throw new GateException('Метод недоступен');
     }
 
     public function sendP2p(SendP2pForm $sendP2pForm)
     {
-        // TODO: Implement sendP2p() method.
+        throw new GateException('Метод недоступен');
     }
 
     public function registrationBenific(RegistrationBenificForm $registrationBenificForm)
     {
-        // TODO: Implement registrationBenific() method.
+        throw new GateException('Метод недоступен');
     }
 }
