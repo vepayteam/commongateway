@@ -1,9 +1,7 @@
 <?php
 
 return [
-    'domain' => getenv('TEST_URL', true) == 'https://feature-vpbc-1295-processing.backend.vepay.cf'
-        ? 'https://my03mgefkd7ifomu3kjew5c7.external.vepay.cf'
-        : getenv('TEST_URL', true),
+    'domain' => getenv('TEST_URL', true),
     'adminEmail' => 'support@vepay.online',
     'robotEmail' => 'robot@vepay.online',
     'infoEmail' => 'support@vepay.online',
