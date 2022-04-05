@@ -539,7 +539,10 @@ class BRSAdapter implements IBankAdapter
                 return BaseResponse::STATUS_DONE;
             case 'REVERSED':
             case 'AUTOREVERSED':
-            return BaseResponse::STATUS_CANCEL;
+                /**
+                 * Для refund/reverse возвращать STATUS_DONE тк начальная транзакция остается в статусе успешно
+                 */
+                return BaseResponse::STATUS_DONE;
             default:
                 return BaseResponse::STATUS_ERROR;
         }
@@ -558,7 +561,10 @@ class BRSAdapter implements IBankAdapter
                 return BaseResponse::STATUS_DONE;
             case 'cancelled':
             case 'returned':
-                return BaseResponse::STATUS_CANCEL;
+                /**
+                 * Для refund/reverse возвращать STATUS_DONE тк начальная транзакция остается в статусе успешно
+                 */
+                return BaseResponse::STATUS_DONE;
             default:
                 return BaseResponse::STATUS_ERROR;
         }
@@ -1021,7 +1027,7 @@ class BRSAdapter implements IBankAdapter
 
         $paySchet = $sendP2pForm->paySchet;
         $sendP2pRequest = new SendP2pRequest();
-        $sendP2pRequest->amount = $paySchet->getSummFull() / 100;
+        $sendP2pRequest->amount = $paySchet->getSummFull();
         $sendP2pRequest->currency = $paySchet->currency->Number;
         $sendP2pRequest->client_ip_addr = Yii::$app->request->remoteIP;
         $sendP2pRequest->cardname = $sendP2pForm->cardHolder;

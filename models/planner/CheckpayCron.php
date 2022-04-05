@@ -53,6 +53,7 @@ class CheckpayCron
                     PaySchet::tableName() . '.ID',
                     PaySchet::tableName() . '.Status',
                     PaySchet::tableName() . '.ExtBillNumber',
+                    PaySchet::tableName() . '.IdUsluga',
                 ]);
 
             foreach ($query->batch() as $paySchets) {

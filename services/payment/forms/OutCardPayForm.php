@@ -117,18 +117,18 @@ class OutCardPayForm extends Model implements AmountFormInterface
         return 'OutCardPay_' . $this->partner->ID . '_' . $this->extid;
     }
 
-    public function getFirstName()
+    public function getFirstName(bool $latinIfEmpty = false): string
     {
         if(empty($this->fullname) || explode(' ', $this->fullname) < 2) {
-            return 'БЕЗИМЕНИ';
+            return $latinIfEmpty ? 'NONAME' : 'БЕЗИМЕНИ';
         }
         return explode(' ', $this->fullname)[1];
     }
 
-    public function getLastName()
+    public function getLastName(bool $latinIfEmpty = false): string
     {
         if(empty($this->fullname) || explode(' ', $this->fullname) < 2) {
-            return 'БЕЗИМЕНИ';
+            return $latinIfEmpty ? 'NONAME' : 'БЕЗИМЕНИ';
         }
         return explode(' ', $this->fullname)[0];
     }
