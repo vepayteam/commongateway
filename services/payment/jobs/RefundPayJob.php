@@ -25,7 +25,7 @@ class RefundPayJob extends BaseObject implements JobInterface
      *
      * @var int|null
      */
-    public $refundSum;
+    public $refundSum = null;
 
     /**
      * @inheritDoc
