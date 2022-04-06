@@ -11,6 +11,7 @@ use app\models\partner\UserLk;
 use app\models\payonline\Partner;
 use app\models\PpExport1s;
 use app\models\TU;
+use app\services\paymentReport\PaymentReportService;
 use Yii;
 use yii\base\Model;
 
@@ -78,6 +79,8 @@ class MfoMonthActs extends Model
             $act = new ActMfo();
         }
 
+        $paymentReportService = new PaymentReportService();
+
         $pays = new PayShetStat();
         $pays->setAttributes([
             'IdPart' => $partner->ID,
@@ -85,14 +88,14 @@ class MfoMonthActs extends Model
             'dateto' => date("t.m.Y 23:59", $this->period),
             'TypeUslug' => TU::InAll()
         ]);
-        $dataIn = $pays->getOtch(true);
+        $dataIn = $paymentReportService->getLegacyReportEntities(true, $pays);
         $pays->setAttributes([
             'IdPart' => $partner->ID,
             'datefrom' => date("01.m.Y H:i", $this->period),
             'dateto' => date("t.m.Y 23:59", $this->period),
             'TypeUslug' => TU::OutMfo()
         ]);
-        $dataOut = $pays->getOtch(true);
+        $dataOut = $paymentReportService->getLegacyReportEntities(true, $pays);
 
         $act->IdPartner = $partner->ID;
         $act->NumAct = $prevAct ? $prevAct->NumAct + 1 : 1;

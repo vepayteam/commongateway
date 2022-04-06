@@ -8,6 +8,9 @@ use Yii;
 use yii\base\BaseObject;
 use yii\queue\JobInterface;
 
+/**
+ * @deprecated Вместо ReverspayJob использовать RefundPayJob
+ */
 class ReverspayJob extends BaseObject implements JobInterface
 {
     /**
@@ -36,7 +39,8 @@ class ReverspayJob extends BaseObject implements JobInterface
         $service = Yii::$app->get(PaymentService::class);
 
         try {
-            $service->reverse($paySchet);
+            $reversePaySchet = $service->createRefundPayment($paySchet);
+            $service->reverse($reversePaySchet);
         } catch (\Exception $e) {
             Yii::error(['ReversPayJob reverse exception', $e]);
         }
