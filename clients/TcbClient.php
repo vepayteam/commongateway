@@ -28,8 +28,6 @@ use yii\helpers\Json;
  */
 class TcbClient extends BaseObject
 {
-    private const TIMEOUT = 10;
-
     /**
      * @var string
      */
@@ -42,19 +40,29 @@ class TcbClient extends BaseObject
      * @var string
      */
     protected $bankUrl;
+    /**
+     * @var int
+     */
+    protected $connectionTimeout;
 
     /**
      * @param string $login
      * @param string $token
      * @param string $bankUrl
      */
-    public function __construct(string $login, string $token, string $bankUrl)
+    public function __construct(
+        string $login,
+        string $token,
+        string $bankUrl,
+        int $connectionTimeout
+    )
     {
         parent::__construct();
 
         $this->login = $login;
         $this->token = $token;
         $this->bankUrl = $bankUrl;
+        $this->connectionTimeout = $connectionTimeout;
     }
 
     /**
@@ -84,8 +92,8 @@ class TcbClient extends BaseObject
 
         try {
             $response = (new Client())->request('POST', $this->bankUrl . $endpoint, [
-                'timeout' => self::TIMEOUT,
-                'connect_timeout' => self::TIMEOUT,
+                'timeout' => $this->connectionTimeout,
+                'connect_timeout' => $this->connectionTimeout,
                 'headers' => $headers,
                 'verify' => false,
                 'curl' => [
@@ -234,9 +242,10 @@ class TcbClient extends BaseObject
 
         } catch (ServerException $e) {
             /** @todo Remove, hack VPBC-1298. */
-            $errorData = $this->tryJsonDecode((string)$e->getResponse()->getBody());
+            $body = (string)$e->getResponse()->getBody();
+            $errorData = $this->tryJsonDecode($body);
             if (is_array($errorData) && $errorData['Code'] === 'OrderNotExist') {
-                \Yii::$app->errorHandler->logException($e);
+                \Yii::warning("OrderNotExist exception. Data: " . $body);
                 throw new TcbOrderNotExistException();
             }
             throw $e;

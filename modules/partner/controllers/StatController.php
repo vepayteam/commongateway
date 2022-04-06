@@ -29,14 +29,17 @@ use app\modules\partner\models\DiffExport;
 use app\modules\partner\models\forms\DiffColumnsForm;
 use app\modules\partner\models\forms\DiffDataForm;
 use app\modules\partner\models\forms\DiffExportForm;
+use app\modules\partner\models\forms\ReverseOrderForm;
 use app\modules\partner\models\PaySchetLogForm;
 use app\services\ident\forms\IdentStatisticForm;
 use app\services\ident\IdentService;
 use app\services\partners\StatDiffSettingsService;
+use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\jobs\RefundPayJob;
 use app\services\payment\models\Bank;
 use app\services\payment\models\PaySchet;
 use app\services\payment\PaymentService;
+use app\services\paymentReport\PaymentReportService;
 use Exception;
 use kartik\mpdf\Pdf;
 use Throwable;
@@ -412,32 +415,32 @@ class StatController extends Controller
     /**
      * Отменить платеж
      * @return array|Response
-     * @throws \yii\db\Exception
      */
     public function actionReversorder()
     {
-        if (Yii::$app->request->isAjax) {
-            Yii::$app->response->format = Response::FORMAT_JSON;
-            $org = UserLk::IsAdmin(Yii::$app->user) ? 0 : UserLk::getPartnerId(Yii::$app->user);
-
-            $where = [
-                'ID' => Yii::$app->request->post('id', 0),
-            ];
-
-            if($org) {
-                $where['IdOrg'] = $org;
-            }
-            if(PaySchet::find()->where($where)->exists()) {
-                Yii::$app->queue->push(new RefundPayJob([
-                    'paySchetId' => Yii::$app->request->post('id', 0),
-                    'initiator' => Yii::$app->user->getId() ?? 'actionReversOrder',
-                ]));
-            }
-
-            return ['status' => 1, 'message' => 'Ожидается отменена'];
-        } else {
+        if (!Yii::$app->request->isAjax) {
             return $this->redirect('/partner');
         }
+
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $form = new ReverseOrderForm();
+        $form->load(Yii::$app->request->bodyParams, '');
+        $form->idOrg = UserLk::IsAdmin(Yii::$app->user) ? 0 : UserLk::getPartnerId(Yii::$app->user);
+        if (!$form->validate()) {
+            return $this->asJson([
+                'status' => 0,
+                'errors' => $form->getErrors(),
+            ]);
+        }
+
+        Yii::$app->queue->push(new RefundPayJob([
+            'paySchetId' => $form->id,
+            'refundSum' => $form->refundSum,
+            'initiator' => Yii::$app->user->getId() ?? 'actionReversOrder',
+        ]));
+
+        return ['status' => 1, 'message' => 'Ожидается отменена'];
     }
 
     /**
@@ -492,7 +495,9 @@ class StatController extends Controller
             Yii::warning('partner/stat/otchdata POST: ' . serialize($data), 'partner');
             try {
                 if ($payShetList->load($data, '') && $payShetList->validate()) {
-                    $data = $payShetList->getOtch($IsAdmin);
+                    $paymentReportService = new PaymentReportService();
+
+                    $data = $paymentReportService->getLegacyReportEntities($IsAdmin, $payShetList);
                     return $this->renderPartial('_otchdata', [
                         'IsAdmin' => $IsAdmin,
                         'data' => $data,

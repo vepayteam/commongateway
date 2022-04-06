@@ -896,9 +896,10 @@ class MTSBankAdapter implements IBankAdapter
     public function refundPay(RefundPayForm $refundPayForm)
     {
         $paySchet = $refundPayForm->paySchet;
+        $sourcePaySchet = $paySchet->refundSource;
 
         $refundPayResponse = new RefundPayResponse();
-        if($paySchet->Status !== PaySchet::STATUS_DONE) {
+        if($sourcePaySchet->Status !== PaySchet::STATUS_DONE) {
             $refundPayResponse->status = BaseResponse::STATUS_ERROR;
             return $refundPayResponse;
         }
@@ -906,7 +907,7 @@ class MTSBankAdapter implements IBankAdapter
         $action = '/rest/reverse.do';
         /** @var ReversePayRequest $requestForm */
         $requestForm = new ReversePayRequest();
-        if($paySchet->DateCreate < Carbon::now()->startOfDay()->timestamp) {
+        if($sourcePaySchet->DateCreate < Carbon::now()->startOfDay()->timestamp) {
             $action = '/rest/refund.do';
             $requestForm = new RefundPayRequest();
             $requestForm->amount = $paySchet->getSummFull();
@@ -914,7 +915,7 @@ class MTSBankAdapter implements IBankAdapter
 
         $requestForm->userName = $this->gate->Login;
         $requestForm->password = $this->gate->Password;
-        $requestForm->orderId = $paySchet->ExtBillNumber;
+        $requestForm->orderId = $sourcePaySchet->ExtBillNumber;
 
         $ans = $this->curlXmlReq($requestForm->getAttributes(), $this->bankUrl.$action);
         $refundPayResponse = new RefundPayResponse();
