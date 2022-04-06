@@ -133,10 +133,10 @@ class OutCardPayForm extends Model implements AmountFormInterface
         return explode(' ', $this->fullname)[0];
     }
 
-    public function getMiddleName()
+    public function getMiddleName(): string
     {
         if(empty($this->fullname) || explode(' ', $this->fullname) < 3) {
-            return 'БЕЗИМЕНИ';
+            return '';
         }
         return explode(' ', $this->fullname)[2];
     }
