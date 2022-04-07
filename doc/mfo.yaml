@@ -308,6 +308,33 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+
+  /pay/info:
+      post:
+          tags:
+              - Pay
+          summary: Информация по операции pay in
+          description: Возвращает статус проведённой ранее операции pay in.
+          requestBody:
+              content:
+                  application/json:
+                      schema:
+                          $ref: "#/components/schemas/IdState"
+              description: ID платежа
+              required: true
+          responses:
+              "200":
+                  description: OK
+                  content:
+                      application/json:
+                          schema:
+                              $ref: "#/components/schemas/PayInInfo"
+              default:
+                  description: Error (40X,500)
+                  content:
+                      application/json:
+                          schema:
+                              $ref: "#/components/schemas/Error"
   /out/paycard:
     post:
       tags:
@@ -1362,6 +1389,24 @@ components:
         channel:
           type: string
           description: Банк-эквайер, через который была совершена транзакция
+    PayInInfo:
+        type: object
+        properties:
+            status:
+                type: integer
+                description: Статус (0 - в обработке, 1 - успешно, 2 - ошибка, 3 - отменен)
+            message:
+                type: string
+                description: Сообщение ошибки
+            rc:
+                type: string
+                description: Код ошибки банка (может отсутствовать)
+            channel:
+                type: string
+                description: Банк-эквайер, через который была совершена транзакция
+            gate_transaction_id:
+                type: string
+                description: ИД транзакции банка-эквайера
     StatusResult:
       type: object
       properties:
