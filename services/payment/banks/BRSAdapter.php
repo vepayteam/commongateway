@@ -49,7 +49,6 @@ use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\forms\RegistrationBenificForm;
 use app\services\payment\forms\SendP2pForm;
-use app\services\payment\forms\RegistrationBenificForm;
 use app\services\payment\helpers\BRSErrorHelper;
 use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\PartnerBankGate;
