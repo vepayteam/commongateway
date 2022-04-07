@@ -23,12 +23,14 @@ class PaymentService extends Component
      * @param PaySchet $paySchet
      * @throws GateException
      * @throws RefundPayException
+     * @throws CreateRefundException
      * @see RefundPayJob::execute()
      */
     public function reverse(PaySchet $paySchet)
     {
+        $refundPayschet = $this->createRefundPayment($paySchet);
         $this->refundInternal(
-            $paySchet,
+            $refundPayschet,
             PaySchet::STATUS_CANCEL,
             'Платеж отменен'
         );
