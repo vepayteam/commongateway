@@ -203,9 +203,19 @@ class MonetixAdapter implements IBankAdapter
                 $checkStatusPayRequest->jsonSerialize()
             )->json();
 
-            $operation = $response['operations'][count($response['operations']) - 1];
-            $checkStatusPayResponse->status = $this->converStatus($operation['status']);
-            $checkStatusPayResponse->message = $operation['code'] . ': ' . $operation['status'];
+            if(isset($response['errors'])) {
+                $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
+                $checkStatusPayResponse->message = $response['errors'][0]["message"] ?? "Ошибка запроса";
+            } elseif (isset($response['operations'])) {
+                $operation = $response['operations'][count($response['operations']) - 1];
+                $checkStatusPayResponse->status = $this->converStatus($operation['status']);
+                $checkStatusPayResponse->message = $operation['code'] . ': ' . $operation['status'];
+            } else {
+                $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
+                $checkStatusPayResponse->message = "Ошибка запроса";
+            }
+
+
             return $checkStatusPayResponse;
         } catch (\Exception $e) {
             $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
