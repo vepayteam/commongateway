@@ -3,15 +3,21 @@
 
 namespace app\services\payment\banks;
 
+use app\clients\TcbClient;
+use app\clients\tcbClient\requests\Debit3ds2FinishRequest;
+use app\clients\tcbClient\requests\DebitFinishRequest;
+use app\clients\tcbClient\requests\GetOrderStateRequest;
+use app\clients\tcbClient\requests\objects\AuthenticationData;
+use app\clients\tcbClient\responses\DebitFinishResponse;
+use app\clients\tcbClient\responses\ErrorResponse;
+use app\clients\tcbClient\responses\GetOrderStateResponse;
+use app\clients\tcbClient\responses\objects\OrderInfo;
+use app\clients\tcbClient\TcbOrderNotExistException;
 use app\helpers\DebugHelper;
-use app\models\mfo\MfoReq;
 use app\models\payonline\Cards;
 use app\models\payonline\User;
-use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
-use app\models\queue\BinBDInfoJob;
 use app\models\TU;
-use app\services\ident\IdentService;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
@@ -20,23 +26,25 @@ use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
+use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentInitResponse;
-use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
-use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
+use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
+use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\interfaces\ITKBankAdapterResponseErrors;
 use app\services\payment\banks\traits\TKBank3DSTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
-use app\services\payment\exceptions\GateException;
-use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
+use app\services\payment\exceptions\GateException;
+use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
 use app\services\payment\exceptions\RefundPayException;
+use app\services\payment\exceptions\reRequestingStatusException;
+use app\services\payment\exceptions\reRequestingStatusOkException;
 use app\services\payment\exceptions\TKBankRefusalException;
 use app\services\payment\forms\AutoPayForm;
-use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\CreatePaySecondStepForm;
 use app\services\payment\forms\DonePayForm;
@@ -44,13 +52,12 @@ use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
+use app\services\payment\forms\RegistrationBenificForm;
 use app\services\payment\forms\SendP2pForm;
 use app\services\payment\forms\tkb\CheckStatusPayRequest;
 use app\services\payment\forms\tkb\Confirm3DSv2Request;
 use app\services\payment\forms\tkb\CreatePayRequest;
 use app\services\payment\forms\tkb\CreateRecurrentPayRequest;
-use app\services\payment\forms\tkb\DonePay3DSv2Request;
-use app\services\payment\forms\tkb\DonePayRequest;
 use app\services\payment\forms\tkb\OutCardPayRequest;
 use app\services\payment\forms\tkb\RefundPayRequest;
 use app\services\payment\forms\tkb\TransferToAccountRequest;
@@ -58,10 +65,9 @@ use app\services\payment\interfaces\Cache3DSv2Interface;
 use app\services\payment\interfaces\Issuer3DSVersionInterface;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
-use app\services\payment\exceptions\reRequestingStatusException;
-use app\services\payment\exceptions\reRequestingStatusOkException;
+use app\services\payment\models\UslugatovarType;
 use Carbon\Carbon;
-use Faker\Provider\Base;
+use GuzzleHttp\Exception\GuzzleException;
 use qfsx\yii2\curl\Curl;
 use SimpleXMLElement;
 use Yii;
@@ -73,12 +79,17 @@ class TKBankAdapter implements IBankAdapter
 
     const AFT_MIN_SUMM = 185000;
 
-    public const BIC = '044525388';
-    const BANK_URL = 'https://pay.tkbbank.ru';
-    const BANK_URL_TEST = 'https://paytest.online.tkbbank.ru';
+    /**
+     * Стандартное время ожидания запроса
+     */
+    const CURL_DEFAULT_TIMEOUT = 110;
 
-    const BANK_URL_XML = 'https://193.232.101.14:8204';
-    const BANK_URL_XML_TEST = 'https://193.232.101.14:8203';
+    /**
+     * Время ожидания запроса регистрации бенефициара
+     */
+    const CURL_REGISTER_BENEFICIAL_TIMEOUT = 300;
+
+    public const BIC = '044525388';
 
     const PS_GENERAL_REFUSAL = 'PS_GENERAL_REFUSAL';
 
@@ -92,6 +103,7 @@ class TKBankAdapter implements IBankAdapter
     private $UserKey;
     private $keyFile;
     private $backUrls = ['ok' => 'https://api.vepay.online/pay/orderok?orderid='];
+    private $_client;
 
     public static $bank = 2;
     private $type = 0;
@@ -102,13 +114,9 @@ class TKBankAdapter implements IBankAdapter
     {
         $this->gate = $partnerBankGate;
 
-        if (Yii::$app->params['DEVMODE'] == 'Y' || Yii::$app->params['TESTMODE'] == 'Y') {
-            $this->bankUrl = self::BANK_URL_TEST;
-            $this->bankUrlXml = self::BANK_URL_XML_TEST;
-        } else {
-            $this->bankUrl = self::BANK_URL;
-            $this->bankUrlXml = self::BANK_URL_XML;
-        }
+        $config = Yii::$app->params['services']['payments']['TCB'];
+        $this->bankUrl = $config['url'];
+        $this->bankUrlXml = $config['url_xml'];
     }
 
     /**
@@ -153,7 +161,7 @@ class TKBankAdapter implements IBankAdapter
             }
 
             $queryData = [
-                'OrderID' => $params['ID'],
+                'ExtID' => $params['ID'],
                 'Amount' => $params['SummFull'],
                 'Description' => $order_description,
                 'ClientInfo' => [
@@ -169,15 +177,15 @@ class TKBankAdapter implements IBankAdapter
 
             if ($user && $idCard == -1) {
                 //привязка карты
-                $action = "/api/tcbpay/gate/registercardbegin";
+                $action = "/api/v1/card/unregistered/bind";
             } elseif ($card && $idCard >= 0) {
                 //реккурентный платеж с карты
-                $action = "/api/tcbpay/gate/registerdirectorderfromregisteredcard";
+                $action = '/api/v1/card/registered/direct';
                 $isRecurrent = 1;
                 $queryData['CardRefID'] = $card['ExtCardIDP'];
             } else {
                 //оплата без привязки карты
-                $action = "/api/tcbpay/gate/registerorderfromunregisteredcard";
+                $action = "/api/v1/card/unregistered/debit";
             }
 
             $queryData = Json::encode($queryData);
@@ -219,10 +227,10 @@ class TKBankAdapter implements IBankAdapter
      */
     public function reRequestingStatus( PaySchet $paySchet):void
     {
-        $action = '/api/tcbpay/gate/getorderstate';
+        $action = '/api/v1/order/state';
 
         $checkStatusPayRequest = new CheckStatusPayRequest();
-        $checkStatusPayRequest->OrderID = $paySchet->ID;
+        $checkStatusPayRequest->ExtID = $paySchet->ID;
 
         $queryData = Json::encode($checkStatusPayRequest->getAttributes());
         $response = $this->curlXmlReq($queryData, $this->bankUrl . $action);
@@ -269,8 +277,7 @@ class TKBankAdapter implements IBankAdapter
      */
     private function checkStatusOrder($params, $isCron)
     {
-        //$action = '/api/v1/order/state';
-        $action = '/api/tcbpay/gate/getorderstate';
+        $action = '/api/v1/order/state';
 
         $queryData = [
             'OrderID' => $params['ID'],
@@ -356,23 +363,28 @@ class TKBankAdapter implements IBankAdapter
     private function convertStatePay($result)
     {
         Yii::warning('TKBankAdapter convertStatePay start: ' . Json::encode($result), 'merchant');
-        $status = 0;
+        $status = BaseResponse::STATUS_CREATED;
         if (isset($result['orderinfo'])) {
+            /**
+             * статус 7 - служебный код, не возвращается
+             * статус 9 - зарезервирован
+             */
             switch ((int)$result['orderinfo']['state']) {
-                case 1:
+                case 1: // operation in processing
                     $status = BaseResponse::STATUS_CREATED;
                     break;
-                case 3:
-                case 0:
-                case 2:
+                case 0: // success credit operations
+                case 2: // success hold
+                case 3: // success debit operations
                     $status = BaseResponse::STATUS_DONE;
                     break;
-                case 6:
+                case 6: // error
                     $status = BaseResponse::STATUS_ERROR;
                     break;
-                case 5:
-                case 8:
-                    $status = BaseResponse::STATUS_CANCEL;
+                case 4: // partial refund debit
+                case 5: // full refund debit
+                case 8: // debit reverse
+                    $status = BaseResponse::STATUS_DONE;
                     break;
                 default:
                     $status = BaseResponse::STATUS_CREATED;
@@ -435,25 +447,44 @@ class TKBankAdapter implements IBankAdapter
         return $status;
     }
 
+    private function getClient(): TcbClient
+    {
+        if ($this->_client === null) {
+            $connectionTimeout = Yii::$app->params['tcbConnectionTimeout'] ?? null;
+            if (!is_int($connectionTimeout)) {
+                $connectionTimeout = self::CURL_DEFAULT_TIMEOUT;
+            }
+
+            $this->_client = new TcbClient(
+                $this->gate->Login,
+                $this->gate->Token,
+                $this->bankUrl,
+                $connectionTimeout
+            );
+        }
+
+        return $this->_client;
+    }
+
     /**
      * Отправка POST запроса в банк
      * @param string $post
      * @param string $url
      * @param array $addHeader
      * @param bool $jsonReq
+     * @param int $timeout таймаут запроса в секундах
      * @return array [xml, error]
+     * @todo Выделить в отдельный (транспортный) слой.
      */
-    private function curlXmlReq($post, $url, $addHeader = [], $jsonReq = true)
+    private function curlXmlReq($post, $url, $addHeader = [], $jsonReq = true, int $timeout = self::CURL_DEFAULT_TIMEOUT)
     {
-
-        $timout = 110;
-
         $curl = new Curl();
         Yii::warning("req: login = " . $this->gate->Login . " url = " . $url . "\r\n" . Cards::MaskCardLog($post), 'merchant');
         try {
             $curl->reset()
-                ->setOption(CURLOPT_TIMEOUT, $timout)
-                ->setOption(CURLOPT_CONNECTTIMEOUT, $timout)
+                ->setOption(CURLOPT_VERBOSE, Yii::$app->params['VERBOSE'] === 'Y')
+                ->setOption(CURLOPT_TIMEOUT, $timeout)
+                ->setOption(CURLOPT_CONNECTTIMEOUT, $timeout)
                 ->setOption(CURLOPT_HTTPHEADER, array_merge([
                         $jsonReq ? 'Content-type: application/json' : 'Content-Type: application/soap+xml; charset=utf-8',
                         'TCB-Header-Login: ' . $this->gate->Login,
@@ -470,10 +501,7 @@ class TKBankAdapter implements IBankAdapter
                     ->setOption(CURLOPT_SSLKEY, $this->UserKey)
                     ->setOption(CURLOPT_SSLCERT, $this->UserCert);
             }
-            Yii::warning("req startReq: login = " . $this->gate->Login . " url = " . $url . "\r\n" . Cards::MaskCardLog($post), 'merchant');
             $curl->post($url);
-            Yii::warning("req finishReq: login = " . $this->gate->Login . " url = " . $url . "\r\n" . Cards::MaskCardLog($post), 'merchant');
-
         } catch (\Exception $e) {
             Yii::warning("req curlerror: login = " . $this->gate->Login . " url = " . $url . "\r\n" . Cards::MaskCardLog($post), 'merchant');
             Yii::warning("curlerror: " . $curl->responseCode . ":" . Cards::MaskCardLog($curl->response), 'merchant');
@@ -541,6 +569,8 @@ class TKBankAdapter implements IBankAdapter
 
         if (isset($ret['errorinfo'])) {
             $ret['Status'] = $ret['errorinfo']['errorcode'];
+        } else {
+            $ret['Status'] = 0;
         }
 
         return $ret;
@@ -816,7 +846,7 @@ class TKBankAdapter implements IBankAdapter
 
     public function SimpleActivateCard($Id, array $params)
     {
-        $action = '/api/tcbpay/gate/simpleactivatecard';
+        $action = '/api/v1/card/registered/activate';
         $queryData = [
             "OrderID" => $Id,
             "EAN" => $params["cardnum"],
@@ -859,7 +889,7 @@ class TKBankAdapter implements IBankAdapter
 
     public function StateActivateCard($Id)
     {
-        $action = '/api/tcbpay/gate/getactivatecardstate';
+        $action = '/api/v1/service/order/state';
         $queryData = [
             "OrderID" => $Id
         ];
@@ -919,10 +949,10 @@ class TKBankAdapter implements IBankAdapter
      */
     public function PayXml(array $params)
     {
-        $action = '/api/tcbpay/gate/registerorderfromunregisteredcardwof';
+        $action = '/api/v1/card/unregistered/debit/wof';
 
         $queryData = [
-            'OrderID' => $params['ID'],
+            'ExtId' => $params['ID'],
             'Amount' => $params['SummFull'],
             'Description' => 'Оплата по счету ' . $params['ID'],
             'CardInfo' => [
@@ -1000,7 +1030,7 @@ class TKBankAdapter implements IBankAdapter
      */
     public function ConfirmXml(array $params)
     {
-        $action = '/api/tcbpay/gate/registerorderfromcardfinish';
+        $action = '/api/v1/card/unregistered/debit/wof/finish';
 
         $queryData = [
             'OrderID' => $params['ID'],
@@ -1026,7 +1056,7 @@ class TKBankAdapter implements IBankAdapter
     }
 
     /**
-     * Регистрация бенифициаров
+     * Регистрация бенефициаров
      *
      * @param array $params
      * @return array
@@ -1152,11 +1182,11 @@ class TKBankAdapter implements IBankAdapter
      */
     protected function createPay3DSv1($createPayForm, $check3DSVersionResponse)
     {
-        $action = '/api/tcbpay/gate/registerorderfromunregisteredcardwof';
+        $action = '/api/v1/card/unregistered/debit/wof';
 
         $paySchet = $createPayForm->getPaySchet();
         $createPayRequest = new CreatePayRequest();
-        $createPayRequest->OrderId = $paySchet->ID;
+        $createPayRequest->ExtId = $paySchet->ID;
         $createPayRequest->Amount = $paySchet->getSummFull();
         $createPayRequest->Description = 'Оплата по счету ' . $paySchet->ID;
         $createPayRequest->TTL = '00.00:' . ($paySchet->TimeElapsed / 60) . ':00';
@@ -1208,9 +1238,11 @@ class TKBankAdapter implements IBankAdapter
 
     /**
      * @param DonePayForm $donePayForm
-     * @return $confirmPayResponse
+     * @return ConfirmPayResponse $confirmPayResponse
+     * @throws BankAdapterResponseException
+     * @throws CreatePayException
      */
-    public function confirm(DonePayForm $donePayForm)
+    public function confirm(DonePayForm $donePayForm): ConfirmPayResponse
     {
         Yii::info('TKBankAdapter confirm IdPay=' . $donePayForm->IdPay);
 
@@ -1230,41 +1262,37 @@ class TKBankAdapter implements IBankAdapter
         }
     }
 
-    protected function confirmBy3DSv1(DonePayForm $donePayForm)
+    /**
+     * @param DonePayForm $donePayForm
+     * @return ConfirmPayResponse
+     * @throws BankAdapterResponseException
+     */
+    protected function confirmBy3DSv1(DonePayForm $donePayForm): ConfirmPayResponse
     {
-        $action = '/api/tcbpay/gate/registerorderfromcardfinish';
-
         $paySchet = $donePayForm->getPaySchet();
-        $donePayRequest = new DonePayRequest();
-        $donePayRequest->OrderId = $donePayForm->IdPay;
-        $donePayRequest->MD = $donePayForm->md;
-        $donePayRequest->PaRes = $donePayForm->paRes;
-
-        $queryData = Json::encode($donePayRequest->getAttributes());
-
+        $client = $this->getClient();
         $confirmPayResponse = new ConfirmPayResponse();
 
-        // TODO: response as object
-        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
-        if (isset($ans['xml']) && !empty($ans['xml'])) {
-            $xml = $this->parseAns($ans['xml']);
-            if (isset($xml['Status']) && $xml['Status'] == '0') {
-                $confirmPayResponse->status = BaseResponse::STATUS_DONE;
-                $confirmPayResponse->message = 'OK';
-                $confirmPayResponse->transac = $xml['ordernumber'];
-
-                $paySchet->ExtBillNumber = $confirmPayResponse->transac;
-                $paySchet->save(false);
-            } else {
-                $confirmPayResponse->status = BaseResponse::STATUS_ERROR;
-                $confirmPayResponse->message = $xml['errorinfo']['errormessage'];
-            }
-        } else {
-            throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
+        $request = new DebitFinishRequest($donePayForm->IdPay, $donePayForm->md, $donePayForm->paRes);
+        try {
+            $response = in_array($paySchet->uslugatovar->IsCustom, UslugatovarType::ecomTypes())
+                ? $client->debitFinishEcom($request)
+                : $client->debitFinishAft($request);
+        } catch (GuzzleException $e) {
+            \Yii::$app->errorHandler->logException($e);
+            throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее.');
         }
 
-        if(!$confirmPayResponse->validate()) {
-            throw new BankAdapterResponseException('Ошибка формата ответа');
+        if ($response instanceof ErrorResponse) {
+            $confirmPayResponse->status = BaseResponse::STATUS_ERROR;
+            $confirmPayResponse->message = $response->message;
+        } elseif($response instanceof DebitFinishResponse) {
+            $confirmPayResponse->status = BaseResponse::STATUS_DONE;
+            $confirmPayResponse->message = 'OK';
+            $confirmPayResponse->transac = $response->orderId;
+
+            $paySchet->ExtBillNumber = $confirmPayResponse->transac;
+            $paySchet->save(false);
         }
 
         return $confirmPayResponse;
@@ -1344,36 +1372,51 @@ class TKBankAdapter implements IBankAdapter
         }
     }
 
-
     protected function finishBy3DSv2(DonePayForm $donePayForm)
     {
-        $action = '/api/v1/card/unregistered/debit/3ds2/wof/finish';
-
+        $client = $this->getClient();
         $paySchet = $donePayForm->getPaySchet();
-        $donePay3DSv2Request = new DonePay3DSv2Request();
-        $donePay3DSv2Request->ExtId = $paySchet->ID;
-        $donePay3DSv2Request->Amount = $paySchet->getSummFull();
-        $donePay3DSv2Request->Description = 'Оплата по счету ' . $paySchet->ID;
-        $donePay3DSv2Request->CardInfo = [
-            'CardRefId' => $paySchet->CardRefId3DS,
-        ];
 
-        $donePay3DSv2Request->AuthenticationData = json_decode(Yii::$app->cache->get('PaySchet_3DSv2_AuthData_' . $paySchet->ID), true);
-        $confirmPayResponse = new ConfirmPayResponse();
+        $forceGate = in_array($paySchet->uslugatovar->IsCustom, UslugatovarType::ecomTypes())
+            ? Debit3ds2FinishRequest::FORCE_GATE_ECOM
+            : Debit3ds2FinishRequest::FORCE_GATE_AFT;
+        $authData = json_decode(
+            Yii::$app->cache->get(Cache3DSv2Interface::CACHE_PREFIX_AUTH_DATA . $paySchet->ID),
+            true
+        );
+        $request = new Debit3ds2FinishRequest(
+            $paySchet->ID,
+            $paySchet->CardRefId3DS,
+            $paySchet->getSummFull(),
+            $forceGate,
+            new AuthenticationData(
+                $authData['Status'],
+                $authData['AuthenticationValue'] ?? null,
+                $authData['DsTransID'] ?? null,
+                $authData['Eci'] ?? null
+            ),
+            'Оплата по счету ' . $paySchet->ID
+        );
 
-        $queryData = Json::encode($donePay3DSv2Request->getAttributes());
-        $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+        try {
+            $response = $client->debit3ds2Finish($request);
+        } catch (GuzzleException $e) {
+            \Yii::$app->errorHandler->logException($e);
+            throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее.');
+        }
 
-        if(!isset($ans['xml']['OrderId'])) {
+        if ($response instanceof ErrorResponse) {
+            // legacy logic
             throw new CreatePayException('Ошибка подтверждения платежа 3DS v2');
         }
 
-        $paySchet->ExtBillNumber = $ans['xml']['OrderId'];
+        $paySchet->ExtBillNumber = $response->orderId;
         $paySchet->save(false);
 
+        $confirmPayResponse = new ConfirmPayResponse();
         $confirmPayResponse->status = BaseResponse::STATUS_DONE;
         $confirmPayResponse->message = 'Успешно';
-        $confirmPayResponse->transac = $ans['xml']['OrderId'];
+        $confirmPayResponse->transac = $response->orderId;
 
         return $confirmPayResponse;
     }
@@ -1382,67 +1425,72 @@ class TKBankAdapter implements IBankAdapter
      * @param OkPayForm $okPayForm
      * @return CheckStatusPayResponse|mixed
      * @throws BankAdapterResponseException
+     * @throws TcbOrderNotExistException
      */
     public function checkStatusPay(OkPayForm $okPayForm)
     {
-        $action = '/api/tcbpay/gate/getorderstate';
-
-        /**
-         * VPBC-1013: добавлено логирование для того, чтобы выяснить что вызывает getorderstate.
-         * @todo Удалить после багфикса.
-         */
-        $route = Yii::$app->controller->route ?? null;
-        $stackTrace = DebugHelper::getStackTrace();
-        Yii::info("Request TKB getorderstate. PaySchet ID: {$okPayForm->IdPay}, Route: {$route}). Stack trace: \n{$stackTrace}");
-
-        $checkStatusPayRequest = new CheckStatusPayRequest();
-        $checkStatusPayRequest->OrderID = $okPayForm->IdPay;
-
-        $queryData = Json::encode($checkStatusPayRequest->getAttributes());
-        $response = $this->curlXmlReq($queryData, $this->bankUrl . $action);
-
         $checkStatusPayResponse = new CheckStatusPayResponse();
-        Yii::warning("checkStatusOrder: " . $this->logArr($response), 'merchant');
-        if (isset($response['xml']) && !empty($response['xml'])) {
-            $xml = $this->parseAns($response['xml']);
-            Yii::warning("checkStatusOrder afterParseAns: " . Json::encode($xml), 'merchant');
-            if ($xml && isset($xml['errorinfo']['errorcode']) && (int)$xml['errorinfo']['errorcode'] > 0) {
-                $errorCode = (int)$xml['errorinfo']['errorcode'];
-                Yii::warning("checkStatusPay isCreated IdPay=" . $okPayForm->IdPay, 'merchant');
-                if($errorCode == ITKBankAdapterResponseErrors::ERROR_CODE_ENGINEERING_WORKS) {
-                    $checkStatusPayResponse->status = BaseResponse::STATUS_CREATED;
-                } else {
-                    $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
-                }
 
-                $checkStatusPayResponse->message = $xml['errorinfo']['errormessage'];
-                $checkStatusPayResponse->xml = $xml;
-            } else {
-                $status = $this->convertState($xml);
-                Yii::warning("checkStatusPay afterConvertStatus IdPay=" . $okPayForm->IdPay . " : " . $status, 'merchant');
-                if(!in_array($status, BaseResponse::STATUSES)) {
-                    throw new BankAdapterResponseException('Ошибка преобразования статусов');
-                }
+        $client = $this->getClient();
+        try {
+            /** Throws {@see TcbOrderNotExistException} */
+            $extId = $okPayForm->paySchet->isRefund ? $okPayForm->paySchet->RefundExtId : $okPayForm->IdPay;
+            $response = $client->getOrderState(new GetOrderStateRequest($extId));
+        } catch (GuzzleException $e) {
+            \Yii::$app->errorHandler->logException($e);
+            throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее.'); // legacy logic
+        }
 
-                if($status == BaseResponse::STATUS_DONE && isset($xml['orderinfo']['orderid'])) {
-                    $checkStatusPayResponse->transId = $xml['orderinfo']['orderid'];
-                }
+        if ($response instanceof ErrorResponse) {
+            $checkStatusPayResponse->status = $response->code === ErrorResponse::CODE_ENGINEERING_WORK
+                ? BaseResponse::STATUS_CREATED
+                : BaseResponse::STATUS_ERROR; // legacy logic
+            $checkStatusPayResponse->message = $response->message;
 
-                $checkStatusPayResponse->status = $status;
-                $checkStatusPayResponse->xml = $xml;
-                $checkStatusPayResponse->rrn = $xml['orderadditionalinfo']['rrn'] ?? '';
-                $checkStatusPayResponse->cardRefId = $xml['orderadditionalinfo']['data']['cardrefid'] ?? '';
-                $checkStatusPayResponse->message = $xml['orderinfo']['statedescription'] ?? '';
-                $checkStatusPayResponse->expYear = $xml['orderadditionalinfo']['cardexpyear'] ?? '';
-                $checkStatusPayResponse->expMonth = $xml['orderadditionalinfo']['cardexpmonth'] ?? '';
-                $checkStatusPayResponse->cardHolder = $xml['orderadditionalinfo']['cardholder'] ?? '';
-                $checkStatusPayResponse->cardNumber = $xml['orderadditionalinfo']['cardnumber'] ?? '';
+        } elseif ($response instanceof GetOrderStateResponse) {
+            $status = $this->statusMap()[$response->orderInfo->state] ?? null;
+            if ($status === null) {
+                Yii::warning("TCB checkStatusPay: unknown state ({$response->orderInfo->state})");
+                $status = BaseResponse::STATUS_CREATED;
             }
+            if ($status === BaseResponse::STATUS_DONE) {
+                $checkStatusPayResponse->transId = $response->orderInfo->orderId;
+            }
+            $checkStatusPayResponse->status = $status;
+            $checkStatusPayResponse->message = $response->orderInfo->stateDescription ?? '';
+            $checkStatusPayResponse->rcCode = $response->additionalInfo->rc ?? null;
+            $checkStatusPayResponse->rrn = $response->additionalInfo->rrn ?? null;
+            $checkStatusPayResponse->cardRefId = $response->additionalInfo->cardRefId ?? null;
+            $checkStatusPayResponse->expYear = $response->additionalInfo->cardExpYear ?? null;
+            $checkStatusPayResponse->expMonth = $response->additionalInfo->cardExpMonth ?? null;
+            $checkStatusPayResponse->cardHolder = $response->additionalInfo->cardHolder ?? null;
+            $checkStatusPayResponse->cardNumber = $response->additionalInfo->cardNumber ?? null;
+
         } else {
-            throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
+            throw new \LogicException('Unprocessable response object.');
         }
 
         return $checkStatusPayResponse;
+    }
+
+    /**
+     * @return array Array with OrderInfo states as keys and response statuses as values.
+     * @see TKBankAdapter::convertStatePay()
+     */
+    private function statusMap(): array
+    {
+        /**
+         * Для refund/reverse возвращать STATUS_DONE тк начальная транзакция остается в статусе успешно
+         */
+        return [
+            OrderInfo::STATE_CREDIT_SUCCESS => BaseResponse::STATUS_DONE,
+            OrderInfo::STATE_IN_PROCESS => BaseResponse::STATUS_CREATED,
+            OrderInfo::STATE_HOLD => BaseResponse::STATUS_DONE,
+            OrderInfo::STATE_DEBIT_SUCCESS => BaseResponse::STATUS_DONE,
+            OrderInfo::STATE_ERROR => BaseResponse::STATUS_ERROR,
+            OrderInfo::STATE_FULL_REFUND => BaseResponse::STATUS_DONE,
+            OrderInfo::STATE_CANCEL => BaseResponse::STATUS_DONE,
+        ];
     }
 
     /**
@@ -1451,10 +1499,10 @@ class TKBankAdapter implements IBankAdapter
      */
     public function recurrentPay(AutoPayForm $autoPayForm)
     {
-        $action = '/api/tcbpay/gate/registerdirectorderfromregisteredcard';
+        $action = '/api/v1/card/registered/direct';
 
         $createRecurrentPayRequest = new CreateRecurrentPayRequest();
-        $createRecurrentPayRequest->OrderId = $autoPayForm->paySchet->ID;
+        $createRecurrentPayRequest->ExtId = $autoPayForm->paySchet->ID;
         $createRecurrentPayRequest->Amount = $autoPayForm->paySchet->getSummFull();
         $createRecurrentPayRequest->Description = 'Оплата по счету ' . $autoPayForm->paySchet->ID;
 
@@ -1465,11 +1513,14 @@ class TKBankAdapter implements IBankAdapter
         $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
 
         $createRecurrentPayResponse = new CreateRecurrentPayResponse();
+
+        Yii::info("recurcurlans: " . Json::encode($ans), 'merchant');
+
         if (isset($ans['xml']) && !empty($ans['xml'])) {
             $xml = $this->parseAns($ans['xml']);
-            if (isset($xml['ordernumber'])) {
+            if (isset($xml['orderid'])) {
                 $createRecurrentPayResponse->status = BaseResponse::STATUS_DONE;
-                $createRecurrentPayResponse->transac = $xml['ordernumber'];
+                $createRecurrentPayResponse->transac = $xml['orderid'];
                 return $createRecurrentPayResponse;
             }
         }
@@ -1479,37 +1530,52 @@ class TKBankAdapter implements IBankAdapter
         return $createRecurrentPayResponse;
     }
 
-
-    public function refundPay(RefundPayForm $refundPayForm)
+    public function refundPay(RefundPayForm $refundPayForm): RefundPayResponse
     {
         $refundPayResponse = new RefundPayResponse();
 
         $paySchet = $refundPayForm->paySchet;
-        if($paySchet->Status != PaySchet::STATUS_DONE) {
+        $sourcePaySchet = $paySchet->refundSource;
+
+        if ($sourcePaySchet->Status != PaySchet::STATUS_DONE) {
             throw new RefundPayException('Невозможно отменить незавершенный платеж');
         }
 
         $refundPayRequest = new RefundPayRequest();
-        $refundPayRequest->ExtId = $paySchet->ID;
+        $refundPayRequest->ExtId = $sourcePaySchet->ID;
 
         $action = '/api/v1/card/unregistered/debit/reverse';
-        if($paySchet->DateCreate < Carbon::now()->startOfDay()->timestamp) {
-            $refundPayRequest->amount = $paySchet->getSummFull();
+        $refundPayResponse->refundType = RefundPayResponse::REFUND_TYPE_REVERSE;
+
+        if ($sourcePaySchet->DateCreate < Carbon::now()->startOfDay()->timestamp || $sourcePaySchet->getSummFull() !== $paySchet->getSummFull()) {
             $action = '/api/v1/card/unregistered/debit/refund';
+            $refundPayResponse->refundType = RefundPayResponse::REFUND_TYPE_REFUND;
+
+            $refundPayRequest->Amount = $paySchet->getSummFull();
         }
 
         $ans = $this->curlXmlReq(Json::encode($refundPayRequest->getAttributes()), $this->bankUrl . $action);
         Yii::warning("reversOrder: " . $this->logArr($ans), 'merchant');
         if (isset($ans['xml']) && !empty($ans['xml'])) {
-            $status = isset($ans['xml']['errorinfo']['errorcode']) ? $ans['xml']['errorinfo']['errorcode'] : 1;
-            $message = isset($ans['xml']['errorinfo']['errormessage']) ? $ans['xml']['errorinfo']['errormessage'] : 'Ошибка запроса';
+            $status = isset($ans['xml']['errorinfo']['errorcode'])
+                ? BaseResponse::STATUS_ERROR
+                : BaseResponse::STATUS_CREATED;
+            $message = $ans['xml']['errorinfo']['errormessage'] ?? 'Ошибка запроса';
 
             $refundPayResponse->state = $status == 0;
             $refundPayResponse->status = $status;
             $refundPayResponse->message = $message;
-
-            return $refundPayResponse;
+            $refundPayResponse->extId = $ans['xml']['ExtId'];
+            $refundPayResponse->transactionId = $ans['xml']['OrderId'];
         }
+        else {
+            $refundPayResponse->status = BaseResponse::STATUS_ERROR;
+            $refundPayResponse->message = 'Ошибка возврата платежа';
+
+            Yii::error('TKBankAdapter refund error response: ' . $this->logArr($ans));
+        }
+
+        return $refundPayResponse;
     }
 
     /**
@@ -1517,27 +1583,27 @@ class TKBankAdapter implements IBankAdapter
      */
     public function outCardPay(OutCardPayForm $outCardPayForm)
     {
-        $action = '/api/tcbpay/gate/registerordertounregisteredcard';
+        $action = '/api/v1/card/unregistered/credit';
 
         $outCardPayRequest = new OutCardPayRequest();
-        $outCardPayRequest->OrderId = $outCardPayForm->paySchet->ID;
+        $outCardPayRequest->ExtId = $outCardPayForm->paySchet->ID;
         $outCardPayRequest->Amount = $outCardPayForm->paySchet->getSummFull();
         $outCardPayRequest->CardInfo = [
             'CardNumber' => $outCardPayForm->cardnum,
         ];
 
-        $ans = $this->curlXmlReq(Json::encode($outCardPayRequest->getAttributes()), $this->bankUrl . $action);
+        $ans = $this->parseAns($this->curlXmlReq(Json::encode($outCardPayRequest->getAttributes()), $this->bankUrl . $action));
 
         $outCardPayResponse = new OutCardPayResponse();
 
         if(isset($ans['xml'])) {
-            if(isset($ans['xml']['errorinfo']['errorcode']) && $ans['xml']['errorinfo']['errorcode'] == 0) {
+            if(!array_key_exists('errorinfo', $ans['xml']) || (isset($ans['xml']['errorinfo']['errorcode']) && $ans['xml']['errorinfo']['errorcode'] == 0)) {
                 $outCardPayResponse->status = BaseResponse::STATUS_DONE;
-                $outCardPayResponse->trans = $ans['xml']['ordernumber'];
-                $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'];
+                $outCardPayResponse->trans = $ans['xml']['orderid'];
+                $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'] ?? 'Ошибка запроса';
             } else {
                 $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
-                $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'];
+                $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'] ?? 'Ошибка запроса';
             }
         } else {
             $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
@@ -1582,22 +1648,22 @@ class TKBankAdapter implements IBankAdapter
      */
     public function transferToAccount(OutPayAccountForm $outPayaccForm)
     {
-        $action = '/api/tcbpay/gate/registerordertoexternalaccount';
+        $action = '/api/v1/account/external/credit';
 
         $outAccountPayRequest = new TransferToAccountRequest();
         $outAccountPayRequest->Inn = $outPayaccForm->inn;
         $outAccountPayRequest->OrderId = (string)$outPayaccForm->paySchet->ID;
         $outAccountPayRequest->Name = ($outPayaccForm->scenario == OutPayAccountForm::SCENARIO_FL ? $outPayaccForm->fio : $outPayaccForm->name);
-        $outAccountPayRequest->Bik = strval($outPayaccForm->bic);
+        $outAccountPayRequest->Bic = strval($outPayaccForm->bic);
         $outAccountPayRequest->Account = strval($outPayaccForm->account);
         $outAccountPayRequest->Amount = $outPayaccForm->amount;
         $outAccountPayRequest->Description = $outPayaccForm->descript;
 
-        $ans = $this->curlXmlReq(Json::encode($outAccountPayRequest->getAttributes()), $this->bankUrl . $action);
+        $ans = $this->parseAns($this->curlXmlReq(Json::encode($outAccountPayRequest->getAttributes()), $this->bankUrl . $action));
 
         $outAccountPayResponse = new TransferToAccountResponse();
         if (isset($ans['xml']) && !empty($ans['xml'])) {
-            if(isset($ans['xml']['errorinfo']['errorcode']) && $ans['xml']['errorinfo']['errorcode'] == 0) {
+            if(!array_key_exists('errorinfo', $ans['xml']) || (isset($ans['xml']['errorinfo']['errorcode']) && $ans['xml']['errorinfo']['errorcode'] == 0)) {
                 $outAccountPayResponse->status = BaseResponse::STATUS_DONE;
                 $outAccountPayResponse->trans = $ans['xml']['ordernumber'];
             } elseif (isset($ans['xml']['errorinfo']['errorcode'])) {
@@ -1722,5 +1788,36 @@ class TKBankAdapter implements IBankAdapter
     public function sendP2p(SendP2pForm $sendP2pForm)
     {
         // TODO: Implement sendP2p() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function registrationBenific(RegistrationBenificForm $registrationBenificForm)
+    {
+        $action = '/cxf/CftNominalService';
+
+        $queryData = $registrationBenificForm->buildSoapForm($this->gate);
+        $this->UserKey = Yii::getAlias('@app/config/tcbcert/vepay.key');
+        $this->UserCert = Yii::getAlias('@app/config/tcbcert/vepay.crt');
+
+        $ans = $this->curlXmlReq($queryData,
+            $this->bankUrlXml . $action,
+            ['SOAPAction: "http://cft.transcapital.ru/CftNominalIntegrator/SetBeneficiary"'],
+            false,
+            self::CURL_REGISTER_BENEFICIAL_TIMEOUT
+        );
+
+        $registrationBenificResponse = new RegistrationBenificResponse();
+        if (isset($ans['xml']) && !empty($ans['xml'])) {
+            $registrationBenificResponse->status = BaseResponse::STATUS_DONE;
+            $registrationBenificResponse->message = 'Успешно';
+            $registrationBenificResponse->response = $ans['xml'];
+        } elseif (isset($ans['httperror']) && !empty($ans['httperror'])) {
+            $registrationBenificResponse->status = BaseResponse::STATUS_ERROR;
+            $registrationBenificResponse->message = $ans['httperror'];
+        }
+
+        return $registrationBenificResponse;
     }
 }

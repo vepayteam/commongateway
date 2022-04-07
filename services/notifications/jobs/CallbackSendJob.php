@@ -4,6 +4,7 @@
 namespace app\services\notifications\jobs;
 
 
+use app\models\planner\Notification;
 use app\services\notifications\models\NotificationPay;
 use app\services\payment\models\PaySchet;
 use GuzzleHttp\Client;
@@ -11,6 +12,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use Yii;
 use yii\base\BaseObject;
 use yii\helpers\Json;
+use yii\helpers\StringHelper;
 use yii\queue\Queue;
 
 class CallbackSendJob extends BaseObject implements \yii\queue\JobInterface
@@ -90,7 +92,7 @@ class CallbackSendJob extends BaseObject implements \yii\queue\JobInterface
             Yii::warning(sprintf('CallbackSendJob afterTry: %s', $this->notificationPayId));
             $info = curl_getinfo($curl);
             $notificationPay->HttpCode = $info['http_code'];
-            $notificationPay->HttpAns = $response;
+            $notificationPay->HttpAns = StringHelper::truncate($response, Notification::HTTP_ANS_MAX_LENGTH, Notification::HTTP_ANS_SUFFIX);
 
             $notificationPay->DateLastReq = time();
             $notificationPay->url = $notificationPay->getNotificationUrl();

@@ -2,7 +2,7 @@
 
 namespace app\models\payonline;
 
-use Yii;
+use yii\db\ActiveQuery;
 
 /**
  * This is the model class for table "partner_bank_rekviz".
@@ -28,6 +28,8 @@ use Yii;
  * @property string $DateLastExport
  * @property integer $BalanceSumm
  * @property integer $IsDeleted
+ *
+ * @property-read Partner $partner {@see PartnerBankRekviz::getPartner()}
  */
 class PartnerBankRekviz extends \yii\db\ActiveRecord
 {
@@ -94,9 +96,12 @@ class PartnerBankRekviz extends \yii\db\ActiveRecord
         return $err;
     }
 
-    public function getPartner()
+    /**
+     * @return ActiveQuery
+     * @see Partner::getBankRekviz()
+     */
+    public function getPartner(): ActiveQuery
     {
-        return $this->hasOne(Partner::className(), ['ID' => 'IdPartner']);
+        return $this->hasOne(Partner::class, ['ID' => 'IdPartner'])->inverseOf('bankRekviz');
     }
-
 }

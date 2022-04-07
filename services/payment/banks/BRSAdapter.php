@@ -16,10 +16,12 @@ use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\SendP2pResponse;
+use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\CurlSSLStructure;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\BRSAdapterExeception;
+use app\services\payment\exceptions\FailedRecurrentPaymentException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\brs\CheckStatusB2cRequest;
@@ -45,6 +47,7 @@ use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\forms\SendP2pForm;
+use app\services\payment\forms\RegistrationBenificForm;
 use app\services\payment\helpers\BRSErrorHelper;
 use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\PartnerBankGate;
@@ -317,6 +320,7 @@ class BRSAdapter implements IBankAdapter
             $checkStatusPayResponse->status = $this->getStatusResponse($ans['RESULT']);
             $this->checkStatusPayResponseFiller($checkStatusPayResponse, $ans);
             $checkStatusPayResponse->rrn = (array_key_exists('RRN', $ans) ? $ans['RRN'] : '');
+            $checkStatusPayResponse->rcCode = $ans['RESULT_CODE'] ?? null;
         } catch (BankAdapterResponseException $e) {
             $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
             $checkStatusPayResponse->message = BankAdapterResponseException::REQUEST_ERROR_MSG;
@@ -386,19 +390,20 @@ class BRSAdapter implements IBankAdapter
 
         $createRecurrentPayResponse = new CreateRecurrentPayResponse;
         try {
-            $ans = $this->sendRequest($uri, $recurrentPayRequest->getAttributes()); // todo fix there
+            $ans = $this->sendRequest($uri, $recurrentPayRequest->getAttributes());
+
             if (isset($ans['RESULT_CODE']) && intval($ans['RESULT_CODE']) === self::BRS_RESPONSE_SYSTEM_ERROR_CODE) {
                 Yii::error('BRSAdapter recurrentPay paySchet.ID=' . $paySchet->ID
                     . ' bad response result code 1001');
 
-                // Вызываем GateException, чтобы в RecurrentPayJob платежу присвоился статус ERROR и не было опроса статуса
-                throw new GateException(BRSErrorHelper::getMessage($ans));
-            } else {
-                $createRecurrentPayResponse->message = BRSErrorHelper::getMessage($ans);
-                $createRecurrentPayResponse->status = $this->getStatusResponse($ans['RESULT']);
-                $createRecurrentPayResponse->transac = isset($ans['TRANSACTION_ID']) ? $ans['TRANSACTION_ID'] : '';
-                $createRecurrentPayResponse->rrn = isset($ans['RRN']) ? $ans['RRN'] : '';
+                // Вызываем FailedRecurrentPaymentException, чтобы в RecurrentPayJob платежу присвоился статус ERROR и не было опроса статуса
+                throw new FailedRecurrentPaymentException(BRSErrorHelper::getMessage($ans), $ans['RESULT_CODE']);
             }
+
+            $createRecurrentPayResponse->message = BRSErrorHelper::getMessage($ans);
+            $createRecurrentPayResponse->status = $this->getStatusResponse($ans['RESULT']);
+            $createRecurrentPayResponse->transac = isset($ans['TRANSACTION_ID']) ? $ans['TRANSACTION_ID'] : '';
+            $createRecurrentPayResponse->rrn = isset($ans['RRN']) ? $ans['RRN'] : '';
         } catch (BankAdapterResponseException $e) {
             $createRecurrentPayResponse->status = BaseResponse::STATUS_ERROR;
             $createRecurrentPayResponse->message = BankAdapterResponseException::REQUEST_ERROR_MSG;
@@ -412,11 +417,13 @@ class BRSAdapter implements IBankAdapter
     public function refundPay(RefundPayForm $refundPayForm)
     {
         $uri = '/ecomm2/MerchantHandler';
-        $paySchet = $refundPayForm->paySchet;
-        $refundPayRequest = new RefundPayRequest();
-        $refundPayRequest->trans_id = $paySchet->ExtBillNumber;
 
-        if($paySchet->DateCreate < Carbon::now()->startOfDay()->timestamp) {
+        $sourcePaySchet = $refundPayForm->paySchet->refundSource;
+
+        $refundPayRequest = new RefundPayRequest();
+        $refundPayRequest->trans_id = $sourcePaySchet->ExtBillNumber;
+
+        if($sourcePaySchet->DateCreate < Carbon::now()->startOfDay()->timestamp) {
             $refundPayRequest->command = 'k';
         }
 
@@ -454,6 +461,7 @@ class BRSAdapter implements IBankAdapter
         $url = $domain . $uri;
         $request = http_build_query($data);
         curl_setopt_array($curl, array(
+            CURLOPT_VERBOSE => Yii::$app->params['VERBOSE'] === 'Y',
             CURLOPT_URL => $url,
             CURLOPT_HEADER => false,
             CURLOPT_POST => true,
@@ -532,7 +540,10 @@ class BRSAdapter implements IBankAdapter
                 return BaseResponse::STATUS_DONE;
             case 'REVERSED':
             case 'AUTOREVERSED':
-            return BaseResponse::STATUS_CANCEL;
+                /**
+                 * Для refund/reverse возвращать STATUS_DONE тк начальная транзакция остается в статусе успешно
+                 */
+                return BaseResponse::STATUS_DONE;
             default:
                 return BaseResponse::STATUS_ERROR;
         }
@@ -551,7 +562,10 @@ class BRSAdapter implements IBankAdapter
                 return BaseResponse::STATUS_DONE;
             case 'cancelled':
             case 'returned':
-                return BaseResponse::STATUS_CANCEL;
+                /**
+                 * Для refund/reverse возвращать STATUS_DONE тк начальная транзакция остается в статусе успешно
+                 */
+                return BaseResponse::STATUS_DONE;
             default:
                 return BaseResponse::STATUS_ERROR;
         }
@@ -609,6 +623,7 @@ class BRSAdapter implements IBankAdapter
         $curl = curl_init();
 
         curl_setopt_array($curl, array(
+            CURLOPT_VERBOSE => Yii::$app->params['VERBOSE'] === 'Y',
             CURLOPT_URL => $this->bankUrlXml,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
@@ -797,6 +812,7 @@ class BRSAdapter implements IBankAdapter
         $curl = curl_init();
 
         $optArray = [
+            CURLOPT_VERBOSE => Yii::$app->params['VERBOSE'] === 'Y',
             CURLOPT_URL => $this->bankUrlB2C . $uri,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
@@ -871,9 +887,9 @@ class BRSAdapter implements IBankAdapter
 
         $sslData->sslcerttype = 'PEM';
         $sslData->sslkeytype = 'PEM';
-        $sslData->cainfo = Yii::getAlias(self::KEYS_PATH . 'ca_' . $this->gate->Login . '.pem');
+        $sslData->cainfo = Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.ca.crt');
         $sslData->sslcert = Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.pem');
-        $sslData->sslkey = Yii::getAlias(self::KEYS_PATH . 'key_' . $this->gate->Login . '.pem');
+        $sslData->sslkey = Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.key');
 
         return $sslData;
     }
@@ -933,7 +949,7 @@ class BRSAdapter implements IBankAdapter
         $transferToAccountRequest->sourceId = $id;
 
         $requestData = $transferToAccountRequest->getAttributes();
-        $requestData['msgSign'] = $transferToAccountRequest->getMsgSign($this->gate, 'key_' . $this->gate->Login . '.pem');
+        $requestData['msgSign'] = $transferToAccountRequest->getMsgSign($this->gate, $this->gate->Login . '.key');
 
         return $requestData;
     }
@@ -1014,7 +1030,7 @@ class BRSAdapter implements IBankAdapter
 
         $paySchet = $sendP2pForm->paySchet;
         $sendP2pRequest = new SendP2pRequest();
-        $sendP2pRequest->amount = $paySchet->getSummFull() / 100;
+        $sendP2pRequest->amount = $paySchet->getSummFull();
         $sendP2pRequest->currency = $paySchet->currency->Number;
         $sendP2pRequest->client_ip_addr = Yii::$app->request->remoteIP;
         $sendP2pRequest->cardname = $sendP2pForm->cardHolder;
@@ -1081,5 +1097,13 @@ class BRSAdapter implements IBankAdapter
             );
             throw new BankAdapterResponseException(BankAdapterResponseException::REQUEST_ERROR_MSG);
         }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function registrationBenific(RegistrationBenificForm $registrationBenificForm)
+    {
+        throw new GateException('Метод недоступен');
     }
 }

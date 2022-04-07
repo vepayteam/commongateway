@@ -2,6 +2,8 @@
 
 namespace app\models\payonline\active_query;
 
+use app\components\activeQuery\SoftDeleteQuery;
+use app\components\activeQuery\SoftDelete;
 use app\models\payonline\Uslugatovar;
 use yii\db\ActiveQuery;
 
@@ -10,14 +12,24 @@ use yii\db\ActiveQuery;
  *
  * @see \app\models\payonline\Uslugatovar
  */
-class UslugatovarQuery extends ActiveQuery
+class UslugatovarQuery extends ActiveQuery implements SoftDeleteQuery
 {
-    
+    use SoftDelete;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getSoftDeleteFlag(): string
+    {
+        /** {@see Uslugatovar::$IsDeleted} */
+        return 'IsDeleted';
+    }
+
     public function withBetween($dateFrom, $dateTo): UslugatovarQuery
     {
         return $this->andWhere(['between', 'DateAdd', $dateFrom, $dateTo]);
     }
-    
+
     /**
      * {@inheritdoc}
      * @return Uslugatovar[]|array
@@ -26,7 +38,7 @@ class UslugatovarQuery extends ActiveQuery
     {
         return parent::all($db);
     }
-    
+
     /**
      * {@inheritdoc}
      * @return Uslugatovar|array|null

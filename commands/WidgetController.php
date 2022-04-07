@@ -129,7 +129,7 @@ class WidgetController extends Controller
                     AND p.ID >= ' . $startId . ' AND p.ID <= ' . $finishId . '
                     AND n.DateSend = 0
                 ORDER BY p.ID DESC
-                LIMIT ' . 100 . ($page > 0 ? "," . $page * 100 : "") .'  
+                LIMIT ' . 100 . ($page > 0 ? "," . $page * 100 : "") .'
             ';
 
             $query = $connection->createCommand($q)->query();
@@ -193,23 +193,6 @@ class WidgetController extends Controller
         }
 
 
-    }
-
-    /**
-     * Vyvod prinatyh platejeii mfo (1d at 12:30)
-     * @throws \yii\db\Exception
-     */
-    public function actionVyvod()
-    {
-        echo "Run Vyvod\n";
-
-        $perevod = new VyvodSumPay();
-        $perevod->execute();
-
-        if (date('d') == 1) {
-            //возмещение космиссии по выдаче 1го числа
-            $this->actionReturnComis();
-        }
     }
 
     /**

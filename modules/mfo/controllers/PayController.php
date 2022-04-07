@@ -12,6 +12,7 @@ use app\services\base\exceptions\InvalidInputParamException;
 use app\services\compensationService\CompensationException;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
+use app\services\payment\exceptions\NotUniquePayException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CreatePayPartsForm;
 use app\services\payment\forms\MfoCallbackForm;
@@ -151,6 +152,13 @@ class PayController extends Controller
 
             $payschet = $paymentStrategy->exec();
 
+        } catch (NotUniquePayException $e) {
+            return $this->asJson([
+                'status' => 0,
+                'message' => $e->getMessage(),
+                'id' => $e->getPaySchetId(),
+                'extid' => $e->getPaySchetExtId(),
+            ])->setStatusCode(400);
         } catch (CreatePayException $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
         } catch (GateException $e) {
@@ -216,7 +224,14 @@ class PayController extends Controller
                 'id' => $paySchet->ID,
                 'url' => $urlForm,
             ];
-        } catch (CreatePayException |GateException $e) {
+        } catch (NotUniquePayException $e) {
+            return $this->asJson([
+                'status' => 0,
+                'message' => $e->getMessage(),
+                'id' => $e->getPaySchetId(),
+                'extid' => $e->getPaySchetExtId(),
+            ])->setStatusCode(400);
+        } catch (CreatePayException | GateException $e) {
             return [
                 'status' => 2,
                 'message' => $e->getMessage(),
@@ -226,7 +241,7 @@ class PayController extends Controller
 
         /**
      * Автопогашение займа
-     * @return array
+     * @return array|Response
      * @throws BadRequestHttpException
      * @throws \yii\db\Exception
      * @throws \yii\web\UnauthorizedHttpException
@@ -258,6 +273,13 @@ class PayController extends Controller
         $mfoAutoPayStrategy = new MfoAutoPayStrategy($autoPayForm);
         try {
             $paySchet = $mfoAutoPayStrategy->exec();
+        } catch (NotUniquePayException $e) {
+            return $this->asJson([
+                'status' => 0,
+                'message' => $e->getMessage(),
+                'id' => $e->getPaySchetId(),
+                'extid' => $e->getPaySchetExtId(),
+            ])->setStatusCode(400);
         } catch (CreatePayException $e) {
             return ['status' => 2, 'message' => $e->getMessage()];
         } catch (GateException $e) {
@@ -273,8 +295,9 @@ class PayController extends Controller
      * @throws BadRequestHttpException
      * @throws \yii\db\Exception
      * @throws Exception
+     * @return array|Response
      */
-    public function actionAutoParts(): array
+    public function actionAutoParts()
     {
         $mfo = new MfoReq();
         $mfo->LoadData(Yii::$app->request->getRawBody());
@@ -291,6 +314,17 @@ class PayController extends Controller
             $this->queue->push(new ExecutePaymentJob(['paySchetId' => $paySchet->ID]));
 
             return ['status' => 1, 'message' => '', 'id' => $paySchet->ID];
+        } catch (NotUniquePayException $e) {
+            /**
+             * Обработка NotUniquePayException {@see RecurrentPaymentPartsForm::validateExtId()}
+             */
+
+            return $this->asJson([
+                'status' => 0,
+                'message' => $e->getMessage(),
+                'id' => $e->getPaySchetId(),
+                'extid' => $e->getPaySchetExtId(),
+            ])->setStatusCode(400);
         } catch (PaymentException $e) {
             switch ($e->getCode()) {
                 case PaymentException::CARD_EXPIRED:
@@ -350,6 +384,42 @@ class PayController extends Controller
                 'channel' => $paySchet->bank->ChannelName,
             ];
         }
+    }
+
+    public function actionInfo()
+    {
+        $mfo = new MfoReq();
+        $mfo->LoadData(Yii::$app->request->getRawBody());
+
+        // TODO: DRY
+        $paySchetId = $mfo->GetReq('id');
+        $paySchet = PaySchet::findOne([
+            'ID' => $paySchetId,
+            'IdOrg' => $mfo->mfo,
+        ]);
+
+        if(!$paySchet) {
+            return ['status' => 0, 'message' => 'Счет не найден'];
+        }
+
+        if($paySchet->Status == PaySchet::STATUS_WAITING) {
+            return [
+                'status' => 0,
+                'message' => 'В обработке',
+                'rc' => '',
+                'channel' => $paySchet->bank->ChannelName,
+                'gate_transaction_id' => $paySchet->ExtBillNumber,
+            ];
+        } else {
+            return [
+                'status' => (int)$paySchet->Status,
+                'message' => (string)$paySchet->ErrorInfo,
+                'rc' => $paySchet->RCCode,
+                'channel' => $paySchet->bank->ChannelName,
+                'gate_transaction_id' => $paySchet->ExtBillNumber,
+            ];
+        }
+
     }
 
     /**

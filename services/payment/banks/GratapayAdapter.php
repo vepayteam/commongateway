@@ -17,6 +17,7 @@ use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentInitResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
+use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
@@ -35,6 +36,7 @@ use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\forms\SendP2pForm;
+use app\services\payment\forms\RegistrationBenificForm;
 use app\services\payment\models\Bank;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
@@ -174,12 +176,19 @@ class GratapayAdapter implements IBankAdapter
      */
     public function refundPay(RefundPayForm $refundPayForm)
     {
+        /**
+         * @todo Temporary not available. Remove this exception after fix.
+         */
+        throw new GateException('Метод недоступен');
+
         $paySchet = $refundPayForm->paySchet;
+        $sourcePaySchet = $paySchet->refundSource;
+
         $refundPayRequest = new RefundPayRequest();
         $refundPayRequest->amount = $paySchet->getSummFull() / 100;
         $refundPayRequest->currency = $paySchet->currency->Code;
-        $refundPayRequest->original_transaction_id = $paySchet->ExtBillNumber;
-        $refundPayRequest->transaction_id = $paySchet->ID;
+        $refundPayRequest->original_transaction_id = $sourcePaySchet->ExtBillNumber;
+        $refundPayRequest->transaction_id = $sourcePaySchet->ID;
 
         $bodyJson = Json::encode($refundPayRequest->getAttributes());
         $refundPayResponse = new RefundPayResponse();
@@ -344,6 +353,11 @@ class GratapayAdapter implements IBankAdapter
 
     public function sendP2p(SendP2pForm $sendP2pForm)
     {
-        // TODO: Implement sendP2p() method.
+        throw new GateException('Метод недоступен');
+    }
+
+    public function registrationBenific(RegistrationBenificForm $registrationBenificForm)
+    {
+        throw new GateException('Метод недоступен');
     }
 }

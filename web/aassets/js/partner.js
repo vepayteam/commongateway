@@ -135,6 +135,36 @@
                 }
             });
         },
+        statrecalcreq: function (page) {
+
+            if (linklink) {
+                linklink.abort();
+            }
+            linklink = $.ajax({
+                type: "POST",
+                url: '/partner/stat/recalcdata?page=' + page,
+                data: $('#statrecalcform').serialize(),
+                beforeSend: function () {
+                    $('#statrecalcform').closest('.ibox-content').toggleClass('sk-loading');
+                },
+                success: function (data) {
+                    $('#statrecalcform').closest('.ibox-content').toggleClass('sk-loading');
+                    if (data.status == 1) {
+                        $('#statlistresult').html(data.data);
+                        $('.pagination a').each(function(){
+                            $(this).removeAttr('href');
+                            $(this).attr('onclick', 'lk.statrecalcreq('+(parseInt($(this).attr('data-page'))+1)+');');
+                        });
+                    } else {
+                        $('#statlistresult').html("<p class='text-center'>" + data.message + "</p>");
+                    }
+                },
+                error: function () {
+                    $('#statrecalcform').closest('.ibox-content').toggleClass('sk-loading');
+                    $('#statlistresult').html("<p class='text-center'>Ошибка</p>");
+                }
+            });
+        },
 
         statlist: function () {
 
@@ -173,26 +203,44 @@
                 return false;
             });
 
+            $('#statrecalcform').on('submit', function () {
+                lk.statrecalcreq(1);
+                return false;
+            });
+
             $('#statlistresult').on('click', '[data-action="cancelpay"]', function () {
-                let idpay = $(this).attr('data-id');
+                let idpay = parseInt($(this).attr('data-id'));
+                let remainingAmount = $(this).attr('data-remaining-amount') || '0'
+                let refundAmount = $(this).attr('data-refund-amount') || '0'
+                let fullSum = $(this).attr('data-full-amount') || '0'
+
                 swal({
-                    title: "Подтвердите отмену платежа",
-                    text: "Послу отмены платежи средства будут возвращены клиенту!",
-                    type: "warning",
+                    title: "Подтвердите возврат платежа",
+                    text: 'Послу возврата платежа средства будут возвращены клиенту!\nПолная сумма платежа: ' + fullSum + '\n\nВозвращено: ' + refundAmount + '\nОсталось: ' + remainingAmount,
+                    type: "input",
+                    inputType: "number",
+                    inputValue: remainingAmount,
                     showCancelButton: true,
                     confirmButtonColor: "#DD6B55",
-                    confirmButtonText: "Да, отменить!",
-                    cancelButtonText: "Не отменять",
+                    confirmButtonText: "Вернуть",
+                    cancelButtonText: "Отмена",
                     closeOnConfirm: false
-                }, function () {
+                }, function (refundSum) {
+                    refundSum = parseFloat(refundSum)
+                    if (isNaN(refundSum)) {
+                        swal.showInputError('Укажите сумму возврата!')
+                        return false
+                    }
 
                     if (linklink) {
                         linklink.abort();
                     }
                     linklink = $.ajax({
-                        type: "POST",
+                        type: 'POST',
                         url: '/partner/stat/reversorder',
-                        data: {'id': idpay},
+                        data: JSON.stringify({'id': idpay, 'refundSum': refundSum}),
+                        dataType: 'json',
+                        contentType: 'application/json',
                         beforeSend: function () {
                             $('#statlistform').closest('.ibox-content').toggleClass('sk-loading');
                         },
@@ -207,9 +255,13 @@
                                     $('#statlistform').trigger('submit');
                                 });
                             } else {
+                                let errors = data.errors
+                                    ? Object.values(data.errors).map(function (i) {return i.join('\n')}).join('\n')
+                                    : 'Ошибка выполнения'
+
                                 swal({
                                     title: "Ошибка",
-                                    text: data.message,
+                                    text: errors,
                                     type: "error"
                                 }, function () {
                                     $('#statlistform').trigger('submit');
@@ -1924,11 +1976,20 @@
 
             // bank gates
             $('#partner-edit__bank-gates-table__add-button').on('click', function(e) {
-                $('#partner-edit__bank-gates-edit-modal__gate-form').trigger('reset');
+
+                let $form = $('#partner-edit__bank-gates-edit-modal__gate-form');
+
+                $form.trigger('reset');
+                $form.find('input[name=Id]').val('');
+
                 $('#partner-edit__bank-gates-edit-modal').modal('show');
 
                 return false;
             })
+
+            $('#partner-edit__bank-gates-edit-modal__cancel-button').on('click', function(e) {
+                $('#partner-edit__bank-gates-edit-modal__gate-form [name="Id"]').val('');
+            });
 
             $('.partner-edit__bank-gates-table__edit-button').on('click', function(e) {
                 let $form = $('#partner-edit__bank-gates-edit-modal__gate-form');
@@ -2332,4 +2393,3 @@
 
 
 }(jQuery || $));
-

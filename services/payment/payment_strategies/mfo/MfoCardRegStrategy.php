@@ -8,6 +8,7 @@ use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\CreatePayException;
+use app\services\payment\exceptions\NotUniquePayException;
 use app\services\payment\forms\CardRegForm;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
@@ -15,7 +16,9 @@ use yii\mutex\FileMutex;
 
 class MfoCardRegStrategy
 {
-    const PAY_SUMM = 1100;
+    const PAYMENT_AMOUNT_REG_TYPE_BY_PAY = 1100;
+    const PAYMENT_AMOUNT_REG_TYPE_BY_OUT = 0;
+
     private $cardRegByPayForm;
 
     public function __construct(CardRegForm $cardRegForm)
@@ -27,13 +30,14 @@ class MfoCardRegStrategy
      * @return PaySchet
      * @throws CreatePayException
      * @throws \app\services\payment\exceptions\GateException
+     * @throws NotUniquePayException
      * @throws \Exception
      */
     public function exec()
     {
         $duplicatePaySchet = $this->getDuplicateRequest();
         if(!empty($duplicatePaySchet)) {
-            return $duplicatePaySchet;
+            throw new NotUniquePayException($duplicatePaySchet->ID, $duplicatePaySchet->Extid);
         }
 
         $user = $this->createUser();
@@ -52,7 +56,6 @@ class MfoCardRegStrategy
         if(!empty($this->cardRegByPayForm->extid)) {
             $duplicatePaySchet = PaySchet::findOne([
                 'Extid' => $this->cardRegByPayForm->extid,
-                'IdUsluga' => Uslugatovar::TYPE_REG_CARD,
                 'IdOrg' => $this->cardRegByPayForm->partner->ID,
             ]);
             return $duplicatePaySchet;
@@ -97,7 +100,6 @@ class MfoCardRegStrategy
      */
     public function createPaySchet(User $user, BankAdapterBuilder $bankAdapterBuilder)
     {
-        $summPay = self::PAY_SUMM;
 
         $paySchet = new PaySchet();
 
@@ -107,7 +109,9 @@ class MfoCardRegStrategy
         $paySchet->IdOrg = $this->cardRegByPayForm->partner->ID;
         $paySchet->Extid = $this->cardRegByPayForm->extid;
         $paySchet->QrParams = '';
-        $paySchet->SummPay = $summPay;
+        $paySchet->SummPay = $this->cardRegByPayForm->type == CardRegForm::CARD_REG_TYPE_BY_OUT
+            ? self::PAYMENT_AMOUNT_REG_TYPE_BY_OUT
+            : self::PAYMENT_AMOUNT_REG_TYPE_BY_PAY;
 
         $paySchet->DateCreate = time();
         $paySchet->DateLastUpdate = time();

@@ -4,20 +4,22 @@
 namespace app\services\payment\payment_strategies;
 
 
+use app\clients\tcbClient\TcbOrderNotExistException;
 use app\models\antifraud\AntiFraud;
 use app\models\bank\BankCheck;
 use app\models\payonline\Cards;
 use app\models\payonline\Uslugatovar;
 use app\models\queue\DraftPrintJob;
-use app\models\queue\ReverspayJob;
 use app\models\TU;
 use app\services\balance\BalanceService;
 use app\services\notifications\NotificationsService;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\BankAdapterBuilder;
+use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\SetPayOkForm;
+use app\services\payment\jobs\RefundPayJob;
 use app\services\payment\models\PayCard;
 use app\services\payment\models\PaySchet;
 use app\services\payment\PaymentService;
@@ -59,8 +61,13 @@ class OkPayStrategy
         $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank, $paySchet->currency);
 
         if($paySchet->Status == PaySchet::STATUS_WAITING && $paySchet->sms_accept == 1) {
-            /** @var CheckStatusPayResponse $checkStatusPayResponse */
-            $checkStatusPayResponse = $bankAdapterBuilder->getBankAdapter()->checkStatusPay($this->okPayForm);
+
+            try {
+                $checkStatusPayResponse = $bankAdapterBuilder->getBankAdapter()->checkStatusPay($this->okPayForm);
+            } catch (TcbOrderNotExistException $e) {
+                /** @todo Remove, hack for TCB (VPBC-1298). */
+                throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее.');
+            }
 
             // Привязка карты
             if($this->isNeedLinkCard($paySchet, $checkStatusPayResponse)) {
@@ -196,17 +203,25 @@ class OkPayStrategy
                     ]));
                 }
 
-                //оповещения на почту и колбэком
-                /** @var NotificationsService $notificationsService */
-                $notificationsService = Yii::$container->get('NotificationsService');
-                $notificationsService->addNotificationByPaySchet($paySchet);
+                /**
+                 * Колбэки для refund/reverse операций отправлять не нужно
+                 */
+                if (!$paySchet->isRefund) {
+                    //оповещения на почту и колбэком
+                    /** @var NotificationsService $notificationsService */
+                    $notificationsService = Yii::$container->get('NotificationsService');
+                    $notificationsService->addNotificationByPaySchet($paySchet);
+                }
 
                 // если регистрация карты, делаем возврат
                 // иначе изменяем баланс
                 if($paySchet->Bank != 0) {
-                    if($paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD) {
-                        Yii::$app->queue->push(new ReverspayJob([
-                            'idpay' => $paySchet->ID,
+                    /**
+                     * Если операция и так является возвратом, то заново для неё рефанд запускать не надо
+                     */
+                    if($paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD && !$paySchet->isRefund) {
+                        Yii::$app->queue->push(new RefundPayJob([
+                            'paySchetId' => $paySchet->ID,
                             'initiator' => 'OkPayStrategy confirmPay',
                         ]));
                     } else {
@@ -227,9 +242,14 @@ class OkPayStrategy
                 Yii::warning('OkPayStrategy confirmPay isStatusDone');
                 $this->paymentService->cancelPay($paySchet, $checkStatusPayResponse->message);
 
-                /** @var NotificationsService $notificationService */
-                $notificationsService = $this->getNotificationsService();
-                $notificationsService->addNotificationByPaySchet($paySchet);
+                /**
+                 * Колбэки для refund/reverse операций отправлять не нужно
+                 */
+                if (!$paySchet->isRefund) {
+                    /** @var NotificationsService $notificationService */
+                    $notificationsService = $this->getNotificationsService();
+                    $notificationsService->addNotificationByPaySchet($paySchet);
+                }
 
                 $antifraud = new AntiFraud($paySchet->ID);
                 $antifraud->update_status_transaction(1);

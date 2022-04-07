@@ -8,6 +8,7 @@ use app\models\mfo\VyvodSystem;
 use app\models\partner\admin\structures\VyvodSystemFilterParams;
 use app\models\partner\admin\VoznagStat;
 use app\models\partner\UserLk;
+use app\models\payonline\active_query\UslugatovarQuery;
 use app\models\sms\tables\AccessSms;
 use app\services\partners\models\PartnerOption;
 use app\services\payment\models\PartnerBankGate;
@@ -32,6 +33,7 @@ use yii\db\ActiveRecord;
  * @property string $DateDogovor [varchar(20)]  -
  * @property string $PodpisantFull [varchar(100)]  -
  * @property string $PodpisantShort [varchar(50)]  -
+ * @property string $SignatoryShortDative [varchar(63)] - Short form of dative signatory
  * @property string $PodpDoljpost [varchar(100)]  -
  * @property string $PodpDoljpostRod [varchar(100)]  -
  * @property string $PodpOsnovan [varchar(100)]  -
@@ -99,7 +101,6 @@ use yii\db\ActiveRecord;
  * @property string $KeyTkbOctVyvod
  * @property string $LoginTkbOctPerevod
  * @property string $KeyTkbOctPerevod
- * @property integer $IsAutoPerevodToVydacha
  * @property integer $IsCommonSchetVydacha
  * @property string $EmailNotif
  * @property string $OrangeDataSingKey
@@ -134,7 +135,7 @@ use yii\db\ActiveRecord;
  * @property int $BankForTransferToCardId
  * @property int $RunaBankCid
  * @property Uslugatovar[] $uslugatovars
- * @property PartnerBankRekviz $partner_bank_rekviz
+ * @property PartnerBankRekviz[] $partner_bank_rekviz Deprecated, use {@see Partner::$bankRekviz} instead.
  * @property string $Apple_displayName [varchar(100)]
  * @property string $MtsLoginEcom [varchar(255)]
  * @property string $MtsPasswordEcom [varchar(255)]
@@ -156,6 +157,8 @@ use yii\db\ActiveRecord;
  * @property string $MtsTokenOctPerevod [varchar(255)]
  * @property string $MtsLoginParts [varchar(255)]
  * @property string $nameWithId
+ *
+ * @property-read PartnerBankRekviz $bankRekviz {@see Partner::getBankRekviz()}
  */
 class Partner extends ActiveRecord
 {
@@ -180,8 +183,8 @@ class Partner extends ActiveRecord
     {
         return [
             [['Name'], 'required', 'on' => self::SCENARIO_DEFAULT],
-            [['IsBlocked', 'UrState', 'IsMfo', 'IsAftOnly', 'IsUnreserveComis', 'TypeMerchant', 'VoznagVyplatDirect',
-                'IsAutoPerevodToVydacha', 'IsCommonSchetVydacha', 'IsUseKKmPrint',
+            [['IsBlocked', 'UrState', 'IsMfo', 'IsUnreserveComis', 'TypeMerchant', 'VoznagVyplatDirect',
+                'IsCommonSchetVydacha', 'IsUseKKmPrint',
                 'IsUseApplepay', 'IsUseGooglepay', 'IsUseSamsungpay', 'BankForPaymentId'], 'integer'],
             [['UrAdres', 'PostAdres'], 'string', 'max' => 1000],
             [['UrAdres', 'PostAdres', 'Apple_PayProcCert'], 'string', 'max' => 1000],
@@ -206,6 +209,7 @@ class Partner extends ActiveRecord
                 'Apple_MerchantID', 'Apple_displayName', 'Apple_KeyPasswd', 'Apple_MerchIdentKey', 'Apple_MerchIdentCert',
                 'GoogleMerchantID', 'SamsungMerchantID'
             ], 'string', 'max' => 100],
+            [['SignatoryShortDative'], 'string', 'max' => 63],
             [['KeyTkbAft', 'KeyTkbEcom', 'KeyTkbVyvod', 'KeyTkbPerevod', 'KeyTkbAuto1', 'KeyTkbAuto2',
                 'KeyTkbAuto3', 'KeyTkbAuto4', 'KeyTkbAuto5', 'KeyTkbAuto6', 'KeyTkbAuto7', 'IpAccesApi', 'KeyTkbJkh',
                 'KeyTkbOct', 'KeyTkbOctVyvod', 'KeyTkbOctPerevod', 'KeyTkbParts'
@@ -252,6 +256,7 @@ class Partner extends ActiveRecord
             'DateDogovor' => 'Дата заключения договора',
             'PodpisantFull' => 'ФИО подписанта полное',
             'PodpisantShort' => 'ФИО подписанта сокращенное',
+            'SignatoryShortDative' => 'ФИО подписанта сокращенное дательном падеже (кому?)',
             'PodpDoljpost' => 'Должность',
             'PodpDoljpostRod' => 'В лице (должность)',
             'PodpOsnovan' => 'Основание подписи',
@@ -292,7 +297,6 @@ class Partner extends ActiveRecord
             'SchetTcbTransit' => 'Номер транзитного счета ТКБ на погашение',
             'SchetTcbNominal' => 'Номер номинального счета ТКБ',
             'IsDeleted' => '0 - rabotaet 1 - udalen',
-            'IsAftOnly' => 'Только AFT шлюз',
             'BankName' => 'Наименование банка',
             'BikBank' => 'БИК банка',
             'RSchet' => 'Расчетный счет',
@@ -311,7 +315,6 @@ class Partner extends ActiveRecord
             'SchetTcbParts' => 'Номер счета разбивка платежей',
             'LoginTkbParts' => 'Логин ТКБ разбивка платежей',
             'KeyTkbParts' => 'Пароль ТКБ разбивка платежей',
-            'IsAutoPerevodToVydacha' => 'Автоперечисления на счет выдачи',
             'IsCommonSchetVydacha' => 'Один счет на выдачу и погашение',
             'EmailNotif' => 'E-mail для оповещения',
             'OrangeDataSingKey' => 'Ключ для подписи',
@@ -379,9 +382,21 @@ class Partner extends ActiveRecord
         ];
     }
 
+    /**
+     * @deprecated Use {@see Partner::getBankRekviz()} instead.
+     */
     public function getPartner_bank_rekviz(): ActiveQuery
     {
         return $this->hasMany(PartnerBankRekviz::class, ['IdPartner' => 'ID']);
+    }
+
+    /**
+     * @return ActiveQuery
+     * @see PartnerBankRekviz::getPartner()
+     */
+    public function getBankRekviz(): ActiveQuery
+    {
+        return $this->hasOne(PartnerBankRekviz::class, ['IdPartner' => 'ID'])->inverseOf('partner');
     }
 
     public function getPartnerDogovor(): ActiveQuery
@@ -404,6 +419,9 @@ class Partner extends ActiveRecord
         return $this->hasOne(DistributionReports::class, ['partner_id' => 'ID']);
     }
 
+    /**
+     * @return UslugatovarQuery
+     */
     public function getUslugatovars(): ActiveQuery
     {
         return $this->hasMany(Uslugatovar::class, ['IDPartner' => 'ID']);

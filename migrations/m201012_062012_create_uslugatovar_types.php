@@ -27,7 +27,7 @@ class m201012_062012_create_uslugatovar_types extends Migration
         ]);
         $this->createIndex($indexName, $tableName, 'id', $unique = true);
 
-        foreach (UslugatovarType::getAll() as $id => $name) {
+        foreach (UslugatovarType::typeList() as $id => $name) {
             $uslugatovarType = new UslugatovarType();
             $uslugatovarType->Id = $id;
             $uslugatovarType->Name = $name;

@@ -6,6 +6,7 @@ return [
     'robotEmail' => 'robot@vepay.online',
     'infoEmail' => 'support@vepay.online',
     'buhEmail' => 'support@vepay.online',
+    'VERBOSE' => 'N',
     'dectaApiUrl' => 'https://gate.decta.com',
     'dectaProxy' => 'http://username:password@vepay-proxy.virtualfort.ru:30013',
     'DEVMODE' => 'Y',
@@ -33,6 +34,7 @@ return [
         'id' => '',
         'key' => '',
     ],
+    'tcbConnectionTimeout' => null,
 
     'kkt' => [
         'urlico' => '',
@@ -48,9 +50,9 @@ return [
     'components' => [
         'redis' => [
             'class' => 'yii\redis\Connection',
-            'hostname' => '127.0.0.1',
-            'port' => 6379,
-            'database' => 3,
+            'hostname' => getenv('REDIS_HOST', true),
+            'port' => getenv('REDIS_PORT', true),
+            'database' => getenv('REDIS_DB_NUM_QUEUE', true),
             'retries' => 3
         ],
         'queue' => [
@@ -72,28 +74,32 @@ return [
         'cache' => [
             'class' => 'yii\redis\Cache',
             'redis' => [
-                'hostname' => '127.0.0.1',
-                'port' => 6379,
-                'database' => 4
+                'hostname' => getenv('REDIS_HOST', true),
+                'port' => getenv('REDIS_PORT', true),
+                'database' => getenv('REDIS_DB_NUM_CACHE', true)
             ],
         ],
     ],
 
     'services' => [
         'accounts' => [
-            'url' => 'http://vpbc-102-test.192-168-110-2.nip.io/api',
-            'superuserLogin' => 'superuser',
-            'superuserPassword' => 'Default12345',
+            'url' => null,
+            'superuserLogin' => null,
+            'superuserPassword' => null,
             'canRegUserRole' => 'php_account_admin',
         ],
         'payments' => [
             'BRS' => [
                 'url' => 'https://testsecurepay2.rsb.ru:9443',
                 'url_3ds' => 'https://testsecurepay2.rsb.ru/ecomm2/ClientHandler',
-                'url_p2p' => 'https://testsecurepay.rsb.ru:9443',
-                'url_p2p_3ds' => 'https://testsecurepay.rsb.ru/ecomm2/ClientHandler',
+                'url_p2p' => 'https://testsecurepay2.rsb.ru:9443',
+                'url_p2p_3ds' => 'https://testsecurepay2.rsb.ru/ecomm2/ClientHandler',
                 'url_xml' => 'https://194.67.29.216:8443',
                 'url_b2c' => 'https://212.46.217.150:7601',
+            ],
+            'TCB' => [
+                'url' => 'https://paytest.online.tkbbank.ru',
+                'url_xml' => 'https://193.232.101.14:8203',
             ],
         ],
     ],

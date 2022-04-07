@@ -4,6 +4,7 @@ namespace app\modules\mfo\models;
 
 use app\models\payonline\Cards;
 use app\models\payonline\Partner;
+use app\services\payment\exceptions\NotUniquePayException;
 use app\services\payment\models\PaySchet;
 use app\services\RecurrentPaymentPartsService;
 use app\services\recurrentPaymentPartsService\dataObjects\PartData;
@@ -75,7 +76,8 @@ class RecurrentPaymentPartsForm extends Model implements PaymentData
     {
         return [
             [['card', 'parts'], 'required'],
-            [['document_id', 'fullname', 'extid'], 'string', 'max' => 40],
+            [['document_id', 'extid'], 'string', 'max' => 40],
+            [['fullname'], 'string', 'max' => 80],
             [['card'], 'integer'],
             [['descript'], 'string', 'max' => 200],
             [
@@ -87,16 +89,29 @@ class RecurrentPaymentPartsForm extends Model implements PaymentData
                         ->andWhere(['userAlias.ExtOrg' => $this->partner->ID]);
                 },
             ],
-            [
-                ['extid'], 'unique',
-                'targetClass' => PaySchet::class, 'targetAttribute' => 'ExtId',
-                'filter' => function (ActiveQuery $query) {
-                    $query->andWhere(['IdOrg' => $this->partner->ID]);
-                }
-            ],
-
-            [['parts'], 'validateParts'],/** @see validateParts() */
+            [['extid'], 'validateExtId'], /** @see validateExtId() */
+            [['parts'], 'validateParts'], /** @see validateParts() */
         ];
+    }
+
+    /**
+     * Проверка на уникальность extid у текущего партнера.
+     * При ошибке требуется кастомный ответ см VPBC-1345 поэтому вызывается {@see NotUniquePayException}
+     *
+     * @return void
+     * @throws NotUniquePayException
+     */
+    public function validateExtId()
+    {
+        /** @var PaySchet $paySchet */
+        $paySchet = PaySchet::find()
+            ->andWhere(['Extid' => $this->extid])
+            ->andWhere(['IdOrg' => $this->partner->ID])
+            ->one();
+
+        if ($paySchet) {
+            throw new NotUniquePayException($paySchet->ID, $paySchet->Extid);
+        }
     }
 
     /**

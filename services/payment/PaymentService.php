@@ -259,7 +259,7 @@ class PaymentService
         $generator = $this->generatorPaySchetsForWhere($where, $limit);
         /** @var PaySchet $paySchet */
         foreach ($generator as $paySchet) {
-            if(!in_array($paySchet->uslugatovar->IsCustom, UslugatovarType::getRecurrent())) {
+            if(!in_array($paySchet->uslugatovar->IsCustom, UslugatovarType::recurrentTypes())) {
                 continue;
             }
 
@@ -363,6 +363,7 @@ class PaymentService
      * @return PaySchet
      * @throws GateException
      * @throws exceptions\CreatePayException
+     * @throws exceptions\NotUniquePayException
      */
     public function sbpTransfer(OutPayAccountForm $outPayAccountForm): PaySchet
     {
