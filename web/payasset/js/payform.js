@@ -368,10 +368,13 @@
                         clearInterval(interval);
                     } else if(response['status'] && response['status'] == 'decline') {
                         window.location = response.termurl;
+                        clearInterval(interval);
                     } else if(response['status'] && response['status'] == 'success') {
                         window.location = '/pay/orderok?id=' + id;
+                        clearInterval(interval);
                     } else {
                         window.location = response.termurl;
+                        clearInterval(interval);
                     }
                 }
             });
