@@ -1,16 +1,14 @@
 <?php
 
 return [
-    'domain' => getenv('TEST_URL', true) == 'https://feature-vpbc-1295-processing.backend.vepay.cf'
-        ? 'https://my03mgefkd7ifomu3kjew5c7.external.vepay.cf'
-        : getenv('TEST_URL', true),
+    'domain' => getenv('TEST_URL', true),
     'adminEmail' => 'support@vepay.online',
     'robotEmail' => 'robot@vepay.online',
     'infoEmail' => 'support@vepay.online',
     'buhEmail' => 'support@vepay.online',
     'dectaApiUrl' => 'https://gate.decta.com',
     'dectaProxy' => getenv("DECTA_PROXY_URL", true),
-    'DEVMODE' => 'Y',
+    'DEVMODE' => boolval(getenv('DEVMODE', true)) ? 'Y' : 'N',
     'TESTMODE' => 'Y',
     'VERBOSE' => boolval(getenv('CURL_VERBOSE', true)) ? 'Y' : 'N',
     'accountServiceUrl' => '',
