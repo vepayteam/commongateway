@@ -356,15 +356,20 @@
                     '_csrf': $('input[name=_csrf]').val(),
                 },
                 success: function (response, textStatus, jqXHR) {
-                    if('status' in response && response['status'] == 'awaiting 3ds result') {
+                    if(!response || typeof response['status'] == 'undefined') {
+                        return;
+                    }
+                    if(response['status'] && response['status'] == 'awaiting 3ds result') {
                         var url = response['data']['acs']['acs_url'];
                         var md = response['data']['acs']['md'];
                         var paReq = response['data']['acs']['pa_req'];
                         var termUrl = response['data']['acs']['term_url'];
                         payform.load3dsMonetix(url, paReq, md, termUrl);
                         clearInterval(interval);
-                    } else if('status' in response && response['status'] == 'decline') {
+                    } else if(response['status'] && response['status'] == 'decline') {
                         window.location = response.termurl;
+                    } else if(response['status'] && response['status'] == 'success') {
+                        window.location = '/pay/orderok?id=' + id;
                     } else {
                         window.location = response.termurl;
                     }
