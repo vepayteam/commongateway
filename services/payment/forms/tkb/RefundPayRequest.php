@@ -1,24 +1,23 @@
 <?php
 
-
 namespace app\services\payment\forms\tkb;
-
 
 use yii\base\Model;
 
 class RefundPayRequest extends Model
 {
     public $ExtId;
-    public $amount;
-    public $description = 'Отмена заказа';
+    public $Amount;
+    public $Description = 'Отмена заказа';
 
-
-    public function rules()
+    /**
+     * @inheritdoc
+     */
+    public function rules(): array
     {
         return [
             ['ExtId', 'required'],
-            [['ExtId', 'amount'], 'number'],
+            [['ExtId', 'Amount'], 'number'],
         ];
     }
-
 }
