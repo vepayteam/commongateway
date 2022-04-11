@@ -6,6 +6,7 @@ namespace app\models\partner\stat\export\csv;
 
 use app\models\partner\UserLk;
 use app\models\TU;
+use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\PaySchet;
 use Yii;
 use yii\helpers\VarDumper;
@@ -76,7 +77,7 @@ class OtchToCSV extends ToCSV
         yield from array_merge(
             [$this->header($isAdmin)],
             $listData,
-            [$this->totalString($listData)]
+            [$this->totalString($list['data'])]
         );
     }
 
@@ -87,11 +88,18 @@ class OtchToCSV extends ToCSV
 
     private function totalString(array $list): array
     {
-        $totalSum = $totalFee = $totalReward = 0;
-        $t = [];
+        $totalSum = $totalFee = 0;
         foreach ($list as $data) {
-            $totalSum += (float)str_replace(',', '.', $data[6]);
-            $totalFee += (float)str_replace(',', '.', $data[7]);
+            if (
+                intval($data['Status']) === PaySchet::STATUS_REFUND_DONE ||
+                intval($data['Status']) === PaySchet::STATUS_CANCEL
+            ) {
+                $totalSum -= (int) $data['SummPay'];
+                $totalFee -= (int) $data['ComissSumm'];
+            } else {
+                $totalSum += (int) $data['SummPay'];
+                $totalFee += (int) $data['ComissSumm'];
+            }
         }
         return [
             'Итого: ',
@@ -100,11 +108,9 @@ class OtchToCSV extends ToCSV
             '',
             '',
             '',
-            number_format($totalSum, 2, ',', ''),
-            number_format($totalFee, 2, ',', ''),
             '',
-            '',
-            '',
+            number_format(PaymentHelper::convertToFullAmount($totalSum), 2, ',', ''),
+            number_format(PaymentHelper::convertToFullAmount($totalFee), 2, ',', ''),
         ];
     }
 
