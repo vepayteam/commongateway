@@ -98,6 +98,7 @@ class FortaTechAdapter implements IBankAdapter
         ];
         $config = [
             RequestOptions::HEADERS => $apiClientHeader,
+            RequestOptions::PROXY => Yii::$app->params['fortaProxy'],
         ];
         $infoMessage = sprintf(
             'partnerId=%d bankId=%d',
