@@ -39,8 +39,7 @@ class ReverspayJob extends BaseObject implements JobInterface
         $service = Yii::$app->get(PaymentService::class);
 
         try {
-            $reversePaySchet = $service->createRefundPayment($paySchet);
-            $service->reverse($reversePaySchet);
+            $service->reverse($paySchet);
         } catch (\Exception $e) {
             Yii::error(['ReversPayJob reverse exception', $e]);
         }
