@@ -36,7 +36,7 @@ return [
         'basePath' => '@webroot/assets',
         'baseUrl' => '@web/assets',
         'js' => [
-            'swagger-be2fa046a8d0b016f7c12379c0c7c6b7.js',
+            'swagger-c7e39c397446e9fbc0ed2d0f8e9872e4.js',
         ],
         'css' => [
             'swagger-3e91ccac8173fbe79464ddc57617e52c.css',
@@ -75,7 +75,7 @@ return [
         'basePath' => '@webroot/assets',
         'baseUrl' => '@web/assets',
         'js' => [
-            'pay-be894bb72893ca2de3dd319d98744dfb.js',
+            'pay-05b87d9f982623d2ef56f3420a19519b.js',
         ],
         'css' => [
             'pay-26d5739b2ec9724046c78940f51f56d8.css',

@@ -26,7 +26,8 @@ const MAX_EXP_CARD_YEARS = 10;
         var minsumComiss = <?=$paySchet->uslugatovar->MinsumComiss?>;
         var currMonth = <?=Carbon::now()->month?>;
         var currYear = <?=Carbon::now()->year?>;
-
+        var minSum = <?=$paySchet->uslugatovar->MinSumm / 100?>;
+        var maxSum = <?=$paySchet->uslugatovar->MaxSumm / 100?>;
 
     </script>
 
@@ -44,7 +45,8 @@ const MAX_EXP_CARD_YEARS = 10;
             background: none;
             border: none;
             font-size: 1.2em;
-            font-weight: bolder;"
+            font-weight: bolder;
+            cursor: pointer"
         >
             x
         </button>
@@ -126,7 +128,11 @@ const MAX_EXP_CARD_YEARS = 10;
             </div>
             <div class="formMainBody">
                 <div class="conditionsBlock center">
-                    <span>* не более 75 000 руб. за одну операцию</span>
+                    <span>
+                        * не менее <?= number_format($paySchet->uslugatovar->MinSumm / 100, 0, '', ' ') ?> руб.
+                        и не более не более <?= number_format($paySchet->uslugatovar->MaxSumm / 100, 0, '', ' ') ?>
+                        руб. за одну операцию
+                    </span>
                     <br>
                     <span>** не более 600 000 руб. в месяц с одной карты</span>
                 </div>
@@ -162,7 +168,7 @@ const MAX_EXP_CARD_YEARS = 10;
                                 <a target="_blank" href="/files/с_21_06_2021_Пуб_оферта_№_2_от_21_06_2021_Card2Card_2_2.pdf">оферты</a>
                             </label>
                         </div>
-                        <button class="submitBtn" id="sendForm" type="submit">Отправить деньги</button>
+                        <button class="submitBtn" id="sendForm" type="submit" disabled>Отправить деньги</button>
                         <div id="formErrorOfferMessage" style="display: none; color: red">
                             Необходимо подтвердить оферту
                         </div>
