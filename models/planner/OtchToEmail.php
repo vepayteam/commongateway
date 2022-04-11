@@ -16,8 +16,8 @@ use yii\helpers\VarDumper;
 
 class OtchToEmail
 {
-    private $now;
-    private $partners;
+    protected $now;
+    protected $partners;
 
     /**
      * @param DistributionReports $partners - партнеры которым можно сделать рассылку
@@ -70,7 +70,7 @@ class OtchToEmail
         }
     }
 
-    private function mailer()
+    protected function mailer()
     {
         return Yii::createObject([
             'class' => 'yii\swiftmailer\Mailer',
