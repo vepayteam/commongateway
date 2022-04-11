@@ -1588,18 +1588,28 @@ class TKBankAdapter implements IBankAdapter
                 $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'] ?? 'Ошибка запроса';
             }
         } else {
-            // Прежде чем отваливаться с ошибкой перепроверяем
             // timeout
-            if ($ans['error'] == 504) {
-                $ans = $this->checkStatusOrder(['ExtID' => $outCardPayRequest->ExtId], false);
-            }
-            if (key_exists('state', $ans) && $ans['state'] == 1) {
-                $outCardPayResponse->status = BaseResponse::STATUS_DONE;
-                $outCardPayResponse->trans = $ans['xml']['orderid'];
-                $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'] ?? 'Ошибка запроса';
+            if ($ans['error'] == '28: timeout' || $ans['error'] == '7: timeout') {
+                $status = $this->checkStatusOrder(['ExtID' => $outCardPayRequest->ExtId], false);
+                if ($status['state'] == 0 && !key_exists('xml', $status)) {
+                    // Сервер все еще не отвечает
+                    $outCardPayResponse->status = BaseResponse::STATUS_CREATED;
+                    $outCardPayResponse->message = 'Запрос в обработке';
+                } else {
+                    // Ответ сервера получен
+                    if(!array_key_exists('errorinfo', $ans['xml']) || (isset($ans['xml']['errorinfo']['errorcode']) && $ans['xml']['errorinfo']['errorcode'] == 0)) {
+                        $outCardPayResponse->status = BaseResponse::STATUS_DONE;
+                        $outCardPayResponse->trans = $ans['xml']['orderid'];
+                        $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'] ?? 'Ошибка запроса';
+                    } else {
+                        $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
+                        $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'] ?? 'Ошибка запроса';
+                    }
+                }
             } else {
+                // другая ошибка без результата
                 $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
-                $outCardPayResponse->message = 'Ошибка запроса: ' . var_export($ans, 1);
+                $outCardPayResponse->message = 'Ошибка запроса';
             }
         }
 
