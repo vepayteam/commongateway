@@ -38,6 +38,7 @@ const MAX_EXP_CARD_YEARS = 10;
 <div class="container">
     <h2 class="center greenText">Перевод с карты на карту</h2>
     <div class="content">
+        <?php if($paySchet->CancelUrl): ?>
         <button id="btnClose" data-url="<?=yii\helpers\Html::encode($paySchet->CancelUrl)?>" style="
             position: absolute;
             right: 20px;
@@ -50,6 +51,7 @@ const MAX_EXP_CARD_YEARS = 10;
         >
             x
         </button>
+        <?php endif; ?>
         <form name="p2pForm" action="">
             <div class="cardsBlock">
                 <div class="cardWrapper">
