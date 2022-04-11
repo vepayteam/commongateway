@@ -155,13 +155,9 @@ const MAX_EXP_CARD_YEARS = 10;
                                type="number">
                     </div>
                 </div>
-                <span class="center d-block greenText">Укажите свою почту, и мы отправим Вам справку о совершенной операции</span>
+                <span class="center d-block greenText"></span>
                 <div class="emailAndButtonBlock">
-                    <div class="center">
-                        <input id="emailInput" placeholder="укажите email" data-sequence="12" type="text"
-                               data-inputmask-regex="[a-zA-Z0-9._%-]+@[a-zA-Z0-9-]+\.[a-zA-Z]{2,10}"
-                        >
-                    </div>
+                    <div class="center"></div>
                     <div class="center">
                         <div style="display: flex; margin-bottom: 10px;">
                             <input type="checkbox" id="agreeOffer" name="agreeOffer">
