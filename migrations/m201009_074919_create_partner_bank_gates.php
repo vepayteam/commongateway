@@ -60,12 +60,7 @@ class m201009_074919_create_partner_bank_gates extends Migration
                 'Login' => 'LoginTkb',
                 'Token' => 'KeyTkb',
                 'Password' => null,
-            ],
-            MTSBankAdapter::$bank => [
-                'Login' => 'MtsLogin',
-                'Token' => 'MtsToken',
-                'Password' => 'MtsPassword',
-            ],
+            ]
         ];
     }
 
