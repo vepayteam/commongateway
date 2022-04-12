@@ -61,13 +61,13 @@ class PayForm extends Model
     public function attributeLabels()
     {
         return [
-            'CardNumber' => 'Номер карты',
-            'CardHolder' => 'Владелец',
-            'CardExp' => 'Действует',
-            'CardCVC' => 'CVC',
-            'Phone' => 'Номер телефона',
-            'LinkPhone' => 'Привязать номер к карте',
-            'Email' => 'Почта для отправления чека'
+            'CardNumber' => Yii::t('app.payment-form', 'Номер карты'),
+            'CardHolder' => Yii::t('app.payment-form', 'Владелец'),
+            'CardExp' => Yii::t('app.payment-form', 'Действует'),
+            'CardCVC' => Yii::t('app.payment-form', 'CVC'),
+            'Phone' => Yii::t('app.payment-form', 'Номер телефона'),
+            'LinkPhone' => Yii::t('app.payment-form', 'Привязать номер к карте'),
+            'Email' => Yii::t('app.payment-form', 'Почта для отправления чека')
         ];
     }
 

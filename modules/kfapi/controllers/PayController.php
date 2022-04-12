@@ -9,6 +9,7 @@ use app\models\kfapi\KfPay;
 use app\models\kfapi\KfRequest;
 use app\models\Payschets;
 use app\models\TU;
+use app\services\LanguageService;
 use app\services\PaySchetService;
 use Yii;
 use yii\base\Exception;
@@ -116,6 +117,11 @@ class PayController extends Controller
         }
 
         $params = $this->paySchetService->payToMfo(null, [$kfPay->document_id, $kfPay->fullname], $kfPay, $usl, TCBank::$bank, $kf->IdPartner, 0);
+
+        /** @var LanguageService $languageService */
+        $languageService = Yii::$container->get('LanguageService');
+        $languageService->saveApiLanguage($params['IdPay'], $kfPay->language);
+
         if (!empty($kfPay->extid)) {
             $mutex->release('getPaySchetExt' . $kfPay->extid);
         }

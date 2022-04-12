@@ -11,6 +11,7 @@ use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\TU;
 use app\services\cards\CacheCardService;
+use app\services\LanguageService;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\TKBankAdapter;
@@ -146,6 +147,10 @@ class PayController extends Controller
                     $cacheCardService->deleteCard();
                 }
 
+                /** @var LanguageService $languageService */
+                $languageService = Yii::$container->get('LanguageService');
+                $languageService->setAppLanguage($params['ID']);
+
                 $payschets->SetIpAddress($params['ID']);
 
                 //разрешить открытие во фрейме на сайте мерчанта
@@ -168,6 +173,7 @@ class PayController extends Controller
                     'google' => (new GooglePay())->GetConf($params['IDPartner']),
                     'samsung' => (new SamsungPay())->GetConf($params['IDPartner']),
                     'payform' => $payForm,
+                    'appLang'=> $languageService->getAppLanguage(),
                 ]);
 
             } else {
@@ -425,6 +431,10 @@ class PayController extends Controller
             throw new NotFoundHttpException();
         }
 
+        /** @var LanguageService $languageService */
+        $languageService = Yii::$container->get('LanguageService');
+        $languageService->setAppLanguage($okPayForm->IdPay);
+
         // Wait until the "order done" mutex lock released.
         $mutexKey = DonePayStrategy::getMutexKey($okPayForm->getPaySchet());
         $mutex = new Mutex(['retryDelay' => 250]);
@@ -451,7 +461,7 @@ class PayController extends Controller
             Yii::info('PayController orderok IdPay=' . $id . ' render orderok');
 
             $this->layout = 'order_done';
-            return $this->render('order-ok', ['paySchet' => $paySchet]);
+            return $this->render('order-ok', ['paySchet' => $paySchet, 'appLang' => $languageService->getAppLanguage()]);
 
         } elseif ($paySchet->Status == PaySchet::STATUS_ERROR) {
             if (!empty($paySchet->FailedUrl) && (mb_stripos($paySchet->ErrorInfo, 'Отказ от оплаты') === false || empty($paySchet->CancelUrl))) {
@@ -483,6 +493,10 @@ class PayController extends Controller
     public function actionOrderfail($id)
     {
         Yii::warning("PayForm orderfail id={$id}");
+
+        /** @var LanguageService $languageService */
+        $languageService = Yii::$container->get('LanguageService');
+        $languageService->setAppLanguage($id);
 
         return $this->render('paycancel');
     }

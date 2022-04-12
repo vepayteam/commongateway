@@ -5,6 +5,7 @@ namespace app\models\kfapi;
 
 use app\models\payonline\Cards;
 use app\models\payonline\User;
+use app\services\LanguageService;
 use Yii;
 use yii\base\Model;
 use yii\db\Query;
@@ -22,6 +23,8 @@ class KfCard extends CardBase
 
     public $extid = '';
 
+    public $language = LanguageService::API_LANG_RUS;
+
     /* @var null|User */
     public $user = null;
 
@@ -35,7 +38,8 @@ class KfCard extends CardBase
             [['timeout'], 'integer', 'min' => 10, 'max' => 59, 'on' => [self::SCENARIO_REG]],
             [['card'], 'required', 'on' => self::SCENARIO_INFO],
             [['id'], 'required', 'on' => self::SCENARIO_GET],
-            [['type'], 'integer', 'min' => 0, 'on' => self::SCENARIO_REG]
+            [['type'], 'integer', 'min' => 0, 'on' => self::SCENARIO_REG],
+            [['language'], 'in', 'range' => LanguageService::ALL_API_LANG_LIST],
         ];
     }
 
@@ -89,7 +93,7 @@ class KfCard extends CardBase
     public function FindKardByPay($IdPartner, $type)
     {
         $IdCard = Yii::$app->db->createCommand('
-            SELECT IdKard FROM `pay_schet` WHERE `ID` = :IDPAY 
+            SELECT IdKard FROM `pay_schet` WHERE `ID` = :IDPAY
         ', [':IDPAY' => $this->id])->queryScalar();
         if ($IdCard) {
             $this->card = $IdCard;
@@ -102,10 +106,10 @@ class KfCard extends CardBase
     public function GetPayState()
     {
         $payState = Yii::$app->db->createCommand('
-            SELECT 
+            SELECT
                 `Status`
-            FROM `pay_schet` 
-            WHERE `ID` = :IDPAY 
+            FROM `pay_schet`
+            WHERE `ID` = :IDPAY
         ', [':IDPAY' => $this->id])->queryScalar();
 
         return (int)$payState;

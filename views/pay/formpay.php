@@ -6,7 +6,9 @@
 /* @var array $google */
 /* @var array $samsung */
 /* @var \app\models\payonline\PayForm $payform */
+/* @var string $appLang */
 
+use app\services\LanguageService;
 use app\services\partners\models\PartnerOption;
 use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\Currency;
@@ -26,7 +28,7 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
         <div class="row margin-top24 rowlogo">
             <div class="col-xs-12">
                 <img src="/imgs/logo_vepay.svg" alt="vepay" class="logo">
-                <span class="logotext">ТЕХНОЛОГИИ В&nbsp;ДЕЙСТВИИ</span>
+                <span class="logotext"><?=Yii::t('app.payment-form', 'ТЕХНОЛОГИИ В&nbsp;ДЕЙСТВИИ')?></span>
                 <img src="/imgs/close.svg" class="closebtn" alt="close" id="closeform">
             </div>
         </div>
@@ -38,13 +40,13 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
             </div>
         <?php else: ?>
             <div class="infotop">
-                Для проверки банковской карты с неё будет списано и затем возвращено 11 р.
+                <?=Yii::t('app.payment-form', 'Для проверки банковской карты с неё будет списано и затем возвращено 11 р.')?>
             </div>
         <?php endif; ?>
     <?php else: ?>
         <div class="row margin-top24">
             <div class="col-xs-12">
-                <div class="info">Оплата в<span class="pull-right blacksumm"><?=Html::encode($params['NamePartner'])?></span></div>
+                <div class="info"><?=Yii::t('app.payment-form', 'Оплата в')?><span class="pull-right blacksumm"><?=Html::encode($params['NamePartner'])?></span></div>
             </div>
         </div>
     <?php endif; ?>
@@ -52,14 +54,14 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
         <div class="row nopadding">
             <div class="col-xs-12">
                 <div class="info">
-                    <span>Сумма </span>
+                    <span><?=Yii::t('app.payment-form', 'Сумма')?> </span>
                     <span class="pull-right blacksumm">
                         <?= PaymentHelper::formatSum($params['amountPay']) ?>
                         <?= Html::encode($params['currencySymbol']) ?>
                     </span>
                 </div>
                 <div class="info">
-                    <span>Комиссия </span>
+                    <span><?=Yii::t('app.payment-form', 'Комиссия')?> </span>
                     <span class="pull-right blacksumm">
                         <?= PaymentHelper::formatSum($params['amountCommission']) ?>
                         <?= Html::encode($params['currencySymbol']) ?>
@@ -68,7 +70,7 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
 
                 <?php if ($paymentFormAdditionalCommission): ?>
                     <div class="info margin-top16" style="font-weight: normal; font-size: 12px;">
-                        Информируем Вас, что банк-эмитент может взимать дополнительную комиссию.
+                        <?=Yii::t('app.payment-form', 'Информируем Вас, что банк-эмитент может взимать дополнительную комиссию.')?>
                     </div>
                 <?php endif; ?>
 
@@ -118,12 +120,12 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
                     'data-inputmask-regex' => '[01]\d{3}',
                     'class' => 'form-control',
                     'value' => '',
-                    'placeholder' => 'ММ/ГГ',
+                    'placeholder' => Yii::t('app.payment-form', 'ММ/ГГ'),
                     'autocomplete' => 'off',
                 ]); ?>
             </div>
             <div class="cvcblock">
-                <img src="/imgs/info.svg" alt="info" class="infocvc" data-toggle="tooltip" data-placement="top" title="Трехзначный код на обратной стороне карты">
+                <img src="/imgs/info.svg" alt="info" class="infocvc" data-toggle="tooltip" data-placement="top" title="<?=Yii::t('app.payment-form', 'Трехзначный код на обратной стороне карты')?>">
                 <?= $form->field($payform, 'CardCVC')->passwordInput([
                     'data-inputmask-placeholder' => '_',
                     'data-inputmask-jitMasking' => 'true',
@@ -149,7 +151,7 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
             </div>
         </div>
     </div>
-    <?php if ($params['IsUseKKmPrint']) : ?>
+    <?php if ($params['IsUseKKmPrint'] && $appLang !== LanguageService::APP_LANG_ENG) : ?>
         <div class="row nopadding">
             <div class="col-sm-12 col-xs-12">
                 <?= $form->field($payform, 'Email')->textInput([
@@ -169,7 +171,7 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
             <input type="hidden" id="client_data" name="PayForm[client]">
             <?=
                 Html::submitButton(
-                    $params['IdUsluga'] == 1 ? 'ОТПРАВИТЬ' : "ОПЛАТИТЬ {$sumFormatted} {$params['currencySymbol']}",
+                    $params['IdUsluga'] == 1 ? Yii::t('app.payment-form', 'ОТПРАВИТЬ') : (Yii::t('app.payment-form', 'ОПЛАТИТЬ') . " {$sumFormatted} {$params['currencySymbol']}"),
                     [
                         'class' => 'btn btn-success paybtn',
                         'name' => 'paysubmit',
@@ -234,7 +236,7 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
     <?php if (!$paymentFormWithoutVepay): ?>
         <div class="row">
             <div class="col-xs-12 text-center">
-                <div class="footcopyr">ООО «ПРОЦЕССИНГОВАЯ КОМПАНИЯ БЫСТРЫХ ПЛАТЕЖЕЙ»</div>
+                <div class="footcopyr"><?=Yii::t('app.payment-form', 'ООО «ПРОЦЕССИНГОВАЯ КОМПАНИЯ БЫСТРЫХ ПЛАТЕЖЕЙ»')?></div>
             </div>
         </div>
     <?php endif; ?>

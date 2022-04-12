@@ -10,6 +10,7 @@ use app\models\kfapi\KfRequest;
 use app\models\payonline\Uslugatovar;
 use app\models\TU;
 use app\modules\mfo\controllers\CardController;
+use app\services\LanguageService;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
@@ -165,6 +166,10 @@ class RecarringController extends Controller
         }
 
         $data = $this->paySchetService->payActivateCard($user,0, $kfCard, 3, $bankAdapter->getBankId(), $kfRequest->IdPartner);
+
+        /** @var LanguageService $languageService */
+        $languageService = Yii::$container->get('LanguageService');
+        $languageService->saveApiLanguage($data['IdPay'], $kfCard->language);
 
         //PCI DSS form
         return [
