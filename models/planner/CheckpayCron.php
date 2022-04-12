@@ -47,14 +47,7 @@ class CheckpayCron
             $startQuery = microtime(true);
 
 
-            $query = PaySchet::find()
-                ->needCheckStatusByRsbcron()
-                ->select([
-                    PaySchet::tableName() . '.ID',
-                    PaySchet::tableName() . '.Status',
-                    PaySchet::tableName() . '.ExtBillNumber',
-                    PaySchet::tableName() . '.IdUsluga',
-                ]);
+            $query = PaySchet::find()->needCheckStatusByRsbcron();
 
             foreach ($query->batch() as $paySchets) {
                 if(!$isCheckedTimeExecQuery) {
