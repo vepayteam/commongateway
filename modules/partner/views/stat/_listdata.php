@@ -89,7 +89,7 @@ use yii\widgets\LinkPager;
                 <td>
 
                     <span class="label label-primary" style="background-color: <?=Html::encode(PaySchet::STATUS_COLORS[$row['Status']])?>">
-                        <?= (!$row['sms_accept'] && $row['Status'] == 0) ? 'Создан' : Html::encode(PaySchet::STATUSES[$row['Status']]) ?>
+                        <?= (!$row['sms_accept'] && $row['Status'] == 0) ? 'Created' : Html::encode(PaySchet::STATUSES[$row['Status']]) ?>
                     </span>
                 </td>
                 <td>
