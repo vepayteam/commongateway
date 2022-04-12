@@ -47,18 +47,18 @@ class AlarmsSend
         $config = AlarmsSettings::findOne(['TypeAlarm' => $type]);
         if ($config && $config->TimeAlarm > 10 && !empty($config->EmailAlarm)) {
             $res = Yii::$app->db->createCommand('
-                SELECT 
+                SELECT
                     ps.ID,
                     ps.DateCreate,
-                    p.Name                
-                FROM 
+                    p.Name
+                FROM
                     `pay_schet` AS ps
                     LEFT JOIN `alarms_send` AS a ON a.IdPay = ps.ID AND a.IdSetting = :IDSETTINGS
                     LEFT JOIN `uslugatovar` AS u ON u.ID = ps.IdUsluga
                     LEFT JOIN `partner` AS p ON p.ID = u.IDPartner
-                WHERE 
+                WHERE
                     ps.`Status` = 0
-                    AND ps.sms_accept = 1 
+                    AND ps.sms_accept = 1
                     AND a.ID IS NULL
             ', [':IDSETTINGS' => $config->ID])->query();
 
@@ -98,21 +98,21 @@ class AlarmsSend
         $config = AlarmsSettings::findOne(['TypeAlarm' => $type]);
         if ($config && $config->TimeAlarm > 10 && !empty($config->EmailAlarm)) {
             $res = Yii::$app->db->createCommand('
-                SELECT 
+                SELECT
                     ps.ID,
                     ps.DateCreate,
                     p.Name
-                FROM 
-                    `pay_schet` AS ps 
+                FROM
+                    `pay_schet` AS ps
                     LEFT JOIN `uslugatovar` AS u ON u.ID = ps.IdUsluga
                     LEFT JOIN `partner` AS p ON p.ID = u.IDPartner
-                WHERE 
+                WHERE
                     ps.`Status` = 0
                     AND ps.sms_accept = 1
                     AND ps.DateCreate < UNIX_TIMESTAMP() - :TIMEOUT * 60
                     AND (
-                        SELECT `ID` 
-                        FROM `alarms_send` AS a 
+                        SELECT `ID`
+                        FROM `alarms_send` AS a
                         WHERE a.IdPay = ps.ID AND a.IdSetting = :IDSETTINGS AND a.DateSend > UNIX_TIMESTAMP() - :TIMEOUT * 60
                         LIMIT 1
                     ) IS NULL
@@ -155,11 +155,11 @@ class AlarmsSend
         if ($config && $config->TimeAlarm > 0 && !empty($config->EmailAlarm)) {
 
             $row = Yii::$app->db->createCommand('
-                SELECT 
+                SELECT
                     a.`DateSend`
                 FROM
-                    `alarms_send` AS a 
-                WHERE 
+                    `alarms_send` AS a
+                WHERE
                     a.`IdSetting` = :IDSETTINGS
                 ORDER BY a.`DateSend` DESC
                 LIMIT 1
