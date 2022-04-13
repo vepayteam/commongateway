@@ -50,6 +50,7 @@ use app\services\payment\forms\SendP2pForm;
 use app\services\payment\forms\RegistrationBenificForm;
 use app\services\payment\helpers\BRSErrorHelper;
 use app\services\payment\helpers\PaymentHelper;
+use app\services\payment\models\Bank;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
@@ -697,7 +698,7 @@ class BRSAdapter implements IBankAdapter
      */
     public function getAftMinSum()
     {
-        return self::AFT_MIN_SUMM;
+        return Bank::findOne(self::$bank)->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**
