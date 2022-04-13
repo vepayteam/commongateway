@@ -1234,6 +1234,10 @@ components:
           type: string
           maxLength: 80
           description: ФИО клиента
+        currency:
+          type: string
+          maxLength: 5
+          description: Код валюты (по умолчанию, RUB)
 
         birthDate:
           type: string
