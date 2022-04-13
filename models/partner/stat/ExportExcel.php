@@ -18,7 +18,7 @@ class ExportExcel
      *
      * @throws ExportExcelRawException
      */
-    public function CreateXlsRaw(string $title, array $head, \Generator $data, array $totalRules = []): void
+    public function CreateXlsRaw(string $title, array $head, \Generator $data, array $totalRules = [], array $footer = null): void
     {
         try {
 
@@ -50,6 +50,10 @@ class ExportExcel
                             }
                         }
                     }
+                }
+
+                if ($footer) {
+                    $exporter->addRow($footer);
                 }
             } catch (\Throwable $e) {
                 Yii::error(
