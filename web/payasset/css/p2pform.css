@@ -221,6 +221,17 @@
 
 .submitBtn:hover {
     background-color: #90c36a;
+    cursor: pointer;
+}
+
+.submitBtn[disabled]  {
+    opacity: 0.6;
+}
+
+.submitBtn[disabled]:hover  {
+    cursor: default;
+    background-color: #5da529;
+    border-color: #5da529 !important;
 }
 
 .emailAndButtonBlock {

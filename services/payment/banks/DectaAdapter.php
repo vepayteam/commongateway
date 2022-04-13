@@ -14,7 +14,7 @@ use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\decta\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\decta\OutCardTransactionResponse;
-use app\services\payment\banks\bank_adapter_responses\decta\RefundPayResponse;
+use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\exceptions\DectaApiUrlException;
 use app\services\payment\banks\exceptions\InvalidBankActionException;
@@ -187,8 +187,10 @@ class DectaAdapter implements IBankAdapter
      */
     public function refundPay(RefundPayForm $refundPayForm): RefundPayResponse
     {
+        $paySchet = $refundPayForm->paySchet;
+
         $url = $this->getRequestUrl('refund_pay', [
-            'payment_id' => $refundPayForm->paySchet->ExtBillNumber
+            'payment_id' => $paySchet->refundSource->ExtBillNumber
         ]);
 
         try {

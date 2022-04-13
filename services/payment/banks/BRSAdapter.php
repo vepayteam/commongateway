@@ -418,11 +418,13 @@ class BRSAdapter implements IBankAdapter
     public function refundPay(RefundPayForm $refundPayForm)
     {
         $uri = '/ecomm2/MerchantHandler';
-        $paySchet = $refundPayForm->paySchet;
-        $refundPayRequest = new RefundPayRequest();
-        $refundPayRequest->trans_id = $paySchet->ExtBillNumber;
 
-        if($paySchet->DateCreate < Carbon::now()->startOfDay()->timestamp) {
+        $sourcePaySchet = $refundPayForm->paySchet->refundSource;
+
+        $refundPayRequest = new RefundPayRequest();
+        $refundPayRequest->trans_id = $sourcePaySchet->ExtBillNumber;
+
+        if($sourcePaySchet->DateCreate < Carbon::now()->startOfDay()->timestamp) {
             $refundPayRequest->command = 'k';
         }
 
@@ -539,7 +541,10 @@ class BRSAdapter implements IBankAdapter
                 return BaseResponse::STATUS_DONE;
             case 'REVERSED':
             case 'AUTOREVERSED':
-            return BaseResponse::STATUS_CANCEL;
+                /**
+                 * Для refund/reverse возвращать STATUS_DONE тк начальная транзакция остается в статусе успешно
+                 */
+                return BaseResponse::STATUS_DONE;
             default:
                 return BaseResponse::STATUS_ERROR;
         }
@@ -558,7 +563,10 @@ class BRSAdapter implements IBankAdapter
                 return BaseResponse::STATUS_DONE;
             case 'cancelled':
             case 'returned':
-                return BaseResponse::STATUS_CANCEL;
+                /**
+                 * Для refund/reverse возвращать STATUS_DONE тк начальная транзакция остается в статусе успешно
+                 */
+                return BaseResponse::STATUS_DONE;
             default:
                 return BaseResponse::STATUS_ERROR;
         }
@@ -752,13 +760,11 @@ class BRSAdapter implements IBankAdapter
         $transferToAccountRequest->bic = $outPayaccForm->bic;
         $transferToAccountRequest->receiverId = (string)$outPayaccForm->paySchet->ID;
         $transferToAccountRequest->merchantId = $this->gate->Token;
-        $transferToAccountRequest->fio = $outPayaccForm->getLastName(). ' '.$outPayaccForm->getFirstName(). $outPayaccForm->getMiddleName();
         $transferToAccountRequest->firstName = $outPayaccForm->getFirstName();
         $transferToAccountRequest->lastName = $outPayaccForm->getLastName();
         $transferToAccountRequest->middleName = $outPayaccForm->getLastName();
         $transferToAccountRequest->amount = $outPayaccForm->amount;
         $transferToAccountRequest->account = (string)$outPayaccForm->account;
-        $transferToAccountRequest->phone = $outPayaccForm->getPhoneToSend();
         $transferToAccountRequest->sourceId = (string)$outPayaccForm->paySchet->ID;
 
         if(Yii::$app->params['TESTMODE'] == 'Y') {
@@ -938,7 +944,6 @@ class BRSAdapter implements IBankAdapter
         $transferToAccountRequest->middleName = $outPayaccForm->getMiddleName();
         $transferToAccountRequest->amount = $outPayaccForm->amount;
         $transferToAccountRequest->account = $outPayaccForm->account;
-        $transferToAccountRequest->phone = $outPayaccForm->getPhoneToSend();
         $transferToAccountRequest->sourceId = $id;
 
         $requestData = $transferToAccountRequest->getAttributes();
@@ -1023,7 +1028,7 @@ class BRSAdapter implements IBankAdapter
 
         $paySchet = $sendP2pForm->paySchet;
         $sendP2pRequest = new SendP2pRequest();
-        $sendP2pRequest->amount = $paySchet->getSummFull() / 100;
+        $sendP2pRequest->amount = $paySchet->getSummFull();
         $sendP2pRequest->currency = $paySchet->currency->Number;
         $sendP2pRequest->client_ip_addr = Yii::$app->request->remoteIP;
         $sendP2pRequest->cardname = $sendP2pForm->cardHolder;

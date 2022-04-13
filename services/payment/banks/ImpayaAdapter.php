@@ -101,18 +101,22 @@ class ImpayaAdapter implements IBankAdapter
             return $createPayResponse;
         }
 
-        if($ans['data']['status_id'] != 2) {
+        $status = self::convertStatus($ans['data']['status_id']);
+        if($status === BaseResponse::STATUS_DONE) {
+            $createPayResponse->status = BaseResponse::STATUS_DONE;
+            $createPayResponse->isNeed3DSRedirect = false;
+            $createPayResponse->isNeed3DSVerif = false;
+        } else if ($status === BaseResponse::STATUS_CREATED) {
+            $createPayResponse->status = BaseResponse::STATUS_DONE;
+            $createPayResponse->url = $ans['data']['3ds']['url'];
+            $createPayResponse->transac = $ans['data']['transaction']['transaction_id'] ?? '';
+            if($ans['data']['3ds']['method'] == 'post') {
+                $createPayResponse->params3DS = $ans['data']['3ds']['params'];
+            }
+        } else {
             $createPayResponse->status = BaseResponse::STATUS_ERROR;
             $createPayResponse->transac = $ans['data']['transaction']['transaction_id'] ?? '';
             $createPayResponse->message = $ans['data']['status_descr'] ?? 'Ошибка запроса';
-            return $createPayResponse;
-        }
-
-        $createPayResponse->status = BaseResponse::STATUS_DONE;
-        $createPayResponse->url = $ans['data']['3ds']['url'];
-        $createPayResponse->transac = $ans['data']['transaction']['transaction_id'] ?? '';
-        if($ans['data']['3ds']['method'] == 'post') {
-            $createPayResponse->params3DS = $ans['data']['3ds']['params'];
         }
 
         return $createPayResponse;
@@ -129,7 +133,7 @@ class ImpayaAdapter implements IBankAdapter
         $checkStatusPayResponse = new CheckStatusPayResponse();
 
         $checkStatusPayResponse->message = $ans['data']['payment_system_status'] ?? '';
-        $checkStatusPayResponse->status = $this->convertStatus($ans['data']['status_id']);
+        $checkStatusPayResponse->status = self::convertStatus($ans['data']['status_id']);
         return $checkStatusPayResponse;
     }
 
@@ -166,15 +170,15 @@ class ImpayaAdapter implements IBankAdapter
         $outCardPayRequest->currency = $outCardPayForm->paySchet->currency->Code;
         $outCardPayRequest->cc_num = $outCardPayForm->cardnum;
         $outCardPayRequest->phone = $outCardPayForm->phone ?? self::PHONE_DEFAULT_VALUE;
-        $outCardPayRequest->fname = $outCardPayForm->getFirstName();
-        $outCardPayRequest->lname = $outCardPayForm->getLastName();
+        $outCardPayRequest->fname = $outCardPayForm->getFirstName(true);
+        $outCardPayRequest->lname = $outCardPayForm->getLastName(true);
         $outCardPayRequest->buildHash($this->gate->Token);
         $uri = '/api3/';
         $ans = $this->sendRequest($uri, $outCardPayRequest->getAttributes());
 
         $outCardPayResponse = new OutCardPayResponse;
         $outCardPayResponse->message = $ans['data']['status_descr'] ?? '';
-        $baseStatus = $this->convertStatus($ans['data']['status_id']);
+        $baseStatus = self::convertStatus($ans['data']['status_id']);
 
         if($baseStatus == BaseResponse::STATUS_DONE || $baseStatus == BaseResponse::STATUS_CREATED) {
             $outCardPayResponse->status = BaseResponse::STATUS_DONE;
@@ -254,7 +258,7 @@ class ImpayaAdapter implements IBankAdapter
         return $ans;
     }
 
-    private function convertStatus(int $status): int {
+    public static function convertStatus(int $status): int {
         switch ($status) {
             case 0:
             case 2:

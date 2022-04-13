@@ -182,11 +182,13 @@ class GratapayAdapter implements IBankAdapter
         throw new GateException('Метод недоступен');
 
         $paySchet = $refundPayForm->paySchet;
+        $sourcePaySchet = $paySchet->refundSource;
+
         $refundPayRequest = new RefundPayRequest();
         $refundPayRequest->amount = $paySchet->getSummFull() / 100;
         $refundPayRequest->currency = $paySchet->currency->Code;
-        $refundPayRequest->original_transaction_id = $paySchet->ExtBillNumber;
-        $refundPayRequest->transaction_id = $paySchet->ID;
+        $refundPayRequest->original_transaction_id = $sourcePaySchet->ExtBillNumber;
+        $refundPayRequest->transaction_id = $sourcePaySchet->ID;
 
         $bodyJson = Json::encode($refundPayRequest->getAttributes());
         $refundPayResponse = new RefundPayResponse();

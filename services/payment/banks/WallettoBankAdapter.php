@@ -26,6 +26,8 @@ use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\forms\SendP2pForm;
 use app\services\payment\forms\RegistrationBenificForm;
+use app\services\payment\forms\walletto\RefundPayRequest;
+use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\Bank;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
@@ -208,44 +210,62 @@ class WallettoBankAdapter implements IBankAdapter
         // TODO: Implement recurrentPay() method.
     }
 
-    public function refundPay(RefundPayForm $refundPayForm)
+    /**
+     * @inheritdoc
+     */
+    public function refundPay(RefundPayForm $refundPayForm): RefundPayResponse
     {
         $refundPayResponse = new RefundPayResponse();
 
-        $paySchet = $refundPayForm->paySchet;
-        if ($paySchet->Status != PaySchet::STATUS_DONE) {
+        $refundPaySchet = $refundPayForm->paySchet;
+        $sourcePaySchet = $refundPaySchet->refundSource;
+
+        if ($sourcePaySchet->Status != PaySchet::STATUS_DONE) {
             throw new RefundPayException('Невозможно отменить незавершенный платеж');
         }
 
-        $uri = '/orders/' . $paySchet->ExtBillNumber . '/cancel';
-        if ($paySchet->DateCreate < Carbon::now()->startOfDay()->timestamp) {
-            $uri = '/orders/' . $paySchet->ExtBillNumber . '/refund';
+        $refundPayRequest = new RefundPayRequest();
+
+        $uri = '/orders/' . $sourcePaySchet->ExtBillNumber . '/cancel';
+        $refundPayResponse->refundType = RefundPayResponse::REFUND_TYPE_REVERSE;
+
+        $isCancelOutDate = $sourcePaySchet->DateCreate < Carbon::now()->startOfDay()->timestamp;
+        $isPartialRefundAmount = $refundPaySchet->getSummFull() !== $sourcePaySchet->getSummFull();
+        if ($isCancelOutDate || $isPartialRefundAmount) {
+            $uri = '/orders/' . $sourcePaySchet->ExtBillNumber . '/refund';
+
+            $refundPayResponse->refundType = RefundPayResponse::REFUND_TYPE_REFUND;
+            $refundPayRequest->amount = PaymentHelper::convertToFullAmount($refundPaySchet->getSummFull());
         }
 
         try {
             $response = $this->api->request(
                 Client::METHOD_PUT,
                 $this->bankUrl() . $uri,
-                [
-                    'amount' => $refundPayForm->paySchet->getSummFull() / 100,
-                ]
+                $refundPayRequest->getAttributes()
             );
+
             if (!$response->isSuccess()) {
                 $refundPayResponse->status = BaseResponse::STATUS_ERROR;
                 $refundPayResponse->message = BankAdapterResponseException::setErrorMsg(self::getFailureMessage($response));
                 return $refundPayResponse;
             }
-            $responseData = $response->json('orders');
-            $requestStatus = $this->convertStatus($responseData[0]['status']);
+
+            $orders = $response->json('orders');
+            Yii::info('WallettoBankAdapter refundPay orders count=' . count($orders)
+                . ' paySchet.ID=' . $refundPaySchet->ID);
+
+            $requestStatus = $this->convertStatus($orders[0]['status']);
             if ($requestStatus == BaseResponse::STATUS_CANCEL) {
                 $refundPayResponse->status = BaseResponse::STATUS_DONE;
             } else {
-                $refundPayResponse->status = $this->convertStatus($responseData[0]['status']);
+                $refundPayResponse->status = $this->convertStatus($orders[0]['status']);
             }
 
             $refundPayResponse->message = '';
         } catch (GuzzleException $e) {
-            Yii::error(' Walletto refundPay err:' . $e->getMessage());
+            Yii::error([' WallettoBankAdapter refundPay exception:', $e]);
+
             throw new BankAdapterResponseException(
                 BankAdapterResponseException::REQUEST_ERROR_MSG . ' : ' . self::ERROR_EXCEPTION_MSG
             );
