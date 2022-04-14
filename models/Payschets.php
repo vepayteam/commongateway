@@ -11,7 +11,7 @@ use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
 use app\models\queue\DraftPrintJob;
-use app\models\queue\ReverspayJob;
+use app\services\payment\jobs\RefundPayJob;
 use app\services\payment\models\PaySchet;
 use Yii;
 use yii\db\Exception;
@@ -562,8 +562,8 @@ class Payschets
      */
     private function reversPay($idpay)
     {
-        Yii::$app->queue->push(new ReverspayJob([
-            'idpay' => $idpay,
+        Yii::$app->queue->push(new RefundPayJob([
+            'paySchetId' => $idpay,
             'initiator' => 'Payschets.reversPay',
         ]));
     }

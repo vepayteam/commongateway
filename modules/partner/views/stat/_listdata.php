@@ -89,7 +89,7 @@ use yii\widgets\LinkPager;
                 <td>
 
                     <span class="label label-primary" style="background-color: <?=Html::encode(PaySchet::STATUS_COLORS[$row['Status']])?>">
-                        <?= (!$row['sms_accept'] && $row['Status'] == 0) ? 'Создан' : Html::encode(PaySchet::STATUSES[$row['Status']]) ?>
+                        <?= (!$row['sms_accept'] && $row['Status'] == 0) ? 'Created' : Html::encode(PaySchet::STATUSES[$row['Status']]) ?>
                     </span>
                 </td>
                 <td>
@@ -108,11 +108,15 @@ use yii\widgets\LinkPager;
                 <td><?= Html::encode($row['BankName']) ?></td>
                 <td>
                     <input class='btn btn-white btn-xs' data-action="logpay" data-id='<?= Html::encode($row['ID']) ?>' type='button' value='Лог'>
-                    <?php if ($row['Status'] == 1 && (TU::IsInPay($row['IsCustom']) || TU::IsInAutoAll($row['IsCustom']))): ?>
+                    <?php if (
+                        $row['Status'] == PaySchet::STATUS_DONE
+                        && (TU::IsInPay($row['IsCustom']) || TU::IsInAutoAll($row['IsCustom']))
+                        && $row['RemainingRefundAmount'] > 0
+                    ): ?>
                         <input class="btn btn-white btn-xs"
                                data-action="cancelpay"
                                data-id="<?= Html::encode($row['ID']) ?>"
-                               data-full-amount="<?= Html::encode(PaymentHelper::convertToFullAmount($row['SummPay'] + $row['ComissSumm'])) ?>"
+                               data-full-amount="<?= Html::encode(PaymentHelper::convertToFullAmount($row['SummPay'])) ?>"
                                data-remaining-amount="<?= Html::encode(PaymentHelper::convertToFullAmount($row['RemainingRefundAmount'])) ?>"
                                data-refund-amount="<?= Html::encode(PaymentHelper::convertToFullAmount($row['RefundAmount'])) ?>"
                                type="button"
@@ -148,6 +152,7 @@ use yii\widgets\LinkPager;
         <th class="text-right"><?= number_format(round($sumcomis / 100.0, 2),2,'.','&nbsp;')?></th>
         <th class="text-right"><?= number_format(round(($sumpay+$sumcomis) / 100.0, 2),2,'.','&nbsp;')?></th>
         <?php if ($IsAdmin) : ?>
+            <th></th>
             <th class="text-right"><?=number_format(round($bankcomis/100.0, 2),2,'.','&nbsp;')?></th>
             <th class="text-right"><?=number_format(round($voznagps/100.0, 2),2,'.','&nbsp;')?></th>
         <?php endif; ?>
