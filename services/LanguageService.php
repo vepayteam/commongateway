@@ -7,6 +7,7 @@ use yii\base\Component;
 class LanguageService extends Component
 {
     private const CACHE_KEY = 'LanguageService.paySchetId.';
+    private const CACHE_DURATION = 60 * 120; // 2 hours
 
     const API_LANG_RUS = 'rus';
     const API_LANG_ENG = 'eng';
@@ -23,7 +24,7 @@ class LanguageService extends Component
 
     public function saveApiLanguage(int $paySchetId, string $apiLanguage)
     {
-        \Yii::$app->cache->set($this->getCacheKey($paySchetId), $apiLanguage);
+        \Yii::$app->cache->set($this->getCacheKey($paySchetId), $apiLanguage, self::CACHE_DURATION);
     }
 
     public function setAppLanguage(int $paySchetId)
