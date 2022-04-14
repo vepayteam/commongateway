@@ -6,6 +6,7 @@
 /* @var $IsAdmin bool */
 
 use app\models\payonline\Partner;
+use app\services\payment\models\PaySchet;
 use yii\helpers\Html;
 
 $this->title = "список операций";
@@ -69,11 +70,9 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         <label class="col-sm-2 control-label">Статус</label>
                         <div class="col-sm-4">
                             <select class="form-control multiselect-status" id="sp" multiple name="status[]">
-<!--                                <option value="-1" >Все</option>-->
-                                <option value="0">В обработке</option>
-                                <option value="1">Оплачен</option>
-                                <option value="2">Отменен</option>
-                                <option value="3">Возврат</option>
+                                <?php foreach (PaySchet::STATUSES as $index => $status): ?>
+                                    <option value="<?= $index ?>"><?= $status ?></option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                         <label class="col-sm-2 control-label">Сумма платежа</label>

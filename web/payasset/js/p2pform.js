@@ -90,7 +90,6 @@ $(document).ready(function() {
         var expYear = parseFloat($('#expYear').val());
         var cvv = $('#cvv').val();
         var holder = $('#holder').val();
-        var email = $('#emailInput').val();
         var cardPan = '';
         var outCardPan = '';
         for(var i = 1; i <= 4; i++) {
@@ -145,10 +144,8 @@ $(document).ready(function() {
             cvv: cvv,
             cardHolder: holder,
             outCardPan: outCardPan,
-            email: email,
         }
         data[csrfParam] = csrfToken;
-        console.log(data);
         $.ajax({
             type: "POST",
             url: '/p2p/send/' + paySchetId,
