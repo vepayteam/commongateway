@@ -3,7 +3,7 @@ version: "3.6"
 services:
   api_init:
     image: alpine
-    entrypoint: /bin/sh -c "chown -Rhv www-data:wwww-data /www/runtime && chmod -v 755 /www/runtime"
+    entrypoint: /bin/sh -c "chown -Rhv 33:33 /www/runtime && chmod -v 755 /www/runtime"
     restart: "no"
     volumes:
       - runtime:/www/runtime
@@ -48,7 +48,7 @@ services:
       - ALL
 
   mariadb:
-    image: mariadb:10.4.18
+    image: mariadb:10.4
     volumes:
       - mariadb_volume:/var/lib/mysql
       - ./dump/:/docker-entrypoint-initdb.d/
