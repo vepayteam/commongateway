@@ -3,7 +3,7 @@ version: "3.6"
 services:
   api_init:
     image: alpine
-    entrypoint: /bin/sh -c "chown -Rhv 33:33 /www/runtime && chmod -v 755 /www/runtime"
+    entrypoint: /bin/sh -c "chown -Rhv www-data:wwww-data /www/runtime && chmod -v 755 /www/runtime"
     restart: "no"
     volumes:
       - runtime:/www/runtime
@@ -16,7 +16,7 @@ services:
       args:
         ENVIRONMENT: dev
     image: api
-    user: 33:33
+    user: www-data
     volumes:
       - ./:/www/
       - runtime:/www/runtime
