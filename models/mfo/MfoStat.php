@@ -40,7 +40,7 @@ class MfoStat
         $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
         $payShetList = new PayShetStat();
         $payShetList->load($post, '');
-        $list = $payShetList->getList2($IsAdmin, 0, 1);
+        $list = $payShetList->getList($IsAdmin, 0, null);
 
         $data = [];
 
@@ -144,7 +144,7 @@ class MfoStat
         return $result;
     }
 
-    public static function getDataGenerator($data, ?bool $isAdmin): \Generator
+    public static function getDataGenerator(\Generator $data, ?bool $isAdmin): \Generator
     {
         foreach ($data as $row) {
 
@@ -196,7 +196,7 @@ class MfoStat
         $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
         $paySchetList = new PayShetStat();
         $paySchetList->load($input, '');
-        $list = $paySchetList->getList2($IsAdmin, 0, 1);
+        $list = $paySchetList->getList($IsAdmin, 0, null, true);
 
         $data = self::getDataGenerator($list['data'], $IsAdmin);
 

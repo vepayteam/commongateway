@@ -118,6 +118,10 @@ use yii\helpers\ArrayHelper;
  */
 class PaySchet extends \yii\db\ActiveRecord
 {
+    public $CntPays;
+    public $GateLogin;
+    public $GateAdvParam_1;
+
     const STATUS_WAITING = 0;
     const STATUS_DONE = 1;
     const STATUS_ERROR = 2;
