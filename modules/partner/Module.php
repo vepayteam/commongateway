@@ -2,8 +2,10 @@
 
 namespace app\modules\partner;
 
+use app\modules\partner\services\AdminSettingsService;
 use app\modules\partner\services\PartService;
 use Yii;
+use yii\base\InvalidConfigException;
 
 /**
  * partner module definition class
@@ -19,11 +21,15 @@ class Module extends \yii\base\Module
 
     /**
      * @inheritdoc
+     * @throws InvalidConfigException
      */
     public function init()
     {
         parent::init();
 
+        if (!\Yii::$app->has(AdminSettingsService::class)) {
+            \Yii::$app->set(AdminSettingsService::class, AdminSettingsService::class);
+        }
         if (!\Yii::$app->has(PartService::class)) {
             \Yii::$app->set(PartService::class, PartService::class);
         }

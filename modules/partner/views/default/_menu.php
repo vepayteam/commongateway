@@ -8,6 +8,7 @@
 
 use app\models\partner\PartUserAccess;
 use yii\helpers\Html;
+use yii\helpers\Url;
 
 $act = PartUserAccess::getSelRazdel(\Yii::$app->controller->action);
 $partsBalanceAccess = PartUserAccess::checkPartsBalanceAccess();
@@ -140,7 +141,11 @@ $route = Yii::$app->controller->route;
                                 class="nav-label">Контрагенты</span></a></li>
             <?php endif; ?>
 
-            <?php if ($IsAdmin || $IsMfo || (!$IsMfo && (count($razdels) == 0 || isset($razdels[52])))) : ?>
+            <?php if ($IsAdmin): ?>
+                <li class="<?= $route === 'partner/admin-settings/index' ? 'active' : '' ?>">
+                    <a href="<?= Url::to(['/partner/admin-settings/index']) ?>"><i class="fa fa-gears"></i> <span class="nav-label">Настройки</span></a>
+                </li>
+            <?php elseif ($IsMfo || (!$IsMfo && (count($razdels) == 0 || isset($razdels[52])))): ?>
                 <li class="<?= !empty($act[52]) || !empty($act[53]) || !empty($act[54]) ? 'active' : '' ?>"><a href="/partner/settings/index"><i class="fa fa-gears"></i> <span
                                 class="nav-label">Настройки</span></a></li>
             <?php endif; ?>

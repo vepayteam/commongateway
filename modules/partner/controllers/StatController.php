@@ -39,6 +39,7 @@ use app\services\payment\jobs\RefundPayJob;
 use app\services\payment\models\Bank;
 use app\services\payment\models\PaySchet;
 use app\services\payment\PaymentService;
+use app\services\paymentReport\PaymentReportService;
 use Exception;
 use kartik\mpdf\Pdf;
 use Throwable;
@@ -278,7 +279,8 @@ class StatController extends Controller
                         "Экспорт",
                         $IsAdmin ? MfoStat::HEAD_ADMIN : MfoStat::HEAD_USER,
                         MfoStat::getDataGenerator($data['data'], $IsAdmin),
-                        $IsAdmin ? MfoStat::ITOGS_ADMIN_EXCEL : MfoStat::ITOGS_USER_EXCEL
+                        [],
+                        MfoStat::getOperationListResultRow($data, $IsAdmin)
                     );
                 }
             };
@@ -490,7 +492,9 @@ class StatController extends Controller
             Yii::warning('partner/stat/otchdata POST: ' . serialize($data), 'partner');
             try {
                 if ($payShetList->load($data, '') && $payShetList->validate()) {
-                    $data = $payShetList->getOtch($IsAdmin);
+                    $paymentReportService = new PaymentReportService();
+
+                    $data = $paymentReportService->getLegacyReportEntities($IsAdmin, $payShetList);
                     return $this->renderPartial('_otchdata', [
                         'IsAdmin' => $IsAdmin,
                         'data' => $data,
