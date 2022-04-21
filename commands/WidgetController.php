@@ -8,6 +8,7 @@ use app\models\mfo\DistributionReports;
 use app\models\payonline\Partner;
 use app\models\Payschets;
 use app\models\planner\AlarmsSend;
+use app\models\planner\BrsReportToEmail;
 use app\models\planner\OtchToEmail;
 use app\models\planner\ReceiveTelegram;
 use app\models\planner\ReturnComisMfo;
@@ -220,6 +221,28 @@ class WidgetController extends Controller
         $sender = new OtchToEmail(new DistributionReports(), $dateFrom, $dateTo, $emailList);
 
         $sender->run();
+        echo "End operation. \n";
+    }
+
+    /**
+     * Ежедневная автоматическая отправка реестра успешных выплат через банк БРС (ежедневно в 4 утра)
+     */
+    public function actionSendBrsReport($dateFrom = '', $dateTo = '', $emailList = '')
+    {
+        echo "Run Send BRS report in csv files. \n";
+
+        $dateFrom = $dateFrom !== '' ? $dateFrom : 'yesterday';
+        $dateTo = $dateTo !== '' ? $dateTo : 'today';
+
+        $sender = new BrsReportToEmail(new DistributionReports(), $dateFrom, $dateTo, $emailList);
+
+        try {
+            $sender->run();
+        } catch (\Exception $e) {
+            Yii::$app->errorHandler->logException($e);
+            echo "Operation error. \n";
+        }
+
         echo "End operation. \n";
     }
 

@@ -283,7 +283,8 @@ class StatController extends Controller
                         "Экспорт",
                         $IsAdmin ? MfoStat::HEAD_ADMIN : MfoStat::HEAD_USER,
                         MfoStat::getDataGenerator($data['data'], $IsAdmin),
-                        $IsAdmin ? MfoStat::ITOGS_ADMIN_EXCEL : MfoStat::ITOGS_USER_EXCEL
+                        [],
+                        MfoStat::getOperationListResultRow($data, $IsAdmin)
                     );
                 }
             };

@@ -8,6 +8,7 @@ use app\models\partner\stat\PayShetStat;
 use app\models\partner\UserLk;
 use app\models\payonline\Uslugatovar;
 use app\models\TU;
+use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\PaySchet;
 use Yii;
 
@@ -39,7 +40,7 @@ class MfoStat
         $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
         $payShetList = new PayShetStat();
         $payShetList->load($post, '');
-        $list = $payShetList->getList($IsAdmin, 0, null);
+        $list = $payShetList->getList2($IsAdmin, 0, 1);
 
         $data = [];
 
@@ -111,14 +112,41 @@ class MfoStat
     }
 
     /**
-     * @param \Generator $data
-     * @param bool|null  $isAdmin
+     * Костыльный метод для формирования итогов xls выгрузки
+     * тк итоги высчитываются в {@see PayShetStat::getList2()} считать их заново не имеет смысла
      *
-     * @return \Generator
+     * TODO убрать при переписывании списка операций и выгрузок
+     *
+     * @param $data
+     * @param bool $isAdmin
+     * @return string[]
      */
-    public static function getDataGenerator(\Generator $data, ?bool $isAdmin): \Generator
+    public static function getOperationListResultRow($data, bool $isAdmin): array
     {
-        foreach ($data as $k => $row) {
+        $result = [
+            'ИТОГО:',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+        ];
+        $result[] = PaymentHelper::convertToFullAmount($data['sumpay']);
+        $result[] = PaymentHelper::convertToFullAmount($data['sumcomis']);
+        $result[] = PaymentHelper::convertToFullAmount($data['sumpay'] + $data['sumcomis']);
+
+        if ($isAdmin) {
+            $result[] = PaymentHelper::convertToFullAmount($data['bankcomis']);
+            $result[] = PaymentHelper::convertToFullAmount($data['voznagps']);
+        }
+
+        return $result;
+    }
+
+    public static function getDataGenerator($data, ?bool $isAdmin): \Generator
+    {
+        foreach ($data as $row) {
 
                 $retAdmin = $isAdmin ? [
                     ($row['BankComis'] / 100.0),
@@ -159,6 +187,8 @@ class MfoStat
     /**
      * Получение отчёта с использованием "сырой" записи в xls, в обход PHPSpreadsheet, для сохранения больших XLS-файлов
      *
+     * @TODO: Probably @deprecated
+     *
      * @param array $input
      */
     public function ExportOpListRaw(array $input): void
@@ -166,7 +196,7 @@ class MfoStat
         $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
         $paySchetList = new PayShetStat();
         $paySchetList->load($input, '');
-        $list = $paySchetList->getList($IsAdmin, 0, null, true);
+        $list = $paySchetList->getList2($IsAdmin, 0, 1);
 
         $data = self::getDataGenerator($list['data'], $IsAdmin);
 
