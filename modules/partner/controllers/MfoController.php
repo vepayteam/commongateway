@@ -199,7 +199,24 @@ class MfoController extends Controller
             return $this->redirect('/partner');
         }
 
-        return $this->partsInternal();
+        return $this->partsInternal([
+            'paySchetId',
+            'partnerName',
+            'partAmount',
+            'createdAt',
+            'extId',
+            'paySchetAmount',
+            'clientCompensation',
+            'partnerCompensation',
+            'bankCompensation',
+            'message',
+            'cardNumber',
+            'cardHolder',
+            'contract',
+            'fio',
+            'withdrawalPayschetId',
+            'withdrawalCreatedAt',
+        ]);
     }
 
     /**
