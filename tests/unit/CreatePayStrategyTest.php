@@ -60,8 +60,7 @@ class CreatePayStrategyTest extends \Codeception\Test\Unit
 
     public function testReleaseLock()
     {
-        $paySchetObj = PaySchet::find()->select('ID')->orderBy('ID ASC')->one();
-        $paySchetId = $paySchetObj->ID;
+        $paySchetId = PaySchet::find()->select('ID')->orderBy('ID ASC')->limit(1)->scalar();
         $paySchet = $this->make(PaySchet::class, [
             'ID' => $paySchetId,
         ]);

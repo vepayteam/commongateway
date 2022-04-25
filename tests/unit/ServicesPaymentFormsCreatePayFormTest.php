@@ -94,8 +94,8 @@ class ServicesPaymentFormsCreatePayFormTest extends \Codeception\Test\Unit
     public function testGetPaySchet()
     {
         $form = new CreatePayForm();
-        $payschet = PaySchet::find()->orderBy('ID ASC')->one();
-        $form->IdPay = $payschet['ID'];
+        $payschet = PaySchet::find()->orderBy('ID ASC')->limit(1)->one();
+        $form->IdPay = $payschet->ID;
         $this->tester->assertInstanceOf(PaySchet::class, $form->getPaySchet());
     }
 
