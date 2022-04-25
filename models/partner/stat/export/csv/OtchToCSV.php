@@ -80,7 +80,7 @@ class OtchToCSV extends ToCSV
         yield from array_merge(
             [$this->header($isAdmin)],
             $listData,
-            [$this->totalString($listData)]
+            [$this->totalString($list['data'])]
         );
     }
 
@@ -94,14 +94,14 @@ class OtchToCSV extends ToCSV
         $totalSum = $totalFee = 0;
         foreach ($list as $data) {
             if (
-                intval($data['Status']) === PaySchet::STATUS_REFUND_DONE ||
-                intval($data['Status']) === PaySchet::STATUS_CANCEL
+                intval($data->Status) === PaySchet::STATUS_REFUND_DONE ||
+                intval($data->Status) === PaySchet::STATUS_CANCEL
             ) {
-                $totalSum -= (int) $data['SummPay'];
-                $totalFee -= (int) $data['ComissSumm'];
+                $totalSum -= (int) $data->SummPay;
+                $totalFee -= (int) $data->ComissSumm;
             } else {
-                $totalSum += (int) $data['SummPay'];
-                $totalFee += (int) $data['ComissSumm'];
+                $totalSum += (int) $data->SummPay;
+                $totalFee += (int) $data->ComissSumm;
             }
         }
         return [
