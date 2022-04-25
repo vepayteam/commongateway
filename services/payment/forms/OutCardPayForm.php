@@ -119,7 +119,7 @@ class OutCardPayForm extends Model implements AmountFormInterface
 
     public function getFirstName(bool $latinIfEmpty = false): string
     {
-        if(empty($this->fullname) || explode(' ', $this->fullname) < 2) {
+        if(empty($this->fullname) || count(explode(' ', $this->fullname)) < 2) {
             return $latinIfEmpty ? 'NONAME' : 'БЕЗИМЕНИ';
         }
         return explode(' ', $this->fullname)[1];
@@ -127,10 +127,18 @@ class OutCardPayForm extends Model implements AmountFormInterface
 
     public function getLastName(bool $latinIfEmpty = false): string
     {
-        if(empty($this->fullname) || explode(' ', $this->fullname) < 2) {
+        if(empty($this->fullname) || count(explode(' ', $this->fullname)) < 2) {
             return $latinIfEmpty ? 'NONAME' : 'БЕЗИМЕНИ';
         }
         return explode(' ', $this->fullname)[0];
+    }
+
+    public function getMiddleName(): string
+    {
+        if(empty($this->fullname) || count(explode(' ', $this->fullname)) < 3) {
+            return '';
+        }
+        return explode(' ', $this->fullname)[2];
     }
 
     /**

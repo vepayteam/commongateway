@@ -18,6 +18,7 @@ class CreatePayResponse extends BaseResponse
     public $vesion3DS = Issuer3DSVersionInterface::V_1;
     public $isNeed3DSVerif = true;
     public $isNeedSendTransIdTKB = false;
+    public $isNeedPingMonetix = false;
     public $authValue;
     public $dsTransId;
     public $eci;

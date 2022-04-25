@@ -330,20 +330,15 @@ class PayShetStat extends Model
 
         $res = $query->all();
 
-        if ($nolimit) {
-            $data = self::mapQueryPaymentResult($res);
+        $data = [];
 
-        } else {
-            $data = [];
+        foreach ($res as $row) {
+            $row['VoznagSumm'] = $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
+            $row['Currency'] = CurrencyRepository::getCurrencyCodeById($row['CurrencyId'])->Code;
 
-            foreach ($res as $row) {
-                $row['VoznagSumm'] = $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
-                $row['Currency'] = CurrencyRepository::getCurrencyCodeById($row['CurrencyId'])->Code;
-
-                $row['RefundAmount'] = $row['RefundAmount'] ?? 0;
-                $row['RemainingRefundAmount'] = $row['SummPay'] - $row['RefundAmount'];
-                $data[] = $row;
-            }
+            $row['RefundAmount'] = $row['RefundAmount'] ?? 0;
+            $row['RemainingRefundAmount'] = $row['SummPay'] - $row['RefundAmount'];
+            $data[] = $row;
         }
 
         $refundTotalPaymentSum = 0;

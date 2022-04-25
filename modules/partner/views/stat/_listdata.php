@@ -89,7 +89,7 @@ use yii\widgets\LinkPager;
                 <td>
 
                     <span class="label label-primary" style="background-color: <?=Html::encode(PaySchet::STATUS_COLORS[$row['Status']])?>">
-                        <?= (!$row['sms_accept'] && $row['Status'] == 0) ? 'Создан' : Html::encode(PaySchet::STATUSES[$row['Status']]) ?>
+                        <?= (!$row['sms_accept'] && $row['Status'] == 0) ? 'Created' : Html::encode(PaySchet::STATUSES[$row['Status']]) ?>
                     </span>
                 </td>
                 <td>
@@ -116,7 +116,7 @@ use yii\widgets\LinkPager;
                         <input class="btn btn-white btn-xs"
                                data-action="cancelpay"
                                data-id="<?= Html::encode($row['ID']) ?>"
-                               data-full-amount="<?= Html::encode(PaymentHelper::convertToFullAmount($row['SummPay'] + $row['ComissSumm'])) ?>"
+                               data-full-amount="<?= Html::encode(PaymentHelper::convertToFullAmount($row['SummPay'])) ?>"
                                data-remaining-amount="<?= Html::encode(PaymentHelper::convertToFullAmount($row['RemainingRefundAmount'])) ?>"
                                data-refund-amount="<?= Html::encode(PaymentHelper::convertToFullAmount($row['RefundAmount'])) ?>"
                                type="button"
@@ -129,6 +129,17 @@ use yii\widgets\LinkPager;
                            href="#" data-id="<?=Html::encode($row['ID'])?>">
                             Обновить статус
                         </a>
+                    <?php endif; ?>
+
+                    <?php if ($IsAdmin): ?>
+                        <button
+                            data-action="transaction-edit"
+                            data-id="<?= Html::encode($row['ID']) ?>"
+                            class="btn btn-white btn-xs"
+                            type="button"
+                        >
+                            Редактировать
+                        </button>
                     <?php endif; ?>
                 </td>
             </tr>
