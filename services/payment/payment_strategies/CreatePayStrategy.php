@@ -252,11 +252,12 @@ class CreatePayStrategy
     public function releaseLock()
     {
         $paySchet = $this->createPayForm->getPaySchet();
-        $paySchetId = $paySchet ? $paySchet->ID : 0;
-        Yii::info("CreatePayStrategy releaseLock PaySchet.ID={$paySchetId}");
+        if ($paySchet) {
+            Yii::info("CreatePayStrategy releaseLock PaySchet.ID={$paySchet->ID}");
 
-        $cacheKey = $this->getCacheKey($paySchet);
-        Yii::$app->cache->delete($cacheKey);
+            $cacheKey = $this->getCacheKey($paySchet);
+            Yii::$app->cache->delete($cacheKey);
+        }
     }
 
     /**

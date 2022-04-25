@@ -26,7 +26,7 @@ class ServicesPaymentFormsOkPayFormTest extends \Codeception\Test\Unit
         $errors = $form->getErrors();
         $this->assertEquals('Id Pay cannot be blank.', $errors['IdPay'][0]);
         $payschet = PaySchet::find()->orderBy('ID ASC')->one();
-        $form->IdPay = $payschet['IdPay'];
+        $form->IdPay = $payschet['ID'];
         $this->assertTrue($form->validate());
     }
 
