@@ -9,7 +9,7 @@ class ServicesPaymentFormsCreatePayFormTest extends \Codeception\Test\Unit
      * @var \UnitTester
      */
     protected $tester;
-    
+
     protected function _before()
     {
     }
@@ -94,7 +94,8 @@ class ServicesPaymentFormsCreatePayFormTest extends \Codeception\Test\Unit
     public function testGetPaySchet()
     {
         $form = new CreatePayForm();
-        $form->IdPay = 1;
+        $payschet = PaySchet::find()->orderBy('IdPay ASC')->one();
+        $form->IdPay = $payschet['IdPay'];
         $this->tester->assertInstanceOf(PaySchet::class, $form->getPaySchet());
     }
 
