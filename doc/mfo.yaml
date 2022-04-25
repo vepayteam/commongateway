@@ -1036,6 +1036,13 @@ components:
         card:
           type: string
           description: Номер карты, 16 или 18 цифр
+        language:
+          type: string
+          default: "rus"
+          enum:
+              - "eng"
+              - "rus"
+          description: Язык формы оплаты, по умолчанию rus
     CardRegAns:
       type: object
       properties:
@@ -1122,6 +1129,13 @@ components:
           enum:
               - 1
               - 0
+        language:
+          type: string
+          default: "rus"
+          enum:
+              - "eng"
+              - "rus"
+          description: Язык формы оплаты, по умолчанию rus
         client:
           type: array
           required: false
@@ -1168,6 +1182,13 @@ components:
           type: string
           maxLength: 40
           description: Номер договора
+        language:
+          type: string
+          default: "rus"
+          enum:
+            - "eng"
+            - "rus"
+          description: Язык формы оплаты, по умолчанию rus
         parts:
           type: array
           items:
