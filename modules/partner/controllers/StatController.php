@@ -30,7 +30,9 @@ use app\modules\partner\models\forms\DiffColumnsForm;
 use app\modules\partner\models\forms\DiffDataForm;
 use app\modules\partner\models\forms\DiffExportForm;
 use app\modules\partner\models\forms\ReverseOrderForm;
+use app\modules\partner\models\forms\UpdateTransactionForm;
 use app\modules\partner\models\PaySchetLogForm;
+use app\modules\partner\services\UpdateTransactionService;
 use app\services\ident\forms\IdentStatisticForm;
 use app\services\ident\IdentService;
 use app\services\partners\StatDiffSettingsService;
@@ -87,7 +89,17 @@ class StatController extends Controller
                     [
                         'allow' => false,
                         'roles' => ['@'],
-                        'actions' => ['diff', 'diff-columns', 'diff-data', 'diff-export', 'recalc', 'recalcdata', 'recalc-save'],
+                        'actions' => [
+                            'diff',
+                            'diff-columns',
+                            'diff-data',
+                            'diff-export',
+                            'recalc',
+                            'recalcdata',
+                            'recalc-save',
+                            'transaction-edit-modal',
+                            'transaction-update',
+                        ],
                         'matchCallback' => function ($rule, $action) {
                             return !UserLk::IsAdmin(Yii::$app->user);
                         }
@@ -279,7 +291,8 @@ class StatController extends Controller
                         "Экспорт",
                         $IsAdmin ? MfoStat::HEAD_ADMIN : MfoStat::HEAD_USER,
                         MfoStat::getDataGenerator($data['data'], $IsAdmin),
-                        $IsAdmin ? MfoStat::ITOGS_ADMIN_EXCEL : MfoStat::ITOGS_USER_EXCEL
+                        [],
+                        MfoStat::getOperationListResultRow($data, $IsAdmin)
                     );
                 }
             };
@@ -1097,6 +1110,49 @@ class StatController extends Controller
             $a = 0;
         }
         return $this->asJson($this->getIdentService()->getIdentStatistic($identStatisticForm));
+    }
+
+    public function actionTransactionEditModal(int $id)
+    {
+        $paySchet = PaySchet::findOne(['ID' => $id]);
+        if (!$paySchet) {
+            throw new NotFoundHttpException();
+        }
+
+        $updateTransactionForm = UpdateTransactionForm::mapFromPaySchet($paySchet);
+
+        return $this->renderPartial('modals/transaction-edit-modal', [
+            'updateTransactionForm' => $updateTransactionForm,
+            'statuses' => PaySchet::STATUSES,
+        ]);
+    }
+
+    public function actionTransactionUpdate()
+    {
+        $updateTransactionForm = new UpdateTransactionForm();
+        $updateTransactionForm->load(Yii::$app->request->post(), $updateTransactionForm->formName());
+        if (!$updateTransactionForm->validate()) {
+            return $this->asJson([
+                'status' => 1,
+                'errors' => $updateTransactionForm->getErrorSummary(true),
+            ]);
+        }
+
+        $user = Yii::$app->user;
+
+        try {
+            $updateTransactionService = new UpdateTransactionService($updateTransactionForm, $user);
+            $updateTransactionService->update();
+        } catch (\Exception $e) {
+            Yii::$app->errorHandler->logException($e);
+
+            return $this->asJson([
+                'status' => 1,
+                'errors' => ['Ошибка обновления'],
+            ]);
+        }
+
+        return $this->asJson(['status' => 0]);
     }
 
     /**

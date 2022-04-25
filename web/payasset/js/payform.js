@@ -183,6 +183,15 @@
             $('#form3ds').trigger('submit');
         },
 
+        load3dsMonetix: function(url, paReq, md, termUrl) {
+            $('#frame3ds').show();
+            $('#form3dsMonetix').attr('action', url);
+            $('#form3dsMonetix__pa_req').val(paReq);
+            $('#form3dsMonetix__md').val(md);
+            $('#form3dsMonetix__term_url').val(termUrl);
+            $('#form3dsMonetix').trigger('submit');
+        },
+
         confirm3dsV2TKB: function(url, transId, termurl) {
             var json = "{\"threeDSServerTransID\": \"" + transId + "\", \"threeDSMethodNotificationURL\": \"" + termurl + "\"}",
                 html = "<html lang='ru'><body>" +
@@ -337,8 +346,46 @@
 
         },
 
+        pingMonetixCallback: function(interval) {
+            let id = $('[name="PayForm[IdPay]"]').val();
+            $.ajax({
+                type: 'POST',
+                url: "/callback/monetix-ping",
+                data: {
+                    'paySchetId': id,
+                    '_csrf': $('input[name=_csrf]').val(),
+                },
+                success: function (response, textStatus, jqXHR) {
+                    if(!response || typeof response['status'] == 'undefined') {
+                        return;
+                    }
+                    if(response['status'] && response['status'] == 'awaiting 3ds result') {
+                        var url = response['data']['acs']['acs_url'];
+                        var md = response['data']['acs']['md'];
+                        var paReq = response['data']['acs']['pa_req'];
+                        var termUrl = response['data']['acs']['term_url'];
+                        payform.load3dsMonetix(url, paReq, md, termUrl);
+                        clearInterval(interval);
+                    } else if(response['status'] && response['status'] == 'decline') {
+                        window.location = response.termurl;
+                        clearInterval(interval);
+                    } else if(response['status'] && response['status'] == 'success') {
+                        window.location = '/pay/orderok?id=' + id;
+                        clearInterval(interval);
+                    } else {
+                        window.location = response.termurl;
+                        clearInterval(interval);
+                    }
+                }
+            });
+        },
+
         createPaySuccess: function (data, textStatus, jqXHR) {
-            if (data.status == 1 && !data.isNeed3DSRedirect) {
+            if (data.status == 1 && data.isNeedPingMonetix) {
+                var interval = setInterval(function() {
+                    payform.pingMonetixCallback(interval);
+                }, 2000);
+            } else if (data.status == 1 && !data.isNeed3DSRedirect) {
                 if (data.isNeed3DSVerif == 1) {
                     //ок - переход по url банка
                     payform.load3ds(data.url, data.pa, data.md, data.creq, data.termurl, data.threeDSServerTransID, data.html3dsForm);
@@ -349,10 +396,6 @@
                 }
             } else if (data.status == 0 && data.threeDSMethodURL && data.isNeedSendTransIdTKB) {
                 payform.confirm3dsV2TKB(data.threeDSMethodURL, data.threeDSServerTransID, data.termurl);
-
-                // setTimeout(function() {
-                //     window.location = data.termurl;
-                // }, 5000);
             } else if (data.status == 1 && data.url && data.isNeed3DSRedirect) {
                 window.location = data.url;
             } else if (data.status == 2 && data.url) {

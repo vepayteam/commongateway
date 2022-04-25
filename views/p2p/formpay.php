@@ -26,7 +26,8 @@ const MAX_EXP_CARD_YEARS = 10;
         var minsumComiss = <?=$paySchet->uslugatovar->MinsumComiss?>;
         var currMonth = <?=Carbon::now()->month?>;
         var currYear = <?=Carbon::now()->year?>;
-
+        var minSum = <?=$paySchet->uslugatovar->MinSumm / 100?>;
+        var maxSum = <?=$paySchet->uslugatovar->MaxSumm / 100?>;
 
     </script>
 
@@ -37,6 +38,7 @@ const MAX_EXP_CARD_YEARS = 10;
 <div class="container">
     <h2 class="center greenText">Перевод с карты на карту</h2>
     <div class="content">
+        <?php if($paySchet->CancelUrl): ?>
         <button id="btnClose" data-url="<?=yii\helpers\Html::encode($paySchet->CancelUrl)?>" style="
             position: absolute;
             right: 20px;
@@ -44,10 +46,12 @@ const MAX_EXP_CARD_YEARS = 10;
             background: none;
             border: none;
             font-size: 1.2em;
-            font-weight: bolder;"
+            font-weight: bolder;
+            cursor: pointer"
         >
             x
         </button>
+        <?php endif; ?>
         <form name="p2pForm" action="">
             <div class="cardsBlock">
                 <div class="cardWrapper">
@@ -126,7 +130,11 @@ const MAX_EXP_CARD_YEARS = 10;
             </div>
             <div class="formMainBody">
                 <div class="conditionsBlock center">
-                    <span>* не более 75 000 руб. за одну операцию</span>
+                    <span>
+                        * не менее <?= number_format($paySchet->uslugatovar->MinSumm / 100, 0, '', ' ') ?> руб.
+                        и не более не более <?= number_format($paySchet->uslugatovar->MaxSumm / 100, 0, '', ' ') ?>
+                        руб. за одну операцию
+                    </span>
                     <br>
                     <span>** не более 600 000 руб. в месяц с одной карты</span>
                 </div>
@@ -147,13 +155,9 @@ const MAX_EXP_CARD_YEARS = 10;
                                type="number">
                     </div>
                 </div>
-                <span class="center d-block greenText">Укажите свою почту, и мы отправим Вам справку о совершенной операции</span>
+                <span class="center d-block greenText"></span>
                 <div class="emailAndButtonBlock">
-                    <div class="center">
-                        <input id="emailInput" placeholder="укажите email" data-sequence="12" type="text"
-                               data-inputmask-regex="[a-zA-Z0-9._%-]+@[a-zA-Z0-9-]+\.[a-zA-Z]{2,10}"
-                        >
-                    </div>
+                    <div class="center"></div>
                     <div class="center">
                         <div style="display: flex; margin-bottom: 10px;">
                             <input type="checkbox" id="agreeOffer" name="agreeOffer">
@@ -162,7 +166,7 @@ const MAX_EXP_CARD_YEARS = 10;
                                 <a target="_blank" href="/files/с_21_06_2021_Пуб_оферта_№_2_от_21_06_2021_Card2Card_2_2.pdf">оферты</a>
                             </label>
                         </div>
-                        <button class="submitBtn" id="sendForm" type="submit">Отправить деньги</button>
+                        <button class="submitBtn" id="sendForm" type="submit" disabled>Отправить деньги</button>
                         <div id="formErrorOfferMessage" style="display: none; color: red">
                             Необходимо подтвердить оферту
                         </div>

@@ -174,7 +174,7 @@ class UserLk implements IdentityInterface
 
     /**
      * Проверка что это администратор
-     * @param IdentityInterface $user
+     * @param User $user
      * @return bool
      */
     public static function IsAdmin($user)
@@ -188,7 +188,7 @@ class UserLk implements IdentityInterface
 
     /**
      * Кабинет МФО
-     * @param IdentityInterface $user
+     * @param User $user
      * @return bool
      */
     public static function IsMfo($user)

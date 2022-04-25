@@ -49,57 +49,8 @@ class AccountController extends Controller
     protected function verbs()
     {
         return [
-            'balance' => ['POST'],
             'statements' => ['POST'],
         ];
-    }
-
-    /**
-     * Баланс счета
-     * @return array
-     * @throws BadRequestHttpException
-     * @throws \yii\web\UnauthorizedHttpException
-     * @throws \Exception
-     */
-    public function actionBalance()
-    {
-        $kf = new KfRequest();
-        $kf->CheckAuth(Yii::$app->request->headers, Yii::$app->request->getRawBody());
-
-        $kfBal = new KfBalance();
-        $kfBal->load($kf->req, '');
-        if (!$kfBal->validate()) {
-            return ['status' => 0, 'message' => $kfBal->GetError()];
-        }
-
-        $bal = $kfBal->GetBalance($kf->partner);
-        if ($bal !== null) {
-            $state = [
-                'status' => 1,
-                'message' => '',
-                'amount' => round($bal, 2),
-                'insumm' => round($kfBal->GetInSums($kf->IdPartner) / 100.0, 2),
-                'outsumm' => round($kfBal->GetOutSums($kf->IdPartner) / 100.0, 2)
-            ];
-        } else {
-            $state = ['status' => 0, 'message' => 'Ошибка запроса', 'amount' => '0.00', 'insumm' => '0.00', 'outsumm' => '0.00'];
-        }
-        /*$TcbGate = new TcbGate($kf->IdPartner, TCBank::$AFTGATE);
-        $tcBank = new TCBank($TcbGate);
-        $ret = $tcBank->getBalanceAcc(['account' => $kfBal->account]);
-        //$ret = $tcBank->getBalance();
-        if ($ret && isset($ret['status']) && $ret['status'] == 1) {
-            $state = [
-                'status' => 1,
-                'message' => '',
-                'amount' => round($ret['amount'], 2),
-                'insumm' => round($kfBal->GetInSums($kf->IdPartner) / 100.0, 2),
-                'outsumm' => round($kfBal->GetOutSums($kf->IdPartner) / 100.0, 2)
-            ];
-        } else {
-            $state = ['status' => 0, 'message' => $ret['message'], 'amount' => '0.00', 'insumm' => '0.00', 'outsumm' => '0.00'];
-        }*/
-        return $state;
     }
 
     /**
