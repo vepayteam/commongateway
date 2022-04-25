@@ -34,6 +34,8 @@ class Banks
                 return new RunaBankAdapter();
             case GratapayAdapter::$bank:
                 return new GratapayAdapter();
+            case MonetixAdapter::$bank:
+                return new MonetixAdapter();
             case ImpayaAdapter::$bank:
                 return new ImpayaAdapter();
             default:

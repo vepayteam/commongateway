@@ -38,6 +38,7 @@ use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\forms\SendP2pForm;
 use app\services\payment\forms\RegistrationBenificForm;
+use app\services\payment\models\Bank;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use Vepay\Gateway\Client\Validator\ValidationException;
@@ -128,7 +129,7 @@ class RunaBankAdapter implements IBankAdapter
      */
     public function getAftMinSum()
     {
-        // TODO: Implement getAftMinSum() method.
+        return Bank::findOne(self::$bank)->AftMinSum;
     }
 
     /**

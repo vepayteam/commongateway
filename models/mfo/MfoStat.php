@@ -8,6 +8,7 @@ use app\models\partner\stat\PayShetStat;
 use app\models\partner\UserLk;
 use app\models\payonline\Uslugatovar;
 use app\models\TU;
+use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\PaySchet;
 use Yii;
 
@@ -110,9 +111,42 @@ class MfoStat
         return $ExportExcel->CreateXls("Экспорт", $head, $data, $sizes, $itogs);
     }
 
-    public static function getDataGenerator(\Generator $data, ?bool $isAdmin): \Generator
+    /**
+     * Костыльный метод для формирования итогов xls выгрузки
+     * тк итоги высчитываются в {@see PayShetStat::getList2()} считать их заново не имеет смысла
+     *
+     * TODO убрать при переписывании списка операций и выгрузок
+     *
+     * @param $data
+     * @param bool $isAdmin
+     * @return string[]
+     */
+    public static function getOperationListResultRow($data, bool $isAdmin): array
     {
-        foreach ($data as $k => $row) {
+        $result = [
+            'ИТОГО:',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+        ];
+        $result[] = PaymentHelper::convertToFullAmount($data['sumpay']);
+        $result[] = PaymentHelper::convertToFullAmount($data['sumcomis']);
+        $result[] = PaymentHelper::convertToFullAmount($data['sumpay'] + $data['sumcomis']);
+
+        if ($isAdmin) {
+            $result[] = PaymentHelper::convertToFullAmount($data['bankcomis']);
+            $result[] = PaymentHelper::convertToFullAmount($data['voznagps']);
+        }
+
+        return $result;
+    }
+
+    public static function getDataGenerator($data, ?bool $isAdmin): \Generator
+    {
+        foreach ($data as $row) {
 
                 $retAdmin = $isAdmin ? [
                     ($row['BankComis'] / 100.0),
