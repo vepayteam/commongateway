@@ -68,6 +68,8 @@ class FortaTechAdapter implements IBankAdapter
     const REFUND_ID_CACHE_PREFIX = 'Forta__RefundIds__';
     const REFUND_REFRESH_STATUS_JOB_DELAY = 30;
 
+    const STATUS_NOT_FOUND_CODE = 404;
+
     const DB_SESSION_EXCEPTION_MESSAGE = 'Startup of infobase session is not allowed';
     const ERROR_MESSAGE_COMMON = 'Ошибка проведения платежа. Пожалуйста, повторите попытку позже';
 
@@ -752,19 +754,25 @@ class FortaTechAdapter implements IBankAdapter
             \Yii::$app->errorHandler->logException($e);
             if($e instanceof BadResponseException) {
                 $statusCode = $e->getResponse()->getStatusCode();
+                $responseBody = $e->getResponse()->getBody()->getContents();
                 \Yii::error([
                     'message' => 'FortaTechAdapter bad response error.',
                     'uri' => $uri,
                     'method' => $methodType,
                     'requestData' => $maskedRequestString,
                     'responseStatusCode' => $statusCode,
-                    'responseBody' => $e->getResponse()->getBody()->getContents(),
+                    'responseBody' => $responseBody,
                     'signature' => $signature,
                 ]);
                 if ($e instanceof ServerException) {
                     throw new FortaServerException("Ошибка запроса", $statusCode);
                 }
                 if ($e instanceof ClientException) {
+                    /** Форта может прислать ответ с кодом 404, в таком случае ошибку нужно записать в ErrorInfo */
+                    if ($statusCode === self::STATUS_NOT_FOUND_CODE) {
+                        throw new FortaClientException($responseBody, $statusCode);
+                    }
+
                     throw new FortaClientException("Ошибка запроса", $statusCode);
                 }
             }

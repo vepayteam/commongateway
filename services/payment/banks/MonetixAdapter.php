@@ -214,8 +214,6 @@ class MonetixAdapter implements IBankAdapter
                 $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
                 $checkStatusPayResponse->message = "Ошибка запроса";
             }
-
-
             return $checkStatusPayResponse;
         } catch (\Exception $e) {
             $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
@@ -293,8 +291,8 @@ class MonetixAdapter implements IBankAdapter
             (string)$outCardPayForm->paySchet->ID,
             Yii::$app->request->remoteIP
         );
-        $customerModel->first_name = $outCardPayForm->getFirstName();
-        $customerModel->last_name = $outCardPayForm->getLastName();
+        $customerModel->first_name = $outCardPayForm->getFirstName(true);
+        $customerModel->last_name = $outCardPayForm->getLastName(true);
         $customerModel->middle_name = $outCardPayForm->getMiddleName();
 
         $paymentModel = new PaymentModel(
