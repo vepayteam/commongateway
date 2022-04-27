@@ -8,6 +8,7 @@ use app\models\partner\stat\PayShetStat;
 use app\models\partner\UserLk;
 use app\models\payonline\Uslugatovar;
 use app\models\TU;
+use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\PaySchet;
 use Yii;
 
@@ -39,7 +40,7 @@ class MfoStat
         $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
         $payShetList = new PayShetStat();
         $payShetList->load($post, '');
-        $list = $payShetList->getList2($IsAdmin, 0, 1);
+        $list = $payShetList->getList($IsAdmin, 0, null);
 
         $data = [];
 
@@ -110,9 +111,42 @@ class MfoStat
         return $ExportExcel->CreateXls("Экспорт", $head, $data, $sizes, $itogs);
     }
 
+    /**
+     * Костыльный метод для формирования итогов xls выгрузки
+     * тк итоги высчитываются в {@see PayShetStat::getList2()} считать их заново не имеет смысла
+     *
+     * TODO убрать при переписывании списка операций и выгрузок
+     *
+     * @param $data
+     * @param bool $isAdmin
+     * @return string[]
+     */
+    public static function getOperationListResultRow($data, bool $isAdmin): array
+    {
+        $result = [
+            'ИТОГО:',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+        ];
+        $result[] = PaymentHelper::convertToFullAmount($data['sumpay']);
+        $result[] = PaymentHelper::convertToFullAmount($data['sumcomis']);
+        $result[] = PaymentHelper::convertToFullAmount($data['sumpay'] + $data['sumcomis']);
+
+        if ($isAdmin) {
+            $result[] = PaymentHelper::convertToFullAmount($data['bankcomis']);
+            $result[] = PaymentHelper::convertToFullAmount($data['voznagps']);
+        }
+
+        return $result;
+    }
+
     public static function getDataGenerator(\Generator $data, ?bool $isAdmin): \Generator
     {
-        foreach ($data as $k => $row) {
+        foreach ($data as $row) {
 
                 $retAdmin = $isAdmin ? [
                     ($row['BankComis'] / 100.0),
@@ -162,7 +196,7 @@ class MfoStat
         $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
         $paySchetList = new PayShetStat();
         $paySchetList->load($input, '');
-        $list = $paySchetList->getList2($IsAdmin, 0, 1);
+        $list = $paySchetList->getList($IsAdmin, 0, null, true);
 
         $data = self::getDataGenerator($list['data'], $IsAdmin);
 
