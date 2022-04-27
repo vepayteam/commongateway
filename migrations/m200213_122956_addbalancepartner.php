@@ -15,6 +15,9 @@ class m200213_122956_addbalancepartner extends Migration
         $this->addColumn('partner', 'BalanceIn','bigint(19) NOT NULL DEFAULT \'0\' COMMENT \'balans pogashenia v kopeikah\'');
         $this->addColumn('partner', 'BalanceOut','bigint(19) NOT NULL DEFAULT \'0\' COMMENT \'balans vydachi v kopeikah\'');
 
+        $this->alterColumn('partner_sumorder', 'Summ', 'bigint(19) NOT NULL DEFAULT \'0\' COMMENT \'summa\'');
+        $this->alterColumn('partner_sumorder', 'SummAfter', 'bigint(19) NOT NULL DEFAULT \'0\' COMMENT \'summa balansa posle operacii\'');
+
         $this->execute('
             CREATE TABLE `partner_orderin` (
               `ID` int(10) unsigned NOT NULL AUTO_INCREMENT,
