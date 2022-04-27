@@ -18,18 +18,18 @@ class ApplePay
     public function GetConf($IdPartner)
     {
         $res = Yii::$app->db->createCommand('
-            SELECT 
-                `Apple_MerchantID`, 
+            SELECT
+                `Apple_MerchantID`,
                 `Apple_displayName`,
                 `Apple_PayProcCert`,
                 `Apple_KeyPasswd`,
                 `Apple_MerchIdentKey`,
                 `Apple_MerchIdentCert`,
                 `IsUseApplepay`
-            FROM 
-                `partner` 
-            WHERE 
-                `IsDeleted` = 0 AND `IsBlocked` = 0 AND `ID` = :IDMFO 
+            FROM
+                `partner`
+            WHERE
+                `IsDeleted` = 0 AND `IsBlocked` = 0 AND `ID` = :IDMFO
             LIMIT 1
         ', [':IDMFO' => $IdPartner]
         )->queryOne();

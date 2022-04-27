@@ -34,6 +34,7 @@ use app\services\payment\helpers\ADGroupBankHelper;
 use app\services\payment\models\adb\ClientCardModel;
 use app\services\payment\models\adb\OrderDataModel;
 use app\services\payment\models\adb\TxDetailsModel;
+use app\services\payment\models\Bank;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use Yii;
@@ -138,7 +139,7 @@ class ADGroupBankAdapter implements IBankAdapter
 
     public function getAftMinSum()
     {
-        return self::AFT_MIN_SUMM;
+        return Bank::findOne(self::$bank)->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**

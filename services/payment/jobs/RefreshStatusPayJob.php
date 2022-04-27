@@ -6,6 +6,7 @@ namespace app\services\payment\jobs;
 
 use app\clients\tcbClient\TcbOrderNotExistException;
 use app\models\TU;
+use app\modules\partner\services\StopRefreshStatusService;
 use app\services\notifications\NotificationsService;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\models\PaySchet;
@@ -36,6 +37,12 @@ class RefreshStatusPayJob extends BaseObject implements \yii\queue\JobInterface
 
         Yii::warning('RefreshStatusPayJob execute isHavePayschet=' . !empty($paySchet), 'RefreshStatusPayJob');
         Yii::warning('RefreshStatusPayJob execute paySchetId=' . $paySchet->ID, 'RefreshStatusPayJob');
+
+        $stopRefreshStatusService = new StopRefreshStatusService($paySchet->ID);
+        if ($stopRefreshStatusService->isStopRefreshStatus()) {
+            Yii::info('RefreshStatusPayJob stop job execution paySchetId=' . $paySchet->ID, 'RefreshStatusPayJob');
+            return;
+        }
 
         $okPayForm = new OkPayForm();
         $okPayForm->IdPay = $this->paySchetId;

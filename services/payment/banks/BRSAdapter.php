@@ -51,6 +51,7 @@ use app\services\payment\forms\RegistrationBenificForm;
 use app\services\payment\forms\SendP2pForm;
 use app\services\payment\helpers\BRSErrorHelper;
 use app\services\payment\helpers\PaymentHelper;
+use app\services\payment\models\Bank;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
@@ -703,7 +704,7 @@ class BRSAdapter implements IBankAdapter
      */
     public function getAftMinSum()
     {
-        return self::AFT_MIN_SUMM;
+        return Bank::findOne(self::$bank)->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**
@@ -765,13 +766,11 @@ class BRSAdapter implements IBankAdapter
         $transferToAccountRequest->bic = $outPayaccForm->bic;
         $transferToAccountRequest->receiverId = (string)$outPayaccForm->paySchet->ID;
         $transferToAccountRequest->merchantId = $this->gate->Token;
-        $transferToAccountRequest->fio = $outPayaccForm->getLastName(). ' '.$outPayaccForm->getFirstName(). $outPayaccForm->getMiddleName();
         $transferToAccountRequest->firstName = $outPayaccForm->getFirstName();
         $transferToAccountRequest->lastName = $outPayaccForm->getLastName();
         $transferToAccountRequest->middleName = $outPayaccForm->getLastName();
         $transferToAccountRequest->amount = $outPayaccForm->amount;
         $transferToAccountRequest->account = (string)$outPayaccForm->account;
-        $transferToAccountRequest->phone = $outPayaccForm->getPhoneToSend();
         $transferToAccountRequest->sourceId = (string)$outPayaccForm->paySchet->ID;
 
         if(Yii::$app->params['TESTMODE'] == 'Y') {
@@ -954,7 +953,6 @@ class BRSAdapter implements IBankAdapter
         $transferToAccountRequest->middleName = $outPayaccForm->getMiddleName();
         $transferToAccountRequest->amount = $outPayaccForm->amount;
         $transferToAccountRequest->account = $outPayaccForm->account;
-        $transferToAccountRequest->phone = $outPayaccForm->getPhoneToSend();
         $transferToAccountRequest->sourceId = $id;
 
         $requestData = $transferToAccountRequest->getAttributes();
