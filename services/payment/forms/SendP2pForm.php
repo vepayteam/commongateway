@@ -22,12 +22,11 @@ class SendP2pForm extends Model
     public $cvv;
     public $cardHolder;
     public $outCardPan;
-    public $email;
 
     public function rules()
     {
         return [
-            [['amount', 'cardPan', 'cardExpMonth', 'cardExpYear', 'cvv', 'cardHolder', 'outCardPan', 'email'], 'required'],
+            [['amount', 'cardPan', 'cardExpMonth', 'cardExpYear', 'cvv', 'cardHolder', 'outCardPan'], 'required'],
             [['amount'], 'integer', 'numberPattern' => '[0-9]{1,5}\,[0-9]{,2}'],
             [['cardPan'], 'integer', 'numberPattern' => '[0-9]{16}'],
             [['outCardPan'], 'integer', 'numberPattern' => '[0-9]{16}'],
@@ -35,7 +34,6 @@ class SendP2pForm extends Model
             [['cardExpYear'], 'integer', 'numberPattern' => '[0-9]{4}'],
             [['cvv'], 'integer', 'numberPattern' => '[0-9]{3}'],
             [['cardHolder'], 'match', 'pattern' => '/[a-zA-Z\s]{3,150}/i'],
-            [['email'], 'email'],
         ];
     }
 }
