@@ -22,8 +22,5 @@ class m220427_000814_drop_reestr_bankpl_table extends Migration
      */
     public function safeDown()
     {
-        $this->createTable('{{%reestr_bankpl}}', [
-            'id' => $this->primaryKey(),
-        ]);
     }
 }
