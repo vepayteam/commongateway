@@ -67,7 +67,7 @@ class SendEmail extends Model
         try {
             return $mailer->send();
         } catch (Swift_SwiftException $e) {
-            Yii::error($e->getMessage());
+            Yii::error('send email error: '.$e->getMessage());
         }
         return false;
     }
