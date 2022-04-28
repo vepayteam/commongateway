@@ -348,7 +348,13 @@ class UserLk implements IdentityInterface
             ];
         }, self::CACHE_ERROR_LOGIN_DURATION);
         $cache['quantity']++;
-        $cache[Yii::$app->request->remoteIP]['quantity']++;
+        if (key_exists(Yii::$app->request->remoteIP, $cache)) {
+            $cache[Yii::$app->request->remoteIP]['quantity']++;
+        } else {
+            $cache[Yii::$app->request->remoteIP] = [
+                'quantity' => 1,
+            ];
+        }
         Yii::$app->cache->set(self::getCacheErrorLoginKey($login), $cache, self::CACHE_ERROR_LOGIN_DURATION);
     }
 
@@ -392,8 +398,14 @@ class UserLk implements IdentityInterface
                 ]
             ];
         }, self::CACHE_ERROR_LOGIN_DURATION);
-
-        return $cache[Yii::$app->request->remoteIP]['quantity'] < self::CACHE_ERROR_LOGIN_QUANTITY;
+        if (key_exists(Yii::$app->request->remoteIP, $cache)) {
+            return $cache[Yii::$app->request->remoteIP]['quantity'] < self::CACHE_ERROR_LOGIN_QUANTITY;
+        } else {
+            $cache[Yii::$app->request->remoteIP] = [
+                'quantity' => 0,
+            ];
+            return true;
+        }
     }
 
     /**
