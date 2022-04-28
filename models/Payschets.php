@@ -816,7 +816,6 @@ class Payschets
                 ut.IDPartner,
                 p.Schetcheks,
                 ut.SchetchikFormat,
-                ut.SchetchikNames,
                 ut.SchetchikIzm,
                 ut.NameUsluga,
                 p.IdUsluga,
