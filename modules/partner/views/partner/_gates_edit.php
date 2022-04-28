@@ -39,6 +39,7 @@ $currencyList = ArrayHelper::merge(['' => ''], ArrayHelper::map(CurrencyReposito
         <th>Тип счета</th>
         <th>Номер счета</th>
         <th>Валюта</th>
+        <th>Комиссия с клиента</th>
         <th>Логин</th>
         <th></th>
     </tr>
@@ -56,6 +57,17 @@ $currencyList = ArrayHelper::merge(['' => ''], ArrayHelper::map(CurrencyReposito
             <td><?= Html::encode(AccountTypes::ALL_TYPES[$bankGate->SchetType]) ?></td>
             <td><?= Html::encode($bankGate->SchetNumber) ?></td>
             <td><?= Html::encode($bankGate->currency->Code) ?></td>
+            <td>
+                <?= (int)$bankGate->ClientCommission . Html::encode("%") ?>
+
+                <?php if ($bankGate->ClientMinimalFee && $bankGate->minimalFeeCurrency): ?>
+                    <?= Html::encode(", мин. {$bankGate->ClientMinimalFee} {$bankGate->minimalFeeCurrency->Symbol}") ?>
+                <?php endif; ?>
+
+                <?php if ($bankGate->ClientFee && $bankGate->feeCurrency): ?>
+                    <?= Html::encode("+ {$bankGate->ClientFee} {$bankGate->feeCurrency->Symbol}") ?>
+                <?php endif; ?>
+            </td>
             <td><?= Html::encode($bankGate->Login) ?></td>
             <td>
                 <button class="btn btn-primary partner-edit__bank-gates-table__edit-button">
