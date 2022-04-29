@@ -2,6 +2,7 @@
 
 use app\models\bank\Banks;
 use app\models\payonline\Partner;
+use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\repositories\CurrencyRepository;
 use app\services\payment\models\UslugatovarType;
 use app\services\payment\types\AccountTypes;
@@ -58,14 +59,16 @@ $currencyList = ArrayHelper::merge(['' => ''], ArrayHelper::map(CurrencyReposito
             <td><?= Html::encode($bankGate->SchetNumber) ?></td>
             <td><?= Html::encode($bankGate->currency->Code) ?></td>
             <td>
-                <?= Html::encode((int)$bankGate->ClientCommission . '%') ?>
+                <?= Html::encode(sprintf("%01.2f%%",$bankGate->ClientCommission)) ?>
 
                 <?php if ($bankGate->ClientMinimalFee && $bankGate->minimalFeeCurrency): ?>
-                    <?= Html::encode(", мин. {$bankGate->ClientMinimalFee} {$bankGate->minimalFeeCurrency->Symbol}") ?>
+                    <?php $minFee = PaymentHelper::formatSum($bankGate->ClientMinimalFee) ?>
+                    <?= Html::encode(", мин. {$minFee} {$bankGate->minimalFeeCurrency->Symbol}") ?>
                 <?php endif; ?>
 
                 <?php if ($bankGate->ClientFee && $bankGate->feeCurrency): ?>
-                    <?= Html::encode("+ {$bankGate->ClientFee} {$bankGate->feeCurrency->Symbol}") ?>
+                    <?php $clientFee = PaymentHelper::formatSum($bankGate->ClientFee) ?>
+                    <?= Html::encode("+ {$clientFee} {$bankGate->feeCurrency->Symbol}") ?>
                 <?php endif; ?>
             </td>
             <td><?= Html::encode($bankGate->Login) ?></td>
