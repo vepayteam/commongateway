@@ -79,6 +79,9 @@ RUN set -ex \
                         nodejs \
                         npm \
                         unzip \
+                        vim \
+                        nano \
+                        mc \
     \
     && docker-php-source extract \
     \
@@ -93,4 +96,7 @@ RUN set -ex \
     && curl -sS https://getcomposer.org/installer -o /tmp/composer-setup.php \
     && php /tmp/composer-setup.php --install-dir=/usr/bin --filename=composer --version=${COMPOSER_VERSION} \
     && /usr/bin/composer global require "fxp/composer-asset-plugin:^1.4.6" \
-    && npm install uglify-es clean-css-cli -g
+    && npm install uglify-es clean-css-cli -g \
+    && apt clean autoclean \
+    && apt autoremove --purge -yq \
+    && rm -rf /var/lib/apt/lists/*
