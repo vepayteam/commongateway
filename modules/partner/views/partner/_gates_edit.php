@@ -58,7 +58,7 @@ $currencyList = ArrayHelper::merge(['' => ''], ArrayHelper::map(CurrencyReposito
             <td><?= Html::encode($bankGate->SchetNumber) ?></td>
             <td><?= Html::encode($bankGate->currency->Code) ?></td>
             <td>
-                <?= (int)$bankGate->ClientCommission . Html::encode("%") ?>
+                <?= Html::encode((int)$bankGate->ClientCommission . '%') ?>
 
                 <?php if ($bankGate->ClientMinimalFee && $bankGate->minimalFeeCurrency): ?>
                     <?= Html::encode(", мин. {$bankGate->ClientMinimalFee} {$bankGate->minimalFeeCurrency->Symbol}") ?>
