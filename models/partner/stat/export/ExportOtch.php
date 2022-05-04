@@ -8,6 +8,7 @@ use app\models\partner\stat\ExportExcel;
 use app\models\partner\stat\PayShetStat;
 use app\models\partner\UserLk;
 use app\models\Payschets;
+use app\services\paymentReport\PaymentReportService;
 use Yii;
 use yii\helpers\VarDumper;
 use yii\web\Response;
@@ -77,7 +78,10 @@ class ExportOtch
     {
         if (!$this->otch) {
             $this->stat->load(Yii::$app->request->get(), '');
-            $this->otch = $this->stat->getOtch($this->isAdmin());
+
+            $paymentReportService = new PaymentReportService();
+
+            $this->otch = $paymentReportService->getLegacyReportEntities($this->isAdmin(), $this->stat);
         }
         return $this->otch;
     }

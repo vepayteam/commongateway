@@ -174,7 +174,7 @@ class UserLk implements IdentityInterface
 
     /**
      * Проверка что это администратор
-     * @param IdentityInterface $user
+     * @param User $user
      * @return bool
      */
     public static function IsAdmin($user)
@@ -188,7 +188,7 @@ class UserLk implements IdentityInterface
 
     /**
      * Кабинет МФО
-     * @param IdentityInterface $user
+     * @param User $user
      * @return bool
      */
     public static function IsMfo($user)
@@ -342,9 +342,19 @@ class UserLk implements IdentityInterface
         $cache = Yii::$app->cache->getOrSet(self::getCacheErrorLoginKey($login), function() use ($login) {
             return [
                 'quantity' => 0,
+                Yii::$app->request->remoteIP => [
+                    'quantity' => 0,
+                ]
             ];
         }, self::CACHE_ERROR_LOGIN_DURATION);
         $cache['quantity']++;
+        if (key_exists(Yii::$app->request->remoteIP, $cache)) {
+            $cache[Yii::$app->request->remoteIP]['quantity']++;
+        } else {
+            $cache[Yii::$app->request->remoteIP] = [
+                'quantity' => 1,
+            ];
+        }
         Yii::$app->cache->set(self::getCacheErrorLoginKey($login), $cache, self::CACHE_ERROR_LOGIN_DURATION);
     }
 
@@ -381,12 +391,32 @@ class UserLk implements IdentityInterface
     public static function IsNotLoginLock($login)
     {
         $cache = Yii::$app->cache->getOrSet(self::getCacheErrorLoginKey($login), function() use ($login) {
-           return [
-               'quantity' => 0,
-           ];
+            return [
+                'quantity' => 0,
+                Yii::$app->request->remoteIP => [
+                    'quantity' => 0,
+                ]
+            ];
         }, self::CACHE_ERROR_LOGIN_DURATION);
+        if (key_exists(Yii::$app->request->remoteIP, $cache)) {
+            return $cache[Yii::$app->request->remoteIP]['quantity'] < self::CACHE_ERROR_LOGIN_QUANTITY;
+        } else {
+            $cache[Yii::$app->request->remoteIP] = [
+                'quantity' => 0,
+            ];
+            return true;
+        }
+    }
 
-        return $cache['quantity'] < self::CACHE_ERROR_LOGIN_QUANTITY;
+    /**
+     * Сброс счетчика неправильного пароля
+     *
+     * @param $login string
+     * @return bool
+     */
+    public static function resetLoginLock($login)
+    {
+        return Yii::$app->cache->delete(self::getCacheErrorLoginKey($login));
     }
 
     /**
@@ -395,7 +425,7 @@ class UserLk implements IdentityInterface
      */
     private static function getCacheErrorLoginKey($login)
     {
-        return self::CACHE_ERROR_LOGIN_COLLECTION_NAME . $login . '_' . Yii::$app->request->remoteIP;
+        return self::CACHE_ERROR_LOGIN_COLLECTION_NAME . $login;
     }
 
 }

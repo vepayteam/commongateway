@@ -63,6 +63,7 @@ use app\services\payment\forms\tkb\RefundPayRequest;
 use app\services\payment\forms\tkb\TransferToAccountRequest;
 use app\services\payment\interfaces\Cache3DSv2Interface;
 use app\services\payment\interfaces\Issuer3DSVersionInterface;
+use app\services\payment\models\Bank;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
@@ -366,23 +367,28 @@ class TKBankAdapter implements IBankAdapter
     private function convertStatePay($result)
     {
         Yii::warning('TKBankAdapter convertStatePay start: ' . Json::encode($result), 'merchant');
-        $status = 0;
+        $status = BaseResponse::STATUS_CREATED;
         if (isset($result['orderinfo'])) {
+            /**
+             * статус 7 - служебный код, не возвращается
+             * статус 9 - зарезервирован
+             */
             switch ((int)$result['orderinfo']['state']) {
-                case 1:
+                case 1: // operation in processing
                     $status = BaseResponse::STATUS_CREATED;
                     break;
-                case 3:
-                case 0:
-                case 2:
+                case 0: // success credit operations
+                case 2: // success hold
+                case 3: // success debit operations
                     $status = BaseResponse::STATUS_DONE;
                     break;
-                case 6:
+                case 6: // error
                     $status = BaseResponse::STATUS_ERROR;
                     break;
-                case 5:
-                case 8:
-                    $status = BaseResponse::STATUS_CANCEL;
+                case 4: // partial refund debit
+                case 5: // full refund debit
+                case 8: // debit reverse
+                    $status = BaseResponse::STATUS_DONE;
                     break;
                 default:
                     $status = BaseResponse::STATUS_CREATED;
@@ -1213,6 +1219,15 @@ class TKBankAdapter implements IBankAdapter
             }
         }
 
+        if (key_exists('httperror', $ans)) {
+            if ($ans['httperror']['Code'] == 'MPI_ERROR') {
+                $paySchet->Status = BaseResponse::STATUS_ERROR;
+                $paySchet->ErrorInfo = 'Ошибка запроса. Пожалуйста, повторите попытку позже.';
+                $paySchet->save(false);
+                throw new BankAdapterResponseException('Ошибка запроса. Пожалуйста, повторите попытку позже.');
+            }
+        }
+
         $payResponse = new CreatePayResponse();
         if (isset($ans['xml']) && !empty($ans['xml'])) {
             $xml = $this->parseAns($ans['xml']);
@@ -1432,7 +1447,8 @@ class TKBankAdapter implements IBankAdapter
         $client = $this->getClient();
         try {
             /** Throws {@see TcbOrderNotExistException} */
-            $response = $client->getOrderState(new GetOrderStateRequest($okPayForm->IdPay));
+            $extId = $okPayForm->paySchet->isRefund ? $okPayForm->paySchet->RefundExtId : $okPayForm->IdPay;
+            $response = $client->getOrderState(new GetOrderStateRequest($extId));
         } catch (GuzzleException $e) {
             \Yii::$app->errorHandler->logException($e);
             throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее.'); // legacy logic
@@ -1476,14 +1492,17 @@ class TKBankAdapter implements IBankAdapter
      */
     private function statusMap(): array
     {
+        /**
+         * Для refund/reverse возвращать STATUS_DONE тк начальная транзакция остается в статусе успешно
+         */
         return [
             OrderInfo::STATE_CREDIT_SUCCESS => BaseResponse::STATUS_DONE,
             OrderInfo::STATE_IN_PROCESS => BaseResponse::STATUS_CREATED,
             OrderInfo::STATE_HOLD => BaseResponse::STATUS_DONE,
             OrderInfo::STATE_DEBIT_SUCCESS => BaseResponse::STATUS_DONE,
-            OrderInfo::STATE_FULL_REFUND => BaseResponse::STATUS_CANCEL,
             OrderInfo::STATE_ERROR => BaseResponse::STATUS_ERROR,
-            OrderInfo::STATE_CANCEL => BaseResponse::STATUS_CANCEL,
+            OrderInfo::STATE_FULL_REFUND => BaseResponse::STATUS_DONE,
+            OrderInfo::STATE_CANCEL => BaseResponse::STATUS_DONE,
         ];
     }
 
@@ -1524,15 +1543,14 @@ class TKBankAdapter implements IBankAdapter
         return $createRecurrentPayResponse;
     }
 
-
-    public function refundPay(RefundPayForm $refundPayForm)
+    public function refundPay(RefundPayForm $refundPayForm): RefundPayResponse
     {
         $refundPayResponse = new RefundPayResponse();
 
         $paySchet = $refundPayForm->paySchet;
         $sourcePaySchet = $paySchet->refundSource;
 
-        if($sourcePaySchet->Status != PaySchet::STATUS_DONE) {
+        if ($sourcePaySchet->Status != PaySchet::STATUS_DONE) {
             throw new RefundPayException('Невозможно отменить незавершенный платеж');
         }
 
@@ -1540,24 +1558,37 @@ class TKBankAdapter implements IBankAdapter
         $refundPayRequest->ExtId = $sourcePaySchet->ID;
 
         $action = '/api/v1/card/unregistered/debit/reverse';
+        $refundPayResponse->refundType = RefundPayResponse::REFUND_TYPE_REVERSE;
 
-        if($sourcePaySchet->DateCreate < Carbon::now()->startOfDay()->timestamp) {
-            $refundPayRequest->amount = $paySchet->getSummFull();
+        if ($sourcePaySchet->DateCreate < Carbon::now()->startOfDay()->timestamp || $sourcePaySchet->getSummFull() !== $paySchet->getSummFull()) {
             $action = '/api/v1/card/unregistered/debit/refund';
+            $refundPayResponse->refundType = RefundPayResponse::REFUND_TYPE_REFUND;
+
+            $refundPayRequest->Amount = $paySchet->getSummFull();
         }
 
         $ans = $this->curlXmlReq(Json::encode($refundPayRequest->getAttributes()), $this->bankUrl . $action);
         Yii::warning("reversOrder: " . $this->logArr($ans), 'merchant');
         if (isset($ans['xml']) && !empty($ans['xml'])) {
-            $status = isset($ans['xml']['errorinfo']['errorcode']) ? $ans['xml']['errorinfo']['errorcode'] : 1;
-            $message = isset($ans['xml']['errorinfo']['errormessage']) ? $ans['xml']['errorinfo']['errormessage'] : 'Ошибка запроса';
+            $status = isset($ans['xml']['errorinfo']['errorcode'])
+                ? BaseResponse::STATUS_ERROR
+                : BaseResponse::STATUS_CREATED;
+            $message = $ans['xml']['errorinfo']['errormessage'] ?? 'Ошибка запроса';
 
             $refundPayResponse->state = $status == 0;
             $refundPayResponse->status = $status;
             $refundPayResponse->message = $message;
-
-            return $refundPayResponse;
+            $refundPayResponse->extId = $ans['xml']['ExtId'];
+            $refundPayResponse->transactionId = $ans['xml']['OrderId'];
         }
+        else {
+            $refundPayResponse->status = BaseResponse::STATUS_ERROR;
+            $refundPayResponse->message = 'Ошибка возврата платежа';
+
+            Yii::error('TKBankAdapter refund error response: ' . $this->logArr($ans));
+        }
+
+        return $refundPayResponse;
     }
 
     /**
@@ -1618,7 +1649,7 @@ class TKBankAdapter implements IBankAdapter
 
     public function getAftMinSum()
     {
-        return self::AFT_MIN_SUMM;
+        return Bank::findOne(self::$bank)->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**

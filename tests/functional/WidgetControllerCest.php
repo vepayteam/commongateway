@@ -43,13 +43,16 @@ class WidgetControllerCest
 
     private function getPartner(): Partner
     {
+        $payschetTable = PaySchet::tableName();
         /** @var Partner $partner */
         $partner = Partner::find()
             ->leftJoin('uslugatovar', 'uslugatovar.IDPartner=partner.ID')
             ->leftJoin('partner_bank_gates', 'partner_bank_gates.PartnerId=partner.ID')
+            ->leftJoin($payschetTable, "{$payschetTable}.IdOrg=partner.ID")
             ->where(['uslugatovar.IsCustom' => \app\models\TU::$ECOM, 'uslugatovar.IsDeleted' => 0])
             ->andWhere('partner_bank_gates.TU=uslugatovar.IsCustom')
             ->andWhere(['partner_bank_gates.Enable' => 1])
+            ->andWhere(["{$payschetTable}.Status" => PaySchet::STATUS_DONE])
             ->one();
 
         return $partner;

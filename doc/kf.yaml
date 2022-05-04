@@ -20,85 +20,6 @@ tags:
 servers:
   - url: https://api.vepay.online/kfapi
 paths:
-  /pay/in:
-    post:
-      tags:
-        - Pay
-      summary: Пополнение счета через Интернет-эквайринг
-      description: Осуществляется перевод средств с карты инвестора на счет площадки, или
-        возврат средств от заёмщика на счет площадки.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PayIn"
-        description: Параметры платежа
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StatusIdUrl"
-        default:
-          description: Error (40X,500)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /pay/state:
-    post:
-      tags:
-        - Pay
-      summary: Статус платежа
-      description: Запрос результата операции. Средства будут списаны с карты и перечислены площадке при успешном статусе платежа.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/IdState"
-        description: ID платежа
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Status"
-        default:
-          description: Error (40X,500)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /out/paycard:
-    post:
-      tags:
-        - Out
-      summary: Запрос перевода на карту
-      description: Осуществляется перевод средств со счета площадки на карту заёмщика.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/OutCard"
-        description: Параметры перевода
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StatusId"
-        default:
-          description: Error (40X,500)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
   /out/ul:
     post:
       tags:
@@ -111,84 +32,6 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/OutU"
-        description: Параметры перевода
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StatusId"
-        default:
-          description: Error (40X,500)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /out/fl:
-    post:
-      tags:
-        - Out
-      summary: Перевод на счет физлица
-      description: Осуществляется перевод средств со счета площадки на расчетный счет физлица.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/OutF"
-        description: Параметры перевода
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StatusId"
-        default:
-          description: Error (40X,500)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /out/int:
-    post:
-      tags:
-        - Out
-      summary: Перевод на счет внутри банка
-      description: Осуществляется перевод средств со счета площадки на счет в банке.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/OutI"
-        description: Параметры перевода
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StatusId"
-        default:
-          description: Error (40X,500)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /out/ndfl:
-    post:
-      tags:
-        - Out
-      summary: Перечисление НДФЛ
-      description: Осуществляется перечисление НДФЛ со счета площадки.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/OutNdfl"
         description: Параметры перевода
         required: true
       responses:
@@ -224,32 +67,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Status"
-        default:
-          description: Error (40X,500)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /account/balance:
-    post:
-      tags:
-        - Account
-      summary: Запрос баланса счета
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Balance"
-        description: Параметры запроса
-        required: true
-      description: Запрос баланса счета площадки.
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StatusAmount"
         default:
           description: Error (40X,500)
           content:
@@ -367,40 +184,6 @@ components:
       name: X-Token
       description: Токен, формируется по алгоритму sha1(sha1(ключ) + sha1(тело запроса))
   schemas:
-    PayIn:
-      type: object
-      properties:
-        amount:
-          type: number
-          description: Cумма платежа, руб
-        document_id:
-          type: string
-          maxLength: 40
-          description: Номер договора
-        fullname:
-          type: string
-          maxLength: 80
-          description: ФИО клиента
-        extid:
-          type: string
-          description: Внешний идентификатор запроса
-        timeout:
-          type: integer
-          minimum: 10
-          maximum: 60
-          description: Тайм-аут ожидания оплаты, от 10 до 60 минут
-        successurl:
-          type: string
-          format: url
-          description: Адрес для Url для возврата после заверщения платежа (успех)
-        failurl:
-          type: string
-          format: url
-          description: Адрес для Url для возврата после заверщения платежа (ошибка)
-        cancelurl:
-          type: string
-          format: url
-          description: Адрес для Url для возврата после отказа от оплаты
     IdState:
       type: object
       properties:
@@ -473,29 +256,6 @@ components:
         outsumm:
           type: number
           description: Сумма отправленных средств (в пути)
-    OutCard:
-      type: object
-      properties:
-        cardnum:
-          type: string
-          description: Номер карты (16/18 цифр)
-        amount:
-          type: number
-          description: Cумма платежа
-        extid:
-          type: string
-          description: Внешний идентификатор запроса
-        document_id:
-          type: string
-          maxLength: 40
-          description: Номер договора
-        fullname:
-          type: string
-          maxLength: 80
-          description: ФИО клиента
-        sms:
-          type: integer
-          description: Если передан 1, то требуется подтверждение кодом из смс
     OutU:
       type: object
       properties:
@@ -527,120 +287,6 @@ components:
         sms:
           type: integer
           description: Если передан 1, то требуется подтверждение кодом из смс
-    OutF:
-      type: object
-      properties:
-        fio:
-          type: string
-          description: ФИО получателя
-        account:
-          type: string
-          description: Счет в банке
-        bic:
-          type: string
-          description: БИК банка
-        descript:
-          type: string
-          maxLength: 210
-          description: Назначение платежа
-        amount:
-          type: number
-          description: Cумма платежа
-        extid:
-          type: string
-          description: Внешний идентификатор запроса
-        sms:
-          type: integer
-          description: Если передан 1, то требуется подтверждение кодом из смс
-    OutNdfl:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Наименование получателя
-        inn:
-          type: string
-          description: ИНН получателя
-        kpp:
-          type: string
-          description: КПП получателя
-        account:
-          type: string
-          description: Счет в банке
-        bic:
-          type: string
-          description: БИК банка
-        descript:
-          type: string
-          maxLength: 210
-          description: Назначение платежа
-        amount:
-          type: number
-          description: Cумма платежа
-        sendername:
-          type: string
-          description: Наименование отправвителя
-        senderadress:
-          type: string
-          description: Адрес отправвителя
-        senderaccount:
-          type: string
-          description: Счет отправвителя
-        kbk:
-          type: string
-          description: КБК
-        okato:
-          type: string
-          description: ОКАТО
-        paymentbase:
-          type: string
-          description: Основание платежа
-        taxperiod:
-          type: string
-          description: Налоговый период
-        taxdocnum:
-          type: string
-          description: Номер налогового документа
-        taxdocdate:
-          type: string
-          description: Дата налогового документа
-        taxpaymenttype:
-          type: string
-          description: Тип налогового платежа
-        extid:
-          type: string
-          description: Внешний идентификатор запроса
-    OutI:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Наименование получателя
-        inn:
-          type: string
-          description: ИНН получателя
-        kpp:
-          type: string
-          description: КПП получателя
-        account:
-          type: string
-          description: Счет получателя в банке
-        descript:
-          type: string
-          maxLength: 210
-          description: Назначение платежа
-        amount:
-          type: number
-          description: Cумма платежа
-        extid:
-          type: string
-          description: Внешний идентификатор запроса
-    Balance:
-      type: object
-      properties:
-        account:
-          type: string
-          description: Счет в банке
     Statements:
       type: object
       properties:

@@ -17,9 +17,6 @@ return [
         'gii' => 'yii\gii\Module',
     ],
     'components' => [
-        'cache' => [
-            'class' => 'yii\caching\FileCache',
-        ],
         'mailer' => [
             'class' => 'yii\swiftmailer\Mailer',
             // send all mails to a file by default. You have to set
@@ -39,6 +36,8 @@ return [
         ],
         'log' => require(__DIR__ . '/log.php'),
         'db' => require(__DIR__ . '/db.php'),
+
+        'cache' => $params['components']['cache'],
         'redis' => $params['components']['redis'],
         'queue' => $params['components']['queue'],
         'reportQueue' => $params['components']['reportQueue'],

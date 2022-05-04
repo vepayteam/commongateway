@@ -3,9 +3,10 @@
 /* @var $this \yii\web\View */
 /* @var $content string */
 
+use app\assets\PartnerAsset;
 use app\models\partner\UserLk;
+use yii\bootstrap\Alert;
 use yii\helpers\Html;
-use app\assets\PartnerAsset; //innspinia
 
 PartnerAsset::register($this);
 ?>
@@ -38,6 +39,15 @@ PartnerAsset::register($this);
                 <?= $this->render('@app/modules/partner/views/default/_bread'); ?>
                 <?php endif; ?>
                 <div class="wrapper wrapper-content">
+
+                    <?php if (Yii::$app->session->hasFlash('success')): ?>
+                        <!-- Flash alert -->
+                        <?php Alert::begin(['options' => ['class' => 'alert-success']]) ?>
+                        <?= Yii::$app->session->getFlash('success') ?>
+                        <?php Alert::end() ?>
+                        <!-- /Flash alert -->
+                    <?php endif; ?>
+
                     <?= $content ?>
                 </div>
                 <?= $this->render('@app/modules/partner/views/default/_footer'); ?>
