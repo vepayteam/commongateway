@@ -1216,6 +1216,15 @@ class TKBankAdapter implements IBankAdapter
             }
         }
 
+        if (key_exists('httperror', $ans)) {
+            if ($ans['httperror']['Code'] == 'MPI_ERROR') {
+                $paySchet->Status = BaseResponse::STATUS_ERROR;
+                $paySchet->ErrorInfo = 'Ошибка запроса. Пожалуйста, повторите попытку позже.';
+                $paySchet->save(false);
+                throw new BankAdapterResponseException('Ошибка запроса. Пожалуйста, повторите попытку позже.');
+            }
+        }
+
         $payResponse = new CreatePayResponse();
         if (isset($ans['xml']) && !empty($ans['xml'])) {
             $xml = $this->parseAns($ans['xml']);

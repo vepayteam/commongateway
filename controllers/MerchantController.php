@@ -173,7 +173,8 @@ class MerchantController extends Controller
         $id = "{$kf->IdPartner} sum={$kfPay->amount} extid={$kfPay->extid}";
         Yii::warning("/merchant/pay id={$id}", 'mfo');
         $user = null;
-        if ($kf->GetReq('regcard', 0)) {
+        $regcard = (bool)$kf->GetReq('regcard', 0);
+        if ($regcard) {
             $reguser = new Reguser();
             $user = $reguser->findUser('0', $kf->IdPartner . '-' . time(), md5($kf->IdPartner . '-' . time()), $kf->IdPartner, false);
         }
@@ -206,7 +207,16 @@ class MerchantController extends Controller
 
         $partnerBankGate = $bankAdapterBuilder->getPartnerBankGate();
 
-        $params = $this->paySchetService->payToMfo($user, [$kfPay->descript], $kfPay, $usl, $partnerBankGate->BankId, $kf->IdPartner, 0);
+        $params = $this->paySchetService->payToMfo(
+            $user,
+            [$kfPay->descript],
+            $kfPay,
+            $usl,
+            $partnerBankGate->BankId,
+            $kf->IdPartner,
+            0,
+            $regcard
+        );
         if (!empty($kfPay->extid)) {
             $mutex->release('getPaySchetExt' . $kfPay->extid);
         }

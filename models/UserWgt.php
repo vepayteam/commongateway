@@ -39,26 +39,6 @@ class UserWgt
     }
 
     /**
-     * Получить карту (проверка)
-     * @param $IdUser
-     * @param $imei
-     * @return false|null|string
-     * @throws \yii\db\Exception
-     */
-    public function getKard($IdUser, $imei)
-    {
-        $reguer = new Reguser();
-        $u = $reguer->findUser($imei);
-        if ($u && $u->ID == $IdUser) {
-            $card = $reguer->getCard($IdUser);
-            if ($card) {
-                return $card->ID;
-            }
-        }
-        return false;
-    }
-
-    /**
      * User
      * @param int $IdUser
      * @return User

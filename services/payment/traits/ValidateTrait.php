@@ -20,10 +20,10 @@ trait ValidateTrait
     {
         $errors = [];
         if($amountForm->getAmount() < $uslugatovar->MinSumm) {
-            $errors[] = 'Минимальная сумма платежа ' . ($uslugatovar->MinSumm / 100) . ' руб.';
+            $errors[] = 'Значение «Amount» не должно быть меньше ' . ($uslugatovar->MinSumm / 100);
         }
         if($amountForm->getAmount() > $uslugatovar->MaxSumm) {
-            $errors[] = 'Максимальная сумма платежа ' . ($uslugatovar->MaxSumm / 100) . ' руб.';
+            $errors[] = 'Значение «Amount» не должно превышать ' . ($uslugatovar->MaxSumm / 100);
         }
         return $errors;
     }
