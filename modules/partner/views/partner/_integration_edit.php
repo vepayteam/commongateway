@@ -149,8 +149,8 @@ echo $form->field($partner, 'Apple_MerchantID')->textInput(['class' => 'form-con
 echo $form->field($partner, 'Apple_displayName')->textInput(['class' => 'form-control']);
 //echo $form->field($partner, 'Apple_PayProcCert')->textarea(['class' => 'form-control']);
 echo $form->field($partner, 'Apple_KeyPasswd')->textInput(['class' => 'form-control']);
-echo $form->field($partner, 'Apple_MerchIdentKey')->fileInput(['class' => 'form-control', "accept" => ".cer, .key, .crt"])->hint($partner->Apple_MerchIdentKey);
-echo $form->field($partner, 'Apple_MerchIdentCert')->fileInput(['class' => 'form-control', "accept" => ".cer, .key, .crt"])->hint($partner->Apple_MerchIdentCert);
+echo $form->field($partner, 'Apple_MerchIdentKey')->fileInput(['class' => 'form-control', 'accept' => '.cer, .key, .crt'])->hint($partner->Apple_MerchIdentKey);
+echo $form->field($partner, 'Apple_MerchIdentCert')->fileInput(['class' => 'form-control', 'accept' => '.cer, .key, .crt'])->hint($partner->Apple_MerchIdentCert);
 ?>
 <div class="row no-margins">
     <div class="col-sm-8 col-sm-offset-3">
@@ -324,9 +324,9 @@ $form = ActiveForm::begin([
     ],
 ]);
 
-echo $form->field($partner, 'OrangeDataSingKey')->fileInput(['class' => 'form-control', "accept" => ".cer, .key, .crt"])->hint($partner->OrangeDataSingKey);
-echo $form->field($partner, 'OrangeDataConKey')->fileInput(['class' => 'form-control', "accept" => ".cer, .key, .crt"])->hint($partner->OrangeDataConKey);
-echo $form->field($partner, 'OrangeDataConCert')->fileInput(['class' => 'form-control', "accept" => ".cer, .key, .crt"])->hint($partner->OrangeDataConCert);
+echo $form->field($partner, 'OrangeDataSingKey')->fileInput(['class' => 'form-control', 'accept' => '.cer, .key, .crt'])->hint($partner->OrangeDataSingKey);
+echo $form->field($partner, 'OrangeDataConKey')->fileInput(['class' => 'form-control', 'accept' => '.cer, .key, .crt'])->hint($partner->OrangeDataConKey);
+echo $form->field($partner, 'OrangeDataConCert')->fileInput(['class' => 'form-control', 'accept' => '.cer, .key, .crt'])->hint($partner->OrangeDataConCert);
 
 ?>
 
