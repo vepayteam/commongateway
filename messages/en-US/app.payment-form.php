@@ -8,7 +8,7 @@ return [
     'Сумма' => 'Amount',
     'Комиссия' => 'Commission',
     'Информируем Вас, что банк-эмитент может взимать дополнительную комиссию.' => 'Attention!  Your issuing bank can charge extra fee for this operation.',
-    'Трехзначный код на обратной стороне карты' => 'located on the back of your credit/debit card, contains 3 digits',
+    'Трехзначный код на обратной стороне карты' => 'Located on the back of your credit/debit card, contains 3 digits',
     'ОПЛАТИТЬ' => 'PAY',
     'ОТПРАВИТЬ' => 'CONTINUE',
     'Номер карты' => 'Card number',
