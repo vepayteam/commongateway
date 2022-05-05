@@ -280,10 +280,13 @@ class TKBankAdapter implements IBankAdapter
     {
         $action = '/api/v1/order/state';
 
-        $queryData = [
-            'OrderID' => $params['ID'],
-            //'ExtId' => $params['ID']
-        ];
+        $queryData = [];
+        if (key_exists('ID', $params)) {
+            $queryData['OrderID'] = $params['ID'];
+        }
+        if (key_exists('ExtID', $params)) {
+            $queryData['ExtID'] = $params['ExtID'];
+        }
 
         $queryData = Json::encode($queryData);
 
@@ -487,11 +490,11 @@ class TKBankAdapter implements IBankAdapter
                 ->setOption(CURLOPT_TIMEOUT, $timeout)
                 ->setOption(CURLOPT_CONNECTTIMEOUT, $timeout)
                 ->setOption(CURLOPT_HTTPHEADER, array_merge([
-                        $jsonReq ? 'Content-type: application/json' : 'Content-Type: application/soap+xml; charset=utf-8',
-                        'TCB-Header-Login: ' . $this->gate->Login,
-                        'TCB-Header-Sign: ' . $this->HmacSha1($post, $this->gate->Token),
-                        'TCB-Header-SerializerType: LowerCase'
-                    ], $addHeader))
+                    $jsonReq ? 'Content-type: application/json' : 'Content-Type: application/soap+xml; charset=utf-8',
+                    'TCB-Header-Login: ' . $this->gate->Login,
+                    'TCB-Header-Sign: ' . $this->HmacSha1($post, $this->gate->Token),
+                    'TCB-Header-SerializerType: LowerCase'
+                ], $addHeader))
                 ->setOption(CURLOPT_SSL_VERIFYHOST, false)
                 ->setOption(CURLOPT_SSL_CIPHER_LIST, 'TLSv1')
                 ->setOption(CURLOPT_SSL_VERIFYPEER, false)
@@ -1216,6 +1219,15 @@ class TKBankAdapter implements IBankAdapter
             }
         }
 
+        if (key_exists('httperror', $ans)) {
+            if ($ans['httperror']['Code'] == 'MPI_ERROR') {
+                $paySchet->Status = BaseResponse::STATUS_ERROR;
+                $paySchet->ErrorInfo = 'Ошибка запроса. Пожалуйста, повторите попытку позже.';
+                $paySchet->save(false);
+                throw new BankAdapterResponseException('Ошибка запроса. Пожалуйста, повторите попытку позже.');
+            }
+        }
+
         $payResponse = new CreatePayResponse();
         if (isset($ans['xml']) && !empty($ans['xml'])) {
             $xml = $this->parseAns($ans['xml']);
@@ -1607,8 +1619,29 @@ class TKBankAdapter implements IBankAdapter
                 $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'] ?? 'Ошибка запроса';
             }
         } else {
-            $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
-            $outCardPayResponse->message = 'Ошибка запроса';
+            // timeout
+            if ($ans['error'] == '28: timeout' || $ans['error'] == '7: timeout') {
+                $status = $this->checkStatusOrder(['ExtID' => $outCardPayRequest->ExtId], false);
+                if ($status['state'] == 0 && !key_exists('xml', $status)) {
+                    // Сервер все еще не отвечает
+                    $outCardPayResponse->status = BaseResponse::STATUS_CREATED;
+                    $outCardPayResponse->message = 'Запрос в обработке';
+                } else {
+                    // Ответ сервера получен
+                    if(!array_key_exists('errorinfo', $ans['xml']) || (isset($ans['xml']['errorinfo']['errorcode']) && $ans['xml']['errorinfo']['errorcode'] == 0)) {
+                        $outCardPayResponse->status = BaseResponse::STATUS_DONE;
+                        $outCardPayResponse->trans = $ans['xml']['orderid'];
+                        $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'] ?? 'Ошибка запроса';
+                    } else {
+                        $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
+                        $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'] ?? 'Ошибка запроса';
+                    }
+                }
+            } else {
+                // другая ошибка без результата
+                $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
+                $outCardPayResponse->message = 'Ошибка запроса';
+            }
         }
 
         return $outCardPayResponse;
