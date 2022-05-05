@@ -5,25 +5,28 @@ namespace app\modules\h2hapi\v1\objects;
 use app\components\api\ApiObject;
 use app\services\payment\models\PaySchet;
 
-/**
- * Платеж по Счету.
- */
 class PaymentObject extends ApiObject
 {
     /**
-     * @var string URL для прохождения проверки 3DS.
+     * @var string URL for 3DS.
      */
     public $acsUrl;
-
     /**
-     * @var string IP клиента.
+     * @var string Client IP.
      */
     public $ip;
-
     /**
      * @var PaymentCardObject
      */
     public $card;
+    /**
+     * @var PaymentHeaderMapObject Headers of HTTP-request made by client.
+     */
+    public $headerMap;
+    /**
+     * @var PaymentBrowserDataObject Client's browser data.
+     */
+    public $browserData;
 
     /**
      * {@inheritDoc}
@@ -33,6 +36,7 @@ class PaymentObject extends ApiObject
         return [
             [['card', 'ip'], 'required'],
             [['ip'], 'ip'],
+            [['headerMap', 'browserData'], 'safe'],
         ];
     }
 

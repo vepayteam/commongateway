@@ -17,6 +17,7 @@ use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
+use app\services\payment\banks\data\ClientData;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
@@ -60,7 +61,6 @@ interface IBankAdapter
     public function confirm(DonePayForm $donePayForm);
 
     /**
-     * @param PaySchet $paySchet
      * @param CreatePayForm $createPayForm
      * @throws BankAdapterResponseException
      * @throws Check3DSv2Exception
@@ -68,7 +68,7 @@ interface IBankAdapter
      * @throws MerchantRequestAlreadyExistsException
      * @return CreatePayResponse
      */
-    public function createPay(CreatePayForm $createPayForm);
+    public function createPay(CreatePayForm $createPayForm, ClientData $clientData);
 
     /**
      * @param CheckStatusPayForm $checkStatusPayForm

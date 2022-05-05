@@ -200,6 +200,7 @@ components:
     Invoice:
       description: Счет
       type: object
+      required: [amountFractional, currencyCode, externalId, client]
       properties:
         id:
           type: integer
@@ -209,14 +210,12 @@ components:
         amountFractional:
           type: integer
           description: Сумма платежа в копейках (центах)
-          required: true
           minimum: 100
           maximum: 100000000
           example: 50000
         currencyCode:
           type: string
           description: Валюта Счета
-          required: true
           enum: [ RUB, USD, EUR ]
           example: "RUB"
         documentId:
@@ -231,7 +230,6 @@ components:
           minLength: 1
           maxLength: 40
           example: "18a2f5e5-6548-4879-88db-b272c7d6b473"
-          required: true
         description:
           type: string
           description: Описание
@@ -322,11 +320,11 @@ components:
 
     Payment:
       type: object
+      required: [ip, card]
       properties:
         ip:
           type: string
           description: IP Клиента
-          required: true
           example: "108.177.16.21"
           writeOnly: true
         acsUrl:
@@ -336,39 +334,91 @@ components:
           example: "https://pay1time.com/api/processingResult?payId=188636&status=succes&url=dfgdfgdfgdfdfgfdg=="
         card:
           type: object
+          required: [cardNumber, cardHolder, expires, cvc]
           properties:
             cardNumber:
               type: string
-              required: true
               description: Номер карты. В ответе замаскирован.
               example: "4111111111111111"
             cardHolder:
               type: string
-              required: true
               description: Держатель карты
               example: "Terentiev Mihail"
             expires:
               type: string
-              required: true
               description: Месяц/год карты
               maxLength: 4
               minLength: 4
               example: "0122"
             cvc:
               type: string
-              required: true
               writeOnly: true
               description: CVC
               maxLength: 3
               minLength: 3
               example: "123"
+        headerMap:
+          type: object
+          required: [userAgent, accept]
+          nullable: true
+          writeOnly: true
+          properties:
+            userAgent:
+              type: string
+              description: HTTP-заголовок User-Agent.
+              maxLength: 255
+              example: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"
+            accept:
+              type: string
+              description: HTTP-заголовок Accept.
+              maxLength: 255
+              example: "text/html"
+        browserData:
+          type: object
+          required: [screenHeight, screenWidth, windowHeight, windowWidth, timezoneOffset, language, colorDepth, javaEnabled]
+          nullable: true
+          writeOnly: true
+          properties:
+            screenHeight:
+              type: integer
+              description: "Высота экрана. JavaScript: window.screen.height."
+              example: 800
+            screenWidth:
+              type: integer
+              description: "Ширина экрана. JavaScript: window.screen.width."
+              example: 1200
+            windowHeight:
+              type: integer
+              description: "Высота окна. JavaScript: window.outerHeight."
+              example: 800
+            windowWidth:
+              type: integer
+              description: "Ширина окна. JavaScript: window.outerWidth."
+              example: 1200
+            timezoneOffset:
+              type: integer
+              description: "Разница между временной зоной браузера и UTC в минутах. JavaScript: (new Date()).getTimezoneOffset()."
+              example: -180
+            language:
+              type: string
+              description: "Язык браузера (ISO). JavaScript: navigator.language || navigator.userLanguage."
+              maxLength: 5
+              example: "ru-RU"
+            colorDepth:
+              type: integer
+              description: "Глубина цвета. JavaScript: window.screen.colorDepth."
+              example: 24
+            javaEnabled:
+              type: boolean
+              description: "Java включен. JavaScript: window.navigator.javaEnabled()."
+              example: false
 
     Refund:
       type: object
       properties:
         amountFractional:
           type: integer
-          description: Сумма возврата в копейках (центах). NULL - полный возврат.
+          description: Сумма возврата в копейках (центах). null - полный возврат.
           required: false
           nullable: true
           minimum: 100

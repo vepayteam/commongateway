@@ -12,6 +12,7 @@ use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\CurrencyExchangeRatesResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
+use app\services\payment\banks\data\ClientData;
 use app\services\payment\banks\traits\WallettoRequestTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CreatePayException;
@@ -114,11 +115,11 @@ class WallettoBankAdapter implements IBankAdapter
         // TODO: Implement confirm() method.
     }
 
-    public function createPay(CreatePayForm $createPayForm): CreatePayResponse
+    public function createPay(CreatePayForm $createPayForm, ClientData $clientData): CreatePayResponse
     {
         $action = 'orders/authorize';
         $url = $this->bankUrl() . '/' . $action;
-        $request = $this->formatCreatePayRequest($createPayForm);
+        $request = $this->formatCreatePayRequest($createPayForm, $clientData);
         $createPayResponse = new CreatePayResponse();
         try {
             $response = $this->api->request(

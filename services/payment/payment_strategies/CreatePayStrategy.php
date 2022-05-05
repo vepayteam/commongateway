@@ -12,6 +12,7 @@ use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\BRSAdapter;
+use app\services\payment\banks\data\ClientData;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
@@ -28,6 +29,7 @@ use app\services\payment\models\UslugatovarType;
 use app\services\payment\PaymentService;
 use Yii;
 use yii\db\Exception;
+use yii\helpers\Json;
 use yii\mutex\FileMutex;
 
 class CreatePayStrategy
@@ -83,8 +85,27 @@ class CreatePayStrategy
         $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank, $paySchet->currency);
         $this->setCardPay($paySchet, $bankAdapterBuilder->getPartnerBankGate());
 
+        /** Move the "client_data" and "client_data_accept" post parameters to {@see CreatePayForm}. */
+        $clientDataPost = Json::decode(Yii::$app->request->post('client_data', '{}'));
+        $acceptPost = Yii::$app->request->post('client_data_accept');
+        $clientDataObject = new ClientData(
+            Yii::$app->request->getRemoteIP(),
+            Yii::$app->request->getUserAgent(),
+            $acceptPost,
+            $clientDataPost['browser_screen_height'] ?? null,
+            $clientDataPost['browser_screen_width'] ?? null,
+            $clientDataPost['browser_timezone'] ?? null,
+            $clientDataPost['window_height'] ?? null,
+            $clientDataPost['window_width'] ?? null,
+            'ru',
+            $clientDataPost['browser_color_depth'] ?? null,
+            $clientDataPost['browser_java_enabled'] ?? null
+        );
+
         try {
-            $this->createPayResponse = $bankAdapterBuilder->getBankAdapter()->createPay($this->createPayForm);
+            $this->createPayResponse = $bankAdapterBuilder
+                ->getBankAdapter()
+                ->createPay($this->createPayForm, $clientDataObject);
         } catch (MerchantRequestAlreadyExistsException $e) {
             $bankAdapterBuilder->getBankAdapter()->reRequestingStatus($paySchet);
         }
