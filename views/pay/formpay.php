@@ -30,6 +30,7 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
                 <img src="/imgs/logo_vepay.svg" alt="vepay" class="logo">
                 <span class="logotext"><?=Yii::t('app.payment-form', 'ТЕХНОЛОГИИ В&nbsp;ДЕЙСТВИИ')?></span>
                 <img src="/imgs/close.svg" class="closebtn" alt="close" id="closeform">
+                <span id="payment_cancel_text" style="display: none;"><?=Yii::t('app.payment-form', 'Отменить оплату?')?></span>
             </div>
         </div>
     <?php endif; ?>
