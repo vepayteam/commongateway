@@ -119,6 +119,7 @@ class CreatePayStrategy
         $paySchet->DsTransId = $this->createPayResponse->dsTransId;
         $paySchet->Eci = $this->createPayResponse->eci;
         $paySchet->CardRefId3DS = $this->createPayResponse->cardRefId;
+        $paySchet->IPAddressUser = Yii::$app->request->remoteIP;
 
         $paySchet->save(false);
     }
@@ -251,11 +252,12 @@ class CreatePayStrategy
     public function releaseLock()
     {
         $paySchet = $this->createPayForm->getPaySchet();
+        if ($paySchet) {
+            Yii::info("CreatePayStrategy releaseLock PaySchet.ID={$paySchet->ID}");
 
-        Yii::info("CreatePayStrategy releaseLock PaySchet.ID={$paySchet->ID}");
-
-        $cacheKey = $this->getCacheKey($paySchet);
-        Yii::$app->cache->delete($cacheKey);
+            $cacheKey = $this->getCacheKey($paySchet);
+            Yii::$app->cache->delete($cacheKey);
+        }
     }
 
     /**

@@ -3,7 +3,7 @@ version: "3.6"
 services:
   api_init:
     image: alpine
-    entrypoint: /bin/sh -c "chown -Rhv 1000:1000 /www/runtime && chmod -v 755 /www/runtime"
+    entrypoint: /bin/sh -c "chown -Rhv 33:33 /www/runtime && chmod -v 755 /www/runtime"
     restart: "no"
     volumes:
       - runtime:/www/runtime
@@ -16,7 +16,7 @@ services:
       args:
         ENVIRONMENT: dev
     image: api
-    user: 1000:1000
+    user: www-data
     volumes:
       - ./:/www/
       - runtime:/www/runtime
@@ -30,6 +30,7 @@ services:
       REDIS_PORT: 6379
       REDIS_DB_NUM_QUEUE: 3
       REDIS_DB_NUM_CACHE: 4
+      COMPOSER_HOME: /tmp
       XDEBUG_CONFIG: >
         remote_enable=${XDEBUG_REMOTE_ENABLE:-1}
         remote_connect_back=${XDEBUG_REMOTE_CONNECT_BACK:-1}
@@ -47,7 +48,7 @@ services:
       - ALL
 
   mariadb:
-    image: mariadb:10.4.18
+    image: mariadb:10.4
     volumes:
       - mariadb_volume:/var/lib/mysql
       - ./dump/:/docker-entrypoint-initdb.d/

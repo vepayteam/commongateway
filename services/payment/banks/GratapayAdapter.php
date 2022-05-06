@@ -224,7 +224,7 @@ class GratapayAdapter implements IBankAdapter
      */
     public function getAftMinSum()
     {
-        return self::AFT_MIN_SUMM;
+        return Bank::findOne(self::$bank)->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**

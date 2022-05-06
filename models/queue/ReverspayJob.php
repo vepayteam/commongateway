@@ -8,6 +8,9 @@ use Yii;
 use yii\base\BaseObject;
 use yii\queue\JobInterface;
 
+/**
+ * @deprecated Вместо ReverspayJob использовать RefundPayJob
+ */
 class ReverspayJob extends BaseObject implements JobInterface
 {
     /**

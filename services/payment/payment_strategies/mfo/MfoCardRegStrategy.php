@@ -16,7 +16,9 @@ use yii\mutex\FileMutex;
 
 class MfoCardRegStrategy
 {
-    const PAY_SUMM = 1100;
+    const PAYMENT_AMOUNT_REG_TYPE_BY_PAY = 1100;
+    const PAYMENT_AMOUNT_REG_TYPE_BY_OUT = 0;
+
     private $cardRegByPayForm;
 
     public function __construct(CardRegForm $cardRegForm)
@@ -98,7 +100,6 @@ class MfoCardRegStrategy
      */
     public function createPaySchet(User $user, BankAdapterBuilder $bankAdapterBuilder)
     {
-        $summPay = self::PAY_SUMM;
 
         $paySchet = new PaySchet();
 
@@ -108,7 +109,9 @@ class MfoCardRegStrategy
         $paySchet->IdOrg = $this->cardRegByPayForm->partner->ID;
         $paySchet->Extid = $this->cardRegByPayForm->extid;
         $paySchet->QrParams = '';
-        $paySchet->SummPay = $summPay;
+        $paySchet->SummPay = $this->cardRegByPayForm->type == CardRegForm::CARD_REG_TYPE_BY_OUT
+            ? self::PAYMENT_AMOUNT_REG_TYPE_BY_OUT
+            : self::PAYMENT_AMOUNT_REG_TYPE_BY_PAY;
 
         $paySchet->DateCreate = time();
         $paySchet->DateLastUpdate = time();

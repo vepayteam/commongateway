@@ -13,12 +13,16 @@ abstract class BaseResponse extends Model
     const STATUS_DONE = PaySchet::STATUS_DONE;
     const STATUS_ERROR = PaySchet::STATUS_ERROR;
     const STATUS_CANCEL = PaySchet::STATUS_CANCEL;
+    const STATUS_REFUND_DONE = PaySchet::STATUS_REFUND_DONE;
+    const STATUS_REVERSE_DONE = PaySchet::STATUS_CANCEL;
 
     const STATUSES = [
         self::STATUS_CREATED,
         self::STATUS_DONE,
         self::STATUS_ERROR,
         self::STATUS_CANCEL,
+        self::STATUS_REFUND_DONE,
+        self::STATUS_REVERSE_DONE,
     ];
 
     /** @var number */
