@@ -22,5 +22,6 @@ class m220427_000814_drop_reestr_bankpl_table extends Migration
      */
     public function safeDown()
     {
+        return false;
     }
 }
