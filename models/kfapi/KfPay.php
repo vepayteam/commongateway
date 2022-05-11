@@ -152,7 +152,7 @@ class KfPay extends Model
     public function IsAftGate($IdPartner, $bank = 2)
     {
         $res = Yii::$app->db->createCommand("
-            SELECT `IsAftOnly`, `LoginTkbAft`, `MtsLoginAft`
+            SELECT `IsAftOnly`, `LoginTkbAft`
             FROM `partner`
             WHERE `ID` = :IDMFO
         ", [':IDMFO' => $IdPartner]
@@ -162,7 +162,7 @@ class KfPay extends Model
             return 1;
         }
 
-        if (($bank == 3 && empty($res['MtsLoginAft'])) || ($bank == 2 && empty($res['LoginTkbAft']))) {
+        if ($bank == 3 || $bank == 2) {
             return 0;
         }
         return $this->amount > self::AFTMINSUMM;
