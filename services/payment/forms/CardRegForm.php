@@ -78,7 +78,7 @@ class CardRegForm extends Model
 
         // Валидация по алгоритму Луна.
         if (!Cards::CheckValidCard($this->card)) {
-            $this->addError('card', 'Неверный номер карты.');
+            $this->addError('card', \Yii::t('app.payment-errors', 'Неверный номер карты'));
         }
     }
 

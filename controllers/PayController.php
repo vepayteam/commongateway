@@ -202,9 +202,18 @@ class PayController extends Controller
 
         $form = new CreatePayForm();
 
-        if (!$form->load(Yii::$app->request->post(), 'PayForm') || !$form->validate()) {
+        if (!$form->load(Yii::$app->request->post(), 'PayForm')) {
             return ['status' => 0, 'message' => $form->GetError()];
         }
+
+        /** @var LanguageService $languageService */
+        $languageService = Yii::$container->get('LanguageService');
+        $languageService->setAppLanguage($form->IdPay);
+
+        if (!$form->validate()) {
+            return ['status' => 0, 'message' => $form->GetError()];
+        }
+
         Yii::warning("PayForm create id=" . $form->IdPay);
         Yii::$app->session->set('IdPay', $form->IdPay);
 
@@ -245,7 +254,10 @@ class PayController extends Controller
             Yii::$app->errorHandler->logException($e);
             $createPayStrategy->releaseLock();
 
-            return ['status' => 0, 'message' => 'Карта не поддерживается, обратитесь в банк'];
+            return [
+                'status' => 0,
+                'message' => \Yii::t('app.payment-errors', 'Карта не поддерживается, обратитесь в банк')
+            ];
         }
 
         $createPayResponse = $createPayStrategy->getCreatePayResponse();
@@ -282,7 +294,7 @@ class PayController extends Controller
             Yii::info('PayController createpaySecondStep createPayStep2');
             $createPayResponse = $tkbAdapter->createPayStep2($createPaySecondStepForm);
         } catch (Check3DSv2Exception $e) {
-            $errorMessage = 'Карта не поддерживается, обратитесь в банк';
+            $errorMessage = \Yii::t('app.payment-errors', 'Карта не поддерживается, обратитесь в банк');
             if ($e->getCode() === Check3DSv2Exception::INCORRECT_ECI) {
                 $errorMessage = 'Операция по карте запрещена. Обратитесь в банк эмитент.';
             }

@@ -371,7 +371,7 @@ class FortaTechAdapter implements IBankAdapter
             }
         } else {
             $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
-            $checkStatusPayResponse->message = 'Ошибка запроса';
+            $checkStatusPayResponse->message = \Yii::t('app.payment-errors', 'Ошибка запроса');
         }
         return $checkStatusPayResponse;
     }
@@ -467,7 +467,7 @@ class FortaTechAdapter implements IBankAdapter
         } catch (FortaServerException|FortaClientException|BankAdapterResponseException $e) {
             Yii::$app->errorHandler->logException($e);
             Yii::error([$e->getMessage(), $e->getTrace(), 'recurentPay send']);
-            throw new BankAdapterResponseException('Ошибка запроса');
+            throw new BankAdapterResponseException(\Yii::t('app.payment-errors', 'Ошибка запроса'));
         } catch (FortaSignatureException $e) {
             Yii::$app->errorHandler->logException($e);
             throw $e;
@@ -564,20 +564,20 @@ class FortaTechAdapter implements IBankAdapter
                         $refundPayResponse->message = $response['status'] ?? '';
                     } else {
                         $refundPayResponse->status = BaseResponse::STATUS_ERROR;
-                        $refundPayResponse->message = $response['message'] ?? 'Ошибка запроса';
+                        $refundPayResponse->message = $response['message'] ?? \Yii::t('app.payment-errors', 'Ошибка запроса');
                     }
                 } catch (FortaServerException|FortaClientException|BankAdapterResponseException $e) {
                     Yii::$app->errorHandler->logException($e);
 
                     $refundPayResponse->status = BaseResponse::STATUS_ERROR;
-                    $refundPayResponse->message = $response['message'] ?? 'Ошибка запроса';
+                    $refundPayResponse->message = $response['message'] ?? \Yii::t('app.payment-errors', 'Ошибка запроса');
                 }
             }
         } catch (\Exception $e) {
             Yii::error(['FortaTechAdapter refundPay exception paySchet.ID=' . $paySchet->ID, $e]);
 
             $refundPayResponse->status = BaseResponse::STATUS_ERROR;
-            $refundPayResponse->message = 'Ошибка запроса';
+            $refundPayResponse->message = \Yii::t('app.payment-errors', 'Ошибка запроса');
         }
 
         Yii::info('FortaTechAdapter refundPay paySchet.ID=' . $paySchet->ID
@@ -652,7 +652,7 @@ class FortaTechAdapter implements IBankAdapter
             if(array_key_exists('errors', $ans) && isset($ans['errors'][0])) {
                 $outCardPayResponse->message = $ans['errors'][0]['description'];
             } else {
-                $outCardPayResponse->message = 'Ошибка запроса';
+                $outCardPayResponse->message = \Yii::t('app.payment-errors', 'Ошибка запроса');
             }
         }
 
@@ -765,7 +765,7 @@ class FortaTechAdapter implements IBankAdapter
                     'signature' => $signature,
                 ]);
                 if ($e instanceof ServerException) {
-                    throw new FortaServerException("Ошибка запроса", $statusCode);
+                    throw new FortaServerException(\Yii::t('app.payment-errors', 'Ошибка запроса'), $statusCode);
                 }
                 if ($e instanceof ClientException) {
                     /** Форта может прислать ответ с кодом 404, в таком случае ошибку нужно записать в ErrorInfo */
@@ -773,7 +773,7 @@ class FortaTechAdapter implements IBankAdapter
                         throw new FortaClientException($responseBody, $statusCode);
                     }
 
-                    throw new FortaClientException("Ошибка запроса", $statusCode);
+                    throw new FortaClientException(\Yii::t('app.payment-errors', 'Ошибка запроса'), $statusCode);
                 }
             }
 
@@ -784,7 +784,7 @@ class FortaTechAdapter implements IBankAdapter
                 'requestData' => $maskedRequestString,
                 'guzzleError' => $e->getMessage(),
             ]);
-            throw new BankAdapterResponseException('Ошибка запроса');
+            throw new BankAdapterResponseException(\Yii::t('app.payment-errors', 'Ошибка запроса'));
         }
 
         $responseContent = $response->getBody()->getContents();
