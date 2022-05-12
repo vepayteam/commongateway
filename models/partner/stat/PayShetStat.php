@@ -344,45 +344,40 @@ class PayShetStat extends Model
 
             $res = $query->all();
 
-            if ($limit === null) {
-
-                $data = self::mapQueryPaymentResult($res);
-
-            } else {
-                $data = [];
-
-                foreach ($res as $row) {
-                    $row->VoznagSumm = $row->ComissSumm - $row->BankComis + $row->MerchVozn;
-                    $row->Currency = $row->CurrencyId ? CurrencyRepository::getCurrencyCodeById($row->CurrencyId)->Code : null;
-                    $row->RefundAmount = $row['RefundAmount'] ?? 0;
-                    $row->RemainingRefundAmount = $row->SummPay + $row->ComissSumm - $row->RefundAmount;
-                    $data[] = $row;
-                }
-            }
-
             $refundTotalPaymentSum = 0;
             $refundTotalClientCommission = 0;
             $refundTotalBankCommission = 0;
             $refundTotalAward = 0;
-            foreach ($data as &$item) {
-                if (
-                    intval($item->Status) === PaySchet::STATUS_REFUND_DONE ||
-                    intval($item->Status) === PaySchet::STATUS_CANCEL
-                ) {
-                    $refundTotalPaymentSum += (int) $item->SummPay;
-                    $refundTotalClientCommission += (int) $item->ComissSumm;
-                    $refundTotalBankCommission += (int) $item->BankComis;
-                    $refundTotalAward += (int) $item->VoznagSumm;
+            $data = [];
 
-                    if (intval($item->Status) === PaySchet::STATUS_REFUND_DONE) {
-                        /**
-                         * Для транзакций в статусе refund/reverse сумма вознаграждения должна быть 0
-                         */
-                        $item->VoznagSumm = 0;
-                    } else {
-                        $refundTotalAward += (int) $item->VoznagSumm;
+            foreach ($res as $row) {
+                /**
+                 * Для транзакций в статусе refund/reverse сумма вознаграждения должна быть 0
+                 */
+                $row->VoznagSumm = (intval($row->Status) === PaySchet::STATUS_REFUND_DONE) ? 0 : ($row->ComissSumm - $row->BankComis + $row->MerchVozn);
+                $row->Currency = $row->CurrencyId ? CurrencyRepository::getCurrencyCodeById($row->CurrencyId)->Code : null;
+                $row->RefundAmount = $row['RefundAmount'] ?? 0;
+                $row->RemainingRefundAmount = $row->SummPay + $row->ComissSumm - $row->RefundAmount;
+
+                if (
+                    intval($row->Status) === PaySchet::STATUS_REFUND_DONE ||
+                    intval($row->Status) === PaySchet::STATUS_CANCEL
+                ) {
+                    $refundTotalPaymentSum += (int) $row->SummPay;
+                    $refundTotalClientCommission += (int) $row->ComissSumm;
+                    $refundTotalBankCommission += (int) $row->BankComis;
+                    $refundTotalAward += (int) $row->VoznagSumm;
+
+                    if (intval($row->Status) !== PaySchet::STATUS_REFUND_DONE) {
+                        $refundTotalAward += (int) $row->VoznagSumm;
                     }
                 }
+
+                $data[] = $row;
+            }
+
+            if ($limit === null) {
+                $data = self::mapQueryPaymentResult($data);
             }
 
             /**
@@ -419,12 +414,6 @@ class PayShetStat extends Model
     private static function mapQueryPaymentResult(array $res): \Generator
     {
         foreach ($res as $row) {
-
-            $row->VoznagSumm = $row->ComissSumm - $row->BankComis + $row->MerchVozn;
-            $row->Currency = $row->CurrencyId ? CurrencyRepository::getCurrencyCodeById($row->CurrencyId)->Code : null;
-            $row->RefundAmount = $row->RefundAmount ?? 0;
-            $row->RemainingRefundAmount = $row->SummPay + $row->ComissSumm - $row->RefundAmount;
-
             yield $row;
         }
     }
