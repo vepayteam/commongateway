@@ -1119,6 +1119,13 @@ components:
           type: string
           format: url
           description: Адрес для Url для возврата после отказа от оплаты
+        regcard:
+          type: integer
+          required: false
+          description: "Опционально, возможные значения: 1, 0. Если 1, производится регистрация карты на рекуррентные платежи и выплаты. По умолчанию 0."
+          enum:
+              - 1
+              - 0
         client:
           type: array
           required: false
@@ -1238,6 +1245,10 @@ components:
           type: string
           maxLength: 80
           description: ФИО клиента
+        currency:
+          type: string
+          maxLength: 5
+          description: Код валюты (по умолчанию, RUB)
 
         birthDate:
           type: string

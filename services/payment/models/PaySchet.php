@@ -18,6 +18,7 @@ use app\services\payment\payment_strategies\mfo\MfoCardRegStrategy;
 use app\services\PaymentService;
 use Carbon\Carbon;
 use Yii;
+use yii\base\InvalidArgumentException;
 use yii\base\InvalidConfigException;
 use yii\db\ActiveQuery;
 use yii\helpers\ArrayHelper;
@@ -92,6 +93,8 @@ use yii\helpers\ArrayHelper;
  * @property string|null $Operations
  * @property int $RegisterCard Регистрировать ли карту для рекуррентных платежей при оплате. Значения: 1, 0. По умолчанию 0.
  * @property int|null $RefundSourceId ID исходной записи для дополнительных записей возврата платежа
+ * @property string|null $RefundExtId Внутренний ID провайдеров операций refund/reverse для проверки статусов
+ * @property int|null $RefundType Тип операции refund/reverse {@see PaySchet::REFUND_TYPE_REFUND} {@see PaySchet::REFUND_TYPE_REVERSE}
  *
  * @property Uslugatovar $uslugatovar
  * @property Partner $partner
@@ -117,6 +120,8 @@ use yii\helpers\ArrayHelper;
 class PaySchet extends \yii\db\ActiveRecord
 {
     public $CntPays;
+    public $GateLogin;
+    public $GateAdvParam_1;
 
     const STATUS_WAITING = 0;
     const STATUS_DONE = 1;
@@ -127,13 +132,13 @@ class PaySchet extends \yii\db\ActiveRecord
     const STATUS_REFUND_DONE = 6;
 
     const STATUSES = [
-        self::STATUS_WAITING => 'В обработке',
-        self::STATUS_DONE => 'Оплачен',
-        self::STATUS_ERROR => 'Отмена',
-        self::STATUS_CANCEL => 'Возврат',
-        self::STATUS_NOT_EXEC => 'Ожидается обработка',
-        self::STATUS_WAITING_CHECK_STATUS => 'Ожидается запрос статуса',
-        self::STATUS_REFUND_DONE => 'Платеж возвращен',
+        self::STATUS_WAITING => 'Processing... (0)',
+        self::STATUS_DONE => 'Success',
+        self::STATUS_ERROR => 'Decline',
+        self::STATUS_CANCEL => 'Reversed',
+        self::STATUS_NOT_EXEC => 'Processing... (4)',
+        self::STATUS_WAITING_CHECK_STATUS => 'Processing... (5)',
+        self::STATUS_REFUND_DONE => 'Refunded',
     ];
 
     const STATUS_COLORS = [
@@ -145,6 +150,9 @@ class PaySchet extends \yii\db\ActiveRecord
         self::STATUS_WAITING_CHECK_STATUS => 'blue',
         self::STATUS_REFUND_DONE => '#FFE600',
     ];
+
+    const REFUND_TYPE_REFUND = 1;
+    const REFUND_TYPE_REVERSE = 2;
 
     const CHECK_3DS_CACHE_PREFIX = 'pay_schet__check-3ds-response';
 
@@ -658,5 +666,21 @@ class PaySchet extends \yii\db\ActiveRecord
         $uslugatovar->ProvComisMin = $data['ProvComisMin'];
         $uslugatovar->ProvVoznagPC = $data['ProvVoznagPC'];
         $uslugatovar->ProvVoznagMin = $data['ProvVoznagMin'];
+    }
+
+    /**
+     * @param int $refundType refund/reverse {@see PaySchet::REFUND_TYPE_REFUND} {@see PaySchet::REFUND_TYPE_REVERSE}
+     * @return int returns paySchet status {@see PaySchet::STATUSES}
+     */
+    public static function getDoneStatusByRefundType(int $refundType): int
+    {
+        switch ($refundType) {
+            case self::REFUND_TYPE_REFUND:
+                return self::STATUS_REFUND_DONE;
+            case self::REFUND_TYPE_REVERSE:
+                return self::STATUS_CANCEL;
+            default:
+                throw new InvalidArgumentException('Incorrect refundType value: ' . $refundType);
+        }
     }
 }

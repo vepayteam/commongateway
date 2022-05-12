@@ -2,8 +2,6 @@
 
 namespace app\models\partner\admin;
 
-use Yii;
-
 /**
  * This is the model class for table "alarms_settings".
  *
@@ -14,6 +12,13 @@ use Yii;
  */
 class AlarmsSettings extends \yii\db\ActiveRecord
 {
+    /** Bank doesn't change status or respond. */
+    public const TYPE_BANK_NO_RESPONSE = 0;
+    /** SMS gate doesn't respond. */
+    public const TYPE_SMS_GATE_NO_RESPONSE = 1;
+    /** Status doesn't change. */
+    public const TYPE_STATUS_FREEZE = 2;
+
     /**
      * {@inheritdoc}
      */

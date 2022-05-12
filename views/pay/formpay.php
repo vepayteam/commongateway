@@ -256,6 +256,15 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
             <input type="hidden" id="creq3ds" name="creq" value="">
             <input type="hidden" id="termurl3ds" name="TermUrl" value="">
             <input type="hidden" id="threeDSServerTransID" name="ThreeDSServerTransID" value="">
+
+            <!-- Monextix -->
+            <input type="hidden" id="frame3ds__monetixMd" name="md" value="">
+            <input type="hidden" id="frame3ds__monetixPaReq" name="pa_req" value="">
+        </form>
+        <form id="form3dsMonetix" action="" method='POST'>
+            <input type="hidden" id="form3dsMonetix__md" name="MD" value="">
+            <input type="hidden" id="form3dsMonetix__pa_req" name="PaReq" value="">
+            <input type="hidden" id="form3dsMonetix__term_url" name="TermUrl" value="">
         </form>
     </div>
 

@@ -30,7 +30,9 @@ use app\modules\partner\models\forms\DiffColumnsForm;
 use app\modules\partner\models\forms\DiffDataForm;
 use app\modules\partner\models\forms\DiffExportForm;
 use app\modules\partner\models\forms\ReverseOrderForm;
+use app\modules\partner\models\forms\UpdateTransactionForm;
 use app\modules\partner\models\PaySchetLogForm;
+use app\modules\partner\services\UpdateTransactionService;
 use app\services\ident\forms\IdentStatisticForm;
 use app\services\ident\IdentService;
 use app\services\partners\StatDiffSettingsService;
@@ -39,6 +41,7 @@ use app\services\payment\jobs\RefundPayJob;
 use app\services\payment\models\Bank;
 use app\services\payment\models\PaySchet;
 use app\services\payment\PaymentService;
+use app\services\paymentReport\PaymentReportService;
 use Exception;
 use kartik\mpdf\Pdf;
 use Throwable;
@@ -59,6 +62,8 @@ use function serialize;
 class StatController extends Controller
 {
     public $enableCsrfValidation = false;
+
+    public const PAGINATION_LIMIT = 100;
 
     public function behaviors()
     {
@@ -86,7 +91,17 @@ class StatController extends Controller
                     [
                         'allow' => false,
                         'roles' => ['@'],
-                        'actions' => ['diff', 'diff-columns', 'diff-data', 'diff-export', 'recalc', 'recalcdata', 'recalc-save'],
+                        'actions' => [
+                            'diff',
+                            'diff-columns',
+                            'diff-data',
+                            'diff-export',
+                            'recalc',
+                            'recalcdata',
+                            'recalc-save',
+                            'transaction-edit-modal',
+                            'transaction-update',
+                        ],
                         'matchCallback' => function ($rule, $action) {
                             return !UserLk::IsAdmin(Yii::$app->user);
                         }
@@ -233,9 +248,11 @@ class StatController extends Controller
             $data = Yii::$app->request->post();
             $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
             $page = Yii::$app->request->get('page', 0);
+            $offset = ($page - 1) * self::PAGINATION_LIMIT;
+
             $payShetList = new PayShetStat();
             if ($payShetList->load($data, '') && $payShetList->validate()) {
-                $list = $payShetList->getList2($IsAdmin, $page);
+                $list = $payShetList->getList($IsAdmin, $offset, self::PAGINATION_LIMIT, true);
                 return [
                     'status' => 1, 'data' => $this->renderPartial('_listdata', [
                         'reqdata' => $data,
@@ -271,14 +288,15 @@ class StatController extends Controller
         $payShetStat = new PayShetStat();
         try {
             if ($payShetStat->load(Yii::$app->request->get(), '') && $payShetStat->validate()) {
-                $data = $payShetStat->getList2($IsAdmin, 0, 1);
+                $data = $payShetStat->getList($IsAdmin, 0, null, true);
                 if (isset($data['data'])) {
                     $exportExcel = new ExportExcel();
                     $exportExcel->CreateXlsRaw(
                         "Экспорт",
                         $IsAdmin ? MfoStat::HEAD_ADMIN : MfoStat::HEAD_USER,
                         MfoStat::getDataGenerator($data['data'], $IsAdmin),
-                        $IsAdmin ? MfoStat::ITOGS_ADMIN_EXCEL : MfoStat::ITOGS_USER_EXCEL
+                        [],
+                        MfoStat::getOperationListResultRow($data, $IsAdmin)
                     );
                 }
             };
@@ -312,7 +330,7 @@ class StatController extends Controller
         $payShetStat = new PayShetStat();
         try {
             if ($payShetStat->load(Yii::$app->request->get(), '') && $payShetStat->validate()) {
-                $data = $payShetStat->getList2($isAdmin, 0, 1);
+                $data = $payShetStat->getList($isAdmin, 0, null);
                 if ($data) {
                     $exportCsv = new OtchToCSV($data);
                     $exportCsv->export();
@@ -490,7 +508,9 @@ class StatController extends Controller
             Yii::warning('partner/stat/otchdata POST: ' . serialize($data), 'partner');
             try {
                 if ($payShetList->load($data, '') && $payShetList->validate()) {
-                    $data = $payShetList->getOtch($IsAdmin);
+                    $paymentReportService = new PaymentReportService();
+
+                    $data = $paymentReportService->getLegacyReportEntities($IsAdmin, $payShetList);
                     return $this->renderPartial('_otchdata', [
                         'IsAdmin' => $IsAdmin,
                         'data' => $data,
@@ -724,7 +744,7 @@ class StatController extends Controller
         $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
         $uslugilist = $IsAdmin ? $fltr->getUslugList(-1, TU::AutoPay()) : $fltr->getUslugList(UserLk::getPartnerId(Yii::$app->user), TU::AutoPay());
         return $this->render('recurrentcard', [
-            'name' => 'Автоплатежи',
+            'name' => 'Регулярные платежи',
             'IsAdmin' => $IsAdmin,
             'partnerlist' => $fltr->getPartnersList(),
             'uslugilist' => $uslugilist,
@@ -1094,6 +1114,49 @@ class StatController extends Controller
             $a = 0;
         }
         return $this->asJson($this->getIdentService()->getIdentStatistic($identStatisticForm));
+    }
+
+    public function actionTransactionEditModal(int $id)
+    {
+        $paySchet = PaySchet::findOne(['ID' => $id]);
+        if (!$paySchet) {
+            throw new NotFoundHttpException();
+        }
+
+        $updateTransactionForm = UpdateTransactionForm::mapFromPaySchet($paySchet);
+
+        return $this->renderPartial('modals/transaction-edit-modal', [
+            'updateTransactionForm' => $updateTransactionForm,
+            'statuses' => PaySchet::STATUSES,
+        ]);
+    }
+
+    public function actionTransactionUpdate()
+    {
+        $updateTransactionForm = new UpdateTransactionForm();
+        $updateTransactionForm->load(Yii::$app->request->post(), $updateTransactionForm->formName());
+        if (!$updateTransactionForm->validate()) {
+            return $this->asJson([
+                'status' => 1,
+                'errors' => $updateTransactionForm->getErrorSummary(true),
+            ]);
+        }
+
+        $user = Yii::$app->user;
+
+        try {
+            $updateTransactionService = new UpdateTransactionService($updateTransactionForm, $user);
+            $updateTransactionService->update();
+        } catch (\Exception $e) {
+            Yii::$app->errorHandler->logException($e);
+
+            return $this->asJson([
+                'status' => 1,
+                'errors' => ['Ошибка обновления'],
+            ]);
+        }
+
+        return $this->asJson(['status' => 0]);
     }
 
     /**
