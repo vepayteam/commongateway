@@ -112,7 +112,7 @@ $gate = (new BankAdapterBuilder())
 
   <div class="form__offer">
     <label class="control control-checkbox form__offer__label">
-      Настоящим я подтверждаю, что ознакомлен и согласен с правилами <a href="#">оферты</a>
+      Настоящим я подтверждаю, что ознакомлен и согласен с правилами <a target="_blank" href="/files/с_21_06_2021_Пуб_оферта_№_2_от_21_06_2021_Card2Card_2_2.pdf">оферты</a>
       <input id="agree_offer" type="checkbox"/>
       <div class="control_indicator"></div>
     </label>
