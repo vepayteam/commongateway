@@ -115,11 +115,18 @@ $(document).ready(function() {
         var cardPan = $('#card_number').val();
         var outCardPan = $('#out_card_number').val();
 
-        if(amount < minSum || amount > maxSum) {
-            $('#paymentAmount').css({'border-color': 'red'});
+        if (amount > maxSum) {
+            $('#payment_amount').css({'border-color': 'red'});
             valid = false;
-        } else {
-            $('#paymentAmount').css({'border-color': ''});
+
+            $('#form__payment_details_error').html('Максимальная сумма платежа <b>' + maxSum.toFixed(2).replace('.', ',') + '</b> ₽')
+            $('#form__payment_details_error').css({'display': 'block'})
+        } else if (amount < minSum) {
+            $('#payment_amount').css({'border-color': 'red'});
+            valid = false;
+
+            $('#form__payment_details_error').html('Минимальная сумма платежа <b>' + minSum.toFixed(2).replace('.', ',') + '</b> ₽')
+            $('#form__payment_details_error').css({'display': 'block'})
         }
 
         var expiryDate = $('#expiry_date').val()

@@ -2,6 +2,10 @@
     font-family: 'Roboto', sans-serif;
 }
 
+b {
+    font-weight: 700;
+}
+
 .control__input {
     padding: 12px 8px;
     font-weight: 300;

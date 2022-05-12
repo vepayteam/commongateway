@@ -13,6 +13,8 @@ use Carbon\Carbon;
 $gate = (new BankAdapterBuilder())
     ->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank, $paySchet->currency)
     ->getPartnerBankGate();
+
+$minSumCommission = $gate->UseGateCompensation ? ($gate->ClientMinimalFee ?? 0) : $paySchet->uslugatovar->MinsumComiss;
 ?>
 
 <form action="#" class="form">
@@ -104,7 +106,7 @@ $gate = (new BankAdapterBuilder())
 
     <div class="form__payment_details__commission">
       <span>Комиссия</span>
-      <span><span id="payment_commission">0,00</span> ₽</span>
+      <span><span id="payment_commission"><?= number_format($minSumCommission, 2, ',', ' ') ?></span> ₽</span>
     </div>
 
     <button id="submit_btn" class="form__payment_details__send" disabled="disabled">Отправить деньги</button>
@@ -122,7 +124,7 @@ $gate = (new BankAdapterBuilder())
 <script>
   var paySchetId = <?=$paySchet->ID?>;
   var pcComission = <?=$gate->UseGateCompensation ? ($gate->ClientCommission ?? 0) : $paySchet->uslugatovar->PcComission?>;
-  var minsumComiss = <?=$gate->UseGateCompensation ? ($gate->ClientMinimalFee ?? 0) : $paySchet->uslugatovar->MinsumComiss?>;
+  var minsumComiss = <?=$minSumCommission?>;
   var currMonth = <?=Carbon::now()->month?>;
   var currYear = <?=Carbon::now()->year?>;
   var minSum = <?=$paySchet->uslugatovar->MinSumm / 100?>;
