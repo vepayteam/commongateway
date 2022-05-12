@@ -1,10 +1,18 @@
 <?php
 
+use app\services\payment\banks\BankAdapterBuilder;
+use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use Carbon\Carbon;
 
-/* @var PaySchet $paySchet */
-const MAX_EXP_CARD_YEARS = 10;
+/**
+ * @var PaySchet $paySchet
+ * @var PartnerBankGate $gate
+ */
+
+$gate = (new BankAdapterBuilder())
+    ->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank, $paySchet->currency)
+    ->getPartnerBankGate();
 ?>
 
 <form action="#" class="form">
@@ -113,8 +121,8 @@ const MAX_EXP_CARD_YEARS = 10;
 
 <script>
   var paySchetId = <?=$paySchet->ID?>;
-  var pcComission = <?=$paySchet->uslugatovar->PcComission?>;
-  var minsumComiss = <?=$paySchet->uslugatovar->MinsumComiss?>;
+  var pcComission = <?=$gate->UseGateCompensation ? ($gate->ClientCommission ?? 0) : $paySchet->uslugatovar->PcComission?>;
+  var minsumComiss = <?=$gate->UseGateCompensation ? ($gate->ClientMinimalFee ?? 0) : $paySchet->uslugatovar->MinsumComiss?>;
   var currMonth = <?=Carbon::now()->month?>;
   var currYear = <?=Carbon::now()->year?>;
   var minSum = <?=$paySchet->uslugatovar->MinSumm / 100?>;
