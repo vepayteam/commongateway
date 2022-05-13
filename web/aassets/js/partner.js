@@ -2469,6 +2469,29 @@
         },
     };
 
+
+    // задача https://it.dengisrazy.ru/browse/VPBC-1334
+    // При переходе по вкладкам режим отображения бокового меню сохраняется от вкладки к вкладке.
+
+    $(window).on('load', function () {
+        const sideMenuOpen = localStorage.getItem('sideMenuOpen');
+        const smallScreen = window.innerWidth <= 768;
+
+        if (sideMenuOpen && smallScreen) {
+            $('body').toggleClass('mini-navbar')
+        }
+
+        const $burgerBtn =  $('.navbar-minimalize');
+        $burgerBtn.on('click', function(e) {
+            const previouslyClicked = localStorage.getItem('sideMenuOpen');
+            if (previouslyClicked) {
+                localStorage.removeItem('sideMenuOpen')
+            } else {
+                localStorage.setItem('sideMenuOpen', 'open')
+            }
+        })
+    });
+
     window.loginNav = loginNav;
     window.lk = lk;
     window.commInfo = commInfo;
