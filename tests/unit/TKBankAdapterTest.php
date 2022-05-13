@@ -1,5 +1,7 @@
 <?php
 
+use app\models\mfo\MfoReq;
+use app\modules\mfo\controllers\OutController;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\exceptions\BankAdapterResponseException;
@@ -7,10 +9,13 @@ use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\OkPayForm;
+use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\RefundPayForm;
+use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\PartnerBankGate;
 use \app\services\payment\models\PaySchet;
 use \app\services\payment\banks\TKBankAdapter;
+use app\services\payment\payment_strategies\mfo\MfoOutCardStrategy;
 
 class TKBankAdapterTest extends \Codeception\Test\Unit
 {
@@ -277,5 +282,40 @@ class TKBankAdapterTest extends \Codeception\Test\Unit
         $identInitResponse = $tkBankAdapter->identGetStatus($ident);
 
         $this->assertTrue($identInitResponse->status == BaseResponse::STATUS_DONE);
+    }
+
+    public function testOutCardPay()
+    {
+        AspectMock\Test::double(\qfsx\yii2\curl\Curl::class, ['post' => false]);
+
+        $login = Yii::$app->request->headers->set('X-Mfo', '116');
+        $token = Yii::$app->request->headers->set('X-Token', '123');
+
+        $request = '{ "cardnum": "2200150221374058", "amount": 1 }';
+        \Yii::$app->request->setRawBody($request);
+
+        $mfo = new MfoReq();
+        $result = false;
+        try {
+            $mfo->LoadData(Yii::$app->request->getRawBody());
+            $outCardPayForm = new OutCardPayForm();
+            $outCardPayForm->partner = $mfo->getPartner();
+            $outCardPayForm->load($mfo->Req(), '');
+            if (!$outCardPayForm->validate()) {
+                Yii::warning("out/paycard: " . $outCardPayForm->GetError(), 'mfo');
+                $result = ['status' => 0, 'message' => $outCardPayForm->GetError()];
+                print "outCardPayForm Invalid";
+            }
+            if ($result == false) {
+                print "outCardPayForm Valid";
+                $outCardPayForm->amount = PaymentHelper::convertToPenny($outCardPayForm->amount);
+                $mfoOutCardStrategy = new MfoOutCardStrategy($outCardPayForm);
+                $paySchet = $mfoOutCardStrategy->exec();
+                $result = ['status' => 1, 'id' => $paySchet->ID, 'message' => ''];
+            }
+        } catch (Exception $e) {
+            return $e;
+        }
+        $this->assertEquals(1, $result['status']);
     }
 }
