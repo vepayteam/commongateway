@@ -10,7 +10,6 @@ use app\models\bank\BankCheck;
 use app\models\payonline\Cards;
 use app\models\payonline\Uslugatovar;
 use app\models\queue\DraftPrintJob;
-use app\models\queue\ReverspayJob;
 use app\models\TU;
 use app\services\balance\BalanceService;
 use app\services\notifications\NotificationsService;
@@ -20,6 +19,7 @@ use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\SetPayOkForm;
+use app\services\payment\jobs\RefundPayJob;
 use app\services\payment\models\PayCard;
 use app\services\payment\models\PaySchet;
 use app\services\payment\PaymentService;
@@ -122,10 +122,6 @@ class OkPayStrategy
                 ||
                 $checkStatusPayResponse->status != BaseResponse::STATUS_CREATED
                 && $paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD
-                ||
-                /** @todo Проверить нужен ли этот блок условий, когда есть {@see PaySchet::$RegisterCard} */
-                $paySchet->IdUser > 0
-                && in_array($paySchet->uslugatovar->IsCustom, [TU::$JKH, TU::$ECOM, TU::$POGASHECOM, TU::$POGASHATF])
             )
             &&
             !empty($checkStatusPayResponse->cardRefId);
@@ -203,17 +199,25 @@ class OkPayStrategy
                     ]));
                 }
 
-                //оповещения на почту и колбэком
-                /** @var NotificationsService $notificationsService */
-                $notificationsService = Yii::$container->get('NotificationsService');
-                $notificationsService->addNotificationByPaySchet($paySchet);
+                /**
+                 * Колбэки для refund/reverse операций отправлять не нужно
+                 */
+                if (!$paySchet->isRefund) {
+                    //оповещения на почту и колбэком
+                    /** @var NotificationsService $notificationsService */
+                    $notificationsService = Yii::$container->get('NotificationsService');
+                    $notificationsService->addNotificationByPaySchet($paySchet);
+                }
 
                 // если регистрация карты, делаем возврат
                 // иначе изменяем баланс
                 if($paySchet->Bank != 0) {
-                    if($paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD) {
-                        Yii::$app->queue->push(new ReverspayJob([
-                            'idpay' => $paySchet->ID,
+                    /**
+                     * Если операция и так является возвратом, то заново для неё рефанд запускать не надо
+                     */
+                    if($paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD && !$paySchet->isRefund) {
+                        Yii::$app->queue->push(new RefundPayJob([
+                            'paySchetId' => $paySchet->ID,
                             'initiator' => 'OkPayStrategy confirmPay',
                         ]));
                     } else {
@@ -234,9 +238,14 @@ class OkPayStrategy
                 Yii::warning('OkPayStrategy confirmPay isStatusDone');
                 $this->paymentService->cancelPay($paySchet, $checkStatusPayResponse->message);
 
-                /** @var NotificationsService $notificationService */
-                $notificationsService = $this->getNotificationsService();
-                $notificationsService->addNotificationByPaySchet($paySchet);
+                /**
+                 * Колбэки для refund/reverse операций отправлять не нужно
+                 */
+                if (!$paySchet->isRefund) {
+                    /** @var NotificationsService $notificationService */
+                    $notificationsService = $this->getNotificationsService();
+                    $notificationsService->addNotificationByPaySchet($paySchet);
+                }
 
                 $antifraud = new AntiFraud($paySchet->ID);
                 $antifraud->update_status_transaction(1);

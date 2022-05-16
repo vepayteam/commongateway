@@ -19,8 +19,8 @@ class CreatePayRequest extends Model
     public $cc_expire_m;
     public $cc_expire_y;
     public $cc_cvc;
-    public $cl_fname = 'Magomed';
-    public $cl_lname = 'Gadzhiev';
+    public $cl_fname = 'NONAME';
+    public $cl_lname = 'NONAME';
     public $cl_email;
     public $cl_country = 'RU';
     public $cl_phone = '79009000000';

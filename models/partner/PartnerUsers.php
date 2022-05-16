@@ -113,6 +113,7 @@ class PartnerUsers extends \yii\db\ActiveRecord
     {
         if ($insert || (!empty( $this->Password) && $this->Password <> $this->oldAttributes['Password'])) {
             $this->Password = hash('sha256', $this->Password);
+            UserLk::resetLoginLock($this->Login);
         } elseif (empty($this->Password)) {
             $this->Password = $this->oldAttributes['Password'];
         }
