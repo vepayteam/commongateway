@@ -31,6 +31,7 @@ return [
         'app\assets\PartnerAsset',
         'app\assets\PayAsset',
         'app\assets\WidgetAsset',
+        'app\assets\P2pAsset',
         'yii\web\YiiAsset',
         'yii\web\JqueryAsset',
         'yii\bootstrap\BootstrapAsset',
@@ -121,7 +122,17 @@ return [
             'depends' => [
                 'app\assets\WidgetAsset'
             ],
-        ]
+        ],
+        'p2p' => [
+            'class' => 'yii\web\AssetBundle',
+            'basePath' => '@webroot/assets',
+            'baseUrl' => '@web/assets',
+            'js' => 'p2p-{hash}.js',
+            'css' => 'p2p-{hash}.css',
+            'depends' => [
+                'app\assets\P2pAsset'
+            ],
+        ],
     ],
     // Asset manager configuration:
     'assetManager' => [

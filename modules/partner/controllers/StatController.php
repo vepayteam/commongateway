@@ -339,6 +339,13 @@ class StatController extends Controller
             }
         } catch (Exception $e) {
             Yii::error(
+                'csv_error'
+                . '. Message: '.$e->getMessage()
+                . '. File: '.$e->getFile()
+                . '. Line: '.$e->getLine(),
+                __METHOD__
+            );
+            Yii::error(
                 [
                     $e->getMessage(),
                     $e->getFile(),
@@ -744,7 +751,7 @@ class StatController extends Controller
         $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
         $uslugilist = $IsAdmin ? $fltr->getUslugList(-1, TU::AutoPay()) : $fltr->getUslugList(UserLk::getPartnerId(Yii::$app->user), TU::AutoPay());
         return $this->render('recurrentcard', [
-            'name' => 'Автоплатежи',
+            'name' => 'Регулярные платежи',
             'IsAdmin' => $IsAdmin,
             'partnerlist' => $fltr->getPartnersList(),
             'uslugilist' => $uslugilist,
