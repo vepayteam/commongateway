@@ -31,7 +31,7 @@ services:
       REDIS_DB_NUM_QUEUE: 3
       REDIS_DB_NUM_CACHE: 4
       COMPOSER_HOME: /tmp
-      XDEBUG_CONFIG: >
+      XDEBUG_CONFIG: >-
         remote_enable=${XDEBUG_REMOTE_ENABLE:-1}
         remote_connect_back=${XDEBUG_REMOTE_CONNECT_BACK:-1}
         discover_client_host=${XDEBUG_DISCOVER_CLIENT_HOST:-1}

@@ -206,7 +206,7 @@ class Partner extends ActiveRecord
             ],
             [['URLSite', 'PodpisantFull', 'PodpDoljpost', 'PodpDoljpostRod', 'PodpOsnovan', 'PodpOsnovanRod',
                 'KontTehFio', 'KontFinansFio', 'BankName', 'PaaswordApi', 'MtsLogin', 'MtsPassword', 'MtsToken',
-                'Apple_MerchantID', 'Apple_displayName', 'Apple_KeyPasswd', 'Apple_MerchIdentKey', 'Apple_MerchIdentCert',
+                'Apple_MerchantID', 'Apple_displayName', 'Apple_KeyPasswd',
                 'GoogleMerchantID', 'SamsungMerchantID'
             ], 'string', 'max' => 100],
             [['SignatoryShortDative'], 'string', 'max' => 63],
@@ -238,12 +238,14 @@ class Partner extends ActiveRecord
                 ],
                 'file',
                 'skipOnEmpty' => true,
-                'mimeTypes' => [
-                    'application/pkcs8', // .p8 .key
-                    'application/pkix-cert', // .cer
-                    'application/x-x509-ca-cert', // .crt .der
-                    'application/x-x509-user-cert', // .crt
-                ],
+                'skipOnError' => false,
+                'checkExtensionByMimeType' => false,
+//                'mimeTypes' => [
+//                    'application/pkcs8', // .p8 .key
+//                    'application/pkix-cert', // .cer
+//                    'application/x-x509-ca-cert', // .crt .der
+//                    'application/x-x509-user-cert', // .crt
+//                ],
                 'extensions' => ['key', 'crt', 'cer'],
             ],
         ];
