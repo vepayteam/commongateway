@@ -32,8 +32,6 @@ use yii\mutex\FileMutex;
 
 class CreatePayStrategy
 {
-    const BRS_ECOMM_MAX_SUMM = 185000;
-
     const CACHE_PREFIX_LOCK_CREATE_PAY = 'Cache_CreatePayStrategy_Stop_CreatePay_';
     const CACHE_DURATION_LOCK_CREATE_PAY = 60 * 60; // 60 минут
 
@@ -125,22 +123,6 @@ class CreatePayStrategy
     }
 
     /**
-     * @param PaySchet $paySchet
-     * @throws Exception
-     */
-    protected function updatePaySchetWithRegCard(PaySchet $paySchet)
-    {
-        $payCard = new PayCard();
-        $payCard->number = $this->createPayForm->CardNumber;
-        $payCard->holder = $this->createPayForm->CardHolder;
-        $payCard->expYear = $this->createPayForm->CardYear;
-        $payCard->expMonth = $this->createPayForm->CardMonth;
-        $payCard->cvv = $this->createPayForm->CardCVC;
-
-        $this->paymentService->tokenizeCard($paySchet, $payCard);
-    }
-
-    /**
      * @throws CreatePayException
      */
     protected function setCardPay(PaySchet $paySchet, PartnerBankGate $partnerBankGate)
@@ -192,7 +174,7 @@ class CreatePayStrategy
         $card->NameCard = $cardNumber;
         $card->CardNumber = $cardNumber;
         $card->ExtCardIDP = 0;
-        $card->CardType = 0;
+        $card->CardType = Cards::GetTypeCard($cardNumber);
         $card->SrokKard = $this->createPayForm->CardMonth . $this->createPayForm->CardYear;
         $card->CardHolder = mb_substr($this->createPayForm->CardHolder, 0, 99);
         $card->Status = 0;

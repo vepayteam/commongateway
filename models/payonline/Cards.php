@@ -131,7 +131,9 @@ class Cards extends ActiveRecord
             Cards::updateAll(['Default' => 0], ['IdUser' => $this->IdUser, 'IsDeleted' => 0]);
         }
 
-        $this->CardType = Cards::GetTypeCard($this->CardNumber);
+        if ($this->CardNumber) {
+            $this->CardType = Cards::GetTypeCard($this->CardNumber);
+        }
 
         return parent::beforeSave($insert);
     }

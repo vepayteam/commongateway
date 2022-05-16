@@ -142,7 +142,7 @@ class MfoOutCardStrategy
         $card->NameCard = $cardNumber;
         $card->CardNumber = $cardNumber;
         $card->ExtCardIDP = 0;
-        $card->CardType = 0;
+        $card->CardType = Cards::GetTypeCard($cardNumber);
         $card->SrokKard = 0;
         $card->Status = 1;
         $card->DateAdd = time();
