@@ -2,6 +2,9 @@
 
 namespace app\services\payment\helpers;
 
+use app\services\payment\exceptions\BankAdapterResponseException;
+use yii\helpers\Json;
+
 class BRSErrorHelper
 {
     private static $errorCodes = [
@@ -474,6 +477,12 @@ class BRSErrorHelper
             return $resultCode . ' - ' . self::$errorCodes[$resultCode]['desc_rus'];
         }
 
-        return $brsResponse['RESULT'];
+        if (isset($brsResponse['RESULT'])) {
+            return $brsResponse['RESULT'];
+        }
+
+        \Yii::info('BRSErrorHelper RESULT_CODE or RESULT not defined, response=' . Json::encode($brsResponse));
+
+        return BankAdapterResponseException::REQUEST_ERROR_MSG;
     }
 }

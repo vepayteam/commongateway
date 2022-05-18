@@ -71,10 +71,10 @@ class P2pController extends Controller
         Yii::warning("P2P open id={$id}");
         $paySchet = PaySchet::findOne(['ID' => $id]);
         if(!$paySchet) {
-            throw new NotFoundHttpException("Форма дял перевода не найдена");
+            throw new NotFoundHttpException("Форма для перевода не найдена");
         }
 
-        if($paySchet->Status != PaySchet::STATUS_WAITING) {
+        if ($paySchet->Status != PaySchet::STATUS_WAITING) {
             return $this->redirect(Url::to('/pay/orderok?id=' . $id));
         }
 
@@ -84,10 +84,14 @@ class P2pController extends Controller
             "connect-src *; frame-src *;";
         Yii::$app->response->headers->add('Content-Security-Policy', $csp);
 
-        $this->layout = false;
-        return $this->render('formpay', [
-            'paySchet' => $paySchet,
-        ]);
+        $this->layout = 'base_p2p_layout';
+        try {
+            return $this->render('formpay', [
+                'paySchet' => $paySchet,
+            ]);
+        } catch (\Exception $e) {
+            return $e->getMessage();
+        }
     }
 
     public function actionSend($id)
