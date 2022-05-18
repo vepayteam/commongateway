@@ -12,6 +12,7 @@ return [
     'accountServiceUrl' => '',
     'dectaApiUrl' => 'https://gate.decta.com',
     'dectaProxy' => 'http://username:password@vepay-proxy.virtualfort.ru:30013',
+    'fortaProxy' => 'http://username:password@vepay-proxy.virtualfort.ru:30013',
 	'key' => '',
     'keycancel' => '',
     'info' => [

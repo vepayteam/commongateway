@@ -339,6 +339,13 @@ class StatController extends Controller
             }
         } catch (Exception $e) {
             Yii::error(
+                'csv_error'
+                . '. Message: '.$e->getMessage()
+                . '. File: '.$e->getFile()
+                . '. Line: '.$e->getLine(),
+                __METHOD__
+            );
+            Yii::error(
                 [
                     $e->getMessage(),
                     $e->getFile(),

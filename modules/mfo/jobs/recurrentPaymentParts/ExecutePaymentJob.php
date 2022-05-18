@@ -12,7 +12,7 @@ use yii\queue\JobInterface;
  */
 class ExecutePaymentJob extends BaseObject implements JobInterface
 {
-    private const UPDATE_STATUS_DELAY = 60 * 5;
+    private const UPDATE_STATUS_DELAY = 30;
 
     /**
      * @var int
