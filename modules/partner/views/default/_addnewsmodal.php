@@ -12,9 +12,9 @@ use yii\helpers\Html;
                     <div class="form-group row">
                         <div class="col-sm-12">
                             <label class="control-label">Заголовок</label>
-                            <input type="text" name="News[Head]" value="" maxlength="150" class="form-control">
+                            <input type="text" name="News[Head]" value="" required minlength="3" maxlength="150" class="form-control">
                             <label class="control-label">Текст</label>
-                            <textarea name="News[Body]" class="form-control" rows="10"></textarea>
+                            <textarea name="News[Body]" minlength="3" required class="form-control" rows="10"></textarea>
                         </div>
                     </div>
                     <div class="form-group row">

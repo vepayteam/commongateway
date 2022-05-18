@@ -70,6 +70,10 @@
     
     yii widget/updatestatm - 1 раз в час
     
+    yii widget/vyvod - в 12.30 пн-пт
+    
+    yii widget/send-brs-report - в 4.00
+    
     yii widget/send-otch - в 7.00
     
     yii widget/parts-balance-send-to-partners - в 3.00

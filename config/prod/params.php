@@ -62,6 +62,11 @@ return [
             'redis' => 'redis',
             'channel' => 'queue',
             'attempts' => 10,
+            'on afterError' => function (\yii\queue\ExecEvent $event) {
+                if ($event->error) {
+                    Yii::$app->errorHandler->logException($event->error);
+                }
+            }
         ],
         'reportQueue' => [
             'class' => \yii\queue\redis\Queue::class,
