@@ -1,17 +1,20 @@
 <?php
 
-/* @var \yii\web\View $this */
+use app\models\payonline\PayForm;
+use app\services\partners\models\PartnerOption;
+use app\services\payment\helpers\PaymentHelper;
+use yii\bootstrap\ActiveForm;
+use yii\bootstrap\Html;
+use yii\web\View;
+
+/* @var View $this */
 /* @var array $params */
 /* @var array $apple */
 /* @var array $google */
 /* @var array $samsung */
-/* @var \app\models\payonline\PayForm $payform */
-
-use app\services\partners\models\PartnerOption;
-use app\services\payment\helpers\PaymentHelper;
-use app\services\payment\models\Currency;
-use yii\bootstrap\ActiveForm;
-use yii\bootstrap\Html;
+/* @var PayForm $payform */
+/* @var boolean $isUseYandexPay */
+/* @var ?string $yandexPayMerchantId */
 
 $partnerCardRegTextHeaderOption = PartnerOption::findOne(['PartnerId' => $params['IdOrg'], 'Name' => PartnerOption::CARD_REG_TEXT_HEADER_NAME]);
 
@@ -178,6 +181,17 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
                     ]
                 )
             ?>
+
+            <?php if ($isUseYandexPay): ?>
+                <div id="yandex-pay-btn" style="margin-top: 2rem;"></div>
+                <div id="yandex-pay-data" style="display: none;">
+                    <input type="hidden" id="yandexPayMerchantId" value="<?= Html::encode($yandexPayMerchantId) ?>">
+                    <input type="hidden" id="paymentId" value="<?= Html::encode($params['ID']) ?>">
+                    <input type="hidden" id="paymentAmount" value="<?= Html::encode($params['amountPay']) ?>">
+                    <input type="hidden" id="partnerId" value="<?= Html::encode($params['IDPartner']) ?>">
+                    <input type="hidden" id="partnerName" value="<?= Html::encode($params['NamePartner']) ?>">
+                </div>
+            <?php endif ?>
         </div>
     </div>
 
@@ -292,12 +306,15 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
 </div>
 
 <noscript><div><img src="https://mc.yandex.ru/watch/66552382" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+
 <?php
 $this->registerJs('payform.init();');
 $this->registerJs('payform.checkIframe();');
+
 if (isset($apple['IsUseApplepay']) && $apple['IsUseApplepay'] && isset($apple['Apple_MerchantID']) && !empty($apple['Apple_MerchantID'])) {
     $this->registerJs('payform.applepay("' . $apple['Apple_MerchantID'] . '", "' . ($params['SummFull'] / 100.0) . '", "' . $params['NamePartner'] . '");');
 }
+
 if (isset($google['IsUseGooglepay']) && $google['IsUseGooglepay']) {
     $this->registerJsFile('https://pay.google.com/gp/p/js/pay.js');
     $this->registerJs('payform.googlepay("' .
@@ -309,9 +326,19 @@ if (isset($google['IsUseGooglepay']) && $google['IsUseGooglepay']) {
         '");'
     );
 }
+
 if (isset($samsung['IsUseSamsungpay']) && $samsung['IsUseSamsungpay']) {
     $this->registerJs('payform.samsungpay("' . $samsung['Samsung_MerchantID'] . '", "' . number_format($params['SummFull'] / 100.0, 2, '.', '') . '", "' . $params['NamePartner'] . '");');
 }
+
 $this->registerJs('$("#client_data").val(JSON.stringify({ "browser_screen_height": window.innerHeight, "browser_screen_width": window.innerWidth, "browser_timezone": (new Date()).getTimezoneOffset(), "browser_java_enabled": navigator.javaEnabled(), "window_height": window.outerHeight, "window_width": window.outerWidth, "browser_color_depth": screen.colorDepth }))');
-$this->registerJs('setTimeout(tracking.sendToServer, 500)', \yii\web\View::POS_READY);
+$this->registerJs('setTimeout(tracking.sendToServer, 500)', View::POS_READY);
+
+if ($isUseYandexPay) {
+    $this->registerJsFile('https://pay.yandex.ru/sdk/v1/pay.js', [
+        'onload' => 'onYaPayLoad()',
+        'async' => true,
+    ]);
+    $this->registerJsFile('/payasset/js/yandex-pay.js');
+}
 ?>

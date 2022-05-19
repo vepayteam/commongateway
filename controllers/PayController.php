@@ -35,6 +35,11 @@ use app\services\payment\models\repositories\CurrencyRepository;
 use app\services\payment\payment_strategies\CreatePayStrategy;
 use app\services\payment\payment_strategies\DonePayStrategy;
 use app\services\payment\payment_strategies\OkPayStrategy;
+use app\services\yandex\forms\YandexPayForm;
+use app\services\yandex\models\PaymentToken;
+use app\services\yandex\PaymentHandlerService;
+use app\services\yandex\PaymentTokenDecryptService;
+use app\services\yandex\PaymentTokenVerifyService;
 use kartik\mpdf\Pdf;
 use Yii;
 use yii\db\Exception;
@@ -131,6 +136,7 @@ class PayController extends Controller
 
         //данные счета для оплаты
         $params = $payschets->getSchetData($id, null);
+        $paySchet = PaySchet::findOne(['ID' => $id]);
 
         if ($params && TU::IsInPay($params['IsCustom'])) {
             if (
@@ -150,8 +156,10 @@ class PayController extends Controller
 
                 //разрешить открытие во фрейме на сайте мерчанта
                 $csp = "default-src 'self' 'unsafe-inline' https://mc.yandex.ru https://pay.google.com; " .
-                    "img-src 'self' data: https://mc.yandex.ru https://google.com/pay https://google.com/pay https://www.gstatic.com; " .
-                    "connect-src *; frame-src *;";
+                    "img-src 'self' data: https://mc.yandex.ru https://google.com/pay https://google.com/pay https://www.gstatic.com https://pay.yandex.ru; " .
+                    "connect-src *; " .
+                    "frame-src *; " .
+                    "script-src 'self' 'unsafe-inline' https://pay.yandex.ru;";
                 Yii::$app->response->headers->add('Content-Security-Policy', $csp);
 
                 $currency = $currencyRepository->getCurrency(null, $params['CurrencyId']);
@@ -162,12 +170,22 @@ class PayController extends Controller
 
                 Yii::info('PayForm render id:' . $id .  ',  paySchet: ' . $params['ID'] . ', Headers: ' . Json::encode(Yii::$app->request->headers));
 
+                /** @var PaymentHandlerService $paymentHandlerService */
+                $paymentHandlerService = Yii::$app->get(PaymentHandlerService::class);
+
+                $isUseYandexPay = $paymentHandlerService->isYandexPayEnabled($paySchet);
+                $yandexPayMerchantId = $isUseYandexPay
+                    ? $paySchet->partner->yandexPayMerchantId
+                    : null;
+
                 return $this->render('formpay', [
                     'params' => $params,
                     'apple' => (new ApplePay())->GetConf($params['IDPartner']),
                     'google' => (new GooglePay())->GetConf($params['IDPartner']),
                     'samsung' => (new SamsungPay())->GetConf($params['IDPartner']),
                     'payform' => $payForm,
+                    'isUseYandexPay' => $isUseYandexPay,
+                    'yandexPayMerchantId' => $yandexPayMerchantId,
                 ]);
 
             } else {
@@ -258,6 +276,91 @@ class PayController extends Controller
             default:
                 return $createPayStrategy->getCreatePayResponse()->getAttributes();
         }
+    }
+
+    /**
+     * TODO перенести в отдельный контроллер
+     */
+    public function actionYandexPay($id)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $form = new YandexPayForm();
+        if (!$form->load(\Yii::$app->request->post(), '') || !$form->validate()) {
+            return [
+                'status' => 0,
+                'message' => $form->firstErrors[0],
+            ];
+        }
+
+        $paySchet = PaySchet::findOne(['ID' => $id]);
+        if (!$paySchet) {
+            return [
+                'status' => 0,
+                'message' => 'Платеж не найден',
+            ];
+        }
+
+        $rawDecodedPaymentToken = base64_decode($form->paymentToken);
+        $paymentToken = new PaymentToken(Json::decode($rawDecodedPaymentToken));
+
+        /** @var PaymentHandlerService $paymentHandlerService */
+        $paymentHandlerService = Yii::$app->get(PaymentHandlerService::class);
+
+        /** @var PaymentTokenVerifyService $paymentTokenVerifyService */
+        $paymentTokenVerifyService = Yii::$app->get(PaymentTokenVerifyService::class);
+
+        /** @var PaymentTokenDecryptService $paymentTokenDecryptService */
+        $paymentTokenDecryptService = Yii::$app->get(PaymentTokenDecryptService::class);
+
+        if (!$paymentHandlerService->isYandexPayEnabled($paySchet)) {
+            return [
+                'status' => 0,
+                'message' => 'Yandex Pay не подключен',
+            ];
+        }
+
+        try {
+            $paymentTokenVerifyService->verify($paymentToken);
+        } catch (\Exception $e) {
+            \Yii::error([
+                'PayController actionYandexPay payment token verification exception',
+                $rawDecodedPaymentToken,
+                $e
+            ]);
+
+            return [
+                'status' => 0,
+                'message' => 'Ошибка запроса',
+            ];
+        }
+
+        try {
+            $encryptionReader = $paymentHandlerService->getEncryptionKeyReader($paySchet);
+            $jsonDecryptedMessage = $paymentTokenDecryptService->decrypt($paymentToken, $encryptionReader);
+        } catch (\Exception $e) {
+            Yii::error([
+                'PayController actionYandexPay payment token decrypt exception',
+                $rawDecodedPaymentToken,
+                $e
+            ]);
+
+            return [
+                'status' => 0,
+                'message' => 'Ошибка запроса',
+            ];
+        }
+
+        $decryptedMessage = $paymentHandlerService->saveYandexTransaction($jsonDecryptedMessage, $paySchet);
+
+        return [
+            'status' => 1,
+            'data' => [
+                'pan' => $decryptedMessage->getPaymentMethodDetails()->getPan(),
+                'expiration_year' => $decryptedMessage->getPaymentMethodDetails()->getExpirationYear(),
+                'expiration_month' => $decryptedMessage->getPaymentMethodDetails()->getExpirationMonth(),
+            ],
+        ];
     }
 
     public function actionCreatepaySecondStep($id)

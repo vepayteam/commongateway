@@ -168,6 +168,12 @@ $config = [
         \app\services\RecurrentPaymentPartsService::class => \app\services\RecurrentPaymentPartsService::class,
         \app\services\ReportService::class => \app\services\ReportService::class,
         \app\services\PaymentService::class => \app\services\PaymentService::class,
+
+        \app\services\yandex\PaymentHandlerService::class => \app\services\yandex\PaymentHandlerService::class,
+        \app\services\yandex\PaymentTokenDecryptService::class => \app\services\yandex\PaymentTokenDecryptService::class,
+        \app\services\yandex\PaymentTokenVerifyService::class => \app\services\yandex\PaymentTokenVerifyService::class,
+        \app\services\yandex\RootKeyStorageService::class => \app\services\yandex\RootKeyStorageService::class,
+        \app\services\yandex\UpdateTransactionService::class => \app\services\yandex\UpdateTransactionService::class,
     ],
     'params' => $params,
     'container' => [
