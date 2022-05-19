@@ -31,7 +31,7 @@ class TestSelValidationService
      */
     public function validateSql(string $sql): string
     {
-        // // $this->checkBlockKeywords($sql);
+        $this->checkBlockKeywords($sql);
 
         $tree = $this->parseSql($sql);
         $tree = $this->handleLimit($tree);
