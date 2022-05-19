@@ -141,6 +141,12 @@ class RecarringController extends Controller
 
         $kfCard = new KfCard();
         $kfCard->scenario = KfCard::SCENARIO_REG;
+        $kfCard->load($kfRequest->req, '');
+        if (!$kfCard->validate()) {
+            $err = $kfCard->GetError();
+            Yii::warning('recarring/reg: ошибка валидации формы: ' . $err);
+            return ['status' => 0, 'message' => $err];
+        }
 
         $regUser = new Reguser();
         $extUser = $kfRequest->IdPartner . '-' . time();

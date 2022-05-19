@@ -22,6 +22,8 @@ class KfCard extends CardBase
     public $type;
 
     public $extid = '';
+    public $postbackurl;
+    public $postbackurl_v2;
 
     public $language = LanguageService::API_LANG_RUS;
 
@@ -39,7 +41,7 @@ class KfCard extends CardBase
             [['card'], 'required', 'on' => self::SCENARIO_INFO],
             [['id'], 'required', 'on' => self::SCENARIO_GET],
             [['type'], 'integer', 'min' => 0, 'on' => self::SCENARIO_REG],
-            [['language'], 'in', 'range' => LanguageService::ALL_API_LANG_LIST],
+            [['language'], 'in', 'range' => LanguageService::ALL_API_LANG_LIST, 'on' => self::SCENARIO_REG],
         ];
     }
 
