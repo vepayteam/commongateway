@@ -9,6 +9,7 @@ use app\models\kfapi\KfPay;
 use app\models\kfapi\KfPayParts;
 use app\models\kfapi\KfRequest;
 use app\models\TU;
+use app\services\LanguageService;
 use app\services\payment\payment_strategies\traits\PaymentFormTrait;
 use app\services\PaySchetService;
 use Yii;
@@ -84,6 +85,11 @@ class CreateFormEcomPartsStrategy implements IPaymentStrategy
             0
         );
         $this->createPayParts($params);
+
+        /** @var LanguageService $languageService */
+        $languageService = Yii::$container->get('LanguageService');
+        $languageService->saveApiLanguage($params['IdPay'], $kfPay->language);
+
         if (!empty($kfPay->extid)) {
             $mutex->release('getPaySchetExt' . $kfPay->extid);
         }
@@ -101,7 +107,7 @@ class CreateFormEcomPartsStrategy implements IPaymentStrategy
     {
 
         return Yii::$app->db->createCommand("
-            SELECT `ID` 
+            SELECT `ID`
             FROM `uslugatovar`
             WHERE `IDPartner` = :IDMFO AND `IsCustom` = :TYPEUSL AND `IsDeleted` = 0
         ", [':IDMFO' => $this->request->IdPartner, ':TYPEUSL' => TU::$ECOMPARTS]

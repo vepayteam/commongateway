@@ -17,6 +17,13 @@ function decimalAdjust(type, value, exp) {
     return +(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp));
 }
 
+function convertToFullYear(lastPartYear) {
+    var today = new Date()
+    var startPartYear = Math.floor(today.getFullYear() / 100)
+
+    return parseInt(startPartYear.toString() + lastPartYear.toString())
+}
+
 if (!Math.ceil10) {
     Math.ceil10 = function (value, exp) {
         return decimalAdjust('ceil', value, exp);
@@ -133,6 +140,7 @@ $(document).ready(function() {
         var expiryDateMatch = expiryDate.match(/(\d{1,2})\/(\d{2})/)
         var expMonth = parseInt(expiryDateMatch[1])
         var expYear = parseInt(expiryDateMatch[2])
+        expYear = convertToFullYear(expYear)
 
         if(expYear === currYear && expMonth < currMonth) {
             $('#expiry_date').css({'border-color': 'red'});

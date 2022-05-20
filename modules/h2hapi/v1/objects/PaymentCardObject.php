@@ -104,9 +104,9 @@ class PaymentCardObject extends ApiObject
      */
     public function mapPaySchet(PaySchet $paySchet): PaymentCardObject
     {
-        $this->cardNumber = $paySchet->CardNum;
-        $this->cardHolder = $paySchet->CardHolder;
-        $this->expires = $paySchet->CardExp;
+        $this->cardNumber = (string)$paySchet->CardNum;
+        $this->cardHolder = (string)$paySchet->CardHolder;
+        $this->expires = str_pad((string)$paySchet->CardExp, 4, '0', STR_PAD_LEFT);
 
         return $this;
     }

@@ -68,9 +68,6 @@ $rekviz = ArrayHelper::map($rekviz, 'ID', 'NamePoluchat');
                     <?= $form->field($usl, 'ExtReestrIDUsluga')->textInput(['class' => 'form-control']); ?>
                     <?= $form->field($usl, 'ProfitExportFormat')->textInput(['class' => 'form-control']); ?>
                     <?= $form->field($usl, 'SchetchikFormat')->textInput(['class' => 'form-control']); ?>
-                    <?= $form->field($usl, 'SchetchikNames')->textInput(['class' => 'form-control']); ?>
-                    <?= $form->field($usl, 'PatternFind')->textInput(['class' => 'form-control']); ?>
-                    <?= $form->field($usl, 'QrcodeExportFormat')->textInput(['class' => 'form-control']); ?>
                     <hr>
                     <h3>Группа:</h3>
                     <?= $form->field($usl, 'IsCustom')->dropDownList(UslugatovarType::typeList(), ['class' => 'form-control']); ?>
@@ -116,13 +113,6 @@ $rekviz = ArrayHelper::map($rekviz, 'ID', 'NamePoluchat');
                     <?= $form->field($usl, 'ReestrNameFormat')->textInput(['class' => 'form-control']); ?>
                     <?= $form->field($usl, 'ProfitIdProvider')->textInput(['class' => 'form-control']); ?>
                     <?= $form->field($usl, 'IdBankRekviz')->dropDownList($rekviz, ['class' => 'form-control']); ?>
-                    <div class="col-sm-8 col-sm-offset-3">
-                        <?php
-                        echo $form->field($usl, 'SendToGisjkh')->checkbox([
-                            'template' => "<div class=\"checkbox m-l-sm\">\n{input}\n{beginLabel}\n{labelTitle}\n{endLabel}\n{error}\n{hint}\n</div>"
-                        ]);
-                        ?>
-                    </div>
 
                     <div class="row">
                         <div class="col-sm-8 col-sm-offset-3">
