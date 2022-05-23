@@ -26,13 +26,13 @@ class MfoStat
     public const ITOGS_USER_EXCEL = [7 => 1, 8 => 1, 9 => 1];
     public const HEAD_ADMIN = [
         'ID Vepay', 'ExtID', 'Код ответа', 'Услуга', 'Реквизиты', 'Договор', 'ФИО', 'Сумма', 'Комиссия', 'К оплате',
-        'Комис. банка', 'Возн. Vepay', 'Дата создания', 'Статус', 'Ошибка', 'Дата оплаты', 'Тип карты', 'Номер транзакции',
-        'ID мерчанта', 'Маска карты', 'Держатель карты', 'RRN', 'Хэш от номера карты', 'Наименование банка-эквайера',
+        'Комис. банка', 'Возн. Vepay', 'Дата создания', 'Статус', 'Ошибка', 'Дата оплаты', 'Номер транзакции',
+        'ID мерчанта', 'Тип карты', 'Маска карты', 'Держатель карты', 'RRN', 'Хэш от номера карты', 'Наименование банка-эквайера',
     ];
     public const HEAD_USER = [
         'ID Vepay', 'ExtID', 'Код ответа', 'Услуга', 'Реквизиты', 'Договор', 'ФИО', 'Сумма', 'Комиссия', 'К оплате',
-        'Дата создания', 'Статус', 'Ошибка', 'Дата оплаты', 'Тип карты', 'Номер операции',
-        'ID мерчанта', 'Маска карты', 'Держатель карты', 'RRN', 'Хэш от номера карты', 'Наименование банка-эквайера',
+        'Дата создания', 'Статус', 'Ошибка', 'Дата оплаты', 'Номер операции',
+        'ID мерчанта', 'Тип карты', 'Маска карты', 'Держатель карты', 'RRN', 'Хэш от номера карты', 'Наименование банка-эквайера',
     ];
 
     public function ExportOpList($post)
@@ -61,10 +61,10 @@ class MfoStat
                     date("d.m.Y H:i:s", $row['DateCreate']),
                     PaySchet::getStatusTitle($row['Status']),
                     $row['ErrorInfo'],
-                    $row['CardType'],
                     $row['DateOplat'] > 0 ? date("d.m.Y H:i:s", $row['DateOplat']) : '',
                     $row['ExtBillNumber'],
                     $row['IdOrg'],
+                    $row['CardType'],
                     $row['CardNum'],
                     $row['CardHolder'],
                     $row['RRN'],
@@ -93,9 +93,9 @@ class MfoStat
                     date("d.m.Y H:i:s", $row['DateCreate']),
                     PaySchet::getStatusTitle($row['Status']),
                     $row['ErrorInfo'],
-                    $row['CardType'],
                     $row['DateOplat'] > 0 ? date("d.m.Y H:i:s", $row['DateOplat']) : '',
                     $row['IdOrg'],
+                    $row['CardType'],
                     $row['CardNum'],
                     $row['CardHolder'],
                     $row['RRN'],
@@ -174,9 +174,9 @@ class MfoStat
                         PaySchet::getStatusTitle($row['Status']),
                         $row['ErrorInfo'],
                         $row['DateOplat'] > 0 ? date("d.m.Y H:i:s", $row['DateOplat']) : '',
-                        $row['CardType'],
                         $row['ExtBillNumber'],
                         $row['IdOrg'],
+                        $row['CardType'],
                         $row['CardNum'],
                         $row['CardHolder'],
                         $row['RRN'],
