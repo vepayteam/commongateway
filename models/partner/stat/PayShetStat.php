@@ -4,6 +4,7 @@ namespace app\models\partner\stat;
 
 use app\models\partner\UserLk;
 use app\models\TU;
+use app\services\payment\models\active_query\PaySchetQuery;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\PaySchetAdditional;
 use app\services\payment\models\repositories\CurrencyRepository;
@@ -108,7 +109,14 @@ class PayShetStat extends Model
 
             try {
 
-                $IdPart = $IsAdmin ? $this->IdPart : UserLk::getPartnerId(Yii::$app->user);
+                if ($IsAdmin) {
+                    $IdPart = !empty($this->idParts) ? $this->idParts : [$this->IdPart];
+                } else {
+                    $IdPart = [UserLk::getPartnerId(Yii::$app->user)];
+                }
+                $IdPart = array_filter($IdPart, static function ($v) {
+                    return (int) $v > 0;
+                });
 
                 $query = PaySchetAdditional::find()
                                            ->select([
@@ -158,10 +166,13 @@ class PayShetStat extends Model
                                                'ps.CardNum',
                                                'ps.CardHolder',
                                                'ps.BankName',
+                                               'c.CardNumber',
                                                'ps.IdKard',//IdCard->cards->IdPan->pan_token->encryptedPan
+                                               'b.Name as BankName',
                                            ])
                                            ->from('`pay_schet` AS ps')
                                            ->leftJoin('`banks` AS b', 'ps.Bank = b.ID')
+                                           ->leftJoin('`cards` AS c', 'ps.IdKard = c.ID')
                                            ->leftJoin('`uslugatovar` AS qp', 'ps.IdUsluga = qp.ID')
                                            ->leftJoin('`user` AS u', 'u.`ID` = ps.`IdUser`')
                                            ->where('ps.DateCreate BETWEEN :DATEFROM AND :DATETO', [
@@ -169,9 +180,10 @@ class PayShetStat extends Model
                                                ':DATETO'   => strtotime($this->dateto . ":59")
                                            ]);
 
-                if ($IdPart > 0) {
-                    $query->andWhere('qp.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);
+                if (!empty($IdPart)) {
+                    $query->andWhere(['qp.IDPartner' => $this->idParts]);
                 }
+                $query = $this->handleParamsQuery($query);
                 if (count($this->status) > 0) {
                     $query->andWhere(['in', 'ps.Status', $this->status]);
                 }
@@ -332,41 +344,32 @@ class PayShetStat extends Model
 
             $res = $query->all();
 
-//            if ($limit === null) {
-//
-//                $data = self::mapQueryPaymentResult($res);
-//
-//            } else {
-            $data = [];
-
             $refundTotalPaymentSum = 0;
             $refundTotalClientCommission = 0;
             $refundTotalBankCommission = 0;
             $refundTotalAward = 0;
+            $data = [];
 
             foreach ($res as $row) {
-                if (intval($row->Status) === PaySchet::STATUS_REFUND_DONE) {
-                    /**
-                     * Для транзакций в статусе refund/reverse сумма вознаграждения должна быть 0
-                     */
-                    $row->VoznagSumm = 0;
-                } else {
-                    $row->VoznagSumm = $row->ComissSumm - $row->BankComis + $row->MerchVozn;
-                }
+                /**
+                 * Для транзакций в статусе refund/reverse сумма вознаграждения должна быть 0
+                 */
+                $row->VoznagSumm = (intval($row->Status) === PaySchet::STATUS_REFUND_DONE) ? 0 : ($row->ComissSumm - $row->BankComis + $row->MerchVozn);
                 $row->Currency = $row->CurrencyId ? CurrencyRepository::getCurrencyCodeById($row->CurrencyId)->Code : null;
-                $row->RefundAmount = $row->RefundAmount ?? 0;
+                $row->RefundAmount = $row['RefundAmount'] ?? 0;
                 $row->RemainingRefundAmount = $row->SummPay + $row->ComissSumm - $row->RefundAmount;
+
                 if (
                     intval($row->Status) === PaySchet::STATUS_REFUND_DONE ||
                     intval($row->Status) === PaySchet::STATUS_CANCEL
                 ) {
-                    $refundTotalPaymentSum += (int)$row->SummPay;
-                    $refundTotalClientCommission += (int)$row->ComissSumm;
-                    $refundTotalBankCommission += (int)$row->BankComis;
-                    $refundTotalAward += (int)$row->VoznagSumm;
+                    $refundTotalPaymentSum += (int) $row->SummPay;
+                    $refundTotalClientCommission += (int) $row->ComissSumm;
+                    $refundTotalBankCommission += (int) $row->BankComis;
+                    $refundTotalAward += (int) $row->VoznagSumm;
 
                     if (intval($row->Status) !== PaySchet::STATUS_REFUND_DONE) {
-                        $refundTotalAward += (int)$row->VoznagSumm;
+                        $refundTotalAward += (int) $row->VoznagSumm;
                     }
                 }
 
@@ -411,12 +414,6 @@ class PayShetStat extends Model
     private static function mapQueryPaymentResult(array $res): \Generator
     {
         foreach ($res as $row) {
-
-            $row->VoznagSumm = $row->ComissSumm - $row->BankComis + $row->MerchVozn;
-            $row->Currency = $row->CurrencyId ? CurrencyRepository::getCurrencyCodeById($row->CurrencyId)->Code : null;
-            $row->RefundAmount = $row->RefundAmount ?? 0;
-            $row->RemainingRefundAmount = $row->SummPay + $row->ComissSumm - $row->RefundAmount;
-
             yield $row;
         }
     }
@@ -463,6 +460,7 @@ class PayShetStat extends Model
         if (count($this->TypeUslug) > 0) {
             $query->andWhere(['in', 'qp.IsCustom', $this->TypeUslug]);
         }
+        $query = $this->handleParamsQuery($query);
         if (is_numeric($this->summpayFrom) && is_numeric($this->summpayTo) && $this->summpayTo) {
             $query->andWhere(['between', 'ps.SummPay', round($this->summpayFrom * 100.0), round($this->summpayTo * 100.0)]);
         } elseif (is_numeric($this->summpayFrom)) {
@@ -470,8 +468,16 @@ class PayShetStat extends Model
         } elseif (is_numeric($this->summpayTo)) {
             $query->andWhere(['<=', 'ps.SummPay', round($this->summpayTo * 100.0)]);
         }
+
+        return $query;
+    }
+
+    private function handleParamsQuery($query): PaySchetQuery
+    {
         if (count($this->params) > 0) {
-            if (!empty($this->params[0])) $query->andWhere(['like', 'ps.Dogovor', $this->params[0]]);
+            if (!empty($this->params[0])) {
+                $query->andWhere(['like', 'ps.Dogovor', $this->params[0]]);
+            }
             if (isset($this->params['fullSummpayFrom']) && isset($this->params['fullSummpayTo'])
                 && is_numeric($this->params['fullSummpayFrom']) && is_numeric($this->params['fullSummpayTo'])) {
                 $query->andWhere([
@@ -501,6 +507,7 @@ class PayShetStat extends Model
                 $query->andFilterWhere(['ps.ExtBillNumber' => $this->explode($this->params['operationNumber'])]);
             }
         }
+
         return $query;
     }
 

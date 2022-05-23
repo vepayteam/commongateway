@@ -318,6 +318,13 @@ components:
           type: string
           maxLength: 40
           description: Номер договора
+        language:
+          type: string
+          default: "rus"
+          enum:
+            - "eng"
+            - "rus"
+          description: Язык формы оплаты, по умолчанию rus
         parts:
           type: array
           items:
@@ -365,6 +372,13 @@ components:
           type: string
           format: url
           description: Дополнительный адрес Url для обратного вызова
+        language:
+          type: string
+          default: "rus"
+          enum:
+            - "eng"
+            - "rus"
+          description: Язык формы оплаты, по умолчанию rus
     P2pCreate:
       type: object
       properties:
@@ -428,6 +442,13 @@ components:
           type: string
           format: url
           description: Адрес для Url для возврата после отказа от оплаты
+        language:
+          type: string
+          default: "rus"
+          enum:
+            - "eng"
+            - "rus"
+          description: Язык формы оплаты, по умолчанию rus
     RecarringGet:
       type: object
       properties:
