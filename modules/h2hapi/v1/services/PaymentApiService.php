@@ -49,7 +49,6 @@ class PaymentApiService extends Component
         $paySchet->IPAddressUser = $paymentObject->ip;
         $cardObject = $paymentObject->card;
         $paySchet->CardNum = Cards::MaskCard($cardObject->cardNumber);
-        $paySchet->CardType = Cards::GetCardBrand(Cards::GetTypeCard($cardObject->cardNumber));
         $paySchet->CardHolder = mb_substr($cardObject->cardHolder, 0, 99);
         $paySchet->CardExp = $cardObject->expires;
         $paySchet->save(false);
