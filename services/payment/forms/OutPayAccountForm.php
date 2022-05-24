@@ -58,7 +58,7 @@ class OutPayAccountForm extends Model
             ['fio', 'required', 'on' => [self::SCENARIO_FL]],
             ['fio', 'string', 'max' => 150, 'on' => [self::SCENARIO_FL]],
 
-            ['phone', 'match', 'pattern' => '/^7\d{10}$/', 'message' => 'Неверный номер телефона'],
+            ['phone', 'match', 'pattern' => '/^7\d{10}$/', 'message' => \Yii::t('app.payment-errors', 'Неверный номер телефона')],
             ['client', 'validateClient'],
 
             ['amount', 'filter', 'filter' => function ($value) {

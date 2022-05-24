@@ -173,7 +173,7 @@ class RunaBankAdapter implements IBankAdapter
         $identInitResponse->response = $ans;
         if($ans['state_code'] != RunaIdentResponseInteface::RESPONSE_STATUS_INIT) {
             $identInitResponse->status = BaseResponse::STATUS_ERROR;
-            $identInitResponse->message = $ans['state_description'] ?? 'Ошибка запроса';
+            $identInitResponse->message = $ans['state_description'] ?? \Yii::t('app.payment-errors', 'Ошибка запроса');
         } else {
             $identInitResponse->status = BaseResponse::STATUS_DONE;
         }
