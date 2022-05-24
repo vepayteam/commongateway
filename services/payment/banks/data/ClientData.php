@@ -29,7 +29,7 @@ final class ClientData extends ImmutableDataObject
         ?int $browserTimezoneOffset = null,
         ?int $browserWindowHeight = null,
         ?int $browserWindowWidth = null,
-        ?int $browserLanguage = null,
+        ?string $browserLanguage = null,
         ?int $browserColorDepth = null,
         ?bool $browserJavaEnabled = null
     )

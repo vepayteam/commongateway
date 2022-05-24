@@ -401,7 +401,7 @@ components:
               example: -180
             language:
               type: string
-              description: "Язык браузера (ISO). JavaScript: navigator.language || navigator.userLanguage."
+              description: "Язык браузера (ISO). JavaScript: window.navigator.language || window.navigator.userLanguage."
               maxLength: 5
               example: "ru-RU"
             colorDepth:

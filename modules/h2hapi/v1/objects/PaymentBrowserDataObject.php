@@ -30,7 +30,7 @@ class PaymentBrowserDataObject extends ApiObject
      */
     public $timezoneOffset;
     /**
-     * @var int
+     * @var string
      */
     public $language;
     /**
@@ -51,7 +51,7 @@ class PaymentBrowserDataObject extends ApiObject
             [
                 [
                     'screenHeight', 'screenWidth', 'timezoneOffset', 'windowHeight', 'windowWidth',
-                    'language', 'colorDepth', 'javaEnabled'
+                    'language', 'colorDepth', 'javaEnabled',
                 ],
                 'required',
             ],

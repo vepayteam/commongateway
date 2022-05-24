@@ -6,7 +6,6 @@ use app\models\bank\ApplePay;
 use app\models\bank\BankMerchant;
 use app\models\bank\GooglePay;
 use app\models\bank\SamsungPay;
-use app\models\payonline\PayForm;
 use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\TU;
@@ -138,7 +137,9 @@ class PayController extends Controller
                 && $params['UserClickPay'] == 0
                 && $params['DateCreate'] + $params['TimeElapsed'] > time()
             ) {
-                $payForm = new PayForm();
+                $payForm = new CreatePayForm();
+                $payForm->IdPay = $id;
+                $payForm->httpHeaderAccept = \Yii::$app->request->headers->get('accept');
 
                 $cacheCardService = new CacheCardService($params['ID']);
                 if ($cacheCardService->cardExists()) {
@@ -196,7 +197,7 @@ class PayController extends Controller
 
         $form = new CreatePayForm();
 
-        if (!$form->load(Yii::$app->request->post(), 'PayForm') || !$form->validate()) {
+        if (!$form->load(Yii::$app->request->post()) || !$form->validate()) {
             return ['status' => 0, 'message' => $form->GetError()];
         }
         Yii::warning("PayForm create id=" . $form->IdPay);

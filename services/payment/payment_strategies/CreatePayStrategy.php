@@ -85,21 +85,19 @@ class CreatePayStrategy
         $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank, $paySchet->currency);
         $this->setCardPay($paySchet, $bankAdapterBuilder->getPartnerBankGate());
 
-        /** Move the "client_data" and "client_data_accept" post parameters to {@see CreatePayForm}. */
-        $clientDataPost = Json::decode(Yii::$app->request->post('client_data', '{}'));
-        $acceptPost = Yii::$app->request->post('client_data_accept');
+        $browserDataForm = $this->createPayForm->browserDataForm;
         $clientDataObject = new ClientData(
             Yii::$app->request->getRemoteIP(),
             Yii::$app->request->getUserAgent(),
-            $acceptPost,
-            $clientDataPost['browser_screen_height'] ?? null,
-            $clientDataPost['browser_screen_width'] ?? null,
-            $clientDataPost['browser_timezone'] ?? null,
-            $clientDataPost['window_height'] ?? null,
-            $clientDataPost['window_width'] ?? null,
-            'ru',
-            $clientDataPost['browser_color_depth'] ?? null,
-            $clientDataPost['browser_java_enabled'] ?? null
+            $this->createPayForm->httpHeaderAccept,
+            !empty($browserDataForm->screenHeight) ? $browserDataForm->screenHeight : null,
+            !empty($browserDataForm->screenWidth) ? $browserDataForm->screenWidth : null,
+            !empty($browserDataForm->timezoneOffset) ? $browserDataForm->timezoneOffset : null,
+            !empty($browserDataForm->windowHeight) ? $browserDataForm->windowHeight : null,
+            !empty($browserDataForm->windowWidth) ? $browserDataForm->windowWidth : null,
+            !empty($browserDataForm->language) ? $browserDataForm->language : null,
+            !empty($browserDataForm->colorDepth) ? $browserDataForm->colorDepth : null,
+            !empty($browserDataForm->javaEnabled) ? $browserDataForm->javaEnabled : null
         );
 
         try {
