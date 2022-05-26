@@ -7,6 +7,7 @@ use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
+use app\models\PaySchetAcsRedirect;
 use app\services\CompensationService;
 use app\services\compensationService\CompensationException;
 use app\services\notifications\models\NotificationPay;
@@ -105,6 +106,7 @@ use yii\helpers\ArrayHelper;
  * @property PaySchet $refundSource {@see PaySchet::getRefundSource()}
  * @property PaySchet[] $refunds {@see PaySchet::getRefunds()}
  * @property-read Cards $cards {@see PaySchet::getCards()}
+ * @property-read PaySchetAcsRedirect $acsRedirect {@see PaySchet::getAcsRedirect()}
  *
  * @property string $Version3DS
  * @property int $IsNeed3DSVerif
@@ -434,6 +436,11 @@ class PaySchet extends \yii\db\ActiveRecord
     public function getCards(): ActiveQuery
     {
         return $this->hasOne(Cards::class, ['ID' => 'IdKard']);
+    }
+
+    public function getAcsRedirect(): ActiveQuery
+    {
+        return $this->hasOne(PaySchetAcsRedirect::class, ['id' => 'ID']);
     }
 
     /**
