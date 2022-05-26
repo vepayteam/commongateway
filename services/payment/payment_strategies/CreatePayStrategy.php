@@ -6,12 +6,12 @@ use app\models\api\Reguser;
 use app\models\crypt\CardToken;
 use app\models\payonline\Cards;
 use app\models\payonline\User;
-use app\models\payonline\Uslugatovar;
+use app\models\PaySchetAcsRedirect;
 use app\services\cards\models\PanToken;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
+use app\services\payment\banks\bank_adapter_responses\createPayResponse\AcsRedirectData;
 use app\services\payment\banks\BankAdapterBuilder;
-use app\services\payment\banks\BRSAdapter;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
@@ -21,13 +21,10 @@ use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\models\PartnerBankGate;
-use app\services\payment\models\PayCard;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\repositories\CurrencyRepository;
-use app\services\payment\models\UslugatovarType;
 use app\services\payment\PaymentService;
 use Yii;
-use yii\db\Exception;
 use yii\mutex\FileMutex;
 
 class CreatePayStrategy
@@ -93,6 +90,21 @@ class CreatePayStrategy
         }
 
         $this->updatePaySchet($paySchet, $bankAdapterBuilder->getPartnerBankGate());
+
+        $acs = $this->createPayResponse->acs;
+        if ($acs instanceof AcsRedirectData) {
+            $acsRedirect = new PaySchetAcsRedirect();
+            $acsRedirect->id = $paySchet->ID;
+            $acsRedirect->status = [
+                AcsRedirectData::STATUS_OK => PaySchetAcsRedirect::STATUS_OK,
+                AcsRedirectData::STATUS_PENDING => PaySchetAcsRedirect::STATUS_PENDING,
+            ][$acs->status];
+            $acsRedirect->url = $acs->url;
+            $acsRedirect->method = $acs->method;
+            $acsRedirect->postParameters = $acs->postParameters;
+            $acsRedirect->save(false);
+        }
+
         return $paySchet;
     }
 

@@ -11,6 +11,7 @@ use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
+use app\services\payment\banks\bank_adapter_responses\createPayResponse\AcsRedirectData;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
@@ -127,6 +128,7 @@ class GratapayAdapter implements IBankAdapter
                 $createPayResponse->url = $responseBody['redirect']['url']
                     . '?data='
                     . urlencode($responseBody['redirect']['params']['data']);
+                $createPayResponse->acs = new AcsRedirectData(AcsRedirectData::STATUS_OK, $createPayResponse->url, 'GET');
             } else {
                 $createPayResponse->status = BaseResponse::STATUS_ERROR;
                 $createPayResponse->message = substr($responseBody['message'] ?? '', 0, 255);
