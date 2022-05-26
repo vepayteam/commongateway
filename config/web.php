@@ -106,6 +106,7 @@ $config = [
                 'POST /h2hapi/v1/invoices' => '/h2hapi/v1/invoice/post',
                 'GET /h2hapi/v1/invoices/<id:\d+>' => '/h2hapi/v1/invoice/get',
                 'PUT /h2hapi/v1/invoices/<paySchetId:\d+>/payment' => '/h2hapi/v1/payment/put',
+                'GET /h2hapi/v1/invoices/<paySchetId:\d+>/payment' => '/h2hapi/v1/payment/get',
                 'PUT /h2hapi/v1/invoices/<paySchetId:\d+>/payment/reversed' => '/h2hapi/v1/payment/put-reversed',
 
                 'POST /h2hapi/v1/invoices/<paySchetId:\d+>/payment/refunds' => '/h2hapi/v1/refund/post',
