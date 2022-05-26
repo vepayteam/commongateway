@@ -117,6 +117,7 @@ class MonetixAdapter implements IBankAdapter
         } catch (\Exception $e) {
             $confirmPayResponse->status = BaseResponse::STATUS_ERROR;
             $confirmPayResponse->message = $e->getMessage();
+            return $confirmPayResponse;
         }
     }
 
@@ -184,6 +185,7 @@ class MonetixAdapter implements IBankAdapter
         } catch (\Exception $e) {
             $createPayResponse->status = BaseResponse::STATUS_ERROR;
             $createPayResponse->message = $e->getMessage();
+            return $createPayResponse;
         }
     }
 
