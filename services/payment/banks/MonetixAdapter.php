@@ -205,14 +205,14 @@ class MonetixAdapter implements IBankAdapter
 
             if(isset($response['errors'])) {
                 $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
-                $checkStatusPayResponse->message = $response['errors'][0]["message"] ?? "Ошибка запроса";
+                $checkStatusPayResponse->message = $response['errors'][0]["message"] ?? \Yii::t('app.payment-errors', 'Ошибка запроса');
             } elseif (isset($response['operations'])) {
                 $operation = $response['operations'][count($response['operations']) - 1];
                 $checkStatusPayResponse->status = $this->converStatus($operation['status']);
                 $checkStatusPayResponse->message = $operation['code'] . ': ' . $operation['status'];
             } else {
                 $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
-                $checkStatusPayResponse->message = "Ошибка запроса";
+                $checkStatusPayResponse->message = \Yii::t('app.payment-errors', 'Ошибка запроса');
             }
             return $checkStatusPayResponse;
         } catch (\Exception $e) {

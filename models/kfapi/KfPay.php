@@ -5,6 +5,7 @@ namespace app\models\kfapi;
 use app\models\bank\TCBank;
 use app\models\payonline\Cards;
 use app\models\TU;
+use app\services\LanguageService;
 use Yii;
 use yii\base\Model;
 
@@ -30,6 +31,7 @@ class KfPay extends Model
     public $cancelurl = '';
     public $postbackurl = '';
     public $postbackurl_v2 = '';
+    public $language = LanguageService::API_LANG_RUS;
 
     public function rules()
     {
@@ -48,7 +50,8 @@ class KfPay extends Model
             [['amount'/*, 'extid'*/], 'required', 'on' => self::SCENARIO_FORM],
             [['amount'/*, 'extid'*/, 'card'], 'required', 'on' => self::SCENARIO_AUTO],
             [['id'], 'integer', 'on' => self::SCENARIO_STATE],
-            [['id'], 'required', 'on' => self::SCENARIO_STATE]
+            [['id'], 'required', 'on' => self::SCENARIO_STATE],
+            [['language'], 'in', 'range' => LanguageService::ALL_API_LANG_LIST],
         ];
     }
 

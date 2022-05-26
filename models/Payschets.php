@@ -816,7 +816,6 @@ class Payschets
                 ut.IDPartner,
                 p.Schetcheks,
                 ut.SchetchikFormat,
-                ut.SchetchikNames,
                 ut.SchetchikIzm,
                 ut.NameUsluga,
                 p.IdUsluga,
@@ -901,52 +900,6 @@ class Payschets
                 'IdShablon' => $token
             ],'`ID` = :ID', [':ID' => $IdPay])
             ->execute();
-    }
-
-    /**
-     * Сохранение карты PCI DSS
-     * @param int $IdUser
-     * @param array $card [number,idcard,expiry,type,holder]
-     * @param $IdPAN
-     * @throws \yii\db\Exception
-     */
-    public function SaveCardPan($IdUser, $card, $IdPAN)
-    {
-        $rowCard = Yii::$app->db->createCommand("
-            SELECT
-                c.ID,
-                c.ExtCardIDP
-            FROM
-                `user` AS u 
-                LEFT JOIN `cards` AS c ON(c.IdUser = u.ID AND c.TypeCard = 0)
-            WHERE
-                u.ID = :IDUSER AND u.IsDeleted = 0
-        ", [':IDUSER' => $IdUser]
-        )->queryOne();
-
-        if ($rowCard) {
-            //удалить старую
-            Yii::$app->db->createCommand()
-                ->update('cards', [
-                    'IsDeleted' => 1
-                ], 'IdUser = :IDUSER', [':IDUSER' => $IdUser])
-                ->execute();
-        }
-
-        //новая карта
-        Yii::$app->db->createCommand()->insert('cards', [
-            'IdUser' => $IdUser,
-            'NameCard' => Cards::MaskCard($card['number']),
-            'ExtCardIDP' => 0,
-            'CardNumber' => Cards::MaskCard($card['number']),
-            'CardType' => 0,
-            'SrokKard' => $card['month'] . $card['year'],
-            'CardHolder' => mb_substr($card['holder'], 0, 99),
-            'Status' => 1,
-            'DateAdd' => time(),
-            'Default' => 0,
-            'IdPan' => $IdPAN
-        ])->execute();
     }
 
     /**

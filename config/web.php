@@ -11,7 +11,8 @@ ini_set('session.cookie_lifetime', 0);
 $config = [
     'id' => 'basic',
     'basePath' => dirname(__DIR__),
-    'language' => 'ru_RU',
+    'language' => 'ru-RU',
+    'sourceLanguage' => 'ru-RU',
     'timezone' => 'Europe/Moscow',
     'defaultRoute' => 'site',
     'bootstrap' => ['log', 'queue', 'reportQueue'],
@@ -153,6 +154,14 @@ $config = [
                 'streamoptions' => ['ssl' => ['verify_peer' => FALSE, 'verify_peer_name' => FALSE]]
             ],
         ],
+        'i18n' => [
+            'translations' => [
+                'app*' => [
+                    'class' => 'yii\i18n\PhpMessageSource',
+                    'basePath' => '@app/messages'
+                ],
+            ],
+        ],
         'log' => require(__DIR__ . '/log.php'),
         'db' => require(__DIR__ . '/db.php'),
 
@@ -179,6 +188,7 @@ $config = [
             'AuthService' => ['class' => 'app\services\auth\AuthService'],
             'NotificationsService' => ['class' => 'app\services\notifications\NotificationsService'],
             'WallettoExchangeRateService' => ['class' => 'app\services\exchange_rates\WallettoExchangeRateService'],
+            'LanguageService' => ['class' => 'app\services\LanguageService'],
         ],
     ],
     'modules' => [
