@@ -5,6 +5,7 @@ namespace app\models\payonline;
 use app\helpers\Validators;
 use app\models\payonline\active_query\CardActiveQuery;
 use app\services\cards\models\PanToken;
+use app\services\payment\models\active_query\PaySchetQuery;
 use app\services\payment\models\Bank;
 use app\services\payment\models\PaySchet;
 use Exception;
@@ -34,6 +35,10 @@ use yii\helpers\Json;
  * @property User $user
  * @property Bank $bank
  * @property PanToken $panToken
+ *
+ * @property-read PaySchet[] $paySchets {@see Cards::getPaySchets()}
+ *
+ * @todo Rename class from "Cards" to "Card".
  */
 class Cards extends ActiveRecord
 {
@@ -126,19 +131,27 @@ class Cards extends ActiveRecord
             Cards::updateAll(['Default' => 0], ['IdUser' => $this->IdUser, 'IsDeleted' => 0]);
         }
 
+        if ($this->CardNumber) {
+            $this->CardType = Cards::GetTypeCard($this->CardNumber);
+        }
+
         return parent::beforeSave($insert);
     }
 
     /**
-     * Gets query for [[PaySchets]].
+     * @return PaySchetQuery
      */
     public function getPaySchets(): ActiveQuery
     {
-        return $this->hasMany(PaySchet::className(), ['IdKard' => 'ID']);
+        return $this->hasMany(PaySchet::class, ['IdKard' => 'ID']);
     }
 
+    /**
+     * @todo Rename to "getUslugatovars". Add a readonly class property for this relation.
+     */
     public function getUslugatovar(): ActiveQuery
     {
+        /** {@see Cards::paySchets} */
         return $this->hasMany(Uslugatovar::class, ['ID' => 'IdUsluga'])->via('paySchets');
     }
 
@@ -294,5 +307,13 @@ class Cards extends ActiveRecord
     public static function GetCardBrand(int $cardType): string
     {
         return self::BRAND_NAMES[$cardType];
+    }
+
+    /**
+     * @return string|null Payment system name in upper case, e.g. MASTERCARD, VISA.
+     */
+    public function getPaymentSystemName(): ?string
+    {
+        return self::BRAND_NAMES[$this->CardType] ?? null;
     }
 }

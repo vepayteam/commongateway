@@ -101,6 +101,22 @@ paths:
                 $ref: "#/components/schemas/NotFoundError"
         "422":
           description: Ошибки валидации. JSON-структура аналогичная запросу, где текст ошибки в значениях атрибутов объекта
+    get:
+      summary: Возвращает Оплату Счета
+      description: Объект Оплата Счета с данными карты и переадресации на проверку 3DS (ACS)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+        "404":
+          description: Счет не найден, либо оплата по счету не произведена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotFoundError"
 
   /invoices/{id}/payment/refunds:
     parameters:
@@ -327,11 +343,44 @@ components:
           description: IP Клиента
           example: "108.177.16.21"
           writeOnly: true
-        acsUrl:
-          type: string
+        acsRedirect:
+          type: object
           readOnly: true
-          description: URL страницы проверки 3DS. Если null, проверка не требуется.
-          example: "https://pay1time.com/api/processingResult?payId=188636&status=succes&url=dfgdfgdfgdfdfgfdg=="
+          description: >
+            Данные для перенаправления пользователя на страницу ACS (проверка 3DS). 
+            Если null, проверка 3DS не требуется.
+          properties:
+            status:
+              type: string
+              enum: [ "OK", "PENDING" ]
+              description: >
+                Статус оплаты Счета:
+                * "OK" - Готово
+                * "PENDING" - Ожидание. Требуется сделать повторный запрос позже.
+              example: "OK"
+            url:
+              type: string
+              description: URL страницы проверки 3DS. null, если статус PENDING.
+              example: "https://some-access-control-server.com/3ds?payId=123"
+            method:
+              type: string
+              description: >
+                HTTP-метод для перенаправления браузера пользователя на страницу проверки 3DS.
+                Если POST, потребуется добавить форму с указанным адресом и параметрами на страницу оплаты
+                в браузере клиента и отправить с помощью JavaScript.
+                null, если статус PENDING.
+              example: "POST"
+            postParameters:
+              type: object
+              description: >
+                Параметры формы для перенаправления методом POST.
+                null, если метод GET или статус PENDING.
+              additionalProperties: true
+              example: {
+                "pa_req": "K8QufpC0UQXOoYcNlfT857Tvu15Wli12WXyvCyTX8AKY2QyMUCk",
+                "md": "YcNlfT857Tvu15Wli12WXyvCyTX8AKY2QyMUCkGMifQ==",
+                "term_url": "https://api.vepay.online/pay/orderdone/12345"
+              }
         card:
           type: object
           required: [cardNumber, cardHolder, expires, cvc]

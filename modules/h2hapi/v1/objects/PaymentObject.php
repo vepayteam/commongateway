@@ -8,11 +8,11 @@ use app\services\payment\models\PaySchet;
 class PaymentObject extends ApiObject
 {
     /**
-     * @var string URL for 3DS.
+     * @var PaymentAcsRedirectObject|null 3DS data.
      */
-    public $acsUrl;
+    public $acsRedirect;
     /**
-     * @var string Client IP.
+     * @var string User IP.
      */
     public $ip;
     /**
@@ -47,7 +47,7 @@ class PaymentObject extends ApiObject
     {
         return [
             'card',
-            'acsUrl',
+            'acsRedirect',
         ];
     }
 
@@ -58,6 +58,11 @@ class PaymentObject extends ApiObject
     public function mapPaySchet(PaySchet $paySchet): PaymentObject
     {
         $this->card = (new PaymentCardObject())->mapPaySchet($paySchet);
+
+        if ($paySchet->acsRedirect !== null) {
+            $this->acsRedirect = (new PaymentAcsRedirectObject)
+                ->mapPaySchetAcsRedirect($paySchet->acsRedirect);
+        }
 
         return $this;
     }

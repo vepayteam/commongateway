@@ -9,6 +9,7 @@ use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
+use app\services\payment\banks\bank_adapter_responses\createPayResponse\AcsRedirectData;
 use app\services\payment\banks\bank_adapter_responses\CurrencyExchangeRatesResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
@@ -153,6 +154,12 @@ class WallettoBankAdapter implements IBankAdapter
         } else {
             $createPayResponse->isNeed3DSVerif = true;
             $createPayResponse->html3dsForm = $responseData['form3d_html'];
+
+            $from3d = $responseData['form3d'];
+            $createPayResponse->acs = new AcsRedirectData(AcsRedirectData::STATUS_OK, $from3d['action'], $from3d['method'], [
+                'threeDSSessionData' => $from3d['threeDSSessionData'],
+                'creq' => $from3d['creq'],
+            ]);
         }
 
         return $createPayResponse;

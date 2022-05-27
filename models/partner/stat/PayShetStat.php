@@ -166,13 +166,11 @@ class PayShetStat extends Model
                                                'ps.CardNum',
                                                'ps.CardHolder',
                                                'ps.BankName',
-                                               'c.CardNumber',
                                                'ps.IdKard',//IdCard->cards->IdPan->pan_token->encryptedPan
                                                'b.Name as BankName',
                                            ])
                                            ->from('`pay_schet` AS ps')
                                            ->leftJoin('`banks` AS b', 'ps.Bank = b.ID')
-                                           ->leftJoin('`cards` AS c', 'ps.IdKard = c.ID')
                                            ->leftJoin('`uslugatovar` AS qp', 'ps.IdUsluga = qp.ID')
                                            ->leftJoin('`user` AS u', 'u.`ID` = ps.`IdUser`')
                                            ->where('ps.DateCreate BETWEEN :DATEFROM AND :DATETO', [

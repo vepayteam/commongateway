@@ -3,11 +3,13 @@
 namespace app\controllers;
 
 use app\models\api\CorsTrait;
+use app\models\PaySchetAcsRedirect;
 use app\services\callbacks\forms\ImpayaCallbackForm;
 use app\services\callbacks\forms\MonetixCallbackForm;
 use app\services\callbacks\forms\MonetixCallbackPingForm;
 use app\services\callbacks\ImpayaCallbackService;
 use app\services\callbacks\MonetixCallbackService;
+use app\services\payment\models\PaySchet;
 use Yii;
 use yii\helpers\Json;
 use yii\web\BadRequestHttpException;
@@ -83,6 +85,23 @@ class CallbackController extends Controller
 
         $monetixCallbackService = new MonetixCallbackService();
         $monetixCallbackService->execCallback($monetixCallbackForm);
+
+
+        $paySchet = PaySchet::findOne((int)$data['customer']['id']);
+        if (
+            $data['operation']['status'] === 'awaiting 3ds result'
+            && $paySchet->acsRedirect !== null
+        ) {
+            $paySchet->acsRedirect->status = PaySchetAcsRedirect::STATUS_OK;
+            $paySchet->acsRedirect->url = $data['acs']['acs_url'];
+            $paySchet->acsRedirect->method = PaySchetAcsRedirect::METHOD_POST;
+            $paySchet->acsRedirect->postParameters = [
+                'MD' => $data['acs']['md'],
+                'PaReq' => $data['acs']['pa_req'],
+                'TermUrl' => $data['acs']['term_url'],
+            ];
+            $paySchet->acsRedirect->save(false);
+        }
 
         return $this->asJson(['status' => 1]);
     }

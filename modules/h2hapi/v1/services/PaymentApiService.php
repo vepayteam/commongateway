@@ -4,9 +4,11 @@ namespace app\modules\h2hapi\v1\services;
 
 use app\controllers\PayController;
 use app\models\payonline\Cards;
+use app\models\PaySchetAcsRedirect;
 use app\modules\h2hapi\v1\objects\PaymentObject;
 use app\modules\h2hapi\v1\services\paymentApiService\PaymentCreateException;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
+use app\services\payment\banks\bank_adapter_responses\createPayResponse\AcsRedirectData;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\data\ClientData;
 use app\services\payment\exceptions\BankAdapterResponseException;
@@ -26,6 +28,15 @@ use yii\base\Component;
  */
 class PaymentApiService extends Component
 {
+    /**
+     * @param PaySchet $paySchet
+     * @return PaymentObject
+     */
+    public function get(PaySchet $paySchet): PaymentObject
+    {
+        return (new PaymentObject())->mapPaySchet($paySchet);
+    }
+
     /**
      * @param PaySchet $paySchet
      * @param PaymentObject $paymentObject
@@ -50,7 +61,6 @@ class PaymentApiService extends Component
         $paySchet->IPAddressUser = $paymentObject->ip;
         $cardObject = $paymentObject->card;
         $paySchet->CardNum = Cards::MaskCard($cardObject->cardNumber);
-        $paySchet->CardType = Cards::GetCardBrand(Cards::GetTypeCard($cardObject->cardNumber));
         $paySchet->CardHolder = mb_substr($cardObject->cardHolder, 0, 99);
         $paySchet->CardExp = $cardObject->expires;
         $paySchet->save(false);
@@ -104,8 +114,21 @@ class PaymentApiService extends Component
             $paySchet->CardRefId3DS = $createPayResponse->cardRefId;
             $paySchet->save(false);
 
-            // Если 3DS не требуется, завершаем все операции по оплате.
-            if (!$paySchet->IsNeed3DSVerif) {
+            if ($createPayResponse->acs !== null) {
+                if ($createPayResponse->acs instanceof AcsRedirectData) {
+                    $acsRedirect = new PaySchetAcsRedirect();
+                    $acsRedirect->status = [
+                        AcsRedirectData::STATUS_OK => PaySchetAcsRedirect::STATUS_OK,
+                        AcsRedirectData::STATUS_PENDING => PaySchetAcsRedirect::STATUS_PENDING,
+                    ][$createPayResponse->acs->status];
+                    $acsRedirect->id = $paySchet->ID;
+                    $acsRedirect->url = $createPayResponse->acs->url;
+                    $acsRedirect->method = $createPayResponse->acs->method;
+                    $acsRedirect->postParameters = $createPayResponse->acs->postParameters;
+                    $acsRedirect->save(false);
+                }
+            } else {
+                // Если 3DS не требуется, завершаем все операции по оплате.
                 /** @todo Зарефактроить confirm(), чтобы он принимал только те данные, которые ему нужны. */
                 $donePayForm = new DonePayForm();
                 $donePayForm->IdPay = $paySchet->ID;
@@ -123,7 +146,6 @@ class PaymentApiService extends Component
 
         $paySchet->refresh();
         $paymentObject = (new PaymentObject())->mapPaySchet($paySchet);
-        $paymentObject->acsUrl = $paySchet->IsNeed3DSVerif ? $createPayResponse->url : null;
 
         return $paymentObject;
     }

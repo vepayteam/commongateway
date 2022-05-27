@@ -22,7 +22,7 @@ class Modifiers
 
     public static function searchAndReplacePan(string $input): string
     {
-        preg_match_all('/(?<pan>[23456]\d{15,17})/xu', $input, $cards);
+        preg_match_all('/(?<pan>\b[23456]\d{15,17}\b)/xu', $input, $cards);
         foreach ($cards['pan'] as $card) {
             if (Validators::checkByLuhnAlgorithm($card)) {
                 $panMaskedLen = strlen($card) - 10;
