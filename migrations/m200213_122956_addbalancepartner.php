@@ -30,7 +30,7 @@ class m200213_122956_addbalancepartner extends Migration
               `IdPay` int(10) unsigned NOT NULL DEFAULT \'0\' COMMENT \'id pay_schet\',
               `IdStatm` int(10) unsigned NOT NULL DEFAULT \'0\' COMMENT \'id statements_account\',
               PRIMARY KEY (`ID`)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8        
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8
         ');
 
         $this->execute('
@@ -45,7 +45,7 @@ class m200213_122956_addbalancepartner extends Migration
               `IdPay` int(10) unsigned NOT NULL DEFAULT \'0\' COMMENT \'id pay_schet\',
               `IdStatm` int(10) unsigned NOT NULL DEFAULT \'0\' COMMENT \'id statements_account\',
               PRIMARY KEY (`ID`)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8        
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8
         ');
     }
 

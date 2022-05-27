@@ -5,6 +5,7 @@ namespace app\services\payment\forms;
 
 
 use app\models\traits\ValidateFormTrait;
+use app\services\LanguageService;
 use app\services\payment\forms\MerchantPayForm;
 
 class CreatePayPartsForm extends MerchantPayForm
@@ -29,6 +30,7 @@ class CreatePayPartsForm extends MerchantPayForm
             [['parts'], 'required'],
             [['parts'], 'validateParts'],
             [['type'], 'integer', 'min' => 0],
+            [['language'], 'in', 'range' => LanguageService::ALL_API_LANG_LIST],
         ];
     }
 

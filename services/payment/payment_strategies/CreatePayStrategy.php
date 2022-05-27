@@ -6,12 +6,12 @@ use app\models\api\Reguser;
 use app\models\crypt\CardToken;
 use app\models\payonline\Cards;
 use app\models\payonline\User;
-use app\models\payonline\Uslugatovar;
+use app\models\PaySchetAcsRedirect;
 use app\services\cards\models\PanToken;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
+use app\services\payment\banks\bank_adapter_responses\createPayResponse\AcsRedirectData;
 use app\services\payment\banks\BankAdapterBuilder;
-use app\services\payment\banks\BRSAdapter;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
@@ -21,19 +21,14 @@ use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\models\PartnerBankGate;
-use app\services\payment\models\PayCard;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\repositories\CurrencyRepository;
-use app\services\payment\models\UslugatovarType;
 use app\services\payment\PaymentService;
 use Yii;
-use yii\db\Exception;
 use yii\mutex\FileMutex;
 
 class CreatePayStrategy
 {
-    const BRS_ECOMM_MAX_SUMM = 185000;
-
     const CACHE_PREFIX_LOCK_CREATE_PAY = 'Cache_CreatePayStrategy_Stop_CreatePay_';
     const CACHE_DURATION_LOCK_CREATE_PAY = 60 * 60; // 60 минут
 
@@ -95,6 +90,21 @@ class CreatePayStrategy
         }
 
         $this->updatePaySchet($paySchet, $bankAdapterBuilder->getPartnerBankGate());
+
+        $acs = $this->createPayResponse->acs;
+        if ($acs instanceof AcsRedirectData) {
+            $acsRedirect = new PaySchetAcsRedirect();
+            $acsRedirect->id = $paySchet->ID;
+            $acsRedirect->status = [
+                AcsRedirectData::STATUS_OK => PaySchetAcsRedirect::STATUS_OK,
+                AcsRedirectData::STATUS_PENDING => PaySchetAcsRedirect::STATUS_PENDING,
+            ][$acs->status];
+            $acsRedirect->url = $acs->url;
+            $acsRedirect->method = $acs->method;
+            $acsRedirect->postParameters = $acs->postParameters;
+            $acsRedirect->save(false);
+        }
+
         return $paySchet;
     }
 
@@ -122,22 +132,6 @@ class CreatePayStrategy
         $paySchet->IPAddressUser = Yii::$app->request->remoteIP;
 
         $paySchet->save(false);
-    }
-
-    /**
-     * @param PaySchet $paySchet
-     * @throws Exception
-     */
-    protected function updatePaySchetWithRegCard(PaySchet $paySchet)
-    {
-        $payCard = new PayCard();
-        $payCard->number = $this->createPayForm->CardNumber;
-        $payCard->holder = $this->createPayForm->CardHolder;
-        $payCard->expYear = $this->createPayForm->CardYear;
-        $payCard->expMonth = $this->createPayForm->CardMonth;
-        $payCard->cvv = $this->createPayForm->CardCVC;
-
-        $this->paymentService->tokenizeCard($paySchet, $payCard);
     }
 
     /**
@@ -169,7 +163,6 @@ class CreatePayStrategy
         $card = $this->createUnregisterCard($token, $user, $partnerBankGate);
         $paySchet->IdKard = $card->ID;
         $paySchet->CardNum = Cards::MaskCard($this->createPayForm->CardNumber);
-        $paySchet->CardType = Cards::GetCardBrand(Cards::GetTypeCard($this->createPayForm->CardNumber));
         $paySchet->CardHolder = mb_substr($this->createPayForm->CardHolder, 0, 99);
         $paySchet->CardExp = $this->createPayForm->CardMonth . $this->createPayForm->CardYear;
         $paySchet->IdShablon = $token;
@@ -193,7 +186,7 @@ class CreatePayStrategy
         $card->NameCard = $cardNumber;
         $card->CardNumber = $cardNumber;
         $card->ExtCardIDP = 0;
-        $card->CardType = 0;
+        $card->CardType = Cards::GetTypeCard($cardNumber);
         $card->SrokKard = $this->createPayForm->CardMonth . $this->createPayForm->CardYear;
         $card->CardHolder = mb_substr($this->createPayForm->CardHolder, 0, 99);
         $card->Status = 0;

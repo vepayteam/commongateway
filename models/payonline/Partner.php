@@ -107,9 +107,6 @@ use yii\db\ActiveRecord;
  * @property string $OrangeDataConKey
  * @property string $OrangeDataConCert
  * @property integer $IsUseKKmPrint
- * @property string $MtsLogin
- * @property string $MtsPassword
- * @property string $MtsToken
  * @property string $Apple_MerchantID
  * @property string $Apple_PayProcCert
  * @property string $Apple_KeyPasswd
@@ -120,42 +117,12 @@ use yii\db\ActiveRecord;
  * @property integer $IsUseGooglepay
  * @property string $SamsungMerchantID
  * @property integer $IsUseSamsungpay
- * @property string $MtsLoginAft
- * @property string $MtsPasswordAft
- * @property string $MtsTokenAft
- * @property string $MtsLoginJkh
- * @property string $MtsPasswordJkh
- * @property string $MtsTokenJkh
- * @property string $MtsLoginOct
- * @property string $MtsPasswordOct
- * @property string $MtsTokenOct
- * @property string $MtsPasswordParts
- * @property string $MtsTokenParts
  * @property int $BankForPaymentId
  * @property int $BankForTransferToCardId
  * @property int $RunaBankCid
  * @property Uslugatovar[] $uslugatovars
  * @property PartnerBankRekviz[] $partner_bank_rekviz Deprecated, use {@see Partner::$bankRekviz} instead.
  * @property string $Apple_displayName [varchar(100)]
- * @property string $MtsLoginEcom [varchar(255)]
- * @property string $MtsPasswordEcom [varchar(255)]
- * @property string $MtsTokenEcom [varchar(255)]
- * @property string $MtsLoginVyvod [varchar(255)]
- * @property string $MtsPasswordVyvod [varchar(255)]
- * @property string $MtsTokenVyvod [varchar(255)]
- * @property string $MtsLoginAuto [varchar(255)]
- * @property string $MtsPasswordAuto [varchar(255)]
- * @property string $MtsTokenAuto [varchar(255)]
- * @property string $MtsLoginPerevod [varchar(255)]
- * @property string $MtsPasswordPerevod [varchar(255)]
- * @property string $MtsTokenPerevod [varchar(255)]
- * @property string $MtsLoginOctVyvod [varchar(255)]
- * @property string $MtsPasswordOctVyvod [varchar(255)]
- * @property string $MtsTokenOctVyvod [varchar(255)]
- * @property string $MtsLoginOctPerevod [varchar(255)]
- * @property string $MtsPasswordOctPerevod [varchar(255)]
- * @property string $MtsTokenOctPerevod [varchar(255)]
- * @property string $MtsLoginParts [varchar(255)]
  * @property string $nameWithId
  *
  * @property-read PartnerBankRekviz $bankRekviz {@see Partner::getBankRekviz()}
@@ -189,24 +156,9 @@ class Partner extends ActiveRecord
             [['UrAdres', 'PostAdres'], 'string', 'max' => 1000],
             [['UrAdres', 'PostAdres', 'Apple_PayProcCert'], 'string', 'max' => 1000],
             [['Name', 'UrLico'], 'string', 'max' => 250],
-            [[
-                /* @todo Удалить */
-                'MtsLoginParts', 'MtsPasswordParts', 'MtsTokenParts',
-                'MtsLoginAft', 'MtsPasswordAft', 'MtsTokenAft',
-                'MtsLoginJkh', 'MtsPasswordJkh', 'MtsTokenJkh',
-                'MtsLoginOct', 'MtsPasswordOct', 'MtsTokenOct',
-
-                'MtsLoginEcom', 'MtsPasswordEcom', 'MtsTokenEcom',
-                'MtsLoginVyvod', 'MtsPasswordVyvod', 'MtsTokenVyvod',
-                'MtsLoginAuto', 'MtsPasswordAuto', 'MtsTokenAuto',
-                'MtsLoginPerevod', 'MtsPasswordPerevod', 'MtsTokenPerevod',
-                'MtsLoginOctVyvod', 'MtsPasswordOctVyvod', 'MtsTokenOctVyvod',
-                'MtsLoginOctPerevod', 'MtsPasswordOctPerevod', 'MtsTokenOctPerevod',
-            ], 'string', 'max' => 500
-            ],
             [['URLSite', 'PodpisantFull', 'PodpDoljpost', 'PodpDoljpostRod', 'PodpOsnovan', 'PodpOsnovanRod',
-                'KontTehFio', 'KontFinansFio', 'BankName', 'PaaswordApi', 'MtsLogin', 'MtsPassword', 'MtsToken',
-                'Apple_MerchantID', 'Apple_displayName', 'Apple_KeyPasswd',
+                'KontTehFio', 'KontFinansFio', 'BankName', 'PaaswordApi',
+                'Apple_MerchantID', 'Apple_displayName', 'Apple_KeyPasswd', 'Apple_MerchIdentKey', 'Apple_MerchIdentCert',
                 'GoogleMerchantID', 'SamsungMerchantID'
             ], 'string', 'max' => 100],
             [['SignatoryShortDative'], 'string', 'max' => 63],
@@ -341,41 +293,6 @@ class Partner extends ActiveRecord
             'OrangeDataConCert' => 'Сертификат для подключения',
             'IsUseKKmPrint' => 'Отправлять чек на Email',
 
-            'MtsLogin' => 'Логин МТС Банк',
-            'MtsPassword' => 'Пароль МТС Банк',
-            'MtsToken' => 'Токен МТС Банк',
-            'MtsLoginJkh' => 'Логин МТС Банк ЖКХ',
-            'MtsPasswordJkh' => 'Пароль МТС Банк ЖКХ',
-            'MtsTokenJkh' => 'Токен МТС Банк ЖКХ',
-            'MtsLoginAft' => 'Логин МТС Банк AFT',
-            'MtsPasswordAft' => 'Пароль МТС Банк AFT',
-            'MtsTokenAft' => 'Токен МТС Банк AFT',
-            'MtsLoginOct' => 'Логин МТС Банк OCT и ПСР',
-            'MtsPasswordOct' => 'Пароль МТС Банк OCT и ПСР',
-            'MtsTokenOct' => 'Токен МТС Банк OCT и ПСР',
-
-            'MtsLoginEcom' => 'Логин МТС Банк Ecom',
-            'MtsPasswordEcom' => 'Пароль МТС Банк Ecom',
-            'MtsTokenEcom' => 'Токен МТС Банк Ecom',
-            'MtsLoginVyvod' => 'Логин МТС Банк Вывод со счета погашений',
-            'MtsPasswordVyvod' => 'Пароль МТС Банк Вывод со счета погашений',
-            'MtsTokenVyvod' => 'Токен МТС Банк Вывод со счета погашений',
-            'MtsLoginAuto' => 'Логин МТС Банк Автоплатеж',
-            'MtsPasswordAuto' => 'Пароль МТС Банк Автоплатеж',
-            'MtsTokenAuto' => 'Токен МТС Банк Автоплатеж',
-            'MtsLoginPerevod' => 'Логин МТС Банк Перевод со счета погашений',
-            'MtsPasswordPerevod' => 'Пароль МТС Банк Перевод со счета погашений',
-            'MtsTokenPerevod' => 'Токен МТС Банк Перевод со счета погашений',
-            'MtsLoginOctVyvod' => 'Логин МТС Банк Вывод со счета выдачи',
-            'MtsPasswordOctVyvod' => 'Пароль МТС Банк Вывод со счета выдачи',
-            'MtsTokenOctVyvod' => 'Токен МТС Банк Вывод со счета выдачи',
-            'MtsLoginOctPerevod' => 'Логин МТС Банк Перевод со счета выдачи',
-            'MtsPasswordOctPerevod' => 'Пароль МТС Перевод со счета выдачи',
-            'MtsTokenOctPerevod' => 'Токен МТС Банк Перевод со счета выдачи',
-
-            'MtsLoginParts' => 'Логин МТС Банк разбивка платежей',
-            'MtsPasswordParts' => 'Пароль МТС Банк разбивка платежей',
-            'MtsTokenParts' => 'Токен МТС Банк разбивка платежей',
             'Apple_MerchantID' => 'Apple MerchantID',
             'Apple_PayProcCert' => 'Payment Processing Certificate',
             'Apple_KeyPasswd' => 'Apple пароль закрытого ключа',

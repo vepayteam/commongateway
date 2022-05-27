@@ -110,7 +110,7 @@
             $('#closeform').on('click', function () {
                 let id = $('[name="PayForm[IdPay]"]').val();
 
-                if (confirm('Отменить оплату?')) {
+                if (confirm($('#payment_cancel_text').text())) {
                     if (linklink) {
                         linklink.abort();
                     }
