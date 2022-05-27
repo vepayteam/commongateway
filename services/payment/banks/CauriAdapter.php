@@ -476,7 +476,7 @@ class CauriAdapter implements IBankAdapter
             $outCardPayResponse->trans = $content['id'];
         } else {
             $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
-            $outCardPayResponse->message = 'Ошибка запроса';
+            $outCardPayResponse->message = \Yii::t('app.payment-errors', 'Ошибка запроса');
         }
 
         return $outCardPayResponse;
@@ -524,7 +524,7 @@ class CauriAdapter implements IBankAdapter
         } catch (\Exception $e) {
             Yii::warning('CauriAdapter getBalance exception: ' . $e->getMessage());
 
-            throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
+            throw new BankAdapterResponseException(\Yii::t('app.payment-errors', 'Ошибка запроса'));
         }
         $response = $responseData->getContent();
         if (!isset($response['amount']) || empty($response['amount'])) {
