@@ -142,7 +142,7 @@ class MfoOutCardStrategy
         $card->NameCard = $cardNumber;
         $card->CardNumber = $cardNumber;
         $card->ExtCardIDP = 0;
-        $card->CardType = 0;
+        $card->CardType = Cards::GetTypeCard($cardNumber);
         $card->SrokKard = 0;
         $card->Status = 1;
         $card->DateAdd = time();
@@ -200,7 +200,6 @@ class MfoOutCardStrategy
         $paySchet->IdKard = $card->ID;
         $paySchet->IdUser = $user->ID;
         $paySchet->CardNum = Cards::MaskCard($this->outCardPayForm->cardnum);
-        $paySchet->CardType = Cards::GetCardBrand(Cards::GetTypeCard($this->outCardPayForm->cardnum));
         $paySchet->CardHolder = mb_substr($card->CardHolder, 0, 99);
         $paySchet->CardExp = $card->getMonth() . $card->getYear();
         $paySchet->Status = PaySchet::STATUS_WAITING;

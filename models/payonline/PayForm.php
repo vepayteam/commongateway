@@ -24,16 +24,16 @@ class PayForm extends Model
     public function rules()
     {
         return [
-            [['CardNumber'], 'match', 'pattern' => '/^\d{16}|\d{18}$/', 'message' => 'Неверный номер карты'],
+            [['CardNumber'], 'match', 'pattern' => '/^\d{16}|\d{18}$/', 'message' => \Yii::t('app.payment-errors', 'Неверный номер карты')],
             ['CardNumber', function ($attribute, $params) {
                 if ($this->CardNumber) {
                     if (preg_match('/^\d{16}|\d{18}$/', $this->CardNumber) && !Cards::CheckValidCard($this->CardNumber)) {
-                        $this->addError($attribute, 'Неверный номер карты');
+                        $this->addError($attribute, \Yii::t('app.payment-errors', 'Неверный номер карты'));
                     }
                 }
             }],
-            [['CardHolder'], 'match', 'pattern' => '/^[\w\s]{3,80}$/',  'message' => 'Неверные Фамилия Имя держателя карты'],
-            [['CardExp'], 'match', 'pattern' => '/^[01]\d{3}$/', 'message' => 'Неверный Срок действия'],
+            [['CardHolder'], 'match', 'pattern' => '/^[\w\s]{3,80}$/',  'message' => \Yii::t('app.payment-errors', 'Неверные Фамилия Имя держателя карты')],
+            [['CardExp'], 'match', 'pattern' => '/^[01]\d{3}$/', 'message' => \Yii::t('app.payment-errors', 'Неверный Срок действия')],
             ['CardExp', function ($attribute, $params) {
                 if ($this->CardExp) {
                     $CardMonth = substr($this->CardExp, 0, 2);
@@ -45,29 +45,29 @@ class PayForm extends Model
                         ($CardYear + 2000 == date('Y') && $CardMonth < date('n')) ||
                         $CardYear + 2000 > date('Y') + 10
                     ) {
-                        $this->addError($attribute, 'Неверный Срок действия');
+                        $this->addError($attribute, \Yii::t('app.payment-errors', 'Неверный Срок действия'));
                     }
                 }
             }],
-            [['CardCVC'], 'match', 'pattern' => '/^\d{3}$/', 'message' => 'Неверный CVC код'],
+            [['CardCVC'], 'match', 'pattern' => '/^\d{3}$/', 'message' => \Yii::t('app.payment-errors', 'Неверный CVC код')],
             [['IdPay'], 'integer', 'min' => 1],
-            [['Phone'], 'match', 'pattern' => '/^\d{10}$/', 'message' => 'Неверный номер телефона'],
-            [['Email'], 'email', 'message' => 'Неверный адрес почты'],
+            [['Phone'], 'match', 'pattern' => '/^\d{10}$/', 'message' => \Yii::t('app.payment-errors', 'Неверный номер телефона')],
+            [['Email'], 'email', 'message' => \Yii::t('app.payment-errors', 'Неверный адрес почты')],
             [['LinkPhone'], 'boolean'],
-            [['CardNumber', 'CardHolder', 'CardExp', 'CardCVC', 'IdPay'], 'required', 'message' => 'Заполните данные карты']
+            [['CardNumber', 'CardHolder', 'CardExp', 'CardCVC', 'IdPay'], 'required', 'message' => \Yii::t('app.payment-errors', 'Заполните данные карты')]
         ];
     }
 
     public function attributeLabels()
     {
         return [
-            'CardNumber' => 'Номер карты',
-            'CardHolder' => 'Владелец',
-            'CardExp' => 'Действует',
-            'CardCVC' => 'CVC',
-            'Phone' => 'Номер телефона',
-            'LinkPhone' => 'Привязать номер к карте',
-            'Email' => 'Почта для отправления чека'
+            'CardNumber' => Yii::t('app.payment-form', 'Номер карты'),
+            'CardHolder' => Yii::t('app.payment-form', 'Владелец'),
+            'CardExp' => Yii::t('app.payment-form', 'Действует'),
+            'CardCVC' => Yii::t('app.payment-form', 'CVC'),
+            'Phone' => Yii::t('app.payment-form', 'Номер телефона'),
+            'LinkPhone' => Yii::t('app.payment-form', 'Привязать номер к карте'),
+            'Email' => Yii::t('app.payment-form', 'Почта для отправления чека')
         ];
     }
 

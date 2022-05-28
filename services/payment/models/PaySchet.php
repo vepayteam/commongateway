@@ -7,6 +7,7 @@ use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
+use app\models\PaySchetAcsRedirect;
 use app\models\PaySchetYandex;
 use app\services\CompensationService;
 use app\services\compensationService\CompensationException;
@@ -58,7 +59,7 @@ use yii\helpers\ArrayHelper;
  * @property string|null $RRN nomer RRN
  * @property string|null $CardNum nomer karty
  * @property string|null $OutCardPan nomer karty
- * @property string|null $CardType tip karty
+ * @property string|null $CardType tip karty @deprecated Use {@see PaySchet::$cards} instead.
  * @property string|null $CardHolder derjatel karty
  * @property int $CardExp srok deistvia karty - MMYY
  * @property string|null $BankName bank karty
@@ -105,6 +106,8 @@ use yii\helpers\ArrayHelper;
  * @property Bank $bank
  * @property PaySchet $refundSource {@see PaySchet::getRefundSource()}
  * @property PaySchet[] $refunds {@see PaySchet::getRefunds()}
+ * @property-read Cards $cards {@see PaySchet::getCards()}
+ * @property-read PaySchetAcsRedirect $acsRedirect {@see PaySchet::getAcsRedirect()}
  * @property PaySchetYandex|null $yandexPayTransaction {@see PaySchet::getYandexPayTransaction()}
  *
  * @property string $Version3DS
@@ -439,7 +442,12 @@ class PaySchet extends \yii\db\ActiveRecord
 
     public function getCards(): ActiveQuery
     {
-        return $this->hasOne(Cards::className(), ['ID' => 'IdKard']);
+        return $this->hasOne(Cards::class, ['ID' => 'IdKard']);
+    }
+
+    public function getAcsRedirect(): ActiveQuery
+    {
+        return $this->hasOne(PaySchetAcsRedirect::class, ['id' => 'ID']);
     }
 
     /**
@@ -457,7 +465,12 @@ class PaySchet extends \yii\db\ActiveRecord
         if (is_string($this->ErrorInfo)) {
             $this->ErrorInfo = mb_substr($this->ErrorInfo, 0, 250);
         }
+
         $this->DateLastUpdate = time();
+
+        if ($this->isAttributeChanged('CardNum') && $this->CardNum) {
+            $this->CardType = Cards::GetCardBrand(Cards::GetTypeCard($this->CardNum));
+        }
 
         if ($insert || $this->uslugatovar->IsCustom == Uslugatovar::P2P) {
             /**

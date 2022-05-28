@@ -34,6 +34,14 @@ return [
                 'streamoptions' => ['ssl' => ['verify_peer' => FALSE, 'verify_peer_name' => FALSE]]
             ],
         ],
+        'i18n' => [
+            'translations' => [
+                'app*' => [
+                    'class' => 'yii\i18n\PhpMessageSource',
+                    'basePath' => '@app/messages'
+                ],
+            ],
+        ],
         'log' => require(__DIR__ . '/log.php'),
         'db' => require(__DIR__ . '/db.php'),
 
