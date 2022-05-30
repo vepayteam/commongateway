@@ -1,6 +1,6 @@
 <?php
 
-namespace app\services\yandex\models;
+namespace app\services\yandexPay\models;
 
 use yii\base\Model;
 use yii\helpers\Json;

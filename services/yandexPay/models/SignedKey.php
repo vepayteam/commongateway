@@ -1,16 +1,11 @@
 <?php
 
-namespace app\services\yandex\models;
+namespace app\services\yandexPay\models;
 
 use yii\base\Model;
 
-class RootKey extends Model
+class SignedKey extends Model
 {
-    /**
-     * @var string
-     */
-    public $protocolVersion;
-
     /**
      * @var string base64 encoded keyValue
      */
@@ -27,14 +22,6 @@ class RootKey extends Model
     public function __construct(array $config)
     {
         parent::__construct($config);
-    }
-
-    /**
-     * @return string
-     */
-    public function getProtocolVersion(): string
-    {
-        return $this->protocolVersion;
     }
 
     /**

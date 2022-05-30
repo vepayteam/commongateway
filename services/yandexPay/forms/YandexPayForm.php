@@ -1,6 +1,6 @@
 <?php
 
-namespace app\services\yandex\forms;
+namespace app\services\yandexPay\forms;
 
 use yii\base\Model;
 
@@ -8,7 +8,10 @@ class YandexPayForm extends Model
 {
     public $paymentToken;
 
-    public function rules()
+    /**
+     * @inheritdoc
+     */
+    public function rules(): array
     {
         return [
             [['paymentToken'], 'required'],

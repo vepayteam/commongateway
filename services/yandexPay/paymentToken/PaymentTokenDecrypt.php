@@ -1,10 +1,11 @@
 <?php
 
-namespace app\services\yandex;
+namespace app\services\yandexPay\paymentToken;
 
-use app\services\yandex\exceptions\PaymentTokenDecryptServiceException;
-use app\services\yandex\models\EncryptionKeyReader;
-use app\services\yandex\models\PaymentToken;
+use app\services\yandexPay\models\EncryptionKeyReader;
+use app\services\yandexPay\models\PaymentToken;
+use app\services\yandexPay\YandexPayException;
+use GMP;
 use Mdanter\Ecc\Crypto\Key\PublicKey;
 use Mdanter\Ecc\EccFactory;
 use Mdanter\Ecc\Primitives\GeneratorPoint;
@@ -14,13 +15,13 @@ use Mdanter\Ecc\Serializer\PrivateKey\PemPrivateKeySerializer;
 use Mdanter\Ecc\Serializer\PublicKey\DerPublicKeySerializer;
 use Mdanter\Ecc\Util\NumberSize;
 
-class PaymentTokenDecryptService
+class PaymentTokenDecrypt
 {
     /**
      * @param PaymentToken $paymentToken
      * @param EncryptionKeyReader $encryptionKeyReader
      * @return string
-     * @throws PaymentTokenDecryptServiceException
+     * @throws YandexPayException
      */
     public function decrypt(PaymentToken $paymentToken, EncryptionKeyReader $encryptionKeyReader): string
     {
@@ -60,12 +61,12 @@ class PaymentTokenDecryptService
         $final = hash_final($hashInit, true);
 
         if ($final !== $signedMessage->getDecodedTag()) {
-            throw new PaymentTokenDecryptServiceException('Failed to verify tag');
+            throw new YandexPayException('Failed to verify tag');
         }
 
         $decryptedMessage = openssl_decrypt($encryptedMessage, 'aes-256-ctr', $symmetricEncryptionKey, OPENSSL_RAW_DATA);
         if (!$decryptedMessage) {
-            throw new PaymentTokenDecryptServiceException('Failed to decrypt message');
+            throw new YandexPayException('Failed to decrypt message');
         }
 
         return $decryptedMessage;
@@ -73,10 +74,10 @@ class PaymentTokenDecryptService
 
     /**
      * @param GeneratorPoint $point
-     * @param \GMP $sharedSecret
+     * @param GMP $sharedSecret
      * @return string
      */
-    private function kdf(GeneratorPoint $point, \GMP $sharedSecret): string
+    private function kdf(GeneratorPoint $point, GMP $sharedSecret): string
     {
         $adapter = $point->getAdapter();
         return $adapter->intToFixedSizeString(

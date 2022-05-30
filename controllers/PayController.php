@@ -36,11 +36,9 @@ use app\services\payment\models\repositories\CurrencyRepository;
 use app\services\payment\payment_strategies\CreatePayStrategy;
 use app\services\payment\payment_strategies\DonePayStrategy;
 use app\services\payment\payment_strategies\OkPayStrategy;
-use app\services\yandex\forms\YandexPayForm;
-use app\services\yandex\models\PaymentToken;
-use app\services\yandex\PaymentHandlerService;
-use app\services\yandex\PaymentTokenDecryptService;
-use app\services\yandex\PaymentTokenVerifyService;
+use app\services\yandexPay\forms\YandexPayForm;
+use app\services\yandexPay\models\PaymentToken;
+use app\services\YandexPayService;
 use kartik\mpdf\Pdf;
 use Yii;
 use yii\db\Exception;
@@ -175,10 +173,10 @@ class PayController extends Controller
 
                 Yii::info('PayForm render id:' . $id .  ',  paySchet: ' . $params['ID'] . ', Headers: ' . Json::encode(Yii::$app->request->headers));
 
-                /** @var PaymentHandlerService $paymentHandlerService */
-                $paymentHandlerService = Yii::$app->get(PaymentHandlerService::class);
+                /** @var YandexPayService $yandexPayService */
+                $yandexPayService = \Yii::$app->get(YandexPayService::class);
 
-                $isUseYandexPay = $paymentHandlerService->isYandexPayEnabled($paySchet);
+                $isUseYandexPay = $yandexPayService->isYandexPayEnabled($paySchet);
                 $yandexPayMerchantId = $isUseYandexPay
                     ? $paySchet->partner->yandexPayMerchantId
                     : null;
@@ -322,16 +320,10 @@ class PayController extends Controller
         $rawDecodedPaymentToken = base64_decode($form->paymentToken);
         $paymentToken = new PaymentToken(Json::decode($rawDecodedPaymentToken));
 
-        /** @var PaymentHandlerService $paymentHandlerService */
-        $paymentHandlerService = Yii::$app->get(PaymentHandlerService::class);
+        /** @var YandexPayService $yandexPayService */
+        $yandexPayService = \Yii::$app->get(YandexPayService::class);
 
-        /** @var PaymentTokenVerifyService $paymentTokenVerifyService */
-        $paymentTokenVerifyService = Yii::$app->get(PaymentTokenVerifyService::class);
-
-        /** @var PaymentTokenDecryptService $paymentTokenDecryptService */
-        $paymentTokenDecryptService = Yii::$app->get(PaymentTokenDecryptService::class);
-
-        if (!$paymentHandlerService->isYandexPayEnabled($paySchet)) {
+        if (!$yandexPayService->isYandexPayEnabled($paySchet)) {
             return [
                 'status' => 0,
                 'message' => 'Yandex Pay не подключен',
@@ -339,23 +331,8 @@ class PayController extends Controller
         }
 
         try {
-            $paymentTokenVerifyService->verify($paymentToken);
-        } catch (\Exception $e) {
-            \Yii::error([
-                'PayController actionYandexPay payment token verification exception',
-                $rawDecodedPaymentToken,
-                $e
-            ]);
-
-            return [
-                'status' => 0,
-                'message' => 'Ошибка запроса',
-            ];
-        }
-
-        try {
-            $encryptionReader = $paymentHandlerService->getEncryptionKeyReader($paySchet);
-            $jsonDecryptedMessage = $paymentTokenDecryptService->decrypt($paymentToken, $encryptionReader);
+            $jsonDecryptedMessage = $yandexPayService->decryptPaymentToken($paymentToken, $paySchet);
+            $decryptedMessage = $yandexPayService->saveYandexTransaction($jsonDecryptedMessage, $paySchet);
         } catch (\Exception $e) {
             Yii::error([
                 'PayController actionYandexPay payment token decrypt exception',
@@ -368,8 +345,6 @@ class PayController extends Controller
                 'message' => 'Ошибка запроса',
             ];
         }
-
-        $decryptedMessage = $paymentHandlerService->saveYandexTransaction($jsonDecryptedMessage, $paySchet);
 
         return [
             'status' => 1,

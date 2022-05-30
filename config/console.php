@@ -58,9 +58,7 @@ return [
         \app\services\PaymentService::class => \app\services\PaymentService::class,
         \app\services\ReportService::class => \app\services\ReportService::class,
 
-        \app\services\yandex\PaymentHandlerService::class => \app\services\yandex\PaymentHandlerService::class,
-        \app\services\yandex\RootKeyStorageService::class => \app\services\yandex\RootKeyStorageService::class,
-        \app\services\yandex\UpdateTransactionService::class => \app\services\yandex\UpdateTransactionService::class,
+        \app\services\YandexPayService::class => \app\services\YandexPayService::class,
     ],
     'params' => $params,
     'container' => [

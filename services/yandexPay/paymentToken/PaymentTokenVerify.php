@@ -1,54 +1,49 @@
 <?php
 
-namespace app\services\yandex;
+namespace app\services\yandexPay\paymentToken;
 
 use app\helpers\CryptographyHelper;
-use app\services\yandex\exceptions\PaymentTokenVerifyServiceException;
-use app\services\yandex\models\PaymentToken;
+use app\models\YandexPayRootKey;
+use app\services\yandexPay\models\PaymentToken;
+use app\services\yandexPay\YandexPayException;
 
-class PaymentTokenVerifyService
+class PaymentTokenVerify
 {
     private const SENDER_ID = 'Yandex';
 
     /**
      * @param PaymentToken $paymentToken
+     * @param YandexPayRootKey[] $rootKeys
      * @return void
-     * @throws PaymentTokenVerifyServiceException
-     * @throws \yii\base\InvalidConfigException
-     * @throws exceptions\RootKeyStorageServiceException
+     * @throws YandexPayException
      */
-    public function verify(PaymentToken $paymentToken)
+    public function validate(PaymentToken $paymentToken, array $rootKeys)
     {
-        $this->verifyIntermediateSigningKey($paymentToken);
+        $this->verifyIntermediateSigningKey($paymentToken, $rootKeys);
         $this->verifySignedMessage($paymentToken);
     }
 
     /**
      * @param PaymentToken $paymentToken
+     * @param YandexPayRootKey[] $rootKeys
      * @return void
-     * @throws PaymentTokenVerifyServiceException
-     * @throws \yii\base\InvalidConfigException
-     * @throws exceptions\RootKeyStorageServiceException
+     * @throws YandexPayException
      */
-    private function verifyIntermediateSigningKey(PaymentToken $paymentToken)
+    private function verifyIntermediateSigningKey(PaymentToken $paymentToken, array $rootKeys)
     {
-        /** @var RootKeyStorageService $rootKeyStorageService */
-        $rootKeyStorageService = \Yii::$app->get(RootKeyStorageService::class);
-
         $toVerifyItermKey = $this->getValidationString([
             self::SENDER_ID,
             $paymentToken->getProtocolVersion(),
             $paymentToken->getIntermediateSigningKey()->getJsonSignedKey(),
         ]);
 
-        $rootKeys = $rootKeyStorageService->getKeys();
         foreach ($rootKeys as $rootKey) {
-            $keyExpired = $this->checkKeyExpiration($rootKey->getKeyExpiration());
+            $keyExpired = $this->checkKeyExpiration($rootKey->keyExpiration);
             if ($keyExpired) {
-                throw new PaymentTokenVerifyServiceException('Root key expired ' . $rootKey->keyValue);
+                throw new YandexPayException('Root key expired ' . $rootKey->keyValue);
             }
 
-            $pemPublicKey = CryptographyHelper::der2pem($rootKey->getRawKeyValue());
+            $pemPublicKey = CryptographyHelper::der2pem($rootKey->keyValue);
             $publicKey = openssl_get_publickey($pemPublicKey);
 
             foreach ($paymentToken->getIntermediateSigningKey()->getDecodedSignatures() as $signature) {
@@ -59,13 +54,13 @@ class PaymentTokenVerifyService
             }
         }
 
-        throw new PaymentTokenVerifyServiceException('Failed to validate intermediate signing key');
+        throw new YandexPayException('Failed to validate intermediate signing key');
     }
 
     /**
      * @param PaymentToken $paymentToken
      * @return void
-     * @throws PaymentTokenVerifyServiceException
+     * @throws YandexPayException
      */
     private function verifySignedMessage(PaymentToken $paymentToken)
     {
@@ -80,7 +75,7 @@ class PaymentTokenVerifyService
 
         $keyExpired = $this->checkKeyExpiration($signedKey->getKeyExpiration());
         if ($keyExpired) {
-            throw new PaymentTokenVerifyServiceException('Intermediate key expired ' . $signedKey->getRawKeyValue());
+            throw new YandexPayException('Intermediate key expired ' . $signedKey->getRawKeyValue());
         }
 
         $pemPublicKey = CryptographyHelper::der2pem($signedKey->getRawKeyValue());
@@ -88,7 +83,7 @@ class PaymentTokenVerifyService
 
         $verify = openssl_verify($toVerifySignedMessage, $paymentToken->getDecodedSignature(), $publicKey, 'sha256');
         if ($verify !== 1) {
-            throw new PaymentTokenVerifyServiceException('Failed to verify signed message');
+            throw new YandexPayException('Failed to verify signed message');
         }
     }
 
