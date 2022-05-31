@@ -207,11 +207,9 @@ class Cards extends ActiveRecord
         if (strpos($card, '22') === 0) {
             $offset = 8;
         }
-        if (strlen($card) == 16) {
-            $card = substr($card, 0, $offset) . '****' . substr($card, -4, 4);
-        } else {
-            $card = substr($card, 0, $offset) . '******' . substr($card, -4, 4);
-        }
+        $card = substr($card, 0, $offset)
+            . str_repeat('*', strlen($card) - $offset - 4)
+            . substr($card, -4, 4);
 
         return $card;
     }

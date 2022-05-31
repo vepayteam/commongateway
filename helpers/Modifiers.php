@@ -29,7 +29,7 @@ class Modifiers
                 if (strpos($card, '22') === 0) {
                     $offset = 8;
                 }
-                $panMaskedLen = strlen($card) - 10;
+                $panMaskedLen = strlen($card) - $offset - 4;
                 $masked = substr_replace(
                     $card,
                     str_pad('', $panMaskedLen, '*'),
