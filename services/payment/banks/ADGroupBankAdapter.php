@@ -17,6 +17,7 @@ use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\data\ClientData;
+use app\services\payment\banks\structures\StatementResult;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\adg\CreatePayRequest;
 use app\services\payment\forms\AutoPayForm;
@@ -186,5 +187,23 @@ class ADGroupBankAdapter implements IBankAdapter
     public function registrationBenific(RegistrationBenificForm $registrationBenificForm)
     {
         throw new GateException('Метод недоступен');
+    }
+
+    /**
+     * @inheritDoc
+     * @throws Yii\base\NotSupportedException
+     */
+    public function getStatement(array $params): StatementResult
+    {
+        throw new yii\base\NotSupportedException;
+    }
+
+    /**
+     * @inheritDoc
+     * @throws Yii\base\NotSupportedException
+     */
+    public function getStatementNominal(array $params): StatementResult
+    {
+        throw new yii\base\NotSupportedException;
     }
 }

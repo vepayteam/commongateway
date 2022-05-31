@@ -1078,6 +1078,7 @@ class TCBank implements IBank
     }
 
     /**
+     * @deprecated
      * Выписка по счету - список исполненных документов
      * @param array $params
      * @return array
@@ -1114,6 +1115,7 @@ class TCBank implements IBank
     }
 
     /**
+     * @deprecated
      * Выписка по счету - список исполненных документов
      * @param array $params
      * @return array

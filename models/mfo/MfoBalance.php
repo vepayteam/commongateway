@@ -8,6 +8,7 @@ use app\models\partner\admin\VoznagStat;
 use app\models\partner\stat\ExportExcel;
 use app\models\payonline\Partner;
 use app\models\queue\ReceiveStatementsJob;
+use app\services\statements\StatementsService;
 use app\services\payment\models\UslugatovarType;
 use Yii;
 use yii\db\Query;
@@ -219,6 +220,7 @@ class MfoBalance
     }
 
     /**
+     * @deprecated
      * Выписка по счету МФО c ТКБ
      * @param int $TypeAcc 0 - счет на выдачу 1 - счет на погашение 2 - номинальный счет
      * @param int $dateFrom
@@ -394,7 +396,7 @@ class MfoBalance
             WHERE
                 `IdPartner` = :IDMFO
                 AND `TypeVyvod` = :TYPEVYVOD
-            ORDER BY `DateTo` DESC 
+            ORDER BY `DateTo` DESC
             LIMIT 1
         ", [':IDMFO' => $this->Partner->ID, ':TYPEVYVOD' => $TypeVyvod])->queryScalar();
 
@@ -543,7 +545,8 @@ class MfoBalance
         $TypeAcc = (int)($get['istransit'] ?? 0);
         $dateFrom = (int)($get['dateFrom'] ?? 0);
         $dateTo = (int)($get['dateTo'] ?? 0);
-        $stlst = $this->GetBankStatemets($TypeAcc, $dateFrom, $dateTo);
+
+        $stlst = StatementsService::GetBankStatements($this->Partner, $TypeAcc, $dateFrom, $dateTo);
 
         $head = ['Дата', 'Дата документа', 'Сумма поступления', 'Сумма списания', 'Комментарий', 'Контрагент', 'Инн'];
         $sizes = [20, 20, 15, 15, 50, 50, 10];
@@ -552,13 +555,13 @@ class MfoBalance
         $data = [];
         foreach ($stlst as $row) {
             $data[] = [
-                date("d.m.Y H:i:s", $row['DatePP']),
-                date("d.m.Y H:i:s", $row['DateDoc']),
-                $row['IsCredit'] == 1 ? ($row['SummPP'] + $row['SummComis']) / 100.0 : 0,
-                $row['IsCredit'] == 0 ? ($row['SummPP'] + $row['SummComis']) / 100.0 : 0,
-                $row['Description'],
-                $row['Name'],
-                $row['Inn']
+                date("d.m.Y H:i:s", $row->DatePP),
+                date("d.m.Y H:i:s", $row->DateDoc),
+                (bool)$row->IsCredit ? ($row->SummPP + $row->SummComis) / 100.0 : 0,
+                !(bool)$row->IsCredit ? ($row->SummPP + $row->SummComis) / 100.0 : 0,
+                $row->Description,
+                $row->Name,
+                $row->Inn
             ];
         }
 
