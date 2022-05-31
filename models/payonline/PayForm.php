@@ -2,9 +2,13 @@
 
 namespace app\models\payonline;
 
+use app\services\payment\forms\CreatePayForm;
 use Yii;
 use yii\base\Model;
 
+/**
+ * @deprecated Use {@see CreatePayForm} instead.
+ */
 class PayForm extends Model
 {
     public $CardNumber;

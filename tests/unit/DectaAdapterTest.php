@@ -1,6 +1,5 @@
 <?php
 
-use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\RefundPayForm;
@@ -37,17 +36,6 @@ class DectaAdapterTest extends \Codeception\Test\Unit
     {
         $tKBankAdapter = new DectaAdapter();
         $this->assertIsInt($tKBankAdapter->getBankId());
-    }
-
-    public function testCreatePay()
-    {
-        $createPayForm = $this->getMockBuilder(CreatePayForm::class)->getMock();
-        $tKBankAdapter = new DectaAdapter();
-        $tKBankAdapterReflectionClass = new ReflectionClass(DectaAdapter::class);
-        $checkStatusPay = $tKBankAdapterReflectionClass->getMethod('createPay');
-        $checkStatusPay->setAccessible(true);
-        $this->expectException(\Exception::class);
-        $this->assertEquals(null, $checkStatusPay->invoke($tKBankAdapter, $createPayForm));
     }
 
     public function testCheckStatusPay()

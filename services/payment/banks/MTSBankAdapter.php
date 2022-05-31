@@ -22,6 +22,7 @@ use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
+use app\services\payment\banks\data\ClientData;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CheckStatusPayForm;
@@ -674,7 +675,7 @@ class MTSBankAdapter implements IBankAdapter
      * @param CreatePayForm $createPayForm
      * @return CreatePayResponse
      */
-    public function createPay(CreatePayForm $createPayForm)
+    public function createPay(CreatePayForm $createPayForm, ClientData $clientData)
     {
         $createPayResponse = $this->_registerOrder($createPayForm->getPaySchet());
 
