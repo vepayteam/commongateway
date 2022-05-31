@@ -2,6 +2,7 @@
 
 namespace app\services\payment\forms;
 
+use app\services\LanguageService;
 use app\services\payment\interfaces\AmountFormInterface;
 use app\services\payment\models\Currency;
 use app\services\payment\models\repositories\CurrencyRepository;
@@ -31,6 +32,7 @@ class MerchantPayForm extends BaseForm implements AmountFormInterface
      * @var int Значения: 1 или 0. Если 1, производится регистрация карты на рекуррентные платежи и выплаты.
      */
     public $regcard = 0;
+    public $language = LanguageService::API_LANG_RUS;
 
     public const REQUIRED = 'required';
     public const NOT_SUPPORTED = 'not supported';
@@ -64,6 +66,7 @@ class MerchantPayForm extends BaseForm implements AmountFormInterface
             [['amount', 'card'], 'required'],
             [['currency'], 'validateCurrency'],
             [['regcard'], 'in', 'range' => [1, 0], 'strict' => true],
+            [['language'], 'in', 'range' => LanguageService::ALL_API_LANG_LIST],
         ];
     }
 

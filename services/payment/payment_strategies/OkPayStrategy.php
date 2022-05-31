@@ -122,10 +122,6 @@ class OkPayStrategy
                 ||
                 $checkStatusPayResponse->status != BaseResponse::STATUS_CREATED
                 && $paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD
-                ||
-                /** @todo Проверить нужен ли этот блок условий, когда есть {@see PaySchet::$RegisterCard} */
-                $paySchet->IdUser > 0
-                && in_array($paySchet->uslugatovar->IsCustom, [TU::$JKH, TU::$ECOM, TU::$POGASHECOM, TU::$POGASHATF])
             )
             &&
             !empty($checkStatusPayResponse->cardRefId);

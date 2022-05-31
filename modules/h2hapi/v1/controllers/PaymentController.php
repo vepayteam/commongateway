@@ -90,6 +90,22 @@ class PaymentController extends BaseApiController
     }
 
     /**
+     * @param $id
+     * @return PaymentObject
+     * @throws NotFoundHttpException
+     */
+    public function actionGet($paySchetId): PaymentObject
+    {
+        $paySchet = $this->findPaySchet($paySchetId);
+
+        if (!$this->apiService->hasPayment($paySchet)) {
+            throw new NotFoundHttpException('Оплата по счету не произведена.');
+        }
+
+        return $this->apiService->get($paySchet);
+    }
+
+    /**
      * Reverses the specified payment.
      *
      * @param mixed $paySchetId ID of payment to reverse.

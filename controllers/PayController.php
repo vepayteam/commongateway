@@ -6,11 +6,11 @@ use app\models\bank\ApplePay;
 use app\models\bank\BankMerchant;
 use app\models\bank\GooglePay;
 use app\models\bank\SamsungPay;
-use app\models\payonline\PayForm;
 use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\TU;
 use app\services\cards\CacheCardService;
+use app\services\LanguageService;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\TKBankAdapter;
@@ -138,13 +138,19 @@ class PayController extends Controller
                 && $params['UserClickPay'] == 0
                 && $params['DateCreate'] + $params['TimeElapsed'] > time()
             ) {
-                $payForm = new PayForm();
+                $payForm = new CreatePayForm();
+                $payForm->IdPay = $id;
+                $payForm->httpHeaderAccept = \Yii::$app->request->headers->get('accept');
 
                 $cacheCardService = new CacheCardService($params['ID']);
                 if ($cacheCardService->cardExists()) {
                     $payForm->CardNumber = $cacheCardService->getCard();
                     $cacheCardService->deleteCard();
                 }
+
+                /** @var LanguageService $languageService */
+                $languageService = Yii::$container->get('LanguageService');
+                $languageService->setAppLanguage($params['ID']);
 
                 $payschets->SetIpAddress($params['ID']);
 
@@ -168,6 +174,7 @@ class PayController extends Controller
                     'google' => (new GooglePay())->GetConf($params['IDPartner']),
                     'samsung' => (new SamsungPay())->GetConf($params['IDPartner']),
                     'payform' => $payForm,
+                    'appLang'=> $languageService->getAppLanguage(),
                 ]);
 
             } else {
@@ -196,9 +203,18 @@ class PayController extends Controller
 
         $form = new CreatePayForm();
 
-        if (!$form->load(Yii::$app->request->post(), 'PayForm') || !$form->validate()) {
+        if (!$form->load(Yii::$app->request->post())) {
             return ['status' => 0, 'message' => $form->GetError()];
         }
+
+        /** @var LanguageService $languageService */
+        $languageService = Yii::$container->get('LanguageService');
+        $languageService->setAppLanguage($form->IdPay);
+
+        if (!$form->validate()) {
+            return ['status' => 0, 'message' => $form->GetError()];
+        }
+
         Yii::warning("PayForm create id=" . $form->IdPay);
         Yii::$app->session->set('IdPay', $form->IdPay);
 
@@ -239,7 +255,10 @@ class PayController extends Controller
             Yii::$app->errorHandler->logException($e);
             $createPayStrategy->releaseLock();
 
-            return ['status' => 0, 'message' => 'Карта не поддерживается, обратитесь в банк'];
+            return [
+                'status' => 0,
+                'message' => \Yii::t('app.payment-errors', 'Карта не поддерживается, обратитесь в банк')
+            ];
         }
 
         $createPayResponse = $createPayStrategy->getCreatePayResponse();
@@ -276,7 +295,7 @@ class PayController extends Controller
             Yii::info('PayController createpaySecondStep createPayStep2');
             $createPayResponse = $tkbAdapter->createPayStep2($createPaySecondStepForm);
         } catch (Check3DSv2Exception $e) {
-            $errorMessage = 'Карта не поддерживается, обратитесь в банк';
+            $errorMessage = \Yii::t('app.payment-errors', 'Карта не поддерживается, обратитесь в банк');
             if ($e->getCode() === Check3DSv2Exception::INCORRECT_ECI) {
                 $errorMessage = 'Операция по карте запрещена. Обратитесь в банк эмитент.';
             }
@@ -425,6 +444,10 @@ class PayController extends Controller
             throw new NotFoundHttpException();
         }
 
+        /** @var LanguageService $languageService */
+        $languageService = Yii::$container->get('LanguageService');
+        $languageService->setAppLanguage($okPayForm->IdPay);
+
         // Wait until the "order done" mutex lock released.
         $mutexKey = DonePayStrategy::getMutexKey($okPayForm->getPaySchet());
         $mutex = new Mutex(['retryDelay' => 250]);
@@ -451,7 +474,7 @@ class PayController extends Controller
             Yii::info('PayController orderok IdPay=' . $id . ' render orderok');
 
             $this->layout = 'order_done';
-            return $this->render('order-ok', ['paySchet' => $paySchet]);
+            return $this->render('order-ok', ['paySchet' => $paySchet, 'appLang' => $languageService->getAppLanguage()]);
 
         } elseif ($paySchet->Status == PaySchet::STATUS_ERROR) {
             if (!empty($paySchet->FailedUrl) && (mb_stripos($paySchet->ErrorInfo, 'Отказ от оплаты') === false || empty($paySchet->CancelUrl))) {
@@ -483,6 +506,10 @@ class PayController extends Controller
     public function actionOrderfail($id)
     {
         Yii::warning("PayForm orderfail id={$id}");
+
+        /** @var LanguageService $languageService */
+        $languageService = Yii::$container->get('LanguageService');
+        $languageService->setAppLanguage($id);
 
         return $this->render('paycancel');
     }

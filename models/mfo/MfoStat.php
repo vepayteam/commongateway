@@ -27,12 +27,12 @@ class MfoStat
     public const HEAD_ADMIN = [
         'ID Vepay', 'ExtID', 'Код ответа', 'Услуга', 'Реквизиты', 'Договор', 'ФИО', 'Сумма', 'Комиссия', 'К оплате',
         'Комис. банка', 'Возн. Vepay', 'Дата создания', 'Статус', 'Ошибка', 'Дата оплаты', 'Номер транзакции',
-        'ID мерчанта', 'Маска карты', 'Держатель карты', 'RRN', 'Хэш от номера карты', 'Наименование банка-эквайера',
+        'ID мерчанта', 'Тип карты', 'Маска карты', 'Держатель карты', 'RRN', 'Хэш от номера карты', 'Наименование банка-эквайера',
     ];
     public const HEAD_USER = [
         'ID Vepay', 'ExtID', 'Код ответа', 'Услуга', 'Реквизиты', 'Договор', 'ФИО', 'Сумма', 'Комиссия', 'К оплате',
         'Дата создания', 'Статус', 'Ошибка', 'Дата оплаты', 'Номер операции',
-        'ID мерчанта', 'Маска карты', 'Держатель карты', 'RRN', 'Хэш от номера карты', 'Наименование банка-эквайера',
+        'ID мерчанта', 'Тип карты', 'Маска карты', 'Держатель карты', 'RRN', 'Хэш от номера карты', 'Наименование банка-эквайера',
     ];
 
     public function ExportOpList($post)
@@ -40,7 +40,7 @@ class MfoStat
         $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
         $payShetList = new PayShetStat();
         $payShetList->load($post, '');
-        $list = $payShetList->getList2($IsAdmin, 0, 1);
+        $list = $payShetList->getList($IsAdmin, 0, null);
 
         $data = [];
 
@@ -64,6 +64,7 @@ class MfoStat
                     $row['DateOplat'] > 0 ? date("d.m.Y H:i:s", $row['DateOplat']) : '',
                     $row['ExtBillNumber'],
                     $row['IdOrg'],
+                    $row['CardType'],
                     $row['CardNum'],
                     $row['CardHolder'],
                     $row['RRN'],
@@ -94,6 +95,7 @@ class MfoStat
                     $row['ErrorInfo'],
                     $row['DateOplat'] > 0 ? date("d.m.Y H:i:s", $row['DateOplat']) : '',
                     $row['IdOrg'],
+                    $row['CardType'],
                     $row['CardNum'],
                     $row['CardHolder'],
                     $row['RRN'],
@@ -144,7 +146,7 @@ class MfoStat
         return $result;
     }
 
-    public static function getDataGenerator($data, ?bool $isAdmin): \Generator
+    public static function getDataGenerator(\Generator $data, ?bool $isAdmin): \Generator
     {
         foreach ($data as $row) {
 
@@ -174,6 +176,7 @@ class MfoStat
                         $row['DateOplat'] > 0 ? date("d.m.Y H:i:s", $row['DateOplat']) : '',
                         $row['ExtBillNumber'],
                         $row['IdOrg'],
+                        $row['CardType'],
                         $row['CardNum'],
                         $row['CardHolder'],
                         $row['RRN'],
@@ -196,7 +199,7 @@ class MfoStat
         $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
         $paySchetList = new PayShetStat();
         $paySchetList->load($input, '');
-        $list = $paySchetList->getList2($IsAdmin, 0, 1);
+        $list = $paySchetList->getList($IsAdmin, 0, null, true);
 
         $data = self::getDataGenerator($list['data'], $IsAdmin);
 
