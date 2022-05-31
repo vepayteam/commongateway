@@ -29,7 +29,7 @@ class Modifiers
                 $masked = substr_replace(
                     $card,
                     str_pad('', $panMaskedLen, '*'),
-                    6,
+                    8,
                     $panMaskedLen
                 );
                 $input = str_replace($card, $masked, $input);
