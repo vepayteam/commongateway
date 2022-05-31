@@ -25,11 +25,15 @@ class Modifiers
         preg_match_all('/(?<pan>\b[23456]\d{15,17}\b)/xu', $input, $cards);
         foreach ($cards['pan'] as $card) {
             if (Validators::checkByLuhnAlgorithm($card)) {
+                $offset = 6;
+                if (strpos($card, '22') === 0) {
+                    $offset = 8;
+                }
                 $panMaskedLen = strlen($card) - 10;
                 $masked = substr_replace(
                     $card,
                     str_pad('', $panMaskedLen, '*'),
-                    8,
+                    $offset,
                     $panMaskedLen
                 );
                 $input = str_replace($card, $masked, $input);

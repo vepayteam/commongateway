@@ -203,10 +203,14 @@ class Cards extends ActiveRecord
 
     public static function MaskCard($card): string
     {
+        $offset = 6;
+        if (strpos($card, '22') === 0) {
+            $offset = 8;
+        }
         if (strlen($card) == 16) {
-            $card = substr($card, 0, 8) . '****' . substr($card, -4, 4);
+            $card = substr($card, 0, $offset) . '****' . substr($card, -4, 4);
         } else {
-            $card = substr($card, 0, 8) . '******' . substr($card, -4, 4);
+            $card = substr($card, 0, $offset) . '******' . substr($card, -4, 4);
         }
 
         return $card;
