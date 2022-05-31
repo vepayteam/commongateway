@@ -998,6 +998,10 @@ components:
         holder:
           type: string
           description: Держатель карты
+        payment_system:
+            type: string
+            description: "Система оплаты. Возможные значения: VISA, MASTERCARD, MIR, AMERICAN EXPRESS, JCB, DINNERSCLUB, MAESTRO, DISCOVER, CHINA UNIONPAY"
+            nullable: true
     CardReg:
       type: object
       properties:
@@ -1036,6 +1040,13 @@ components:
         card:
           type: string
           description: Номер карты, 16 или 18 цифр
+        language:
+          type: string
+          default: "rus"
+          enum:
+              - "eng"
+              - "rus"
+          description: Язык формы оплаты, по умолчанию rus
     CardRegAns:
       type: object
       properties:
@@ -1115,6 +1126,20 @@ components:
           type: string
           format: url
           description: Адрес для Url для возврата после отказа от оплаты
+        regcard:
+          type: integer
+          required: false
+          description: "Опционально, возможные значения: 1, 0. Если 1, производится регистрация карты на рекуррентные платежи и выплаты. По умолчанию 0."
+          enum:
+              - 1
+              - 0
+        language:
+          type: string
+          default: "rus"
+          enum:
+              - "eng"
+              - "rus"
+          description: Язык формы оплаты, по умолчанию rus
         client:
           type: array
           required: false
@@ -1161,6 +1186,13 @@ components:
           type: string
           maxLength: 40
           description: Номер договора
+        language:
+          type: string
+          default: "rus"
+          enum:
+            - "eng"
+            - "rus"
+          description: Язык формы оплаты, по умолчанию rus
         parts:
           type: array
           items:
@@ -1234,6 +1266,10 @@ components:
           type: string
           maxLength: 80
           description: ФИО клиента
+        currency:
+          type: string
+          maxLength: 5
+          description: Код валюты (по умолчанию, RUB)
 
         birthDate:
           type: string

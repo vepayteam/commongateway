@@ -1,14 +1,15 @@
 <?php
 
-
 namespace app\services\payment\banks\bank_adapter_responses;
 
-
 use app\services\base\traits\Fillable;
+use app\services\payment\banks\bank_adapter_responses\createPayResponse\BaseAcsData;
 use app\services\payment\interfaces\Issuer3DSVersionInterface;
 use Yii;
-use yii\base\Model;
 
+/**
+ * @todo Refactoring: remove all properties related to 3ds except $acs
+ */
 class CreatePayResponse extends BaseResponse
 {
     use Fillable;
@@ -18,6 +19,7 @@ class CreatePayResponse extends BaseResponse
     public $vesion3DS = Issuer3DSVersionInterface::V_1;
     public $isNeed3DSVerif = true;
     public $isNeedSendTransIdTKB = false;
+    public $isNeedPingMonetix = false;
     public $authValue;
     public $dsTransId;
     public $eci;
@@ -35,6 +37,10 @@ class CreatePayResponse extends BaseResponse
     public $threeDSMethodURL;
     public $html3dsForm;
     public $params3DS;
+    /**
+     * @var BaseAcsData
+     */
+    public $acs;
 
     /**
      * @param int $paySchetId
@@ -42,7 +48,7 @@ class CreatePayResponse extends BaseResponse
      */
     public function getRetUrl($paySchetId)
     {
-        return Yii::$app->params['domain'] . '/pay/orderdone/'.$paySchetId;
+        return Yii::$app->params['domain'] . '/pay/orderdone/' . $paySchetId;
     }
 
     /**
@@ -51,7 +57,6 @@ class CreatePayResponse extends BaseResponse
      */
     public function getStep2Url($paySchetId)
     {
-        return Yii::$app->params['domain'] . '/pay/createpay-second-step/'.$paySchetId;
+        return Yii::$app->params['domain'] . '/pay/createpay-second-step/' . $paySchetId;
     }
-
 }

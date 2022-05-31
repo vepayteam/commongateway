@@ -37,6 +37,7 @@ use app\services\payment\forms\RefundPayForm;
 use app\services\payment\forms\SendP2pForm;
 use app\services\payment\forms\RegistrationBenificForm;
 use app\services\payment\helpers\PaymentHelper;
+use app\services\payment\models\Bank;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use Vepay\Cauri\Client\Request\UserResolveRequest;
@@ -475,7 +476,7 @@ class CauriAdapter implements IBankAdapter
             $outCardPayResponse->trans = $content['id'];
         } else {
             $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
-            $outCardPayResponse->message = 'Ошибка запроса';
+            $outCardPayResponse->message = \Yii::t('app.payment-errors', 'Ошибка запроса');
         }
 
         return $outCardPayResponse;
@@ -502,7 +503,7 @@ class CauriAdapter implements IBankAdapter
 
     public function getAftMinSum(): int
     {
-        return self::AFT_MIN_SUMM;
+        return Bank::findOne(self::$bank)->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**
@@ -523,7 +524,7 @@ class CauriAdapter implements IBankAdapter
         } catch (\Exception $e) {
             Yii::warning('CauriAdapter getBalance exception: ' . $e->getMessage());
 
-            throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
+            throw new BankAdapterResponseException(\Yii::t('app.payment-errors', 'Ошибка запроса'));
         }
         $response = $responseData->getContent();
         if (!isset($response['amount']) || empty($response['amount'])) {

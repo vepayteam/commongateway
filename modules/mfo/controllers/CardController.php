@@ -102,36 +102,41 @@ class CardController extends Controller
         if ($kfCard->validate()) {
             $Card = $kfCard->FindKard($mfo->mfo, $type);
         }
-        if (!$Card) {
+
+        if ($Card) {
+            /** @todo Fix saving payment system (card type) in {@see Cards}, and then get it from there. */
+            $paymentSystem = Cards::GetCardBrand(Cards::GetTypeCard($Card->CardNumber));
+            if ($type == 0) {
+                return [
+                    'status' => 1,
+                    'message' => '',
+                    'card' => [
+                        'id' => (int)$Card->ID,
+                        'num' => (string)$Card->CardNumber,
+                        'exp' => $Card->getMonth() . '/' . $Card->getYear(),
+                        'holder' => $Card->CardHolder,
+                        'payment_system' => $paymentSystem,
+                    ],
+                ];
+            } elseif ($type == 1) {
+                return [
+                    'status' => 1,
+                    'message' => '',
+                    'card' => [
+                        'id' => (int)$Card->ID,
+                        'num' => (string)$Card->CardNumber,
+                        'exp' => '',
+                        'holder' => '',
+                        'payment_system' => $paymentSystem,
+                    ],
+                ];
+            } else {
+                return ['status' => 0, 'message' => 'Ошибка запроса'];
+            }
+        } else {
             Yii::warning('card/info: нет такой карты', 'mfo');
             return ['status' => 0, 'message' => 'Нет такой карты'];
         }
-
-        //информация и карте
-        if ($Card && $type == 0) {
-            return [
-                'status' => 1,
-                'message' => '',
-                'card' => [
-                    'id' => (int)$Card->ID,
-                    'num' => (string)$Card->CardNumber,
-                    'exp' => $Card->getMonth() . '/' . $Card->getYear(),
-                    'holder' => $Card->CardHolder
-                ]
-            ];
-        } elseif ($Card && $type == 1) {
-            return [
-                'status' => 1,
-                'message' => '',
-                'card' => [
-                    'id' => (int)$Card->ID,
-                    'num' => (string)$Card->CardNumber,
-                    'exp' => '',
-                    'holder' => ''
-                ]
-            ];
-        }
-        return ['status' => 0, 'message' => 'Ошибка запроса'];
     }
 
     /**
@@ -240,30 +245,34 @@ class CardController extends Controller
 
         $Card = $kfCard->FindKardByPay($mfo->mfo, $type);
 
-        //информация по карте
-        if ($Card && $type == 0) {
-            return [
-                'status' => 1,
-                'message' => '',
-                'card' => [
-                    'id' => (int)$Card->ID,
-                    'num' => (string)$Card->CardNumber,
-                    'exp' => $Card->getMonth() . '/' . $Card->getYear(),
-                    'holder' => $Card->CardHolder
-                ]
-            ];
-
-        } elseif ($Card && $type == 1) {
-            return [
-                'status' => 1,
-                'message' => '',
-                'card' => [
-                    'id' => (int)$Card->ID,
-                    'num' => $Card->CardNumber,
-                    'exp' => '',
-                    'holder' => ''
-                ]
-            ];
+        if ($Card) {
+            /** @todo Fix saving payment system (card type) in {@see Cards}, and then get it from there. */
+            $paymentSystem = Cards::GetCardBrand(Cards::GetTypeCard($Card->CardNumber));
+            if ($type == 0) {
+                return [
+                    'status' => 1,
+                    'message' => '',
+                    'card' => [
+                        'id' => (int)$Card->ID,
+                        'num' => (string)$Card->CardNumber,
+                        'exp' => $Card->getMonth() . '/' . $Card->getYear(),
+                        'holder' => $Card->CardHolder,
+                        'payment_system' => $paymentSystem,
+                    ],
+                ];
+            } elseif ($type == 1) {
+                return [
+                    'status' => 1,
+                    'message' => '',
+                    'card' => [
+                        'id' => (int)$Card->ID,
+                        'num' => $Card->CardNumber,
+                        'exp' => '',
+                        'holder' => '',
+                        'payment_system' => $paymentSystem,
+                    ],
+                ];
+            }
         }
         return ['status' => 0, 'message' => 'Ошибка запроса'];
     }

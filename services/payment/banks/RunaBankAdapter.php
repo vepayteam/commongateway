@@ -38,6 +38,7 @@ use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
 use app\services\payment\forms\SendP2pForm;
 use app\services\payment\forms\RegistrationBenificForm;
+use app\services\payment\models\Bank;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use Vepay\Gateway\Client\Validator\ValidationException;
@@ -128,7 +129,7 @@ class RunaBankAdapter implements IBankAdapter
      */
     public function getAftMinSum()
     {
-        // TODO: Implement getAftMinSum() method.
+        return Bank::findOne(self::$bank)->AftMinSum;
     }
 
     /**
@@ -171,7 +172,7 @@ class RunaBankAdapter implements IBankAdapter
         $identInitResponse->response = $ans;
         if($ans['state_code'] != RunaIdentResponseInteface::RESPONSE_STATUS_INIT) {
             $identInitResponse->status = BaseResponse::STATUS_ERROR;
-            $identInitResponse->message = $ans['state_description'] ?? 'Ошибка запроса';
+            $identInitResponse->message = $ans['state_description'] ?? \Yii::t('app.payment-errors', 'Ошибка запроса');
         } else {
             $identInitResponse->status = BaseResponse::STATUS_DONE;
         }

@@ -93,15 +93,6 @@ return array (
       '@yii/redis' => $vendorDir . '/yiisoft/yii2-redis/src',
     ),
   ),
-  'qfsx/yii2-curl' => 
-  array (
-    'name' => 'qfsx/yii2-curl',
-    'version' => '9999999-dev',
-    'alias' => 
-    array (
-      '@qfsx/yii2/curl' => $vendorDir . '/qfsx/yii2-curl/src',
-    ),
-  ),
   'kartik-v/yii2-mpdf' => 
   array (
     'name' => 'kartik-v/yii2-mpdf',
@@ -109,6 +100,15 @@ return array (
     'alias' => 
     array (
       '@kartik/mpdf' => $vendorDir . '/kartik-v/yii2-mpdf/src',
+    ),
+  ),
+  'qfsx/yii2-curl' => 
+  array (
+    'name' => 'qfsx/yii2-curl',
+    'version' => '9999999-dev',
+    'alias' => 
+    array (
+      '@qfsx/yii2/curl' => $vendorDir . '/qfsx/yii2-curl/src',
     ),
   ),
 );

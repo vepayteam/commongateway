@@ -9,6 +9,7 @@ return [
     'VERBOSE' => 'N',
     'dectaApiUrl' => 'https://gate.decta.com',
     'dectaProxy' => 'http://username:password@vepay-proxy.virtualfort.ru:30013',
+    'fortaProxy' => 'http://username:password@vepay-proxy.virtualfort.ru:30013',
     'DEVMODE' => 'Y',
     'TESTMODE' => 'Y',
     'key' => '',
@@ -60,6 +61,11 @@ return [
             'redis' => 'redis',
             'channel' => 'queue',
             'attempts' => 10,
+            'on afterError' => function (\yii\queue\ExecEvent $event) {
+                if ($event->error) {
+                    Yii::$app->errorHandler->logException($event->error);
+                }
+            }
         ],
         'reportQueue' => [
             'class' => \yii\queue\redis\Queue::class,

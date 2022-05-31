@@ -377,6 +377,88 @@
                 });
                 return false;
             });
+
+            var transactionEditModalFormSubmit = function (e) {
+                e.preventDefault()
+
+                var $this = $(this)
+
+                swal({
+                    title: 'Внимание!',
+                    text: 'Данная процедура перезапишет данные по операции внутри базы.\nНенадлежащее использование может повлечь за собой возмущение клиента или финансовые потери!!!',
+                    type: 'warning',
+                    showCancelButton: true,
+                    showLoaderOnConfirm: true,
+                    closeOnConfirm: false,
+                    closeOnCancel: true,
+                    confirmButtonColor: '#DD6B55',
+                    confirmButtonText: 'Сохранить',
+                    cancelButtonText: 'Отмена'
+                }, function (isConfirm) {
+                    if (isConfirm) {
+                        var data = $this.serialize()
+                        $.ajax({
+                            url: $this.attr('action'),
+                            type: $this.attr('method'),
+                            data: data,
+                            success: function (data) {
+                                console.log(data)
+                                if (data.status === 0) {
+                                    swal({
+                                        title: 'Успешно сохранено',
+                                        type: 'success'
+                                    }, function () {
+                                        $('#transaction-edit-modal').modal('hide')
+                                        $('#statlistform').trigger('submit')
+                                    })
+                                } else {
+                                    swal({
+                                        title: 'Ошибка',
+                                        text: data.errors.join('\n'),
+                                        type: 'error'
+                                    })
+                                }
+                            },
+                            error: function () {
+                                swal({
+                                    title: 'Ошибка',
+                                    text: 'Внутренняя ошибка сервера',
+                                    type: 'error'
+                                }, function () {
+                                    $('#transaction-edit-modal').modal('hide')
+                                })
+                            }
+                        })
+                    } else {
+                        console.log('closed')
+                    }
+                })
+            }
+
+            $('#statlistresult').on('click', '[data-action="transaction-edit"]', function (e) {
+                e.preventDefault()
+
+                $('#statlistform').closest('.ibox-content').addClass('sk-loading')
+
+                var id = $(this).attr('data-id')
+
+                $.ajax({
+                    url: '/partner/stat/transaction-edit-modal/' + id,
+                    success: function (data) {
+                        $('#statlistform').closest('.ibox-content').removeClass('sk-loading')
+
+                        $('#transaction-edit-wrapper').html(data)
+                        $('#transaction-edit-modal').modal()
+
+                        $('#transaction-edit-modal-form').on('submit', transactionEditModalFormSubmit)
+                    },
+                    error: function (data) {
+                        $('#statlistform').closest('.ibox-content').removeClass('sk-loading')
+
+                        console.log(data)
+                    }
+                })
+            })
         },
 
         getErrors: function (errors) {
@@ -2386,6 +2468,29 @@
             });
         },
     };
+
+
+    // задача https://it.dengisrazy.ru/browse/VPBC-1334
+    // При переходе по вкладкам режим отображения бокового меню сохраняется от вкладки к вкладке.
+
+    $(window).on('load', function () {
+        const sideMenuOpen = localStorage.getItem('sideMenuOpen');
+        const smallScreen = window.innerWidth <= 768;
+
+        if (sideMenuOpen && smallScreen) {
+            $('body').toggleClass('mini-navbar')
+        }
+
+        const $burgerBtn =  $('.navbar-minimalize');
+        $burgerBtn.on('click', function(e) {
+            const previouslyClicked = localStorage.getItem('sideMenuOpen');
+            if (previouslyClicked) {
+                localStorage.removeItem('sideMenuOpen')
+            } else {
+                localStorage.setItem('sideMenuOpen', 'open')
+            }
+        })
+    });
 
     window.loginNav = loginNav;
     window.lk = lk;

@@ -62,6 +62,7 @@ class PaySchetService extends Component
      * @param string $dogovor
      * @param string $fio
      * @param int $smsNeed
+     * @param bool $registerCard
      * @return PaySchet
      * @throws CreatePayException
      */
@@ -78,7 +79,8 @@ class PaySchetService extends Component
         $timeout = 86400, // !!! изменен default переменной $timeout, старое значение 900
         $dogovor = '',
         $fio = '',
-        $smsNeed = 0
+        $smsNeed = 0,
+        bool $registerCard = false
     ): PaySchet
     {
         $paySchet = new PaySchet();
@@ -111,6 +113,7 @@ class PaySchetService extends Component
         $paySchet->sms_accept = ($smsNeed === 1 ? 0 : 1);
         $paySchet->Dogovor = $dogovor;
         $paySchet->FIO = $fio;
+        $paySchet->RegisterCard = (int)$registerCard;
 
         if (!$paySchet->save()) {
             throw new CreatePayException('Не удалось создать счет');
@@ -167,10 +170,20 @@ class PaySchetService extends Component
      * @param $bank
      * @param $idOrg
      * @param $autoPayIdGate
+     * @param bool $registerCard
      * @return array
      * @throws CreatePayException
      */
-    public function payToMfo($user, $params, KfPay $kfPay, $usl, $bank, $idOrg, $autoPayIdGate): array
+    public function payToMfo(
+        $user,
+        $params,
+        KfPay $kfPay,
+        $usl,
+        $bank,
+        $idOrg,
+        $autoPayIdGate,
+        bool $registerCard = false
+    ): array
     {
         $provparams = new Provparams();
         $provparams->prov = $usl;
@@ -190,7 +203,9 @@ class PaySchetService extends Component
             $autoPayIdGate,
             $kfPay->timeout * 60,
             $kfPay->document_id,
-            $kfPay->fullname
+            $kfPay->fullname,
+            0,
+            $registerCard
         );
 
         if (!empty($KfPay->successurl)) {
@@ -301,7 +316,22 @@ class PaySchetService extends Component
         $provparams->Usluga = Uslugatovar::findOne(['ID' => $provparams->prov]);
 
         if ($provparams->Usluga) {
-            $paySchet = $this->addPayschet($user, $provparams, 0, $idCardActivate, $TypwWidget, $bank, $org, $kfCard->extid, 0, $kfCard->timeout * 60);
+            $paySchet = $this->addPayschet(
+                $user,
+                $provparams,
+                0,
+                $idCardActivate,
+                $TypwWidget,
+                $bank,
+                $org,
+                $kfCard->extid,
+                0,
+                $kfCard->timeout * 60,
+                '',
+                '',
+                0,
+                true
+            );
             $idpay = $paySchet->ID;
             if (!empty($kfCard->successurl)) {
                 $this->setReturnUrl($paySchet, $kfCard->successurl);

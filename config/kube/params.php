@@ -8,6 +8,7 @@ return [
     'buhEmail' => 'support@vepay.online',
     'dectaApiUrl' => 'https://gate.decta.com',
     'dectaProxy' => getenv("DECTA_PROXY_URL", true),
+    'fortaProxy' => getenv("FORTA_PROXY_URL", true),
     'DEVMODE' => boolval(getenv('DEVMODE', true)) ? 'Y' : 'N',
     'TESTMODE' => 'Y',
     'VERBOSE' => boolval(getenv('CURL_VERBOSE', true)) ? 'Y' : 'N',
@@ -60,6 +61,11 @@ return [
             'redis' => 'redis',
             'channel' => 'queue',
             'attempts' => 10,
+            'on afterError' => function (\yii\queue\ExecEvent $event) {
+                if ($event->error) {
+                    Yii::$app->errorHandler->logException($event->error);
+                }
+            }
         ],
         'reportQueue' => [
             'class' => \yii\queue\redis\Queue::class,

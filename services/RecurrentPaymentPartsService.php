@@ -93,7 +93,6 @@ class RecurrentPaymentPartsService extends Component
         $paySchet->Status = PaySchet::STATUS_NOT_EXEC;
         $paySchet->IdKard = $card->ID;
         $paySchet->CardNum = Cards::MaskCard($cardNumber);
-        $paySchet->CardType = Cards::GetCardBrand(Cards::GetTypeCard($cardNumber));
         $paySchet->CardHolder = mb_substr($card->CardHolder, 0, 99);
         $paySchet->CardExp = $expires;
         $paySchet->IdShablon = $token;

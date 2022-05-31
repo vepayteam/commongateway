@@ -4,17 +4,15 @@ namespace app\models\partner\stat;
 
 use app\models\partner\UserLk;
 use app\models\TU;
+use app\services\payment\models\active_query\PaySchetQuery;
 use app\services\payment\models\PaySchet;
+use app\services\payment\models\PaySchetAdditional;
 use app\services\payment\models\repositories\CurrencyRepository;
 use Yii;
 use yii\base\Model;
 use yii\data\Pagination;
 use yii\db\Expression;
 use yii\db\Query;
-
-use yii\helpers\ArrayHelper;
-use yii\helpers\Json;
-use function array_walk;
 
 class PayShetStat extends Model
 {
@@ -96,319 +94,324 @@ class PayShetStat extends Model
     /**
      * Список платежей
      *
-     * @param int $IsAdmin
-     * @param int $page
-     * @param int $nolimit
+     * @param bool $IsAdmin
+     * @param int $offset
+     * @param int|null $limit
+     * @param bool $forList
      *
      * @return array
      */
-    public function getList($IsAdmin, $page = 0, $nolimit = 0)
+    public function getList(bool $IsAdmin, int $offset = 0, ?int $limit = 100, bool $forList = false): array
     {
         $before = microtime(true);
-        try {
 
-            $CNTPAGE = 100;
+        if (!$forList) {
 
-            $IdPart = $IsAdmin ? $this->IdPart : UserLk::getPartnerId(Yii::$app->user);
+            try {
 
-            $query = new Query();
-            $query
-                ->select([
-                    'ps.ID',
-                    'ps.IdOrg',
-                    'ps.Extid',
-                    'ps.RRN',
-                    'ps.CardNum',
-                    'ps.CardHolder',
-                    'ps.BankName',
-                    'ps.IdKard',//
-                    'qp.NameUsluga',
-                    'ps.SummPay',
-                    'ps.CurrencyId',
-                    'ps.ComissSumm',
-                    'ps.MerchVozn',
-                    'ps.BankComis',
-                    'ps.DateCreate',
-                    'ps.DateOplat',
-                    'ps.PayType',
-                    'ps.ExtBillNumber',
-                    'ps.Status',
-                    'ps.Period',
-                    'u.`UserDeviceType`',
-                    'ps.IdKard',
-                    'ps.CardType',
-                    'ps.QrParams',
-                    'ps.IdShablon',
-                    'ps.IdQrProv',
-                    'ps.IdAgent',
-                    'qp.IsCustom',
-                    'ps.ErrorInfo',
-                    'ps.BankName',
-                    'ps.CountryUser',
-                    'ps.CityUser',
-                    'qp.ProvVoznagPC',
-                    'qp.ProvVoznagMin',
-                    'qp.ProvComisPC',
-                    'qp.ProvComisMin',
-                    'ps.sms_accept',
-                    'ps.Dogovor',
-                    'ps.FIO',
-                    'ps.RCCode',
-                    'ps.IdOrg',
-                    'ps.RRN',
-                    'ps.CardNum',
-                    'ps.CardHolder',
-                    'ps.BankName',
-                    'ps.IdKard',//IdCard->cards->IdPan->pan_token->encryptedPan
-                ])
-                ->from('`pay_schet` AS ps')
-                ->leftJoin('`banks` AS b', 'ps.Bank = b.ID')
-                ->leftJoin('`uslugatovar` AS qp', 'ps.IdUsluga = qp.ID')
-                ->leftJoin('`user` AS u', 'u.`ID` = ps.`IdUser`')
-                ->where('ps.DateCreate BETWEEN :DATEFROM AND :DATETO', [
-                    ':DATEFROM' => strtotime($this->datefrom . ":00"),
-                    ':DATETO' => strtotime($this->dateto . ":59")
-                ]);
-
-            if ($IdPart > 0) {
-                $query->andWhere('qp.IDPartner = :IDPARTNER', [':IDPARTNER' => $IdPart]);
-            }
-            if (count($this->status) > 0) {
-                $query->andWhere(['in', 'ps.Status', $this->status]);
-            }
-            if (count($this->usluga) > 0) {
-                $query->andWhere(['in', 'ps.IdUsluga', $this->usluga]);
-            }
-            if (count($this->TypeUslug) > 0) {
-                $query->andWhere(['in', 'qp.IsCustom', $this->TypeUslug]);
-            }
-            if ($this->id > 0) {
-                $query->andWhere('ps.ID = :ID', [':ID' => $this->id]);
-            }
-            if (!empty($this->Extid)) {
-                $query->andWhere('ps.Extid = :EXTID', [':EXTID' => $this->Extid]);
-            }
-            if ($this->summpay > 0) {
-                $query->andWhere('ps.SummPay = :SUMPAY', [':SUMPAY' => round($this->summpay * 100.0)]);
-            }
-            if (count($this->params) > 0) {
-                if (!empty($this->params[0])) $query->andWhere(['like', 'ps.Dogovor', $this->params[0]]);
-            }
-
-            $cnt = $sumPay = $sumComis = $voznagps = $bankcomis = 0;
-            $allres = $query->cache(10)->all();
-
-            foreach ($allres as $row) {
-                $sumPay += $row['SummPay'];
-                $sumComis += $row['ComissSumm'];
-                $voznagps += $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
-                $bankcomis += $row['BankComis'];
-                $cnt++;
-            }
-
-            if (!$nolimit) {
-                if ($page > 0) {
-                    $query->offset($CNTPAGE * $page);
+                if ($IsAdmin) {
+                    $IdPart = !empty($this->idParts) ? $this->idParts : [$this->IdPart];
+                } else {
+                    $IdPart = [UserLk::getPartnerId(Yii::$app->user)];
                 }
-                $query->orderBy('`ID` DESC')->limit($CNTPAGE);
+                $IdPart = array_filter($IdPart, static function ($v) {
+                    return (int) $v > 0;
+                });
+
+                $query = PaySchetAdditional::find()
+                                           ->select([
+                                               'ps.ID',
+                                               'ps.IdOrg',
+                                               'ps.Extid',
+                                               'ps.RRN',
+                                               'ps.CardNum',
+                                               'ps.CardHolder',
+                                               'ps.BankName',
+                                               'ps.IdKard',//
+                                               'qp.NameUsluga',
+                                               'ps.SummPay',
+                                               'ps.CurrencyId',
+                                               'ps.ComissSumm',
+                                               'ps.MerchVozn',
+                                               'ps.BankComis',
+                                               'ps.DateCreate',
+                                               'ps.DateOplat',
+                                               'ps.PayType',
+                                               'ps.ExtBillNumber',
+                                               'ps.Status',
+                                               'ps.Period',
+                                               'u.`UserDeviceType`',
+                                               'ps.IdKard',
+                                               'ps.CardType',
+                                               'ps.QrParams',
+                                               'ps.IdShablon',
+                                               'ps.IdQrProv',
+                                               'ps.IdAgent',
+                                               'qp.IsCustom',
+                                               'ps.ErrorInfo',
+                                               'ps.BankName',
+                                               'ps.CountryUser',
+                                               'ps.CityUser',
+                                               'qp.ProvVoznagPC',
+                                               'qp.ProvVoznagMin',
+                                               'qp.ProvComisPC',
+                                               'qp.ProvComisMin',
+                                               'ps.sms_accept',
+                                               'qp.NameUsluga',
+                                               'ps.Dogovor',
+                                               'ps.FIO',
+                                               'ps.RCCode',
+                                               'ps.IdOrg',
+                                               'ps.RRN',
+                                               'ps.CardNum',
+                                               'ps.CardHolder',
+                                               'ps.BankName',
+                                               'ps.IdKard',//IdCard->cards->IdPan->pan_token->encryptedPan
+                                               'b.Name as BankName',
+                                           ])
+                                           ->from('`pay_schet` AS ps')
+                                           ->leftJoin('`banks` AS b', 'ps.Bank = b.ID')
+                                           ->leftJoin('`uslugatovar` AS qp', 'ps.IdUsluga = qp.ID')
+                                           ->leftJoin('`user` AS u', 'u.`ID` = ps.`IdUser`')
+                                           ->where('ps.DateCreate BETWEEN :DATEFROM AND :DATETO', [
+                                               ':DATEFROM' => strtotime($this->datefrom . ":00"),
+                                               ':DATETO'   => strtotime($this->dateto . ":59")
+                                           ]);
+
+                if (!empty($IdPart)) {
+                    $query->andWhere(['qp.IDPartner' => $this->idParts]);
+                }
+                $query = $this->handleParamsQuery($query);
+                if (count($this->status) > 0) {
+                    $query->andWhere(['in', 'ps.Status', $this->status]);
+                }
+                if (count($this->usluga) > 0) {
+                    $query->andWhere(['in', 'ps.IdUsluga', $this->usluga]);
+                }
+                if (count($this->TypeUslug) > 0) {
+                    $query->andWhere(['in', 'qp.IsCustom', $this->TypeUslug]);
+                }
+                if ($this->id > 0) {
+                    $query->andWhere('ps.ID = :ID', [':ID' => $this->id]);
+                }
+                if (!empty($this->Extid)) {
+                    $query->andWhere('ps.Extid = :EXTID', [':EXTID' => $this->Extid]);
+                }
+
+                if (is_numeric($this->summpayFrom) && is_numeric($this->summpayTo) && is_numeric($this->summpayTo) && $this->summpayTo > 0.0) {
+                    $query->andWhere(['between', 'ps.SummPay', round($this->summpayFrom * 100.0), round($this->summpayTo * 100.0)]);
+                } elseif (is_numeric($this->summpayFrom)) {
+                    $query->andWhere(['>=', 'ps.SummPay', round($this->summpayFrom * 100.0)]);
+                } elseif (is_numeric($this->summpayTo) && $this->summpayTo > 0.0) {
+                    $query->andWhere(['<=', 'ps.SummPay', round($this->summpayTo * 100.0)]);
+                }
+                if (count($this->params) > 0) {
+                    if (!empty($this->params[0])) {
+                        $query->andWhere(['like', 'ps.Dogovor', $this->params[0]]);
+                    }
+                }
+
+                $cnt = $sumPay = $sumComis = $voznagps = $bankcomis = 0;
+
+                if ($limit === null) {
+                    /** @var PaySchet[] $allres */
+                    $allres = $query->cache(10)->all();
+
+                    foreach ($allres as $row) {
+                        $sumPay += $row->SummPay;
+                        $sumComis += $row->ComissSumm;
+                        $voznagps += $row->ComissSumm - $row->BankComis + $row->MerchVozn;
+                        $bankcomis += $row->BankComis;
+                        $cnt++;
+                    }
+                } else {
+
+                    if ($offset > 0) {
+                        $query->offset($offset);
+                    }
+                    $query->orderBy('`ID` DESC')->limit($limit);
+                }
+
+                /** @var PaySchet[] $res */
+                $res = $query->cache(3)->all();
+
+                $ret = [];
+                foreach ($res as $row) {
+                    $row->VoznagSumm = $row->ComissSumm - $row->BankComis + $row->MerchVozn;
+
+                    $ret[] = $row;
+                }
+                $after = microtime(true);
+                $delta = $after - $before;
+                Yii::warning('Profiling delta ' . self::class . __METHOD__ . ': ' . $delta);
+            } catch (\Exception $e) {
+                Yii::warning("getList Error: " . $e->getMessage() . ' file: ' . $e->getFile() . ' line: ' . $e->getLine());
+            } catch (\Throwable $e) {
+                Yii::warning("getList Error: " . $e->getMessage() . ' file: ' . $e->getFile() . ' line: ' . $e->getLine());
+            } finally {
+                Yii::warning("getList Error FINALLY ");
             }
-            $res = $query->cache(3)->all();
 
-            $ret = [];
-            foreach ($res as $row) {
-                $row['VoznagSumm'] = $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
-
-                $ret[] = $row;
-            }
-            $after = microtime(true);
-            $delta = $after - $before;
-            Yii::warning('Profiling delta ' . self::class . __METHOD__ . ': ' . $delta);
-        } catch (\Exception $e) {
-            Yii::warning("getList Error: " . $e->getMessage() . ' file: ' . $e->getFile() . ' line: ' . $e->getLine());
-        } catch (\Throwable $e) {
-            Yii::warning("getList Error: " . $e->getMessage() . ' file: ' . $e->getFile() . ' line: ' . $e->getLine());
-        } finally {
-            Yii::warning("getList Error FINALLY ");
-        }
-        return ['data' => $ret, 'cnt' => $cnt, 'cntpage' => $CNTPAGE, 'sumpay' => $sumPay, 'sumcomis' => $sumComis, 'bankcomis' => $bankcomis, 'voznagps' => $voznagps];
-    }
-
-    /**
-     * Список платежей
-     *
-     * @param int $IsAdmin
-     * @param int $page
-     * @param int $nolimit
-     *
-     * @return array
-     */
-    public function getList2($IsAdmin, $page = 0, $nolimit = 0)
-    {
-        $CNTPAGE = 100;
-
-        $IdPart = $IsAdmin ? $this->IdPart : UserLk::getPartnerId(Yii::$app->user);
-        $select = [
-            'COUNT(ps.ID) as c',
-            'SUM(ps.SummPay) AS SummPay',
-            'SUM(ps.ComissSumm) AS ComissSumm',
-            //'SUM(ps.ComissSumm - ps.BankComis + ps.MerchVozn) AS VoznagPS',
-            'SUM(ps.BankComis) AS BankComis',
-            'SUM(ps.MerchVozn) AS MerchVozn',
-        ];
-        $query = $this->buildQuery($select, $IdPart);
-
-        $cnt = $sumPay = $sumComis = $voznagps = $bankcomis = 0;
-        $res = $query->one();
-
-        $sumPay = $res['SummPay'];
-        $sumComis = $res['ComissSumm'];
-        $summBankComis = $res['BankComis'];
-        $summMerchVozn = $res['MerchVozn'];
-        $voznagps = $sumComis - $summBankComis + $summMerchVozn;
-
-        $bankcomis = $res['BankComis'];
-        $cnt = $res['c'];
-
-        /**
-         * Подсчет уже возвращенной суммы через subQuery, возможно костыльное решение, тк вся функция очень страшная
-         */
-        $refundAmountSubQuery = (new Query())
-            ->from('pay_schet refund_ps')
-            ->select('SUM(refund_ps.SummPay)')
-            ->andWhere('refund_ps.RefundSourceId=ps.ID');
-
-        $select = [
-            'ps.ID',
-            'ps.IdOrg',
-            'ps.Extid',
-            'ps.RRN',
-            'c.CardNumber',
-            'ps.CardNum',
-            'ps.CardHolder',
-            'ps.IdKard',//
-            'qp.NameUsluga',
-            'ps.SummPay',
-            'ps.CurrencyId',
-            'ps.ComissSumm',
-            'ps.MerchVozn',
-            'ps.BankComis',
-            'ps.DateCreate',
-            'ps.DateOplat',
-            'ps.PayType',
-            'ps.ExtBillNumber',
-            'ps.Status',
-            'ps.Period',
-            'u.`UserDeviceType`',
-            'ps.CardType',
-            'ps.QrParams',
-            'ps.IdShablon',
-            'ps.IdQrProv',
-            'ps.IdAgent',
-            'qp.IsCustom',
-            'ps.ErrorInfo',
-            'ps.CountryUser',
-            'ps.CityUser',
-            'qp.ProvVoznagPC',
-            'qp.ProvVoznagMin',
-            'qp.ProvComisPC',
-            'qp.ProvComisMin',
-            'ps.sms_accept',
-            'ps.Dogovor',
-            'ps.FIO',
-            'ps.RCCode',
-            'b.Name as BankName',
-            'RefundAmount' => $refundAmountSubQuery,
-        ];
-        $query = $this->buildQuery($select, $IdPart);
-
-        if (!$nolimit) {
-            if ($page > 0) {
-                $query->offset($CNTPAGE * ($page - 1));
-            }
-            $query->orderBy('ID DESC')->limit($CNTPAGE);
-        }
-
-        $res = $query->all();
-
-        if ($nolimit) {
-            $data = self::mapQueryPaymentResult($res);
+            return ['data' => $ret, 'cnt' => $cnt, 'cntpage' => $limit, 'sumpay' => $sumPay, 'sumcomis' => $sumComis, 'bankcomis' => $bankcomis, 'voznagps' => $voznagps];
 
         } else {
+
+            $IdPart = $IsAdmin ? $this->IdPart : UserLk::getPartnerId(Yii::$app->user);
+            $select = [
+                'COUNT(ps.ID) as count',
+                'SUM(ps.SummPay) AS SummPay',
+                'SUM(ps.ComissSumm) AS ComissSumm',
+                //'SUM(ps.ComissSumm - ps.BankComis + ps.MerchVozn) AS VoznagPS',
+                'SUM(ps.BankComis) AS BankComis',
+                'SUM(ps.MerchVozn) AS MerchVozn',
+            ];
+            $query = $this->buildQuery($select, $IdPart);
+
+            $cnt = $sumPay = $sumComis = $voznagps = $bankcomis = 0;
+
+            /** @var PaySchet $res */
+            $res = $query->one();
+
+            $sumPay = $res->SummPay;
+            $sumComis = $res->ComissSumm;
+            $summBankComis = $res->BankComis;
+            $summMerchVozn = $res->MerchVozn;
+            $voznagps = $sumComis - $summBankComis + $summMerchVozn;
+
+            $bankcomis = $res->BankComis;
+            $cnt = $res->count;
+
+            /**
+             * Подсчет уже возвращенной суммы через subQuery, возможно костыльное решение, тк вся функция очень страшная
+             */
+            $refundAmountSubQuery = (new Query())
+                ->from('pay_schet refund_ps')
+                ->select('SUM(refund_ps.SummPay)')
+                ->andWhere('refund_ps.RefundSourceId=ps.ID');
+
+            $select = [
+                'ps.ID',
+                'ps.IdOrg',
+                'ps.Extid',
+                'ps.RRN',
+                'c.CardNumber',
+                'ps.CardNum',
+                'ps.CardHolder',
+                'ps.IdKard',//
+                'qp.NameUsluga',
+                'ps.SummPay',
+                'ps.CurrencyId',
+                'ps.ComissSumm',
+                'ps.MerchVozn',
+                'ps.BankComis',
+                'ps.DateCreate',
+                'ps.DateOplat',
+                'ps.PayType',
+                'ps.ExtBillNumber',
+                'ps.Status',
+                'ps.Period',
+                'u.`UserDeviceType`',
+                'ps.CardType',
+                'ps.QrParams',
+                'ps.IdShablon',
+                'ps.IdQrProv',
+                'ps.IdAgent',
+                'qp.IsCustom',
+                'ps.ErrorInfo',
+                'ps.CountryUser',
+                'ps.CityUser',
+                'qp.ProvVoznagPC',
+                'qp.ProvVoznagMin',
+                'qp.ProvComisPC',
+                'qp.ProvComisMin',
+                'ps.sms_accept',
+                'ps.Dogovor',
+                'ps.FIO',
+                'ps.RCCode',
+                'b.Name as BankName',
+                'RefundAmount' => $refundAmountSubQuery,
+            ];
+            $query = $this->buildQuery($select, $IdPart);
+
+            if ($limit) {
+                if ($offset > 0) {
+                    $query->offset($offset);
+                }
+                $query->orderBy('ID DESC')->limit($limit);
+            }
+
+            $res = $query->all();
+
+            $refundTotalPaymentSum = 0;
+            $refundTotalClientCommission = 0;
+            $refundTotalBankCommission = 0;
+            $refundTotalAward = 0;
             $data = [];
 
             foreach ($res as $row) {
-                $row['VoznagSumm'] = $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
-                $row['Currency'] = CurrencyRepository::getCurrencyCodeById($row['CurrencyId'])->Code;
+                /**
+                 * Для транзакций в статусе refund/reverse сумма вознаграждения должна быть 0
+                 */
+                $row->VoznagSumm = (intval($row->Status) === PaySchet::STATUS_REFUND_DONE) ? 0 : ($row->ComissSumm - $row->BankComis + $row->MerchVozn);
+                $row->Currency = $row->CurrencyId ? CurrencyRepository::getCurrencyCodeById($row->CurrencyId)->Code : null;
+                $row->RefundAmount = $row['RefundAmount'] ?? 0;
+                $row->RemainingRefundAmount = $row->SummPay + $row->ComissSumm - $row->RefundAmount;
 
-                $row['RefundAmount'] = $row['RefundAmount'] ?? 0;
-                $row['RemainingRefundAmount'] = $row['SummPay'] - $row['RefundAmount'];
+                if (
+                    intval($row->Status) === PaySchet::STATUS_REFUND_DONE ||
+                    intval($row->Status) === PaySchet::STATUS_CANCEL
+                ) {
+                    $refundTotalPaymentSum += (int) $row->SummPay;
+                    $refundTotalClientCommission += (int) $row->ComissSumm;
+                    $refundTotalBankCommission += (int) $row->BankComis;
+                    $refundTotalAward += (int) $row->VoznagSumm;
+
+                    if (intval($row->Status) !== PaySchet::STATUS_REFUND_DONE) {
+                        $refundTotalAward += (int) $row->VoznagSumm;
+                    }
+                }
+
                 $data[] = $row;
             }
-        }
 
-        $refundTotalPaymentSum = 0;
-        $refundTotalClientCommission = 0;
-        $refundTotalBankCommission = 0;
-        $refundTotalAward = 0;
-        foreach ($data as &$item) {
-            if (
-                intval($item['Status']) === PaySchet::STATUS_REFUND_DONE ||
-                intval($item['Status']) === PaySchet::STATUS_CANCEL
-            ) {
-                $refundTotalPaymentSum += (int)$item['SummPay'];
-                $refundTotalClientCommission += (int)$item['ComissSumm'];
-                $refundTotalBankCommission += (int)$item['BankComis'];
-                $refundTotalAward += (int)$item['VoznagSumm'];
-
-                if (intval($item['Status']) === PaySchet::STATUS_REFUND_DONE) {
-                    /**
-                     * Для транзакций в статусе refund/reverse сумма вознаграждения должна быть 0
-                     */
-                    $item['VoznagSumm'] = 0;
-                } else {
-                    $refundTotalAward += (int)$item['VoznagSumm'];
-                }
+            if ($limit === null) {
+                $data = self::mapQueryPaymentResult($data);
             }
+
+            /**
+             * Из суммы всех платежей вычитаем возвраты
+             */
+            $resultPaymentSum = $sumPay - ($refundTotalPaymentSum * 2);
+            $resultClientCommission = $sumComis - ($refundTotalClientCommission * 2);
+            $resultBankCommission = $bankcomis - ($refundTotalBankCommission * 2);
+            $resultAward = $voznagps - ($refundTotalAward);
+
+            $pagination = new Pagination([
+                'totalCount' => $query->count(),
+                'pageSize'   => $limit,
+            ]);
+
+            return [
+                'data'       => $data,
+                'pagination' => $pagination,
+                'cnt'        => $cnt,
+                'cntpage'    => $limit,
+                'sumpay'     => $resultPaymentSum,
+                'sumcomis'   => $resultClientCommission,
+                'bankcomis'  => $resultBankCommission,
+                'voznagps'   => $resultAward
+            ];
         }
-
-        /**
-         * Из суммы всех платежей вычитаем возвраты
-         */
-        $resultPaymentSum = $sumPay - ($refundTotalPaymentSum * 2);
-        $resultClientCommission = $sumComis - ($refundTotalClientCommission * 2);
-        $resultBankCommission = $bankcomis - ($refundTotalBankCommission * 2);
-        $resultAward = $voznagps - ($refundTotalAward);
-
-        $pagination = new Pagination([
-            'totalCount' => $query->count(),
-            'pageSize' => $CNTPAGE,
-        ]);
-
-        return [
-            'data' => $data,
-            'pagination' => $pagination,
-            'cnt' => $cnt,
-            'cntpage' => $CNTPAGE,
-            'sumpay' => $resultPaymentSum,
-            'sumcomis' => $resultClientCommission,
-            'bankcomis' => $resultBankCommission,
-            'voznagps' => $resultAward
-        ];
     }
 
     /**
-     * @param Query $query
+     * @param array $res
      *
      * @return \Generator
      */
     private static function mapQueryPaymentResult(array $res): \Generator
     {
         foreach ($res as $row) {
-            $row['VoznagSumm'] = $row['ComissSumm'] - $row['BankComis'] + $row['MerchVozn'];
-            $row['Currency'] = CurrencyRepository::getCurrencyCodeById($row['CurrencyId'])->Code;
-
-            $row['RefundAmount'] = $row['RefundAmount'] ?? 0;
-            $row['RemainingRefundAmount'] = $row['SummPay'] - $row['RefundAmount'];
             yield $row;
         }
     }
@@ -420,7 +423,7 @@ class PayShetStat extends Model
      */
     private function buildQuery($select, $IdPart)
     {
-        $query = new Query();
+        $query = PaySchetAdditional::find();
         $query
             ->select($select)
             ->from('pay_schet AS ps FORCE INDEX(DateCreate_idx)')
@@ -455,6 +458,7 @@ class PayShetStat extends Model
         if (count($this->TypeUslug) > 0) {
             $query->andWhere(['in', 'qp.IsCustom', $this->TypeUslug]);
         }
+        $query = $this->handleParamsQuery($query);
         if (is_numeric($this->summpayFrom) && is_numeric($this->summpayTo) && $this->summpayTo) {
             $query->andWhere(['between', 'ps.SummPay', round($this->summpayFrom * 100.0), round($this->summpayTo * 100.0)]);
         } elseif (is_numeric($this->summpayFrom)) {
@@ -462,8 +466,16 @@ class PayShetStat extends Model
         } elseif (is_numeric($this->summpayTo)) {
             $query->andWhere(['<=', 'ps.SummPay', round($this->summpayTo * 100.0)]);
         }
+
+        return $query;
+    }
+
+    private function handleParamsQuery($query): PaySchetQuery
+    {
         if (count($this->params) > 0) {
-            if (!empty($this->params[0])) $query->andWhere(['like', 'ps.Dogovor', $this->params[0]]);
+            if (!empty($this->params[0])) {
+                $query->andWhere(['like', 'ps.Dogovor', $this->params[0]]);
+            }
             if (isset($this->params['fullSummpayFrom']) && isset($this->params['fullSummpayTo'])
                 && is_numeric($this->params['fullSummpayFrom']) && is_numeric($this->params['fullSummpayTo'])) {
                 $query->andWhere([
@@ -493,6 +505,7 @@ class PayShetStat extends Model
                 $query->andFilterWhere(['ps.ExtBillNumber' => $this->explode($this->params['operationNumber'])]);
             }
         }
+
         return $query;
     }
 
