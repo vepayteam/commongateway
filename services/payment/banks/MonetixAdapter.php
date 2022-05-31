@@ -79,14 +79,7 @@ class MonetixAdapter implements IBankAdapter
             $this->gate->PartnerId,
             $this->getBankId()
         );
-        if(Yii::$app->params['TESTMODE'] === 'Y') {
-            $this->apiClient = new Client([
-                RequestOptions::PROXY => str_replace('@', '%40', $this->proxyUser) . '@' . $this->proxyHost,
-            ], $infoMessage);
-        } else {
-            $this->apiClient = new Client([], $infoMessage);
-        }
-
+        $this->apiClient = new Client([], $infoMessage);
     }
 
     public function getBankId()
