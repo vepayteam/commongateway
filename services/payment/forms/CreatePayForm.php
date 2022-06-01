@@ -42,6 +42,14 @@ class CreatePayForm extends Model
 
     public $IdPay;
 
+    /**
+     * {@inheritDoc}
+     */
+    public function formName(): string
+    {
+        return 'PayForm';
+    }
+
     public function rules()
     {
         return [
