@@ -65,10 +65,10 @@ use yii\web\View;
                 </div>
                 <div class="ibox-content">
                     <div class="row">
-                        <div class="col-sm-12" id="plat-graph-error"></div>
+                        <div class="col-sm-12" id="plat-graph-error">Введите данные для отображения статистики</div>
                     </div>
-                    <div class="row">
-                        <div class="col-sm-6">
+                    <div style="display: none" class="row js-graph-row">
+                        <div  class="col-sm-6">
                             <h3 class="text-center">Cтраны</h3>
                             <div id="plat-graph-country"></div>
                         </div>
@@ -77,7 +77,7 @@ use yii\web\View;
                             <div id="plat-graph-city"></div>
                         </div>
                     </div>
-                    <div class="row">
+                    <div style="display: none" class="row js-graph-row">
                         <div class="col-sm-6">
                             <h3 class="text-center">Банки</h3>
                             <div id="plat-graph-bank"></div>

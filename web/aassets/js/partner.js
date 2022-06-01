@@ -999,11 +999,13 @@
                     $("#plat-graph-city").empty();
                     $("#plat-graph-bank").empty();
                     $("#plat-graph-card").empty();
+                    $(".js-graph-row").hide();
                     $('#platelshikform').closest('.ibox-content').toggleClass('sk-loading');
                 },
                 success: function (data) {
                     $('#platelshikform').closest('.ibox-content').toggleClass('sk-loading');
                     if (data.status == 1) {
+                        $(".js-graph-row").show();
                         Morris.Donut({
                             element: 'plat-graph-country',
                             data: data.country,
@@ -1029,11 +1031,13 @@
                             resize: true
                         });
                     } else {
+                        $(".js-graph-row").hide();
                         $('#plat-graph-error').html(data.message);
                     }
                 },
                 error: function () {
                     $('#platelshikform').closest('.ibox-content').toggleClass('sk-loading');
+                    $(".js-graph-row").hide();
                     $('#plat-graph-error').html("Ошибка запроса");
                 }
             });
