@@ -17,10 +17,12 @@ class Currency extends ActiveRecord
     public const RUB = 'RUB';
     public const USD = 'USD';
     public const EUR = 'EUR';
+    public const AZN = 'AZN';
     public const SYMBOLS = [
         self::RUB => '₽',
         self::USD => '$',
-        self::EUR => '€'
+        self::EUR => '€',
+        self::AZN => '₼',
     ];
     public const MAIN_CURRENCY = self::RUB;
 
