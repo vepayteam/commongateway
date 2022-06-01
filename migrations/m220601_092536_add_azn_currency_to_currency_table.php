@@ -13,12 +13,11 @@ class m220601_092536_add_azn_currency_to_currency_table extends Migration
      */
     public function safeUp()
     {
-        $currency = new Currency([
+        $this->insert('currency', [
             'Name' => 'Azerbaijanian Manat',
             'Code' => 'AZN',
             'Number' => 944,
         ]);
-        $currency->save();
     }
 
     /**
@@ -26,7 +25,7 @@ class m220601_092536_add_azn_currency_to_currency_table extends Migration
      */
     public function safeDown()
     {
-        Currency::deleteAll([
+        $this->delete('currency', [
             'Number' => 944,
         ]);
     }
