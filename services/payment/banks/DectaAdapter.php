@@ -16,6 +16,7 @@ use app\services\payment\banks\bank_adapter_responses\decta\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\decta\OutCardTransactionResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
+use app\services\payment\banks\data\ClientData;
 use app\services\payment\banks\exceptions\DectaApiUrlException;
 use app\services\payment\banks\exceptions\InvalidBankActionException;
 use app\services\payment\exceptions\BankAdapterResponseException;
@@ -112,7 +113,7 @@ class DectaAdapter implements IBankAdapter
      * @throws BankAdapterResponseException
      * @throws CreatePayException
      */
-    public function createPay(CreatePayForm $createPayForm): CreatePayResponse
+    public function createPay(CreatePayForm $createPayForm, ClientData $clientData): CreatePayResponse
     {
         $url = $this->getRequestUrl('pay');
 

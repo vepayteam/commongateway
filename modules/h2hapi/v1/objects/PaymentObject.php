@@ -19,6 +19,14 @@ class PaymentObject extends ApiObject
      * @var PaymentCardObject
      */
     public $card;
+    /**
+     * @var PaymentHeaderMapObject Headers of HTTP-request made by client.
+     */
+    public $headerMap;
+    /**
+     * @var PaymentBrowserDataObject Client's browser data.
+     */
+    public $browserData;
 
     /**
      * {@inheritDoc}
@@ -28,6 +36,7 @@ class PaymentObject extends ApiObject
         return [
             [['card', 'ip'], 'required'],
             [['ip'], 'ip'],
+            [['headerMap', 'browserData'], 'safe'],
         ];
     }
 

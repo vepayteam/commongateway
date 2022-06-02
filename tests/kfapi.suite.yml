@@ -8,3 +8,14 @@ modules:
         - \Helper\Kfapi
     config:
         - Yii2
+
+env:
+  drone:
+    modules:
+        enabled:
+            - REST:
+                depends: PhpBrowser
+                url: 'http://apache2:8000'
+                shortDebugResponse: 300 # only the first 300 chars of the response
+            - \Helper\Kfapi
+  default:

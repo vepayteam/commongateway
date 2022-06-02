@@ -1,6 +1,6 @@
 ---
 kind: pipeline
-type: kubernetes
+type: docker
 name: build-deploy-development-pull-request
 
 platform:
@@ -8,7 +8,7 @@ platform:
   arch: amd64
 
 concurrency:
-  limit: 1
+  limit: 2
 
 steps:
 - name: submodules
@@ -23,12 +23,12 @@ steps:
   commands:
   - commitsar -v -s
 
-- name: notify-conventional-commits-4cef185a33ba84b7ecf260d3a5806c23
+- name: notify-conventional-commits-dcd24bf89c55dfa36844603c62d8b7dd
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
   - export BUILD_STATUS=$$(cat /run/drone/env | grep DRONE_STAGE_STATUS | cut -d '=' -f 2 | tr -d \")
-  - gitea-status -t "conventional-commits" -m "$$BUILD_STATUS" -s "$$BUILD_STATUS" -u "https://www.conventionalcommits.org/en/v1.0.0/#why-use-conventional-commits"
+  - gitea-status -t "conventional-commits" -m "$${BUILD_STATUS:-$$DRONE_STAGE_STATUS}" -s "$${BUILD_STATUS:-$$DRONE_STAGE_STATUS}" -u "https://www.conventionalcommits.org/en/v1.0.0/#why-use-conventional-commits"
   environment:
     GITEA_TOKEN:
       from_secret: GITEA_TOKEN
@@ -37,7 +37,7 @@ steps:
     - failure
     - success
 
-- name: run-test-app
+- name: apache2
   pull: always
   image: registry.vepay.cf/apache-php
   detach: true
@@ -61,7 +61,7 @@ steps:
   commands:
   - wait-for mariadb:3306 -s -t 60
   - wait-for redis:6379 -s
-  - wait-for 127.0.0.1:8000 -s
+  - wait-for apache2:8000 -s
 
 - name: prepare-test-env
   pull: always
@@ -100,7 +100,7 @@ steps:
   pull: always
   image: registry.vepay.cf/apache-php
   commands:
-  - vendor/bin/codecept run kfapi
+  - vendor/bin/codecept run kfapi --env drone
   environment:
     DATABASE_DSN: mysql:host=mariadb;port=3306;dbname=vepay
     DATABASE_USER: vepay
@@ -161,11 +161,11 @@ steps:
     status:
     - success
 
-- name: fetch-extract-helm-package-2636825aa6bb09be7a3998172154ea86
+- name: fetch-extract-helm-package-b5e2049afa298047974315e908c96775
   pull: if-not-exists
   image: dtzar/helm-kubectl:3.5.2
   commands:
-  - helm repo add vepay http://charts.service.vepay:8080/
+  - helm repo add vepay https://charts.vepay.cf/
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
@@ -190,11 +190,11 @@ steps:
   image: registry.vepay.cf/drone-plugin-helm3:3.7.1-1
   settings:
     add_repos:
-    - vepay=http://charts.service.vepay:8080/
+    - vepay=https://charts.vepay.cf/
     atomic_upgrade: true
     chart: ${DRONE_REPO_NAME}
     cleanup_failed_upgrade: true
-    kube_api_server: https://kubernetes.default.svc
+    kube_api_server: https://192.168.110.1:6443
     kube_service_account: deploy-app-user
     kube_token:
       from_secret: KUBE_TOKEN
@@ -246,7 +246,7 @@ trigger:
 
 ---
 kind: pipeline
-type: kubernetes
+type: docker
 name: build-deploy-development-push
 
 platform:
@@ -254,7 +254,7 @@ platform:
   arch: amd64
 
 concurrency:
-  limit: 1
+  limit: 2
 
 steps:
 - name: submodules
@@ -263,7 +263,7 @@ steps:
   commands:
   - git submodule update --recursive --init
 
-- name: run-test-app
+- name: apache2
   pull: always
   image: registry.vepay.cf/apache-php
   detach: true
@@ -287,7 +287,7 @@ steps:
   commands:
   - wait-for mariadb:3306 -s -t 60
   - wait-for redis:6379 -s
-  - wait-for 127.0.0.1:8000 -s
+  - wait-for apache2:8000 -s
 
 - name: prepare-test-env
   pull: always
@@ -326,7 +326,7 @@ steps:
   pull: always
   image: registry.vepay.cf/apache-php
   commands:
-  - vendor/bin/codecept run kfapi
+  - vendor/bin/codecept run kfapi --env drone
   environment:
     DATABASE_DSN: mysql:host=mariadb;port=3306;dbname=vepay
     DATABASE_USER: vepay
@@ -387,11 +387,11 @@ steps:
     status:
     - success
 
-- name: fetch-extract-helm-package-2636825aa6bb09be7a3998172154ea86
+- name: fetch-extract-helm-package-b5e2049afa298047974315e908c96775
   pull: if-not-exists
   image: dtzar/helm-kubectl:3.5.2
   commands:
-  - helm repo add vepay http://charts.service.vepay:8080/
+  - helm repo add vepay https://charts.vepay.cf/
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
@@ -415,11 +415,11 @@ steps:
   image: registry.vepay.cf/drone-plugin-helm3:3.7.1-1
   settings:
     add_repos:
-    - vepay=http://charts.service.vepay:8080/
+    - vepay=https://charts.vepay.cf/
     atomic_upgrade: true
     chart: ${DRONE_REPO_NAME}
     cleanup_failed_upgrade: true
-    kube_api_server: https://kubernetes.default.svc
+    kube_api_server: https://192.168.110.1:6443
     kube_service_account: deploy-app-user
     kube_token:
       from_secret: KUBE_TOKEN
@@ -459,11 +459,11 @@ steps:
   image: registry.vepay.cf/drone-plugin-helm3:3.7.1-1
   settings:
     add_repos:
-    - vepay=http://charts.service.vepay:8080/
+    - vepay=https://charts.vepay.cf/
     atomic_upgrade: true
     chart: ${DRONE_REPO_NAME}
     cleanup_failed_upgrade: true
-    kube_api_server: https://kubernetes.default.svc
+    kube_api_server: https://192.168.110.1:6443
     kube_service_account: deploy-app-user
     kube_token:
       from_secret: KUBE_TOKEN
@@ -515,7 +515,7 @@ trigger:
 
 ---
 kind: pipeline
-type: kubernetes
+type: docker
 name: build-deploy-staging-push
 
 platform:
@@ -523,7 +523,7 @@ platform:
   arch: amd64
 
 concurrency:
-  limit: 1
+  limit: 2
 
 steps:
 - name: submodules
@@ -568,11 +568,11 @@ steps:
     status:
     - success
 
-- name: fetch-extract-helm-package-2636825aa6bb09be7a3998172154ea86
+- name: fetch-extract-helm-package-b5e2049afa298047974315e908c96775
   pull: if-not-exists
   image: dtzar/helm-kubectl:3.5.2
   commands:
-  - helm repo add vepay http://charts.service.vepay:8080/
+  - helm repo add vepay https://charts.vepay.cf/
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
@@ -600,11 +600,11 @@ steps:
   image: registry.vepay.cf/drone-plugin-helm3:3.7.1-1
   settings:
     add_repos:
-    - vepay=http://charts.service.vepay:8080/
+    - vepay=https://charts.vepay.cf/
     atomic_upgrade: true
     chart: ${DRONE_REPO_NAME}
     cleanup_failed_upgrade: true
-    kube_api_server: https://kubernetes.default.svc
+    kube_api_server: https://192.168.110.1:6443
     kube_service_account: deploy-app-user
     kube_token:
       from_secret: KUBE_TOKEN
@@ -638,7 +638,7 @@ trigger:
 
 ---
 kind: pipeline
-type: kubernetes
+type: docker
 name: promote-release
 
 platform:
@@ -646,7 +646,7 @@ platform:
   arch: amd64
 
 concurrency:
-  limit: 1
+  limit: 2
 
 steps:
 - name: assert-version-provided
@@ -725,6 +725,6 @@ get:
 
 ---
 kind: signature
-hmac: d67a82dbff3bef03a3382ffe13dadef3a843aff3e060ed7ed8f162518eebb542
+hmac: 7cc4d2c06d3dbecf24f6910bf338d4a470297eda3268d0b1763ee7d112ff326c
 
 ...
