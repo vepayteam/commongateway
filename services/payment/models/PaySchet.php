@@ -107,6 +107,7 @@ use yii\helpers\ArrayHelper;
  * @property PaySchet[] $refunds {@see PaySchet::getRefunds()}
  * @property-read Cards $cards {@see PaySchet::getCards()}
  * @property-read PaySchetAcsRedirect $acsRedirect {@see PaySchet::getAcsRedirect()}
+ * @property-read PaySchetLanguage $paySchetLanguage {@see PaySchet::getPaySchetLanguage()}
  *
  * @property string $Version3DS
  * @property int $IsNeed3DSVerif
@@ -441,6 +442,11 @@ class PaySchet extends \yii\db\ActiveRecord
     public function getAcsRedirect(): ActiveQuery
     {
         return $this->hasOne(PaySchetAcsRedirect::class, ['id' => 'ID']);
+    }
+
+    public function getPaySchetLanguage(): ActiveQuery
+    {
+        return $this->hasOne(PaySchetLanguage::class, ['paySchetId' => 'ID']);
     }
 
     /**
