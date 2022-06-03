@@ -22,7 +22,7 @@ class Currency extends ActiveRecord
         self::RUB => '₽',
         self::USD => '$',
         self::EUR => '€',
-        self::AZN => '₼',
+        self::AZN => 'AZN',
     ];
     public const MAIN_CURRENCY = self::RUB;
 
