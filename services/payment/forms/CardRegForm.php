@@ -32,7 +32,7 @@ class CardRegForm extends Model
     public $cancelurl = '';
     public $postbackurl = '';
     public $postbackurl_v2 = '';
-    public $language = LanguageService::API_LANG_RUS;
+    public $language;
 
     /**
      * @var string
