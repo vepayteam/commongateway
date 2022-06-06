@@ -38,6 +38,8 @@ class BrsReportToEmail extends OtchToEmail
         echo "from ".$dateFrom." to ".$dateTo."\r\n";
         Yii::warning("from ".$dateFrom." to ".$dateTo, "rsbcron");
 
+        $emptyDataCount = 0;
+
         foreach ($this->partners as $partner) {
 
             Yii::warning("BrsReportToEmail: send to " . $partner->partner_id, "rsbcron");
@@ -56,41 +58,47 @@ class BrsReportToEmail extends OtchToEmail
                 $list = ['data' => []];
             }
 
-            if (!empty($list['data'])) {
-
-                $firstItem = reset($list['data']);
-                $partnerBankGateAdvParam1 = $firstItem['GateAdvParam_1'];
-
-                $otch = new BrsReportToCSV($list, $partner->payment, $partner->repayment);
-                $otch->export();
-
-                $sender = new SendEmail();
-                $subject = "Отчет по реестру БРС за период " . $dateFrom . ' - ' . $dateTo;
-                $fileName = 'PRT' . $partnerBankGateAdvParam1 . date('Ymd') . '1.csv';
-                $emailBody = 'Отчет предоставлен в виде прикрепленного файла csv.';
-
-                $res = $sender->sendReestr($partner->email, $subject, $emailBody, [[
-                    'data' => file_get_contents($otch->fullpath()),
-                    'name' => $fileName]]);
-
-                Yii::warning("BrsReportToEmail: send to " . $partner->email . " result = " . $res, "rsbcron");
-                echo "BrsReportToEmail: send to " . $partner->email . " result = " . $res . "\r\n";
-
-                if(!empty($this->emailList)) {
-
-                    $res = $sender->sendReestr($this->emailList, $subject, 'Отчет предоставлен в виде прикрепленного файла csv.', [[
-                        'data' => file_get_contents($otch->fullpath()),
-                        'name' => $fileName
-                    ]]);
-
-                    Yii::warning("BrsReportToEmail: send to " . $this->emailList . " result = " . $res, "rsbcron");
-                    echo "BrsReportToEmail: send to " . $this->emailList . " result = " . $res . "\r\n";
-                }
-
-                if (file_exists($otch->fullpath())) {
-                    unlink($otch->fullpath());
-                }
+            if (empty($list['data'])) {
+                echo "Нет данных для отображения | ". "\r\n";
+                $emptyDataCount++;
+                continue;
             }
+
+            $firstItem = reset($list['data']);
+            $partnerBankGateAdvParam1 = $firstItem['GateAdvParam_1'];
+
+            $otch = new BrsReportToCSV($list, $partner->payment, $partner->repayment);
+            $otch->export();
+
+            $sender = new SendEmail();
+            $subject = "Отчет по реестру БРС за период " . $dateFrom . ' - ' . $dateTo;
+            $fileName = 'PRT' . $partnerBankGateAdvParam1 . date('Ymd') . '1.csv';
+            $emailBody = 'Отчет предоставлен в виде прикрепленного файла csv.';
+
+            $res = $sender->sendReestr($partner->email, $subject, $emailBody, [[
+                'data' => file_get_contents($otch->fullpath()),
+                'name' => $fileName]]);
+
+            Yii::warning("BrsReportToEmail: send to " . $partner->email . " result = " . $res, "rsbcron");
+            echo "BrsReportToEmail: send to " . $partner->email . " result = " . $res . "\r\n" . ' | ';
+
+            if(!empty($this->emailList)) {
+
+                $res = $sender->sendReestr($this->emailList, $subject, 'Отчет предоставлен в виде прикрепленного файла csv.', [[
+                    'data' => file_get_contents($otch->fullpath()),
+                    'name' => $fileName
+                ]]);
+
+                Yii::warning("BrsReportToEmail: send to " . $this->emailList . " result = " . $res, "rsbcron");
+            }
+
+            if (file_exists($otch->fullpath())) {
+                unlink($otch->fullpath());
+            }
+        }
+
+        if ($emptyDataCount === count($this->partners)) {
+            echo 'Отсутствуют записи для отправки | '. "\r\n";
         }
     }
 }
