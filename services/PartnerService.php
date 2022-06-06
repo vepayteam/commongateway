@@ -262,6 +262,12 @@ class PartnerService extends Component
         ?UploadedFile $uploadedConCert
     ): bool
     {
+        $partner->OrangeDataSingKey = $uploadedSingKey;
+        $partner->OrangeDataConKey = $uploadedConKey;
+        $partner->OrangeDataConCert = $uploadedConCert;
+        if (!$partner->validate()) {
+            return false;
+        }
         $isSingKeySaved = $isConKeySaved = $isConCertSaved = true;
         $path = \Yii::$app->basePath . '/config/kassaclients/';
         if (!file_exists($path)) {
@@ -321,6 +327,11 @@ class PartnerService extends Component
      */
     public function saveKeysApplepay(Partner $partner, ?UploadedFile $uploadedKey, ?UploadedFile $uploadedCert): bool
     {
+        $partner->Apple_MerchIdentKey = $uploadedKey;
+        $partner->Apple_MerchIdentCert = $uploadedCert;
+        if (!$partner->validate()) {
+            return false;
+        }
         $isKeySaved = $isCertSaved = true;
         $path = \Yii::$app->basePath . '/config/applepayclients/';
         if (!file_exists($path)) {

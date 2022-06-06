@@ -10,6 +10,7 @@ use app\modules\h2hapi\v1\services\paymentApiService\PaymentCreateException;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\createPayResponse\AcsRedirectData;
 use app\services\payment\banks\BankAdapterBuilder;
+use app\services\payment\banks\data\ClientData;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
@@ -75,7 +76,19 @@ class PaymentApiService extends Component
 
         // Запрос к банку
         try {
-            $createPayResponse = $bankAdapter->createPay($createPayForm);
+            $createPayResponse = $bankAdapter->createPay($createPayForm, new ClientData(
+                $paymentObject->ip,
+                $paymentObject->headerMap->userAgent ?? null,
+                $paymentObject->headerMap->accept ?? null,
+                $paymentObject->browserData->screenHeight ?? null,
+                $paymentObject->browserData->screenWidth ?? null,
+                $paymentObject->browserData->timezoneOffset ?? null,
+                $paymentObject->browserData->windowHeight ?? null,
+                $paymentObject->browserData->windowWidth ?? null,
+                $paymentObject->browserData->language ?? null,
+                $paymentObject->browserData->colorDepth ?? null,
+                $paymentObject->browserData->javaEnabled ?? null
+            ));
         } catch (BankAdapterResponseException $e) {
             \Yii::$app->errorHandler->logException($e);
             throw new PaymentCreateException('Bank adapter error.', PaymentCreateException::BANK_ADAPTER_ERROR, $e->getMessage());

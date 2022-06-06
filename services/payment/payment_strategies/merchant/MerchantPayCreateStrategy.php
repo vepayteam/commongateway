@@ -169,6 +169,9 @@ class MerchantPayCreateStrategy
         if (!$paySchet->save()) {
             throw new CreatePayException('Не удалось создать счет');
         }
+
+        Yii::info('id: ' . $paySchet->ID . ', timeout: ' . $this->payForm->timeout . ' minutes', 'mfo');
+
         return $paySchet;
     }
 

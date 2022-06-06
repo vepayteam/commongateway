@@ -186,8 +186,26 @@ class Partner extends ActiveRecord
             [['KPP', 'PodpDoljpost', 'PodpDoljpostRod', 'BikBank', 'BankName', 'RSchet', 'KSchet'], 'required', 'on' => self::SCENARIO_SELFREG, 'when' => function ($model) {
                 return $model->UrState == 0;
             }],
-            [['OrangeDataSingKey', 'OrangeDataConKey', 'OrangeDataConCert', 'Apple_MerchIdentKey', 'Apple_MerchIdentCert'], 'file', 'skipOnEmpty' => true, 'extensions' => 'key,crt,cer'],
-
+            [
+                [
+                    'OrangeDataSingKey',
+                    'OrangeDataConKey',
+                    'OrangeDataConCert',
+                    'Apple_MerchIdentKey',
+                    'Apple_MerchIdentCert',
+                ],
+                'file',
+                'skipOnEmpty' => true,
+                'skipOnError' => false,
+                'checkExtensionByMimeType' => false,
+//                'mimeTypes' => [
+//                    'application/pkcs8', // .p8 .key
+//                    'application/pkix-cert', // .cer
+//                    'application/x-x509-ca-cert', // .crt .der
+//                    'application/x-x509-user-cert', // .crt
+//                ],
+                'extensions' => ['key', 'crt', 'cer'],
+            ],
             [['isUseYandexPay'], 'boolean'],
             [[
                 'yandexPayMerchantId',
