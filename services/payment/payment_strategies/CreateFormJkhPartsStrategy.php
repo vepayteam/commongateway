@@ -79,7 +79,7 @@ class CreateFormJkhPartsStrategy implements IPaymentStrategy
         $this->createPayParts($params);
 
         /** @var LanguageService $languageService */
-        $languageService = Yii::$container->get('LanguageService');
+        $languageService = Yii::$app->get(LanguageService::class);
         $languageService->saveApiLanguage($params['IdPay'], $kfPay->language);
 
         if (!empty($kfPay->extid)) {

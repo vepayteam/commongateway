@@ -6,7 +6,6 @@ use app\models\bank\ApplePay;
 use app\models\bank\BankMerchant;
 use app\models\bank\GooglePay;
 use app\models\bank\SamsungPay;
-use app\models\payonline\PayForm;
 use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\TU;
@@ -139,7 +138,9 @@ class PayController extends Controller
                 && $params['UserClickPay'] == 0
                 && $params['DateCreate'] + $params['TimeElapsed'] > time()
             ) {
-                $payForm = new PayForm();
+                $payForm = new CreatePayForm();
+                $payForm->IdPay = $id;
+                $payForm->httpHeaderAccept = \Yii::$app->request->headers->get('accept');
 
                 $cacheCardService = new CacheCardService($params['ID']);
                 if ($cacheCardService->cardExists()) {
@@ -148,7 +149,7 @@ class PayController extends Controller
                 }
 
                 /** @var LanguageService $languageService */
-                $languageService = Yii::$container->get('LanguageService');
+                $languageService = Yii::$app->get(LanguageService::class);
                 $languageService->setAppLanguage($params['ID']);
 
                 $payschets->SetIpAddress($params['ID']);
@@ -202,12 +203,12 @@ class PayController extends Controller
 
         $form = new CreatePayForm();
 
-        if (!$form->load(Yii::$app->request->post(), 'PayForm')) {
+        if (!$form->load(Yii::$app->request->post())) {
             return ['status' => 0, 'message' => $form->GetError()];
         }
 
         /** @var LanguageService $languageService */
-        $languageService = Yii::$container->get('LanguageService');
+        $languageService = Yii::$app->get(LanguageService::class);
         $languageService->setAppLanguage($form->IdPay);
 
         if (!$form->validate()) {
@@ -444,7 +445,7 @@ class PayController extends Controller
         }
 
         /** @var LanguageService $languageService */
-        $languageService = Yii::$container->get('LanguageService');
+        $languageService = Yii::$app->get(LanguageService::class);
         $languageService->setAppLanguage($okPayForm->IdPay);
 
         // Wait until the "order done" mutex lock released.
@@ -507,7 +508,7 @@ class PayController extends Controller
         Yii::warning("PayForm orderfail id={$id}");
 
         /** @var LanguageService $languageService */
-        $languageService = Yii::$container->get('LanguageService');
+        $languageService = Yii::$app->get(LanguageService::class);
         $languageService->setAppLanguage($id);
 
         return $this->render('paycancel');

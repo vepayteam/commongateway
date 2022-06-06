@@ -20,6 +20,7 @@ use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
+use app\services\payment\banks\data\ClientData;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
@@ -79,14 +80,7 @@ class MonetixAdapter implements IBankAdapter
             $this->gate->PartnerId,
             $this->getBankId()
         );
-        if(Yii::$app->params['TESTMODE'] === 'Y') {
-            $this->apiClient = new Client([
-                RequestOptions::PROXY => str_replace('@', '%40', $this->proxyUser) . '@' . $this->proxyHost,
-            ], $infoMessage);
-        } else {
-            $this->apiClient = new Client([], $infoMessage);
-        }
-
+        $this->apiClient = new Client([], $infoMessage);
     }
 
     public function getBankId()
@@ -121,7 +115,7 @@ class MonetixAdapter implements IBankAdapter
         }
     }
 
-    public function createPay(CreatePayForm $createPayForm)
+    public function createPay(CreatePayForm $createPayForm, ClientData $clientData)
     {
         $callbackUrl = Yii::$app->params['domain'] . '/callback/monetix';
         $generalModel = new GeneralModel(

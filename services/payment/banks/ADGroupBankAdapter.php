@@ -16,6 +16,7 @@ use app\services\payment\banks\bank_adapter_responses\RegistrationBenificRespons
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
+use app\services\payment\banks\data\ClientData;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\adg\CreatePayRequest;
 use app\services\payment\forms\AutoPayForm;
@@ -62,7 +63,7 @@ class ADGroupBankAdapter implements IBankAdapter
         // TODO: Implement confirm() method.
     }
 
-    public function createPay(CreatePayForm $createPayForm)
+    public function createPay(CreatePayForm $createPayForm, ClientData $clientData)
     {
         throw new GateException('Метод недоступен');
         $action = '/FE/rest/tx/sync/purchase';
