@@ -30,7 +30,7 @@ class   KfPayParts extends KfPay
     public $failurl = '';
     public $cancelurl = '';
     public $postbackurl = '';
-    public $language = LanguageService::API_LANG_RUS;
+    public $language;
 
     public $parts = [];
 

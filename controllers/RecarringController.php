@@ -174,7 +174,7 @@ class RecarringController extends Controller
         $data = $this->paySchetService->payActivateCard($user,0, $kfCard, 3, $bankAdapter->getBankId(), $kfRequest->IdPartner);
 
         /** @var LanguageService $languageService */
-        $languageService = Yii::$container->get('LanguageService');
+        $languageService = Yii::$app->get(LanguageService::class);
         $languageService->saveApiLanguage($data['IdPay'], $kfCard->language);
 
         //PCI DSS form

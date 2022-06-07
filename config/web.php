@@ -178,6 +178,7 @@ $config = [
         \app\services\RecurrentPaymentPartsService::class => \app\services\RecurrentPaymentPartsService::class,
         \app\services\ReportService::class => \app\services\ReportService::class,
         \app\services\PaymentService::class => \app\services\PaymentService::class,
+        \app\services\LanguageService::class => \app\services\LanguageService::class,
     ],
     'params' => $params,
     'container' => [
@@ -189,7 +190,6 @@ $config = [
             'AuthService' => ['class' => 'app\services\auth\AuthService'],
             'NotificationsService' => ['class' => 'app\services\notifications\NotificationsService'],
             'WallettoExchangeRateService' => ['class' => 'app\services\exchange_rates\WallettoExchangeRateService'],
-            'LanguageService' => ['class' => 'app\services\LanguageService'],
         ],
     ],
     'modules' => [
