@@ -43,5 +43,11 @@ class RegisterP2P extends Model
     }
 
 
+    public function attributeLabels()
+    {
+        return [
+            'amount' => 'Суммы перевода',
+        ];
+    }
 
 }
