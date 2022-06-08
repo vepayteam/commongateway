@@ -1,6 +1,6 @@
 <?php
 
-/* @var array $listorder */
+/* @var array $orders */
 /* @var $IsAdmin */
 /* @var $sort */
 /* @var $this \yii\web\View */
@@ -25,8 +25,8 @@ $sumIn = $sumOut = $sumComis = 0;
     </tr>
     </thead>
     <tbody>
-    <?php if (count($listorder) > 0): ?>
-        <?php foreach ($listorder as $row) : ?>
+    <?php if (count($orders) > 0): ?>
+        <?php foreach ($orders as $row) : ?>
             <tr>
                 <td data-datesort="<?=date('YmdHis', $row['DateOp'])?>"><?= date('d.m.Y H:i:s', $row['DateOp']) ?></td>
                 <td class="text-right"><?= $row['Summ'] >= 0 ? number_format($row['Summ']/100.0,2,'.','&nbsp;') : ''?></td>

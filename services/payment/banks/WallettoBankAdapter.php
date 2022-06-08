@@ -14,6 +14,7 @@ use app\services\payment\banks\bank_adapter_responses\CurrencyExchangeRatesRespo
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\data\ClientData;
+use app\services\payment\banks\structures\StatementResult;
 use app\services\payment\banks\traits\WallettoRequestTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CreatePayException;
@@ -424,5 +425,23 @@ class WallettoBankAdapter implements IBankAdapter
     public function registrationBenific(RegistrationBenificForm $registrationBenificForm)
     {
         throw new GateException('Метод недоступен');
+    }
+
+    /**
+     * @inheritDoc
+     * @throws Yii\base\NotSupportedException
+     */
+    public function getStatement(array $params): StatementResult
+    {
+        throw new yii\base\NotSupportedException;
+    }
+
+    /**
+     * @inheritDoc
+     * @throws Yii\base\NotSupportedException
+     */
+    public function getStatementNominal(array $params): StatementResult
+    {
+        throw new yii\base\NotSupportedException;
     }
 }

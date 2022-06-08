@@ -11,6 +11,7 @@ use app\models\kfapi\KfStatement;
 use app\models\mfo\MfoBalance;
 use app\models\mfo\MfoTestError;
 use app\models\payonline\Partner;
+use app\services\statements\StatementsService;
 use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
@@ -80,26 +81,25 @@ class AccountController extends Controller
             $TypeAcc = 1;
         }
 
-        $MfoBalance = new MfoBalance($kf->partner);
-        $result = $MfoBalance->GetBankStatemets($TypeAcc, strtotime($kfStatm->dayfrom), strtotime($kfStatm->dayto));
+        $result = StatementsService::GetBankStatements($kf->partner, $TypeAcc, strtotime($kfStatm->dayfrom), strtotime($kfStatm->dayto));
 
         $ret = [];
         foreach ($result as $row) {
             $ret[] = [
-                'id' => $row['BnkId'],
-                'number' => $row['NumberPP'],
-                'date' => date('Y-m-d\TH:i:s', $row['DatePP']),
-                'datedoc' => date('Y-m-d\TH:i:s', $row['DateDoc']),
-                'summ' => round(($row['SummPP'] + $row['SummComis'])/100.0,2),
-                'description' => $row['Description'],
-                'iscredit' => $row['IsCredit'] ? true : false, //true - пополнение счета
-                'name' => $row['Name'],
-                'inn' => $row['Inn'],
+                'id' => $row->BnkId,
+                'number' => $row->NumberPP,
+                'date' => date('Y-m-d\TH:i:s', $row->DatePP),
+                'datedoc' => date('Y-m-d\TH:i:s', $row->DateDoc),
+                'summ' => round(($row->SummPP + $row->SummComis)/100.0,2),
+                'description' => $row->Description,
+                'iscredit' => $row->IsCredit ? true : false, //true - пополнение счета
+                'name' => $row->Name,
+                'inn' => $row->Inn,
                 'kpp' => '',
-                'bic' => $row['Bic'],
-                'bank' => $row['Bank'],
-                'bankaccount' => $row['BankAccount'],
-                'account' => $row['Account']
+                'bic' => $row->Bic,
+                'bank' => $row->Bank,
+                'bankaccount' => $row->BankAccount,
+                'account' => $row->Account
             ];
         }
         $state = [
