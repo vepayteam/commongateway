@@ -6,7 +6,6 @@ namespace app\models\mfo;
 
 use app\models\payonline\Cards;
 use app\models\Payschets;
-use app\services\payment\banks\structures\StatementResult;
 use yii\helpers\Json;
 
 class MfoTestError
@@ -166,7 +165,7 @@ class MfoTestError
         $fl = file_get_contents(\Yii::$app->basePath.'/tests/_data/transit.json');
         $st = Json::decode($fl);
         $st = self::array_change_key_case_recursive($st,CASE_LOWER);
-        return new StatementResult(['status' => StatementResult::STATUS_OK, 'statements' => $st['statement']]);
+        return ['status' => 1, 'statements' => $st['statement']];
     }
 
     private static function array_change_key_case_recursive($array, $case)

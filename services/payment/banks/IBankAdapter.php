@@ -18,7 +18,6 @@ use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\data\ClientData;
-use app\services\payment\banks\structures\StatementResult;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
@@ -140,32 +139,4 @@ interface IBankAdapter
      * @return RegistrationBenificResponse
      */
     public function registrationBenific(RegistrationBenificForm $registrationBenificForm);
-
-    /**
-     * Выписка по счету - список исполненных документов
-     *
-     * @param array $params
-     *              [
-     *                 'account'     => (string) Account.
-     *                 'datefrom'    => (string) datefrom Y-m-d\TH:i:s.
-     *                 'dateto'      => (string) dateto Y-m-d\TH:i:s.
-     *              ];
-     *
-     * @return mixed
-     */
-    public function getStatement(array $params): StatementResult;
-
-    /**
-     * Выписка по счету - список исполненных документов
-     *
-     * @param array $params
-     *              [
-     *                 'account'     => (string) Account.
-     *                 'datefrom'    => (string) datefrom Y-m-d\TH:i:s.
-     *                 'dateto'      => (string) dateto Y-m-d\TH:i:s.
-     *              ];
-     *
-     * @return mixed
-     */
-    public function getStatementNominal(array $params): StatementResult;
 }

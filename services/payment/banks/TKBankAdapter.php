@@ -35,7 +35,6 @@ use app\services\payment\banks\bank_adapter_responses\RegistrationBenificRespons
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\data\ClientData;
 use app\services\payment\banks\interfaces\ITKBankAdapterResponseErrors;
-use app\services\payment\banks\structures\StatementResult;
 use app\services\payment\banks\traits\TKBank3DSTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
@@ -635,7 +634,7 @@ class TKBankAdapter implements IBankAdapter
      * @param array $params
      * @return array
      */
-    public function getStatement(array $params): StatementResult
+    public function getStatement(array $params)
     {
         $action = '/api/v1/banking/account/statement/document';
 
@@ -655,15 +654,15 @@ class TKBankAdapter implements IBankAdapter
         if (isset($ans['xml']) && !empty($ans['xml'])) {
             $ans['xml'] = self::array_change_key_case_recursive($ans['xml'], CASE_LOWER);
             if (isset($ans['xml']['statement'])) {
-                return new StatementResult([
-                    'status' => StatementResult::STATUS_OK,
+                return [
+                    'status' => 1,
                     'message' => '',
                     'statements' => $ans['xml']['statement']
-                ]);
+                ];
             }
         }
 
-        return new StatementResult(['status' => StatementResult::STATUS_FAILED, 'message' => \Yii::t('app.payment-errors', 'Ошибка запроса')]);
+        return ['status' => 0, 'message' => \Yii::t('app.payment-errors', 'Ошибка запроса')];
     }
 
     /**
@@ -671,7 +670,7 @@ class TKBankAdapter implements IBankAdapter
      * @param array $params
      * @return array
      */
-    public function getStatementNominal(array $params): StatementResult
+    public function getStatementNominal(array $params)
     {
         $action = '/nominal/v2/getStatement';
 
@@ -691,15 +690,15 @@ class TKBankAdapter implements IBankAdapter
         if (isset($ans['xml']) && !empty($ans['xml'])) {
             $ans['xml'] = self::array_change_key_case_recursive($ans['xml'], CASE_LOWER);
             if (isset($ans['xml']['documents'])) {
-                return new StatementResult([
-                    'status' => StatementResult::STATUS_OK,
+                return [
+                    'status' => 1,
                     'message' => '',
                     'statements' => $ans['xml']['documents']
-                ]);
+                ];
             }
         }
 
-        return new StatementResult(['status' => StatementResult::STATUS_FAILED, 'message' => \Yii::t('app.payment-errors', 'Ошибка запроса')]);
+        return ['status' => 0, 'message' => \Yii::t('app.payment-errors', 'Ошибка запроса')];
     }
 
     /**

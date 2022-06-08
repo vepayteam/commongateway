@@ -1,7 +1,11 @@
 <?php
 
+
 namespace app\models\mfo\statements;
 
+
+use app\models\bank\TCBank;
+use app\models\bank\TcbGate;
 use app\models\mfo\MfoReq;
 use app\models\mfo\MfoTestError;
 use app\models\payonline\BalancePartner;
@@ -10,9 +14,6 @@ use app\models\payonline\Uslugatovar;
 use app\models\StatementsAccount;
 use app\models\StatementsPlanner;
 use app\models\TU;
-use app\services\payment\banks\BankAdapterBuilder;
-use app\services\payment\banks\TKBankAdapter;
-use app\services\payment\models\Bank;
 use Yii;
 use yii\db\Exception;
 use yii\helpers\ArrayHelper;
@@ -22,23 +23,11 @@ class ReceiveStatemets
     /** @var Partner $Partner */
     public $Partner;
 
-    /** @var int $bankId */
-    public $bankId;
-
     private $list = null;
 
-    /**
-     * ReceiveStatemets constructor.
-     *
-     * @param Partner $Partner
-     * @param int $bankId
-     *
-     * @TODO: Пока хардкод с id банка, позже, когда будет решён вопрос с передачей ID извне, убрать хардкод.
-     */
-    public function __construct(Partner $Partner, int $bankId = 2)
+    public function __construct(Partner $Partner)
     {
         $this->Partner = $Partner;
-        $this->bankId = $bankId;
     }
 
     /**
@@ -52,10 +41,8 @@ class ReceiveStatemets
         $list = [];
         $mfo = new MfoReq();
         $mfo->mfo = $this->Partner->ID;
-        $bank = Bank::find()->where(['=','ID', $this->bankId])->one();
-        $bankAdapterBuilder = new BankAdapterBuilder();
-        $bankAdapterBuilder->buildByBankId($this->Partner, $bank);
-        $bankAdapter = $bankAdapterBuilder->getBankAdapter();
+        $TcbGate = new TcbGate($this->Partner->ID, TCBank::$AFTGATE);
+        $tcBank = new TCBank($TcbGate);
 
         //TODO вынеси в константы имена полей счетов
         foreach (['SchetTcbNominal', 'SchetTcbTransit', 'SchetTcb'] as $accountType) {
@@ -72,9 +59,9 @@ class ReceiveStatemets
             ];
 
             if ($isNominal) {
-                $res = $bankAdapter->getStatementNominal($request);
+                $res = $tcBank->getStatementNominal($request);
             } else {
-                $res = $bankAdapter->getStatement($request);
+                $res = $tcBank->getStatement($request);
             }
 
             if (isset($res['statements'])) {
@@ -105,44 +92,46 @@ class ReceiveStatemets
     {
         $mfo = new MfoReq();
         $mfo->mfo = $this->Partner->ID;
+        $TcbGate = new TcbGate($this->Partner->ID, TCBank::$AFTGATE);
+        $tcBank = new TCBank($TcbGate);
 
-        $bank = Bank::find()->where(['=','ID', $this->bankId])->one();
-        $bankAdapterBuilder = new BankAdapterBuilder();
-        $bankAdapterBuilder->buildByBankId($this->Partner, $bank);
-        /** @var TKBankAdapter $bankAdapter */
-        $bankAdapter = $bankAdapterBuilder->getBankAdapter();
-
+        $bal = null;
         if (!empty($this->Partner->SchetTcbNominal) && $TypeSchet == 2) {
-            $bal = $bankAdapter->getStatementNominal([
-                'account' => $this->Partner->SchetTcbNominal,
-                'datefrom' => date('Y-m-d\TH:i:s', $dateFrom),
-                'dateto' => date('Y-m-d\TH:i:s', $dateTo)
-            ]);
-            if ($bal->status === 1 && !empty($bal['statements'])) {
+            if (Yii::$app->params['TESTMODE'] == 'Y') {
+                $MfoTestError = new MfoTestError();
+                $bal = $MfoTestError->TestNominalStatements();
+            } else {
+                $bal = $tcBank->getStatementNominal([
+                    'account' => $this->Partner->SchetTcbNominal,
+                    'datefrom' => date('Y-m-d\TH:i:s', $dateFrom),
+                    'dateto' => date('Y-m-d\TH:i:s', $dateTo)
+                ]);
+            }
+            if ($bal && isset($bal['statements'])) {
                 $this->list = $this->ParseSatementsNominal($bal['statements']);
             }
         } elseif (!empty($this->Partner->SchetTcbTransit) && $TypeSchet == 1) {
-            $bal = $bankAdapter->getStatement([
+            $bal = $tcBank->getStatement([
                 'account' => $this->Partner->SchetTcbTransit,
                 'datefrom' => date('Y-m-d\TH:i:s', $dateFrom),
                 'dateto' => date('Y-m-d\TH:i:s', $dateTo)
             ]);
-            if ($bal->status === 1 && !empty($bal->statements)) {
-                $this->list = $this->ParseSatements($bal->statements);
+            if ($bal && isset($bal['statements'])) {
+                $this->list = $this->ParseSatements($bal['statements']);
             }
         } elseif (!empty($this->Partner->SchetTcb) && $TypeSchet == 0) {
             if (Yii::$app->params['TESTMODE'] == 'Y') {
                 $MfoTestError = new MfoTestError();
                 $bal = $MfoTestError->TestTransitStatements();
             } else {
-                $bal = $bankAdapter->getStatement([
+                $bal = $tcBank->getStatement([
                     'account' => $this->Partner->SchetTcb,
                     'datefrom' => date('Y-m-d\TH:i:s', $dateFrom),
                     'dateto' => date('Y-m-d\TH:i:s', $dateTo)
                 ]);
             }
-            if ($bal->status === 1 && !empty($bal->statements)) {
-                $this->list = $this->ParseSatements($bal->statements);
+            if ($bal && isset($bal['statements'])) {
+                $this->list = $this->ParseSatements($bal['statements']);
             }
         }
 

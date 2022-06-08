@@ -1,6 +1,6 @@
 <?php
 
-/* @var array|\app\models\mfo\statements\StatementsAccount[] $listorder */
+/* @var array $listorder */
 /* @var $IsAdmin */
 /* @var $sort */
 /* @var $this \yii\web\View */
@@ -32,15 +32,15 @@ $sumIn = $sumOut = 0;
     <?php if (count($listorder) > 0) :?>
         <?php foreach ($listorder as $row) : ?>
         <tr>
-            <td data-datesort="<?=date('YmdHis', $row->DatePP)?>"><?= date('d.m.Y H:i:s', $row->DatePP) ?></td>
-            <td class="text-right"><?= $row->IsCredit ? number_format($row->SummPP/100.0,2,'.','&nbsp;') : ''?></td>
-            <td class="text-right"><?= !$row->IsCredit ? number_format($row->SummPP/100.0,2,'.','&nbsp;') : ''?></td>
-            <td><?= Html::encode($row->Description) ?></td>
-            <td><?= Html::encode($row->Name) ?></td>
+            <td data-datesort="<?=date('YmdHis', $row['DatePP'])?>"><?= date('d.m.Y H:i:s', $row['DatePP']) ?></td>
+            <td class="text-right"><?= $row['IsCredit'] ? number_format($row['SummPP']/100.0,2,'.','&nbsp;') : ''?></td>
+            <td class="text-right"><?= !$row['IsCredit'] ? number_format($row['SummPP']/100.0,2,'.','&nbsp;') : ''?></td>
+            <td><?= Html::encode($row['Description']) ?></td>
+            <td><?= Html::encode($row['Name']) ?></td>
         </tr>
-        <?php if ($row->IsCredit) $sumIn += $row->SummPP; ?>
-        <?php if (!$row->IsCredit) {
-            $sumOut += $row->SummPP;
+        <?php if ($row['IsCredit']) $sumIn += $row['SummPP']; ?>
+        <?php if (!$row['IsCredit']) {
+            $sumOut += $row['SummPP'];
         } ?>
 
         <?php endforeach; ?>

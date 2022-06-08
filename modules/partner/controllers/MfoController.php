@@ -11,7 +11,6 @@ use app\services\balance\Balance;
 use app\services\balance\BalanceService;
 use app\services\balance\models\PartsBalanceForm;
 use app\services\balance\models\PartsBalancePartnerForm;
-use app\services\statements\StatementsService;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
@@ -220,7 +219,7 @@ class MfoController extends Controller
             $dateFrom = strtotime(Yii::$app->request->post('datefrom') . ":00");
             $dateTo = strtotime(Yii::$app->request->post('dateto') . ":59");
             $istransit = (int)Yii::$app->request->post('istransit', 0);
-            $sort = (int)Yii::$app->request->post('sort', 0) === 1 ? SORT_ASC : SORT_DESC;
+            $sort = (int)Yii::$app->request->post('sort', 0);
 
             Yii::$app->response->format = Response::FORMAT_JSON;
             $partner = Partner::findOne(['ID' => $idpartner]);
@@ -233,12 +232,12 @@ class MfoController extends Controller
             $ostEnd = number_format($MfoBalance->GetOstBeg($dateFrom, $dateTo,$istransit)/100.0, 2, '.', ' ');
             $data = ($istransit == 10 || $istransit == 11)
                 ? $this->renderPartial('_balanceorderlocal', [
-                    'orders' => StatementsService::GetBankStatements($partner, $istransit - 10, $dateFrom, $dateTo, $sort),
+                    'listorder' => $MfoBalance->GetOrdersLocal($istransit - 10, $dateFrom, $dateTo, $sort),
                     'IsAdmin' => $IsAdmin,
                     'sort' => $sort
                 ])
                 : $this->renderPartial('_balanceorder', [
-                    'orders' => StatementsService::GetBankStatements($partner, $istransit, $dateFrom, $dateTo, $sort),
+                    'listorder' => $MfoBalance->GetBankStatemets($istransit, $dateFrom, $dateTo, $sort),
                     'IsAdmin' => $IsAdmin,
                     'sort' => $sort,
                     'dateFrom' => $dateFrom,
