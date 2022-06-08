@@ -15,7 +15,11 @@
     </div>
 
     <div class="row">
-        <div class="col-xs-12 text-center"><h2 class="zagend">Платеж находится в обработке</h2></div>
+        <div class="col-xs-12 text-center">
+            <h2 class="zagend">
+                <?= Yii::t('app.payment-wait', 'Платеж находится в обработке') ?>
+            </h2>
+        </div>
     </div>
 
 

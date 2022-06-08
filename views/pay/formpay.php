@@ -101,16 +101,16 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
     ]);
     ?>
 
-    <?= $form->field($payform, 'IdPay')->hiddenInput(['class' => 'idPay']); ?>
+    <?= Html::activeHiddenInput($payform, 'IdPay', ['class' => 'idPay']) ?>
 
     <?=
     /** {@see CreatePayForm::$browserDataJson} */
-    $form->field($payform, 'browserDataJson')->hiddenInput();
+    Html::activeHiddenInput($payform, 'browserDataJson');
     ?>
 
     <?=
     /** {@see CreatePayForm::$httpHeaderAccept} */
-    $form->field($payform, 'httpHeaderAccept')->hiddenInput();
+    Html::activeHiddenInput($payform, 'httpHeaderAccept');
     ?>
 
     <input type="hidden" class="user_hash" name="user_hash" value="">

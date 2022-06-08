@@ -66,7 +66,7 @@ class BRSAdapter implements IBankAdapter
     const AFT_MIN_SUMM = 180000;
     const KEYS_PATH = '@app/config/brs/';
 
-    const BALANCE_CARD_NUM = '5100476090795931'; // Карта используется для запроса баланса TODO: переместить в другое место?
+    const BALANCE_CARD_NUM = '5100920551403998'; // Карта используется для запроса баланса TODO: переместить в другое место?
     const BALANCE_FAKE_AMOUNT = 1000;
 
     const BRS_RESPONSE_SYSTEM_ERROR_CODE = 1001;
