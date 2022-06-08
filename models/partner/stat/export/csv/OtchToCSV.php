@@ -64,6 +64,7 @@ class OtchToCSV extends ToCSV
                 'Держатель карты',
                 'RRN',
                 'Хэш от номера карты',
+                'Маска карты получателя',
                 'Наименование банка-эквайера',
                 ]
         );
@@ -161,6 +162,7 @@ class OtchToCSV extends ToCSV
                         $data->CardHolder,
                         $data->RRN,
                         $data->IdKard,
+                        $data->OutCardPan,
                         $data->BankName,
                     ]
 
