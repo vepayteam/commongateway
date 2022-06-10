@@ -2523,7 +2523,7 @@
 
                 const invalidDateRange = parsedDateFrom > parsedDateTo
 
-                const submitButton = $('button[type="submit"]')
+                const submitButton = $('[type="submit"]')
 
                 if (invalidDateRange) {
                     toastr.error('Начальная дата отчета должна быть раньше конечной')
