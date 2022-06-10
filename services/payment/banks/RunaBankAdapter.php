@@ -22,6 +22,7 @@ use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
+use app\services\payment\banks\data\ClientData;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
@@ -87,7 +88,7 @@ class RunaBankAdapter implements IBankAdapter
     /**
      * @inheritDoc
      */
-    public function createPay(CreatePayForm $createPayForm)
+    public function createPay(CreatePayForm $createPayForm, ClientData $clientData)
     {
         // TODO: Implement createPay() method.
     }
@@ -172,7 +173,7 @@ class RunaBankAdapter implements IBankAdapter
         $identInitResponse->response = $ans;
         if($ans['state_code'] != RunaIdentResponseInteface::RESPONSE_STATUS_INIT) {
             $identInitResponse->status = BaseResponse::STATUS_ERROR;
-            $identInitResponse->message = $ans['state_description'] ?? 'Ошибка запроса';
+            $identInitResponse->message = $ans['state_description'] ?? \Yii::t('app.payment-errors', 'Ошибка запроса');
         } else {
             $identInitResponse->status = BaseResponse::STATUS_DONE;
         }

@@ -9,9 +9,11 @@ use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
+use app\services\payment\banks\bank_adapter_responses\createPayResponse\AcsRedirectData;
 use app\services\payment\banks\bank_adapter_responses\CurrencyExchangeRatesResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
+use app\services\payment\banks\data\ClientData;
 use app\services\payment\banks\traits\WallettoRequestTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CreatePayException;
@@ -114,11 +116,11 @@ class WallettoBankAdapter implements IBankAdapter
         // TODO: Implement confirm() method.
     }
 
-    public function createPay(CreatePayForm $createPayForm): CreatePayResponse
+    public function createPay(CreatePayForm $createPayForm, ClientData $clientData): CreatePayResponse
     {
         $action = 'orders/authorize';
         $url = $this->bankUrl() . '/' . $action;
-        $request = $this->formatCreatePayRequest($createPayForm);
+        $request = $this->formatCreatePayRequest($createPayForm, $clientData);
         $createPayResponse = new CreatePayResponse();
         try {
             $response = $this->api->request(
@@ -152,6 +154,12 @@ class WallettoBankAdapter implements IBankAdapter
         } else {
             $createPayResponse->isNeed3DSVerif = true;
             $createPayResponse->html3dsForm = $responseData['form3d_html'];
+
+            $from3d = $responseData['form3d'];
+            $createPayResponse->acs = new AcsRedirectData(AcsRedirectData::STATUS_OK, $from3d['action'], $from3d['method'], [
+                'threeDSSessionData' => $from3d['threeDSSessionData'],
+                'creq' => $from3d['creq'],
+            ]);
         }
 
         return $createPayResponse;

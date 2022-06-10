@@ -6,6 +6,7 @@ namespace app\services\payment\payment_strategies\mfo;
 use app\models\api\Reguser;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
+use app\services\LanguageService;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\NotUniquePayException;
@@ -45,7 +46,13 @@ class MfoCardRegStrategy
         $bankAdapterBuilder = new BankAdapterBuilder();
         $bankAdapterBuilder->build($this->cardRegByPayForm->partner, $uslugatovar);
 
-        return $this->createPaySchet($user, $bankAdapterBuilder);
+        $paySchet = $this->createPaySchet($user, $bankAdapterBuilder);
+
+        /** @var LanguageService $languageService */
+        $languageService = \Yii::$app->get(LanguageService::class);
+        $languageService->saveApiLanguage($paySchet->ID, $this->cardRegByPayForm->language);
+
+        return $paySchet;
     }
 
     /**

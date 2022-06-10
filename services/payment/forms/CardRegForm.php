@@ -7,6 +7,7 @@ namespace app\services\payment\forms;
 use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\traits\ValidateFormTrait;
+use app\services\LanguageService;
 use yii\base\Model;
 
 class CardRegForm extends Model
@@ -31,6 +32,7 @@ class CardRegForm extends Model
     public $cancelurl = '';
     public $postbackurl = '';
     public $postbackurl_v2 = '';
+    public $language;
 
     /**
      * @var string
@@ -52,6 +54,7 @@ class CardRegForm extends Model
             [['timeout'], 'integer', 'min' => 10, 'max' => 59],
             [['card'], 'match', 'pattern' => '/^\d{16}|\d{18}$/'],
             [['card'], 'validateCard'], /** @see validateCard() */
+            [['language'], 'in', 'range' => LanguageService::ALL_API_LANG_LIST],
         ];
     }
 
@@ -75,7 +78,7 @@ class CardRegForm extends Model
 
         // Валидация по алгоритму Луна.
         if (!Cards::CheckValidCard($this->card)) {
-            $this->addError('card', 'Неверный номер карты.');
+            $this->addError('card', \Yii::t('app.payment-errors', 'Неверный номер карты'));
         }
     }
 

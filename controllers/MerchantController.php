@@ -12,6 +12,7 @@ use app\models\kfapi\KfPay;
 use app\models\kfapi\KfRequest;
 use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
+use app\services\LanguageService;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\models\PaySchet;
@@ -217,6 +218,11 @@ class MerchantController extends Controller
             0,
             $regcard
         );
+
+        /** @var LanguageService $languageService */
+        $languageService = Yii::$app->get(LanguageService::class);
+        $languageService->saveApiLanguage($params['IdPay'], $kfPay->language);
+
         if (!empty($kfPay->extid)) {
             $mutex->release('getPaySchetExt' . $kfPay->extid);
         }

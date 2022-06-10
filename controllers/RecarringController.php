@@ -10,6 +10,7 @@ use app\models\kfapi\KfRequest;
 use app\models\payonline\Uslugatovar;
 use app\models\TU;
 use app\modules\mfo\controllers\CardController;
+use app\services\LanguageService;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
@@ -140,6 +141,12 @@ class RecarringController extends Controller
 
         $kfCard = new KfCard();
         $kfCard->scenario = KfCard::SCENARIO_REG;
+        $kfCard->load($kfRequest->req, '');
+        if (!$kfCard->validate()) {
+            $err = $kfCard->GetError();
+            Yii::warning('recarring/reg: ошибка валидации формы: ' . $err);
+            return ['status' => 0, 'message' => $err];
+        }
 
         $regUser = new Reguser();
         $extUser = $kfRequest->IdPartner . '-' . time();
@@ -165,6 +172,10 @@ class RecarringController extends Controller
         }
 
         $data = $this->paySchetService->payActivateCard($user,0, $kfCard, 3, $bankAdapter->getBankId(), $kfRequest->IdPartner);
+
+        /** @var LanguageService $languageService */
+        $languageService = Yii::$app->get(LanguageService::class);
+        $languageService->saveApiLanguage($data['IdPay'], $kfCard->language);
 
         //PCI DSS form
         return [

@@ -17,6 +17,7 @@ use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
+use app\services\payment\banks\data\ClientData;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
@@ -72,7 +73,7 @@ class ImpayaAdapter implements IBankAdapter
         return $confirmPayResponse;
     }
 
-    public function createPay(CreatePayForm $createPayForm): CreatePayResponse
+    public function createPay(CreatePayForm $createPayForm, ClientData $clientData): CreatePayResponse
     {
         $paySchet = $createPayForm->getPaySchet();
         $createPayRequest = new CreatePayRequest();
@@ -116,7 +117,7 @@ class ImpayaAdapter implements IBankAdapter
         } else {
             $createPayResponse->status = BaseResponse::STATUS_ERROR;
             $createPayResponse->transac = $ans['data']['transaction']['transaction_id'] ?? '';
-            $createPayResponse->message = $ans['data']['status_descr'] ?? 'Ошибка запроса';
+            $createPayResponse->message = $ans['data']['status_descr'] ?? \Yii::t('app.payment-errors', 'Ошибка запроса');
         }
 
         return $createPayResponse;

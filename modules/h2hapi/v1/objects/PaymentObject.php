@@ -5,25 +5,28 @@ namespace app\modules\h2hapi\v1\objects;
 use app\components\api\ApiObject;
 use app\services\payment\models\PaySchet;
 
-/**
- * Платеж по Счету.
- */
 class PaymentObject extends ApiObject
 {
     /**
-     * @var string URL для прохождения проверки 3DS.
+     * @var PaymentAcsRedirectObject|null 3DS data.
      */
-    public $acsUrl;
-
+    public $acsRedirect;
     /**
-     * @var string IP клиента.
+     * @var string User IP.
      */
     public $ip;
-
     /**
      * @var PaymentCardObject
      */
     public $card;
+    /**
+     * @var PaymentHeaderMapObject Headers of HTTP-request made by client.
+     */
+    public $headerMap;
+    /**
+     * @var PaymentBrowserDataObject Client's browser data.
+     */
+    public $browserData;
 
     /**
      * {@inheritDoc}
@@ -33,6 +36,7 @@ class PaymentObject extends ApiObject
         return [
             [['card', 'ip'], 'required'],
             [['ip'], 'ip'],
+            [['headerMap', 'browserData'], 'safe'],
         ];
     }
 
@@ -43,7 +47,7 @@ class PaymentObject extends ApiObject
     {
         return [
             'card',
-            'acsUrl',
+            'acsRedirect',
         ];
     }
 
@@ -54,6 +58,11 @@ class PaymentObject extends ApiObject
     public function mapPaySchet(PaySchet $paySchet): PaymentObject
     {
         $this->card = (new PaymentCardObject())->mapPaySchet($paySchet);
+
+        if ($paySchet->acsRedirect !== null) {
+            $this->acsRedirect = (new PaymentAcsRedirectObject)
+                ->mapPaySchetAcsRedirect($paySchet->acsRedirect);
+        }
 
         return $this;
     }

@@ -9,6 +9,7 @@ use app\models\kfapi\KfPay;
 use app\models\kfapi\KfPayParts;
 use app\models\kfapi\KfRequest;
 use app\models\TU;
+use app\services\LanguageService;
 use app\services\payment\payment_strategies\traits\PaymentFormTrait;
 use app\services\PaySchetService;
 use Yii;
@@ -76,6 +77,11 @@ class CreateFormJkhPartsStrategy implements IPaymentStrategy
 
         $params = $paySchetService->payToMfo($this->getUser(), [$kfPay->descript], $kfPay, $usl, TCBank::$bank, $this->request->IdPartner, 0);
         $this->createPayParts($params);
+
+        /** @var LanguageService $languageService */
+        $languageService = Yii::$app->get(LanguageService::class);
+        $languageService->saveApiLanguage($params['IdPay'], $kfPay->language);
+
         if (!empty($kfPay->extid)) {
             $mutex->release('getPaySchetExt' . $kfPay->extid);
         }
@@ -92,7 +98,7 @@ class CreateFormJkhPartsStrategy implements IPaymentStrategy
     private function getUsl()
     {
         return Yii::$app->db->createCommand("
-            SELECT `ID` 
+            SELECT `ID`
             FROM `uslugatovar`
             WHERE `IDPartner` = :IDMFO AND `IsCustom` = :TYPEUSL AND `IsDeleted` = 0
         ", [':IDMFO' => $this->request->IdPartner, ':TYPEUSL' => TU::$JKHPARTS]

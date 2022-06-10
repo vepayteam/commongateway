@@ -19,6 +19,7 @@ use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
+use app\services\payment\banks\data\ClientData;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
@@ -160,7 +161,7 @@ class CauriAdapter implements IBankAdapter
      * @return CreatePayResponse
      * @throws CreatePayException
      */
-    public function createPay(CreatePayForm $createPayForm): CreatePayResponse
+    public function createPay(CreatePayForm $createPayForm, ClientData $clientData): CreatePayResponse
     {
         $createPayResponse = new CreatePayResponse();
         $paySchet = $createPayForm->getPaySchet();
@@ -476,7 +477,7 @@ class CauriAdapter implements IBankAdapter
             $outCardPayResponse->trans = $content['id'];
         } else {
             $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
-            $outCardPayResponse->message = 'Ошибка запроса';
+            $outCardPayResponse->message = \Yii::t('app.payment-errors', 'Ошибка запроса');
         }
 
         return $outCardPayResponse;
@@ -524,7 +525,7 @@ class CauriAdapter implements IBankAdapter
         } catch (\Exception $e) {
             Yii::warning('CauriAdapter getBalance exception: ' . $e->getMessage());
 
-            throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
+            throw new BankAdapterResponseException(\Yii::t('app.payment-errors', 'Ошибка запроса'));
         }
         $response = $responseData->getContent();
         if (!isset($response['amount']) || empty($response['amount'])) {

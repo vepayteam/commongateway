@@ -44,6 +44,14 @@ return [
             ],
             */
         ],
+        'i18n' => [
+            'translations' => [
+                'app*' => [
+                    'class' => 'yii\i18n\PhpMessageSource',
+                    'basePath' => '@app/messages'
+                ],
+            ],
+        ],
         'cache' => $params['components']['cache'],
         'redis' => $params['components']['redis'],
         'queue' => $params['components']['queue'],
@@ -54,6 +62,7 @@ return [
         \app\services\CompensationService::class => \app\services\CompensationService::class,
         \app\services\RecurrentPaymentPartsService::class => \app\services\RecurrentPaymentPartsService::class,
         \app\services\PaymentService::class => \app\services\PaymentService::class,
+        \app\services\LanguageService::class => \app\services\LanguageService::class,
     ],
     'params' => $params,
     'container' => [

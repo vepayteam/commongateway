@@ -11,6 +11,7 @@ use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
+use app\services\payment\banks\bank_adapter_responses\createPayResponse\AcsRedirectData;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
@@ -19,6 +20,7 @@ use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
+use app\services\payment\banks\data\ClientData;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
@@ -78,14 +80,7 @@ class MonetixAdapter implements IBankAdapter
             $this->gate->PartnerId,
             $this->getBankId()
         );
-        if(Yii::$app->params['TESTMODE'] === 'Y') {
-            $this->apiClient = new Client([
-                RequestOptions::PROXY => str_replace('@', '%40', $this->proxyUser) . '@' . $this->proxyHost,
-            ], $infoMessage);
-        } else {
-            $this->apiClient = new Client([], $infoMessage);
-        }
-
+        $this->apiClient = new Client([], $infoMessage);
     }
 
     public function getBankId()
@@ -116,10 +111,11 @@ class MonetixAdapter implements IBankAdapter
         } catch (\Exception $e) {
             $confirmPayResponse->status = BaseResponse::STATUS_ERROR;
             $confirmPayResponse->message = $e->getMessage();
+            return $confirmPayResponse;
         }
     }
 
-    public function createPay(CreatePayForm $createPayForm)
+    public function createPay(CreatePayForm $createPayForm, ClientData $clientData)
     {
         $callbackUrl = Yii::$app->params['domain'] . '/callback/monetix';
         $generalModel = new GeneralModel(
@@ -174,6 +170,7 @@ class MonetixAdapter implements IBankAdapter
                 $createPayResponse->status = BaseResponse::STATUS_DONE;
                 $createPayResponse->message = $response['status'];
                 $createPayResponse->transac = $response['request_id'];
+                $createPayResponse->acs = new AcsRedirectData(AcsRedirectData::STATUS_PENDING);
             } else {
                 $createPayResponse->status = BaseResponse::STATUS_ERROR;
                 $createPayResponse->message = $response['status'] ?? '';
@@ -182,6 +179,7 @@ class MonetixAdapter implements IBankAdapter
         } catch (\Exception $e) {
             $createPayResponse->status = BaseResponse::STATUS_ERROR;
             $createPayResponse->message = $e->getMessage();
+            return $createPayResponse;
         }
     }
 
@@ -205,14 +203,14 @@ class MonetixAdapter implements IBankAdapter
 
             if(isset($response['errors'])) {
                 $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
-                $checkStatusPayResponse->message = $response['errors'][0]["message"] ?? "Ошибка запроса";
+                $checkStatusPayResponse->message = $response['errors'][0]["message"] ?? \Yii::t('app.payment-errors', 'Ошибка запроса');
             } elseif (isset($response['operations'])) {
                 $operation = $response['operations'][count($response['operations']) - 1];
                 $checkStatusPayResponse->status = $this->converStatus($operation['status']);
                 $checkStatusPayResponse->message = $operation['code'] . ': ' . $operation['status'];
             } else {
                 $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
-                $checkStatusPayResponse->message = "Ошибка запроса";
+                $checkStatusPayResponse->message = \Yii::t('app.payment-errors', 'Ошибка запроса');
             }
             return $checkStatusPayResponse;
         } catch (\Exception $e) {

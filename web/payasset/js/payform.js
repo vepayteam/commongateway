@@ -110,7 +110,7 @@
             $('#closeform').on('click', function () {
                 let id = $('[name="PayForm[IdPay]"]').val();
 
-                if (confirm('Отменить оплату?')) {
+                if (confirm($('#payment_cancel_text').text())) {
                     if (linklink) {
                         linklink.abort();
                     }
@@ -347,6 +347,7 @@
         },
 
         pingMonetixCallback: function(interval) {
+            let me = this;
             let id = $('[name="PayForm[IdPay]"]').val();
             $.ajax({
                 type: 'POST',
@@ -365,6 +366,16 @@
                         var paReq = response['data']['acs']['pa_req'];
                         var termUrl = response['data']['acs']['term_url'];
                         payform.load3dsMonetix(url, paReq, md, termUrl);
+                        clearInterval(interval);
+                    } else if(response['status'] && response['status'] == 'awaiting redirect result') {
+                        let method = response['data']['redirect_data']['method'];
+                        let url = response['data']['redirect_data']['url'];
+                        let fields = response['data']['redirect_data']['body'];
+                        if (method === 'GET') {
+                            window.location = url;
+                        } else {
+                            me.submitForm(method, url, fields);
+                        }
                         clearInterval(interval);
                     } else if(response['status'] && response['status'] == 'decline') {
                         window.location = response.termurl;
