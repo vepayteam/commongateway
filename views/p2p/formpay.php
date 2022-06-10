@@ -1,11 +1,16 @@
 <?php
 
+use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\models\PaySchet;
 use Carbon\Carbon;
 use yii\helpers\Html;
 
 /* @var PaySchet $paySchet */
 const MAX_EXP_CARD_YEARS = 10;
+/** @var \app\services\payment\models\PartnerBankGate $gate */
+$gate = (new BankAdapterBuilder())
+    ->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank, $paySchet->currency)
+    ->getPartnerBankGate();
 ?>
 <?php $this->beginPage() ?>
 <!DOCTYPE html>
@@ -22,8 +27,8 @@ const MAX_EXP_CARD_YEARS = 10;
 
     <script>
         var paySchetId = <?=$paySchet->ID?>;
-        var pcComission = <?=$paySchet->uslugatovar->PcComission?>;
-        var minsumComiss = <?=$paySchet->uslugatovar->MinsumComiss?>;
+        var pcComission = <?=$gate->UseGateCompensation ? ($gate->ClientCommission ?? 0) : $paySchet->uslugatovar->PcComission?>;
+        var minsumComiss = <?=$gate->UseGateCompensation ? ($gate->ClientMinimalFee ?? 0) : $paySchet->uslugatovar->MinsumComiss?>;
         var currMonth = <?=Carbon::now()->month?>;
         var currYear = <?=Carbon::now()->year?>;
         var minSum = <?=$paySchet->uslugatovar->MinSumm / 100?>;
