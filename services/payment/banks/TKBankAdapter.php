@@ -1533,7 +1533,7 @@ class TKBankAdapter implements IBankAdapter
         if (isset($ans['xml']) && !empty($ans['xml'])) {
             $xml = $this->parseAns($ans['xml']);
             if (isset($xml['orderid'])) {
-                $createRecurrentPayResponse->status = BaseResponse::STATUS_DONE;
+                $createRecurrentPayResponse->status = PaySchet::STATUS_WAITING_CHECK_STATUS;
                 $createRecurrentPayResponse->transac = $xml['orderid'];
                 return $createRecurrentPayResponse;
             }
@@ -1541,6 +1541,10 @@ class TKBankAdapter implements IBankAdapter
 
         $createRecurrentPayResponse->status = BaseResponse::STATUS_ERROR;
         $createRecurrentPayResponse->message = '';
+        if ($ans['error'] == 500) {
+            $createRecurrentPayResponse->status = BaseResponse::STATUS_CREATED;
+            $createRecurrentPayResponse->message = 'Ожидается обновление статуса';
+        }
         return $createRecurrentPayResponse;
     }
 
