@@ -357,7 +357,7 @@ class PayShetStat extends Model
                 $row->VoznagSumm = (intval($row->Status) === PaySchet::STATUS_REFUND_DONE) ? 0 : ($row->ComissSumm - $row->BankComis + $row->MerchVozn);
                 $row->Currency = $row->CurrencyId ? CurrencyRepository::getCurrencyCodeById($row->CurrencyId)->Code : null;
                 $row->RefundAmount = $row['RefundAmount'] ?? 0;
-                $row->RemainingRefundAmount = $row->SummPay + $row->ComissSumm - $row->RefundAmount;
+                $row->RemainingRefundAmount = $row->SummPay - $row->RefundAmount;
 
                 if (
                     intval($row->Status) === PaySchet::STATUS_REFUND_DONE ||

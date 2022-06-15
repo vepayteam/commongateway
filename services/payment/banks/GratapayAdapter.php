@@ -189,7 +189,7 @@ class GratapayAdapter implements IBankAdapter
         $sourcePaySchet = $paySchet->refundSource;
 
         $refundPayRequest = new RefundPayRequest();
-        $refundPayRequest->amount = $paySchet->getSummFull() / 100;
+        $refundPayRequest->amount = round($paySchet->getSummFull() / 100, 2);
         $refundPayRequest->currency = $paySchet->currency->Code;
         $refundPayRequest->original_transaction_id = $sourcePaySchet->ExtBillNumber;
         $refundPayRequest->transaction_id = $paySchet->ID;
