@@ -346,25 +346,6 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/OutCard"
-            example: 
-              card: 0
-              cardnum: stringstringstring
-              amount: 0
-              extid: string
-              document_id: string
-              fullname: string
-              currency: RUB
-              birthDate: string
-              countryOfCitizenship: 'RU'
-              countryOfResidence: 'RU'
-              birthPlace: string
-              documentType: 'passport'
-              documentIssuer: string
-              documentIssuedAt: string
-              documentValidUntil: string
-              documentSeries: string
-              documentNumber: string
-              phone: string
         description: Параметры перевода
         required: true
       responses:
@@ -1269,6 +1250,7 @@ components:
           type: string
           minLength: 16
           maxLength: 18
+          example: xxxxxxxxxxxxxxxx
           description: Номер карты (16/18 цифр)
         amount:
           type: number
@@ -1288,11 +1270,13 @@ components:
         currency:
           type: string
           maxLength: 5
+          default: 'RUB'
+          example: 'RUB'
           description: Код валюты (по умолчанию, RUB)
-
         birthDate:
           type: string
           description: Дата рождения, dd.mm.yyyy
+          example: '23.06.1900'
         countryOfCitizenship:
           type: string
           default: 'RU'
