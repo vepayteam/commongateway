@@ -216,9 +216,7 @@ class OkPayStrategy
                      * Если операция и так является возвратом, то заново для неё рефанд запускать не надо
                      */
                     if($paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD && !$paySchet->isRefund) {
-                        Yii::$app->queue
-                            ->delay(5 * 60)
-                            ->push(new RefundPayJob([
+                        Yii::$app->queue->delay(5 * 60)->push(new RefundPayJob([
                             'paySchetId' => $paySchet->ID,
                             'initiator' => 'OkPayStrategy confirmPay',
                         ]));
