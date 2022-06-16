@@ -2496,6 +2496,54 @@
         })
     });
 
+    // задача https://it.dengisrazy.ru/browse/VPBC-1343
+    // Во всех датапикерах на сайте существует возможность выбрать некорректный диапазон дат
+
+    function setDatePickerDateRangeValidation() {
+        const dateFrom = $('[name="datefrom"]')
+        const dateTo = $('[name="dateto"]')
+
+        if (!dateTo.length) {
+            // прекращаем активацию валидатора, если нет dateTo
+            return
+        }
+
+        $('[name="datefrom"],[name="dateto"]').on("dp.change", function() {
+
+            try {
+
+                toastr.options = {
+                    closeButton: true,
+                    progressBar: true,
+                    showMethod: 'slideDown',
+                    timeOut: 3000,
+                    escapeHtml: true
+                };
+
+                const format = 'DD.MM.YYYY HH:mm';
+
+                const parsedDateTo = moment(dateTo.val(), format)
+                const parsedDateFrom = moment(dateFrom.val(), format)
+
+                const invalidDateRange = parsedDateFrom > parsedDateTo
+
+                const submitButton = $('[type="submit"]')
+
+                if (invalidDateRange) {
+                    toastr.error('Начальная дата отчета должна быть раньше конечной')
+                    submitButton.prop('disabled', true);
+                } else {
+                    submitButton.prop('disabled', false);
+                }
+
+            } catch (e) {
+                console.log('ошибка валидации дат')
+            }
+        });
+    }
+
+    $(window).on('load', setDatePickerDateRangeValidation)
+
     window.loginNav = loginNav;
     window.lk = lk;
     window.commInfo = commInfo;
