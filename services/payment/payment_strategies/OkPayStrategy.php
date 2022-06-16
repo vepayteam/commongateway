@@ -39,6 +39,12 @@ class OkPayStrategy
     protected $isCard = false;
 
     /**
+     * Время задержки между получением успешного статуса и запросом отмены по методу card/reg.
+     * @link https://it.dengisrazy.ru/browse/VPBC-1441
+     */
+    private const REFUND_JOB_DELAY = 5 * 60;
+
+    /**
      * OkPayStrategy constructor.
      * @param OkPayForm $okPayForm
      */
@@ -216,7 +222,7 @@ class OkPayStrategy
                      * Если операция и так является возвратом, то заново для неё рефанд запускать не надо
                      */
                     if($paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD && !$paySchet->isRefund) {
-                        Yii::$app->queue->delay(5 * 60)->push(new RefundPayJob([
+                        Yii::$app->queue->delay(self::REFUND_JOB_DELAY)->push(new RefundPayJob([
                             'paySchetId' => $paySchet->ID,
                             'initiator' => 'OkPayStrategy confirmPay',
                         ]));
