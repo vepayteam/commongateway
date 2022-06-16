@@ -1,6 +1,6 @@
 ---
 kind: pipeline
-type: kubernetes
+type: docker
 name: build-deploy-development-pull-request
 
 platform:
@@ -8,7 +8,7 @@ platform:
   arch: amd64
 
 concurrency:
-  limit: 1
+  limit: 2
 
 steps:
 - name: submodules
@@ -23,12 +23,12 @@ steps:
   commands:
   - commitsar -v -s
 
-- name: notify-conventional-commits-4cef185a33ba84b7ecf260d3a5806c23
+- name: notify-conventional-commits-dcd24bf89c55dfa36844603c62d8b7dd
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
   - export BUILD_STATUS=$$(cat /run/drone/env | grep DRONE_STAGE_STATUS | cut -d '=' -f 2 | tr -d \")
-  - gitea-status -t "conventional-commits" -m "$$BUILD_STATUS" -s "$$BUILD_STATUS" -u "https://www.conventionalcommits.org/en/v1.0.0/#why-use-conventional-commits"
+  - gitea-status -t "conventional-commits" -m "$${BUILD_STATUS:-$$DRONE_STAGE_STATUS}" -s "$${BUILD_STATUS:-$$DRONE_STAGE_STATUS}" -u "https://www.conventionalcommits.org/en/v1.0.0/#why-use-conventional-commits"
   environment:
     GITEA_TOKEN:
       from_secret: GITEA_TOKEN
@@ -37,9 +37,9 @@ steps:
     - failure
     - success
 
-- name: run-test-app
-  pull: always
-  image: registry.vepay.cf/apache-php
+- name: apache2
+  pull: if-not-exists
+  image: registry.vepay.cf/apache-php:7.2
   detach: true
   commands:
   - mkdir -p $$(pwd)/runtime/logs/console
@@ -61,11 +61,11 @@ steps:
   commands:
   - wait-for mariadb:3306 -s -t 60
   - wait-for redis:6379 -s
-  - wait-for 127.0.0.1:8000 -s
+  - wait-for apache2:8000 -s
 
 - name: prepare-test-env
-  pull: always
-  image: registry.vepay.cf/apache-php
+  pull: if-not-exists
+  image: registry.vepay.cf/apache-php:7.2
   commands:
   - php init --env=dev
   - php yii migrate/up --interactive=0
@@ -80,8 +80,8 @@ steps:
     TEST_URL: https://test-env-${DRONE_REPO_NAME}.backend.vepay.cf/
 
 - name: unit-functional-testing
-  pull: always
-  image: registry.vepay.cf/apache-php
+  pull: if-not-exists
+  image: registry.vepay.cf/apache-php:7.2
   commands:
   - vendor/bin/codecept run acceptance
   - vendor/bin/codecept run unit
@@ -97,10 +97,10 @@ steps:
     TEST_URL: https://test-env-${DRONE_REPO_NAME}.backend.vepay.cf/
 
 - name: integration-testing
-  pull: always
-  image: registry.vepay.cf/apache-php
+  pull: if-not-exists
+  image: registry.vepay.cf/apache-php:7.2
   commands:
-  - vendor/bin/codecept run kfapi
+  - vendor/bin/codecept run kfapi --env drone
   environment:
     DATABASE_DSN: mysql:host=mariadb;port=3306;dbname=vepay
     DATABASE_USER: vepay
@@ -113,8 +113,8 @@ steps:
   failure: ignore
 
 - name: post-test-step
-  pull: always
-  image: registry.vepay.cf/apache-php
+  pull: if-not-exists
+  image: registry.vepay.cf/apache-php:7.2
   commands:
   - php yii cache/flush-all --interactive 0
   environment:
@@ -161,15 +161,15 @@ steps:
     status:
     - success
 
-- name: fetch-extract-helm-package-2636825aa6bb09be7a3998172154ea86
+- name: fetch-extract-helm-package-b5e2049afa298047974315e908c96775
   pull: if-not-exists
   image: dtzar/helm-kubectl:3.5.2
   commands:
-  - helm repo add vepay http://charts.service.vepay:8080/
+  - helm repo add vepay https://charts.vepay.cf/
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
-- name: helm-values-generator-5bd53d250cde1cadb31104d3d4c47718
+- name: helm-values-generator-f9bc0fc1a078464768e63c66a06ce0ec
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
@@ -181,7 +181,7 @@ steps:
   - yq write values.yaml "ingress.tls[0].hosts[0]" "`replace-slash ${DRONE_SOURCE_BRANCH}`-${DRONE_REPO_NAME}.backend.vepay.cf" -i
   - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-cf-wildcard-certificate" -i
   - yq write values.yaml "redis.enabled" "true" -i
-  - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+1700000000))" -i
+  - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+1710000000))" -i
   - yq write values.yaml "config.payments.brs.url_xml" "https://194.67.29.216:8443" -i
   - echo "=>>>" && cat values.yaml
 
@@ -190,11 +190,11 @@ steps:
   image: registry.vepay.cf/drone-plugin-helm3:3.7.1-1
   settings:
     add_repos:
-    - vepay=http://charts.service.vepay:8080/
+    - vepay=https://charts.vepay.cf/
     atomic_upgrade: true
     chart: ${DRONE_REPO_NAME}
     cleanup_failed_upgrade: true
-    kube_api_server: https://kubernetes.default.svc
+    kube_api_server: https://192.168.110.1:6443
     kube_service_account: deploy-app-user
     kube_token:
       from_secret: KUBE_TOKEN
@@ -246,7 +246,7 @@ trigger:
 
 ---
 kind: pipeline
-type: kubernetes
+type: docker
 name: build-deploy-development-push
 
 platform:
@@ -254,7 +254,7 @@ platform:
   arch: amd64
 
 concurrency:
-  limit: 1
+  limit: 2
 
 steps:
 - name: submodules
@@ -263,9 +263,9 @@ steps:
   commands:
   - git submodule update --recursive --init
 
-- name: run-test-app
-  pull: always
-  image: registry.vepay.cf/apache-php
+- name: apache2
+  pull: if-not-exists
+  image: registry.vepay.cf/apache-php:7.2
   detach: true
   commands:
   - mkdir -p $$(pwd)/runtime/logs/console
@@ -287,11 +287,11 @@ steps:
   commands:
   - wait-for mariadb:3306 -s -t 60
   - wait-for redis:6379 -s
-  - wait-for 127.0.0.1:8000 -s
+  - wait-for apache2:8000 -s
 
 - name: prepare-test-env
-  pull: always
-  image: registry.vepay.cf/apache-php
+  pull: if-not-exists
+  image: registry.vepay.cf/apache-php:7.2
   commands:
   - php init --env=dev
   - php yii migrate/up --interactive=0
@@ -306,8 +306,8 @@ steps:
     TEST_URL: https://test-env-${DRONE_REPO_NAME}.backend.vepay.cf/
 
 - name: unit-functional-testing
-  pull: always
-  image: registry.vepay.cf/apache-php
+  pull: if-not-exists
+  image: registry.vepay.cf/apache-php:7.2
   commands:
   - vendor/bin/codecept run acceptance
   - vendor/bin/codecept run unit
@@ -323,10 +323,10 @@ steps:
     TEST_URL: https://test-env-${DRONE_REPO_NAME}.backend.vepay.cf/
 
 - name: integration-testing
-  pull: always
-  image: registry.vepay.cf/apache-php
+  pull: if-not-exists
+  image: registry.vepay.cf/apache-php:7.2
   commands:
-  - vendor/bin/codecept run kfapi
+  - vendor/bin/codecept run kfapi --env drone
   environment:
     DATABASE_DSN: mysql:host=mariadb;port=3306;dbname=vepay
     DATABASE_USER: vepay
@@ -339,8 +339,8 @@ steps:
   failure: ignore
 
 - name: post-test-step
-  pull: always
-  image: registry.vepay.cf/apache-php
+  pull: if-not-exists
+  image: registry.vepay.cf/apache-php:7.2
   commands:
   - php yii cache/flush-all --interactive 0
   environment:
@@ -387,11 +387,11 @@ steps:
     status:
     - success
 
-- name: fetch-extract-helm-package-2636825aa6bb09be7a3998172154ea86
+- name: fetch-extract-helm-package-b5e2049afa298047974315e908c96775
   pull: if-not-exists
   image: dtzar/helm-kubectl:3.5.2
   commands:
-  - helm repo add vepay http://charts.service.vepay:8080/
+  - helm repo add vepay https://charts.vepay.cf/
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
@@ -415,11 +415,11 @@ steps:
   image: registry.vepay.cf/drone-plugin-helm3:3.7.1-1
   settings:
     add_repos:
-    - vepay=http://charts.service.vepay:8080/
+    - vepay=https://charts.vepay.cf/
     atomic_upgrade: true
     chart: ${DRONE_REPO_NAME}
     cleanup_failed_upgrade: true
-    kube_api_server: https://kubernetes.default.svc
+    kube_api_server: https://192.168.110.1:6443
     kube_service_account: deploy-app-user
     kube_token:
       from_secret: KUBE_TOKEN
@@ -459,11 +459,11 @@ steps:
   image: registry.vepay.cf/drone-plugin-helm3:3.7.1-1
   settings:
     add_repos:
-    - vepay=http://charts.service.vepay:8080/
+    - vepay=https://charts.vepay.cf/
     atomic_upgrade: true
     chart: ${DRONE_REPO_NAME}
     cleanup_failed_upgrade: true
-    kube_api_server: https://kubernetes.default.svc
+    kube_api_server: https://192.168.110.1:6443
     kube_service_account: deploy-app-user
     kube_token:
       from_secret: KUBE_TOKEN
@@ -515,7 +515,7 @@ trigger:
 
 ---
 kind: pipeline
-type: kubernetes
+type: docker
 name: build-deploy-staging-push
 
 platform:
@@ -523,7 +523,7 @@ platform:
   arch: amd64
 
 concurrency:
-  limit: 1
+  limit: 2
 
 steps:
 - name: submodules
@@ -568,11 +568,11 @@ steps:
     status:
     - success
 
-- name: fetch-extract-helm-package-2636825aa6bb09be7a3998172154ea86
+- name: fetch-extract-helm-package-b5e2049afa298047974315e908c96775
   pull: if-not-exists
   image: dtzar/helm-kubectl:3.5.2
   commands:
-  - helm repo add vepay http://charts.service.vepay:8080/
+  - helm repo add vepay https://charts.vepay.cf/
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
@@ -600,11 +600,11 @@ steps:
   image: registry.vepay.cf/drone-plugin-helm3:3.7.1-1
   settings:
     add_repos:
-    - vepay=http://charts.service.vepay:8080/
+    - vepay=https://charts.vepay.cf/
     atomic_upgrade: true
     chart: ${DRONE_REPO_NAME}
     cleanup_failed_upgrade: true
-    kube_api_server: https://kubernetes.default.svc
+    kube_api_server: https://192.168.110.1:6443
     kube_service_account: deploy-app-user
     kube_token:
       from_secret: KUBE_TOKEN
@@ -638,7 +638,7 @@ trigger:
 
 ---
 kind: pipeline
-type: kubernetes
+type: docker
 name: promote-release
 
 platform:
@@ -646,7 +646,7 @@ platform:
   arch: amd64
 
 concurrency:
-  limit: 1
+  limit: 2
 
 steps:
 - name: assert-version-provided
@@ -725,6 +725,6 @@ get:
 
 ---
 kind: signature
-hmac: d67a82dbff3bef03a3382ffe13dadef3a843aff3e060ed7ed8f162518eebb542
+hmac: 75d41578730939934930e7af9d8734a69755064a4acadb45324913e348687267
 
 ...

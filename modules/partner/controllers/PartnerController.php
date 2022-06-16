@@ -222,7 +222,8 @@ class PartnerController extends Controller
                 if ($this->partnerService->saveKeysKkm($partner, $uploadedSingKey, $uploadedConKey, $uploadedConCert)) {
                     return ['status' => 1];
                 } else {
-                    return ['status' => 0, 'message' => 'Ошибка сохранения файла'];
+                    $errors = $partner->getErrorSummary(false);
+                    return ['status' => 0, 'message' => array_pop($errors)];
                 }
             }
         }
@@ -251,7 +252,8 @@ class PartnerController extends Controller
                 if ($this->partnerService->saveKeysApplepay($partner, $uploadedKey, $uploadedCert)) {
                     return ['status' => 1];
                 } else {
-                    return ['status' => 0, 'message' => 'Ошибка сохранения файла'];
+                    $errors = $partner->getErrorSummary(false);
+                    return ['status' => 0, 'message' => array_pop($errors)];
                 }
             }
         }

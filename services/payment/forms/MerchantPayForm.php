@@ -32,7 +32,7 @@ class MerchantPayForm extends BaseForm implements AmountFormInterface
      * @var int Значения: 1 или 0. Если 1, производится регистрация карты на рекуррентные платежи и выплаты.
      */
     public $regcard = 0;
-    public $language = LanguageService::API_LANG_RUS;
+    public $language;
 
     public const REQUIRED = 'required';
     public const NOT_SUPPORTED = 'not supported';

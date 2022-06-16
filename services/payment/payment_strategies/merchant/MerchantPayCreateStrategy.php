@@ -69,7 +69,7 @@ class MerchantPayCreateStrategy
         $paySchet = $this->createPaySchet($bankAdapterBuilder);
 
         /** @var LanguageService $languageService */
-        $languageService = Yii::$container->get('LanguageService');
+        $languageService = Yii::$app->get(LanguageService::class);
         $languageService->saveApiLanguage($paySchet->ID, $this->payForm->language);
 
         return $paySchet;
@@ -169,6 +169,9 @@ class MerchantPayCreateStrategy
         if (!$paySchet->save()) {
             throw new CreatePayException('Не удалось создать счет');
         }
+
+        Yii::info('id: ' . $paySchet->ID . ', timeout: ' . $this->payForm->timeout . ' minutes', 'mfo');
+
         return $paySchet;
     }
 

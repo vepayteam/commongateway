@@ -2,13 +2,11 @@
 
 namespace app\services;
 
+use app\services\payment\models\PaySchetLanguage;
 use yii\base\Component;
 
 class LanguageService extends Component
 {
-    private const CACHE_KEY = 'LanguageService.paySchetId.';
-    private const CACHE_DURATION = 60 * 120; // 2 hours
-
     const API_LANG_RUS = 'rus';
     const API_LANG_ENG = 'eng';
 
@@ -22,28 +20,62 @@ class LanguageService extends Component
         self::API_LANG_ENG => self::APP_LANG_ENG,
     ];
 
-    public function saveApiLanguage(int $paySchetId, string $apiLanguage)
+    /**
+     * Сохраняет язык для конкретного paySchet
+     *
+     * @param int $paySchetId
+     * @param string|null $apiLanguage
+     * @return void
+     */
+    public function saveApiLanguage(int $paySchetId, ?string $apiLanguage)
     {
-        \Yii::$app->cache->set($this->getCacheKey($paySchetId), $apiLanguage, self::CACHE_DURATION);
+        /**
+         * Если apiLanguage не передан, то просто выходим из функции и ничего не сохраняем в таблицу,
+         * в дальнейшем значение языка приложения будет по умолчанию ru-RU
+         */
+        if (!$apiLanguage) {
+            return;
+        }
+
+        $paySchetLanguage = PaySchetLanguage::findOne([
+            'paySchetId' => $paySchetId,
+        ]);
+
+        if (!$paySchetLanguage) {
+            $paySchetLanguage = new PaySchetLanguage();
+            $paySchetLanguage->paySchetId = $paySchetId;
+        }
+
+        $paySchetLanguage->apiLanguage = $apiLanguage;
+        $paySchetLanguage->save();
     }
 
+    /**
+     * Устанавливает язык приложения для конкретного paySchet
+     *
+     * @param int $paySchetId
+     * @return void
+     */
     public function setAppLanguage(int $paySchetId)
     {
-        $apiLanguage = \Yii::$app->cache->get($this->getCacheKey($paySchetId));
-        if ($apiLanguage && array_key_exists($apiLanguage, $this->apiLangToAppLang)) {
-            \Yii::$app->language = $this->apiLangToAppLang[$apiLanguage];
+        $paySchetLanguage = PaySchetLanguage::findOne([
+            'paySchetId' => $paySchetId,
+        ]);
+
+        if ($paySchetLanguage) {
+            \Yii::$app->language = $this->apiLangToAppLang[$paySchetLanguage->apiLanguage];
         } else {
-            \Yii::$app->language = $this->apiLangToAppLang[self::API_LANG_RUS];
+            \Yii::$app->language = self::APP_LANG_RUS;
         }
     }
 
+    /**
+     * Возвращает язык приложения
+     *
+     * @return string
+     */
     public function getAppLanguage(): string
     {
         return \Yii::$app->language;
-    }
-
-    private function getCacheKey(int $paySchetId): string
-    {
-        return self::CACHE_KEY . $paySchetId;
     }
 }

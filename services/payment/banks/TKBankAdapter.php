@@ -33,6 +33,7 @@ use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
+use app\services\payment\banks\data\ClientData;
 use app\services\payment\banks\interfaces\ITKBankAdapterResponseErrors;
 use app\services\payment\banks\traits\TKBank3DSTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
@@ -1129,7 +1130,7 @@ class TKBankAdapter implements IBankAdapter
      * @throws Check3DSv2Exception
      * @throws CreatePayException
      */
-    public function createPay(CreatePayForm $createPayForm)
+    public function createPay(CreatePayForm $createPayForm, ClientData $clientData)
     {
         /** @var Check3DSVersionResponse $check3DSVersionResponse */
         $check3DSVersionResponse = $this->check3DSVersion($createPayForm);
@@ -1605,6 +1606,7 @@ class TKBankAdapter implements IBankAdapter
         $outCardPayRequest = new OutCardPayRequest();
         $outCardPayRequest->ExtId = $outCardPayForm->paySchet->ID;
         $outCardPayRequest->Amount = $outCardPayForm->paySchet->getSummFull();
+        $outCardPayRequest->Fullname = !empty($outCardPayForm->paySchet->CardHolder) ? $outCardPayForm->paySchet->CardHolder : 'NONAME NONAME';
         $outCardPayRequest->CardInfo = [
             'CardNumber' => $outCardPayForm->cardnum,
         ];

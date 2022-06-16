@@ -1,4 +1,4 @@
-FROM registry.vepay.cf/apache-php as base
+FROM registry.vepay.cf/apache-php:7.2 as base
 
 LABEL maintainer="Vadims I <vivolgin@vepay.online>"
 
@@ -23,7 +23,7 @@ RUN set -ex \
 
 USER ${RUN_USER}:${RUN_GROUP}
 
-#FROM registry.vepay.cf/apache-php as vendor
+#FROM registry.vepay.cf/apache-php:7.2 as vendor
 #
 #ARG COMPOSER_VERSION=1.10.16
 #ENV COMPOSER_VERSION=${COMPOSER_VERSION}
@@ -39,7 +39,7 @@ USER ${RUN_USER}:${RUN_GROUP}
 #    && composer --working-dir="${APACHE_DOCUMENT_ROOT}/" --ansi --no-interaction --no-cache update \
 #    && composer --working-dir="${APACHE_DOCUMENT_ROOT}/" --ansi --no-interaction --no-cache install
 #
-#FROM registry.vepay.cf/apache-php as assets
+#FROM registry.vepay.cf/apache-php:7.2 as assets
 #
 #COPY --from=vendor ${APACHE_DOCUMENT_ROOT}/vendor ${APACHE_DOCUMENT_ROOT}/vendor
 #COPY config ${APACHE_DOCUMENT_ROOT}/config
@@ -67,7 +67,7 @@ USER ${RUN_USER}:${RUN_GROUP}
 #    && chown -R ${RUN_USER}:${RUN_GROUP} web/
 #### @TODO Intermidate containers enable when VF comes out
 
-FROM registry.vepay.cf/apache-php as dev
+FROM registry.vepay.cf/apache-php:7.2 as dev
 
 ARG COMPOSER_VERSION=1.10.16
 ENV COMPOSER_VERSION=${COMPOSER_VERSION}

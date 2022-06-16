@@ -29,7 +29,7 @@ class OutCardPayForm extends Model implements AmountFormInterface
     public $amount = 0;
     public $extid = '';
     public $document_id = '';
-    public $fullname = '';
+    public $fullname = 'NONAME NONAME';
     public $currency = 'RUB';
 
     public $card = 0;

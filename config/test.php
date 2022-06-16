@@ -62,6 +62,7 @@ return [
         \app\services\CompensationService::class => \app\services\CompensationService::class,
         \app\services\RecurrentPaymentPartsService::class => \app\services\RecurrentPaymentPartsService::class,
         \app\services\PaymentService::class => \app\services\PaymentService::class,
+        \app\services\LanguageService::class => \app\services\LanguageService::class,
     ],
     'params' => $params,
     'container' => [
@@ -73,7 +74,6 @@ return [
             'AuthService' => ['class' => 'app\services\auth\AuthService'],
             'NotificationsService' => ['class' => 'app\services\notifications\NotificationsService'],
             'WallettoExchangeRateService' => ['class' => 'app\services\exchange_rates\WallettoExchangeRateService'],
-            'LanguageService' => ['class' => 'app\services\LanguageService'],
         ],
     ],
     'modules' => [

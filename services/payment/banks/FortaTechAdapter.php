@@ -20,6 +20,7 @@ use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
+use app\services\payment\banks\data\ClientData;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CardTokenException;
 use app\services\payment\exceptions\CreatePayException;
@@ -69,6 +70,7 @@ class FortaTechAdapter implements IBankAdapter
     const REFUND_REFRESH_STATUS_JOB_DELAY = 30;
 
     const STATUS_NOT_FOUND_CODE = 404;
+    const STATUS_FORBIDDEN_CODE = 403;
 
     const DB_SESSION_EXCEPTION_MESSAGE = 'Startup of infobase session is not allowed';
     const ERROR_MESSAGE_COMMON = 'Ошибка проведения платежа. Пожалуйста, повторите попытку позже';
@@ -154,7 +156,7 @@ class FortaTechAdapter implements IBankAdapter
     /**
      * @inheritDoc
      */
-    public function createPay(CreatePayForm $createPayForm)
+    public function createPay(CreatePayForm $createPayForm, ClientData $clientData)
     {
         $createPayResponse = new CreatePayResponse();
 
@@ -772,6 +774,9 @@ class FortaTechAdapter implements IBankAdapter
                     /** Форта может прислать ответ с кодом 404, в таком случае ошибку нужно записать в ErrorInfo */
                     if ($statusCode === self::STATUS_NOT_FOUND_CODE) {
                         throw new FortaClientException($responseBody, $statusCode);
+                    }
+                    if ($statusCode === self::STATUS_FORBIDDEN_CODE) {
+                        throw new FortaClientException(self::ERROR_MESSAGE_COMMON, $statusCode);
                     }
 
                     throw new FortaClientException(\Yii::t('app.payment-errors', 'Ошибка запроса'), $statusCode);
