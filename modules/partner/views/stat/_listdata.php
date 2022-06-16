@@ -102,7 +102,7 @@ use yii\widgets\LinkPager;
                 <td><?= Html::encode($row['CardType']) ?></td>
                 <td><?= Html::encode($row['CountryUser'] . " " . $row['CityUser']) ?></td>
                 <td><?= Html::encode($row['IdOrg']) ?></td>
-                <td><?= Html::encode($row['CardNumber']) ?></td>
+                <td><?= Html::encode($row['CardNum']) ?></td>
                 <td><?= Html::encode($row['CardHolder']) ?></td>
                 <td><?= Html::encode($row['RRN']) ?></td>
                 <td><?= Html::encode($row['IdKard']) ?></td>
