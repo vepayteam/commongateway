@@ -346,6 +346,25 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/OutCard"
+            example: 
+              card: 0
+              cardnum: stringstringstring
+              amount: 0
+              extid: string
+              document_id: string
+              fullname: string
+              currency: RUB
+              birthDate: string
+              countryOfCitizenship: 'RU'
+              countryOfResidence: 'RU'
+              birthPlace: string
+              documentType: 'passport'
+              documentIssuer: string
+              documentIssuedAt: string
+              documentValidUntil: string
+              documentSeries: string
+              documentNumber: string
+              phone: string
         description: Параметры перевода
         required: true
       responses:
