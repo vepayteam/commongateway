@@ -1416,6 +1416,10 @@ components:
         status:
           type: integer
           description: Статус (0 - в обработке, 1 - успешно, 2 - ошибка, 3 - отменен)
+        serviceType:
+            type: string
+            description: Тип операции
+            example: Платёж AFT
         message:
           type: string
           description: Сообщение ошибки
@@ -1431,6 +1435,10 @@ components:
             status:
                 type: integer
                 description: Статус (0 - в обработке, 1 - успешно, 2 - ошибка, 3 - отменен)
+            serviceType:
+                type: string
+                description: Тип операции
+                example: Платёж AFT
             message:
                 type: string
                 description: Сообщение ошибки
