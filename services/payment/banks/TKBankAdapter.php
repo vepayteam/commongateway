@@ -1602,6 +1602,7 @@ class TKBankAdapter implements IBankAdapter
         $outCardPayRequest = new OutCardPayRequest();
         $outCardPayRequest->ExtId = $outCardPayForm->paySchet->ID;
         $outCardPayRequest->Amount = $outCardPayForm->paySchet->getSummFull();
+        $outCardPayRequest->Fullname = !empty($outCardPayForm->paySchet->CardHolder) ? $outCardPayForm->paySchet->CardHolder : 'NONAME NONAME';
         $outCardPayRequest->CardInfo = [
             'CardNumber' => $outCardPayForm->cardnum,
         ];
