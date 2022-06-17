@@ -372,6 +372,7 @@ class PayController extends Controller
         if($paySchet->Status == PaySchet::STATUS_WAITING) {
             return [
                 'status' => 0,
+                'serviceType' => $paySchet->uslugatovar->type->Name,
                 'message' => 'В обработке',
                 'rc' => '',
                 'channel' => $paySchet->bank->ChannelName,
@@ -379,6 +380,7 @@ class PayController extends Controller
         } else {
             return [
                 'status' => (int)$paySchet->Status,
+                'serviceType' => $paySchet->uslugatovar->type->Name,
                 'message' => (string)$paySchet->ErrorInfo,
                 'rc' => $paySchet->RCCode,
                 'channel' => $paySchet->bank->ChannelName,
@@ -405,6 +407,7 @@ class PayController extends Controller
         if($paySchet->Status == PaySchet::STATUS_WAITING) {
             return [
                 'status' => 0,
+                'serviceType' => $paySchet->uslugatovar->type->Name,
                 'message' => 'В обработке',
                 'rc' => '',
                 'channel' => $paySchet->bank->ChannelName,
@@ -413,6 +416,7 @@ class PayController extends Controller
         } else {
             return [
                 'status' => (int)$paySchet->Status,
+                'serviceType' => $paySchet->uslugatovar->type->Name,
                 'message' => (string)$paySchet->ErrorInfo,
                 'rc' => $paySchet->RCCode,
                 'channel' => $paySchet->bank->ChannelName,

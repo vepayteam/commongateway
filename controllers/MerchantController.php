@@ -327,6 +327,7 @@ class MerchantController extends Controller
 
             $state = [
                 'status' => (int)$confirmPayResult['status'],
+                'serviceType' => $paySchet->uslugatovar->type->Name,
                 'message' => (string)$confirmPayResult['message'],
                 'rc' => isset($confirmPayResult['rc']) ? (string)$confirmPayResult['rc'] : '',
                 'info' => $confirmPayResult['info'],
