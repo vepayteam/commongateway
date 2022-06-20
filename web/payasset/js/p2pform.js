@@ -16,15 +16,24 @@ function decimalAdjust(type, value, exp) {
     value = value.toString().split('e');
     return +(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp));
 }
+
+function convertToFullYear(lastPartYear) {
+    var today = new Date()
+    var startPartYear = Math.floor(today.getFullYear() / 100)
+
+    return parseInt(startPartYear.toString() + lastPartYear.toString())
+}
+
 if (!Math.ceil10) {
-    Math.ceil10 = function(value, exp) {
+    Math.ceil10 = function (value, exp) {
         return decimalAdjust('ceil', value, exp);
     };
 }
+
 $(document).ready(function() {
-    var tooltipIsShow = false;
+
     $("input").inputmask({
-        "placeholder": "",
+        placeholder: '',
         showMaskOnHover: false,
         showMaskOnFocus: false
     });
@@ -33,86 +42,60 @@ $(document).ready(function() {
         content: null
     });
 
-    $("input").on('keyup', function() {
-        if(tooltipIsShow) {
-            $('input').tooltipster('content', null);
-            $('input').css({'border-color': 'rgb(230, 230, 230)'});
-            tooltipIsShow = false;
-        }
+    function enableSendButton () {
+        $('#submit_btn').prop( "disabled", false);
+    }
 
-        if($(this).inputmask('isComplete')) {
-            var sequence = parseInt($(this).data('sequence')) + 1;
-            $(`input[data-sequence=${sequence}]`).focus();
-        }
-    })
+    function disableSendButton () {
+        $('#submit_btn').prop( "disabled", true);
+    }
 
-    $("#btnClose").click(function() {
-        window.location = $(this).data('url');
-    })
+    function checkButtonState () {
+        var paymentAmount = $('#payment_amount').val()
 
-    $('#agreeOffer').change(function() {
-        if($(this).is(":checked")) {
-            $('.submitBtn').prop( "disabled", false);
+        var isChecked = $('#agree_offer').is(":checked")
+        var isValidPaymentAmount = paymentAmount && parseInt(paymentAmount) > 0
+
+        if(isChecked && isValidPaymentAmount) {
+            enableSendButton()
         } else {
-            $('.submitBtn').prop( "disabled", true);
+            disableSendButton()
         }
+    }
+
+    $('#agree_offer').change(function() {
+        checkButtonState()
     })
 
-    $('#paymentAmount').on('change keyup', function() {
-        var amount = parseInt($(this).val());
-        var comiss = amount * (pcComission/100);
-        if(comiss < minsumComiss) {
-            comiss = minsumComiss;
+    $('#payment_amount').on('change keyup', function() {
+        var val = $(this).val()
+        if (!val) {
+            val = 0
         }
-        $('#paymentComission').val(Math.ceil10(comiss, -2).toString());
+
+        var amount = parseInt(val);
+        var commission = amount * (pcComission/100);
+        if(commission < minsumComiss) {
+            commission = minsumComiss;
+        }
+
+        var strValue = Math.ceil10(commission, -2).toFixed(2).replace('.', ',')
+        $('#payment_commission').text(strValue);
+        checkButtonState()
     })
 
-    $('#sendForm').click(function(e) {
+    $('#submit_btn').click(function(e) {
         e.preventDefault();
 
-        if($('.submitBtn').prop( "disabled")) {
-            return false;
-        }
+        disableSendButton()
 
-        if(!$("#agreeOffer").prop('checked')) {
-            $("#formErrorOfferMessage").show();
-            return false;
-        } else {
-            $("#formErrorOfferMessage").hide();
-        }
+        $('#form__payment_details_error').css({'display': 'none'})
 
         var csrfParam = $('meta[name=csrf-param]').attr("content");
         var csrfToken = $('meta[name=csrf-token]').attr("content");
 
         var valid = true;
-        var amount = parseFloat($('#paymentAmount').val());
-        var expMonth = parseFloat($('#expMonth').val());
-        var expYear = parseFloat($('#expYear').val());
-        var cvv = $('#cvv').val();
-        var holder = $('#holder').val();
-        var cardPan = '';
-        var outCardPan = '';
-        for(var i = 1; i <= 4; i++) {
-            cardPan += $('#cardPan' + i.toString()).val()
-            outCardPan += $('#outCardPan' + i.toString()).val()
-        }
-
-        if(expYear == currYear && expMonth < currMonth) {
-            $('#expMonth').css({'border-color': 'red'});
-            $('#expYear').css({'border-color': 'red'});
-            valid = false;
-        } else {
-            $('#expMonth').css({'border-color': 'rgb(230, 230, 230)'});
-            $('#expYear').css({'border-color': 'rgb(230, 230, 230)'});
-        }
-
-        if(amount < minSum || amount > maxSum) {
-            $('#paymentAmount').css({'border-color': 'red'});
-            valid = false;
-        } else {
-            $('#paymentAmount').css({'border-color': 'rgb(230, 230, 230)'});
-        }
-
+        var tooltipIsShow = false;
         $("input").each(function() {
             if(!$(this).inputmask('isComplete')) {
                 valid = false;
@@ -121,29 +104,64 @@ $(document).ready(function() {
                     $(this).tooltipster('content', 'Поле заполнено некорректно');
                     $(this).tooltipster('show');
                     tooltipIsShow = true;
-
                 }
             } else {
                 $(this).tooltipster('content', null);
-                $(this).css({'border-color': 'rgb(230, 230, 230)'});
+                $(this).css({'border-color': ''});
             }
         })
 
         if(!valid) {
-            $("#formErrorMessage").show();
+            checkButtonState()
             return false;
+        }
+
+        var amount = parseFloat($('#payment_amount').val());
+        var cvv = $('#cvv').val();
+        var holder = $('#cardholder_name').val();
+        var cardPan = $('#card_number').val();
+        var outCardPan = $('#out_card_number').val();
+
+        if (amount > maxSum) {
+            $('#payment_amount').css({'border-color': 'red'});
+            valid = false;
+
+            $('#form__payment_details_error').html('Максимальная сумма платежа <b>' + maxSum.toFixed(2).replace('.', ',') + '</b> ₽')
+            $('#form__payment_details_error').css({'display': 'block'})
+        } else if (amount < minSum) {
+            $('#payment_amount').css({'border-color': 'red'});
+            valid = false;
+
+            $('#form__payment_details_error').html('Минимальная сумма платежа <b>' + minSum.toFixed(2).replace('.', ',') + '</b> ₽')
+            $('#form__payment_details_error').css({'display': 'block'})
+        }
+
+        var expiryDate = $('#expiry_date').val()
+        var expiryDateMatch = expiryDate.match(/(\d{1,2})\/(\d{2})/)
+        var expMonth = parseInt(expiryDateMatch[1])
+        var expYear = parseInt(expiryDateMatch[2])
+        expYear = convertToFullYear(expYear)
+
+        if(expYear === currYear && expMonth < currMonth) {
+            $('#expiry_date').css({'border-color': 'red'});
+            valid = false;
         } else {
-            $("#formErrorMessage").hide();
+            $('#expiry_date').css({'border-color': ''});
+        }
+
+        if(!valid) {
+            checkButtonState()
+            return false;
         }
 
         var data = {
             amount: amount,
-            cardPan: cardPan,
+            cardPan: cardPan.replaceAll(' ', ''),
             cardExpMonth: expMonth,
             cardExpYear: expYear,
             cvv: cvv,
             cardHolder: holder,
-            outCardPan: outCardPan,
+            outCardPan: outCardPan.replaceAll(' ', ''),
         }
         data[csrfParam] = csrfToken;
         $.ajax({
@@ -151,17 +169,21 @@ $(document).ready(function() {
             url: '/p2p/send/' + paySchetId,
             data: data,
             success: function(response) {
+                checkButtonState()
+
                 if(response.status == 1) {
                     window.location = response.url;
                 } else {
-                    alert(response.message);
+                    $('#form__payment_details_error').text(response.message)
+                    $('#form__payment_details_error').css({'display': 'block'})
                 }
             },
             error: function(response) {
-                alert('Ошибка запроса');
+                checkButtonState()
+
+                $('#form__payment_details_error').text('Ошибка запроса')
+                $('#form__payment_details_error').css({'display': 'block'})
             }
         })
-
-        return false;
     })
 })

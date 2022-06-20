@@ -53,12 +53,6 @@ class m220412_124429_remove_columns_from_table_partner extends Migration
                 $this->dropColumn('partner', $columnName);
             }
         }
-        // Remove old migrations
-        Yii::$app->db->createCommand("DELETE
-    FROM migration
-    WHERE version = 'm200514_132711_mtsconfig'
-       OR version = 'm201001_052755_add_mts_gates'
-")->execute();
     }
 
     /**

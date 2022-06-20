@@ -4,6 +4,7 @@
 namespace app\models\kfapi;
 
 
+use app\services\LanguageService;
 use yii\base\Model;
 
 class   KfPayParts extends KfPay
@@ -29,6 +30,7 @@ class   KfPayParts extends KfPay
     public $failurl = '';
     public $cancelurl = '';
     public $postbackurl = '';
+    public $language;
 
     public $parts = [];
 
@@ -50,7 +52,9 @@ class   KfPayParts extends KfPay
 
             [['parts'], 'required', 'on' => [self::SCENARIO_FORM, self::SCENARIO_AUTO]],
             [['parts'], 'validateParts', 'on' => [self::SCENARIO_FORM, self::SCENARIO_AUTO]],
-            [['type'], 'integer', 'min' => 0,'on' => [self::SCENARIO_FORM]]
+            [['type'], 'integer', 'min' => 0,'on' => [self::SCENARIO_FORM]],
+
+            [['language'], 'in', 'range' => LanguageService::ALL_API_LANG_LIST],
         ];
     }
 

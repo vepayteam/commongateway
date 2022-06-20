@@ -59,10 +59,12 @@ class OtchToCSV extends ToCSV
                 'Дата оплаты',
                 'Номер транзакции',
                 'ID мерчанта',
+                'Тип карты',
                 'Маска карты',
                 'Держатель карты',
                 'RRN',
                 'Хэш от номера карты',
+                'Маска карты получателя',
                 'Наименование банка-эквайера',
                 ]
         );
@@ -155,10 +157,12 @@ class OtchToCSV extends ToCSV
                         $data->DateOplat > 0 ? date("d.m.Y H:i:s", $data->DateOplat) : '',
                         $data->ExtBillNumber,
                         $data->IdOrg,
+                        $data->CardType,
                         $data->CardNum,
                         $data->CardHolder,
                         $data->RRN,
                         $data->IdKard,
+                        $data->OutCardPan,
                         $data->BankName,
                     ]
 

@@ -130,7 +130,7 @@ class CheckpayCron
             $paySchets = PaySchet::find()
                 ->andWhere(['=', 'Status', PaySchet::STATUS_WAITING])
                 ->andWhere(['is', 'ExtBillNumber', null])
-                ->andWhere(['<', 'DateLastUpdate', new Expression('UNIX_TIMESTAMP() - (TimeElapsed * 2)')])
+                ->andWhere(['<', 'DateLastUpdate', new Expression('UNIX_TIMESTAMP() - TimeElapsed')])
                 ->joinWith(['uslugatovar' => function (ActiveQuery $query) {
                     return $query->andWhere(['!=', 'uslugatovar.IsCustom', UslugatovarType::TOCARD]);
                 }])

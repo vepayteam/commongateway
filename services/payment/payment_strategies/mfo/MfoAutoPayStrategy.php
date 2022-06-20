@@ -152,7 +152,6 @@ class MfoAutoPayStrategy
         $paySchet->Status = PaySchet::STATUS_NOT_EXEC;
         $paySchet->IdKard = $card->ID;
         $paySchet->CardNum = Cards::MaskCard($card->CardNumber);
-        $paySchet->CardType = Cards::GetCardBrand(Cards::GetTypeCard($card->CardNumber));
         $paySchet->CardHolder = mb_substr($card->CardHolder, 0, 99);
         $paySchet->CardExp = $card->getMonth() . $card->getYear();
         $paySchet->IdShablon = $token;

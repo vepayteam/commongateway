@@ -24,11 +24,8 @@ use yii\db\ActiveQuery;
  * @property string $NameUsluga [varchar(200)]  naimenovanie uslugi
  * @property string $InfoUsluga [varchar(500)]  opisanie uslugi
  * @property string $SitePoint [varchar(50)]  sait ustanovki
- * @property string $PatternFind [varchar(250)]  pattern dlia poiska provaidera po qr-cody
  * @property string $ProfitExportFormat [varchar(250)]  format eksporta: LS, PERIOD, FIO, ADDRESS
- * @property string $QrcodeExportFormat [varchar(500)]  qr code format eksporta: LS, PERIOD, FIO, ADDRESS
  * @property string $SchetchikFormat [varchar(250)]  schetchiki uslugi, razdelenie |, format - regexp
- * @property string $SchetchikNames [varchar(250)]  naimenovanie schetchikov uslugi, razdelenie |
  * @property string $SchetchikIzm [varchar(250)]  edinicy izmerenia schetchikov uslugi, razdelenie |
  * @property string $PartnerSiteReferer [varchar(250)]  referer dlia freima saita partnera po usluge
  * @property string $PcComission [double unsigned]  procent komissii
@@ -66,7 +63,6 @@ use yii\db\ActiveQuery;
  * @property string $UrlReturnCancel [varchar(500)]  url dlia vozvrata v magazin pri otmene
  * @property string $SupportInfo [varchar(100)]  email slujby podderjki magazina
  * @property int $IdBankRekviz [int(10) unsigned]  id partner_bank_rekviz
- * @property bool $SendToGisjkh [tinyint(1) unsigned]  1 - otpravliat v gis jkh
  * @property bool $EnabledStatus [tinyint(1) unsigned]  0 - novaya 1 - activnaya 2 - zablokirovana
  * @property bool $IsDeleted [tinyint(1) unsigned]  0 - activen 1 - udalen
  * @property bool $HideFromList
@@ -143,13 +139,13 @@ class Uslugatovar extends \yii\db\ActiveRecord
                 'PcComission', 'MinsumComiss'
                 ], 'required'],
             [['ExtReestrIDUsluga', 'IsCustom', 'Group', 'Region', 'MinSumm', 'MaxSumm', 'TypeExport', 'ProfitIdProvider',
-                'IdBankRekviz', 'TypeReestr', 'SendToGisjkh', 'IsCustom', 'EnabledStatus', 'IdMagazin', 'HideFromList'], 'integer'],
+                'IdBankRekviz', 'TypeReestr', 'IsCustom', 'EnabledStatus', 'IdMagazin', 'HideFromList'], 'integer'],
             [['CustomData'], 'string'],
             [['PcComission', 'MinsumComiss', 'ProvVoznagPC', 'ProvVoznagMin', 'ProvComisPC', 'ProvComisMin'], 'number'],
             [['NameUsluga'], 'string', 'max' => 200],
-            [['PatternFind', 'ProfitExportFormat', 'SchetchikFormat', 'SchetchikNames', 'SchetchikIzm',
+            [['ProfitExportFormat', 'SchetchikFormat', 'SchetchikIzm',
                 'Regex', 'PartnerSiteReferer', 'CommentsInfo'], 'string', 'max' => 250],
-            [['InfoUsluga', 'QrcodeExportFormat', 'Information', 'Labels', 'Comments', 'Example',
+            [['InfoUsluga', 'Information', 'Labels', 'Comments', 'Example',
                 'LabelsInfo', 'Mask', 'UrlInform', 'UrlReturn', 'UrlReturnFail', 'UrlReturnCancel', 'UrlCheckReq'], 'string', 'max' => 500],
             [['LogoProv', 'EmailReestr', 'ExampleInfo', 'MaskInfo', 'RegexInfo', 'SupportInfo','ReestrNameFormat'
                 ], 'string', 'max' => 100],
@@ -182,13 +178,10 @@ class Uslugatovar extends \yii\db\ActiveRecord
             'ExtReestrIDUsluga' => 'ID МФО для перечисления',
             'NameUsluga' => 'Наименование',
             'InfoUsluga' => 'Информация об услуге',
-            'PatternFind' => 'Паттерн поиска по qr-коду',
             'ProfitExportFormat' => 'Формат полей из реестра',
             'SchetchikFormat' => 'Формат счетчиков',
-            'SchetchikNames' => 'Подпись счетчиков (устар)',
             'SchetchikIzm' => 'edinicy izmerenia schetchikov uslugi, razdelenie |',
             'PartnerSiteReferer' => 'referer dlia freima saita partnera po usluge',
-            'QrcodeExportFormat' => 'Формат экспорта по qr-коду',
             'PcComission' => 'Комиссия с клиента %',
             'MinsumComiss' => 'Комиссия с клиента не менее, руб.',
             'Information' => 'informacia po usluge',
@@ -212,7 +205,6 @@ class Uslugatovar extends \yii\db\ActiveRecord
             'EmailReestr' => 'Email для реестров',
             'IdBankRekviz' => 'Реквизиты банка',
             'HideFromList' => 'Скрыта из списка',
-            'SendToGisjkh' => 'Отправлять в ГИС ЖКХ',
             'IsDeleted' => '0 - activen 1 - udalen',
             'LabelsInfo' => 'Подпись ввода для запроса',
             'CommentsInfo' => 'Комментарий для запроса',
@@ -229,7 +221,6 @@ class Uslugatovar extends \yii\db\ActiveRecord
         return [
             'ProfitExportFormat' => 'LS|PERIOD|FIO|ADDRESS',
             'SchetchikFormat' => 'HV1|GV1|HV2|GV2|ELE',
-            'QrcodeExportFormat' => 'par=<имя>=<подпись>|...###smk=<имя суммы> (par - параметр, per - период MMYY)',
         ];
     }
 

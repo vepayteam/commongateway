@@ -19,6 +19,7 @@ use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\SendP2pResponse;
 use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
+use app\services\payment\banks\data\ClientData;
 use app\services\payment\CurlSSLStructure;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\BRSAdapterExeception;
@@ -65,7 +66,7 @@ class BRSAdapter implements IBankAdapter
     const AFT_MIN_SUMM = 180000;
     const KEYS_PATH = '@app/config/brs/';
 
-    const BALANCE_CARD_NUM = '5100476090795931'; // Карта используется для запроса баланса TODO: переместить в другое место?
+    const BALANCE_CARD_NUM = '5100920551403998'; // Карта используется для запроса баланса TODO: переместить в другое место?
     const BALANCE_FAKE_AMOUNT = 1000;
 
     const BRS_RESPONSE_SYSTEM_ERROR_CODE = 1001;
@@ -164,7 +165,7 @@ class BRSAdapter implements IBankAdapter
     /**
      * @inheritDoc
      */
-    public function createPay(CreatePayForm $createPayForm)
+    public function createPay(CreatePayForm $createPayForm, ClientData $clientData)
     {
         $uri = '/ecomm2/MerchantHandler';
 

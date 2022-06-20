@@ -22,14 +22,18 @@ class Modifiers
 
     public static function searchAndReplacePan(string $input): string
     {
-        preg_match_all('/(?<pan>[23456]\d{15,17})/xu', $input, $cards);
+        preg_match_all('/(?<pan>\b[23456]\d{15,18}\b)/xu', $input, $cards);
         foreach ($cards['pan'] as $card) {
             if (Validators::checkByLuhnAlgorithm($card)) {
-                $panMaskedLen = strlen($card) - 10;
+                $offset = 6;
+                if (strpos($card, '22') === 0) {
+                    $offset = 8;
+                }
+                $panMaskedLen = strlen($card) - $offset - 4;
                 $masked = substr_replace(
                     $card,
                     str_pad('', $panMaskedLen, '*'),
-                    6,
+                    $offset,
                     $panMaskedLen
                 );
                 $input = str_replace($card, $masked, $input);

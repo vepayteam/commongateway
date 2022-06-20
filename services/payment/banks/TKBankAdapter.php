@@ -33,6 +33,7 @@ use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
+use app\services\payment\banks\data\ClientData;
 use app\services\payment\banks\interfaces\ITKBankAdapterResponseErrors;
 use app\services\payment\banks\traits\TKBank3DSTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
@@ -262,11 +263,11 @@ class TKBankAdapter implements IBankAdapter
                     case BaseResponse::STATUS_CANCEL :
                         throw new reRequestingStatusOkException($msg);
                     default:
-                        throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
+                        throw new BankAdapterResponseException(\Yii::t('app.payment-errors', 'Ошибка запроса'));
                 }
             }
         } else {
-            throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
+            throw new BankAdapterResponseException(\Yii::t('app.payment-errors', 'Ошибка запроса'));
         }
     }
 
@@ -625,7 +626,7 @@ class TKBankAdapter implements IBankAdapter
             }
         }
 
-        return ['status' => 0, 'message' => 'Ошибка запроса'];
+        return ['status' => 0, 'message' => \Yii::t('app.payment-errors', 'Ошибка запроса')];
     }
 
     /**
@@ -661,7 +662,7 @@ class TKBankAdapter implements IBankAdapter
             }
         }
 
-        return ['status' => 0, 'message' => 'Ошибка запроса'];
+        return ['status' => 0, 'message' => \Yii::t('app.payment-errors', 'Ошибка запроса')];
     }
 
     /**
@@ -697,7 +698,7 @@ class TKBankAdapter implements IBankAdapter
             }
         }
 
-        return ['status' => 0, 'message' => 'Ошибка запроса'];
+        return ['status' => 0, 'message' => \Yii::t('app.payment-errors', 'Ошибка запроса')];
     }
 
     /**
@@ -733,7 +734,7 @@ class TKBankAdapter implements IBankAdapter
             }
         }
 
-        return ['status' => 0, 'message' => 'Ошибка запроса'];
+        return ['status' => 0, 'message' => \Yii::t('app.payment-errors', 'Ошибка запроса')];
     }
 
     public function ActivateCard($Id, array $params)
@@ -1129,7 +1130,7 @@ class TKBankAdapter implements IBankAdapter
      * @throws Check3DSv2Exception
      * @throws CreatePayException
      */
-    public function createPay(CreatePayForm $createPayForm)
+    public function createPay(CreatePayForm $createPayForm, ClientData $clientData)
     {
         /** @var Check3DSVersionResponse $check3DSVersionResponse */
         $check3DSVersionResponse = $this->check3DSVersion($createPayForm);
@@ -1222,9 +1223,9 @@ class TKBankAdapter implements IBankAdapter
         if (key_exists('httperror', $ans)) {
             if ($ans['httperror']['Code'] == 'MPI_ERROR') {
                 $paySchet->Status = BaseResponse::STATUS_ERROR;
-                $paySchet->ErrorInfo = 'Ошибка запроса. Пожалуйста, повторите попытку позже.';
+                $paySchet->ErrorInfo = \Yii::t('app.payment-errors', 'Ошибка запроса, попробуйте повторить позднее');
                 $paySchet->save(false);
-                throw new BankAdapterResponseException('Ошибка запроса. Пожалуйста, повторите попытку позже.');
+                throw new BankAdapterResponseException(\Yii::t('app.payment-errors', 'Ошибка запроса, попробуйте повторить позднее'));
             }
         }
 
@@ -1243,7 +1244,7 @@ class TKBankAdapter implements IBankAdapter
                 $payResponse->message = $xml['errorinfo']['errormessage'];
             }
         } else {
-            throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
+            throw new BankAdapterResponseException(\Yii::t('app.payment-errors', 'Ошибка запроса, попробуйте повторить позднее'));
         }
 
         return $payResponse;
@@ -1293,7 +1294,7 @@ class TKBankAdapter implements IBankAdapter
                 : $client->debitFinishAft($request);
         } catch (GuzzleException $e) {
             \Yii::$app->errorHandler->logException($e);
-            throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее.');
+            throw new BankAdapterResponseException(\Yii::t('app.payment-errors', 'Ошибка запроса, попробуйте повторить позднее'));
         }
 
         if ($response instanceof ErrorResponse) {
@@ -1381,7 +1382,7 @@ class TKBankAdapter implements IBankAdapter
             );
             return true;
         } else {
-            throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее');
+            throw new BankAdapterResponseException(\Yii::t('app.payment-errors', 'Ошибка запроса, попробуйте повторить позднее'));
         }
     }
 
@@ -1415,7 +1416,7 @@ class TKBankAdapter implements IBankAdapter
             $response = $client->debit3ds2Finish($request);
         } catch (GuzzleException $e) {
             \Yii::$app->errorHandler->logException($e);
-            throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее.');
+            throw new BankAdapterResponseException(\Yii::t('app.payment-errors', 'Ошибка запроса, попробуйте повторить позднее'));
         }
 
         if ($response instanceof ErrorResponse) {
@@ -1451,7 +1452,7 @@ class TKBankAdapter implements IBankAdapter
             $response = $client->getOrderState(new GetOrderStateRequest($extId));
         } catch (GuzzleException $e) {
             \Yii::$app->errorHandler->logException($e);
-            throw new BankAdapterResponseException('Ошибка запроса, попробуйте повторить позднее.'); // legacy logic
+            throw new BankAdapterResponseException(\Yii::t('app.payment-errors', 'Ошибка запроса, попробуйте повторить позднее')); // legacy logic
         }
 
         if ($response instanceof ErrorResponse) {
@@ -1573,7 +1574,7 @@ class TKBankAdapter implements IBankAdapter
             $status = isset($ans['xml']['errorinfo']['errorcode'])
                 ? BaseResponse::STATUS_ERROR
                 : BaseResponse::STATUS_CREATED;
-            $message = $ans['xml']['errorinfo']['errormessage'] ?? 'Ошибка запроса';
+            $message = $ans['xml']['errorinfo']['errormessage'] ?? \Yii::t('app.payment-errors', 'Ошибка запроса');
 
             $refundPayResponse->state = $status == 0;
             $refundPayResponse->status = $status;
@@ -1601,6 +1602,7 @@ class TKBankAdapter implements IBankAdapter
         $outCardPayRequest = new OutCardPayRequest();
         $outCardPayRequest->ExtId = $outCardPayForm->paySchet->ID;
         $outCardPayRequest->Amount = $outCardPayForm->paySchet->getSummFull();
+        $outCardPayRequest->Fullname = !empty($outCardPayForm->paySchet->CardHolder) ? $outCardPayForm->paySchet->CardHolder : 'NONAME NONAME';
         $outCardPayRequest->CardInfo = [
             'CardNumber' => $outCardPayForm->cardnum,
         ];
@@ -1613,10 +1615,10 @@ class TKBankAdapter implements IBankAdapter
             if(!array_key_exists('errorinfo', $ans['xml']) || (isset($ans['xml']['errorinfo']['errorcode']) && $ans['xml']['errorinfo']['errorcode'] == 0)) {
                 $outCardPayResponse->status = BaseResponse::STATUS_DONE;
                 $outCardPayResponse->trans = $ans['xml']['orderid'];
-                $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'] ?? 'Ошибка запроса';
+                $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'] ?? \Yii::t('app.payment-errors', 'Ошибка запроса');
             } else {
                 $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
-                $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'] ?? 'Ошибка запроса';
+                $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'] ?? \Yii::t('app.payment-errors', 'Ошибка запроса');
             }
         } else {
             // timeout
@@ -1631,16 +1633,16 @@ class TKBankAdapter implements IBankAdapter
                     if(!array_key_exists('errorinfo', $ans['xml']) || (isset($ans['xml']['errorinfo']['errorcode']) && $ans['xml']['errorinfo']['errorcode'] == 0)) {
                         $outCardPayResponse->status = BaseResponse::STATUS_DONE;
                         $outCardPayResponse->trans = $ans['xml']['orderid'];
-                        $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'] ?? 'Ошибка запроса';
+                        $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'] ?? \Yii::t('app.payment-errors', 'Ошибка запроса');
                     } else {
                         $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
-                        $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'] ?? 'Ошибка запроса';
+                        $outCardPayResponse->message = $ans['xml']['errorinfo']['errormessage'] ?? \Yii::t('app.payment-errors', 'Ошибка запроса');
                     }
                 }
             } else {
                 // другая ошибка без результата
                 $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
-                $outCardPayResponse->message = 'Ошибка запроса';
+                $outCardPayResponse->message = \Yii::t('app.payment-errors', 'Ошибка запроса');
             }
         }
 
@@ -1705,11 +1707,11 @@ class TKBankAdapter implements IBankAdapter
                 $outAccountPayResponse->message = $ans['xml']['errorinfo']['errormessage'];
             } else {
                 $outAccountPayResponse->status = BaseResponse::STATUS_ERROR;
-                $outAccountPayResponse->message = 'Ошибка запроса';
+                $outAccountPayResponse->message = \Yii::t('app.payment-errors', 'Ошибка запроса');
             }
         } else {
             $outAccountPayResponse->status = BaseResponse::STATUS_ERROR;
-            $outAccountPayResponse->message = 'Ошибка запроса';
+            $outAccountPayResponse->message = \Yii::t('app.payment-errors', 'Ошибка запроса');
         }
 
         return $outAccountPayResponse;

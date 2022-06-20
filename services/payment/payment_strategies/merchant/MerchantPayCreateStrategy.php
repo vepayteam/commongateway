@@ -6,6 +6,7 @@ namespace app\services\payment\payment_strategies\merchant;
 
 use app\models\api\Reguser;
 use app\models\payonline\Uslugatovar;
+use app\services\LanguageService;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
@@ -66,6 +67,11 @@ class MerchantPayCreateStrategy
 
         Yii::warning('createPaySchet extid=' . $this->payForm->extid, 'merchant');
         $paySchet = $this->createPaySchet($bankAdapterBuilder);
+
+        /** @var LanguageService $languageService */
+        $languageService = Yii::$app->get(LanguageService::class);
+        $languageService->saveApiLanguage($paySchet->ID, $this->payForm->language);
+
         return $paySchet;
     }
 
@@ -163,6 +169,9 @@ class MerchantPayCreateStrategy
         if (!$paySchet->save()) {
             throw new CreatePayException('Не удалось создать счет');
         }
+
+        Yii::info('id: ' . $paySchet->ID . ', timeout: ' . $this->payForm->timeout . ' minutes', 'mfo');
+
         return $paySchet;
     }
 

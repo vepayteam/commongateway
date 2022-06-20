@@ -11,6 +11,7 @@ use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
+use app\services\payment\banks\bank_adapter_responses\createPayResponse\AcsRedirectData;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
@@ -19,6 +20,7 @@ use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
+use app\services\payment\banks\data\ClientData;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
@@ -92,7 +94,7 @@ class GratapayAdapter implements IBankAdapter
     /**
      * @inheritDoc
      */
-    public function createPay(CreatePayForm $createPayForm)
+    public function createPay(CreatePayForm $createPayForm, ClientData $clientData)
     {
         $paySchet = $createPayForm->getPaySchet();
         $createPayRequest = new CreatePayRequest();
@@ -127,6 +129,7 @@ class GratapayAdapter implements IBankAdapter
                 $createPayResponse->url = $responseBody['redirect']['url']
                     . '?data='
                     . urlencode($responseBody['redirect']['params']['data']);
+                $createPayResponse->acs = new AcsRedirectData(AcsRedirectData::STATUS_OK, $createPayResponse->url, 'GET');
             } else {
                 $createPayResponse->status = BaseResponse::STATUS_ERROR;
                 $createPayResponse->message = substr($responseBody['message'] ?? '', 0, 255);
