@@ -1250,6 +1250,7 @@ components:
           type: string
           minLength: 16
           maxLength: 18
+          example: xxxxxxxxxxxxxxxx
           description: Номер карты (16/18 цифр)
         amount:
           type: number
@@ -1269,11 +1270,13 @@ components:
         currency:
           type: string
           maxLength: 5
+          default: 'RUB'
+          example: 'RUB'
           description: Код валюты (по умолчанию, RUB)
-
         birthDate:
           type: string
           description: Дата рождения, dd.mm.yyyy
+          example: '23.06.1900'
         countryOfCitizenship:
           type: string
           default: 'RU'
