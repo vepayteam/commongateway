@@ -132,10 +132,24 @@ class GratapayAdapter implements IBankAdapter
                 $createPayResponse->status = BaseResponse::STATUS_DONE;
                 $createPayResponse->transac = $responseBody['id'];
                 $createPayResponse->isNeed3DSRedirect = true;
-                $createPayResponse->url = $responseBody['redirect']['url']
-                    . '?data='
-                    . urlencode($responseBody['redirect']['params']['data']);
-                $createPayResponse->acs = new AcsRedirectData(AcsRedirectData::STATUS_OK, $createPayResponse->url, 'GET');
+
+                if ($responseBody['redirect']['method'] === 'GET') {
+                    $createPayResponse->url = $responseBody['redirect']['url'] . '?'
+                        . http_build_query($responseBody['redirect']['params']);
+                    $createPayResponse->acs = new AcsRedirectData(
+                        AcsRedirectData::STATUS_OK,
+                        $createPayResponse->url,
+                        'GET'
+                    );
+                } elseif ($responseBody['redirect']['method'] === 'POST') {
+                    $createPayResponse->url = $responseBody['redirect']['url'];
+                    $createPayResponse->acs = new AcsRedirectData(
+                        AcsRedirectData::STATUS_OK,
+                        $createPayResponse->url,
+                        'POST',
+                        $responseBody['redirect']['params']
+                    );
+                }
             } else {
                 $createPayResponse->status = BaseResponse::STATUS_ERROR;
                 $createPayResponse->message = substr($responseBody['message'] ?? '', 0, 255);
