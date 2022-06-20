@@ -10,6 +10,7 @@ class OutCardPayRequest extends Model
 {
     public $ExtId;
     public $Amount;
+    public $Fullname = 'NONAME NONAME';
     public $Description;
     public $CardInfo;
 

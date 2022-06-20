@@ -168,6 +168,7 @@ class PayShetStat extends Model
                                                'ps.BankName',
                                                'ps.IdKard',//IdCard->cards->IdPan->pan_token->encryptedPan
                                                'b.Name as BankName',
+                                               'ps.OutCardPan',
                                            ])
                                            ->from('`pay_schet` AS ps')
                                            ->leftJoin('`banks` AS b', 'ps.Bank = b.ID')
@@ -329,6 +330,7 @@ class PayShetStat extends Model
                 'ps.FIO',
                 'ps.RCCode',
                 'b.Name as BankName',
+                'ps.OutCardPan',
                 'RefundAmount' => $refundAmountSubQuery,
             ];
             $query = $this->buildQuery($select, $IdPart);

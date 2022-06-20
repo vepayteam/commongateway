@@ -49,7 +49,7 @@ class MfoCardRegStrategy
         $paySchet = $this->createPaySchet($user, $bankAdapterBuilder);
 
         /** @var LanguageService $languageService */
-        $languageService = \Yii::$container->get('LanguageService');
+        $languageService = \Yii::$app->get(LanguageService::class);
         $languageService->saveApiLanguage($paySchet->ID, $this->cardRegByPayForm->language);
 
         return $paySchet;
