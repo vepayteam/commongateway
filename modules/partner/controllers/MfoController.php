@@ -11,6 +11,7 @@ use app\services\balance\Balance;
 use app\services\balance\BalanceService;
 use app\services\balance\models\PartsBalanceForm;
 use app\services\balance\models\PartsBalancePartnerForm;
+use Throwable;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
@@ -208,50 +209,60 @@ class MfoController extends Controller
     public function actionBalanceorder()
     {
         if (Yii::$app->request->isAjax) {
-            $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-            if ($IsAdmin) {
-                $idpartner = (int)Yii::$app->request->post('idpartner');
+            try {
+                $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+                if ($IsAdmin) {
+                    $idpartner = (int)Yii::$app->request->post('idpartner');
 
-            } else {
-                $idpartner = UserLk::getPartnerId(Yii::$app->user);
+                } else {
+                    $idpartner = UserLk::getPartnerId(Yii::$app->user);
+                }
+
+                $dateFrom = strtotime(Yii::$app->request->post('datefrom') . ":00");
+                $dateTo = strtotime(Yii::$app->request->post('dateto') . ":59");
+                $istransit = (int)Yii::$app->request->post('istransit', 0);
+                $sort = (int)Yii::$app->request->post('sort', 0);
+
+                Yii::$app->response->format = Response::FORMAT_JSON;
+                $partner = Partner::findOne(['ID' => $idpartner]);
+                $MfoBalance = new MfoBalance($partner);
+
+                if ($istransit == 10 || $istransit == 11) {
+                    $istransit -= 10;
+                }
+                $ostBeg = number_format($MfoBalance->GetOstBeg($dateFrom, $dateTo,$istransit)/100.0, 2, '.', ' ');
+                $ostEnd = number_format($MfoBalance->GetOstBeg($dateFrom, $dateTo,$istransit)/100.0, 2, '.', ' ');
+                $data = ($istransit == 10 || $istransit == 11)
+                    ? $this->renderPartial('_balanceorderlocal', [
+                        'listorder' => $MfoBalance->GetOrdersLocal($istransit - 10, $dateFrom, $dateTo, $sort),
+                        'IsAdmin' => $IsAdmin,
+                        'sort' => $sort
+                    ])
+                    : $this->renderPartial('_balanceorder', [
+                        'listorder' => $MfoBalance->GetBankStatemets($istransit, $dateFrom, $dateTo, $sort),
+                        'IsAdmin' => $IsAdmin,
+                        'sort' => $sort,
+                        'dateFrom' => $dateFrom,
+                        'dateTo' => $dateTo,
+                        'istransit' => $istransit,
+                        'IdPartner' => $idpartner
+                    ]);
+
+                return [
+                    'status' => 1,
+                    'ostbeg' => $ostBeg,
+                    'ostend' => $ostEnd,
+                    'data' => $data
+                ];
+            } catch (Throwable $e) {
+                Yii::error('balanceorder error: '
+                           . '| Message: ' . $e->getMessage()
+                           . '| File: ' . $e->getFile()
+                           . '| Line: ' . $e->getLine()
+                           . '| Trace: ' . $e->getTraceAsString()
+                    , 'mfo');
+                return ['status' => 0, 'message' => 'Ошибка получения баланса'];
             }
-
-            $dateFrom = strtotime(Yii::$app->request->post('datefrom') . ":00");
-            $dateTo = strtotime(Yii::$app->request->post('dateto') . ":59");
-            $istransit = (int)Yii::$app->request->post('istransit', 0);
-            $sort = (int)Yii::$app->request->post('sort', 0);
-
-            Yii::$app->response->format = Response::FORMAT_JSON;
-            $partner = Partner::findOne(['ID' => $idpartner]);
-            $MfoBalance = new MfoBalance($partner);
-
-            if ($istransit == 10 || $istransit == 11) {
-                $istransit -= 10;
-            }
-            $ostBeg = number_format($MfoBalance->GetOstBeg($dateFrom, $dateTo,$istransit)/100.0, 2, '.', ' ');
-            $ostEnd = number_format($MfoBalance->GetOstBeg($dateFrom, $dateTo,$istransit)/100.0, 2, '.', ' ');
-            $data = ($istransit == 10 || $istransit == 11)
-                ? $this->renderPartial('_balanceorderlocal', [
-                    'listorder' => $MfoBalance->GetOrdersLocal($istransit - 10, $dateFrom, $dateTo, $sort),
-                    'IsAdmin' => $IsAdmin,
-                    'sort' => $sort
-                ])
-                : $this->renderPartial('_balanceorder', [
-                    'listorder' => $MfoBalance->GetBankStatemets($istransit, $dateFrom, $dateTo, $sort),
-                    'IsAdmin' => $IsAdmin,
-                    'sort' => $sort,
-                    'dateFrom' => $dateFrom,
-                    'dateTo' => $dateTo,
-                    'istransit' => $istransit,
-                    'IdPartner' => $idpartner
-                ]);
-
-            return [
-                'status' => 1,
-                'ostbeg' => $ostBeg,
-                'ostend' => $ostEnd,
-                'data' => $data
-            ];
         } else {
             return $this->redirect('/partner');
         }
