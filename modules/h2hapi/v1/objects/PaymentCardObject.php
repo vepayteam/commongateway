@@ -78,8 +78,9 @@ class PaymentCardObject extends ApiObject
         $currentMonth = (int)date('n');
         if (
             $month < 1 || $month > 12
-            || $year + 2000 < $currentYear
-            || ($year + 2000 == $currentYear && $month < $currentMonth)
+            // TODO: https://it.dengisrazy.ru/browse/VPBC-1468
+//            || $year + 2000 < $currentYear
+//            || ($year + 2000 == $currentYear && $month < $currentMonth)
             || $year + 2000 > $currentYear + 10
         ) {
             $this->addError('expires', 'Неверный срок действия.');

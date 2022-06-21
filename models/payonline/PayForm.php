@@ -45,8 +45,9 @@ class PayForm extends Model
                     if (!preg_match('/^[01]\d{3}$/', $this->CardExp) ||
                         $CardMonth < 1 ||
                         $CardMonth > 12 ||
-                        $CardYear + 2000 < date('Y') ||
-                        ($CardYear + 2000 == date('Y') && $CardMonth < date('n')) ||
+                        // TODO: https://it.dengisrazy.ru/browse/VPBC-1468
+//                        $CardYear + 2000 < date('Y') ||
+//                        ($CardYear + 2000 == date('Y') && $CardMonth < date('n')) ||
                         $CardYear + 2000 > date('Y') + 10
                     ) {
                         $this->addError($attribute, \Yii::t('app.payment-errors', 'Неверный Срок действия'));
