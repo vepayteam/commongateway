@@ -1541,7 +1541,7 @@ class TKBankAdapter implements IBankAdapter
 
         $createRecurrentPayResponse->status = BaseResponse::STATUS_ERROR;
         $createRecurrentPayResponse->message = '';
-        if ( 0 === substr_compare($ans['error'], '500', -3) ) {
+        if (0 === substr_compare($ans['error'], '500', -3)) {
             $createRecurrentPayResponse->status = BaseResponse::STATUS_CREATED;
             $createRecurrentPayResponse->message = 'Ожидается обновление статуса';
         }
