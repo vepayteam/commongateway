@@ -4,6 +4,7 @@ namespace app\models\crypt;
 
 use Yii;
 use yii\helpers\Json;
+use \app\models\payonline\Cards;
 
 class Tokenizer
 {
@@ -30,9 +31,11 @@ class Tokenizer
         }
         try {
             $firstDigits = 6;
-            if (strpos($CardNumber, '22') === 0) {
+
+            if (Cards::GetTypeCard($CardNumber) == Cards::BRAND_MIR) {
                 $firstDigits = 8;
             }
+
             $this->db->createCommand()->insert('pan_token', [
                 'FirstSixDigits' => substr($CardNumber, 0, $firstDigits),
                 'LastFourDigits' => substr($CardNumber, -4, 4),
