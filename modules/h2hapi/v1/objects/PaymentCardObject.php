@@ -79,8 +79,14 @@ class PaymentCardObject extends ApiObject
         if (
             $month < 1 || $month > 12
             // TODO: https://it.dengisrazy.ru/browse/VPBC-1468
-//            || $year + 2000 < $currentYear
-//            || ($year + 2000 == $currentYear && $month < $currentMonth)
+            || (in_array(Cards::GetCardBrand($this->cardNumber), [
+                    Cards::BRAND_AMERICAN_EXPRESS,
+                    Cards::BRAND_MAESTRO,
+                    Cards::BRAND_MASTERCARD
+                ]) &&
+                ($year + 2000 < date('Y') ||
+                ($year + 2000 == date('Y') && $month < date('n')))
+            )
             || $year + 2000 > $currentYear + 10
         ) {
             $this->addError('expires', 'Неверный срок действия.');
