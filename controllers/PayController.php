@@ -458,7 +458,7 @@ class PayController extends Controller
             $okPayStrategy = new OkPayStrategy($okPayForm);
             $paySchet = $okPayStrategy->exec();
         } catch (BankAdapterResponseException $e) {
-            Yii::warning($e->getMessage());
+            Yii::warning($e);
             return $this->render('paywait');
         }
         Yii::info('PayController orderok IdPay=' . $id . ' okPayStrategy exec ok'
