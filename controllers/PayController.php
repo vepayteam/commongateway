@@ -153,7 +153,7 @@ class PayController extends Controller
                 }
 
                 /** @var LanguageService $languageService */
-                $languageService = Yii::$container->get('LanguageService');
+                $languageService = Yii::$app->get(LanguageService::class);
                 $languageService->setAppLanguage($params['ID']);
 
                 $payschets->SetIpAddress($params['ID']);
@@ -224,7 +224,7 @@ class PayController extends Controller
         }
 
         /** @var LanguageService $languageService */
-        $languageService = Yii::$container->get('LanguageService');
+        $languageService = Yii::$app->get(LanguageService::class);
         $languageService->setAppLanguage($form->IdPay);
 
         if (!$form->validate()) {
@@ -523,7 +523,7 @@ class PayController extends Controller
         }
 
         /** @var LanguageService $languageService */
-        $languageService = Yii::$container->get('LanguageService');
+        $languageService = Yii::$app->get(LanguageService::class);
         $languageService->setAppLanguage($okPayForm->IdPay);
 
         // Wait until the "order done" mutex lock released.
@@ -586,7 +586,7 @@ class PayController extends Controller
         Yii::warning("PayForm orderfail id={$id}");
 
         /** @var LanguageService $languageService */
-        $languageService = Yii::$container->get('LanguageService');
+        $languageService = Yii::$app->get(LanguageService::class);
         $languageService->setAppLanguage($id);
 
         return $this->render('paycancel');

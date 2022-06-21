@@ -69,7 +69,7 @@ class MerchantPayCreateStrategy
         $paySchet = $this->createPaySchet($bankAdapterBuilder);
 
         /** @var LanguageService $languageService */
-        $languageService = Yii::$container->get('LanguageService');
+        $languageService = Yii::$app->get(LanguageService::class);
         $languageService->saveApiLanguage($paySchet->ID, $this->payForm->language);
 
         return $paySchet;

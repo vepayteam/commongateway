@@ -25,7 +25,7 @@ class KfCard extends CardBase
     public $postbackurl;
     public $postbackurl_v2;
 
-    public $language = LanguageService::API_LANG_RUS;
+    public $language;
 
     /* @var null|User */
     public $user = null;
