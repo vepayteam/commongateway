@@ -203,7 +203,7 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
                 <div id="yandex-pay-data" style="display: none;">
                     <input type="hidden" id="yandexPayMerchantId" value="<?= Html::encode($yandexPayMerchantId) ?>">
                     <input type="hidden" id="paymentId" value="<?= Html::encode($params['ID']) ?>">
-                    <input type="hidden" id="paymentAmount" value="<?= Html::encode($params['amountPay']) ?>">
+                    <input type="hidden" id="paymentAmount" value="<?= Html::encode(PaymentHelper::convertToFullAmount($params['SummFull'])) ?>">
                     <input type="hidden" id="partnerId" value="<?= Html::encode($params['IDPartner']) ?>">
                     <input type="hidden" id="partnerName" value="<?= Html::encode($params['NamePartner']) ?>">
                 </div>

@@ -56,6 +56,21 @@ class DecryptedMessagePaymentDetails extends Model
     }
 
     /**
+     * Возвращяет expiration карты в формате MMYY
+     *
+     * @return string
+     */
+    public function getFullExpiration(): string
+    {
+        $strMonth = (string)$this->getExpirationMonth();
+        $strYear = (string)$this->getExpirationYear();
+
+        $strMonth = str_pad($strMonth, 2, '0', STR_PAD_LEFT);
+
+        return "{$strMonth}{$strYear}";
+    }
+
+    /**
      * @return string
      */
     public function getPan(): string

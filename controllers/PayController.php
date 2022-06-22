@@ -295,68 +295,6 @@ class PayController extends Controller
         }
     }
 
-    /**
-     * TODO перенести в отдельный контроллер
-     */
-    public function actionYandexPay($id)
-    {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
-        $form = new YandexPayForm();
-        if (!$form->load(\Yii::$app->request->post(), '') || !$form->validate()) {
-            return [
-                'status' => 0,
-                'message' => $form->firstErrors[0],
-            ];
-        }
-
-        $paySchet = PaySchet::findOne(['ID' => $id]);
-        if (!$paySchet) {
-            return [
-                'status' => 0,
-                'message' => 'Платеж не найден',
-            ];
-        }
-
-        $rawDecodedPaymentToken = base64_decode($form->paymentToken);
-        $paymentToken = new PaymentToken(Json::decode($rawDecodedPaymentToken));
-
-        /** @var YandexPayService $yandexPayService */
-        $yandexPayService = \Yii::$app->get(YandexPayService::class);
-
-        if (!$yandexPayService->isYandexPayEnabled($paySchet)) {
-            return [
-                'status' => 0,
-                'message' => 'Yandex Pay не подключен',
-            ];
-        }
-
-        try {
-            $jsonDecryptedMessage = $yandexPayService->decryptPaymentToken($paymentToken, $paySchet);
-            $decryptedMessage = $yandexPayService->saveYandexTransaction($jsonDecryptedMessage, $paySchet);
-        } catch (\Exception $e) {
-            Yii::error([
-                'PayController actionYandexPay payment token decrypt exception',
-                $rawDecodedPaymentToken,
-                $e
-            ]);
-
-            return [
-                'status' => 0,
-                'message' => 'Ошибка запроса',
-            ];
-        }
-
-        return [
-            'status' => 1,
-            'data' => [
-                'pan' => $decryptedMessage->getPaymentMethodDetails()->getPan(),
-                'expiration_year' => $decryptedMessage->getPaymentMethodDetails()->getExpirationYear(),
-                'expiration_month' => $decryptedMessage->getPaymentMethodDetails()->getExpirationMonth(),
-            ],
-        ];
-    }
-
     public function actionCreatepaySecondStep($id)
     {
         // TODO: refact

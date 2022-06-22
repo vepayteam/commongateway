@@ -4,7 +4,6 @@ namespace app\services;
 
 use app\clients\YandexPayClient;
 use app\clients\yandexPayClient\requests\PaymentUpdateRequest;
-use app\clients\yandexPayClient\responses\RootKeyListResponse;
 use app\models\PaySchetYandex;
 use app\models\YandexPayRootKey;
 use app\services\payment\models\PaySchet;
@@ -35,24 +34,17 @@ class YandexPayService extends Component
     }
 
     /**
-     * Верфиицирует и расшифровывает payment token
+     * Расшифровывает paymentToken и возвращает decryptedMessage
      *
      * @param PaymentToken $paymentToken
      * @param PaySchet $paySchet
-     * @return string
+     * @return DecryptedMessage
      * @throws YandexPayException
      */
-    public function decryptPaymentToken(PaymentToken $paymentToken, PaySchet $paySchet): string
+    public function getDecryptedMessage(PaymentToken $paymentToken, PaySchet $paySchet): DecryptedMessage
     {
-        $rootKeys = $this->getKeys();
-
-        $paymentTokenVerify = new PaymentTokenVerify();
-        $paymentTokenVerify->validate($paymentToken, $rootKeys);
-
-        $encryptionKeyReader = $this->getEncryptionKeyReader($paySchet);
-
-        $paymentTokenDecrypt = new PaymentTokenDecrypt();
-        return $paymentTokenDecrypt->decrypt($paymentToken, $encryptionKeyReader);
+        $jsonDecryptedMessage = $this->decryptPaymentToken($paymentToken, $paySchet);
+        return $this->saveYandexTransaction($jsonDecryptedMessage, $paySchet);
     }
 
     /**
@@ -114,26 +106,6 @@ class YandexPayService extends Component
     }
 
     /**
-     * Сохраняет транзакцию yandex в бд и возвращает DecryptedMessage
-     *
-     * @param string $jsonDecryptedMessage
-     * @param PaySchet $paySchet
-     * @return DecryptedMessage
-     */
-    public function saveYandexTransaction(string $jsonDecryptedMessage, PaySchet $paySchet): DecryptedMessage
-    {
-        $decryptedMessage = new DecryptedMessage(Json::decode($jsonDecryptedMessage));
-
-        $paySchetYandex = new PaySchetYandex();
-        $paySchetYandex->paySchetId = $paySchet->ID;
-        $paySchetYandex->messageId = $decryptedMessage->getMessageId();
-        $paySchetYandex->decryptedMessage = $jsonDecryptedMessage;
-        $paySchetYandex->save();
-
-        return $decryptedMessage;
-    }
-
-    /**
      * Получает root ключи с серверов яндекса и обновляет их в бд
      *
      * @return void
@@ -180,25 +152,68 @@ class YandexPayService extends Component
     }
 
     /**
+     * Сохраняет транзакцию yandex в бд и возвращает DecryptedMessage
+     *
+     * @param string $jsonDecryptedMessage
+     * @param PaySchet $paySchet
+     * @return DecryptedMessage
+     */
+    private function saveYandexTransaction(string $jsonDecryptedMessage, PaySchet $paySchet): DecryptedMessage
+    {
+        $decryptedMessage = new DecryptedMessage(Json::decode($jsonDecryptedMessage));
+
+        $paySchetYandex = new PaySchetYandex();
+        $paySchetYandex->paySchetId = $paySchet->ID;
+        $paySchetYandex->messageId = $decryptedMessage->getMessageId();
+        $paySchetYandex->decryptedMessage = $jsonDecryptedMessage;
+        $paySchetYandex->save();
+
+        return $decryptedMessage;
+    }
+
+    /**
+     * Верфиицирует и расшифровывает payment token
+     *
+     * @param PaymentToken $paymentToken
+     * @param PaySchet $paySchet
+     * @return string
+     * @throws YandexPayException
+     */
+    private function decryptPaymentToken(PaymentToken $paymentToken, PaySchet $paySchet): string
+    {
+        $rootKeys = $this->getKeys();
+
+        $paymentTokenVerify = new PaymentTokenVerify();
+        $paymentTokenVerify->validate($paymentToken, $rootKeys);
+
+        $encryptionKeyReader = $this->getEncryptionKeyReader($paySchet);
+
+        $paymentTokenDecrypt = new PaymentTokenDecrypt();
+        return $paymentTokenDecrypt->decrypt($paymentToken, $encryptionKeyReader);
+    }
+
+    /**
      * @return YandexPayRootKey[]
      * @throws YandexPayException
      */
     private function getKeys(): array
     {
         $yandexPayRootKeys = YandexPayRootKey::find()->all();
-        if (count($yandexPayRootKeys) === 0) {
-            \Yii::info('YandexPayService getKeys no keys found in db');
-            $this->updateKeys();
+        if (count($yandexPayRootKeys) > 0) {
+            return $yandexPayRootKeys;
         }
 
-        return $yandexPayRootKeys;
+        \Yii::info('YandexPayService getKeys no keys found in db');
+        $this->updateKeys();
+
+        return YandexPayRootKey::find()->all();
     }
 
     /**
      * @param PaySchet $paySchet
      * @return EncryptionKeyReader
      */
-    public function getEncryptionKeyReader(PaySchet $paySchet): EncryptionKeyReader
+    private function getEncryptionKeyReader(PaySchet $paySchet): EncryptionKeyReader
     {
         return new EncryptionKeyReader([
             'partner' => $paySchet->partner,

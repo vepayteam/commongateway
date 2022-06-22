@@ -16,17 +16,6 @@ function hideLoader(errorMessage) {
   }
 }
 
-function getFullExpiration(data) {
-  const month = data.expiration_month.toString()
-  const year = data.expiration_year.toString()
-
-  if (month.length === 1) {
-    month = '0' + month
-  }
-
-  return month + '/' + year.substring(2)
-}
-
 function onYaPayLoad() {
   const YaPay = window.YaPay;
 
@@ -96,7 +85,7 @@ function onYaPayLoad() {
 
         showLoader()
 
-        $.ajax('/pay/yandex-pay/' + paymentId, {
+        $.ajax('/yandex-pay/create-pay/' + paymentId, {
           data: JSON.stringify({
             paymentToken: event.token,
           }),
@@ -110,8 +99,7 @@ function onYaPayLoad() {
           else {
             hideLoader()
 
-            $('#payform-cardnumber').val(response.data.pan)
-            $('#payform-cardexp').val(getFullExpiration(response.data))
+            payform.createPaySuccess(response)
           }
         }).fail(function (error) {
           hideLoader('Ошибка запроса')

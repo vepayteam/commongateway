@@ -33,11 +33,11 @@ class PaymentToken extends Model
     public $intermediateSigningKey;
 
     /**
-     * @inheritdoc
+     * @param string $paymentToken
      */
-    public function __construct(array $config)
+    public function __construct(string $paymentToken)
     {
-        parent::__construct($config);
+        parent::__construct(Json::decode(base64_decode($paymentToken)));
     }
 
     /**
