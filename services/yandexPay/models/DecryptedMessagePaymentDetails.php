@@ -66,6 +66,7 @@ class DecryptedMessagePaymentDetails extends Model
         $strYear = (string)$this->getExpirationYear();
 
         $strMonth = str_pad($strMonth, 2, '0', STR_PAD_LEFT);
+        $strYear = substr($strYear, 2, 2);
 
         return "{$strMonth}{$strYear}";
     }
