@@ -56,7 +56,6 @@ class TransferToAccountRequest extends Model
             'bic',
             'firstName',
             'lastName',
-            'phone',
             'middleName',
             'amount',
             'currency',
