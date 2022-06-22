@@ -80,6 +80,7 @@ class YandexPayController extends Controller
 
         $createPayForm = new CreatePayForm([
             'CardNumber' => $decryptedMessage->getPaymentMethodDetails()->getPan(),
+            'CardHolder' => 'CARD HOLDER',
             'CardExp' => $decryptedMessage->getPaymentMethodDetails()->getFullExpiration(),
             'IdPay' => $id,
         ]);
