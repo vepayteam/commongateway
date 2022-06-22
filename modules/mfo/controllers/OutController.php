@@ -321,6 +321,7 @@ class OutController extends Controller
 
             return [
                 'status' => $status,
+                'serviceName' => $paySchet->uslugatovar->type->Name,
                 'message' => $message,
                 'rc' => $paySchet->RCCode,
                 'channel' => $paySchet->bank->ChannelName,
