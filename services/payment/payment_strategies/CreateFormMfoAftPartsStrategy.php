@@ -84,7 +84,7 @@ class CreateFormMfoAftPartsStrategy implements IMfoStrategy
             $payschetPart = new PayschetPart();
             $payschetPart->PayschetId = $params['IdPay'];
             $payschetPart->PartnerId = $part['merchant_id'];
-            $payschetPart->Amount = $part['amount'] * 100;
+            $payschetPart->Amount = (int)round($part['amount'] * 100);
             $payschetPart->save(false);
         }
 
