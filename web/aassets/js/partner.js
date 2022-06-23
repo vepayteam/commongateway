@@ -999,11 +999,13 @@
                     $("#plat-graph-city").empty();
                     $("#plat-graph-bank").empty();
                     $("#plat-graph-card").empty();
+                    $(".js-graph-row").hide();
                     $('#platelshikform').closest('.ibox-content').toggleClass('sk-loading');
                 },
                 success: function (data) {
                     $('#platelshikform').closest('.ibox-content').toggleClass('sk-loading');
                     if (data.status == 1) {
+                        $(".js-graph-row").show();
                         Morris.Donut({
                             element: 'plat-graph-country',
                             data: data.country,
@@ -1029,11 +1031,13 @@
                             resize: true
                         });
                     } else {
+                        $(".js-graph-row").hide();
                         $('#plat-graph-error').html(data.message);
                     }
                 },
                 error: function () {
                     $('#platelshikform').closest('.ibox-content').toggleClass('sk-loading');
+                    $(".js-graph-row").hide();
                     $('#plat-graph-error').html("Ошибка запроса");
                 }
             });
@@ -2539,6 +2543,81 @@
     }
 
     $(window).on('load', setDatePickerDateRangeValidation)
+
+
+    // задача https://it.dengisrazy.ru/browse/VPBC-1368
+    // изменить форму комиссий в настройках шлюзов
+
+    document.addEventListener("DOMContentLoaded", function() {
+
+        const gateForm = document.querySelector('#partner-edit__bank-gates-edit-modal__gate-form')
+
+        if (gateForm) {
+
+            const fixedComissionCurrency = gateForm.querySelector('select[name=FeeCurrencyId]')
+            const minimalComissionCurrency = gateForm.querySelector('select[name=MinimalFeeCurrencyId]')
+            const fixedCurrencyElements = gateForm.querySelectorAll('#comissionWrapper .fixedComissionCurrency')
+            const minimalCurrencyElements = gateForm.querySelectorAll('#comissionWrapper .minimalComissionCurrency')
+
+            function getSelectedCurrency (dropDown) {
+                const selectedCurrency = dropDown.options[dropDown.options.selectedIndex]
+                return selectedCurrency
+            }
+
+            function updateCurrency(selectedCurrency, elements) {
+                try {
+                    let currentCurrency;
+                    if (selectedCurrency) {
+                        currentCurrency = selectedCurrency.innerText
+                    }
+                    if (elements) {
+                        elements.forEach(function (el) {
+                            el.textContent = currentCurrency || ''
+                        })
+                    }
+                } catch (e) {
+                    console.log('ошибка изменения валюты', e)
+                }
+            }
+
+            fixedComissionCurrency.addEventListener('change', function (e) {
+                const selectedCurrency = getSelectedCurrency(e.target)
+                updateCurrency(selectedCurrency, fixedCurrencyElements)
+            })
+
+            minimalComissionCurrency.addEventListener('change', function (e) {
+                const selectedCurrency = getSelectedCurrency(e.target)
+                updateCurrency(selectedCurrency, minimalCurrencyElements)
+            })
+
+            const addGateBtn = document.querySelector('#partner-edit__bank-gates-table__add-button')
+            if (addGateBtn) {
+                addGateBtn.addEventListener('click', function () {
+                    // очищаем поля при добавлении нового шлюза
+                    updateCurrency({}, fixedCurrencyElements)
+                    updateCurrency({}, minimalCurrencyElements)
+
+                })
+            }
+
+            const editGateBtns = document.querySelectorAll('.partner-edit__bank-gates-table__edit-button')
+            if (editGateBtns) {
+                editGateBtns.forEach(function (button) {
+                    button.addEventListener('click', function () {
+                        setTimeout(function () {
+                            const fixedCurrency = getSelectedCurrency(fixedComissionCurrency)
+                            const minimalCurrency = getSelectedCurrency(minimalComissionCurrency)
+
+                            updateCurrency(fixedCurrency, fixedCurrencyElements)
+                            updateCurrency(minimalCurrency, minimalCurrencyElements)
+                            // ждем обновления selectedIndex 100 миллисекунд, иначе не успевает отобразиться информация
+                        }, 100)
+                    })
+                })
+            }
+        }
+
+    });
 
     window.loginNav = loginNav;
     window.lk = lk;
