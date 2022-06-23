@@ -64,7 +64,7 @@
 
         changepassw: function () {
 
-            $('#passwform').on('submit', function () {
+            $('#passwform').on('submit', function (e) {
 
                 toastr.options = {
                     closeButton: true,
@@ -73,6 +73,23 @@
                     timeOut: 1000,
                     escapeHtml: true
                 };
+
+                try {
+                    const oldPass = $('[name="oldpassw"]').val()
+                    const newPass = $('[name="passw"]').val()
+                    const newPass2 = $('[name="passw2"]').val()
+
+                    if (oldPass === newPass) {
+                        toastr.error("Ошибка, старый и новый пароли не должны совпадать", "Ошибка");
+                        return e.preventDefault()
+                    } else if (newPass !== newPass2) {
+                        toastr.error("Ошибка, введенные пароли не совпадают", "Ошибка");
+                        return e.preventDefault()
+                    }
+
+                } catch (e) {
+                    console.log('ошибка валидации паролей', e)
+                }
 
                 if (linklink) {
                     linklink.abort();
@@ -90,7 +107,7 @@
                             toastr.success("OK", "Пароль изменен");
                             $('#passwform').reset();
                         } else {
-                            toastr.error("Ошибка, введенные пароли не совпадают", "Ошибка");
+                            toastr.error("Ошибка, введенные пароли не соответствуют требованиям", "Ошибка");
                         }
                     },
                     error: function () {
@@ -2543,6 +2560,81 @@
     }
 
     $(window).on('load', setDatePickerDateRangeValidation)
+
+
+    // задача https://it.dengisrazy.ru/browse/VPBC-1368
+    // изменить форму комиссий в настройках шлюзов
+
+    document.addEventListener("DOMContentLoaded", function() {
+
+        const gateForm = document.querySelector('#partner-edit__bank-gates-edit-modal__gate-form')
+
+        if (gateForm) {
+
+            const fixedComissionCurrency = gateForm.querySelector('select[name=FeeCurrencyId]')
+            const minimalComissionCurrency = gateForm.querySelector('select[name=MinimalFeeCurrencyId]')
+            const fixedCurrencyElements = gateForm.querySelectorAll('#comissionWrapper .fixedComissionCurrency')
+            const minimalCurrencyElements = gateForm.querySelectorAll('#comissionWrapper .minimalComissionCurrency')
+
+            function getSelectedCurrency (dropDown) {
+                const selectedCurrency = dropDown.options[dropDown.options.selectedIndex]
+                return selectedCurrency
+            }
+
+            function updateCurrency(selectedCurrency, elements) {
+                try {
+                    let currentCurrency;
+                    if (selectedCurrency) {
+                        currentCurrency = selectedCurrency.innerText
+                    }
+                    if (elements) {
+                        elements.forEach(function (el) {
+                            el.textContent = currentCurrency || ''
+                        })
+                    }
+                } catch (e) {
+                    console.log('ошибка изменения валюты', e)
+                }
+            }
+
+            fixedComissionCurrency.addEventListener('change', function (e) {
+                const selectedCurrency = getSelectedCurrency(e.target)
+                updateCurrency(selectedCurrency, fixedCurrencyElements)
+            })
+
+            minimalComissionCurrency.addEventListener('change', function (e) {
+                const selectedCurrency = getSelectedCurrency(e.target)
+                updateCurrency(selectedCurrency, minimalCurrencyElements)
+            })
+
+            const addGateBtn = document.querySelector('#partner-edit__bank-gates-table__add-button')
+            if (addGateBtn) {
+                addGateBtn.addEventListener('click', function () {
+                    // очищаем поля при добавлении нового шлюза
+                    updateCurrency({}, fixedCurrencyElements)
+                    updateCurrency({}, minimalCurrencyElements)
+
+                })
+            }
+
+            const editGateBtns = document.querySelectorAll('.partner-edit__bank-gates-table__edit-button')
+            if (editGateBtns) {
+                editGateBtns.forEach(function (button) {
+                    button.addEventListener('click', function () {
+                        setTimeout(function () {
+                            const fixedCurrency = getSelectedCurrency(fixedComissionCurrency)
+                            const minimalCurrency = getSelectedCurrency(minimalComissionCurrency)
+
+                            updateCurrency(fixedCurrency, fixedCurrencyElements)
+                            updateCurrency(minimalCurrency, minimalCurrencyElements)
+                            // ждем обновления selectedIndex 100 миллисекунд, иначе не успевает отобразиться информация
+                        }, 100)
+                    })
+                })
+            }
+        }
+
+    });
 
     window.loginNav = loginNav;
     window.lk = lk;
