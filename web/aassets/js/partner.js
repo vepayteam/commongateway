@@ -64,7 +64,7 @@
 
         changepassw: function () {
 
-            $('#passwform').on('submit', function () {
+            $('#passwform').on('submit', function (e) {
 
                 toastr.options = {
                     closeButton: true,
@@ -73,6 +73,23 @@
                     timeOut: 1000,
                     escapeHtml: true
                 };
+
+                try {
+                    const oldPass = $('[name="oldpassw"]').val()
+                    const newPass = $('[name="passw"]').val()
+                    const newPass2 = $('[name="passw2"]').val()
+
+                    if (oldPass === newPass) {
+                        toastr.error("Ошибка, старый и новый пароли не должны совпадать", "Ошибка");
+                        return e.preventDefault()
+                    } else if (newPass !== newPass2) {
+                        toastr.error("Ошибка, введенные пароли не совпадают", "Ошибка");
+                        return e.preventDefault()
+                    }
+
+                } catch (e) {
+                    console.log('ошибка валидации паролей', e)
+                }
 
                 if (linklink) {
                     linklink.abort();
@@ -90,7 +107,7 @@
                             toastr.success("OK", "Пароль изменен");
                             $('#passwform').reset();
                         } else {
-                            toastr.error("Ошибка, введенные пароли не совпадают", "Ошибка");
+                            toastr.error("Ошибка, введенные пароли не соответствуют требованиям", "Ошибка");
                         }
                     },
                     error: function () {
