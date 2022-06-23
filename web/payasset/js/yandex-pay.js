@@ -85,7 +85,7 @@ function onYaPayLoad() {
 
         showLoader()
 
-        $.ajax('/yandex-pay/create-pay/' + paymentId, {
+        $.ajax('/pay/yandex-pay/' + paymentId, {
           data: JSON.stringify({
             paymentToken: event.token,
           }),

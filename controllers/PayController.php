@@ -208,7 +208,7 @@ class PayController extends Controller
      *
      * @return array|Response
      * @throws NotFoundHttpException
-     * @throws MerchantRequestAlreadyExistsException
+     * @throws \yii\base\InvalidConfigException
      */
     public function actionCreatepay()
     {
@@ -219,80 +219,73 @@ class PayController extends Controller
 
         $form = new CreatePayForm();
 
-        if (!$form->load(Yii::$app->request->post())) {
+        if (!$form->load(Yii::$app->request->post()) || $form->validate()) {
             return ['status' => 0, 'message' => $form->GetError()];
         }
 
-        /** @var LanguageService $languageService */
-        $languageService = Yii::$app->get(LanguageService::class);
-        $languageService->setAppLanguage($form->IdPay);
+        return $this->processCreatePayForm($form);
+    }
 
-        if (!$form->validate()) {
-            return ['status' => 0, 'message' => $form->GetError()];
+    /**
+     * @param $id
+     * @return array|Response
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function actionYandexPay($id)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $paySchet = PaySchet::findOne(['ID' => $id]);
+        if (!$paySchet) {
+            return [
+                'status' => 0,
+                'message' => 'Платеж не найден',
+            ];
         }
 
-        Yii::warning("PayForm create id=" . $form->IdPay);
-        Yii::$app->session->set('IdPay', $form->IdPay);
+        /** @var YandexPayService $yandexPayService */
+        $yandexPayService = \Yii::$app->get(YandexPayService::class);
+        if (!$yandexPayService->isYandexPayEnabled($paySchet)) {
+            return [
+                'status' => 0,
+                'message' => 'Yandex Pay не подключен',
+            ];
+        }
 
-        $createPayStrategy = new CreatePayStrategy($form);
+        $yandexPayForm = new YandexPayForm();
+        if (!$yandexPayForm->load(\Yii::$app->request->post(), '') || !$yandexPayForm->validate()) {
+            return [
+                'status' => 0,
+                'message' => $yandexPayForm->firstErrors[0],
+            ];
+        }
+
+        $paymentToken = new PaymentToken($yandexPayForm->paymentToken);
 
         try {
-            $paySchet = $createPayStrategy->exec();
-        } catch (DuplicateCreatePayException $e) {
-            // releaseLock сюда не надо, эксепшен вызывается при попытке провести платеж, который уже проведен
-            Yii::$app->errorHandler->logException($e);
-
-            return ['status' => 0, 'message' => $e->getMessage()];
-        } catch (CreatePayException | GateException | reRequestingStatusException | BankAdapterResponseException | Exception $e) {
-            Yii::$app->errorHandler->logException($e);
-            $createPayStrategy->releaseLock();
-
-            return ['status' => 0, 'message' => $e->getMessage()];
-        } catch (reRequestingStatusOkException $e) {
-            Yii::$app->errorHandler->logException($e);
-            $createPayStrategy->releaseLock();
-
-            return [
-                'status' => 2,
-                'message' => $e->getMessage(),
-                'url' => Yii::$app->params['domain'] . '/pay/orderok?id=' . $form->IdPay,
-            ];
-        } catch (FailPaymentException $e)   {
-            // The payment has failed: client redirect to orderok which, in turn, will redirect to the fail page
-            Yii::$app->errorHandler->logException($e);
-            $createPayStrategy->releaseLock();
-
-            return [
-                'status' => 2,
-                'message' => $e->getMessage(),
-                'url' => Url::to(['orderok', 'id' => $form->IdPay]),
-            ];
-        } catch (Check3DSv2Exception $e) {
-            Yii::$app->errorHandler->logException($e);
-            $createPayStrategy->releaseLock();
+            $decryptedMessage = $yandexPayService->getDecryptedMessage($paymentToken, $paySchet);
+        } catch (\Exception $e) {
+            \Yii::error([
+                'YandexPayController actionCreatePay payment token decrypt exception',
+                $yandexPayForm->paymentToken,
+                $e
+            ]);
 
             return [
                 'status' => 0,
-                'message' => \Yii::t('app.payment-errors', 'Карта не поддерживается, обратитесь в банк')
+                'message' => 'Ошибка запроса',
             ];
         }
 
-        $createPayResponse = $createPayStrategy->getCreatePayResponse();
-        $createPayResponse->termurl = $createPayResponse->GetRetUrl($paySchet->ID);
-        switch ($createPayResponse->status) {
-            case BaseResponse::STATUS_DONE:
-                // отправить запрос адреса формы 3ds
-                Yii::warning('PayController createPayResponse data: ' . Json::encode($createPayResponse->getAttributes()));
-                return $createPayResponse->getAttributes();
-            case BaseResponse::STATUS_ERROR:
-                // отменить счет
-                return $this->redirect(Url::to('/pay/orderok?id=' . $form->IdPay));
-            case BaseResponse::STATUS_CREATED:
-                $createPayResponse->termurl = $createPayResponse->getStep2Url($paySchet->ID);
-                return $createPayStrategy->getCreatePayResponse()->getAttributes();
-            default:
-                return $createPayStrategy->getCreatePayResponse()->getAttributes();
-        }
+        $createPayForm = new CreatePayForm([
+            'CardNumber' => $decryptedMessage->getPaymentMethodDetails()->getPan(),
+            'CardHolder' => 'YANDEXPAY', // можно не передавать cvv, но нужно передавать любое значение cardHolder не короче 2х символов
+            'CardExp' => $decryptedMessage->getPaymentMethodDetails()->getFullExpiration(),
+            'IdPay' => $id,
+        ]);
+        $createPayForm->afterValidate();
+
+        return $this->processCreatePayForm($createPayForm);
     }
 
     public function actionCreatepaySecondStep($id)
@@ -642,4 +635,78 @@ class PayController extends Controller
         return '';
     }
 
+    /**
+     * @param CreatePayForm $form
+     * @return array|Response
+     * @throws \yii\base\InvalidConfigException
+     */
+    private function processCreatePayForm(CreatePayForm $form)
+    {
+        /** @var LanguageService $languageService */
+        $languageService = Yii::$app->get(LanguageService::class);
+        $languageService->setAppLanguage($form->IdPay);
+
+        Yii::warning("PayForm create id=" . $form->IdPay);
+        Yii::$app->session->set('IdPay', $form->IdPay);
+
+        $createPayStrategy = new CreatePayStrategy($form);
+
+        try {
+            $paySchet = $createPayStrategy->exec();
+        } catch (DuplicateCreatePayException $e) {
+            // releaseLock сюда не надо, эксепшен вызывается при попытке провести платеж, который уже проведен
+            Yii::$app->errorHandler->logException($e);
+
+            return ['status' => 0, 'message' => $e->getMessage()];
+        } catch (CreatePayException | GateException | reRequestingStatusException | BankAdapterResponseException | Exception $e) {
+            Yii::$app->errorHandler->logException($e);
+            $createPayStrategy->releaseLock();
+
+            return ['status' => 0, 'message' => $e->getMessage()];
+        } catch (reRequestingStatusOkException $e) {
+            Yii::$app->errorHandler->logException($e);
+            $createPayStrategy->releaseLock();
+
+            return [
+                'status' => 2,
+                'message' => $e->getMessage(),
+                'url' => Yii::$app->params['domain'] . '/pay/orderok?id=' . $form->IdPay,
+            ];
+        } catch (FailPaymentException $e)   {
+            // The payment has failed: client redirect to orderok which, in turn, will redirect to the fail page
+            Yii::$app->errorHandler->logException($e);
+            $createPayStrategy->releaseLock();
+
+            return [
+                'status' => 2,
+                'message' => $e->getMessage(),
+                'url' => Url::to(['orderok', 'id' => $form->IdPay]),
+            ];
+        } catch (Check3DSv2Exception $e) {
+            Yii::$app->errorHandler->logException($e);
+            $createPayStrategy->releaseLock();
+
+            return [
+                'status' => 0,
+                'message' => \Yii::t('app.payment-errors', 'Карта не поддерживается, обратитесь в банк')
+            ];
+        }
+
+        $createPayResponse = $createPayStrategy->getCreatePayResponse();
+        $createPayResponse->termurl = $createPayResponse->GetRetUrl($paySchet->ID);
+        switch ($createPayResponse->status) {
+            case BaseResponse::STATUS_DONE:
+                // отправить запрос адреса формы 3ds
+                Yii::warning('PayController createPayResponse data: ' . Json::encode($createPayResponse->getAttributes()));
+                return $createPayResponse->getAttributes();
+            case BaseResponse::STATUS_ERROR:
+                // отменить счет
+                return $this->redirect(Url::to('/pay/orderok?id=' . $form->IdPay));
+            case BaseResponse::STATUS_CREATED:
+                $createPayResponse->termurl = $createPayResponse->getStep2Url($paySchet->ID);
+                return $createPayStrategy->getCreatePayResponse()->getAttributes();
+            default:
+                return $createPayStrategy->getCreatePayResponse()->getAttributes();
+        }
+    }
 }

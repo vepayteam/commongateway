@@ -4,6 +4,7 @@ namespace app\services;
 
 use app\clients\YandexPayClient;
 use app\clients\yandexPayClient\requests\PaymentUpdateRequest;
+use app\helpers\Modifiers;
 use app\models\PaySchetYandex;
 use app\models\YandexPayRootKey;
 use app\services\payment\models\PaySchet;
@@ -165,7 +166,7 @@ class YandexPayService extends Component
         $paySchetYandex = new PaySchetYandex();
         $paySchetYandex->paySchetId = $paySchet->ID;
         $paySchetYandex->messageId = $decryptedMessage->getMessageId();
-        $paySchetYandex->decryptedMessage = $jsonDecryptedMessage;
+        $paySchetYandex->decryptedMessage = Modifiers::searchAndReplacePan($jsonDecryptedMessage);
         $paySchetYandex->save();
 
         return $decryptedMessage;
