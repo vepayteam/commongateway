@@ -392,6 +392,8 @@ class PayController extends Controller
             Yii::info('PayController orderdone IdPay=' . $id . ' trans=' . $trans);
         }
 
+        $donePayForm->postParameters = Yii::$app->request->post();
+
         $donePayForm->md = Yii::$app->request->post('MD', null);
         $donePayForm->paRes = Yii::$app->request->post('PaRes', null);
         $donePayForm->cres = Yii::$app->request->post('cres', null);
