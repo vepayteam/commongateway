@@ -506,6 +506,10 @@ components:
         status:
           type: integer
           description: Статус (0 - в обработке, 1 - успешно, 2 - ошибка)
+        serviceName:
+            type: string
+            description: Тип операции
+            example: Платёж AFT
         message:
           type: string
           description: Сообщение ошибки
