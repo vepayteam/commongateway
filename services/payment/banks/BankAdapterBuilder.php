@@ -81,6 +81,7 @@ class BankAdapterBuilder
      * @param Partner $partner
      * @param Uslugatovar $uslugatovar
      * @param Bank $bank
+     * @param Currency|null $currency
      * @return $this
      * @throws GateException
      */
@@ -94,15 +95,16 @@ class BankAdapterBuilder
         $this->uslugatovar = $uslugatovar;
         $this->partnerBankGate = $partner
             ->getBankGates()
-            ->where([
+            ->andWhere([
                 'BankId' => $bank->ID,
                 'TU' => $uslugatovar->IsCustom,
                 'Enable' => 1,
                 'CurrencyId' => $currency->Id,
-            ])->orderBy('Priority DESC')->one();
+            ])
+            ->orderBy('Priority DESC')
+            ->one();
 
         if (!$this->partnerBankGate) {
-            Yii::error(Yii::$app->request->getRawBody(), 'buildByBank');
             throw new GateException("Нет шлюза. partnerId=$partner->ID uslugatovarId=$uslugatovar->ID bankId=$bank->ID");
         }
         return $this->buildAdapter();
