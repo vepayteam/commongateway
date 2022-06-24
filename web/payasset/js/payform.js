@@ -392,6 +392,18 @@
         },
 
         createPaySuccess: function (data, textStatus, jqXHR) {
+            const acs = data.acs;
+            if (acs !== null && acs.type === 'redirect') {
+                if (acs.status === 'OK') {
+                    if (acs.method === 'GET') {
+                        window.location = acs.url;
+                    } else if (acs.method === 'POST') {
+                        payform.submitForm('POST', acs.url, acs.postParameters);
+                    }
+                    return;
+                }
+            }
+
             if (data.status == 1 && data.isNeedPingMonetix) {
                 var interval = setInterval(function() {
                     payform.pingMonetixCallback(interval);

@@ -838,11 +838,10 @@ class BRSAdapter implements IBankAdapter
         }
 
         if ($curlSSLStructure instanceof CurlSSLStructure) {
-            $this->validateCertFiles($curlSSLStructure->sslcert, $curlSSLStructure->sslkey, $curlSSLStructure->cainfo);
+            $this->validateCertFiles($curlSSLStructure->sslcert, $curlSSLStructure->sslkey);
 
             $optArray[CURLOPT_SSLCERTTYPE] = $curlSSLStructure->sslcerttype;
             $optArray[CURLOPT_SSLKEYTYPE] = $curlSSLStructure->sslkeytype;
-            $optArray[CURLOPT_CAINFO] = $curlSSLStructure->cainfo;
             $optArray[CURLOPT_SSLCERT] = $curlSSLStructure->sslcert;
             $optArray[CURLOPT_SSLKEY] = $curlSSLStructure->sslkey;
         } else {
@@ -887,7 +886,6 @@ class BRSAdapter implements IBankAdapter
 
         $sslData->sslcerttype = 'PEM';
         $sslData->sslkeytype = 'PEM';
-        $sslData->cainfo = Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.ca.crt');
         $sslData->sslcert = Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.pem');
         $sslData->sslkey = Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.key');
 
