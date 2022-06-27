@@ -68,4 +68,13 @@ return [
     '5413330000000019',
     '5413330000000035',
     '5413330000000092',
+
+    // Gratapay
+    // To test payment that remains in non-final status
+    '4012888888881881',
+    '5200828282828210',
+    // For successful payment with 3ds imitation process
+    '5555555555554444',
+    '5454545454545454',
+    '4917610000000000',
 ];

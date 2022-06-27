@@ -1250,6 +1250,7 @@ components:
           type: string
           minLength: 16
           maxLength: 18
+          example: xxxxxxxxxxxxxxxx
           description: Номер карты (16/18 цифр)
         amount:
           type: number
@@ -1269,11 +1270,13 @@ components:
         currency:
           type: string
           maxLength: 5
+          default: 'RUB'
+          example: 'RUB'
           description: Код валюты (по умолчанию, RUB)
-
         birthDate:
           type: string
           description: Дата рождения, dd.mm.yyyy
+          example: '23.06.1900'
         countryOfCitizenship:
           type: string
           default: 'RU'
@@ -1416,6 +1419,10 @@ components:
         status:
           type: integer
           description: Статус (0 - в обработке, 1 - успешно, 2 - ошибка, 3 - отменен)
+        serviceName:
+            type: string
+            description: Тип операции
+            example: Платёж AFT
         message:
           type: string
           description: Сообщение ошибки
@@ -1431,6 +1438,10 @@ components:
             status:
                 type: integer
                 description: Статус (0 - в обработке, 1 - успешно, 2 - ошибка, 3 - отменен)
+            serviceName:
+                type: string
+                description: Тип операции
+                example: Платёж AFT
             message:
                 type: string
                 description: Сообщение ошибки

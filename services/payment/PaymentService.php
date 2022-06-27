@@ -123,7 +123,7 @@ class PaymentService
     public function geyPaySchetLog(PaySchetLogForm $paySchetLogForm)
     {
         $paySchet = $paySchetLogForm->getPaySchet();
-        $result = $paySchet->getLog()->orderBy('DateCreate DESC')->all();
+        $result = $paySchet->getLog()->orderBy('DateCreate DESC, Id DESC')->all();
         return $result;
     }
 
