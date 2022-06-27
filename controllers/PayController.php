@@ -35,7 +35,6 @@ use app\services\payment\models\repositories\CurrencyRepository;
 use app\services\payment\payment_strategies\CreatePayStrategy;
 use app\services\payment\payment_strategies\DonePayStrategy;
 use app\services\payment\payment_strategies\OkPayStrategy;
-use kartik\mpdf\Pdf;
 use Yii;
 use yii\db\Exception;
 use yii\helpers\Json;
@@ -366,6 +365,7 @@ class PayController extends Controller
      * @return Response
      * @throws BadRequestHttpException
      * @throws NotFoundHttpException
+     * @todo Add different actions for each bank to avoid ambiguous behavior.
      */
     public function actionOrderdone($id = null)
     {
@@ -376,13 +376,15 @@ class PayController extends Controller
         $donePayForm->trans = Yii::$app->request->post('trans_id', null);
 
         // Impaya
-        if(Yii::$app->request->isGet && $trans = Yii::$app->request->get('transaction_id', null)) {
-            // TODO: check hash
-            Yii::info('PayController orderdone GET Impaya data: ' . Json::encode(Yii::$app->request->get()));
-            $donePayForm->IdPay = $trans;
-        } elseif (Yii::$app->request->isPost && $trans = Yii::$app->request->post('transaction_id', null)) {
-            Yii::info('PayController orderdone POST Impaya trans=' . Json::encode(Yii::$app->request->get()));
-            $donePayForm->trans = $trans;
+        if (empty($id)) {
+            if (Yii::$app->request->isGet && $trans = Yii::$app->request->get('transaction_id', null)) {
+                // TODO: check hash
+                Yii::info('PayController orderdone GET Impaya data: ' . Json::encode(Yii::$app->request->get()));
+                $donePayForm->IdPay = $trans;
+            } elseif (Yii::$app->request->isPost && $trans = Yii::$app->request->post('transaction_id', null)) {
+                Yii::info('PayController orderdone POST Impaya trans=' . Json::encode(Yii::$app->request->get()));
+                $donePayForm->trans = $trans;
+            }
         }
 
         // Для тестирования, добавляем возможность передать ид транзакции GET параметром
