@@ -57,12 +57,12 @@ class OutCardPayForm extends Model implements AmountFormInterface
             ['birthDate', 'match', 'pattern' => '/^[0-3][0-9]\.[0-1][0-9]\.[1-2][0-9]{3}$/i'],
             ['countryOfCitizenship', 'default', 'value' => 'RU'],
             ['countryOfResidence', 'default', 'value' => 'RU'],
+            [['phone'], 'string'],
 
             ['documentType', 'default', 'value' => 'passport'],
             ['documentType', 'in', 'range' => ['passport', 'id']],
             ['documentIssuedAt', 'match', 'pattern' => '/^[0-3][0-9]\.[0-1][0-9]\.[1-2][0-9]{3}$/i'],
             ['documentValidUntil', 'match', 'pattern' => '/^[0-3][0-9]\.[0-1][0-9]\.[1-2][0-9]{3}$/i'],
-
 
             [[
                 'fullname',

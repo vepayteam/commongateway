@@ -454,8 +454,13 @@ class PayController extends Controller
         $mutex->acquire($mutexKey, 15);
         $mutex->release($mutexKey);
 
-        $okPayStrategy = new OkPayStrategy($okPayForm);
-        $paySchet = $okPayStrategy->exec();
+        try {
+            $okPayStrategy = new OkPayStrategy($okPayForm);
+            $paySchet = $okPayStrategy->exec();
+        } catch (BankAdapterResponseException $e) {
+            Yii::warning($e);
+            return $this->render('paywait');
+        }
         Yii::info('PayController orderok IdPay=' . $id . ' okPayStrategy exec ok'
             . ' Status=' . $paySchet->Status
             . ' ErrorInfo=' . $paySchet->ErrorInfo);

@@ -294,3 +294,53 @@
     justify-content: center;
     margin-top: 30px;
 }
+
+.comissionBlock {
+    display: flex;
+    justify-content: space-between;
+}
+
+.comissionBlockItem {
+    display: flex;
+    justify-content: space-between;
+
+}
+
+#comissionWrapper h3 {
+    font-size: 13px;
+    color: #676a6c;
+    font-weight: 700;
+}
+
+#comissionWrapper .plusPercent {
+    font-size: 16px;
+    padding-top: 5px;
+    margin-left: 1rem;
+    margin-right: 1rem;
+    white-space: nowrap;
+}
+
+#comissionWrapper .chosenCurrency {
+    font-size: 16px;
+    padding-top: 5px;
+    margin-left: 1rem;
+}
+
+#comissionWrapper .currencyWrapper {
+    font-size: 16px;
+    padding-top: 5px;
+}
+
+#comissionWrapper input {
+    text-align: right;
+}
+
+#comissionWrapper .percentsStyle {
+    width: 9rem;
+}
+
+@media (max-width: 550px) {
+    .comissionBlock {
+        flex-wrap: wrap;
+    }
+}
