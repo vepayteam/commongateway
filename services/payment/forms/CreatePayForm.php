@@ -71,8 +71,8 @@ class CreatePayForm extends Model
                     if (!preg_match('/^[01]\d{3}$/', $this->CardExp) ||
                         $CardMonth < 1 ||
                         $CardMonth > 12 ||
-                        // TODO: https://it.dengisrazy.ru/browse/VPBC-1468
-                        (in_array(Cards::GetCardBrand($this->CardNumber), [
+                        // TODO: Убрать после потери актуальности https://it.dengisrazy.ru/browse/VPBC-1468
+                        (in_array(Cards::GetTypeCard($this->CardNumber), [
                             Cards::BRAND_AMERICAN_EXPRESS,
                             Cards::BRAND_MAESTRO,
                             Cards::BRAND_MASTERCARD
