@@ -76,16 +76,15 @@ class PaymentCardObject extends ApiObject
         list($month, $year) = array_map('intval', str_split($this->expires, 2));
         $currentYear = (int)date('Y');
         $currentMonth = (int)date('n');
-        if (
-            $month < 1 || $month > 12
+        if ($month < 1 || $month > 12
             // TODO: Убрать после потери актуальности https://it.dengisrazy.ru/browse/VPBC-1468
             || (in_array(Cards::GetTypeCard($this->cardNumber), [
                     Cards::BRAND_AMERICAN_EXPRESS,
                     Cards::BRAND_MAESTRO,
                     Cards::BRAND_MASTERCARD
-                ]) &&
-                ($year + 2000 < date('Y') ||
-                ($year + 2000 == date('Y') && $month < date('n')))
+                ])
+                && ($year + 2000 < date('Y')
+                || ($year + 2000 == date('Y') && $month < date('n')))
             )
             || $year + 2000 > $currentYear + 10
         ) {
