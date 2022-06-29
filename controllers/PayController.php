@@ -375,6 +375,7 @@ class PayController extends Controller
      * @return Response
      * @throws BadRequestHttpException
      * @throws NotFoundHttpException
+     * @todo Add different actions for each bank to avoid ambiguous behavior.
      */
     public function actionOrderdone($id = null)
     {
@@ -385,13 +386,15 @@ class PayController extends Controller
         $donePayForm->trans = Yii::$app->request->post('trans_id', null);
 
         // Impaya
-        if(Yii::$app->request->isGet && $trans = Yii::$app->request->get('transaction_id', null)) {
-            // TODO: check hash
-            Yii::info('PayController orderdone GET Impaya data: ' . Json::encode(Yii::$app->request->get()));
-            $donePayForm->IdPay = $trans;
-        } elseif (Yii::$app->request->isPost && $trans = Yii::$app->request->post('transaction_id', null)) {
-            Yii::info('PayController orderdone POST Impaya trans=' . Json::encode(Yii::$app->request->get()));
-            $donePayForm->trans = $trans;
+        if (empty($id)) {
+            if (Yii::$app->request->isGet && $trans = Yii::$app->request->get('transaction_id', null)) {
+                // TODO: check hash
+                Yii::info('PayController orderdone GET Impaya data: ' . Json::encode(Yii::$app->request->get()));
+                $donePayForm->IdPay = $trans;
+            } elseif (Yii::$app->request->isPost && $trans = Yii::$app->request->post('transaction_id', null)) {
+                Yii::info('PayController orderdone POST Impaya trans=' . Json::encode(Yii::$app->request->get()));
+                $donePayForm->trans = $trans;
+            }
         }
 
         // Для тестирования, добавляем возможность передать ид транзакции GET параметром
@@ -463,8 +466,13 @@ class PayController extends Controller
         $mutex->acquire($mutexKey, 15);
         $mutex->release($mutexKey);
 
-        $okPayStrategy = new OkPayStrategy($okPayForm);
-        $paySchet = $okPayStrategy->exec();
+        try {
+            $okPayStrategy = new OkPayStrategy($okPayForm);
+            $paySchet = $okPayStrategy->exec();
+        } catch (BankAdapterResponseException $e) {
+            Yii::warning($e);
+            return $this->render('paywait');
+        }
         Yii::info('PayController orderok IdPay=' . $id . ' okPayStrategy exec ok'
             . ' Status=' . $paySchet->Status
             . ' ErrorInfo=' . $paySchet->ErrorInfo);
