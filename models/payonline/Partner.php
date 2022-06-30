@@ -117,6 +117,12 @@ use yii\db\ActiveRecord;
  * @property integer $IsUseGooglepay
  * @property string $SamsungMerchantID
  * @property integer $IsUseSamsungpay
+ * @property string $yandexPayMerchantId
+ * @property string $yandexPayAuthPrivate
+ * @property string $yandexPayAuthPublic
+ * @property string $yandexPayEncryptionPrivate
+ * @property string $yandexPayEncryptionPublic
+ * @property boolean $isUseYandexPay
  * @property int $BankForPaymentId
  * @property int $BankForTransferToCardId
  * @property int $RunaBankCid
@@ -200,6 +206,14 @@ class Partner extends ActiveRecord
 //                ],
                 'extensions' => ['key', 'crt', 'cer'],
             ],
+            [['isUseYandexPay'], 'boolean'],
+            [[
+                'yandexPayMerchantId',
+                'yandexPayAuthPrivate',
+                'yandexPayAuthPublic',
+                'yandexPayEncryptionPrivate',
+                'yandexPayEncryptionPublic',
+            ], 'string', 'max' => 50],
         ];
     }
 
@@ -304,6 +318,8 @@ class Partner extends ActiveRecord
             'SamsungMerchantID' => 'Samsung MerchantID',
             'IsUseSamsungpay' => 'Используется Samsung Pay',
             'BankForPaymentId' => 'Банк для оплат',
+
+            'isUseYandexPay' => 'Включить оплату Yandex Pay',
         ];
     }
 
@@ -314,7 +330,13 @@ class Partner extends ActiveRecord
     public function attributeHints()
     {
         return [
-            'IpAccesApi' => 'Адреса через запятую, пример: 127.0.0.1,192.168.1.0/24'
+            'IpAccesApi' => 'Адреса через запятую, пример: 127.0.0.1,192.168.1.0/24',
+
+            'yandexPayMerchantId' => 'Merchant ID в системе Yandex Pay',
+            'yandexPayAuthPrivate' => 'Имя файла приватного ключа аутентификации в папке @app/config/yandexPay/',
+            'yandexPayAuthPublic' => 'Имя файла публичного ключа аутентификации в папке @app/config/yandexPay/',
+            'yandexPayEncryptionPrivate' => 'Имя файла приватного ключа шифрования в папке @app/config/yandexPay/',
+            'yandexPayEncryptionPublic' => 'Имя файла публичного ключа шифрования в папке @app/config/yandexPay/',
         ];
     }
 

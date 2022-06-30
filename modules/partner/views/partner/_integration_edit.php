@@ -122,7 +122,7 @@ ActiveForm::end();
 
 <div class="row">
     <div class="m-md">
-        <h3>Настройки ApplePay, GooglePay, SamsungPay</h3>
+        <h3>Настройки ApplePay, GooglePay, SamsungPay, YandexPay</h3>
     </div>
 </div>
 
@@ -177,6 +177,21 @@ echo $form->field($partner, 'Apple_MerchIdentCert')->fileInput(['class' => 'form
     <div class="col-sm-8 col-sm-offset-3">
         <?php
         echo $form->field($partner,'IsUseSamsungpay')->checkbox([
+            'template' => "<div class=\"checkbox m-l-sm\">\n{input}\n{beginLabel}\n{labelTitle}\n{endLabel}\n{error}\n{hint}\n</div>"
+        ]);
+        ?>
+    </div>
+</div>
+
+<?= $form->field($partner, 'yandexPayMerchantId')->textInput(['class' => 'form-control']);?>
+<?= $form->field($partner, 'yandexPayAuthPrivate')->textInput(['class' => 'form-control']);?>
+<?= $form->field($partner, 'yandexPayAuthPublic')->textInput(['class' => 'form-control']);?>
+<?= $form->field($partner, 'yandexPayEncryptionPrivate')->textInput(['class' => 'form-control']);?>
+<?= $form->field($partner, 'yandexPayEncryptionPublic')->textInput(['class' => 'form-control']);?>
+<div class="row no-margins">
+    <div class="col-sm-8 col-sm-offset-3">
+        <?php
+        echo $form->field($partner,'isUseYandexPay')->checkbox([
             'template' => "<div class=\"checkbox m-l-sm\">\n{input}\n{beginLabel}\n{labelTitle}\n{endLabel}\n{error}\n{hint}\n</div>"
         ]);
         ?>
