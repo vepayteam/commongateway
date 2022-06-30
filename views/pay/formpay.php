@@ -257,7 +257,7 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
 
     <div class="raw3DsForm"></div>
 
-    <div id="frame3ds" class="BankFrame" style="height: 600px; display: none">
+    <div id="frame3ds" class="BankFrame" style="display: none">
         <form id="form3ds" action="" method='POST'>
             <input type="hidden" id="pareq3ds" name="PaReq" value="">
             <input type="hidden" id="md3ds" name="MD" value="">

@@ -371,6 +371,7 @@ class StatController extends Controller
             'partnerlist' => $fltr->getPartnersList(),
             'uslugilist' => $fltr->getTypeUslugLiust(),
             'bankList' => $fltr->getBankList(),
+            'statuses' => PaySchet::STATUSES,
         ]);
     }
 
@@ -380,10 +381,11 @@ class StatController extends Controller
             Yii::$app->response->format = Response::FORMAT_JSON;
             $data = Yii::$app->request->post();
             $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+            $perPage = 100;
             $page = Yii::$app->request->get('page', 0);
             $payShetList = new PayShetStat();
             if ($payShetList->load($data, '') && $payShetList->validate()) {
-                $list = $payShetList->getList2($IsAdmin, $page);
+                $list = $payShetList->getList($IsAdmin, ($page - 1) * $perPage, $perPage, true);
                 return [
                     'status' => 1, 'data' => $this->renderPartial('_recalcdata', [
                         'reqdata' => $data,
@@ -412,7 +414,9 @@ class StatController extends Controller
         if (Yii::$app->request->isAjax) {
             $payShetList = new PayShetStat();
             if ($payShetList->load(Yii::$app->request->get(), '')) {
-                $data = $payShetList->getList2(UserLk::IsAdmin(Yii::$app->user), 0, 1);
+                $isAdmin = UserLk::IsAdmin(Yii::$app->user);
+
+                $data = $payShetList->getList($isAdmin, 0, null, true);
                 $paySchets = PaySchet::findAll(ArrayHelper::getColumn($data['data'], 'ID'));
                 foreach ($paySchets as $paySchet) {
                     $paySchet->recalcComiss(array_map('floatval', Yii::$app->request->post()));

@@ -223,7 +223,7 @@ class PayController extends Controller
             $paySchet = $createPayStrategy->exec();
         } catch (DuplicateCreatePayException $e) {
             // releaseLock сюда не надо, эксепшен вызывается при попытке провести платеж, который уже проведен
-            Yii::$app->errorHandler->logException($e);
+            Yii::warning($e);
 
             return ['status' => 0, 'message' => $e->getMessage()];
         } catch (CreatePayException | GateException | reRequestingStatusException | BankAdapterResponseException | Exception $e) {

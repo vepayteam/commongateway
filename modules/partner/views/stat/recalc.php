@@ -5,6 +5,7 @@
 /* @var $partnerlist  */
 /* @var $IsAdmin bool */
 /* @var $bankList \app\services\payment\models\Bank[] */
+/* @var $statuses array */
 
 $this->title = "Пересчет комиссий";
 
@@ -75,11 +76,9 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         <label class="col-sm-2 control-label">Статус</label>
                         <div class="col-sm-4">
                             <select class="form-control multiselect-status" id="sp" multiple name="status[]">
-<!--                                <option value="-1" >Все</option>-->
-                                <option value="0">В обработке</option>
-                                <option value="1">Оплачен</option>
-                                <option value="2">Отменен</option>
-                                <option value="3">Возврат</option>
+                                <?php foreach ($statuses as $id => $name): ?>
+                                    <option value="<?= $id ?>"><?= $name ?></option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                     </div>
