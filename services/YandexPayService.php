@@ -20,11 +20,11 @@ use yii\helpers\Json;
 
 class YandexPayService extends Component
 {
-    private const PROD_URL = 'https://pay.yandex.ru';
-    private const DEV_URL = 'https://sandbox.pay.yandex.ru';
+    private const URL_PROD = 'https://pay.yandex.ru';
+    private const URL_DEV = 'https://sandbox.pay.yandex.ru';
 
-    private const PRODUCTION_ENV = 'PRODUCTION';
-    private const SANDBOX_ENV = 'SANDBOX';
+    private const ENV_PRODUCTION = 'PRODUCTION';
+    private const ENV_SANDBOX = 'SANDBOX';
 
     /**
      * Расшифровывает paymentToken и возвращает decryptedMessage
@@ -145,26 +145,6 @@ class YandexPayService extends Component
     }
 
     /**
-     * @param PaySchet $paySchet
-     * @return array
-     */
-    public function getFormData(PaySchet $paySchet): array
-    {
-        $isEnabled = $this->isEnabled($paySchet);
-        $parameters = [];
-        if ($isEnabled) {
-            $parameters = [
-                'merchantId' => $this->getMerchantId($paySchet),
-                'environment' => $this->getEnvironment(),
-            ];
-        }
-
-        return array_merge([
-            'isEnabled' => $isEnabled,
-        ], $parameters);
-    }
-
-    /**
      * Возвращает true если yandex pay включен в настройках контрагента
      *
      * @param PaySchet $paySchet
@@ -173,6 +153,18 @@ class YandexPayService extends Component
     public function isEnabled(PaySchet $paySchet): bool
     {
         return $paySchet->partner->isUseYandexPay;
+    }
+
+    /**
+     * @return string
+     */
+    public function getEnvironment(): string
+    {
+        if (\Yii::$app->params['DEVMODE'] === 'Y' || \Yii::$app->params['TESTMODE'] === 'Y') {
+            return self::ENV_SANDBOX;
+        }
+
+        return self::ENV_PRODUCTION;
     }
 
     /**
@@ -249,27 +241,6 @@ class YandexPayService extends Component
      */
     private function getBaseUrl(): string
     {
-        return $this->getEnvironment() === self::SANDBOX_ENV ? self::DEV_URL : self::PROD_URL;
-    }
-
-    /**
-     * @return string
-     */
-    private function getEnvironment(): string
-    {
-        if (\Yii::$app->params['DEVMODE'] === 'Y' || \Yii::$app->params['TESTMODE'] === 'Y') {
-            return self::SANDBOX_ENV;
-        }
-
-        return self::PRODUCTION_ENV;
-    }
-
-    /**
-     * @param PaySchet $paySchet
-     * @return string
-     */
-    private function getMerchantId(PaySchet $paySchet): string
-    {
-        return $paySchet->partner->yandexPayMerchantId;
+        return $this->getEnvironment() === self::ENV_SANDBOX ? self::URL_DEV : self::URL_PROD;
     }
 }

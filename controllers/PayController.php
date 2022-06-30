@@ -174,9 +174,7 @@ class PayController extends Controller
 
                 Yii::info('PayForm render id:' . $id .  ',  paySchet: ' . $params['ID'] . ', Headers: ' . Json::encode(Yii::$app->request->headers));
 
-                /** @var YandexPayService $yandexPayService */
-                $yandexPayService = \Yii::$app->get(YandexPayService::class);
-                $yandexPayFormData = $yandexPayService->getFormData($paySchet);
+                $yandexPayFormData = $this->getYandexPayFormData($paySchet);
 
                 return $this->render('formpay', [
                     'params' => $params,
@@ -710,6 +708,29 @@ class PayController extends Controller
                 return $createPayStrategy->getCreatePayResponse()->getAttributes();
             default:
                 return $createPayStrategy->getCreatePayResponse()->getAttributes();
+        }
+    }
+
+    /**
+     * @param PaySchet $paySchet
+     * @return array
+     */
+    private function getYandexPayFormData(PaySchet $paySchet): array
+    {
+        /** @var YandexPayService $yandexPayService */
+        $yandexPayService = \Yii::$app->get(YandexPayService::class);
+
+        if ($yandexPayService->isEnabled($paySchet)) {
+            return [
+                'isEnabled' => true,
+                'merchantId' => $paySchet->partner->yandexPayMerchantId,
+                'environment' => $yandexPayService->getEnvironment(),
+            ];
+        }
+        else {
+            return [
+                'isEnabled' => false,
+            ];
         }
     }
 }
