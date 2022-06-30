@@ -20,17 +20,19 @@ function onYaPayLoad() {
   const YaPay = window.YaPay;
 
   const yandexPayMerchantId = document.getElementById('yandexPayMerchantId').value
+  const yandexPayEnvironment = document.getElementById('yandexPayEnvironment').value
   const paymentId = document.getElementById('paymentId').value
   const paymentAmount = document.getElementById('paymentAmount').value
+  const paymentCurrency = document.getElementById('paymentCurrency').value
   const partnerId = document.getElementById('partnerId').value
   const partnerName = document.getElementById('partnerName').value
 
   // Сформировать данные платежа.
   const paymentData = {
-    env: YaPay.PaymentEnv.Sandbox,
+    env: yandexPayEnvironment,
     version: 2,
     countryCode: YaPay.CountryCode.Ru,
-    currencyCode: YaPay.CurrencyCode.Rub,
+    currencyCode: paymentCurrency,
     merchant: {
       id: yandexPayMerchantId, // Наш merchant id, менять не надо
       name: partnerName, // Название мерчанта в нашей системе

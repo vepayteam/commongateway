@@ -16,8 +16,7 @@ use yii\web\View;
 /* @var array $samsung */
 /* @var string $appLang */
 /* @var CreatePayForm $payform */
-/* @var boolean $isUseYandexPay */
-/* @var ?string $yandexPayMerchantId */
+/* @var array $yandexPayFormData */
 
 $partnerCardRegTextHeaderOption = PartnerOption::findOne(['PartnerId' => $params['IdOrg'], 'Name' => PartnerOption::CARD_REG_TEXT_HEADER_NAME]);
 
@@ -198,12 +197,14 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
                 )
             ?>
 
-            <?php if ($isUseYandexPay): ?>
+            <?php if ($yandexPayFormData['isEnabled']): ?>
                 <div id="yandex-pay-btn" style="margin-top: 2rem;"></div>
                 <div id="yandex-pay-data" style="display: none;">
-                    <input type="hidden" id="yandexPayMerchantId" value="<?= Html::encode($yandexPayMerchantId) ?>">
+                    <input type="hidden" id="yandexPayMerchantId" value="<?= Html::encode($yandexPayFormData['merchantId']) ?>">
+                    <input type="hidden" id="yandexPayEnvironment" value="<?= Html::encode($yandexPayFormData['environment']) ?>">
                     <input type="hidden" id="paymentId" value="<?= Html::encode($params['ID']) ?>">
                     <input type="hidden" id="paymentAmount" value="<?= Html::encode(PaymentHelper::convertToFullAmount($params['SummFull'])) ?>">
+                    <input type="hidden" id="paymentCurrency" value="<?= Html::encode($params['currency']) ?>">
                     <input type="hidden" id="partnerId" value="<?= Html::encode($params['IDPartner']) ?>">
                     <input type="hidden" id="partnerName" value="<?= Html::encode($params['NamePartner']) ?>">
                 </div>
@@ -340,7 +341,7 @@ if (isset($samsung['IsUseSamsungpay']) && $samsung['IsUseSamsungpay']) {
 }
 $this->registerJs('setTimeout(tracking.sendToServer, 500)', \yii\web\View::POS_READY);
 
-if ($isUseYandexPay) {
+if ($yandexPayFormData['isEnabled']) {
     $this->registerJsFile('https://pay.yandex.ru/sdk/v1/pay.js', [
         'onload' => 'onYaPayLoad()',
         'async' => true,

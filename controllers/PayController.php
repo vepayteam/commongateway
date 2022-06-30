@@ -176,11 +176,7 @@ class PayController extends Controller
 
                 /** @var YandexPayService $yandexPayService */
                 $yandexPayService = \Yii::$app->get(YandexPayService::class);
-
-                $isUseYandexPay = $yandexPayService->isYandexPayEnabled($paySchet);
-                $yandexPayMerchantId = $isUseYandexPay
-                    ? $paySchet->partner->yandexPayMerchantId
-                    : null;
+                $yandexPayFormData = $yandexPayService->getFormData($paySchet);
 
                 return $this->render('formpay', [
                     'params' => $params,
@@ -189,8 +185,7 @@ class PayController extends Controller
                     'samsung' => (new SamsungPay())->GetConf($params['IDPartner']),
                     'payform' => $payForm,
                     'appLang'=> $languageService->getAppLanguage(),
-                    'isUseYandexPay' => $isUseYandexPay,
-                    'yandexPayMerchantId' => $yandexPayMerchantId,
+                    'yandexPayFormData' => $yandexPayFormData,
                 ]);
 
             } else {
@@ -245,7 +240,7 @@ class PayController extends Controller
 
         /** @var YandexPayService $yandexPayService */
         $yandexPayService = \Yii::$app->get(YandexPayService::class);
-        if (!$yandexPayService->isYandexPayEnabled($paySchet)) {
+        if (!$yandexPayService->isEnabled($paySchet)) {
             return [
                 'status' => 0,
                 'message' => 'Yandex Pay не подключен',
