@@ -34,6 +34,7 @@ class RecurrentPayJob extends BaseObject implements \yii\queue\JobInterface
         } catch (GateException|FailedRecurrentPaymentException $e) {
             if ($e instanceof FailedRecurrentPaymentException) {
                 $paySchet->RCCode = $e->getRcCode();
+                $paySchet->ExtBillNumber = $e->getTransactionId();
             }
 
             $paySchet->Status = PaySchet::STATUS_ERROR;

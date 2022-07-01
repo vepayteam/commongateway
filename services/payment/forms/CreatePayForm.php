@@ -72,8 +72,7 @@ class CreatePayForm extends Model
                         $CardMonth < 1 ||
                         $CardMonth > 12 ||
                         $CardYear + 2000 < date('Y') ||
-                        ($CardYear + 2000 == date('Y') && $CardMonth < date('n')) ||
-                        $CardYear + 2000 > date('Y') + 10
+                        ($CardYear + 2000 == date('Y') && $CardMonth < date('n'))
                     ) {
                         $this->addError($attribute, \Yii::t('app.payment-errors', 'Неверный Срок действия'));
                     }

@@ -399,7 +399,7 @@ class BRSAdapter implements IBankAdapter
                     . ' bad response result code 1001');
 
                 // Вызываем FailedRecurrentPaymentException, чтобы в RecurrentPayJob платежу присвоился статус ERROR и не было опроса статуса
-                throw new FailedRecurrentPaymentException(BRSErrorHelper::getMessage($ans), $ans['RESULT_CODE']);
+                throw new FailedRecurrentPaymentException(BRSErrorHelper::getMessage($ans), $ans['RESULT_CODE'], $ans['TRANSACTION_ID'] ?? '');
             }
 
             $createRecurrentPayResponse->message = BRSErrorHelper::getMessage($ans);

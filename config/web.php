@@ -179,6 +179,7 @@ $config = [
         \app\services\ReportService::class => \app\services\ReportService::class,
         \app\services\PaymentService::class => \app\services\PaymentService::class,
         \app\services\LanguageService::class => \app\services\LanguageService::class,
+        \app\services\YandexPayService::class => \app\services\YandexPayService::class,
     ],
     'params' => $params,
     'container' => [
