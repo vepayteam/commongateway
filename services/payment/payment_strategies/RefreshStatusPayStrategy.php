@@ -23,6 +23,7 @@ use app\services\payment\forms\SetPayOkForm;
 use app\services\payment\models\PayCard;
 use app\services\payment\models\PaySchet;
 use app\services\payment\PaymentService;
+use app\services\YandexPayService;
 use Yii;
 use yii\db\Exception;
 use yii\db\Query;
@@ -107,6 +108,26 @@ class RefreshStatusPayStrategy extends OkPayStrategy
         $paySchet->save(false);
 
         $this->getNotificationsService()->sendPostbacks($paySchet);
+        $this->updateYandexPayTransaction($paySchet);
+
         return $paySchet;
+    }
+
+    private function updateYandexPayTransaction(PaySchet $paySchet)
+    {
+        if (!$paySchet->yandexPayTransaction) {
+            return;
+        }
+
+        try {
+            /** @var YandexPayService $yandexPayService */
+            $yandexPayService = \Yii::$app->get(YandexPayService::class);
+            $yandexPayService->paymentUpdate($paySchet);
+        } catch (\Exception $e) {
+            Yii::error([
+                'RefreshStatusPayStrategy updateYandexPayTransaction update fail',
+                $e
+            ]);
+        }
     }
 }
