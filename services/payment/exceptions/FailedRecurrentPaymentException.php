@@ -11,16 +11,18 @@ class FailedRecurrentPaymentException extends \Exception
      * @var string|null {@see \app\services\payment\models\PaySchet::$RCCode}
      */
     private $rcCode;
+    private $transactionId;
 
     /**
      * @param string $message
      * @param string|null $rcCode
      */
-    public function __construct(string $message = '', ?string $rcCode = null)
+    public function __construct(string $message = '', ?string $rcCode = null, $transactionId = null)
     {
         parent::__construct($message);
 
         $this->rcCode = $rcCode;
+        $this->transactionId = $transactionId;
     }
 
     /**
@@ -29,5 +31,13 @@ class FailedRecurrentPaymentException extends \Exception
     public function getRcCode(): ?string
     {
         return $this->rcCode;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getTransactionId(): ?string
+    {
+        return $this->transactionId;
     }
 }
