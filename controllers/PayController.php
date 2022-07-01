@@ -212,7 +212,7 @@ class PayController extends Controller
 
         $form = new CreatePayForm();
 
-        if (!$form->load(Yii::$app->request->post()) || $form->validate()) {
+        if (!$form->load(Yii::$app->request->post()) || !$form->validate()) {
             return ['status' => 0, 'message' => $form->GetError()];
         }
 

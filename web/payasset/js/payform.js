@@ -392,9 +392,9 @@
         },
 
         createPaySuccess: function (data, textStatus, jqXHR) {
-            const acs = data.acs;
-            if (acs !== null && acs.type === 'redirect') {
-                if (acs.status === 'OK') {
+            if ('acs' in data && data.acs !== null) {
+                const acs = data.acs;
+                if (acs.type === 'redirect' && acs.status === 'OK') {
                     if (acs.method === 'GET') {
                         window.location = acs.url;
                     } else if (acs.method === 'POST') {
