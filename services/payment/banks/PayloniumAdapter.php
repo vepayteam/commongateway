@@ -2,7 +2,11 @@
 
 namespace app\services\payment\banks;
 
-use app\Api\Client\Client;
+use app\clients\PayloniumClient;
+use app\clients\payloniumClient\requests\BalanceRequest;
+use app\clients\payloniumClient\requests\GetStatusRequest;
+use app\clients\payloniumClient\requests\OutCardPayRequest;
+use app\clients\payloniumClient\responses\TransactionStatusResponse;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
@@ -25,8 +29,6 @@ use app\services\payment\forms\RegistrationBenificForm;
 use app\services\payment\forms\SendP2pForm;
 use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\PartnerBankGate;
-use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\RequestOptions;
 
 class PayloniumAdapter implements IBankAdapter
 {
@@ -42,39 +44,16 @@ class PayloniumAdapter implements IBankAdapter
     public static $bank = 16;
 
     /**
-     * @var string
-     */
-    private $bankUrl;
-
-    /**
-     * @var PartnerBankGate
-     */
-    private $gate;
-
-    /**
-     * @var Client
+     * @var PayloniumClient
      */
     private $api;
 
     public function setGate(PartnerBankGate $partnerBankGate)
     {
-        $this->gate = $partnerBankGate;
+        $bankUrl = self::BASE_URL_BANK . $partnerBankGate->Login;
+        $privateKeyPath = \Yii::getAlias('@app/config/paylonium/' . $partnerBankGate->AdvParam_1);
 
-        $this->bankUrl = self::BASE_URL_BANK . $partnerBankGate->Login;
-
-        $infoMessage = sprintf(
-            'partnerId=%d bankId=%d',
-            $this->gate->PartnerId,
-            $this->getBankId()
-        );
-
-        /**
-         * Существует проблема, что при попытке сделать запрос через curl ругается на их сертификат, который через браузер валидный
-         * В поддержке посоветовали отключить верификацию
-         */
-        $this->api = new Client([
-            'verify' => false,
-        ], $infoMessage);
+        $this->api = new PayloniumClient($bankUrl, $privateKeyPath, $partnerBankGate->PartnerId, $this->getBankId());
     }
 
     /**
@@ -102,24 +81,21 @@ class PayloniumAdapter implements IBankAdapter
     {
         $checkStatusPayResponse = new CheckStatusPayResponse();
 
-        $xmlRequest = $this->getCommonRequestXmlElement();
-        $xmlRequest->addChild('status');
-        $xmlRequest->status->addAttribute('id', $okPayForm->IdPay);
+        $request = new GetStatusRequest($okPayForm->IdPay);
 
         try {
-            $xmlResponse = $this->sendRequest($xmlRequest);
-            $responseData = $this->parseTransactionResponse($xmlResponse);
+            $response = $this->api->checkStatusPay($request);
         } catch (PayloniumServerException $e) {
             \Yii::warning(['PayloniumAdapter checkStatusPay', $e]);
 
             $checkStatusPayResponse->status = BaseResponse::STATUS_ERROR;
-            $checkStatusPayResponse->message = BankAdapterResponseException::REQUEST_ERROR_MSG;
+            $checkStatusPayResponse->message = $e->getMessage();
 
             return $checkStatusPayResponse;
         }
 
         try {
-            $status = $this->getTransactionBaseResponseStatus($responseData);
+            $status = $this->getTransactionBaseResponseStatus($response);
         } catch (PayloniumTransactionNotFound $e) {
             \Yii::$app->errorHandler->logException($e);
 
@@ -135,10 +111,10 @@ class PayloniumAdapter implements IBankAdapter
                 $checkStatusPayResponse->message = 'Ожидается запрос статуса';
                 break;
             case BaseResponse::STATUS_DONE:
-                $checkStatusPayResponse->transId = $responseData['trans'];
+                $checkStatusPayResponse->transId = $response->getTrans();
                 break;
             case BaseResponse::STATUS_ERROR:
-                $checkStatusPayResponse->message = $responseData['additional']['error-description'] ?? BankAdapterResponseException::REQUEST_ERROR_MSG;
+                $checkStatusPayResponse->message = $response->getErrorDescription() ?? BankAdapterResponseException::REQUEST_ERROR_MSG;
                 break;
             default:
                 break;
@@ -172,23 +148,17 @@ class PayloniumAdapter implements IBankAdapter
          *
          * в нашем случае есть лишь вывод на карты
          */
-        $xmlRequest = $this->getCommonRequestXmlElement();
-        $xmlRequest->addChild('payment');
-        $xmlRequest->payment->addAttribute('id', $outCardPayForm->paySchet->ID);
-        $xmlRequest->payment->addAttribute('sum', $outCardPayForm->amount);
-        $xmlRequest->payment->addAttribute('service', '24');
-        $xmlRequest->payment->addAttribute('account', $outCardPayForm->cardnum);
-        $xmlRequest->payment->addAttribute('date', date('c', $outCardPayForm->paySchet->DateCreate)); // Дата создания платежа в формате стандарта ISO 8601
-
-        if ($outCardPayForm->phone) {
-            $xmlRequest->payment->addChild('attribute');
-            $xmlRequest->payment->attribute->addAttribute('name', 'phone');
-            $xmlRequest->payment->attribute->addAttribute('value', $outCardPayForm->phone);
-        }
+        $request = new OutCardPayRequest(
+            $outCardPayForm->paySchet->ID,
+            $outCardPayForm->amount,
+            24,
+            $outCardPayForm->cardnum,
+            date('c', $outCardPayForm->paySchet->DateCreate),
+            $outCardPayForm->phone
+        );
 
         try {
-            $xmlResponse = $this->sendRequest($xmlRequest);
-            $responseData = $this->parseTransactionResponse($xmlResponse);
+            $response = $this->api->outCardPay($request);
         } catch (PayloniumServerException $e) {
             \Yii::warning(['PayloniumAdapter outCardPay', $e]);
 
@@ -199,7 +169,7 @@ class PayloniumAdapter implements IBankAdapter
         }
 
         try {
-            $status = $this->getTransactionBaseResponseStatus($responseData);
+            $status = $this->getTransactionBaseResponseStatus($response);
         } catch (PayloniumTransactionNotFound $e) {
             \Yii::$app->errorHandler->logException($e);
 
@@ -215,10 +185,10 @@ class PayloniumAdapter implements IBankAdapter
                 $outCardPayResponse->message = 'Ожидается запрос статуса';
                 break;
             case BaseResponse::STATUS_DONE:
-                $outCardPayResponse->trans = $responseData['trans'];
+                $outCardPayResponse->trans = $response->getTrans();
                 break;
             case BaseResponse::STATUS_ERROR:
-                $outCardPayResponse->message = $responseData['additional']['error-description'] ?? BankAdapterResponseException::REQUEST_ERROR_MSG;
+                $outCardPayResponse->message = $response->getErrorDescription() ?? BankAdapterResponseException::REQUEST_ERROR_MSG;
                 break;
             default:
                 break;
@@ -242,19 +212,17 @@ class PayloniumAdapter implements IBankAdapter
         $getBalanceResponse->currency = $getBalanceRequest->currency;
         $getBalanceResponse->account_type = $getBalanceRequest->accountType;
 
-        $xmlRequest = $this->getCommonRequestXmlElement();
-        $xmlRequest->addChild('balance');
+        $request = new BalanceRequest();
 
         try {
-            $xmlResponse = $this->sendRequest($xmlRequest);
+            $response = $this->api->getBalance($request);
         } catch (PayloniumServerException $e) {
             \Yii::$app->errorHandler->logException($e);
 
             throw new BankAdapterResponseException(BankAdapterResponseException::REQUEST_ERROR_MSG);
         }
 
-        $balanceAmount = (float)current($xmlResponse->balance['balance']);
-        $getBalanceResponse->amount = PaymentHelper::convertToFullAmount($balanceAmount);
+        $getBalanceResponse->amount = PaymentHelper::convertToFullAmount($response->getAmount());
 
         return $getBalanceResponse;
     }
@@ -304,135 +272,32 @@ class PayloniumAdapter implements IBankAdapter
      * игнорируйте, считайте, что ответ от сервера не получен."
      *
      *
-     * @param array $transactionResponse
+     * @param TransactionStatusResponse $response
      * @return int
      * @throws PayloniumTransactionNotFound
      */
-    private function getTransactionBaseResponseStatus(array $transactionResponse): int
+    private function getTransactionBaseResponseStatus(TransactionStatusResponse $response): int
     {
         if (
-            (int)$transactionResponse['code'] === 0 &&
-            (int)$transactionResponse['state'] === 60 &&
-            (int)$transactionResponse['final'] === 1
+            $response->getCode() === 0 &&
+            $response->getState() === 60 &&
+            $response->getFinal() === 1
         ) {
             return BaseResponse::STATUS_DONE;
         } else if (
-            (int)$transactionResponse['code'] === 20 &&
-            (int)$transactionResponse['state'] === 80 &&
-            (int)$transactionResponse['final'] === 1
+            $response->getCode() === 20 &&
+            $response->getState() === 80 &&
+            $response->getFinal() === 1
         ) {
             return BaseResponse::STATUS_ERROR;
         } else if (
-            (int)$transactionResponse['code'] === 15 &&
-            (int)$transactionResponse['state'] === -2 &&
-            (int)$transactionResponse['final'] === 1
+            $response->getCode() === 15 &&
+            $response->getState() === -2 &&
+            $response->getFinal() === 1
         ) {
             throw new PayloniumTransactionNotFound();
         }
 
         return BaseResponse::STATUS_CREATED;
-    }
-
-    /**
-     * @param \SimpleXMLElement $xml
-     * @return array
-     */
-    private function parseTransactionResponse(\SimpleXMLElement $xml): array
-    {
-        $commonAttributes = current($xml->result->attributes());
-        $additionalAttributes = [];
-
-        foreach ($xml->result->children() as $child) {
-            if ($child->getName() !== 'attribute') {
-                continue;
-            }
-
-            $name = current($child['name']);
-            $value = current($child['value']);
-
-            $additionalAttributes[$name] = $value;
-        }
-
-        $commonAttributes['additional'] = $additionalAttributes;
-
-        return $commonAttributes;
-    }
-
-    /**
-     * @param \SimpleXMLElement $xmlRequest
-     * @return \SimpleXMLElement
-     * @throws PayloniumServerException
-     */
-    private function sendRequest(\SimpleXMLElement $xmlRequest): \SimpleXMLElement
-    {
-        $requestData = $this->convertXmlElementToString($xmlRequest);
-        $signature = $this->getSignature($requestData);
-
-        try {
-            $response = $this->api->getClient()->post($this->bankUrl, [
-                RequestOptions::BODY => $requestData,
-                RequestOptions::HEADERS => [
-                    'Content-Type' => 'application/xml',
-                    'Signature' => $signature,
-                ],
-            ]);
-        } catch (GuzzleException $e) {
-            \Yii::$app->errorHandler->logException($e);
-            \Yii::error([
-                'message' => 'PayloniumAdapter send request error',
-                'url', $this->bankUrl,
-                'requestData' => $requestData,
-                'signature' => $signature,
-            ]);
-
-            throw new PayloniumServerException(BankAdapterResponseException::REQUEST_ERROR_MSG);
-        }
-
-        $content = (string)$response->getBody();
-
-        $xmlResponse = new \SimpleXMLElement($content);
-        if ($xmlResponse->getName() === 'error') {
-            $message = (string)$xmlResponse;
-
-            throw new PayloniumServerException($message);
-        }
-
-        return $xmlResponse;
-    }
-
-    /**
-     * @return \SimpleXMLElement
-     */
-    private function getCommonRequestXmlElement(): \SimpleXMLElement
-    {
-        return new \SimpleXMLElement('<request></request>');
-    }
-
-    /**
-     * Функция конвертации \SimpleXMLElement в строку
-     * Если использовать встроенную функцию $xml->saveXML(), то добавится ненужная шапка <?xml version="1.0"?>
-     *
-     * @param \SimpleXMLElement $xml
-     * @return string
-     */
-    private function convertXmlElementToString(\SimpleXMLElement $xml): string
-    {
-        $dom = dom_import_simplexml($xml);
-        return $dom->ownerDocument->saveXML($dom->ownerDocument->documentElement);
-    }
-
-    /**
-     * @param string $requestData xml request string
-     * @return string request signature
-     */
-    private function getSignature(string $requestData): string
-    {
-        $pathPrivateKey = \Yii::getAlias('@app/config/paylonium/' . $this->gate->AdvParam_1);
-
-        $privateKey = openssl_get_privatekey(file_get_contents($pathPrivateKey));
-        openssl_sign($requestData, $signature, $privateKey);
-        openssl_free_key($privateKey);
-
-        return base64_encode($signature);
     }
 }
