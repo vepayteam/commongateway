@@ -6,6 +6,7 @@ use app\models\api\Reguser;
 use app\models\bank\TCBank;
 use app\models\kfapi\KfCheckreq;
 use app\models\mfo\MfoOutcardReg;
+use app\models\mfo\MfoReq;
 use app\models\partner\UserLk;
 use app\models\payonline\Cards;
 use app\models\payonline\User;
@@ -133,13 +134,17 @@ class DefaultController extends Controller
 
     public function actionGetsbpbankreceiver()
     {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $mfo = new MfoReq();
+        $mfo->LoadData(Yii::$app->request->getRawBody());
+
         try {
-            $data = $this->getPaymentService()->getSbpBankReceive();
-        } catch (NotInstantiableException | InvalidConfigException | \Exception $e) {
+            $data = $this->getPaymentService()->getSbpBankReceive($mfo->getPartner());
+        } catch (NotInstantiableException|InvalidConfigException|\Exception $e) {
             Yii::error([$e->getMessage(), $e->getTrace(), $e->getFile(), $e->getLine()], 'mfo_out');
             return ['status' => 0, 'message' => 'Ошибка запроса'];
         }
-        Yii::$app->response->format = Response::FORMAT_JSON;
 
         return $this->mapGetsbpbankreceiverResult($data);
     }
