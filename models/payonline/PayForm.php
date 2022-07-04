@@ -49,7 +49,8 @@ class PayForm extends Model
                         || (in_array(Cards::GetTypeCard($this->CardNumber), [
                                 Cards::BRAND_AMERICAN_EXPRESS,
                                 Cards::BRAND_MAESTRO,
-                                Cards::BRAND_MASTERCARD
+                                Cards::BRAND_MASTERCARD,
+                                Cards::BRAND_VISA
                             ])
                             && ($CardYear + 2000 < date('Y') || ($CardYear + 2000 == date('Y') && $CardMonth < date('n')))
                         )

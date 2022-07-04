@@ -81,7 +81,8 @@ class PaymentCardObject extends ApiObject
             || (in_array(Cards::GetTypeCard($this->cardNumber), [
                     Cards::BRAND_AMERICAN_EXPRESS,
                     Cards::BRAND_MAESTRO,
-                    Cards::BRAND_MASTERCARD
+                    Cards::BRAND_MASTERCARD,
+                    Cards::BRAND_VISA
                 ])
                 && ($year + 2000 < date('Y')
                 || ($year + 2000 == date('Y') && $month < date('n')))
