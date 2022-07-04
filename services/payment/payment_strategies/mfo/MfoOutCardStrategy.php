@@ -16,6 +16,7 @@ use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\NotUniquePayException;
 use app\services\payment\forms\OutCardPayForm;
+use app\services\payment\jobs\RefreshStatusPayJob;
 use app\services\payment\models\Currency;
 use app\services\payment\models\PayCard;
 use app\services\payment\models\PaySchet;
@@ -99,9 +100,17 @@ class MfoOutCardStrategy
         $this->outCardPayForm->paySchet = $paySchet;
         $outCardPayResponse = $bankAdapterBuilder->getBankAdapter()->outCardPay($this->outCardPayForm);
 
-        if($outCardPayResponse->status == BaseResponse::STATUS_DONE) {
+        if ($outCardPayResponse->status == BaseResponse::STATUS_DONE) {
             $paySchet->ExtBillNumber = $outCardPayResponse->trans;
             $paySchet->save(false);
+        } else if ($outCardPayResponse->status == BaseResponse::STATUS_CREATED) {
+            $paySchet->Status = PaySchet::STATUS_WAITING_CHECK_STATUS;
+            $paySchet->ErrorInfo = $outCardPayResponse->message;
+            $paySchet->save(false);
+
+            \Yii::$app->queue->push(new RefreshStatusPayJob([
+                'paySchetId' => $paySchet->ID,
+            ]));
         } else {
             $paySchet->Status = PaySchet::STATUS_ERROR;
             $paySchet->ErrorInfo = $outCardPayResponse->message;
