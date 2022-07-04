@@ -8,6 +8,7 @@ use app\models\payonline\Partner;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
 use app\models\PaySchetAcsRedirect;
+use app\models\PaySchetYandex;
 use app\services\CompensationService;
 use app\services\compensationService\CompensationException;
 use app\services\notifications\models\NotificationPay;
@@ -108,6 +109,7 @@ use yii\helpers\ArrayHelper;
  * @property-read Cards $cards {@see PaySchet::getCards()}
  * @property-read PaySchetAcsRedirect $acsRedirect {@see PaySchet::getAcsRedirect()}
  * @property-read PaySchetLanguage $paySchetLanguage {@see PaySchet::getPaySchetLanguage()}
+ * @property PaySchetYandex|null $yandexPayTransaction {@see PaySchet::getYandexPayTransaction()}
  *
  * @property string $Version3DS
  * @property int $IsNeed3DSVerif
@@ -386,6 +388,11 @@ class PaySchet extends \yii\db\ActiveRecord
     public function getRefundedAmount(): int
     {
         return array_sum(ArrayHelper::getColumn($this->refunds, 'SummPay'));
+    }
+
+    public function getYandexPayTransaction(): ActiveQuery
+    {
+        return $this->hasOne(PaySchetYandex::class, ['paySchetId' => 'ID']);
     }
 
     public function getUser()

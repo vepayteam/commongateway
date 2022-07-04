@@ -241,7 +241,7 @@ class CreatePayStrategy
         // Открываем mutex
         if ($this->mutex->acquire($mutexKey, self::MUTEX_TIMEOUT_LOCK_CREATE_PAY)) {
             if (Yii::$app->cache->exists($cacheKey)) {
-                Yii::error("CreatePayStrategy checkCreatePayLock PaySchet.ID={$paySchet->ID} cache exists throw CreatePayException");
+                Yii::warning("CreatePayStrategy checkCreatePayLock PaySchet.ID={$paySchet->ID} cache exists throw CreatePayException");
 
                 throw new DuplicateCreatePayException('Платеж в процессе оплаты');
             }
@@ -251,7 +251,7 @@ class CreatePayStrategy
             // Релизим mutex
             $this->mutex->release($mutexKey);
         } else {
-            Yii::error("CreatePayStrategy checkCreatePayLock PaySchet.ID={$paySchet->ID} mutex acquire return false");
+            Yii::warning("CreatePayStrategy checkCreatePayLock PaySchet.ID={$paySchet->ID} mutex acquire return false");
 
             throw new DuplicateCreatePayException('Ошибка проведения платежа');
         }

@@ -51,7 +51,7 @@ class ReverseOrderForm extends Model
     {
         $paySchet = PaySchet::findOne(['ID' => $this->id]);
         $refundedAmount = $paySchet->refundedAmount;
-        if (($this->refundSum + $refundedAmount) > $paySchet->getSummFull()) {
+        if (($this->refundSum + $refundedAmount) > $paySchet->SummPay) {
             $maxRefundAmount = PaymentHelper::convertToFullAmount($paySchet->getSummFull() - $refundedAmount);
             $this->addError('refundSum', 'Максимальная сумма возврата: ' . $maxRefundAmount);
         }

@@ -18,10 +18,6 @@ class CurlSSLStructure extends Structure
      */
     public $sslkeytype;
     /**
-     * @var string $cainfo
-     */
-    public $cainfo;
-    /**
      * @var string $sslcert
      */
     public $sslcert;

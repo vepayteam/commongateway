@@ -1,20 +1,22 @@
 <?php
 
-/* @var \yii\web\View $this */
+use app\components\widgets\EmbedJs;
+use app\services\LanguageService;
+use app\services\partners\models\PartnerOption;
+use app\services\payment\forms\CreatePayForm;
+use app\services\payment\helpers\PaymentHelper;
+use yii\bootstrap\ActiveForm;
+use yii\bootstrap\Html;
+use yii\web\View;
+
+/* @var View $this */
 /* @var array $params */
 /* @var array $apple */
 /* @var array $google */
 /* @var array $samsung */
 /* @var string $appLang */
 /* @var CreatePayForm $payform */
-
-use app\services\LanguageService;
-use app\components\widgets\EmbedJs;
-use app\services\partners\models\PartnerOption;
-use app\services\payment\forms\CreatePayForm;
-use app\services\payment\helpers\PaymentHelper;
-use yii\bootstrap\ActiveForm;
-use yii\bootstrap\Html;
+/* @var array $yandexPayFormData */
 
 $partnerCardRegTextHeaderOption = PartnerOption::findOne(['PartnerId' => $params['IdOrg'], 'Name' => PartnerOption::CARD_REG_TEXT_HEADER_NAME]);
 
@@ -194,6 +196,19 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
                     ]
                 )
             ?>
+
+            <?php if ($yandexPayFormData['isEnabled']): ?>
+                <div id="yandex-pay-btn" style="margin-top: 2rem;"></div>
+                <div id="yandex-pay-data" style="display: none;">
+                    <input type="hidden" id="yandexPayMerchantId" value="<?= Html::encode($yandexPayFormData['merchantId']) ?>">
+                    <input type="hidden" id="yandexPayEnvironment" value="<?= Html::encode($yandexPayFormData['environment']) ?>">
+                    <input type="hidden" id="paymentId" value="<?= Html::encode($params['ID']) ?>">
+                    <input type="hidden" id="paymentAmount" value="<?= Html::encode(PaymentHelper::convertToFullAmount($params['SummFull'])) ?>">
+                    <input type="hidden" id="paymentCurrency" value="<?= Html::encode($params['currency']) ?>">
+                    <input type="hidden" id="partnerId" value="<?= Html::encode($params['IDPartner']) ?>">
+                    <input type="hidden" id="partnerName" value="<?= Html::encode($params['NamePartner']) ?>">
+                </div>
+            <?php endif ?>
         </div>
     </div>
 
@@ -257,7 +272,7 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
 
     <div class="raw3DsForm"></div>
 
-    <div id="frame3ds" class="BankFrame" style="height: 600px; display: none">
+    <div id="frame3ds" class="BankFrame" style="display: none">
         <form id="form3ds" action="" method='POST'>
             <input type="hidden" id="pareq3ds" name="PaReq" value="">
             <input type="hidden" id="md3ds" name="MD" value="">
@@ -300,12 +315,15 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
 </div>
 
 <noscript><div><img src="https://mc.yandex.ru/watch/66552382" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+
 <?php
 $this->registerJs('payform.init();');
 $this->registerJs('payform.checkIframe();');
+
 if (isset($apple['IsUseApplepay']) && $apple['IsUseApplepay'] && isset($apple['Apple_MerchantID']) && !empty($apple['Apple_MerchantID'])) {
     $this->registerJs('payform.applepay("' . $apple['Apple_MerchantID'] . '", "' . ($params['SummFull'] / 100.0) . '", "' . $params['NamePartner'] . '");');
 }
+
 if (isset($google['IsUseGooglepay']) && $google['IsUseGooglepay']) {
     $this->registerJsFile('https://pay.google.com/gp/p/js/pay.js');
     $this->registerJs('payform.googlepay("' .
@@ -317,10 +335,19 @@ if (isset($google['IsUseGooglepay']) && $google['IsUseGooglepay']) {
         '");'
     );
 }
+
 if (isset($samsung['IsUseSamsungpay']) && $samsung['IsUseSamsungpay']) {
     $this->registerJs('payform.samsungpay("' . $samsung['Samsung_MerchantID'] . '", "' . number_format($params['SummFull'] / 100.0, 2, '.', '') . '", "' . $params['NamePartner'] . '");');
 }
 $this->registerJs('setTimeout(tracking.sendToServer, 500)', \yii\web\View::POS_READY);
+
+if ($yandexPayFormData['isEnabled']) {
+    $this->registerJsFile('https://pay.yandex.ru/sdk/v1/pay.js', [
+        'onload' => 'onYaPayLoad()',
+        'async' => true,
+    ]);
+    $this->registerJsFile('/payasset/js/yandex-pay.js');
+}
 ?>
 
 <?php
@@ -342,4 +369,5 @@ EmbedJs::begin([
             "language": window.navigator.language || window.navigator.userLanguage
         }));
     </script>
+
 <?php EmbedJs::end(); ?>

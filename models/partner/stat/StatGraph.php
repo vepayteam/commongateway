@@ -362,6 +362,9 @@ class StatGraph extends Model
                 $bank[$row['BankName']] = 1;
             }
         }
+        if (empty($country) && empty($city) && empty($card) && empty($bank)) {
+            return ['status' => 0, 'message' => 'Нет данных для отображения'];
+        }
 
         if (!empty($country)) {
             foreach ($country as $cnm => $ctr) {
@@ -372,6 +375,7 @@ class StatGraph extends Model
             }
         } else {
             $countryJ = ['label' => '', 'value' => 0];
+
         }
         if (!empty($city)) {
             foreach ($city as $cnm => $ctr) {

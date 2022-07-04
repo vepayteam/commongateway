@@ -395,7 +395,7 @@ steps:
   - helm repo update
   - helm pull --untar vepay/${DRONE_REPO_NAME}
 
-- name: helm-values-generator-57851566f739750c75cf78c562a62432
+- name: helm-values-generator-a5d7e5df397c66eb9295ad99da679e8a
   pull: always
   image: registry.vepay.cf/ci-tools
   commands:
@@ -406,7 +406,7 @@ steps:
   - yq write values.yaml "ingress.hosts[0].paths[0]" "/" -i
   - yq write values.yaml "ingress.tls[0].hosts[0]" "${DRONE_BRANCH}-test-${DRONE_REPO_NAME}.backend.vepay.cf" -i
   - yq write values.yaml "ingress.tls[0].secretName" "backend-vepay-cf-wildcard-certificate" -i
-  - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+1550000000))" -i
+  - yq write values.yaml "config.increment.pay_schet" "$$((1000*${DRONE_BUILD_NUMBER}+1560000000))" -i
   - yq write values.yaml "config.payments.brs.url_xml" "https://194.67.29.216:8443" -i
   - echo "=>>>" && cat values.yaml
 
@@ -725,6 +725,6 @@ get:
 
 ---
 kind: signature
-hmac: 75d41578730939934930e7af9d8734a69755064a4acadb45324913e348687267
+hmac: 3fd252dd640f61802167388411a4de115f65ff4d94465110e5b1ea32c310d966
 
 ...

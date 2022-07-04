@@ -12,8 +12,6 @@ use yii\helpers\Html;
 /**
  * @var Partner $partner
  */
-$this->registerCssFile('/web/aassets/css/gate_form.css');
-$this->registerJsFile('/web/aassets/js/partner_gate_settings.js');
 $bankGates = $partner->getBankGates()->orderBy('TU ASC, Priority DESC')->all();
 $currencyList = ArrayHelper::merge(['' => ''], ArrayHelper::map(CurrencyRepository::getAll(), 'Id', 'Code'));
 ?>
