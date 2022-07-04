@@ -163,6 +163,7 @@ class RecurrentPaymentPartsService extends Component
 
             if ($e instanceof FailedRecurrentPaymentException) {
                 $paySchet->RCCode = $e->getRcCode();
+                $paySchet->ExtBillNumber = $e->getTransactionId();
             }
 
             $paySchet->Status = PaySchet::STATUS_ERROR;
