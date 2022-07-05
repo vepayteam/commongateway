@@ -74,7 +74,7 @@ class ApplePay
             }
             $ans = $curl->post('https://'.$validationURL.'/paymentSession');
 
-            (new CurlLogger($curl, 'https://'.$validationURL.'/paymentSession', $headers, Cards::MaskCardLog($data), Cards::MaskCardLog($ans)))();
+            CurlLogger::handle($curl, 'https://'.$validationURL.'/paymentSession', $headers, Cards::MaskCardLog($data), Cards::MaskCardLog($ans));
 
         } catch (\Exception $e) {
             Yii::warning("curlerror: " . $curl->responseCode . ":" . Cards::MaskCardLog($curl->response), 'merchant');

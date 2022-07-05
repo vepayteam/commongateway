@@ -34,7 +34,7 @@ class BindbNet
 
             if ($curl->response) {
 
-                (new CurlLogger($curl, $url . $card, [], [], Cards::MaskCardLog($curl->response)))();
+                CurlLogger::handle($curl, $url . $card, [], [], Cards::MaskCardLog($curl->response));
 
                 $resp = Json::decode($curl->response);
                 return ['status' => 1, 'info' => $resp];

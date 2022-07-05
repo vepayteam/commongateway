@@ -58,7 +58,7 @@ class KfCheckreq
         }
         $this->result = $curl->get($url . $fst . $params);
 
-        (new CurlLogger($curl, Cards::MaskCardLog($url . $fst . $params), [], [], Cards::MaskCardLog($this->result)))();
+        CurlLogger::handle($curl, Cards::MaskCardLog($url . $fst . $params), [], [], Cards::MaskCardLog($this->result));
 
         Yii::warning("sendCurlChech: " . $url . $fst . $params . " - " . $curl->errorCode . "\r\n", 'rsbcron');
         return $curl->errorCode == 0;

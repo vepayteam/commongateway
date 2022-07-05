@@ -616,7 +616,7 @@ class TCBank implements IBank
 
             $curl->post($url);
 
-            (new CurlLogger($curl, $url, $headers, Cards::MaskCardLog($post), Cards::MaskCardLog($curl->response)))();
+            CurlLogger::handle($curl, $url, $headers, Cards::MaskCardLog($post), Cards::MaskCardLog($curl->response));
 
         } catch (\Exception $e) {
             Yii::warning("curlerror: " . $curl->responseCode . ":" . Cards::MaskCardLog($curl->response), 'merchant');

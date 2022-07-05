@@ -126,7 +126,7 @@ class SendHttp
 
         $this->fullReq = $url . $fst . $params;
 
-        (new CurlLogger($curl, $this->fullReq, [], [], Cards::MaskCardLog($curl->response)))();
+        CurlLogger::handle($curl, $this->fullReq, [], [], Cards::MaskCardLog($curl->response));
 
         Yii::warning("sendCurlGet-url: " . $url . $fst . $params . "\r\n", 'rsbcron');
         if ($curl->errorCode) {

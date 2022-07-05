@@ -83,7 +83,7 @@ class ReceiveTelegram
         }
         $curl->get($url . $fst . $params);
 
-        (new CurlLogger($curl, Cards::MaskCardLog($url . $fst . $params), [], [], Cards::MaskCardLog($curl->response)))();
+        CurlLogger::handle($curl, Cards::MaskCardLog($url . $fst . $params), [], [], Cards::MaskCardLog($curl->response));
 
         Yii::warning("sendCurlGet-url: " . $url . $fst . $params . "\r\n", 'rsbcron');
         if ($curl->errorCode) {

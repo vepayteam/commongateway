@@ -218,7 +218,7 @@ class AlarmsSend
                 $ret = 1;
             }
 
-            (new CurlLogger($curl, 'https://mainsms.ru/', [], [], Cards::MaskCardLog($curl->response)))();
+            CurlLogger::handle($curl, 'https://mainsms.ru/', [], [], Cards::MaskCardLog($curl->response));
 
             if ($curl->errorCode) {
                 Yii::warning('CheckMainSms error: ' . $curl->errorCode . ":" . $curl->errorText, 'rsbcron');

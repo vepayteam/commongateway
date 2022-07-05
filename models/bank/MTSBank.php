@@ -656,7 +656,7 @@ class MTSBank implements IBank
                 ->setOption(CURLOPT_POSTFIELDS, $post)
                 ->post($url);
 
-            (new CurlLogger($curl, $url, $headers, $this->MaskLog($post), Cards::MaskCardLog($curl->response)))();
+            CurlLogger::handle($curl, $url, $headers, $this->MaskLog($post), Cards::MaskCardLog($curl->response));
 
         } catch (\Exception $e) {
             Yii::warning("curlerror: " . $curl->responseCode . ":" . Cards::MaskCardLog($curl->response), 'merchant');

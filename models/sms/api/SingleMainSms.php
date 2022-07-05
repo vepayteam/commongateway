@@ -83,7 +83,7 @@ class SingleMainSms implements ISms
             $curl->get('https://mainsms.ru/api/mainsms/message/send?' . $this->fields());
             $this->response = $curl->response;
 
-            (new CurlLogger($curl, 'https://mainsms.ru/api/mainsms/message/send?' . $this->fields(), [], [], Cards::MaskCardLog($curl->response)))();
+            CurlLogger::handle($curl, 'https://mainsms.ru/api/mainsms/message/send?' . $this->fields(), [], [], Cards::MaskCardLog($curl->response));
 
             if ($curl->errorCode) {
                 Yii::warning('MainSms error: ' . $curl->errorCode . ":" . $curl->errorText, 'mfo');
