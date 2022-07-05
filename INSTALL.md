@@ -82,7 +82,9 @@
 
     yii exchange/update - каждые сутки по Вильнюсу (UTC+3) в 00:00
 
-5. В дальнейшем обновлять:
+    yii yandex/root-keys-update - через день в 00:00 (UTC) 
+
+6. В дальнейшем обновлять:
 
     Обновить файлы: git checkout master, git pull 
     
