@@ -40,7 +40,7 @@ class PaymentService
 {
     use PayPartsTrait, CardsTrait, ValidateTrait;
 
-    const GET_SBP_BANK_RECEIVER_CACHE_KEY = 'Getsbpbankreceiver';
+    const GET_SBP_BANK_RECEIVER_CACHE_KEY = 'Getsbpbankreceiver.';
 
     public function createPay(KfRequest $kfRequest)
     {
@@ -313,20 +313,22 @@ class PaymentService
     }
 
     /**
+     * @param Partner $partner
      * @return mixed
      * @throws \Exception
      */
-    public function getSbpBankReceive()
+    public function getSbpBankReceive(Partner $partner)
     {
-        $data = Yii::$app->cache->getOrSet(self::GET_SBP_BANK_RECEIVER_CACHE_KEY, function() {
-            $partner = Partner::findOne(['ID' => Partner::VEPAY_ID]);
+        $cacheKey = self::GET_SBP_BANK_RECEIVER_CACHE_KEY . $partner->ID;
+
+        $data = Yii::$app->cache->getOrSet($cacheKey, function () use ($partner) {
             $uslugatovar = Uslugatovar::findOne([
-                'IDPartner' => Partner::VEPAY_ID,
-                'IsCustom' => TU::$VYVODPAYS,
+                'IDPartner' => $partner->ID,
+                'IsCustom' => UslugatovarType::TRANSFER_B2C_SBP,
                 'IsDeleted' => 0,
             ]);
 
-            if(!$uslugatovar) {
+            if (!$uslugatovar) {
                 throw new \Exception('Услуга не найдена');
             }
 
