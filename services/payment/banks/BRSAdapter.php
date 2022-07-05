@@ -485,7 +485,7 @@ class BRSAdapter implements IBankAdapter
         $curlError = curl_error($curl);
         $info = curl_getinfo($curl);
 
-        (new DeprecatedCurlLogger($info, $url, [], Cards::MaskCardLog($data), Cards::MaskCardLog($response)))();
+        DeprecatedCurlLogger::handle($info, $url, [], Cards::MaskCardLog($data), Cards::MaskCardLog($response));
 
         if(empty($curlError) && $info['http_code'] == 200) {
             try {
@@ -659,7 +659,7 @@ class BRSAdapter implements IBankAdapter
         $info = curl_getinfo($curl);
         curl_close($curl);
 
-        (new DeprecatedCurlLogger($info, $this->bankUrlXml, $headers, Cards::MaskCardLog($xml), Cards::MaskCardLog($response)))();
+        DeprecatedCurlLogger::handle($info, $this->bankUrlXml, $headers, Cards::MaskCardLog($xml), Cards::MaskCardLog($response));
 
         if(empty($curlError) && $info['http_code'] == 200) {
             Yii::warning('BRSAdapter xmlAns uri=' . $response);
@@ -869,7 +869,7 @@ class BRSAdapter implements IBankAdapter
         $curlError = curl_error($curl);
         $info = curl_getinfo($curl);
 
-        (new DeprecatedCurlLogger($info, Cards::MaskCardLog($this->bankUrlB2C . $uri), $headers, [], Cards::MaskCardLog($response)))();
+        DeprecatedCurlLogger::handle($info, Cards::MaskCardLog($this->bankUrlB2C . $uri), $headers, [], Cards::MaskCardLog($response));
 
         if(empty($curlError)) {
             try {

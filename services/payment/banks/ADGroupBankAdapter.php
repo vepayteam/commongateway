@@ -120,7 +120,7 @@ class ADGroupBankAdapter implements IBankAdapter
         $response = curl_exec($curl);
         curl_close($curl);
 
-        (new DeprecatedCurlLogger(curl_getinfo($curl), $url, $headers, Cards::MaskCardLog($data), Cards::MaskCardLog($response)))();
+        DeprecatedCurlLogger::handle(curl_getinfo($curl), $url, $headers, Cards::MaskCardLog($data), Cards::MaskCardLog($response));
 
         $a = 0;
     }

@@ -62,7 +62,7 @@ class CallbackSendJob extends BaseObject implements \yii\queue\JobInterface
                 $startTimeExec = microtime(true);
                 $response = curl_exec($curl);
 
-                (new DeprecatedCurlLogger(curl_getinfo($curl), $notificationPay->getNotificationUrl(), $headers, [], Cards::MaskCardLog($response)))();
+                DeprecatedCurlLogger::handle(curl_getinfo($curl), $notificationPay->getNotificationUrl(), $headers, [], Cards::MaskCardLog($response));
 
                 Yii::warning(sprintf(
                         'CallbackSendJob response: %s ;  %s',

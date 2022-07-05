@@ -71,7 +71,7 @@ class AllAsn
             ]);
             $this->content = curl_exec($curl);
 
-            (new DeprecatedCurlLogger(curl_getinfo($curl), $this->link, [], [], Cards::MaskCardLog($this->content)))();
+            DeprecatedCurlLogger::handle(curl_getinfo($curl), $this->link, [], [], Cards::MaskCardLog($this->content));
 
             curl_close($curl);
         }

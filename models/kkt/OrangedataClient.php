@@ -403,7 +403,7 @@ class OrangedataClient
         $answer = curl_exec($curl);
         $info = curl_getinfo($curl);
 
-        (new DeprecatedCurlLogger($info, $url, $headers, Cards::MaskCardLog($jsonstring), Cards::MaskCardLog($answer)))();
+        DeprecatedCurlLogger::handle($info, $url, $headers, Cards::MaskCardLog($jsonstring), Cards::MaskCardLog($answer));
 
         switch ($info['http_code']) {
             case '201':
@@ -451,7 +451,7 @@ class OrangedataClient
         $answer = curl_exec($curl);
         $info = curl_getinfo($curl);
 
-        (new DeprecatedCurlLogger($info, $url, [], [], Cards::MaskCardLog($answer)))();
+        DeprecatedCurlLogger::handle($info, $url, [], [], Cards::MaskCardLog($answer));
 
         switch ($info['http_code']) {
             case '200':
@@ -679,7 +679,7 @@ class OrangedataClient
         $answer = curl_exec($curl);
         $info = curl_getinfo($curl);
 
-        (new DeprecatedCurlLogger($info, $url, $headers, Cards::MaskCardLog($jsonstring), Cards::MaskCardLog($answer)))();
+        DeprecatedCurlLogger::handle($info, $url, $headers, Cards::MaskCardLog($jsonstring), Cards::MaskCardLog($answer));
 
         switch ($info['http_code']) {
             case '201':
@@ -728,7 +728,7 @@ class OrangedataClient
         $answer = curl_exec($curl);
         $info = curl_getinfo($curl);
 
-        (new DeprecatedCurlLogger($info, $url, [], [], Cards::MaskCardLog($answer)))();
+        DeprecatedCurlLogger::handle($info, $url, [], [], Cards::MaskCardLog($answer));
 
         switch ($info['http_code']) {
             case '200':

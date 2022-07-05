@@ -53,7 +53,7 @@ abstract class BaseClient
         $response = curl_exec($curl);
         curl_close($curl);
 
-        (new DeprecatedCurlLogger(curl_getinfo($curl), $this->url.$this->uri, $headers, Cards::MaskCardLog($data), Cards::MaskCardLog($response)))();
+        DeprecatedCurlLogger::handle(curl_getinfo($curl), $this->url.$this->uri, $headers, Cards::MaskCardLog($data), Cards::MaskCardLog($response));
 
         return json_decode($response, true);
     }
