@@ -1,5 +1,6 @@
 <?php
 /* @var array $data */
+/* @var array $postData */
 /* @var $this \yii\web\View */
 /* @var bool $IsAdmin */
 /* @var array $requestToExport*/
@@ -196,7 +197,7 @@ function renderItog($itog, $IsAdmin)
                 }
                 $exportLink .= '&IdPart='.$requestToExport['IdPart'];
                 ?>
-                <a class="btn btn-white btn-xs pull-right" target="_blank" href="/partner/stat/export-otch?<?=Html::encode($exportLink)?>"><i class="fa fa-share"></i>&nbsp;Экспорт</a>
+                <a class="btn btn-white btn-xs pull-right" target="_blank" href="/partner/stat/export-otch?<?=http_build_query($postData)?>"><i class="fa fa-share"></i>&nbsp;Экспорт</a>
             </th>
         </tr>
     <?php endif; ?>
