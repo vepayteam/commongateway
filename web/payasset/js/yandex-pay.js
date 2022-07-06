@@ -66,7 +66,7 @@ function onYaPayLoad() {
       // Создать экземпляр кнопки.
       const container = document.querySelector('#yandex-pay-btn');
       const button = payment.createButton({
-        type: YaPay.ButtonType.Checkout,
+        type: YaPay.ButtonType.Pay,
         theme: YaPay.ButtonTheme.Black,
         width: YaPay.ButtonWidth.Max,
       });
