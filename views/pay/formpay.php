@@ -88,6 +88,26 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
     <div id="loader" class="col-xs-12" style="display: none">
         <div class='text-center col-xs-12 loader'><i class="fa fa-spinner fa-spin fa-fw"></i></div>
     </div>
+
+    <?php if ($yandexPayFormData['isEnabled']): ?>
+        <div id="yandex-pay-btn" style="margin-top: 2rem;"></div>
+        <div id="yandex-pay-data" style="display: none;">
+            <input type="hidden" id="yandexPayMerchantId" value="<?= Html::encode($yandexPayFormData['merchantId']) ?>">
+            <input type="hidden" id="yandexPayEnvironment" value="<?= Html::encode($yandexPayFormData['environment']) ?>">
+            <input type="hidden" id="paymentId" value="<?= Html::encode($params['ID']) ?>">
+            <input type="hidden" id="paymentAmount" value="<?= Html::encode(PaymentHelper::convertToFullAmount($params['SummFull'])) ?>">
+            <input type="hidden" id="paymentCurrency" value="<?= Html::encode($params['currency']) ?>">
+            <input type="hidden" id="partnerId" value="<?= Html::encode($params['IDPartner']) ?>">
+            <input type="hidden" id="partnerName" value="<?= Html::encode($params['NamePartner']) ?>">
+        </div>
+
+        <div class="yandex-pay-separator">
+            <div class="yandex-pay-separator_line"></div>
+            <span class="yandex-pay-separator_info">или</span>
+            <div class="yandex-pay-separator_line"></div>
+        </div>
+    <?php endif ?>
+
     <?php
     $form = ActiveForm::begin([
         'id' => 'payform',
@@ -196,19 +216,6 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
                     ]
                 )
             ?>
-
-            <?php if ($yandexPayFormData['isEnabled']): ?>
-                <div id="yandex-pay-btn" style="margin-top: 2rem;"></div>
-                <div id="yandex-pay-data" style="display: none;">
-                    <input type="hidden" id="yandexPayMerchantId" value="<?= Html::encode($yandexPayFormData['merchantId']) ?>">
-                    <input type="hidden" id="yandexPayEnvironment" value="<?= Html::encode($yandexPayFormData['environment']) ?>">
-                    <input type="hidden" id="paymentId" value="<?= Html::encode($params['ID']) ?>">
-                    <input type="hidden" id="paymentAmount" value="<?= Html::encode(PaymentHelper::convertToFullAmount($params['SummFull'])) ?>">
-                    <input type="hidden" id="paymentCurrency" value="<?= Html::encode($params['currency']) ?>">
-                    <input type="hidden" id="partnerId" value="<?= Html::encode($params['IDPartner']) ?>">
-                    <input type="hidden" id="partnerName" value="<?= Html::encode($params['NamePartner']) ?>">
-                </div>
-            <?php endif ?>
         </div>
     </div>
 
