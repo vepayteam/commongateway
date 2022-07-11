@@ -8,6 +8,7 @@ use app\models\PayschetPart;
 use app\services\balance\BalanceService;
 use app\services\balance\models\PartsBalanceForm;
 use app\services\balance\models\PartsBalancePartnerForm;
+use yii\db\Query;
 
 /**
  * @deprecated
@@ -26,6 +27,12 @@ trait PartsTrait
         $result = [
             'draw' => $partsBalanceForm->draw,
         ];
+
+        $refundPaySchetSubQuery = new Query();
+        $refundPaySchetSubQuery
+            ->from('pay_schet as refund_pay_schet')
+            ->andWhere('refund_pay_schet.RefundSourceId=pay_schet.ID');
+
         $q = PayschetPart::find()
             ->innerJoin('pay_schet', 'pay_schet.ID = pay_schet_parts.PayschetId')
             ->innerJoin('partner', 'partner.ID = pay_schet_parts.PartnerId')
@@ -35,7 +42,8 @@ trait PartsTrait
                 'pay_schet.Status' => '1',
             ])
             ->andWhere(['>=', 'pay_schet.DateCreate', strtotime($partsBalanceForm->filters['datefrom'].':00')])
-            ->andWhere(['<=', 'pay_schet.DateCreate', strtotime($partsBalanceForm->filters['dateto'])]);
+            ->andWhere(['<=', 'pay_schet.DateCreate', strtotime($partsBalanceForm->filters['dateto'])])
+            ->andWhere(['not exists', $refundPaySchetSubQuery]);
 
         $result['recordsTotal'] = $q->count();
 
@@ -93,6 +101,12 @@ trait PartsTrait
         $result = [
             'draw' => $partsBalancePartnerForm->draw,
         ];
+
+        $refundPaySchetSubQuery = new Query();
+        $refundPaySchetSubQuery
+            ->from('pay_schet as refund_pay_schet')
+            ->andWhere('refund_pay_schet.RefundSourceId=pay_schet.ID');
+
         $q = PayschetPart::find()
             ->innerJoin('pay_schet', 'pay_schet.ID = pay_schet_parts.PayschetId')
             ->innerJoin('partner', 'partner.ID = pay_schet_parts.PartnerId')
@@ -102,7 +116,8 @@ trait PartsTrait
                 'pay_schet.Status' => '1',
             ])
             ->andWhere(['>=', 'pay_schet.DateCreate', strtotime($partsBalancePartnerForm->filters['datefrom'].':00')])
-            ->andWhere(['<=', 'pay_schet.DateCreate', strtotime($partsBalancePartnerForm->filters['dateto'])]);
+            ->andWhere(['<=', 'pay_schet.DateCreate', strtotime($partsBalancePartnerForm->filters['dateto'])])
+            ->andWhere(['not exists', $refundPaySchetSubQuery]);
 
         $result['recordsTotal'] = $q->count();
 
