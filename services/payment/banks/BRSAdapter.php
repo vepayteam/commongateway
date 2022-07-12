@@ -485,7 +485,7 @@ class BRSAdapter implements IBankAdapter
         $curlError = curl_error($curl);
         $info = curl_getinfo($curl);
 
-        DeprecatedCurlLogger::handle($info, $url, [], Cards::MaskCardLog($data), Cards::MaskCardLog($response));
+        DeprecatedCurlLogger::handle($info, $url, [], Cards::MaskCardLog(Json::encode($data)), Cards::MaskCardLog($response));
 
         if(empty($curlError) && $info['http_code'] == 200) {
             try {
