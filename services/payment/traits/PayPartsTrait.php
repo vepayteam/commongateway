@@ -65,6 +65,11 @@ trait PayPartsTrait
             $vyvodParts->Status = VyvodParts::STATUS_CREATED;
             $transactionOk &= $vyvodParts->save(false);
 
+            $refundPaySchetSubQuery = new Query();
+            $refundPaySchetSubQuery
+                ->from('pay_schet as refund_pay_schet')
+                ->andWhere('refund_pay_schet.RefundSourceId=pay_schet.ID');
+
             $data = PayschetPart::find()
                 ->innerJoin('pay_schet', 'pay_schet.ID = pay_schet_parts.PayschetId')
                 ->where([
@@ -77,6 +82,7 @@ trait PayPartsTrait
                 ->andWhere(['=', 'pay_schet.IdOrg', $senderPartner->ID])
                 ->andWhere(['>=', 'pay_schet.DateCreate', $dateFrom->timestamp])
                 ->andWhere(['<=', 'pay_schet.DateCreate', $dateTo->timestamp])
+                ->andWhere(['not exists', $refundPaySchetSubQuery])
                 ->all();
 
             /** @var PayschetPart $row */
@@ -178,6 +184,11 @@ trait PayPartsTrait
      */
     private function getPartsSenderPartners(Carbon $dateFrom, Carbon $dateTo)
     {
+        $refundPaySchetSubQuery = new Query();
+        $refundPaySchetSubQuery
+            ->from('pay_schet as refund_pay_schet')
+            ->andWhere('refund_pay_schet.RefundSourceId=p.ID');
+
         $query = new Query();
         $partnerSenderIds = $query
             ->select([
@@ -191,6 +202,7 @@ trait PayPartsTrait
             ])
             ->andWhere(['>=', 'p.DateCreate', $dateFrom->timestamp])
             ->andWhere(['<=', 'p.DateCreate', $dateTo->timestamp])
+            ->andWhere(['not exists', $refundPaySchetSubQuery])
             ->groupBy('p.IdOrg')
             ->column();
 
@@ -206,6 +218,11 @@ trait PayPartsTrait
      */
     private function getPartsRecipientPartners($partner, Carbon $dateFrom, Carbon $dateTo)
     {
+        $refundPaySchetSubQuery = new Query();
+        $refundPaySchetSubQuery
+            ->from('pay_schet as refund_pay_schet')
+            ->andWhere('refund_pay_schet.RefundSourceId=p.ID');
+
         $query = new Query();
         $partnerRecipientIds = $query
             ->select([
@@ -220,6 +237,7 @@ trait PayPartsTrait
             ])
             ->andWhere(['>=', 'p.DateCreate', $dateFrom->timestamp])
             ->andWhere(['<=', 'p.DateCreate', $dateTo->timestamp])
+            ->andWhere(['not exists', $refundPaySchetSubQuery])
             ->groupBy('pp.PartnerId')
             ->column();
 
