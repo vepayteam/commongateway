@@ -18,6 +18,11 @@ class DonePayForm extends Model
     public $cres;
     public $trans;
 
+    /**
+     * @var array
+     */
+    public $postParameters;
+
     public function rules()
     {
         return [

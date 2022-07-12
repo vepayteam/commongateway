@@ -23,6 +23,7 @@ use app\services\payment\banks\data\ClientData;
 use app\services\payment\CurlSSLStructure;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\BRSAdapterExeception;
+use app\services\payment\exceptions\ConfirmPostDataException;
 use app\services\payment\exceptions\FailedRecurrentPaymentException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
@@ -125,7 +126,20 @@ class BRSAdapter implements IBankAdapter
      */
     public function confirm(DonePayForm $donePayForm)
     {
-        if($donePayForm->getPaySchet()->uslugatovar->IsCustom == UslugatovarType::P2P) {
+        $paySchet = $donePayForm->getPaySchet();
+
+        // check for error in POST parameters
+        if (isset($donePayForm->postParameters['trans_id'])) {
+            if ($donePayForm->postParameters['trans_id'] !== $paySchet->ExtBillNumber) {
+                /** @todo Refactor: move "trans_id" check to a validation form. */
+                throw new \Exception('Invalid transaction ID.');
+            }
+            if (array_key_exists('error', $donePayForm->postParameters)) {
+                throw new ConfirmPostDataException($donePayForm->postParameters['error']);
+            }
+        }
+
+        if($paySchet->uslugatovar->IsCustom == UslugatovarType::P2P) {
             return $this->confirmP2p($donePayForm);
         }
         $confirmPayResponse = new ConfirmPayResponse();
