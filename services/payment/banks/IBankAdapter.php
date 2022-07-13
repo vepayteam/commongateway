@@ -20,6 +20,7 @@ use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\data\ClientData;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
+use app\services\payment\exceptions\ConfirmPostDataException;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\FailedRecurrentPaymentException;
 use app\services\payment\exceptions\GateException;
@@ -57,6 +58,7 @@ interface IBankAdapter
      * TODO: rename to confirmPay
      * @param DonePayForm $donePayForm
      * @return ConfirmPayResponse
+     * @throws ConfirmPostDataException
      */
     public function confirm(DonePayForm $donePayForm);
 

@@ -2,6 +2,8 @@
 
 namespace app\models\extservice;
 
+use app\models\payonline\Cards;
+use app\services\CurlLogger;
 use qfsx\yii2\curl\Curl;
 use Yii;
 use yii\helpers\Json;
@@ -31,6 +33,9 @@ class BindbNet
             $curl->get($url . $card);
 
             if ($curl->response) {
+
+                CurlLogger::handle($curl, $url . $card, [], [], Cards::MaskCardLog($curl->response));
+
                 $resp = Json::decode($curl->response);
                 return ['status' => 1, 'info' => $resp];
             }

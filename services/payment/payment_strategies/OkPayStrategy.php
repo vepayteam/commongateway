@@ -23,6 +23,7 @@ use app\services\payment\jobs\RefundPayJob;
 use app\services\payment\models\PayCard;
 use app\services\payment\models\PaySchet;
 use app\services\payment\PaymentService;
+use app\services\YandexPayService;
 use Yii;
 use yii\db\Exception;
 use yii\db\Query;
@@ -42,7 +43,7 @@ class OkPayStrategy
      * Время задержки между получением успешного статуса и запросом отмены по методу card/reg.
      * @link https://it.dengisrazy.ru/browse/VPBC-1441
      */
-    private const REFUND_JOB_DELAY = 5 * 60;
+    private const REFUND_JOB_DELAY = 1 * 60;
 
     /**
      * OkPayStrategy constructor.
@@ -99,6 +100,7 @@ class OkPayStrategy
             $paySchet->save(false);
 
             $this->getNotificationsService()->sendPostbacks($paySchet);
+            $this->updateYandexPayTransaction($paySchet);
         } elseif ($paySchet->sms_accept == 1) {
             $q = new Query();
             $count = $q->from('notification_pay')
@@ -277,4 +279,21 @@ class OkPayStrategy
         return Yii::$container->get('NotificationsService');
     }
 
+    protected function updateYandexPayTransaction(PaySchet $paySchet)
+    {
+        if (!$paySchet->yandexPayTransaction) {
+            return;
+        }
+
+        try {
+            /** @var YandexPayService $yandexPayService */
+            $yandexPayService = \Yii::$app->get(YandexPayService::class);
+            $yandexPayService->paymentUpdate($paySchet);
+        } catch (\Exception $e) {
+            Yii::error([
+                'RefreshStatusPayStrategy updateYandexPayTransaction update fail',
+                $e
+            ]);
+        }
+    }
 }
