@@ -178,6 +178,8 @@ class PaymentService extends Component
             $refundPayschet->ErrorInfo = $refundPayResponse->message;
         }
         $refundPayschet->save(false);
+
+        $this->updateYandexPayTransaction($refundPayschet);
     }
 
     /**
@@ -226,6 +228,20 @@ class PaymentService extends Component
 
             $percent = $amount / $sourcePaySchet->SummPay;
             return floor($sourcePaySchet->ComissSumm * $percent);
+        }
+    }
+
+    private function updateYandexPayTransaction(PaySchet $refundPaySchet)
+    {
+        try {
+            /** @var YandexPayService $yandexPayService */
+            $yandexPayService = \Yii::$app->get(YandexPayService::class);
+            $yandexPayService->paymentUpdate($refundPaySchet);
+        } catch (\Exception $e) {
+            \Yii::error([
+                'PaymentService updateYandexPayTransaction update fail',
+                $e
+            ]);
         }
     }
 }

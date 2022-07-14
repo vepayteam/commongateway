@@ -281,10 +281,6 @@ class OkPayStrategy
 
     protected function updateYandexPayTransaction(PaySchet $paySchet)
     {
-        if (!$paySchet->yandexPayTransaction) {
-            return;
-        }
-
         try {
             /** @var YandexPayService $yandexPayService */
             $yandexPayService = \Yii::$app->get(YandexPayService::class);
