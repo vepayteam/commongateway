@@ -23,6 +23,7 @@ use app\services\payment\jobs\RefundPayJob;
 use app\services\payment\models\PayCard;
 use app\services\payment\models\PaySchet;
 use app\services\payment\PaymentService;
+use app\services\yandexPay\YandexPayException;
 use app\services\YandexPayService;
 use Yii;
 use yii\db\Exception;
@@ -100,7 +101,10 @@ class OkPayStrategy
             $paySchet->save(false);
 
             $this->getNotificationsService()->sendPostbacks($paySchet);
-            $this->updateYandexPayTransaction($paySchet);
+
+            if ($paySchet->existsYandexPayTransaction) {
+                $this->updateYandexPayTransaction($paySchet);
+            }
         } elseif ($paySchet->sms_accept == 1) {
             $q = new Query();
             $count = $q->from('notification_pay')
@@ -281,11 +285,12 @@ class OkPayStrategy
 
     protected function updateYandexPayTransaction(PaySchet $paySchet)
     {
+        /** @var YandexPayService $yandexPayService */
+        $yandexPayService = \Yii::$app->get(YandexPayService::class);
+
         try {
-            /** @var YandexPayService $yandexPayService */
-            $yandexPayService = \Yii::$app->get(YandexPayService::class);
             $yandexPayService->paymentUpdate($paySchet);
-        } catch (\Exception $e) {
+        } catch (YandexPayException $e) {
             Yii::error([
                 'RefreshStatusPayStrategy updateYandexPayTransaction update fail',
                 $e

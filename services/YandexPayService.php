@@ -53,10 +53,6 @@ class YandexPayService extends Component
             $paySchet->refundSource->yandexPayTransaction :
             $paySchet->yandexPayTransaction;
 
-        if (!$yandexPayTransaction) {
-            return;
-        }
-
         switch ($paySchet->Status) {
             case PaySchet::STATUS_DONE:
                 $status = 'SUCCESS';
