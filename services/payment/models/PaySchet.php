@@ -398,9 +398,7 @@ class PaySchet extends \yii\db\ActiveRecord
 
     public function getExistsYandexPayTransaction(): bool
     {
-        return $this->isRefund
-            ? $this->refundSource->yandexPayTransaction !== null
-            : $this->yandexPayTransaction !== null;
+        return ($this->isRefund ? $this->refundSource : $this)->yandexPayTransaction !== null;
     }
 
     public function getUser()
