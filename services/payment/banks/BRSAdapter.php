@@ -878,7 +878,7 @@ class BRSAdapter implements IBankAdapter
 
         curl_setopt_array($curl, $optArray);
 
-        Yii::warning('BRSAdapter req ' . $requestType . ' uri=' . $uri . '; data=' . Json::encode($data));
+        Yii::warning('BRSAdapter req ' . $requestType . ' uri=' . $uri . '; x-User-Login: ' . $this->gate->AdvParam_1 . '; data=' . Json::encode($data));
         $response = curl_exec($curl);
         $curlError = curl_error($curl);
         $info = curl_getinfo($curl);
