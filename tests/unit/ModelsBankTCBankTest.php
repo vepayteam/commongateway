@@ -83,13 +83,6 @@ class ModelsBankTCBankTest extends \Codeception\Test\Unit
         $this->tester->assertEquals('KeyTkbParts', $keyFile->getValue($tCBank));
     }
 
-    public function testBeginPay()
-    {
-        $tCBank = new TCBank();
-        $this->expectException(yii\base\ErrorException::class);
-        $tCBank->beginPay([]);
-    }
-
     public function testСonfirmPay()
     {
         $tCBank = new TCBank();
@@ -228,18 +221,6 @@ class ModelsBankTCBankTest extends \Codeception\Test\Unit
         $HmacSha1 = $tCBankReflectionClass->getMethod('HmacSha1');
         $HmacSha1->setAccessible(true);
         $this->tester->assertEquals('DJRRXBXlCVuKh6ULoN87847QX+Y=', $HmacSha1->invoke($tCBank, 'test', 'test'));
-    }
-
-    public function testRegisterCard()
-    {
-        $tCBank = new TCBank();
-        $this->tester->assertEquals('', $tCBank->registerCard(null, null));
-    }
-
-    public function testPayCard()
-    {
-        $tCBank = new TCBank();
-        $this->tester->assertEquals('', $tCBank->payCard(null, null, null));
     }
 
     public function testTransferToAccount()

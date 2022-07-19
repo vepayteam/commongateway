@@ -16,7 +16,6 @@ use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\Banks;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\models\active_query\PaySchetQuery;
-use app\services\payment\payment_strategies\mfo\MfoCardRegStrategy;
 use app\services\PaymentService;
 use Carbon\Carbon;
 use Yii;
@@ -106,7 +105,8 @@ use yii\helpers\ArrayHelper;
  * @property Bank $bank
  * @property PaySchet $refundSource {@see PaySchet::getRefundSource()}
  * @property PaySchet[] $refunds {@see PaySchet::getRefunds()}
- * @property-read Cards $cards {@see PaySchet::getCards()}
+ * @property-read Cards $cards {@see PaySchet::getCards()} @deprecated Use {@see PaySchet::$card} instead.
+ * @property-read Cards $card {@see PaySchet::getCard()}
  * @property-read PaySchetAcsRedirect $acsRedirect {@see PaySchet::getAcsRedirect()}
  * @property-read PaySchetLanguage $paySchetLanguage {@see PaySchet::getPaySchetLanguage()}
  * @property PaySchetYandex|null $yandexPayTransaction {@see PaySchet::getYandexPayTransaction()}
@@ -441,7 +441,15 @@ class PaySchet extends \yii\db\ActiveRecord
         return $this->hasMany(PaySchet::class, ['RefundSourceId' => 'ID'])->inverseOf('refundSource');
     }
 
+    /**
+     * @deprecated Use {@see PaySchet::getCard()} instead.
+     */
     public function getCards(): ActiveQuery
+    {
+        return $this->getCard();
+    }
+
+    public function getCard(): ActiveQuery
     {
         return $this->hasOne(Cards::class, ['ID' => 'IdKard']);
     }
@@ -472,6 +480,9 @@ class PaySchet extends \yii\db\ActiveRecord
             $this->ErrorInfo = mb_substr($this->ErrorInfo, 0, 250);
         }
 
+        if ($insert) {
+            $this->DateCreate = time();
+        }
         $this->DateLastUpdate = time();
 
         if ($this->isAttributeChanged('CardNum') && $this->CardNum) {
@@ -479,11 +490,7 @@ class PaySchet extends \yii\db\ActiveRecord
         }
 
         if ($insert || $this->uslugatovar->IsCustom == Uslugatovar::P2P) {
-            /**
-             * Calculate compensation.
-             * Needed only when bank is not 0 ({@see MfoCardRegStrategy::createPaySchet()}).
-             */
-            if ($this->Bank !== 0) {
+            if ($this->Bank !== Bank::OUT_BANK_ID) {
                 $gate = (new BankAdapterBuilder())
                     ->buildByBank($this->partner, $this->uslugatovar, $this->bank, $this->currency)
                     ->getPartnerBankGate();
@@ -603,24 +610,6 @@ class PaySchet extends \yii\db\ActiveRecord
     public function getCallbackUrl(): string
     {
         return Yii::$app->params['domain'] . '/mfo/pay/callback';
-    }
-
-    /**
-     * @param string|null $cardNumber
-     * @return string
-     */
-    public function getFromUrl(?string $cardNumber = null): string
-    {
-        if($this->Bank == Banks::REG_CARD_BY_OUT_ID) {
-            $url = Yii::$app->params['domain'] . '/mfo/default/outcard/' . $this->ID;
-        } else {
-            $url = Yii::$app->params['domain'] . '/pay/form/' . $this->ID;
-        }
-        if ($cardNumber !== null) {
-            $url .= "?cardNumber={$cardNumber}";
-        }
-
-        return $url;
     }
 
     /**

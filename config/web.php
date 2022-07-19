@@ -180,6 +180,7 @@ $config = [
         \app\services\PaymentService::class => \app\services\PaymentService::class,
         \app\services\LanguageService::class => \app\services\LanguageService::class,
         \app\services\YandexPayService::class => \app\services\YandexPayService::class,
+        \app\services\CardRegisterService::class => \app\services\CardRegisterService::class,
     ],
     'params' => $params,
     'container' => [

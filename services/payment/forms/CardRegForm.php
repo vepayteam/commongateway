@@ -7,10 +7,11 @@ namespace app\services\payment\forms;
 use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\traits\ValidateFormTrait;
+use app\services\cardRegisterService\CreatePayschetData;
 use app\services\LanguageService;
 use yii\base\Model;
 
-class CardRegForm extends Model
+class CardRegForm extends Model implements CreatePayschetData
 {
     use ValidateFormTrait;
 
@@ -39,14 +40,11 @@ class CardRegForm extends Model
      */
     public $card;
 
-    /** @var Partner */
-    public $partner;
-
     public function rules()
     {
         return [
-            ['type', 'validateType'],
-            ['partner', 'required'],
+            [['type'], 'required'],
+            [['type'], 'in', 'range' => self::CARD_REG_TYPES],
             [['extid'], 'string', 'max' => 40],
             [['successurl', 'failurl', 'cancelurl', 'postbackurl', 'postbackurl_v2'], 'url'],
             [['successurl', 'failurl', 'cancelurl'], 'string', 'max' => 1000],
@@ -56,13 +54,6 @@ class CardRegForm extends Model
             [['card'], 'validateCard'], /** @see validateCard() */
             [['language'], 'in', 'range' => LanguageService::ALL_API_LANG_LIST],
         ];
-    }
-
-    public function validateType()
-    {
-        if($this->type !== self::CARD_REG_TYPE_BY_PAY && $this->type !== self::CARD_REG_TYPE_BY_OUT) {
-            $this->addError('type', 'Тип регистрации не корректный');
-        }
     }
 
     public function validateCard()
@@ -85,8 +76,48 @@ class CardRegForm extends Model
     /**
      * @return string
      */
-    public function getMutexKey()
+    public function getMutexKey(): string
     {
         return 'getPaySchetExt' . $this->extid;
+    }
+
+    public function getType(): int
+    {
+        return $this->type;
+    }
+
+    public function getExtId(): ?string
+    {
+        return $this->extid;
+    }
+
+    public function getSuccessUrl(): ?string
+    {
+        return $this->successurl;
+    }
+
+    public function getFailUrl(): ?string
+    {
+        return $this->failurl;
+    }
+
+    public function getCancelUrl(): ?string
+    {
+        return $this->cancelurl;
+    }
+
+    public function getPostbackUrl(): ?string
+    {
+        return $this->postbackurl;
+    }
+
+    public function getPostbackUrlV2(): ?string
+    {
+        return $this->postbackurl_v2;
+    }
+
+    public function getLanguage(): ?string
+    {
+        return $this->language;
     }
 }

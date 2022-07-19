@@ -17,6 +17,7 @@ use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\NotUniquePayException;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\jobs\RefreshStatusPayJob;
+use app\services\payment\models\Bank;
 use app\services\payment\models\Currency;
 use app\services\payment\models\PayCard;
 use app\services\payment\models\PaySchet;
@@ -139,28 +140,38 @@ class MfoOutCardStrategy
 
     /**
      * @param $token
+     * @param User $user
      * @return Cards
      */
-    private function createUnregisterCard($token, User $user)
+    private function createUnregisterCard($token, User $user): Cards
     {
         $panToken = PanToken::findOne(['ID' => $token]);
 
-        $cardNumber = $panToken->FirstSixDigits . '******' . $panToken->LastFourDigits;
-        $card = new Cards();
-        $card->IdUser = $user->ID;
-        $card->NameCard = $cardNumber;
-        $card->CardNumber = $cardNumber;
-        $card->ExtCardIDP = 0;
-        $card->CardType = Cards::GetTypeCard($cardNumber);
-        $card->SrokKard = 0;
-        $card->Status = 1;
-        $card->DateAdd = time();
-        $card->Default = 0;
-        $card->TypeCard = 1;
-        $card->IdPan = $panToken->ID;
-        $card->IdBank = 0;
-        $card->IsDeleted = 0;
-        $save = $card->save(false);
+        $card = Cards::find()
+            ->notSoftDeleted()
+            ->andWhere([
+                'IdPan' => $panToken->ID,
+                'IdBank' => Bank::OUT_BANK_ID,
+                'TypeCard' => Cards::TYPE_CARD_OUT,
+            ])
+            ->orderBy(['ID' => SORT_DESC])
+            ->limit(1) // optimization
+            ->one();
+        if ($card === null) {
+            $card = new Cards();
+            $card->CardNumber = $card->NameCard = $panToken->FirstSixDigits . '******' . $panToken->LastFourDigits;
+            $card->IdUser = $user->ID;
+            $card->ExtCardIDP = 0;
+            $card->SrokKard = 0;
+            $card->Status = Cards::STATUS_ACTIVE;
+            $card->DateAdd = time();
+            $card->TypeCard = Cards::TYPE_CARD_OUT;
+            $card->IdPan = $panToken->ID;
+            $card->IdBank = 0;
+            $card->IsDeleted = 0;
+            $card->save(false);
+            $card->loadDefaultValues();
+        }
 
         return $card;
     }
