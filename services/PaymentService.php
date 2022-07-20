@@ -12,6 +12,7 @@ use app\services\payment\jobs\RefreshStatusPayJob;
 use app\services\payment\jobs\RefundPayJob;
 use app\services\payment\models\PaySchet;
 use app\services\paymentService\CreateRefundException;
+use app\services\yandexPay\YandexPayException;
 use yii\base\Component;
 use yii\helpers\ArrayHelper;
 
@@ -178,6 +179,10 @@ class PaymentService extends Component
             $refundPayschet->ErrorInfo = $refundPayResponse->message;
         }
         $refundPayschet->save(false);
+
+        if ($refundPayschet->existsYandexPayTransaction) {
+            $this->updateYandexPayTransaction($refundPayschet);
+        }
     }
 
     /**
@@ -226,6 +231,21 @@ class PaymentService extends Component
 
             $percent = $amount / $sourcePaySchet->SummPay;
             return floor($sourcePaySchet->ComissSumm * $percent);
+        }
+    }
+
+    private function updateYandexPayTransaction(PaySchet $refundPaySchet)
+    {
+        /** @var YandexPayService $yandexPayService */
+        $yandexPayService = \Yii::$app->get(YandexPayService::class);
+
+        try {
+            $yandexPayService->paymentUpdate($refundPaySchet);
+        } catch (YandexPayException $e) {
+            \Yii::error([
+                'PaymentService updateYandexPayTransaction update fail',
+                $e
+            ]);
         }
     }
 }

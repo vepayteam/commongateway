@@ -121,6 +121,7 @@ use yii\helpers\ArrayHelper;
  * @property-read int|null $refundNumber {@see PaySchet::getRefundNumber()}
  * @property-read bool $isRefund {@see PaySchet::getIsRefund()}
  * @property-read int $refundedAmount {@see PaySchet::getRefundedAmount()}
+ * @property-read bool $existsYandexPayTransaction Возвращает true если существует yandexPayTransaction для текущего paySchet или для refundSource {@see PaySchet::getExistsYandexPayTransaction()}
  */
 class PaySchet extends \yii\db\ActiveRecord
 {
@@ -393,6 +394,11 @@ class PaySchet extends \yii\db\ActiveRecord
     public function getYandexPayTransaction(): ActiveQuery
     {
         return $this->hasOne(PaySchetYandex::class, ['paySchetId' => 'ID']);
+    }
+
+    public function getExistsYandexPayTransaction(): bool
+    {
+        return ($this->isRefund ? $this->refundSource : $this)->yandexPayTransaction !== null;
     }
 
     public function getUser()
