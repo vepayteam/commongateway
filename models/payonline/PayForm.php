@@ -46,7 +46,7 @@ class PayForm extends Model
                         || $CardMonth < 1
                         || $CardMonth > 12
                         // TODO: Убрать после потери актуальности https://it.dengisrazy.ru/browse/VPBC-1468
-                        || (in_array(Cards::GetTypeCard($this->CardNumber), [
+                        || (!in_array(Cards::GetTypeCard($this->CardNumber), [
                                 Cards::BRAND_AMERICAN_EXPRESS,
                                 Cards::BRAND_MAESTRO,
                                 Cards::BRAND_MASTERCARD,

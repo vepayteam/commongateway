@@ -78,7 +78,7 @@ class PaymentCardObject extends ApiObject
         $currentMonth = (int)date('n');
         if ($month < 1 || $month > 12
             // TODO: Убрать после потери актуальности https://it.dengisrazy.ru/browse/VPBC-1468
-            || (in_array(Cards::GetTypeCard($this->cardNumber), [
+            || (!in_array(Cards::GetTypeCard($this->cardNumber), [
                     Cards::BRAND_AMERICAN_EXPRESS,
                     Cards::BRAND_MAESTRO,
                     Cards::BRAND_MASTERCARD,
