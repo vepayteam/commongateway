@@ -95,12 +95,6 @@ class ModelsBankTCBankTest extends \Codeception\Test\Unit
         $this->tester->assertEquals(['state' => 0, 'Status' => '', 'message' => ''], $tCBank->reversOrder(0));
     }
 
-    public function testСreateTisket()
-    {
-        $tCBank = new TCBank();
-        $this->tester->assertEquals(['state' => 0, 'Status' => '', 'message' => ''], $tCBank->reversOrder(0));
-    }
-
     public function testCheckStatusOrder()
     {
         $tCBank = new TCBank();
