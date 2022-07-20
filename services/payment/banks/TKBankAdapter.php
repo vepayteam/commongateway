@@ -44,6 +44,7 @@ use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
 use app\services\payment\exceptions\RefundPayException;
 use app\services\payment\exceptions\reRequestingStatusException;
 use app\services\payment\exceptions\reRequestingStatusOkException;
+use app\services\payment\exceptions\TKBankGatewayTimeoutException;
 use app\services\payment\exceptions\TKBankRefusalException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CreatePayForm;
@@ -534,6 +535,9 @@ class TKBankAdapter implements IBankAdapter
                     $ans['httperror'] = $jsonReq ? Json::decode($curl->response) : $curl->response;
                     Yii::error(['curlerror:' => ['Headers' => $curl->getRequestHeaders(), 'Post' => Cards::MaskCardLog($post)]], 'merchant');
                     break;
+                case 504:
+                    Yii::warning('TKBankAdapter curlXmlReq gateway timeout response');
+                    throw new TKBankGatewayTimeoutException();
                 default:
                     $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
                     break;
@@ -1622,9 +1626,22 @@ class TKBankAdapter implements IBankAdapter
             'CardNumber' => $outCardPayForm->cardnum,
         ];
 
-        $ans = $this->parseAns($this->curlXmlReq(Json::encode($outCardPayRequest->getAttributes()), $this->bankUrl . $action));
-
         $outCardPayResponse = new OutCardPayResponse();
+
+        try {
+            $ans = $this->parseAns($this->curlXmlReq(Json::encode($outCardPayRequest->getAttributes()), $this->bankUrl . $action));
+        } catch (TKBankGatewayTimeoutException $e) {
+            /**
+             * В случае если запрос отваливается по таймауту, стоит проверить статус транзакции
+             */
+
+            Yii::warning('TKBankAdapter outCardPay gateway timeout paySchet.ID=' . $outCardPayForm->paySchet->ID);
+
+            $outCardPayResponse->status = BaseResponse::STATUS_CREATED;
+            $outCardPayResponse->message = 'Ожидает запрос статуса';
+
+            return $outCardPayResponse;
+        }
 
         if(isset($ans['xml'])) {
             if(!array_key_exists('errorinfo', $ans['xml']) || (isset($ans['xml']['errorinfo']['errorcode']) && $ans['xml']['errorinfo']['errorcode'] == 0)) {
