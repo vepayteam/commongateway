@@ -513,18 +513,19 @@ class StatController extends Controller
     public function actionOtchdata()
     {
         if (Yii::$app->request->isAjax) {
-            $data = Yii::$app->request->post();
+            $postData = Yii::$app->request->post();
             $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
             $payShetList = new PayShetStat();
-            Yii::warning('partner/stat/otchdata POST: ' . serialize($data), 'partner');
+            Yii::info('partner/stat/otchdata POST: ' . serialize($postData), 'partner');
             try {
-                if ($payShetList->load($data, '') && $payShetList->validate()) {
+                if ($payShetList->load($postData, '') && $payShetList->validate()) {
                     $paymentReportService = new PaymentReportService();
 
                     $data = $paymentReportService->getLegacyReportEntities($IsAdmin, $payShetList);
                     return $this->renderPartial('_otchdata', [
                         'IsAdmin' => $IsAdmin,
                         'data' => $data,
+                        'postData' => $postData,
                         'requestToExport' => $payShetList->getAttributes()
                     ]);
                 }

@@ -9,6 +9,7 @@ use app\models\payonline\User;
 use app\models\Payschets;
 use app\models\queue\BinBDInfoJob;
 use app\models\TU;
+use app\services\CurlLogger;
 use app\services\ident\IdentService;
 use qfsx\yii2\curl\Curl;
 use SimpleXMLElement;
@@ -590,17 +591,18 @@ class TCBank implements IBank
         //}
         $curl = new Curl();
         Yii::warning("req: login = " . $this->shopId . " url = " . $url . "\r\n" . Cards::MaskCardLog($post), 'merchant');
+        $headers = array_merge([
+            $jsonReq ? 'Content-type: application/json' : 'Content-Type: application/soap+xml; charset=utf-8',
+            'TCB-Header-Login: ' . $this->shopId,
+            'TCB-Header-Sign: ' . $this->HmacSha1($post, $this->keyFile),
+            'TCB-Header-SerializerType: LowerCase'
+        ], $addHeader);
         try {
             $curl->reset()
                 ->setOption(CURLOPT_VERBOSE, Yii::$app->params['VERBOSE'] === 'Y')
                 ->setOption(CURLOPT_TIMEOUT, $timout)
                 ->setOption(CURLOPT_CONNECTTIMEOUT, $timout)
-                ->setOption(CURLOPT_HTTPHEADER, array_merge([
-                    $jsonReq ? 'Content-type: application/json' : 'Content-Type: application/soap+xml; charset=utf-8',
-                    'TCB-Header-Login: ' . $this->shopId,
-                    'TCB-Header-Sign: ' . $this->HmacSha1($post, $this->keyFile),
-                    'TCB-Header-SerializerType: LowerCase'
-                ], $addHeader))
+                ->setOption(CURLOPT_HTTPHEADER, $headers)
                 ->setOption(CURLOPT_SSL_VERIFYHOST, false)
                 ->setOption(CURLOPT_SSL_CIPHER_LIST, 'TLSv1')
                 ->setOption(CURLOPT_SSL_VERIFYPEER, false)
@@ -613,6 +615,8 @@ class TCBank implements IBank
             }
 
             $curl->post($url);
+
+            CurlLogger::handle($curl, $url, $headers, Cards::MaskCardLog($post), Cards::MaskCardLog($curl->response));
 
         } catch (\Exception $e) {
             Yii::warning("curlerror: " . $curl->responseCode . ":" . Cards::MaskCardLog($curl->response), 'merchant');

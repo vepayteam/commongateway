@@ -38,6 +38,8 @@ class Banks
                 return new MonetixAdapter();
             case ImpayaAdapter::$bank:
                 return new ImpayaAdapter();
+            case PayloniumAdapter::$bank:
+                return new PayloniumAdapter();
             default:
                 throw new \Exception('Ошибка выбора банка');
         }

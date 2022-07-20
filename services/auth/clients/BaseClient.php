@@ -4,9 +4,11 @@
 namespace app\services\auth\clients;
 
 
+use app\models\payonline\Cards;
 use app\services\auth\AuthService;
 use app\services\auth\models\IClientForm;
 use app\services\auth\models\User;
+use app\services\DeprecatedCurlLogger;
 use Requests;
 use Yii;
 use yii\base\Model;
@@ -50,6 +52,8 @@ abstract class BaseClient
 
         $response = curl_exec($curl);
         curl_close($curl);
+
+        DeprecatedCurlLogger::handle(curl_getinfo($curl), $this->url.$this->uri, $headers, Cards::MaskCardLog($data), Cards::MaskCardLog($response));
 
         return json_decode($response, true);
     }

@@ -4,6 +4,8 @@ namespace app\models\planner;
 
 use app\models\partner\news\News;
 use app\models\extservice\HttpProxy;
+use app\models\payonline\Cards;
+use app\services\CurlLogger;
 use qfsx\yii2\curl\Curl;
 use Yii;
 use yii\helpers\Json;
@@ -80,6 +82,8 @@ class ReceiveTelegram
             $curl->setOption(CURLOPT_PROXYUSERPWD, $this->proxyUser);
         }
         $curl->get($url . $fst . $params);
+
+        CurlLogger::handle($curl, Cards::MaskCardLog($url . $fst . $params), [], [], Cards::MaskCardLog($curl->response));
 
         Yii::warning("sendCurlGet-url: " . $url . $fst . $params . "\r\n", 'rsbcron');
         if ($curl->errorCode) {

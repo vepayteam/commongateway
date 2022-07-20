@@ -6,7 +6,9 @@ namespace app\models\planner;
 
 use app\models\extservice\HttpProxy;
 use app\models\partner\admin\AlarmsSettings;
+use app\models\payonline\Cards;
 use app\models\SendEmail;
+use app\services\CurlLogger;
 use qfsx\yii2\curl\Curl;
 use Yii;
 use yii\db\Exception;
@@ -215,6 +217,9 @@ class AlarmsSend
             if ($curl->responseCode == 200) {
                 $ret = 1;
             }
+
+            CurlLogger::handle($curl, 'https://mainsms.ru/', [], [], Cards::MaskCardLog($curl->response));
+
             if ($curl->errorCode) {
                 Yii::warning('CheckMainSms error: ' . $curl->errorCode . ":" . $curl->errorText, 'rsbcron');
             }
