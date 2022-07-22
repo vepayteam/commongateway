@@ -8,6 +8,7 @@ use app\models\partner\UserLk;
 use app\models\TU;
 use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\PaySchet;
+use app\services\payment\models\repositories\CurrencyRepository;
 use Yii;
 use yii\helpers\VarDumper;
 
@@ -50,6 +51,7 @@ class OtchToCSV extends ToCSV
                 'Сумма',
                 'Комиссия',
                 'К оплате',
+                'Валюта',
             ],
             $header_admin,
             [
@@ -148,6 +150,7 @@ class OtchToCSV extends ToCSV
                         number_format($data->SummPay / 100.0, 2, '.', ''),
                         number_format($data->ComissSumm / 100.0, 2, '.', ''),
                         number_format(($data->SummPay + $data->ComissSumm) / 100.0, 2, '.', ''),
+                        $data->CurrencyId ? CurrencyRepository::getCurrencyCodeById($data->CurrencyId)->Code : null,
                     ],
                     $ret_admin,
                     [

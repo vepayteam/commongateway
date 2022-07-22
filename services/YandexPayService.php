@@ -49,7 +49,9 @@ class YandexPayService extends Component
      */
     public function paymentUpdate(PaySchet $paySchet)
     {
-        $yandexPayTransaction = $paySchet->yandexPayTransaction;
+        $yandexPayTransaction = $paySchet->isRefund ?
+            $paySchet->refundSource->yandexPayTransaction :
+            $paySchet->yandexPayTransaction;
 
         switch ($paySchet->Status) {
             case PaySchet::STATUS_DONE:

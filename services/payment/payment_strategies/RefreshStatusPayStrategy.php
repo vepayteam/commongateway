@@ -107,7 +107,10 @@ class RefreshStatusPayStrategy extends OkPayStrategy
         $paySchet->save(false);
 
         $this->getNotificationsService()->sendPostbacks($paySchet);
-        $this->updateYandexPayTransaction($paySchet);
+
+        if ($paySchet->existsYandexPayTransaction) {
+            $this->updateYandexPayTransaction($paySchet);
+        }
 
         return $paySchet;
     }
