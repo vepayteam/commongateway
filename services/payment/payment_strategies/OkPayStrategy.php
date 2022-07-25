@@ -44,7 +44,7 @@ class OkPayStrategy
      * Время задержки между получением успешного статуса и запросом отмены по методу card/reg.
      * @link https://it.dengisrazy.ru/browse/VPBC-1441
      */
-    private const REFUND_JOB_DELAY = 1 * 60;
+    private const REFUND_JOB_DELAY = 1 * 30;
 
     /**
      * OkPayStrategy constructor.
