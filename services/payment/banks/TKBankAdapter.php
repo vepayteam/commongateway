@@ -37,6 +37,7 @@ use app\services\payment\banks\data\ClientData;
 use app\services\payment\banks\interfaces\ITKBankAdapterResponseErrors;
 use app\services\payment\banks\traits\TKBank3DSTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
+use app\services\payment\exceptions\CacheValueMissingException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
@@ -1162,24 +1163,30 @@ class TKBankAdapter implements IBankAdapter
      * @return CreatePayResponse
      * @throws Check3DSv2Exception
      * @throws CreatePayException
+     * @throws CacheValueMissingException
      */
     public function createPayStep2(CreatePaySecondStepForm $createPaySecondStepForm)
     {
         $checkDataCacheKey = Cache3DSv2Interface::CACHE_PREFIX_CHECK_DATA . $createPaySecondStepForm->getPaySchet()->ID;
 
-        if(Yii::$app->cache->exists($checkDataCacheKey)) { //@TODO: а я не понял, а если в кэше нет, то ничего вообще не делаем?
-            $checkData = Yii::$app->cache->get($checkDataCacheKey);
+        if (!Yii::$app->cache->exists($checkDataCacheKey)) {
+            Yii::warning('TKBankAdapter createPayStep2 cache data not found checkDataCacheKey=' . $checkDataCacheKey
+                . ' paySchet.ID=' . $createPaySecondStepForm->getPaySchet()->ID);
 
-            $check3DSVersionResponse = new Check3DSVersionResponse();
-            $check3DSVersionResponse->cardRefId = ($checkData['cardRefId'] ?? '');
-            $check3DSVersionResponse->transactionId = ($checkData['transactionId'] ?? '');
-
-            $paySchet = $createPaySecondStepForm->getPaySchet();
-            $payResponse = $this->createPay3DSv2($paySchet, $check3DSVersionResponse);
-
-            $payResponse->isNeed3DSRedirect = false;
-            return $payResponse;
+            throw new CacheValueMissingException();
         }
+
+        $checkData = Yii::$app->cache->get($checkDataCacheKey);
+
+        $check3DSVersionResponse = new Check3DSVersionResponse();
+        $check3DSVersionResponse->cardRefId = ($checkData['cardRefId'] ?? '');
+        $check3DSVersionResponse->transactionId = ($checkData['transactionId'] ?? '');
+
+        $paySchet = $createPaySecondStepForm->getPaySchet();
+        $payResponse = $this->createPay3DSv2($paySchet, $check3DSVersionResponse);
+
+        $payResponse->isNeed3DSRedirect = false;
+        return $payResponse;
     }
 
     /**
