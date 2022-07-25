@@ -798,7 +798,7 @@ class BRSAdapter implements IBankAdapter
         }
 
         $requestData = $transferToAccountRequest->getAttributes();
-        $requestData['msgSign'] = $transferToAccountRequest->getMsgSign($this->gate);
+        $requestData['msgSign'] = $transferToAccountRequest->getMsgSign($this->gate, $this->gate->Login . '.fps.key');
         $transferToAccountResponse = new TransferToAccountResponse();
 
         try {
@@ -878,7 +878,7 @@ class BRSAdapter implements IBankAdapter
 
         curl_setopt_array($curl, $optArray);
 
-        Yii::warning('BRSAdapter req ' . $requestType . ' uri=' . $uri . '; data=' . Json::encode($data));
+        Yii::warning('BRSAdapter req ' . $requestType . ' uri=' . $uri . '; x-User-Login: ' . $this->gate->AdvParam_1 . '; data=' . Json::encode($data));
         $response = curl_exec($curl);
         $curlError = curl_error($curl);
         $info = curl_getinfo($curl);
@@ -956,7 +956,7 @@ class BRSAdapter implements IBankAdapter
      */
     private function getTransferB2cRequestData(OutPayAccountForm $outPayaccForm): array
     {
-        $id = $outPayaccForm->paySchet->ID ?? Yii::$app->security->generateRandomString(16);
+        $id = (string) ($outPayaccForm->paySchet->ID ?? Yii::$app->security->generateRandomString(16));
         $transferToAccountRequest = new TransferToAccountRequest();
         $transferToAccountRequest->bic = $outPayaccForm->bic;
         $transferToAccountRequest->receiverId = $outPayaccForm->getPhoneToSend();
@@ -969,7 +969,7 @@ class BRSAdapter implements IBankAdapter
         $transferToAccountRequest->sourceId = $id;
 
         $requestData = $transferToAccountRequest->getAttributes();
-        $requestData['msgSign'] = $transferToAccountRequest->getMsgSign($this->gate, $this->gate->Login . '.key');
+        $requestData['msgSign'] = $transferToAccountRequest->getMsgSign($this->gate, $this->gate->Login . '.fps.key');
 
         return $requestData;
     }
