@@ -2,6 +2,7 @@
 
 namespace app\models\payonline;
 
+use app\helpers\UrlHelper;
 use app\models\SendEmail;
 use Yii;
 use yii\db\ActiveQuery;
@@ -92,6 +93,7 @@ class OrderNotif extends ActiveRecord
 
             $subject = 'Счет на оплату';
             $content = Yii::$app->controller->renderPartial('@app/mail/order_notif', [
+                'apiUrl' => UrlHelper::getApiUrl(),
                 'orderNotif' => $orderNotif,
                 'orderPay' => $orderPay,
                 'orderTo' => $orderPay->OrderTo ? Json::decode($orderPay->OrderTo) : null,
