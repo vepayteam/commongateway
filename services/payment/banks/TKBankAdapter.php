@@ -37,6 +37,7 @@ use app\services\payment\banks\data\ClientData;
 use app\services\payment\banks\interfaces\ITKBankAdapterResponseErrors;
 use app\services\payment\banks\traits\TKBank3DSTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
+use app\services\payment\exceptions\CacheValueMissingException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
@@ -44,6 +45,7 @@ use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
 use app\services\payment\exceptions\RefundPayException;
 use app\services\payment\exceptions\reRequestingStatusException;
 use app\services\payment\exceptions\reRequestingStatusOkException;
+use app\services\payment\exceptions\TKBankGatewayTimeoutException;
 use app\services\payment\exceptions\TKBankRefusalException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CreatePayForm;
@@ -127,98 +129,6 @@ class TKBankAdapter implements IBankAdapter
     public function getBankId()
     {
         return self::$bank;
-    }
-
-    /**
-     * Получение № тарнзакции в банке
-     * @param array $data [IdPay]
-     * @param User|null $user
-     * @param int $idCard
-     * @param int $activate
-     * @return array ['tisket', 'recurrent']
-     * @throws \yii\db\Exception
-     */
-    private function createTisket($data, $user = null, $idCard = 0, $activate = 0)
-    {
-        $payschets = new Payschets();
-        //данные счета для оплаты
-        $params = $payschets->getSchetData($data['IdPay']);
-
-        $tisket = $userUrl = '';
-        $isRecurrent = 0;
-        if ($params && $params['Status'] == 0) {
-
-            $order_description = 'Счет №' . $params['ID'];
-
-            $card = null;
-            if ($user && $idCard >= 0) {
-                $card = $payschets->getSavedCard($user->ID, $idCard, $activate);
-            }
-
-            $emailClient = '';
-            if (isset($params['Email']) && !empty($params['Email'])) {
-                $emailClient = $params['Email'];
-            } elseif (isset($data['email']) && !empty($data['email']) && $data['email'] != 'undefined') {
-                $emailClient = $data['email'];
-            }
-
-            $queryData = [
-                'ExtID' => $params['ID'],
-                'Amount' => $params['SummFull'],
-                'Description' => $order_description,
-                'ClientInfo' => [
-                    //'PhoneNumber'
-                    'Email' => $emailClient,
-                    //'FIO'
-                ],
-                'ReturnUrl' => $this->backUrls['ok'] . $params['ID'],
-                'ShowReturnButton' => false,
-                'TTL' => '00.00:' . $params['TimeElapsed'] . ':00',
-                //'AdditionalParameters'
-            ];
-
-            if ($user && $idCard == -1) {
-                //привязка карты
-                $action = "/api/v1/card/unregistered/bind";
-            } elseif ($card && $idCard >= 0) {
-                //реккурентный платеж с карты
-                $action = '/api/v1/card/registered/direct';
-                $isRecurrent = 1;
-                $queryData['CardRefID'] = $card['ExtCardIDP'];
-            } else {
-                //оплата без привязки карты
-                $action = "/api/v1/card/unregistered/debit";
-            }
-
-            $queryData = Json::encode($queryData);
-
-            //$language = 'fullsize';
-            // определяем через что зашли - pageView = MOBILE
-            //if ($user->isMobile()) {
-            //$language = 'mob';
-            //}*/
-
-            $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
-
-            if (isset($ans['xml']) && !empty($ans['xml'])) {
-                $xml = $this->parseAns($ans['xml']);
-                if (isset($xml['Status']) && $xml['Status'] == '0') {
-                    $userUrl = isset($xml['formurl']) ? $xml['formurl'] : '';
-                    $tisket = $xml['ordernumber'];
-                    //сохранение номера транзакции
-                    $payschets = new Payschets();
-                    $payschets->SetBankTransact([
-                        'idpay' => $params['ID'],
-                        'trx_id' => $tisket,
-                        'url' => $userUrl
-                    ]);
-
-                    Yii::$app->session['IdPay'] = $params['ID'];
-                }
-            }
-        }
-
-        return ['tisket' => $tisket, 'recurrent' => $isRecurrent, 'url' => $userUrl];
     }
 
     /**
@@ -534,6 +444,9 @@ class TKBankAdapter implements IBankAdapter
                     $ans['httperror'] = $jsonReq ? Json::decode($curl->response) : $curl->response;
                     Yii::error(['curlerror:' => ['Headers' => $curl->getRequestHeaders(), 'Post' => Cards::MaskCardLog($post)]], 'merchant');
                     break;
+                case 504:
+                    Yii::warning('TKBankAdapter curlXmlReq gateway timeout response');
+                    throw new TKBankGatewayTimeoutException();
                 default:
                     $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
                     break;
@@ -1158,24 +1071,30 @@ class TKBankAdapter implements IBankAdapter
      * @return CreatePayResponse
      * @throws Check3DSv2Exception
      * @throws CreatePayException
+     * @throws CacheValueMissingException
      */
     public function createPayStep2(CreatePaySecondStepForm $createPaySecondStepForm)
     {
         $checkDataCacheKey = Cache3DSv2Interface::CACHE_PREFIX_CHECK_DATA . $createPaySecondStepForm->getPaySchet()->ID;
 
-        if(Yii::$app->cache->exists($checkDataCacheKey)) { //@TODO: а я не понял, а если в кэше нет, то ничего вообще не делаем?
-            $checkData = Yii::$app->cache->get($checkDataCacheKey);
+        if (!Yii::$app->cache->exists($checkDataCacheKey)) {
+            Yii::warning('TKBankAdapter createPayStep2 cache data not found checkDataCacheKey=' . $checkDataCacheKey
+                . ' paySchet.ID=' . $createPaySecondStepForm->getPaySchet()->ID);
 
-            $check3DSVersionResponse = new Check3DSVersionResponse();
-            $check3DSVersionResponse->cardRefId = ($checkData['cardRefId'] ?? '');
-            $check3DSVersionResponse->transactionId = ($checkData['transactionId'] ?? '');
-
-            $paySchet = $createPaySecondStepForm->getPaySchet();
-            $payResponse = $this->createPay3DSv2($paySchet, $check3DSVersionResponse);
-
-            $payResponse->isNeed3DSRedirect = false;
-            return $payResponse;
+            throw new CacheValueMissingException();
         }
+
+        $checkData = Yii::$app->cache->get($checkDataCacheKey);
+
+        $check3DSVersionResponse = new Check3DSVersionResponse();
+        $check3DSVersionResponse->cardRefId = ($checkData['cardRefId'] ?? '');
+        $check3DSVersionResponse->transactionId = ($checkData['transactionId'] ?? '');
+
+        $paySchet = $createPaySecondStepForm->getPaySchet();
+        $payResponse = $this->createPay3DSv2($paySchet, $check3DSVersionResponse);
+
+        $payResponse->isNeed3DSRedirect = false;
+        return $payResponse;
     }
 
     /**
@@ -1622,9 +1541,22 @@ class TKBankAdapter implements IBankAdapter
             'CardNumber' => $outCardPayForm->cardnum,
         ];
 
-        $ans = $this->parseAns($this->curlXmlReq(Json::encode($outCardPayRequest->getAttributes()), $this->bankUrl . $action));
-
         $outCardPayResponse = new OutCardPayResponse();
+
+        try {
+            $ans = $this->parseAns($this->curlXmlReq(Json::encode($outCardPayRequest->getAttributes()), $this->bankUrl . $action));
+        } catch (TKBankGatewayTimeoutException $e) {
+            /**
+             * В случае если запрос отваливается по таймауту, стоит проверить статус транзакции
+             */
+
+            Yii::warning('TKBankAdapter outCardPay gateway timeout paySchet.ID=' . $outCardPayForm->paySchet->ID);
+
+            $outCardPayResponse->status = BaseResponse::STATUS_CREATED;
+            $outCardPayResponse->message = 'Ожидает запрос статуса';
+
+            return $outCardPayResponse;
+        }
 
         if(isset($ans['xml'])) {
             if(!array_key_exists('errorinfo', $ans['xml']) || (isset($ans['xml']['errorinfo']['errorcode']) && $ans['xml']['errorinfo']['errorcode'] == 0)) {

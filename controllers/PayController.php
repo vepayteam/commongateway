@@ -15,6 +15,7 @@ use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\banks\TKBankAdapter;
 use app\services\payment\exceptions\BankAdapterResponseException;
+use app\services\payment\exceptions\CacheValueMissingException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\DuplicateCreatePayException;
@@ -306,6 +307,12 @@ class PayController extends Controller
                 'message' => $errorMessage,
                 'failUrl' => $paySchet->FailedUrl,
             ]);
+        } catch (CacheValueMissingException $e) {
+            Yii::warning('PayController createpaySecondStep CacheValueMissingException redirect to orderok paySchet.ID=' . $paySchet->ID);
+
+            return $this->renderPartial('client-redirect', [
+                'redirectUrl' => Url::toRoute(['orderok', 'id' => $paySchet->ID]),
+            ]);
         }
 
         $paySchet->IsNeed3DSVerif = $createPayResponse->isNeed3DSVerif;
@@ -396,6 +403,8 @@ class PayController extends Controller
 
             Yii::info('PayController orderdone IdPay=' . $id . ' trans=' . $trans);
         }
+
+        $donePayForm->postParameters = Yii::$app->request->post();
 
         $donePayForm->md = Yii::$app->request->post('MD', null);
         $donePayForm->paRes = Yii::$app->request->post('PaRes', null);

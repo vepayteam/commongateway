@@ -3,6 +3,7 @@
 namespace app\services\payment\payment_strategies;
 
 use app\services\payment\banks\BankAdapterBuilder;
+use app\services\payment\exceptions\ConfirmPostDataException;
 use app\services\payment\exceptions\TKBankRefusalException;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\jobs\RefreshStatusPayJob;
@@ -92,6 +93,14 @@ class DonePayStrategy
 
                 $paySchet->Status = PaySchet::STATUS_ERROR;
                 $paySchet->ErrorInfo = $e->getMessage();
+                $paySchet->save(false);
+
+                return $paySchet;
+            } catch (ConfirmPostDataException $e) {
+                Yii::warning(["DonePayStrategy error in POST data (PaySchet.ID:{$paySchet->ID}).", $e]);
+
+                $paySchet->Status = PaySchet::STATUS_ERROR;
+                $paySchet->ErrorInfo = $e->getBankErrorMessage();
                 $paySchet->save(false);
 
                 return $paySchet;

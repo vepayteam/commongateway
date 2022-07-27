@@ -4,6 +4,8 @@
 namespace app\services\payment\banks;
 
 
+use app\models\payonline\Cards;
+use app\services\DeprecatedCurlLogger;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
@@ -98,6 +100,9 @@ class ADGroupBankAdapter implements IBankAdapter
         $curl = curl_init();
 
         $url = $this->bankUrl . $action;
+        $headers = [
+            "Content-Type: application/json"
+        ];
         curl_setopt_array($curl, array(
             CURLOPT_VERBOSE => Yii::$app->params['VERBOSE'] === 'Y',
             CURLOPT_URL => $url,
@@ -109,13 +114,13 @@ class ADGroupBankAdapter implements IBankAdapter
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => "POST",
             CURLOPT_POSTFIELDS => json_encode($data),
-            CURLOPT_HTTPHEADER => array(
-                "Content-Type: application/json"
-            ),
+            CURLOPT_HTTPHEADER => $headers,
         ));
 
         $response = curl_exec($curl);
         curl_close($curl);
+
+        DeprecatedCurlLogger::handle(curl_getinfo($curl), $url, $headers, Cards::MaskCardLog($data), Cards::MaskCardLog($response));
 
         $a = 0;
     }
