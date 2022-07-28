@@ -12,7 +12,7 @@ $db = require(__DIR__ . '/test_db.php');
 return [
     'id' => 'basic-tests',
     'basePath' => dirname(__DIR__),
-    'language' => 'en-US',
+    'language' => 'ru-RU',
     'sourceLanguage' => 'ru-RU',
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
