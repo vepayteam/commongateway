@@ -18,6 +18,12 @@ class ModelsMfoMfoOutcardRegTest extends \Codeception\Test\Unit
     {
     }
 
+    public function testMaskedCardNumber()
+    {
+        $mfoOutcardReg = new MfoOutcardReg();
+        $this->tester->assertEquals('555555******5555', $mfoOutcardReg->MaskedCardNumber('555555555555555'));
+    }
+
     public function testSaveOutard()
     {
         $mfoOutcardReg = new MfoOutcardReg();

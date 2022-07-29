@@ -1,6 +1,8 @@
 <?php
 
+
 namespace app\services\payment\payment_strategies;
+
 
 use app\clients\tcbClient\TcbOrderNotExistException;
 use app\models\antifraud\AntiFraud;
@@ -18,6 +20,7 @@ use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\SetPayOkForm;
 use app\services\payment\jobs\RefundPayJob;
+use app\services\payment\models\PayCard;
 use app\services\payment\models\PaySchet;
 use app\services\payment\PaymentService;
 use app\services\yandexPay\YandexPayException;
@@ -138,37 +141,28 @@ class OkPayStrategy
 
     /**
      * @param PaySchet $paySchet
-     * @param CheckStatusPayResponse $response
-     * @todo Rename + refactor.
+     * @param CheckStatusPayResponse $checkStatusPayResponse
+     * @throws \yii\db\Exception
      */
-    protected function linkCard(PaySchet $paySchet, CheckStatusPayResponse $response)
+    protected function linkCard(PaySchet $paySchet, CheckStatusPayResponse $checkStatusPayResponse)
     {
-        $card = $paySchet->card;
+        $payCard = new PayCard();
+        $number = str_replace(
+            " ",
+            "",
+            $checkStatusPayResponse->cardNumber
+        );
+        $payCard->bankId =  $checkStatusPayResponse->cardRefId;
+        $payCard->number = $number;
+        $payCard->expYear = substr($checkStatusPayResponse->expYear, 2, 2);
+        $payCard->expMonth = $checkStatusPayResponse->expMonth;
+        $payCard->type = Cards::GetTypeCard($number);
 
-        if ($response->status === BaseResponse::STATUS_DONE) {
-            $card->Status = Cards::STATUS_ACTIVE;
-        }
-        if (!empty($response->cardHolder)) {
-            $card->CardHolder = mb_substr($response->cardHolder, 0, 99);
-        }
-        if (!empty($response->cardNumber)) {
-            $number = str_replace(' ', '', $response->cardNumber);
-            $card->CardNumber = $card->NameCard = $number;
-        }
-        if (!empty($response->cardRefId)) {
-            $card->ExtCardIDP = $response->cardRefId;
-        }
-        if (!empty($response->expYear) && !empty($response->expMonth)) {
-            $card->SrokKard = (int)($response->expMonth . substr($response->expYear, 2, 2));
+        if(!empty($checkStatusPayResponse->cardHolder)) {
+            $payCard->holder = $checkStatusPayResponse->cardHolder;
         }
 
-        if ($card->getDirtyAttributes() !== []) {
-            Yii::info([
-                'Nessage' => "Card attributes updated (ID: {$card->ID}).",
-                'New attributes' => $card->getDirtyAttributes(),
-            ]);
-            $card->save(false);
-        }
+        return $this->paymentService->updateCardExtId($paySchet, $payCard);
     }
 
     /**

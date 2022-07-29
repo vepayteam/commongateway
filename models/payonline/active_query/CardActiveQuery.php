@@ -2,7 +2,6 @@
 
 namespace app\models\payonline\active_query;
 
-use app\components\activeQuery\SoftDelete;
 use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\payonline\User;
@@ -13,16 +12,6 @@ use yii\db\ActiveQuery;
  */
 class CardActiveQuery extends ActiveQuery
 {
-    use SoftDelete;
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getSoftDeleteFlag(): string
-    {
-        /** {@see Cards::$IsDeleted} */
-        return 'IsDeleted';
-    }
 
     /**
      * @param Partner $partner
@@ -36,4 +25,16 @@ class CardActiveQuery extends ActiveQuery
                 User::tableName() . '.ExtOrg' => $partner->ID,
             ]);
     }
+
+    /**
+     * @param $dateFrom
+     * @param $dateTo
+     *
+     * @return CardActiveQuery
+     */
+    public function withBetween($dateFrom, $dateTo): CardActiveQuery
+    {
+        return $this->andWhere(['between', 'DateAdd', $dateFrom, $dateTo]);
+    }
+
 }

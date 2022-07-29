@@ -43,7 +43,7 @@ class Tokenizer
             $token = $this->db->getLastInsertID();
         } catch (\yii\db\Exception $e) {
             $token = 0;
-            Yii::error(['CreateToken error.', $e]);
+            Yii::warning('CreateToken: '.$e->getMessage());
         }
 
         return $token;
