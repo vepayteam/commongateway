@@ -132,7 +132,7 @@ class PaymentService extends Component
     private function refundInternal(PaySchet $refundPayschet, $successStatus, $successErrorInfo)
     {
         $refundPayResponse = (new BankAdapterBuilder())
-            ->build($refundPayschet->partner, $refundPayschet->uslugatovar)
+            ->buildByBank($refundPayschet->partner, $refundPayschet->uslugatovar, $refundPayschet->bank)
             ->getBankAdapter()
             ->refundPay(new RefundPayForm(['paySchet' => $refundPayschet]));
 
