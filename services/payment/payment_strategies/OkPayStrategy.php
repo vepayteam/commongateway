@@ -232,10 +232,6 @@ class OkPayStrategy
                             'paySchetId' => $paySchet->ID,
                             'initiator' => 'OkPayStrategy confirmPay',
                         ]));
-                    } else {
-                        /** @var BalanceService $balanceService */
-                        $balanceService = Yii::$container->get('BalanceService');
-                        $balanceService->changeBalance($paySchet);
                     }
 
                     $BankCheck = new BankCheck();
