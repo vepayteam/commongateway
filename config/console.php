@@ -60,7 +60,6 @@ return [
         \app\services\ReportService::class => \app\services\ReportService::class,
         \app\services\LanguageService::class => \app\services\LanguageService::class,
         \app\services\YandexPayService::class => \app\services\YandexPayService::class,
-        \app\services\CardRegisterService::class => \app\services\CardRegisterService::class,
     ],
     'params' => $params,
     'container' => [
