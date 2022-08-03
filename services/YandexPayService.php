@@ -72,7 +72,7 @@ class YandexPayService extends Component
 
         $paymentUpdateRequest = new PaymentUpdateRequest(
             $yandexPayTransaction->messageId,
-            date(\DateTimeInterface::RFC3339),
+            date(\DateTimeInterface::RFC3339_EXTENDED),
             $paySchet->getSummFull(),
             $paySchet->currency->Code,
             $status,
