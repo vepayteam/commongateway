@@ -13,6 +13,7 @@ return [
     'id' => 'basic-tests',
     'basePath' => dirname(__DIR__),
     'language' => 'en-US',
+    'sourceLanguage' => 'ru-RU',
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
         '@npm'   => '@vendor/npm-asset',
