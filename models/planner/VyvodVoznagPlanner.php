@@ -6,8 +6,8 @@ use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\Options;
 use app\models\partner\admin\VoznagStat;
-use app\services\paymentTransfer\PaymentTransferException;
-use app\services\paymentTransfer\TransferRewardForm;
+use app\services\paymentTransfer\exceptions\PaymentTransferException;
+use app\services\paymentTransfer\models\TransferRewardForm;
 use app\services\PaymentTransferService;
 use Yii;
 

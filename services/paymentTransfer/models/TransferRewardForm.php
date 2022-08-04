@@ -1,6 +1,6 @@
 <?php
 
-namespace app\services\paymentTransfer;
+namespace app\services\paymentTransfer\models;
 
 use app\models\payonline\Partner;
 use Carbon\Carbon;

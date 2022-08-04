@@ -16,10 +16,10 @@ use app\services\payment\jobs\RefreshStatusPayJob;
 use app\services\payment\models\Bank;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
-use app\services\paymentTransfer\PartnerRequisites;
-use app\services\paymentTransfer\PaymentTransferException;
-use app\services\paymentTransfer\TransferRewardForm;
-use app\services\paymentTransfer\TransferFundsForm;
+use app\services\paymentTransfer\models\PartnerRequisites;
+use app\services\paymentTransfer\exceptions\PaymentTransferException;
+use app\services\paymentTransfer\models\TransferRewardForm;
+use app\services\paymentTransfer\models\TransferFundsForm;
 use Carbon\Carbon;
 use yii\base\Component;
 
