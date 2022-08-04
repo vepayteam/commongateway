@@ -6,7 +6,9 @@ use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\Options;
 use app\models\partner\admin\VoznagStat;
-use app\models\partner\admin\VyvodVoznag;
+use app\services\paymentTransfer\PaymentTransferException;
+use app\services\paymentTransfer\TransferRewardForm;
+use app\services\PaymentTransferService;
 use Yii;
 
 class VyvodVoznagPlanner
@@ -44,10 +46,10 @@ class VyvodVoznagPlanner
                 p.`KeyTkbVyvod`,
                 p.NumDogovor,
                 r.INNPolushat
-            FROM 
+            FROM
                 `partner` AS p
                 LEFT JOIN partner_bank_rekviz AS r ON p.ID = r.IdPartner
-            WHERE 
+            WHERE
                 p.`IsDeleted` = 0
                 AND p.`IsBlocked` = 0
                 AND r.ID IS NOT NULL
@@ -71,17 +73,22 @@ class VyvodVoznagPlanner
                 $bal = $tkb->getBalance();
 
                 if ($bal['status'] == 1 && $bal['amount'] > $sumVozn / 100.0) {
-                    $VyvodVoznag = new VyvodVoznag();
-                    $VyvodVoznag->setAttributes([
-                        'partner' => $rowPart['ID'],
-                        'summ' => $sumVozn,
-                        'datefrom' => date("d.m.Y H:i", $dateFrom),
-                        'dateto' => date("d.m.Y H:i", $dateTo),
-                        'isCron' => true,
-                        'type' => 0,
-                        'balance' => $bal['amount']
-                    ]);
-                    $VyvodVoznag->CreatePayVyvod();
+                    $form = new TransferRewardForm();
+                    $form->datefrom = date("d.m.Y H:i", $dateFrom);
+                    $form->dateto = date("d.m.Y H:i", $dateTo);
+                    $form->partner = $rowPart['ID'];
+                    $form->summ = $sumVozn;
+                    $form->type = TransferRewardForm::TYPE_STANDARD;
+
+                    /** @var PaymentTransferService $paymentTransferService */
+                    $paymentTransferService = Yii::$app->get(PaymentTransferService::class);
+
+                    try {
+                        $paymentTransferService->transferReward($form);
+                    } catch (PaymentTransferException $e) {
+                        Yii::$app->errorHandler->logException($e);
+                        throw $e;
+                    }
                 }
             }
         }
@@ -107,7 +114,7 @@ class VyvodVoznagPlanner
             WHERE
                 `IdPartner` = :IDMFO
                 AND `TypeVyvod` = 0
-                AND `DateTo` > :DATEFROM                          
+                AND `DateTo` > :DATEFROM
         ", [':IDMFO' => $IdPartner, ':DATEFROM' =>  $dateFrom])->queryScalar();
 
         if (!$existPay) {

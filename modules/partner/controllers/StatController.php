@@ -4,7 +4,6 @@ namespace app\modules\partner\controllers;
 
 use app\models\kkt\OnlineKassa;
 use app\models\mfo\MfoStat;
-use app\models\partner\admin\VyvodVoznag;
 use app\models\partner\PartUserAccess;
 use app\models\partner\stat\ActMfo;
 use app\models\partner\stat\ActSchet;
@@ -42,6 +41,9 @@ use app\services\payment\models\Bank;
 use app\services\payment\models\PaySchet;
 use app\services\payment\PaymentService;
 use app\services\paymentReport\PaymentReportService;
+use app\services\paymentTransfer\PaymentTransferException;
+use app\services\paymentTransfer\TransferRewardForm;
+use app\services\PaymentTransferService;
 use Exception;
 use kartik\mpdf\Pdf;
 use Throwable;
@@ -1001,18 +1003,26 @@ class StatController extends Controller
             $schet->Komment = 'Вознаграждение за период, '.date('m.Y', $act->ActPeriod);
             $schet->IsDeleted = 0;
             if ($schet->save(false)) {
+                $form = new TransferRewardForm();
+                $form->datefrom = date("01.m.Y H:i", $act->ActPeriod);
+                $form->dateto = date("t.m.Y 23:59", $act->ActPeriod);
+                $form->partner = $act->IdPartner;
+                $form->summ = $act->ComisVyplata;
+                $form->type = TransferRewardForm::TYPE_FAKE;
 
-                $vv = new VyvodVoznag();
-                $vv->setAttributes([
-                    'partner' => $act->IdPartner,
-                    'summ' => $act->ComisVyplata,
-                    'datefrom' => date("01.m.Y H:i", $act->ActPeriod),
-                    'dateto' => date("t.m.Y 23:59", $act->ActPeriod),
-                    'isCron' => true,
-                    'type' => 1,
-                    'balance' => 0
-                ]);
-                $vv->CreatePayVyvod();
+                /** @var PaymentTransferService $paymentTransferService */
+                $paymentTransferService = Yii::$app->get(PaymentTransferService::class);
+
+                try {
+                    $paymentTransferService->transferReward($form);
+                } catch (PaymentTransferException $e) {
+                    Yii::$app->errorHandler->logException($e);
+
+                    return [
+                        'status' => 0,
+                        'message' => $e->getMessage(),
+                    ];
+                }
 
                 return [
                     'status' => 1,
@@ -1032,7 +1042,10 @@ class StatController extends Controller
 
             if ($schet) {
                 $Partner = Partner::findOne(['ID' => $schet->IdPartner]);
-                $recviz = VyvodVoznag::GetRecviz();
+
+                /** @var PaymentTransferService $paymentTransferService */
+                $paymentTransferService = Yii::$app->get(PaymentTransferService::class);
+                $recviz = $paymentTransferService->getLegacyRewardRequisites();
 
                 $pdf = new Pdf([
                     'mode'=> Pdf::MODE_UTF8,

@@ -64,6 +64,7 @@ return [
         \app\services\RecurrentPaymentPartsService::class => \app\services\RecurrentPaymentPartsService::class,
         \app\services\PaymentService::class => \app\services\PaymentService::class,
         \app\services\LanguageService::class => \app\services\LanguageService::class,
+        \app\services\PaymentTransferService::class => \app\services\PaymentTransferService::class,
     ],
     'params' => $params,
     'container' => [
