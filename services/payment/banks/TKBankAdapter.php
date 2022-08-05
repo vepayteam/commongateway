@@ -45,6 +45,7 @@ use app\services\payment\exceptions\RefundPayException;
 use app\services\payment\exceptions\reRequestingStatusException;
 use app\services\payment\exceptions\reRequestingStatusOkException;
 use app\services\payment\exceptions\TKBankRefusalException;
+use app\services\payment\exceptions\ValidationException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\CreatePaySecondStepForm;
@@ -1129,6 +1130,7 @@ class TKBankAdapter implements IBankAdapter
      * @throws BankAdapterResponseException
      * @throws Check3DSv2Exception
      * @throws CreatePayException
+     * @throws ValidationException
      */
     public function createPay(CreatePayForm $createPayForm, ClientData $clientData)
     {
