@@ -126,6 +126,55 @@ class MfoSettings extends Model
             $usl->save(false);
         }
 
+        $usl = Uslugatovar::findOne(['IsCustom' => TU::$JKHPARTS, 'IDPartner' => $this->IdPartner, 'IsDeleted' => 0]);
+        if ($usl) {
+            $usl->UrlInform = $this->url;
+            $usl->KeyInform = $this->key;
+            $usl->save(false);
+        }
+
+        $usl = Uslugatovar::findOne(['IsCustom' => TU::$ECOMPARTS, 'IDPartner' => $this->IdPartner, 'IsDeleted' => 0]);
+        if ($usl) {
+            $usl->UrlInform = $this->url;
+            $usl->KeyInform = $this->key;
+            $usl->save(false);
+        }
+
+        $usl = Uslugatovar::findOne(['IsCustom' => TU::$POGASHATFPARTS, 'IDPartner' => $this->IdPartner, 'IsDeleted' => 0]);
+        if ($usl) {
+            $usl->UrlInform = $this->url;
+            $usl->KeyInform = $this->key;
+            $usl->save(false);
+        }
+
+        $usl = Uslugatovar::findOne(['IsCustom' => TU::$AVTOPLATATFPARTS, 'IDPartner' => $this->IdPartner, 'IsDeleted' => 0]);
+        if ($usl) {
+            $usl->UrlInform = $this->url;
+            $usl->KeyInform = $this->key;
+            $usl->save(false);
+        }
+
+        $usl = Uslugatovar::findOne(['IsCustom' => TU::$POGASHECOMPARTS, 'IDPartner' => $this->IdPartner, 'IsDeleted' => 0]);
+        if ($usl) {
+            $usl->UrlInform = $this->url;
+            $usl->KeyInform = $this->key;
+            $usl->save(false);
+        }
+
+        $usl = Uslugatovar::findOne(['IsCustom' => TU::$AVTOPLATECOMPARTS, 'IDPartner' => $this->IdPartner, 'IsDeleted' => 0]);
+        if ($usl) {
+            $usl->UrlInform = $this->url;
+            $usl->KeyInform = $this->key;
+            $usl->save(false);
+        }
+
+        $usl = Uslugatovar::findOne(['IsCustom' => TU::$VYVODPAYSPARTS, 'IDPartner' => $this->IdPartner, 'IsDeleted' => 0]);
+        if ($usl) {
+            $usl->UrlInform = $this->url;
+            $usl->KeyInform = $this->key;
+            $usl->save(false);
+        }
+
         //merchant
         $usl = Uslugatovar::findOne(['IsCustom' => TU::$JKH, 'IDPartner' => $this->IdPartner, 'IsDeleted' => 0]);
         if ($usl) {
