@@ -47,12 +47,12 @@ class PaymentUpdateRequest extends BaseObject
     private $eci;
 
     /**
-     * @var string
+     * @var string|null
      */
     private $reasonCode;
 
     /**
-     * @var string
+     * @var string|null
      */
     private $reason;
 
@@ -65,8 +65,8 @@ class PaymentUpdateRequest extends BaseObject
      * @param string $rrn
      * @param string $approvalCode
      * @param string $eci
-     * @param string $reasonCode
-     * @param string $reason
+     * @param string|null $reasonCode
+     * @param string|null $reason
      */
     public function __construct(
         string $messageId,
@@ -77,8 +77,8 @@ class PaymentUpdateRequest extends BaseObject
         string $rrn,
         string $approvalCode,
         string $eci,
-        string $reasonCode,
-        string $reason
+        ?string $reasonCode,
+        ?string $reason
     )
     {
         parent::__construct();
@@ -160,17 +160,17 @@ class PaymentUpdateRequest extends BaseObject
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getReasonCode(): string
+    public function getReasonCode(): ?string
     {
         return $this->reasonCode;
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getReason(): string
+    public function getReason(): ?string
     {
         return $this->reason;
     }

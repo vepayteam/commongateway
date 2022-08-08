@@ -101,7 +101,7 @@ class YandexPayService extends Component
             $paySchet->ApprovalCode ?? '',
             $paySchet->Eci ?? '',
             $reasonCode,
-            $paySchet->ErrorInfo ?? ''
+            $paySchet->ErrorInfo
         );
 
         $client = new YandexPayClient($this->getBaseUrl());
