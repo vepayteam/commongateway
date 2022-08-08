@@ -19,6 +19,7 @@ class PaySchetService extends Component
 {
 
     private const MAX_ERROR_INFO_MESSAGE_LENGHT = 250;
+    private const REG_CARD_PAYMENT_AMOUNT = 11;
 
     /**
      * Создание платежа по Provparams.
@@ -295,7 +296,7 @@ class PaySchetService extends Component
     {
         $ret = null;
 
-        $REG_CARD_PAYMENT_AMOUNT = 11;
+        $regAmount = self::REG_CARD_PAYMENT_AMOUNT;
 
         /**
          * @todo Легаси. Сделать по-нормальному инициализацию $provparams.
@@ -304,8 +305,8 @@ class PaySchetService extends Component
         $provparams->load([
             'Provparams' => [
                 'prov' => 1,
-                'param' => [0 => $REG_CARD_PAYMENT_AMOUNT],
-                'summ' => $REG_CARD_PAYMENT_AMOUNT
+                'param' => [0 => $regAmount],
+                'summ' => $regAmount
             ]
         ]);
         $provparams->summ = round(floatval($provparams->summ) * 100.0);
@@ -345,7 +346,7 @@ class PaySchetService extends Component
                 $this->setReturnUrlPostbackV2($paySchet, $kfCard->postbackurl_v2);
             }
 
-            $ret = ['IdPay' => $idpay, 'Sum' => $REG_CARD_PAYMENT_AMOUNT];
+            $ret = ['IdPay' => $idpay, 'Sum' => $regAmount];
         }
         return $ret;
     }
