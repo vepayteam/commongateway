@@ -295,11 +295,7 @@ class PaySchetService extends Component
     {
         $ret = null;
 
-        try {
-            $sum = random_int(100, 1000) / 100.0;
-        } catch (\Exception $e) {
-            $sum = 100;
-        }
+        $REG_CARD_PAYMENT_AMOUNT = 11;
 
         /**
          * @todo Легаси. Сделать по-нормальному инициализацию $provparams.
@@ -308,8 +304,8 @@ class PaySchetService extends Component
         $provparams->load([
             'Provparams' => [
                 'prov' => 1,
-                'param' => [0 => $sum],
-                'summ' => $sum
+                'param' => [0 => $REG_CARD_PAYMENT_AMOUNT],
+                'summ' => $REG_CARD_PAYMENT_AMOUNT
             ]
         ]);
         $provparams->summ = round(floatval($provparams->summ) * 100.0);
@@ -349,7 +345,7 @@ class PaySchetService extends Component
                 $this->setReturnUrlPostbackV2($paySchet, $kfCard->postbackurl_v2);
             }
 
-            $ret = ['IdPay' => $idpay, 'Sum' => $sum];
+            $ret = ['IdPay' => $idpay, 'Sum' => $REG_CARD_PAYMENT_AMOUNT];
         }
         return $ret;
     }
