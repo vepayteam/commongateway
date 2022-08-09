@@ -3,6 +3,7 @@
 namespace app\modules\partner\controllers;
 
 use app\modules\partner\components\CheckAccessFilter;
+use app\modules\partner\models\forms\AdminSettingsBankForm;
 use app\modules\partner\services\AdminSettingsService;
 use app\services\payment\models\Bank;
 use yii\base\InvalidConfigException;
@@ -10,6 +11,7 @@ use yii\base\Model;
 use yii\filters\VerbFilter;
 use yii\helpers\ArrayHelper;
 use yii\web\Controller;
+use yii\web\NotFoundHttpException;
 
 class AdminSettingsController extends Controller
 {
@@ -69,6 +71,30 @@ class AdminSettingsController extends Controller
             'settings' => $settingsForm,
             'banks' => $bankForms,
             'bankList' => $bankList,
+        ]);
+    }
+
+    /**
+     * @param string|int $id Bank ID.
+     * @throws NotFoundHttpException
+     */
+    public function actionBank($id)
+    {
+        $bank = Bank::findOne($id);
+        if ($bank === null) {
+            throw new NotFoundHttpException('Банк не найден.');
+        }
+
+        $bankForm = (new AdminSettingsBankForm())->mapBank($bank);
+
+        if ($bankForm->load(\Yii::$app->request->post()) && $bankForm->validate()) {
+            $this->service->saveBank($bank, $bankForm);
+            \Yii::$app->session->setFlash('success', "Настройки банка сохранены.");
+            return $this->refresh();
+        }
+
+        return $this->render('bank', [
+            'bank' => $bankForm,
         ]);
     }
 }

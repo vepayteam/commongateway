@@ -62,7 +62,7 @@ use Exception;
 use Yii;
 use yii\helpers\Json;
 
-class BRSAdapter implements IBankAdapter
+class BRSAdapter extends BaseAdapter implements IBankAdapter
 {
     const AFT_MIN_SUMM = 180000;
     const KEYS_PATH = '@app/config/brs/';
@@ -730,7 +730,7 @@ class BRSAdapter implements IBankAdapter
      */
     public function getAftMinSum()
     {
-        return Bank::findOne(self::bankId())->AftMinSum ?? self::AFT_MIN_SUMM;
+        return $this->getBankModel()->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**

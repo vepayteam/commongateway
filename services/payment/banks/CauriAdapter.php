@@ -50,7 +50,7 @@ use Vepay\Gateway\Logger\LoggerInterface;
 use Yii;
 use yii\helpers\Json;
 
-class CauriAdapter implements IBankAdapter
+class CauriAdapter extends BaseAdapter implements IBankAdapter
 {
     public const AFT_MIN_SUMM = 120000;
     public const IS_CONFIG_OUT_CARD_PARAMS_CACHE_PREFIX = 'Cauri_IsConfigOutCardParams';
@@ -515,7 +515,7 @@ class CauriAdapter implements IBankAdapter
 
     public function getAftMinSum(): int
     {
-        return Bank::findOne(self::bankId())->AftMinSum ?? self::AFT_MIN_SUMM;
+        return $this->getBankModel()->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**
