@@ -50,7 +50,7 @@ use SoapHeader;
 use Yii;
 use yii\helpers\Json;
 
-class MTSBankAdapter implements IBankAdapter
+class MTSBankAdapter extends BaseAdapter implements IBankAdapter
 {
     const AFT_MIN_SUMM = 120000;
 
@@ -956,7 +956,7 @@ class MTSBankAdapter implements IBankAdapter
 
     public function getAftMinSum()
     {
-        return Bank::findOne(self::bankId())->AftMinSum ?? self::AFT_MIN_SUMM;
+        return $this->getBankModel()->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**

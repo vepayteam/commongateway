@@ -30,7 +30,7 @@ use app\services\payment\forms\SendP2pForm;
 use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\PartnerBankGate;
 
-class PayloniumAdapter implements IBankAdapter
+class PayloniumAdapter extends BaseAdapter implements IBankAdapter
 {
     /**
      * Все запросы шлются на один endpoint в конце нужно добавить username

@@ -11,7 +11,11 @@ use yii\base\Model;
 class AdminSettingsBankForm extends Model
 {
     /**
-     * @var string|bool Only-read name.
+     * @var int Read-only ID.
+     */
+    public $id;
+    /**
+     * @var string|bool Read-only name.
      */
     public $name;
 
@@ -39,6 +43,10 @@ class AdminSettingsBankForm extends Model
      * @var string|bool
      */
     public $useSamsungPay;
+    /**
+     * @var string|int
+     */
+    public $outCardRefreshStatusDelay;
 
     /**
      * {@inheritDoc}
@@ -53,6 +61,8 @@ class AdminSettingsBankForm extends Model
                 ['usePayIn', 'useApplePay', 'useGooglePay', 'useSamsungPay'],
                 'boolean',
             ],
+            [['outCardRefreshStatusDelay'], 'integer', 'min' => 0, 'max' => 60 * 60],
+            [['outCardRefreshStatusDelay'], 'required'],
         ];
     }
 
@@ -62,6 +72,7 @@ class AdminSettingsBankForm extends Model
     public function attributeLabels(): array
     {
         return [
+            'id' => 'ID',
             'name' => 'Банк',
             'sortOrder' => 'Приоритет',
             'aftMinSum' => 'Порог для платежа через AFT (в копейках)',
@@ -69,6 +80,7 @@ class AdminSettingsBankForm extends Model
             'useApplePay' => 'Apple Pay',
             'useGooglePay' => 'Google Pay',
             'useSamsungPay' => 'Samsung Pay',
+            'outCardRefreshStatusDelay' => 'Задержка обновления статуса при выводе на карту (в секундах)',
         ];
     }
 
@@ -78,6 +90,7 @@ class AdminSettingsBankForm extends Model
      */
     public function mapBank(Bank $bank): AdminSettingsBankForm
     {
+        $this->id = $bank->ID;
         $this->name = $bank->Name;
         $this->sortOrder = $bank->SortOrder;
         $this->aftMinSum = $bank->AftMinSum;
@@ -85,6 +98,7 @@ class AdminSettingsBankForm extends Model
         $this->useApplePay = $bank->UseApplePay;
         $this->useGooglePay = $bank->UseGooglePay;
         $this->useSamsungPay = $bank->UseSamsungPay;
+        $this->outCardRefreshStatusDelay = $bank->OutCardRefreshStatusDelay;
 
         return $this;
     }
