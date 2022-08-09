@@ -39,6 +39,7 @@ class PayloniumAdapter implements IBankAdapter
     private const BASE_URL_BANK = 'https://api.paylonium.com/api/v1/payment-easy/';
 
     /**
+     * @deprecated Use {@see bankId()} instead.
      * @var int
      */
     public static $bank = 16;
@@ -47,6 +48,14 @@ class PayloniumAdapter implements IBankAdapter
      * @var PayloniumClient
      */
     private $api;
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function bankId(): int
+    {
+        return 16;
+    }
 
     public function setGate(PartnerBankGate $partnerBankGate)
     {
@@ -61,7 +70,7 @@ class PayloniumAdapter implements IBankAdapter
      */
     public function getBankId(): int
     {
-        return self::$bank;
+        return self::bankId();
     }
 
     public function confirm(DonePayForm $donePayForm)

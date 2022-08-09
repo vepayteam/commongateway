@@ -44,6 +44,11 @@ use Vepay\Gateway\Client\Validator\ValidationException;
 interface IBankAdapter
 {
     /**
+     * @return int
+     */
+    public static function bankId(): int;
+
+    /**
      * @param PartnerBankGate $partnerBankGate
      * @return mixed
      */

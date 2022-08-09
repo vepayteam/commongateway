@@ -72,6 +72,9 @@ class BRSAdapter implements IBankAdapter
 
     const BRS_RESPONSE_SYSTEM_ERROR_CODE = 1001;
 
+    /**
+     * @deprecated Use {@see bankId()} instead.
+     */
     public static $bank = 7;
 
     /** @var PartnerBankGate */
@@ -98,6 +101,14 @@ class BRSAdapter implements IBankAdapter
     const BANK_URL_XML_TEST = 'https://194.67.29.216:8443';
 
     /**
+     * {@inheritDoc}
+     */
+    public static function bankId(): int
+    {
+        return 7;
+    }
+
+    /**
      * @inheritDoc
      */
     public function setGate(PartnerBankGate $partnerBankGate)
@@ -118,7 +129,7 @@ class BRSAdapter implements IBankAdapter
      */
     public function getBankId()
     {
-        return self::$bank;
+        return self::bankId();
     }
 
     /**
@@ -719,7 +730,7 @@ class BRSAdapter implements IBankAdapter
      */
     public function getAftMinSum()
     {
-        return Bank::findOne(self::$bank)->AftMinSum ?? self::AFT_MIN_SUMM;
+        return Bank::findOne(self::bankId())->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**

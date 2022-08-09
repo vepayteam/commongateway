@@ -65,10 +65,21 @@ class CauriAdapter implements IBankAdapter
     public const ERROR_USER_MSG = 'Ошибка получения пользователя'; //TODO: create global error handler
     private const ERROR_MSG_REQUEST = BankAdapterResponseException::REQUEST_ERROR_MSG;
 
+    /**
+     * @deprecated Use {@see bankId()} instead.
+     */
     public static $bank = 8;
 
     /** @var PartnerBankGate */
     protected $gate;
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function bankId(): int
+    {
+        return 8;
+    }
 
     /**
      * @inheritDoc
@@ -87,7 +98,7 @@ class CauriAdapter implements IBankAdapter
      */
     public function getBankId(): int
     {
-        return self::$bank;
+        return self::bankId();
     }
 
     /**
@@ -504,7 +515,7 @@ class CauriAdapter implements IBankAdapter
 
     public function getAftMinSum(): int
     {
-        return Bank::findOne(self::$bank)->AftMinSum ?? self::AFT_MIN_SUMM;
+        return Bank::findOne(self::bankId())->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**

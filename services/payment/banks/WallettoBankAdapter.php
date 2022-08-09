@@ -48,7 +48,11 @@ class WallettoBankAdapter implements IBankAdapter
     /** @var Client $api */
     protected $api;
 
+    /**
+     * @deprecated Use {@see bankId()} instead.
+     */
     public static $bank = 10;
+
     private const BANK_URL = 'https://api.walletto.eu';
     private const BANK_TEST_URL = 'https://api.sandbox.walletto.eu';
     private const KEY_ROOT_PATH = '@app/config/walletto/';
@@ -66,6 +70,14 @@ class WallettoBankAdapter implements IBankAdapter
     public const ERROR_EXCEPTION_MSG = 'Не удалось связаться с провайдером';
 
     public const BANK_TIMEZONE = 'Europe/Vilnius';
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function bankId(): int
+    {
+        return 10;
+    }
 
     /**
      * @return string
@@ -108,7 +120,7 @@ class WallettoBankAdapter implements IBankAdapter
 
     public function getBankId(): int
     {
-        return self::$bank;
+        return self::bankId();
     }
 
     public function confirm(DonePayForm $donePayForm)
@@ -289,7 +301,7 @@ class WallettoBankAdapter implements IBankAdapter
 
     public function getAftMinSum()
     {
-        return Bank::findOne(self::$bank)->AftMinSum;
+        return Bank::findOne(self::bankId())->AftMinSum;
     }
 
     public function getBalance(GetBalanceRequest $getBalanceForm)

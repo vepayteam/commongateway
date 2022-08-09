@@ -49,11 +49,23 @@ class ImpayaAdapter implements IBankAdapter
 {
     private const PHONE_DEFAULT_VALUE = '79009000000';
 
+    /**
+     * @deprecated Use {@see bankId()} instead.
+     */
     public static $bank = 15;
+
     protected $bankUrl;
 
     /** @var PartnerBankGate */
     protected $gate;
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function bankId(): int
+    {
+        return 15;
+    }
 
     public function setGate(PartnerBankGate $partnerBankGate)
     {
@@ -63,7 +75,7 @@ class ImpayaAdapter implements IBankAdapter
 
     public function getBankId()
     {
-        return self::$bank;
+        return self::bankId();
     }
 
     public function confirm(DonePayForm $donePayForm)
