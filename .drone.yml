@@ -25,7 +25,7 @@ steps:
 
 - name: notify-conventional-commits-dcd24bf89c55dfa36844603c62d8b7dd
   pull: always
-  image: registry.vepay.cf/ci-tools
+  image: registry.vepay.dev/ci/tools
   commands:
   - export BUILD_STATUS=$$(cat /run/drone/env | grep DRONE_STAGE_STATUS | cut -d '=' -f 2 | tr -d \")
   - gitea-status -t "conventional-commits" -m "$${BUILD_STATUS:-$$DRONE_STAGE_STATUS}" -s "$${BUILD_STATUS:-$$DRONE_STAGE_STATUS}" -u "https://www.conventionalcommits.org/en/v1.0.0/#why-use-conventional-commits"
@@ -39,7 +39,7 @@ steps:
 
 - name: apache2
   pull: if-not-exists
-  image: registry.vepay.cf/apache-php:7.2
+  image: registry.vepay.dev/library/php:7.2
   detach: true
   commands:
   - mkdir -p $$(pwd)/runtime/logs/console
@@ -57,7 +57,7 @@ steps:
 
 - name: wait-for-services
   pull: always
-  image: registry.vepay.cf/ci-tools
+  image: registry.vepay.dev/ci/tools
   commands:
   - wait-for mariadb:3306 -s -t 60
   - wait-for redis:6379 -s
@@ -65,7 +65,7 @@ steps:
 
 - name: prepare-test-env
   pull: if-not-exists
-  image: registry.vepay.cf/apache-php:7.2
+  image: registry.vepay.dev/library/php:7.2
   commands:
   - php init --env=dev
   - php yii migrate/up --interactive=0
@@ -81,7 +81,7 @@ steps:
 
 - name: unit-functional-testing
   pull: if-not-exists
-  image: registry.vepay.cf/apache-php:7.2
+  image: registry.vepay.dev/library/php:7.2
   commands:
   - vendor/bin/codecept run acceptance
   - vendor/bin/codecept run unit
@@ -98,7 +98,7 @@ steps:
 
 - name: integration-testing
   pull: if-not-exists
-  image: registry.vepay.cf/apache-php:7.2
+  image: registry.vepay.dev/library/php:7.2
   commands:
   - vendor/bin/codecept run kfapi --env drone
   environment:
@@ -114,7 +114,7 @@ steps:
 
 - name: post-test-step
   pull: if-not-exists
-  image: registry.vepay.cf/apache-php:7.2
+  image: registry.vepay.dev/library/php:7.2
   commands:
   - php yii cache/flush-all --interactive 0
   environment:
@@ -129,7 +129,7 @@ steps:
 
 - name: docker-tag-7d9d8b7eed1620f6eefac4a9eca4190b
   pull: always
-  image: registry.vepay.cf/ci-tools
+  image: registry.vepay.dev/ci/tools
   commands:
   - echo -n "`urlencode ${DRONE_BUILD_NUMBER}`" > .tags
   - echo -n ",`urlencode ${DRONE_SOURCE_BRANCH}`" >> .tags
@@ -143,17 +143,17 @@ steps:
     compress: true
     password:
       from_secret: DOCKER_PASSWORD
-    registry: registry.vepay.cf
-    repo: registry.vepay.cf/${DRONE_REPO,,}
+    registry: registry.vepay.dev
+    repo: registry.vepay.dev/${DRONE_REPO,,}
     target: base
     username:
       from_secret: DOCKER_USERNAME
 
-- name: notify-docker-image-url-fb17f5d1c26cf21e87726f754773188c
+- name: notify-docker-image-url-b04147de712e964fd4efa115385e0fc9
   pull: always
-  image: registry.vepay.cf/ci-tools
+  image: registry.vepay.dev/ci/tools
   commands:
-  - gitea-status -t "docker-image/url" -m "registry.vepay.cf/${DRONE_REPO,,}:`urlencode ${DRONE_SOURCE_BRANCH}`" -s "success" -u "${DRONE_BUILD_LINK}"
+  - gitea-status -t "docker-image/url" -m "registry.vepay.dev/${DRONE_REPO,,}:`urlencode ${DRONE_SOURCE_BRANCH}`" -s "success" -u "${DRONE_BUILD_LINK}"
   environment:
     GITEA_TOKEN:
       from_secret: GITEA_TOKEN
@@ -161,12 +161,12 @@ steps:
     status:
     - success
 
-- name: helm-values-generator-f9bc0fc1a078464768e63c66a06ce0ec
+- name: helm-values-generator-fe08c6bd71f0a5dfcf69a2f22695aa71
   pull: always
-  image: registry.vepay.cf/ci-tools
+  image: registry.vepay.dev/ci/tools
   commands:
   - touch values.yaml
-  - yq write values.yaml "image.repository" "registry.vepay.cf/${DRONE_REPO,,}" -i
+  - yq write values.yaml "image.repository" "registry.vepay.dev/${DRONE_REPO,,}" -i
   - yq write values.yaml "image.tag" "${DRONE_BUILD_NUMBER}" -i
   - yq write values.yaml "ingress.hosts[0].host" "`replace-slash ${DRONE_SOURCE_BRANCH}`-${DRONE_REPO_NAME}.backend.vepay.cf" -i
   - yq write values.yaml "ingress.hosts[0].paths[0]" "/" -i
@@ -179,10 +179,10 @@ steps:
 
 - name: helm-deployment-upgrade-baa45884b60a4f0c9e522a66e07efbf7
   pull: if-not-exists
-  image: registry.vepay.cf/drone-plugin-helm3:3.9.2
+  image: registry.vepay.dev/drone/helm3:3.9.2
   settings:
     add_repos:
-    - vepay=https://charts.vepay.cf/
+    - vepay=https://registry.vepay.dev/chartrepo/${DRONE_REPO_NAMESPACE}
     atomic_upgrade: true
     chart: vepay/${DRONE_REPO_NAME}
     cleanup_failed_upgrade: true
@@ -193,6 +193,10 @@ steps:
     mode: upgrade
     namespace: api-edge
     release: ${DRONE_REPO_NAMESPACE,,}-${DRONE_REPO_NAME,,}-pr-${DRONE_PULL_REQUEST}
+    repo_password:
+      from_secret: DOCKER_PASSWORD
+    repo_username:
+      from_secret: DOCKER_USERNAME
     skip_tls_verify: true
     timeout: 20m
     values_files:
@@ -201,7 +205,7 @@ steps:
 
 - name: notify-app-test-url-45d1b6d1dcfc91ac3be6776a252e4525
   pull: always
-  image: registry.vepay.cf/ci-tools
+  image: registry.vepay.dev/ci/tools
   commands:
   - gitea-status -t "app-test/url" -m "https://`replace-slash ${DRONE_SOURCE_BRANCH}`-${DRONE_REPO_NAME}.backend.vepay.cf/" -s "success" -u "https://`replace-slash ${DRONE_SOURCE_BRANCH}`-${DRONE_REPO_NAME}.backend.vepay.cf/"
   environment:
@@ -211,7 +215,7 @@ steps:
 services:
 - name: mariadb
   pull: always
-  image: registry.vepay.cf/${DRONE_REPO,,}:maria-test-data
+  image: registry.vepay.dev/${DRONE_REPO,,}:maria-test-data
   environment:
     MYSQL_DATABASE: vepay
     MYSQL_PASSWORD: vepay
@@ -256,7 +260,7 @@ steps:
 
 - name: apache2
   pull: if-not-exists
-  image: registry.vepay.cf/apache-php:7.2
+  image: registry.vepay.dev/library/php:7.2
   detach: true
   commands:
   - mkdir -p $$(pwd)/runtime/logs/console
@@ -274,7 +278,7 @@ steps:
 
 - name: wait-for-services
   pull: always
-  image: registry.vepay.cf/ci-tools
+  image: registry.vepay.dev/ci/tools
   commands:
   - wait-for mariadb:3306 -s -t 60
   - wait-for redis:6379 -s
@@ -282,7 +286,7 @@ steps:
 
 - name: prepare-test-env
   pull: if-not-exists
-  image: registry.vepay.cf/apache-php:7.2
+  image: registry.vepay.dev/library/php:7.2
   commands:
   - php init --env=dev
   - php yii migrate/up --interactive=0
@@ -298,7 +302,7 @@ steps:
 
 - name: unit-functional-testing
   pull: if-not-exists
-  image: registry.vepay.cf/apache-php:7.2
+  image: registry.vepay.dev/library/php:7.2
   commands:
   - vendor/bin/codecept run acceptance
   - vendor/bin/codecept run unit
@@ -315,7 +319,7 @@ steps:
 
 - name: integration-testing
   pull: if-not-exists
-  image: registry.vepay.cf/apache-php:7.2
+  image: registry.vepay.dev/library/php:7.2
   commands:
   - vendor/bin/codecept run kfapi --env drone
   environment:
@@ -331,7 +335,7 @@ steps:
 
 - name: post-test-step
   pull: if-not-exists
-  image: registry.vepay.cf/apache-php:7.2
+  image: registry.vepay.dev/library/php:7.2
   commands:
   - php yii cache/flush-all --interactive 0
   environment:
@@ -346,7 +350,7 @@ steps:
 
 - name: docker-tag-295b3c44309601b1d345bccaaede9d84
   pull: always
-  image: registry.vepay.cf/ci-tools
+  image: registry.vepay.dev/ci/tools
   commands:
   - echo -n "`urlencode ${DRONE_BUILD_NUMBER}`" > .tags
   - echo -n ",`urlencode ${DRONE_BRANCH}`" >> .tags
@@ -360,17 +364,17 @@ steps:
     compress: true
     password:
       from_secret: DOCKER_PASSWORD
-    registry: registry.vepay.cf
-    repo: registry.vepay.cf/${DRONE_REPO,,}
+    registry: registry.vepay.dev
+    repo: registry.vepay.dev/${DRONE_REPO,,}
     target: base
     username:
       from_secret: DOCKER_USERNAME
 
-- name: notify-docker-image-url-33a6a8f7ef36d5db070dc1c519ba7083
+- name: notify-docker-image-url-deb1b81bf4447f8081088a71faf1022a
   pull: always
-  image: registry.vepay.cf/ci-tools
+  image: registry.vepay.dev/ci/tools
   commands:
-  - gitea-status -t "docker-image/url" -m "registry.vepay.cf/${DRONE_REPO,,}:`urlencode ${DRONE_BRANCH}`" -s "success" -u "${DRONE_BUILD_LINK}"
+  - gitea-status -t "docker-image/url" -m "registry.vepay.dev/${DRONE_REPO,,}:`urlencode ${DRONE_BRANCH}`" -s "success" -u "${DRONE_BUILD_LINK}"
   environment:
     GITEA_TOKEN:
       from_secret: GITEA_TOKEN
@@ -378,12 +382,12 @@ steps:
     status:
     - success
 
-- name: helm-values-generator-a5d7e5df397c66eb9295ad99da679e8a
+- name: helm-values-generator-87f0b46249bd299b733d5b3d7a0b567c
   pull: always
-  image: registry.vepay.cf/ci-tools
+  image: registry.vepay.dev/ci/tools
   commands:
   - touch values.yaml
-  - yq write values.yaml "image.repository" "registry.vepay.cf/${DRONE_REPO,,}" -i
+  - yq write values.yaml "image.repository" "registry.vepay.dev/${DRONE_REPO,,}" -i
   - yq write values.yaml "image.tag" "${DRONE_BUILD_NUMBER}" -i
   - yq write values.yaml "ingress.hosts[0].host" "${DRONE_BRANCH}-test-${DRONE_REPO_NAME}.backend.vepay.cf" -i
   - yq write values.yaml "ingress.hosts[0].paths[0]" "/" -i
@@ -395,10 +399,10 @@ steps:
 
 - name: helm-deployment-upgrade-92ef42f80124f30279fb47f2cd4ffd68
   pull: if-not-exists
-  image: registry.vepay.cf/drone-plugin-helm3:3.9.2
+  image: registry.vepay.dev/drone/helm3:3.9.2
   settings:
     add_repos:
-    - vepay=https://charts.vepay.cf/
+    - vepay=https://registry.vepay.dev/chartrepo/${DRONE_REPO_NAMESPACE}
     atomic_upgrade: true
     chart: vepay/${DRONE_REPO_NAME}
     cleanup_failed_upgrade: true
@@ -409,6 +413,10 @@ steps:
     mode: upgrade
     namespace: api-testing
     release: ${DRONE_REPO_NAMESPACE,,}-${DRONE_REPO_NAME,,}-${DRONE_BRANCH}-test
+    repo_password:
+      from_secret: DOCKER_PASSWORD
+    repo_username:
+      from_secret: DOCKER_USERNAME
     skip_tls_verify: true
     timeout: 20m
     values_files:
@@ -417,7 +425,7 @@ steps:
 
 - name: notify-app-test-url-c3f56f8375d811da7142568f7f63ddc6
   pull: always
-  image: registry.vepay.cf/ci-tools
+  image: registry.vepay.dev/ci/tools
   commands:
   - gitea-status -t "app-test/url" -m "https://${DRONE_BRANCH}-test-${DRONE_REPO_NAME}.backend.vepay.cf/" -s "success" -u "https://${DRONE_BRANCH}-test-${DRONE_REPO_NAME}.backend.vepay.cf/"
   environment:
@@ -426,7 +434,7 @@ steps:
 
 - name: helm-values-generator-9d75809f43841d74a14882719cb62864
   pull: always
-  image: registry.vepay.cf/ci-tools
+  image: registry.vepay.dev/ci/tools
   commands:
   - touch values.yaml
   - yq write values.yaml "ingress.hosts[0].host" "${DRONE_BRANCH}-${DRONE_REPO_NAME}.backend.vepay.cf" -i
@@ -438,10 +446,10 @@ steps:
 
 - name: helm-deployment-upgrade-3606237ab0fb9dcc2c35d0bef846fdb8
   pull: if-not-exists
-  image: registry.vepay.cf/drone-plugin-helm3:3.9.2
+  image: registry.vepay.dev/drone/helm3:3.9.2
   settings:
     add_repos:
-    - vepay=https://charts.vepay.cf/
+    - vepay=https://registry.vepay.dev/chartrepo/${DRONE_REPO_NAMESPACE}
     atomic_upgrade: true
     chart: vepay/${DRONE_REPO_NAME}
     cleanup_failed_upgrade: true
@@ -452,6 +460,10 @@ steps:
     mode: upgrade
     namespace: api-development
     release: ${DRONE_REPO_NAMESPACE,,}-${DRONE_REPO_NAME,,}-${DRONE_BRANCH}
+    repo_password:
+      from_secret: DOCKER_PASSWORD
+    repo_username:
+      from_secret: DOCKER_USERNAME
     skip_tls_verify: true
     timeout: 20m
     values_files:
@@ -460,7 +472,7 @@ steps:
 
 - name: notify-app-url-22c2eaa5e21a8df37982341630a7015a
   pull: always
-  image: registry.vepay.cf/ci-tools
+  image: registry.vepay.dev/ci/tools
   commands:
   - gitea-status -t "app/url" -m "https://${DRONE_BRANCH}-${DRONE_REPO_NAME}.backend.vepay.cf/" -s "success" -u "https://${DRONE_BRANCH}-${DRONE_REPO_NAME}.backend.vepay.cf/"
   environment:
@@ -470,7 +482,7 @@ steps:
 services:
 - name: mariadb
   pull: always
-  image: registry.vepay.cf/${DRONE_REPO,,}:maria-test-data
+  image: registry.vepay.dev/${DRONE_REPO,,}:maria-test-data
   environment:
     MYSQL_DATABASE: vepay
     MYSQL_PASSWORD: vepay
@@ -515,7 +527,7 @@ steps:
 
 - name: docker-tag-124f9367ceef05be618224ab8eea34be
   pull: always
-  image: registry.vepay.cf/ci-tools
+  image: registry.vepay.dev/ci/tools
   commands:
   - echo -n "`urlencode ${DRONE_BUILD_NUMBER}`" > .tags
   - echo -n ",`urlencode ${DRONE_BRANCH}`" >> .tags
@@ -531,17 +543,17 @@ steps:
     compress: true
     password:
       from_secret: DOCKER_PASSWORD
-    registry: registry.vepay.cf
-    repo: registry.vepay.cf/${DRONE_REPO,,}
+    registry: registry.vepay.dev
+    repo: registry.vepay.dev/${DRONE_REPO,,}
     target: base
     username:
       from_secret: DOCKER_USERNAME
 
-- name: notify-docker-image-url-80b1924d17db3ab2c9c4f10343e4e972
+- name: notify-docker-image-url-b5d5355c30978b3e113b3857342e02b9
   pull: always
-  image: registry.vepay.cf/ci-tools
+  image: registry.vepay.dev/ci/tools
   commands:
-  - gitea-status -t "docker-image/url" -m "registry.vepay.cf/${DRONE_REPO,,}:`urlencode latest`" -s "success" -u "${DRONE_BUILD_LINK}"
+  - gitea-status -t "docker-image/url" -m "registry.vepay.dev/${DRONE_REPO,,}:`urlencode latest`" -s "success" -u "${DRONE_BUILD_LINK}"
   environment:
     GITEA_TOKEN:
       from_secret: GITEA_TOKEN
@@ -549,12 +561,12 @@ steps:
     status:
     - success
 
-- name: helm-values-generator-d8d3f5aafec783043706da3fce826f21
+- name: helm-values-generator-3448f1642d4540ed3dcfabaa30175008
   pull: always
-  image: registry.vepay.cf/ci-tools
+  image: registry.vepay.dev/ci/tools
   commands:
   - touch values.yaml
-  - yq write values.yaml "image.repository" "registry.vepay.cf/${DRONE_REPO,,}" -i
+  - yq write values.yaml "image.repository" "registry.vepay.dev/${DRONE_REPO,,}" -i
   - yq write values.yaml "image.tag" "${DRONE_BUILD_NUMBER}" -i
   - yq write values.yaml "ingress.enabled" "false" -i
   - yq write values.yaml "ingress.hosts[0].host" "test.vepay.online" -i
@@ -570,10 +582,10 @@ steps:
 
 - name: helm-deployment-upgrade-091eac7be9d381f18978b1c621dd6a86
   pull: if-not-exists
-  image: registry.vepay.cf/drone-plugin-helm3:3.9.2
+  image: registry.vepay.dev/drone/helm3:3.9.2
   settings:
     add_repos:
-    - vepay=https://charts.vepay.cf/
+    - vepay=https://registry.vepay.dev/chartrepo/${DRONE_REPO_NAMESPACE}
     atomic_upgrade: true
     chart: vepay/${DRONE_REPO_NAME}
     cleanup_failed_upgrade: true
@@ -584,6 +596,10 @@ steps:
     mode: upgrade
     namespace: api-staging
     release: ${DRONE_REPO_NAMESPACE,,}-${DRONE_REPO_NAME,,}-staging
+    repo_password:
+      from_secret: DOCKER_PASSWORD
+    repo_username:
+      from_secret: DOCKER_USERNAME
     skip_tls_verify: true
     timeout: 20m
     values_files:
@@ -592,7 +608,7 @@ steps:
 
 - name: notify-app-url-9469898d4f9dd92dd107433d19dc4d8e
   pull: always
-  image: registry.vepay.cf/ci-tools
+  image: registry.vepay.dev/ci/tools
   commands:
   - gitea-status -t "app/url" -m "${DRONE_REPO_NAME}.backend.vepay.dev" -s "success" -u "${DRONE_REPO_NAME}.backend.vepay.dev"
   environment:
@@ -630,7 +646,7 @@ steps:
 
 - name: build-changelog
   pull: if-not-exists
-  image: registry.vepay.cf/conventional-changelog-cli:2.1.1
+  image: registry.vepay.dev/ci/conventional-changelog:2.1.1
   commands:
   - conventional-changelog -p angular -i CHANGELOG.md -s
 
@@ -697,6 +713,6 @@ get:
 
 ---
 kind: signature
-hmac: 8e54c1a963dcf1e1d626b0fdfb81c5fb622a51d280d8aa35672d33b317c8c494
+hmac: 9b2356b8001425160d8eade22e090f0c22c2ca824f3f2c9e52c12ca9a42ad66e
 
 ...
