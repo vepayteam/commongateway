@@ -214,7 +214,7 @@ class Uslugatovar extends \yii\db\ActiveRecord
             'KodPoluchat' => 'Код получателя в реестре',
             'ReestrNameFormat' => 'Формат наименования реестра',
             'UrlInform' => 'Адрес для обратного запроса',
-            'KeyInform' => 'Ключ обратного запроса'
+            'KeyInform' => 'Ключ обратного запроса',
         ];
     }
 
