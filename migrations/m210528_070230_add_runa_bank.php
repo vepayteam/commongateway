@@ -15,7 +15,7 @@ class m210528_070230_add_runa_bank extends Migration
     public function safeUp()
     {
         $bank = new Bank();
-        $bank->ID = RunaBankAdapter::$bank;
+        $bank->ID = 11;
         $bank->Name = 'Runa';
         $bank->save(false);
     }
@@ -25,7 +25,7 @@ class m210528_070230_add_runa_bank extends Migration
      */
     public function safeDown()
     {
-        Bank::deleteAll(['ID' => RunaBankAdapter::$bank]);
+        Bank::deleteAll(['ID' => 11]);
         return true;
     }
 

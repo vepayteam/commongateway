@@ -63,6 +63,9 @@ class MonetixAdapter implements IBankAdapter
 
     const BANK_URL = 'https://api.trxhost.com';
 
+    /**
+     * @deprecated Use {@see bankId()} instead.
+     */
     public static $bank = 14;
 
     /** @var PartnerBankGate $gate */
@@ -70,6 +73,14 @@ class MonetixAdapter implements IBankAdapter
     /** @var Client $apiClient */
     protected $apiClient;
     protected $bankUrl;
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function bankId(): int
+    {
+        return 14;
+    }
 
     public function setGate(PartnerBankGate $partnerBankGate)
     {
@@ -85,7 +96,7 @@ class MonetixAdapter implements IBankAdapter
 
     public function getBankId()
     {
-        return self::$bank;
+        return self::bankId();
     }
 
     public function confirm(DonePayForm $donePayForm)
