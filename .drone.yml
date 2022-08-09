@@ -161,14 +161,6 @@ steps:
     status:
     - success
 
-- name: fetch-extract-helm-package-b5e2049afa298047974315e908c96775
-  pull: if-not-exists
-  image: dtzar/helm-kubectl:3.5.2
-  commands:
-  - helm repo add vepay https://charts.vepay.cf/
-  - helm repo update
-  - helm pull --untar vepay/${DRONE_REPO_NAME}
-
 - name: helm-values-generator-f9bc0fc1a078464768e63c66a06ce0ec
   pull: always
   image: registry.vepay.cf/ci-tools
@@ -187,12 +179,12 @@ steps:
 
 - name: helm-deployment-upgrade-baa45884b60a4f0c9e522a66e07efbf7
   pull: if-not-exists
-  image: registry.vepay.cf/drone-plugin-helm3:3.7.1-1
+  image: registry.vepay.cf/drone-plugin-helm3:3.9.2
   settings:
     add_repos:
     - vepay=https://charts.vepay.cf/
     atomic_upgrade: true
-    chart: ${DRONE_REPO_NAME}
+    chart: vepay/${DRONE_REPO_NAME}
     cleanup_failed_upgrade: true
     kube_api_server: https://192.168.110.1:6443
     kube_service_account: deploy-app-user
@@ -203,7 +195,6 @@ steps:
     release: ${DRONE_REPO_NAMESPACE,,}-${DRONE_REPO_NAME,,}-pr-${DRONE_PULL_REQUEST}
     skip_tls_verify: true
     timeout: 20m
-    update_dependencies: true
     values_files:
     - values.yaml
     wait_for_upgrade: true
@@ -387,14 +378,6 @@ steps:
     status:
     - success
 
-- name: fetch-extract-helm-package-b5e2049afa298047974315e908c96775
-  pull: if-not-exists
-  image: dtzar/helm-kubectl:3.5.2
-  commands:
-  - helm repo add vepay https://charts.vepay.cf/
-  - helm repo update
-  - helm pull --untar vepay/${DRONE_REPO_NAME}
-
 - name: helm-values-generator-a5d7e5df397c66eb9295ad99da679e8a
   pull: always
   image: registry.vepay.cf/ci-tools
@@ -412,12 +395,12 @@ steps:
 
 - name: helm-deployment-upgrade-92ef42f80124f30279fb47f2cd4ffd68
   pull: if-not-exists
-  image: registry.vepay.cf/drone-plugin-helm3:3.7.1-1
+  image: registry.vepay.cf/drone-plugin-helm3:3.9.2
   settings:
     add_repos:
     - vepay=https://charts.vepay.cf/
     atomic_upgrade: true
-    chart: ${DRONE_REPO_NAME}
+    chart: vepay/${DRONE_REPO_NAME}
     cleanup_failed_upgrade: true
     kube_api_server: https://192.168.110.1:6443
     kube_service_account: deploy-app-user
@@ -428,7 +411,6 @@ steps:
     release: ${DRONE_REPO_NAMESPACE,,}-${DRONE_REPO_NAME,,}-${DRONE_BRANCH}-test
     skip_tls_verify: true
     timeout: 20m
-    update_dependencies: true
     values_files:
     - values.yaml
     wait_for_upgrade: true
@@ -456,12 +438,12 @@ steps:
 
 - name: helm-deployment-upgrade-3606237ab0fb9dcc2c35d0bef846fdb8
   pull: if-not-exists
-  image: registry.vepay.cf/drone-plugin-helm3:3.7.1-1
+  image: registry.vepay.cf/drone-plugin-helm3:3.9.2
   settings:
     add_repos:
     - vepay=https://charts.vepay.cf/
     atomic_upgrade: true
-    chart: ${DRONE_REPO_NAME}
+    chart: vepay/${DRONE_REPO_NAME}
     cleanup_failed_upgrade: true
     kube_api_server: https://192.168.110.1:6443
     kube_service_account: deploy-app-user
@@ -472,7 +454,6 @@ steps:
     release: ${DRONE_REPO_NAMESPACE,,}-${DRONE_REPO_NAME,,}-${DRONE_BRANCH}
     skip_tls_verify: true
     timeout: 20m
-    update_dependencies: true
     values_files:
     - values.yaml
     wait_for_upgrade: true
@@ -568,14 +549,6 @@ steps:
     status:
     - success
 
-- name: fetch-extract-helm-package-b5e2049afa298047974315e908c96775
-  pull: if-not-exists
-  image: dtzar/helm-kubectl:3.5.2
-  commands:
-  - helm repo add vepay https://charts.vepay.cf/
-  - helm repo update
-  - helm pull --untar vepay/${DRONE_REPO_NAME}
-
 - name: helm-values-generator-d8d3f5aafec783043706da3fce826f21
   pull: always
   image: registry.vepay.cf/ci-tools
@@ -597,12 +570,12 @@ steps:
 
 - name: helm-deployment-upgrade-091eac7be9d381f18978b1c621dd6a86
   pull: if-not-exists
-  image: registry.vepay.cf/drone-plugin-helm3:3.7.1-1
+  image: registry.vepay.cf/drone-plugin-helm3:3.9.2
   settings:
     add_repos:
     - vepay=https://charts.vepay.cf/
     atomic_upgrade: true
-    chart: ${DRONE_REPO_NAME}
+    chart: vepay/${DRONE_REPO_NAME}
     cleanup_failed_upgrade: true
     kube_api_server: https://192.168.110.1:6443
     kube_service_account: deploy-app-user
@@ -613,7 +586,6 @@ steps:
     release: ${DRONE_REPO_NAMESPACE,,}-${DRONE_REPO_NAME,,}-staging
     skip_tls_verify: true
     timeout: 20m
-    update_dependencies: true
     values_files:
     - values.yaml
     wait_for_upgrade: true
@@ -725,6 +697,6 @@ get:
 
 ---
 kind: signature
-hmac: 3fd252dd640f61802167388411a4de115f65ff4d94465110e5b1ea32c310d966
+hmac: 8e54c1a963dcf1e1d626b0fdfb81c5fb622a51d280d8aa35672d33b317c8c494
 
 ...
