@@ -57,7 +57,7 @@ use Vepay\Gateway\Client\Validator\ValidationException;
 use Yii;
 use yii\helpers\Json;
 
-class MonetixAdapter implements IBankAdapter
+class MonetixAdapter extends BaseAdapter implements IBankAdapter
 {
     use HttpProxy;
 

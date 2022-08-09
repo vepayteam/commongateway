@@ -43,7 +43,7 @@ use Yii;
 /**
  * Class DectaAdapter
  */
-class DectaAdapter implements IBankAdapter
+class DectaAdapter extends BaseAdapter implements IBankAdapter
 {
     public const AFT_MIN_SUM = 120000;
 
@@ -403,7 +403,7 @@ class DectaAdapter implements IBankAdapter
      */
     public function getAftMinSum(): int
     {
-        return Bank::findOne(self::bankId())->AftMinSum ?? self::AFT_MIN_SUM;
+        return $this->getBankModel()->AftMinSum ?? self::AFT_MIN_SUM;
     }
 
     /**

@@ -37,6 +37,7 @@ use yii\db\ActiveQuery;
  * @property string $name
  * @property int $SortOrder
  * @property int $AftMinSum Minimal sum to use AFT gate, in fractional currency units e.g. cents.
+ * @property int $OutCardRefreshStatusDelay Delay in seconds for status refresh after withdrawal to a card (pay-out to card).
  */
 class Bank extends \yii\db\ActiveRecord
 {

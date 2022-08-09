@@ -13,7 +13,6 @@ use app\clients\tcbClient\responses\ErrorResponse;
 use app\clients\tcbClient\responses\GetOrderStateResponse;
 use app\clients\tcbClient\responses\objects\OrderInfo;
 use app\clients\tcbClient\TcbOrderNotExistException;
-use app\helpers\DebugHelper;
 use app\models\payonline\Cards;
 use app\models\payonline\User;
 use app\models\Payschets;
@@ -34,7 +33,6 @@ use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\data\ClientData;
-use app\services\payment\banks\interfaces\ITKBankAdapterResponseErrors;
 use app\services\payment\banks\traits\TKBank3DSTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CacheValueMissingException;
@@ -78,7 +76,7 @@ use SimpleXMLElement;
 use Yii;
 use yii\helpers\Json;
 
-class TKBankAdapter implements IBankAdapter
+class TKBankAdapter extends BaseAdapter implements IBankAdapter
 {
     use TKBank3DSTrait;
 
@@ -1704,7 +1702,7 @@ class TKBankAdapter implements IBankAdapter
 
     public function getAftMinSum()
     {
-        return Bank::findOne(self::bankId())->AftMinSum ?? self::AFT_MIN_SUMM;
+        return $this->getBankModel()->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**

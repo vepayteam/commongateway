@@ -39,7 +39,7 @@ use GuzzleHttp\RequestOptions;
 use Yii;
 use yii\helpers\Json;
 
-class WallettoBankAdapter implements IBankAdapter
+class WallettoBankAdapter extends BaseAdapter implements IBankAdapter
 {
     use WallettoRequestTrait;
 
@@ -301,7 +301,7 @@ class WallettoBankAdapter implements IBankAdapter
 
     public function getAftMinSum()
     {
-        return Bank::findOne(self::bankId())->AftMinSum;
+        return $this->getBankModel()->AftMinSum;
     }
 
     public function getBalance(GetBalanceRequest $getBalanceForm)

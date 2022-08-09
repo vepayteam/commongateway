@@ -125,7 +125,13 @@ foreach ($allModels as $model) {
                     'dataProvider' => new ArrayDataProvider(['allModels' => $banks]),
                     'layout' => '{items}',
                     'columns' => [
-                        'name',
+                        [
+                            'attribute' => 'name',
+                            'value' => function (AdminSettingsBankForm $bank) {
+                                return Html::a($bank->name, ['bank', 'id' => $bank->id]);
+                            },
+                            'format' => 'raw',
+                        ],
                         [
                             'attribute' => 'sortOrder',
                             'format' => 'raw',
@@ -173,6 +179,13 @@ foreach ($allModels as $model) {
                             'attribute' => 'useSamsungPay',
                             'format' => 'raw',
                             'value' => $checkboxValue,
+                        ],
+                        [
+                            'value' => function (AdminSettingsBankForm $bank) {
+                                $icon = Html::tag('span', '', ['class' => "glyphicon glyphicon-pencil"]);
+                                return Html::a($icon, ['bank', 'id' => $bank->id]);
+                            },
+                            'format' => 'raw',
                         ],
                     ],
                 ])

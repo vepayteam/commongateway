@@ -56,6 +56,7 @@ interface IBankAdapter
 
     /**
      * @return int
+     * @todo Remove, replace with {@see bankId()}.
      */
     public function getBankId();
 
@@ -146,4 +147,11 @@ interface IBankAdapter
      * @return RegistrationBenificResponse
      */
     public function registrationBenific(RegistrationBenificForm $registrationBenificForm);
+
+    /**
+     * Delay in seconds for status refresh after withdrawal to a card (pay-out to card).
+     *
+     * @return int
+     */
+    public function getOutCardRefreshStatusDelay(): int;
 }

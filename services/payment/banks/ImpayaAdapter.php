@@ -45,7 +45,7 @@ use Yii;
 use yii\base\InvalidArgumentException;
 use yii\helpers\Json;
 
-class ImpayaAdapter implements IBankAdapter
+class ImpayaAdapter extends BaseAdapter implements IBankAdapter
 {
     private const PHONE_DEFAULT_VALUE = '79009000000';
 
