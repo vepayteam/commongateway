@@ -15,7 +15,7 @@ class SeedController extends Controller
 
         for ($i = 0; $i < $recordCount; $i++) {
             Yii::$app->db->createCommand()->insert('pay_schet', [
-                'Bank'       => BRSAdapter::$bank,
+                'Bank'       => BRSAdapter::bankId(),
                 'DateCreate' => (new DateTime())->modify('- '.mt_rand(1, 31).' day')->getTimestamp(),
                 'IDUsluga'   => 213,
                 'SummPay'   => mt_rand(1000, 50000),

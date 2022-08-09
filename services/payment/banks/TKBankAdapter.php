@@ -110,10 +110,22 @@ class TKBankAdapter implements IBankAdapter
     private $backUrls = ['ok' => 'https://api.vepay.online/pay/orderok?orderid='];
     private $_client;
 
+    /**
+     * @deprecated Use {@see bankId()} instead.
+     */
     public static $bank = 2;
+
     private $type = 0;
     private $IsCard = 0;
     private $IsAft = 0;
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function bankId(): int
+    {
+        return 2;
+    }
 
     public function setGate(PartnerBankGate $partnerBankGate)
     {
@@ -129,7 +141,7 @@ class TKBankAdapter implements IBankAdapter
      */
     public function getBankId()
     {
-        return self::$bank;
+        return self::bankId();
     }
 
     /**
@@ -1692,7 +1704,7 @@ class TKBankAdapter implements IBankAdapter
 
     public function getAftMinSum()
     {
-        return Bank::findOne(self::$bank)->AftMinSum ?? self::AFT_MIN_SUMM;
+        return Bank::findOne(self::bankId())->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**

@@ -21,7 +21,7 @@ class BrsPaySchetStat extends PayShetStat
      */
     public function getList(bool $IsAdmin, int $offset = 0, ?int $limit = 100, bool $forList = false): array
     {
-        $this->idBank = BRSAdapter::$bank;
+        $this->idBank = BRSAdapter::bankId();
 
         $ret = [];
         $cnt = $sumPay = $sumComis = $voznagps = $bankcomis = 0;
@@ -88,7 +88,7 @@ class BrsPaySchetStat extends PayShetStat
                 ->leftJoin('`partner_bank_gates` AS pbg',
                     'pbg.BankId = b.ID AND pbg.PartnerId = qp.IDPartner AND pbg.TU = qp.IsCustom')
                 ->leftJoin('`user` AS u', 'u.`ID` = ps.`IdUser`')
-                ->where('ps.Bank = :BANK', [':BANK' => BRSAdapter::$bank])
+                ->where('ps.Bank = :BANK', [':BANK' => BRSAdapter::bankId()])
                 ->andWhere('ps.DateCreate BETWEEN :DATEFROM AND :DATETO', [
                     ':DATEFROM' => strtotime($this->datefrom . ":00"),
                     ':DATETO' => strtotime($this->dateto . ":59")

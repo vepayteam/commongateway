@@ -44,11 +44,24 @@ use yii\base\Model;
 class ADGroupBankAdapter implements IBankAdapter
 {
     const AFT_MIN_SUMM = 120000;
+
+    /**
+     * @deprecated Use {@see bankId()} instead.
+     */
     public static $bank = 5;
+
     protected $bankUrl = 'https://qpg.adgroup.finance';
 
     /** @var PartnerBankGate */
     protected $gate;
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function bankId(): int
+    {
+        return 5;
+    }
 
     public function setGate(PartnerBankGate $partnerBankGate)
     {
@@ -57,7 +70,7 @@ class ADGroupBankAdapter implements IBankAdapter
 
     public function getBankId()
     {
-        return self::$bank;
+        return self::bankId();
     }
 
     public function confirm(DonePayForm $donePayForm)
@@ -140,7 +153,7 @@ class ADGroupBankAdapter implements IBankAdapter
 
     public function getAftMinSum()
     {
-        return Bank::findOne(self::$bank)->AftMinSum ?? self::AFT_MIN_SUMM;
+        return Bank::findOne(self::bankId())->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**

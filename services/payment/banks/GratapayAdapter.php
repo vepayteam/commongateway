@@ -61,13 +61,25 @@ class GratapayAdapter implements IBankAdapter
     const BANK_URL = 'https://psp.kiparisdmcc.ae/api';
     const AFT_MIN_SUMM = 185000;
 
+    /**
+     * @deprecated Use {@see bankId()} instead.
+     */
     public static $bank = 13;
+
     protected $bankUrl;
 
     /** @var PartnerBankGate */
     protected $gate;
     /** @var \GuzzleHttp\Client */
     protected $apiClient;
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function bankId(): int
+    {
+        return 13;
+    }
 
     /**
      * @inheritDoc
@@ -84,7 +96,7 @@ class GratapayAdapter implements IBankAdapter
      */
     public function getBankId()
     {
-        return self::$bank;
+        return self::bankId();
     }
 
     /**
@@ -297,7 +309,7 @@ class GratapayAdapter implements IBankAdapter
      */
     public function getAftMinSum()
     {
-        return Bank::findOne(self::$bank)->AftMinSum ?? self::AFT_MIN_SUMM;
+        return Bank::findOne(self::bankId())->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**
