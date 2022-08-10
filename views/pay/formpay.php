@@ -89,6 +89,21 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
         <div class='text-center col-xs-12 loader'><i class="fa fa-spinner fa-spin fa-fw"></i></div>
     </div>
 
+    <?php
+    $form = ActiveForm::begin([
+        'id' => 'payform',
+        'errorCssClass' => null,
+        'successCssClass' => null,
+        'options' => [
+            'class' => 'form-horizontal'
+        ],
+        'fieldConfig' => [
+            //'template' => "{label}<div class='col-xs-12 col-sm-8'>{input}{hint}</div>",
+            'template' => '{label}{input}{hint}',
+        ]
+    ]);
+    ?>
+
     <?php if ($yandexPayFormData['isEnabled']): ?>
         <div id="yandex-pay-btn" style="margin-top: 2rem;"></div>
         <div id="yandex-pay-data" style="display: none;">
@@ -107,21 +122,6 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
             <div class="yandex-pay-separator_line"></div>
         </div>
     <?php endif ?>
-
-    <?php
-    $form = ActiveForm::begin([
-        'id' => 'payform',
-        'errorCssClass' => null,
-        'successCssClass' => null,
-        'options' => [
-            'class' => 'form-horizontal'
-        ],
-        'fieldConfig' => [
-            //'template' => "{label}<div class='col-xs-12 col-sm-8'>{input}{hint}</div>",
-            'template' => '{label}{input}{hint}',
-        ]
-    ]);
-    ?>
 
     <?= Html::activeHiddenInput($payform, 'IdPay', ['class' => 'idPay']) ?>
 
@@ -353,7 +353,6 @@ if ($yandexPayFormData['isEnabled']) {
         'onload' => 'onYaPayLoad()',
         'async' => true,
     ]);
-    $this->registerJsFile('/payasset/js/yandex-pay.js');
 }
 ?>
 

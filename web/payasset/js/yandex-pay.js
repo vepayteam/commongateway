@@ -99,8 +99,6 @@ function onYaPayLoad() {
             hideLoader(response.message)
           }
           else {
-            hideLoader()
-
             payform.createPaySuccess(response)
           }
         }).fail(function (error) {
