@@ -64,6 +64,10 @@ $rekviz = ArrayHelper::map($rekviz, 'ID', 'NamePoluchat');
                     <?= $form->field($usl, 'InfoUsluga')->textInput(['class' => 'form-control']); ?>
                     <?= $form->field($usl, 'LogoProv')->textInput(['class' => 'form-control']); ?>
                     <hr>
+                    <h3>Оповещение:</h3>
+                    <?= $form->field($usl, 'UrlInform')->textInput(['class' => 'form-control']); ?>
+                    <?= $form->field($usl, 'KeyInform')->textInput(['class' => 'form-control']); ?>
+                    <hr>
                     <h3>Реестры:</h3>
                     <?= $form->field($usl, 'ExtReestrIDUsluga')->textInput(['class' => 'form-control']); ?>
                     <?= $form->field($usl, 'ProfitExportFormat')->textInput(['class' => 'form-control']); ?>
