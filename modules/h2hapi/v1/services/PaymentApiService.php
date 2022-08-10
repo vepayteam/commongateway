@@ -16,6 +16,7 @@ use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
+use app\services\payment\exceptions\ValidationException;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\OkPayForm;
@@ -98,6 +99,9 @@ class PaymentApiService extends Component
         } catch (Check3DSv2Exception|MerchantRequestAlreadyExistsException $e) {
             /** @todo Реализовать корректную обработку ошибок ТКБ */
             \Yii::$app->errorHandler->logException($e);
+            throw new PaymentCreateException('TKB Error', PaymentCreateException::TKB_ERROR, $e->getMessage());
+        } catch (ValidationException $e) {
+            \Yii::warning($e->getMessage(), 'mfo');
             throw new PaymentCreateException('TKB Error', PaymentCreateException::TKB_ERROR, $e->getMessage());
         }
 
