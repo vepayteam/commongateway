@@ -344,3 +344,12 @@
         flex-wrap: wrap;
     }
 }
+
+.partner-stat-otch tr.partner-stat-otch_provider, .partner-stat-otch tr.partner-stat-otch_summary {
+    background-color: #f9f9f9;
+    font-weight: bold;
+}
+
+tr.partner-stat-otch_datarow.darkned {
+    background-color: #fbfbfb;
+}
