@@ -204,7 +204,7 @@ class Cards extends ActiveRecord
     public static function MaskCard($card): string
     {
         $offset = 6;
-        if (strpos($card, '22') === 0) {
+        if (self::GetTypeCard($card) == self::BRAND_MIR) {
             $offset = 8;
         }
         $card = substr($card, 0, $offset)

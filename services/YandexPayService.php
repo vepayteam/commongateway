@@ -14,12 +14,22 @@ use app\services\yandexPay\models\PaymentToken;
 use app\services\yandexPay\paymentToken\PaymentTokenDecrypt;
 use app\services\yandexPay\paymentToken\PaymentTokenVerify;
 use app\services\yandexPay\YandexPayException;
+use Carbon\Carbon;
 use GuzzleHttp\Exception\GuzzleException;
 use yii\base\Component;
 use yii\helpers\Json;
 
 class YandexPayService extends Component
 {
+    private const REASON_CODE_TOKEN_AMOUNT_MISMATCH = 'YANDEX_PAY_TOKEN_AMOUNT_MISMATCH';
+    private const REASON_CODE_TOKEN_EXPIRED = 'YANDEX_PAY_TOKEN_EXPIRED';
+    private const REASON_CODE_REJECTED = 'REJECTED';
+
+    private const STATUS_SUCCESS = 'SUCCESS';
+    private const STATUS_FAIL = 'FAIL';
+    private const STATUS_REVERSE = 'REVERSE';
+    private const STATUS_REFUND = 'REFUND';
+
     private const URL_PROD = 'https://pay.yandex.ru';
     private const URL_DEV = 'https://sandbox.pay.yandex.ru';
 
@@ -49,25 +59,36 @@ class YandexPayService extends Component
      */
     public function paymentUpdate(PaySchet $paySchet)
     {
-        $yandexPayTransaction = $paySchet->isRefund ?
-            $paySchet->refundSource->yandexPayTransaction :
-            $paySchet->yandexPayTransaction;
+        $sourcePaySchet = $paySchet->isRefund ? $paySchet->refundSource : $paySchet;
+        $yandexPayTransaction = $sourcePaySchet->yandexPayTransaction;
 
-        switch ($paySchet->Status) {
-            case PaySchet::STATUS_DONE:
-                $status = 'SUCCESS';
-                break;
-            case PaySchet::STATUS_ERROR:
-                $status = 'FAIL';
-                break;
-            case PaySchet::STATUS_CANCEL:
-                $status = 'REVERSE';
-                break;
-            case PaySchet::STATUS_REFUND_DONE:
-                $status = 'REFUND';
-                break;
-            default:
-                return;
+        $reasonCode = null;
+        $decryptedMessage = new DecryptedMessage(Json::decode($yandexPayTransaction->decryptedMessage));
+
+        if (Carbon::createFromTimestampMs($decryptedMessage->getMessageExpiration()) < Carbon::now()) {
+            $status = self::STATUS_FAIL;
+            $reasonCode = self::REASON_CODE_TOKEN_EXPIRED;
+        } else if ($sourcePaySchet->getSummFull() !== $decryptedMessage->getTransactionDetails()->getAmount()) {
+            $status = self::STATUS_FAIL;
+            $reasonCode = self::REASON_CODE_TOKEN_AMOUNT_MISMATCH;
+        } else {
+            switch ($paySchet->Status) {
+                case PaySchet::STATUS_DONE:
+                    $status = self::STATUS_SUCCESS;
+                    break;
+                case PaySchet::STATUS_ERROR:
+                    $status = self::STATUS_FAIL;
+                    $reasonCode = self::REASON_CODE_REJECTED;
+                    break;
+                case PaySchet::STATUS_CANCEL:
+                    $status = self::STATUS_REVERSE;
+                    break;
+                case PaySchet::STATUS_REFUND_DONE:
+                    $status = self::STATUS_REFUND;
+                    break;
+                default:
+                    return;
+            }
         }
 
         $paymentUpdateRequest = new PaymentUpdateRequest(
@@ -79,8 +100,8 @@ class YandexPayService extends Component
             $paySchet->RRN ?? '',
             $paySchet->ApprovalCode ?? '',
             $paySchet->Eci ?? '',
-            $paySchet->RCCode ?? '',
-            $paySchet->ErrorInfo ?? ''
+            $reasonCode,
+            $paySchet->ErrorInfo
         );
 
         $client = new YandexPayClient($this->getBaseUrl());
