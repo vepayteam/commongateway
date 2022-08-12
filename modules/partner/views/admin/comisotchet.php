@@ -4,9 +4,11 @@
 /* @var array $uslugilist */
 /* @var string $veekends */
 /* @var Partner[] $partnerlist  */
+/* @var Bank[] $banks  */
 /* @var $IsAdmin bool */
 
 use app\models\payonline\Partner;
+use app\services\payment\models\Bank;
 use yii\web\View;
 use app\services\payment\forms\VoznagStatForm;
 use yii\helpers\Html;
@@ -84,7 +86,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-body">
-                    <?=$this->render('_perevodform', ['partnerlist' => $partnerlist])?>
+                    <?=$this->render('_perevodform', ['partnerlist' => $partnerlist, 'banks' => $banks])?>
                 </div>
             </div>
         </div>

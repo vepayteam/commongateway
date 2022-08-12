@@ -62,7 +62,7 @@ return [
         'basePath' => '@webroot/assets',
         'baseUrl' => '@web/assets',
         'js' => [
-            'partner-d76ffde283ed92fa661d4255a22e9626.js',
+            'partner-34edea32c0eea4a11d63215044771141.js',
         ],
         'css' => [
             'partner-61c66add7e2b7d29edb460a54050f71d.css',
