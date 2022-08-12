@@ -20,6 +20,9 @@ class RefreshStatusPayJob extends BaseObject implements \yii\queue\JobInterface
     private const TCB_ORDER_NOT_EXIST_INTERVAL = 5 * 60; // 5 minutes
     private const TCB_ORDER_NOT_EXIST_TIMEOUT = 2 * 60 * 60; // 2 hours
 
+    private const DELAY_REFRESH_STATUS_COMMON = 5 * 60; // 5 minutes
+    private const DELAY_REFRESH_STATUS_AUTOPAYS = 60 * 60; // 1 hours
+
     public $paySchetId;
 
     /**
@@ -79,9 +82,9 @@ class RefreshStatusPayJob extends BaseObject implements \yii\queue\JobInterface
 
             if($paySchet->isNeedContinueRefreshStatus()) {
                 // TODO пока костыль
-                $delay = 5 * 60; // 5 min
+                $delay = self::DELAY_REFRESH_STATUS_COMMON;
                 if (TU::IsInAutoAll($paySchet->uslugatovar->IsCustom)) {
-                    $delay = 120 * 60; // 120 min
+                    $delay = self::DELAY_REFRESH_STATUS_AUTOPAYS;
                 }
 
                 Yii::$app->queue
