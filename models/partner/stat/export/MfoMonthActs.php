@@ -122,7 +122,7 @@ class MfoMonthActs extends Model
         foreach ($dataOut as $row) {
             $act->SumVyplata += $row['SummPay'];
             $act->ComisVyplata += $row['VoznagSumm'];
-            if (!$partner->VoznagVyplatDirect && ($partner->IsCommonSchetVydacha || $partner->IsUnreserveComis)) {
+            if (!$partner->VoznagVyplatDirect && $partner->IsUnreserveComis) {
                 $act->SumSchetComisVyplata += $row['MerchVozn'];  //c комиссией банка
             } else {
                 $act->SumSchetComisVyplata += $row['VoznagSumm']; //без комиссии банка

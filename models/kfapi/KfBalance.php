@@ -68,28 +68,4 @@ class KfBalance extends Model
         ])->queryScalar();
         return intval($ret);
     }
-
-    /**
-     * @deprecated
-     * Баланс краутфандинга и МФО с учётом комиссий
-     * @param Partner $partner
-     * @return double|null
-     * @throws \yii\db\Exception
-     */
-    public function GetBalance(Partner $partner)
-    {
-        $bal = new MfoBalance($partner);
-        $out = $bal->GetBalanceWithoutLocal();
-
-        $b = null;
-        if ($partner->SchetTcb == $this->account) {
-            //транзитный КФ и транзитный выдача
-            $b = $out['localout'];
-        } elseif ($partner->SchetTcbNominal == $this->account || $partner->SchetTcbTransit == $this->account) {
-            //номинальный КФ и транзитный погашение
-            $b = $out['localin'];
-        }
-
-        return $b;
-    }
 }
