@@ -9,7 +9,6 @@
 
 namespace app\models\kkt;
 
-use app\models\extservice\HttpProxy;
 use app\models\payonline\Cards;
 use app\services\DeprecatedCurlLogger;
 use \DateTime;
@@ -19,8 +18,6 @@ use Yii;
 
 class OrangedataClient
 {
-    use HttpProxy;
-
     const MAX_ID_LENGTH = 64;
     const MAX_GROUP_LENGTH = 32;
     const MAX_KEY_LENGTH = 32;
@@ -522,9 +519,10 @@ class OrangedataClient
             CURLOPT_SSL_CIPHER_LIST => 'TLSv1',
             CURLOPT_SSL_VERIFYPEER => false,
         ];
-        if (Yii::$app->params['DEVMODE'] != 'Y' && Yii::$app->params['TESTMODE'] != 'Y' && !empty($this->proxyHost)) {
-            $options[CURLOPT_PROXY] = $this->proxyHost;
-            $options[CURLOPT_PROXYUSERPWD] = $this->proxyUser;
+        if (Yii::$app->params['DEVMODE'] != 'Y' && Yii::$app->params['TESTMODE'] != 'Y'
+            && in_array('proxy', Yii::$app->params) && !empty(Yii::$app->params['proxy']['proxyHost'])) {
+            $options[CURLOPT_PROXY] = Yii::$app->params['proxy']['proxyHost'];
+            $options[CURLOPT_PROXYUSERPWD] = Yii::$app->params['proxy']['proxyUser'];
         }
         curl_setopt_array($curl, $options);
         if ($this->debug) {
