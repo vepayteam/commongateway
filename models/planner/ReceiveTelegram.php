@@ -74,8 +74,12 @@ class ReceiveTelegram
         if (mb_stripos($url, "?") > 0) {
             $fst = "&";
         }
-        if (Yii::$app->params['DEVMODE'] != 'Y' && Yii::$app->params['TESTMODE'] != 'Y'
-            && in_array('proxy', Yii::$app->params) && !empty(Yii::$app->params['proxy']['proxyHost'])) {
+        if (
+            Yii::$app->params['DEVMODE'] != 'Y'
+            && Yii::$app->params['TESTMODE'] != 'Y'
+            && in_array('proxy', Yii::$app->params)
+            && !empty(Yii::$app->params['proxy']['proxyHost'])
+        ) {
             $curl->setOption(CURLOPT_VERBOSE, Yii::$app->params['VERBOSE'] === 'Y');
             $curl->setOption(CURLOPT_PROXY, Yii::$app->params['proxy']['proxyHost']);
             $curl->setOption(CURLOPT_PROXYUSERPWD, Yii::$app->params['proxy']['proxyUser']);

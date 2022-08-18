@@ -205,8 +205,12 @@ class AlarmsSend
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_SSL_CIPHER_LIST => 'TLSv1'
         ]);
-        if (Yii::$app->params['DEVMODE'] != 'Y' && Yii::$app->params['TESTMODE'] != 'Y'
-            && in_array('proxy', Yii::$app->params) && !empty(Yii::$app->params['proxy']['proxyHost'])) {
+        if (
+            Yii::$app->params['DEVMODE'] != 'Y'
+            && Yii::$app->params['TESTMODE'] != 'Y'
+            && in_array('proxy', Yii::$app->params)
+            && !empty(Yii::$app->params['proxy']['proxyHost'])
+        ) {
             $curl->setOption(CURLOPT_PROXY, Yii::$app->params['proxy']['proxyHost']);
             $curl->setOption(CURLOPT_PROXYUSERPWD, Yii::$app->params['proxy']['proxyUser']);
         }
