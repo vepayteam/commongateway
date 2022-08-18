@@ -4,6 +4,7 @@ namespace app\models\crypt;
 
 use Yii;
 use yii\helpers\Json;
+use \app\models\payonline\Cards;
 
 class Tokenizer
 {
@@ -29,8 +30,14 @@ class Tokenizer
             return 0;
         }
         try {
+            $firstDigits = 6;
+
+            if (Cards::GetTypeCard($CardNumber) == Cards::BRAND_MIR) {
+                $firstDigits = 8;
+            }
+
             $this->db->createCommand()->insert('pan_token', [
-                'FirstSixDigits' => substr($CardNumber, 0, 6),
+                'FirstSixDigits' => substr($CardNumber, 0, $firstDigits),
                 'LastFourDigits' => substr($CardNumber, -4, 4),
                 'EncryptedPAN' => $EncryptedPan,
                 'ExpDateMonth' => substr(sprintf("%04d", $SrokKard), 0, 2),
@@ -163,9 +170,9 @@ class Tokenizer
                     `ID`,
                     `EncryptedKeyValue`,
                     `Counter`
-                FROM 
-                    `crypto_keys_table` 
-                WHERE 
+                FROM
+                    `crypto_keys_table`
+                WHERE
                     `Counter` < 1000
                 ORDER BY RAND()
                 LIMIT 1
@@ -201,9 +208,9 @@ class Tokenizer
             $row = $this->db->createCommand("
                 SELECT
                     `EncryptedKeyValue`
-                FROM 
-                    `crypto_keys_table` 
-                WHERE 
+                FROM
+                    `crypto_keys_table`
+                WHERE
                     `ID`=:ID
             ", [':ID' => $CryptKeyId])->queryOne();
         } catch (\yii\db\Exception $e) {
@@ -295,7 +302,7 @@ class Tokenizer
             SELECT
                 COUNT(*)
             FROM
-                `crypto_keys_table`                    
+                `crypto_keys_table`
         ")->queryScalar();
 
         $countwork = $this->db->createCommand("
