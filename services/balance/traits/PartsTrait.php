@@ -5,14 +5,12 @@ namespace app\services\balance\traits;
 
 
 use app\models\PayschetPart;
-use app\services\balance\BalanceService;
 use app\services\balance\models\PartsBalanceForm;
 use app\services\balance\models\PartsBalancePartnerForm;
 use yii\db\Query;
 
 /**
  * @deprecated
- * @mixin BalanceService
  */
 trait PartsTrait
 {

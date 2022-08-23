@@ -47,6 +47,7 @@ use app\services\payment\exceptions\reRequestingStatusException;
 use app\services\payment\exceptions\reRequestingStatusOkException;
 use app\services\payment\exceptions\TKBankGatewayTimeoutException;
 use app\services\payment\exceptions\TKBankRefusalException;
+use app\services\payment\exceptions\ValidationException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\CreatePaySecondStepForm;
@@ -129,6 +130,98 @@ class TKBankAdapter implements IBankAdapter
     public function getBankId()
     {
         return self::$bank;
+    }
+
+    /**
+     * Получение № тарнзакции в банке
+     * @param array $data [IdPay]
+     * @param User|null $user
+     * @param int $idCard
+     * @param int $activate
+     * @return array ['tisket', 'recurrent']
+     * @throws \yii\db\Exception
+     */
+    private function createTisket($data, $user = null, $idCard = 0, $activate = 0)
+    {
+        $payschets = new Payschets();
+        //данные счета для оплаты
+        $params = $payschets->getSchetData($data['IdPay']);
+
+        $tisket = $userUrl = '';
+        $isRecurrent = 0;
+        if ($params && $params['Status'] == 0) {
+
+            $order_description = 'Счет №' . $params['ID'];
+
+            $card = null;
+            if ($user && $idCard >= 0) {
+                $card = $payschets->getSavedCard($user->ID, $idCard, $activate);
+            }
+
+            $emailClient = '';
+            if (isset($params['Email']) && !empty($params['Email'])) {
+                $emailClient = $params['Email'];
+            } elseif (isset($data['email']) && !empty($data['email']) && $data['email'] != 'undefined') {
+                $emailClient = $data['email'];
+            }
+
+            $queryData = [
+                'ExtID' => $params['ID'],
+                'Amount' => $params['SummFull'],
+                'Description' => $order_description,
+                'ClientInfo' => [
+                    //'PhoneNumber'
+                    'Email' => $emailClient,
+                    //'FIO'
+                ],
+                'ReturnUrl' => $this->backUrls['ok'] . $params['ID'],
+                'ShowReturnButton' => false,
+                'TTL' => '00.00:' . $params['TimeElapsed'] . ':00',
+                //'AdditionalParameters'
+            ];
+
+            if ($user && $idCard == -1) {
+                //привязка карты
+                $action = "/api/v1/card/unregistered/bind";
+            } elseif ($card && $idCard >= 0) {
+                //реккурентный платеж с карты
+                $action = '/api/v1/card/registered/direct';
+                $isRecurrent = 1;
+                $queryData['CardRefID'] = $card['ExtCardIDP'];
+            } else {
+                //оплата без привязки карты
+                $action = "/api/v1/card/unregistered/debit";
+            }
+
+            $queryData = Json::encode($queryData);
+
+            //$language = 'fullsize';
+            // определяем через что зашли - pageView = MOBILE
+            //if ($user->isMobile()) {
+            //$language = 'mob';
+            //}*/
+
+            $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+
+            if (isset($ans['xml']) && !empty($ans['xml'])) {
+                $xml = $this->parseAns($ans['xml']);
+                if (isset($xml['Status']) && $xml['Status'] == '0') {
+                    $userUrl = isset($xml['formurl']) ? $xml['formurl'] : '';
+                    $tisket = $xml['ordernumber'];
+                    //сохранение номера транзакции
+                    $payschets = new Payschets();
+                    $payschets->SetBankTransact([
+                        'idpay' => $params['ID'],
+                        'trx_id' => $tisket,
+                        'url' => $userUrl
+                    ]);
+
+                    Yii::$app->session['IdPay'] = $params['ID'];
+                }
+            }
+        }
+
+        return ['tisket' => $tisket, 'recurrent' => $isRecurrent, 'url' => $userUrl];
     }
 
     /**
@@ -1042,6 +1135,7 @@ class TKBankAdapter implements IBankAdapter
      * @throws BankAdapterResponseException
      * @throws Check3DSv2Exception
      * @throws CreatePayException
+     * @throws ValidationException
      */
     public function createPay(CreatePayForm $createPayForm, ClientData $clientData)
     {
@@ -1461,18 +1555,7 @@ class TKBankAdapter implements IBankAdapter
         $createRecurrentPayResponse->status = BaseResponse::STATUS_ERROR;
         $createRecurrentPayResponse->message = '';
         if (substr_compare($ans['error'], '500', -3) === 0) {
-            /*TODO: VPBC-1489
-//            вообще сейчас логика работает так
-//            из recurrentPay возвращаются два статуса когда точно уверены что все хорошо, но все таки надо ещё статус
-//            проверить это DONE
-//            и когда точно все зафейлилось это Error
-//            RecurrentPayJob на всякий случай запускает проверку статуса даже когда пришло в ответе Error
-//            а RecurrentPaymentPartsService просто устанавливает status error пишет в лог и все на этом
-//            чего-то промежуточного у нас нет, типа хз че там было, но лучше проверить статус
-//            поэтому либо логику можно допилить до такого, либо просто вернуть Done и тогда refreshStatus жоба
-//            определить че там со статусом
-            */
-            $createRecurrentPayResponse->status = BaseResponse::STATUS_DONE;
+            $createRecurrentPayResponse->status = BaseResponse::STATUS_ERROR;
             $createRecurrentPayResponse->message = 'Ожидается обновление статуса';
         }
         return $createRecurrentPayResponse;

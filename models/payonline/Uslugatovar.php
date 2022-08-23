@@ -212,7 +212,9 @@ class Uslugatovar extends \yii\db\ActiveRecord
             'MaskInfo' => 'Маска ввода для запроса',
             'RegexInfo' => 'Регулярное выражение для запроса',
             'KodPoluchat' => 'Код получателя в реестре',
-            'ReestrNameFormat' => 'Формат наименования реестра'
+            'ReestrNameFormat' => 'Формат наименования реестра',
+            'UrlInform' => 'Адрес для обратного запроса',
+            'KeyInform' => 'Ключ обратного запроса',
         ];
     }
 

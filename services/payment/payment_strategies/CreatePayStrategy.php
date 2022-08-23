@@ -192,40 +192,29 @@ class CreatePayStrategy
 
     /**
      * @param $token
-     * @param User $user
-     * @param PartnerBankGate $partnerBankGate
      * @return Cards
      */
-    private function createUnregisterCard($token, User $user, PartnerBankGate $partnerBankGate): Cards
+    private function createUnregisterCard($token, User $user, PartnerBankGate $partnerBankGate)
     {
         $panToken = PanToken::findOne(['ID' => $token]);
 
-        $card = Cards::find()
-            ->notSoftDeleted()
-            ->andWhere([
-                'IdPan' => $panToken->ID,
-                'IdBank' => $partnerBankGate->BankId,
-                'TypeCard' => Cards::TYPE_CARD_IN,
-            ])
-            ->orderBy(['ID' => SORT_DESC])
-            ->limit(1) // optimization
-            ->one();
-        if ($card === null) {
-            $card = new Cards();
-            $card->CardNumber = $card->NameCard = $panToken->FirstSixDigits . '******' . $panToken->LastFourDigits;
-            $card->IdUser = $user->ID;
-            $card->ExtCardIDP = 0;
-            $card->SrokKard = $this->createPayForm->CardMonth . $this->createPayForm->CardYear;
-            $card->CardHolder = mb_substr($this->createPayForm->CardHolder, 0, 99);
-            $card->Status = Cards::STATUS_UNCONFIRMED;
-            $card->DateAdd = time();
-            $card->TypeCard = Cards::TYPE_CARD_IN;
-            $card->IdPan = $panToken->ID;
-            $card->IdBank = $partnerBankGate->BankId;
-            $card->IsDeleted = 0;
-            $card->save(false);
-            $card->loadDefaultValues();
-        }
+        $cardNumber = $panToken->FirstSixDigits . '******' . $panToken->LastFourDigits;
+        $card = new Cards();
+        $card->IdUser = $user->ID;
+        $card->NameCard = $cardNumber;
+        $card->CardNumber = $cardNumber;
+        $card->ExtCardIDP = 0;
+        $card->CardType = Cards::GetTypeCard($cardNumber);
+        $card->SrokKard = $this->createPayForm->CardMonth . $this->createPayForm->CardYear;
+        $card->CardHolder = mb_substr($this->createPayForm->CardHolder, 0, 99);
+        $card->Status = 0;
+        $card->DateAdd = time();
+        $card->Default = 0;
+        $card->TypeCard = 0;
+        $card->IdPan = $panToken->ID;
+        $card->IdBank = $partnerBankGate->BankId;
+        $card->IsDeleted = 0;
+        $card->save(false);
 
         return $card;
     }

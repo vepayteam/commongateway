@@ -119,6 +119,33 @@ class TCBank implements IBank
     }
 
     /**
+     * Регистрация запроса оплаты в банке и возврат страницы для перенеправлениея клиента
+     * @param array $data
+     * @return array
+     * @throws \yii\db\Exception
+     */
+    public function beginPay($data)
+    {
+        $idkard = isset($data['IdKard']) ? $data['IdKard'] : 0;
+        $user = isset($data['user']) ? $data['user'] : null;
+        $ans = $this->createTisket($data, $user, $idkard);
+        if (!empty($ans['tisket'])) {
+            if ($ans['recurrent']) {
+                return [
+                    'type' => 'recurrent',
+                    'id' => $ans['tisket']
+                ];
+            } else {
+                return [
+                    'type' => 'url',
+                    'url' => $ans['url']
+                ];
+            }
+        }
+        return ['error' => 1];
+    }
+
+    /**
      * Завершение оплаты (запрос статуса)
      *
      * @param string $idpay
@@ -284,6 +311,98 @@ class TCBank implements IBank
             }*/
         }
         return ['state' => 0, 'Status' => '', 'message' => ''];
+    }
+
+    /**
+     * Получение № тарнзакции в банке
+     * @param array $data [IdPay]
+     * @param User|null $user
+     * @param int $idCard
+     * @param int $activate
+     * @return array ['tisket', 'recurrent']
+     * @throws \yii\db\Exception
+     */
+    private function createTisket($data, $user = null, $idCard = 0, $activate = 0)
+    {
+        $payschets = new Payschets();
+        //данные счета для оплаты
+        $params = $payschets->getSchetData($data['IdPay']);
+
+        $tisket = $userUrl = '';
+        $isRecurrent = 0;
+        if ($params && $params['Status'] == 0) {
+
+            $order_description = 'Счет №' . $params['ID'];
+
+            $card = null;
+            if ($user && $idCard >= 0) {
+                $card = $payschets->getSavedCard($user->ID, $idCard, $activate);
+            }
+
+            $emailClient = '';
+            if (isset($params['Email']) && !empty($params['Email'])) {
+                $emailClient = $params['Email'];
+            } elseif (isset($data['email']) && !empty($data['email']) && $data['email'] != 'undefined') {
+                $emailClient = $data['email'];
+            }
+
+            $queryData = [
+                'ExtID' => $params['ID'],
+                'Amount' => $params['SummFull'],
+                'Description' => $order_description,
+                'ClientInfo' => [
+                    //'PhoneNumber'
+                    'Email' => $emailClient,
+                    //'FIO'
+                ],
+                'ReturnUrl' => $this->backUrls['ok'] . $params['ID'],
+                'ShowReturnButton' => false,
+                'TTL' => '00.00:' . $params['TimeElapsed'] . ':00',
+                //'AdditionalParameters'
+            ];
+
+            if ($user && $idCard == -1) {
+                //привязка карты
+                $action = "/api/v1/card/unregistered/bind";
+            } elseif ($card && $idCard >= 0) {
+                //реккурентный платеж с карты
+                $action = "/api/v1/card/registered/direct";
+                $isRecurrent = 1;
+                $queryData['CardRefID'] = $card['ExtCardIDP'];
+            } else {
+                //оплата без привязки карты
+                $action = "/api/v1/card/unregistered/debit";
+            }
+
+            $queryData = Json::encode($queryData);
+
+            //$language = 'fullsize';
+            // определяем через что зашли - pageView = MOBILE
+            //if ($user->isMobile()) {
+            //$language = 'mob';
+            //}*/
+
+            $ans = $this->curlXmlReq($queryData, $this->bankUrl . $action);
+
+            if (isset($ans['xml']) && !empty($ans['xml'])) {
+                $xml = $this->parseAns($ans['xml']);
+                if (isset($xml['Status']) && $xml['Status'] == '0') {
+                    $userUrl = isset($xml['formurl']) ? $xml['formurl'] : '';
+                    $tisket = $xml['ordernumber'];
+                    //сохранение номера транзакции
+                    $payschets = new Payschets();
+                    $payschets->SetBankTransact([
+                        'idpay' => $params['ID'],
+                        'trx_id' => $tisket,
+                        'url' => $userUrl
+                    ]);
+
+                    Yii::$app->session['IdPay'] = $params['ID'];
+                }
+            }
+        }
+
+        return ['tisket' => $tisket, 'recurrent' => $isRecurrent, 'url' => $userUrl];
     }
 
     /**
@@ -586,6 +705,41 @@ class TCBank implements IBank
     private function HmacSha1($post, $keyFile)
     {
         return base64_encode(hash_hmac('SHA1', $post, $keyFile, true));
+    }
+
+    /**
+     * Привязка карты
+     * @param array $data
+     * @param User $user
+     * @return string
+     * @throws \yii\db\Exception
+     */
+    public function registerCard($data, $user)
+    {
+        $ans = $this->createTisket($data, $user, -1);
+        if (!empty($ans['url'])) {
+            return $ans['url'];
+        }
+        return '';
+    }
+
+    /**
+     * Оплата привязанной картой
+     * @param array $data
+     * @param User $user
+     * @param int $idCard
+     * @param int $activate
+     * @return string
+     * @throws \yii\db\Exception
+     */
+    public function payCard($data, $user, $idCard, $activate = 0)
+    {
+        $ans = $this->createTisket($data, $user, $idCard, $activate);
+        if (!empty($ans['tisket'])) {
+            return $ans['tisket'];
+        }
+        return '';
+
     }
 
     /**

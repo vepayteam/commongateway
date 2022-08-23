@@ -10,17 +10,15 @@ use app\models\kfapi\KfCard;
 use app\models\kfapi\KfPay;
 use app\models\mfo\MfoReq;
 use app\models\payonline\Cards;
-use app\services\CardRegisterService;
 use app\services\cards\CacheCardService;
-use app\services\payment\banks\Banks;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\NotUniquePayException;
 use app\services\payment\forms\CardRegForm;
 use app\services\payment\models\PaySchet;
+use app\services\payment\payment_strategies\mfo\MfoCardRegStrategy;
 use Yii;
 use yii\base\Exception;
-use yii\base\InvalidConfigException;
 use yii\mutex\FileMutex;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
@@ -32,20 +30,6 @@ use yii\web\Response;
 class CardController extends Controller
 {
     use CorsTrait;
-
-    /**
-     * @var CardRegisterService
-     */
-    private $cardRegisterService;
-
-    /**
-     * {@inheritDoc}
-     * @throws InvalidConfigException
-     */
-    public function init()
-    {
-        $this->cardRegisterService = \Yii::$app->get(CardRegisterService::class);
-    }
 
     public function behaviors()
     {
@@ -168,59 +152,55 @@ class CardController extends Controller
     {
         $mfo = new MfoReq();
         $mfo->LoadData(Yii::$app->request->getRawBody());
-        $partner = $mfo->getPartner();
 
         $cardRegForm = new CardRegForm();
+        $cardRegForm->partner = $mfo->getPartner();
         $cardRegForm->load($mfo->Req(), '');
+
         if(!$cardRegForm->validate()) {
             return ['status' => 0, 'message' => $cardRegForm->GetError()];
         }
 
-        // check for duplicates
-        $duplicatePaySchet = PaySchet::findOne([
-            'Extid' => $cardRegForm->extid,
-            'IdOrg' => $partner->ID,
-        ]);
-        if ($duplicatePaySchet !== null) {
-            return $this->asJson([
-                'status' => 0,
-                'message' => 'Транзакция с передаваемым extid уже существует',
-                'id' => $duplicatePaySchet->ID,
-                'extid' => $duplicatePaySchet->Extid,
-            ])->setStatusCode(400);
-        }
-
-
         $mutex = new FileMutex();
-        if (!empty($cardRegForm->extid)) {
+        if(!empty($cardRegForm->extid)) {
             $mutex->acquire($cardRegForm->getMutexKey(), CardRegForm::MUTEX_TIMEOUT);
         }
 
+        $mfoCardRegStrategy = new MfoCardRegStrategy($cardRegForm);
+
         try {
+            $paySchet = $mfoCardRegStrategy->exec();
+            $mutex->release($cardRegForm->getMutexKey());
 
-            $paySchet = $this->cardRegisterService->createPayschet($partner, $cardRegForm);
+            if (!empty($cardRegForm->card)) {
+                $cacheCardService = new CacheCardService($paySchet->ID);
+                $cacheCardService->setCard($cardRegForm->card);
+            }
 
-        } catch (CreatePayException|GateException $e) {
-            \Yii::error($e);
+            return [
+                'status' => 1,
+                'message' => '',
+                'id' => $paySchet->ID,
+                'url' => $paySchet->getFromUrl(),
+            ];
+        } catch (NotUniquePayException $e) {
+            $mutex->release($cardRegForm->getMutexKey());
+
+            return $this->asJson([
+                'status' => 0,
+                'message' => $e->getMessage(),
+                'id' => $e->getPaySchetId(),
+                'extid' => $e->getPaySchetExtId(),
+            ])->setStatusCode(400);
+        } catch (CreatePayException $e) {
+            \Yii::$app->errorHandler->logException($e);
+            $mutex->release($cardRegForm->getMutexKey());
+            return ['status' => 0, 'message' => $e->getMessage()];
+        } catch (GateException $e) {
+            \Yii::$app->errorHandler->logException($e);
             $mutex->release($cardRegForm->getMutexKey());
             return ['status' => 0, 'message' => $e->getMessage()];
         }
-
-        $mutex->release($cardRegForm->getMutexKey());
-
-        if (!empty($cardRegForm->card)) {
-            $cacheCardService = new CacheCardService($paySchet->ID);
-            $cacheCardService->setCard($cardRegForm->card);
-        }
-
-        return [
-            'status' => 1,
-            'message' => '',
-            'id' => $paySchet->ID,
-            'url' => $paySchet->Bank == Banks::REG_CARD_BY_OUT_ID
-                ? Yii::$app->params['domain'] . '/mfo/default/outcard/' . $paySchet->ID
-                : Yii::$app->params['domain'] . '/pay/form/' . $paySchet->ID,
-        ];
     }
 
     /**

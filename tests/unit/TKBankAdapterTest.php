@@ -49,6 +49,15 @@ class TKBankAdapterTest extends \Codeception\Test\Unit
         $this->assertIsInt($tKBankAdapter->getBankId());
     }
 
+    public function testCreateTisket()
+    {
+        $tKBankAdapter = new TKBankAdapter();
+        $tKBankAdapterReflectionClass = new ReflectionClass(TKBankAdapter::class);
+        $createTisket = $tKBankAdapterReflectionClass->getMethod('createTisket');
+        $createTisket->setAccessible(true);
+        $this->assertEquals(['tisket' => '', 'recurrent' => 0, 'url' => ''], $createTisket->invoke($tKBankAdapter, ['IdPay' => null]));
+    }
+
     public function testCheckStatusOrder()
     {
         $tKBankAdapter = new TKBankAdapter();

@@ -13,6 +13,7 @@ return [
     'id' => 'basic-tests',
     'basePath' => dirname(__DIR__),
     'language' => 'en-US',
+    'sourceLanguage' => 'ru-RU',
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
         '@npm'   => '@vendor/npm-asset',
@@ -63,7 +64,7 @@ return [
         \app\services\RecurrentPaymentPartsService::class => \app\services\RecurrentPaymentPartsService::class,
         \app\services\PaymentService::class => \app\services\PaymentService::class,
         \app\services\LanguageService::class => \app\services\LanguageService::class,
-        \app\services\CardRegisterService::class => \app\services\CardRegisterService::class,
+        \app\services\PaymentTransferService::class => \app\services\PaymentTransferService::class,
     ],
     'params' => $params,
     'container' => [

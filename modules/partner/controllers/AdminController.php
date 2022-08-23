@@ -5,11 +5,9 @@ namespace app\modules\partner\controllers;
 use app\models\api\Reguser;
 use app\models\bank\Banks;
 use app\models\mfo\statements\ReceiveStatemets;
-use app\models\partner\admin\PerevodToPartner;
 use app\models\partner\admin\SystemVoznagList;
 use app\models\partner\admin\VoznagStat;
 use app\models\partner\admin\VyvodList;
-use app\models\partner\admin\VyvodVoznag;
 use app\models\partner\stat\StatFilter;
 use app\models\partner\UserLk;
 use app\models\payonline\BalancePartner;
@@ -18,13 +16,20 @@ use app\models\payonline\Partner;
 use app\models\SendEmail;
 use app\models\sms\api\SingleMainSms;
 use app\models\sms\tables\AccessSms;
+use app\services\balance\Balance;
 use app\services\files\FileService;
 use app\services\payment\forms\VoznagStatForm;
+use app\services\payment\models\Bank;
+use app\services\paymentTransfer\exceptions\PaymentTransferException;
+use app\services\paymentTransfer\models\TransferRewardForm;
+use app\services\paymentTransfer\models\TransferFundsForm;
+use app\services\PaymentTransferService;
 use app\services\validation\exceptions\TestSelValidateException;
 use app\services\validation\TestSelValidationService;
 use toriphes\console\Runner;
 use Yii;
 use yii\base\DynamicModel;
+use yii\base\InvalidConfigException;
 use yii\data\ArrayDataProvider;
 use yii\db\Exception;
 use yii\db\Query;
@@ -100,9 +105,12 @@ class AdminController extends Controller
     public function actionComisotchet()
     {
         if (UserLk::IsAdmin(Yii::$app->user)) {
+            $banks = Bank::find()->all();
+
             $fltr = new StatFilter();
             return $this->render('comisotchet', [
-                'partnerlist' => $fltr->getPartnersList(false, true)
+                'partnerlist' => $fltr->getPartnersList(false, true),
+                'banks' => $banks,
             ]);
         } else {
             throw new NotFoundHttpException();
@@ -270,21 +278,41 @@ class AdminController extends Controller
      * Вывод вознаграждения
      * @return array
      * @throws NotFoundHttpException
-     * @throws \yii\db\Exception
+     * @throws InvalidConfigException
      */
     public function actionVyvodvoznag()
     {
-        if (Yii::$app->request->isAjax) {
-            Yii::$app->response->format = Response::FORMAT_JSON;
-            $data = Yii::$app->request->post();
-            $vyvod = new VyvodVoznag();
-            if ($vyvod->load($data, '') && $vyvod->validate() && $vyvod->CreatePayVyvod()) {
-                return ['status' => 1, 'message' => 'Средства выведены'];
-            }
-            return ['status' => 0, 'message' => 'Ошибка создания операции вывода'];
-        } else {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        if (!Yii::$app->request->isAjax) {
             throw new NotFoundHttpException();
         }
+
+        $form = new TransferRewardForm();
+        if (!$form->load(Yii::$app->request->post(), '') || !$form->validate()) {
+            return [
+                'status' => 0,
+                'message' => array_pop($form->firstErrors),
+            ];
+        }
+
+        /** @var PaymentTransferService $paymentTransferService */
+        $paymentTransferService = Yii::$app->get(PaymentTransferService::class);
+
+        try {
+            $paymentTransferService->transferReward($form);
+        } catch (PaymentTransferException $e) {
+            Yii::$app->errorHandler->logException($e);
+
+            return [
+                'status' => 0,
+                'message' => $e->getMessage(),
+            ];
+        }
+
+        return [
+            'status' => 1,
+            'message' => 'Средства выведены',
+        ];
     }
 
     /**
@@ -293,41 +321,70 @@ class AdminController extends Controller
      */
     public function actionPerevodaginfo()
     {
-        if (Yii::$app->request->isAjax) {
-            Yii::$app->response->format = Response::FORMAT_JSON;
-
-            $Partner = Partner::findOne(['ID' => (int)Yii::$app->request->post('partner')]);
-            if (!$Partner) {
-                return ['status' => 0, 'message' => 'Не найден'];
-            }
-
-            $recviz = $Partner->getPartner_bank_rekviz()->one();
-
-            return ['status' => 1, 'data' => [
-                'balance' => ($Partner->IsCommonSchetVydacha ? $Partner->BalanceOut / 100.0 : $Partner->BalanceIn / 100.0),
-                'schettcb' => ($Partner->IsCommonSchetVydacha ? '' : (string)$Partner->SchetTcb),
-                'schetfrom' => ($Partner->IsCommonSchetVydacha ? (string)$Partner->SchetTcb : (string)$Partner->SchetTcbTransit),
-                'urlico' => (string)$Partner->UrLico,
-                'schetrs' => isset($recviz) ? $recviz->RaschShetPolushat : '',
-                'schetbik' => isset($recviz) ? $recviz->BIKPoluchat : '',
-                'schetinfo' => isset($recviz) ? $recviz->NameBankPoluchat : '',
-            ]];
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        if (!Yii::$app->request->isAjax) {
+            throw new NotFoundHttpException();
         }
-        throw new NotFoundHttpException();
+
+        $partner = Partner::findOne(['ID' => (int)Yii::$app->request->post('partner')]);
+        if (!$partner) {
+            return ['status' => 0, 'message' => 'Не найден'];
+        }
+
+        $recviz = $partner->bankRekviz;
+
+        $balance = new Balance([
+            'partner' => $partner,
+        ]);
+        $balanceResponse = $balance->getAllBanksBalance();
+
+        return [
+            'status' => 1,
+            'data' => [
+                'balance' => $balanceResponse->balance,
+                'schettcb' => '',
+                'schetfrom' => '',
+                'urlico' => (string)$partner->UrLico,
+                'schetbik' => isset($recviz) ? $recviz->BIKPoluchat : '',
+                'schetrs' => isset($recviz) ? $recviz->RaschShetPolushat : '',
+                'schetinfo' => isset($recviz) ? $recviz->NameBankPoluchat : '',
+            ]
+        ];
     }
 
     public function actionPerevodacreate()
     {
-        if (Yii::$app->request->isAjax) {
-            Yii::$app->response->format = Response::FORMAT_JSON;
-            $Perevod = new PerevodToPartner();
-            $Perevod->load(Yii::$app->request->post(), 'Perechislen');
-            if ($Perevod->validate()) {
-                return $Perevod->CreatePerevod();
-            }
-            return ['status' => 0, 'message' => $Perevod->GetError()];
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        if (!Yii::$app->request->isAjax) {
+            throw new NotFoundHttpException();
         }
-        throw new NotFoundHttpException();
+
+        $form = new TransferFundsForm();
+        if (!$form->load(Yii::$app->request->post(), 'Perechislen') || !$form->validate()) {
+            return [
+                'status' => 0,
+                'message' => array_pop($form->firstErrors),
+            ];
+        }
+
+        /** @var PaymentTransferService $paymentTransferService */
+        $paymentTransferService = Yii::$app->get(PaymentTransferService::class);
+
+        try {
+            $paymentTransferService->transferFunds($form);
+        } catch (PaymentTransferException $e) {
+            Yii::$app->errorHandler->logException($e);
+
+            return [
+                'status' => 0,
+                'message' => $e->getMessage(),
+            ];
+        }
+
+        return [
+            'status' => 1,
+            'message' => 'Средства перечислены',
+        ];
     }
 
     public function actionRenotificate()

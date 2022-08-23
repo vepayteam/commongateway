@@ -2,6 +2,7 @@
 
 namespace app\helpers;
 
+use app\models\payonline\Cards;
 use Yii;
 
 class Modifiers
@@ -26,7 +27,7 @@ class Modifiers
         foreach ($cards['pan'] as $card) {
             if (Validators::checkByLuhnAlgorithm($card)) {
                 $offset = 6;
-                if (strpos($card, '22') === 0) {
+                if (Cards::GetTypeCard($card) == Cards::BRAND_MIR) {
                     $offset = 8;
                 }
                 $panMaskedLen = strlen($card) - $offset - 4;

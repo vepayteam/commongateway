@@ -6,6 +6,7 @@ use app\models\payonline\Uslugatovar;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\forms\CardRegForm;
 use app\services\payment\models\PaySchet;
+use app\services\payment\payment_strategies\mfo\MfoCardRegStrategy;
 use Yii;
 
 class MfoCardRegStrategyTest extends \Codeception\Test\Unit

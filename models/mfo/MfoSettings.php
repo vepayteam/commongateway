@@ -126,6 +126,26 @@ class MfoSettings extends Model
             $usl->save(false);
         }
 
+        $partUslugatovars = Uslugatovar::find()
+            ->notSoftDeleted()
+            ->andWhere(['IDPartner' => $this->IdPartner])
+            ->andWhere(['in', 'IsCustom', [
+                TU::$JKHPARTS,
+                TU::$ECOMPARTS,
+                TU::$POGASHATFPARTS,
+                TU::$AVTOPLATATFPARTS,
+                TU::$POGASHECOMPARTS,
+                TU::$AVTOPLATECOMPARTS,
+                TU::$VYVODPAYSPARTS,
+            ]])
+            ->all();
+
+        foreach ($partUslugatovars as $partUslugatovar) {
+            $partUslugatovar->UrlInform = $this->url;
+            $partUslugatovar->KeyInform = $this->key;
+            $partUslugatovar->save(false);
+        }
+
         //merchant
         $usl = Uslugatovar::findOne(['IsCustom' => TU::$JKH, 'IDPartner' => $this->IdPartner, 'IsDeleted' => 0]);
         if ($usl) {

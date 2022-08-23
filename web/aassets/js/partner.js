@@ -1617,12 +1617,11 @@
 
             $('#modal-perevod').on('shown.bs.modal', function () {
                 $('#perevodform')[0].reset();
-                $('[name="Perechislen[IdPartner]"]').trigger('change');
             });
 
             $('[name="Perechislen[IdPartner]"]').on('change', function () {
-
                 let idPartner = $(this).val();
+                if (parseInt(idPartner) === 0) return
 
                 linklink = $.ajax({
                     type: "POST",
@@ -1666,8 +1665,16 @@
                                 $('#perevodpartner').prop('disabled', false);
                             }
 
-                            $('#balancepartner').html(data.data.balance.toFixed(2));
+                            let html = '';
+                            if (data.data.balance.length > 0) {
+                                for (const balance of data.data.balance) {
+                                    html += `<div>${balance.bank_name} <b>${balance.amount}</b> ${balance.currency}</div>`
+                                }
+                            } else {
+                                html += '<div>Баланс недоступен</div>'
+                            }
 
+                            $('#balancepartner').html(html);
                         } else {
                             $('#perevodpartner').prop('disabled', true);
                             toastr.error("Ошибка", data.message);
@@ -1681,13 +1688,7 @@
             });
 
             $('#perevodpartner').on('click', function () {
-                let balance = parseFloat($('#balancepartner').html());
                 let sum = parseFloat($('#perevodform').find('#Summ').val());
-                if (isNaN(sum) || sum < 1 || sum > balance) {
-                    toastr.error("Ошибка", "Неверная сумма перевода");
-                    return false;
-                }
-
                 let ct = "Перевести средства контрагенту?\r\n\r\n"+$('#infoschet').html()+"\r\nна счет: ";
                 if ($('#TypeSchet1').prop('checked')) {
                     ct += $('#perevodform').find('#TypeSchet1Info').html()+" (выдача)";

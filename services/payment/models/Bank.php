@@ -41,11 +41,6 @@ use yii\db\ActiveQuery;
 class Bank extends \yii\db\ActiveRecord
 {
     /**
-     * Bank ID for out payments.
-     */
-    public const OUT_BANK_ID = 0;
-
-    /**
      * {@inheritdoc}
      */
     public static function tableName()

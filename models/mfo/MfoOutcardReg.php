@@ -2,13 +2,10 @@
 
 namespace app\models\mfo;
 
+use app\models\Crypt;
 use app\models\crypt\CardToken;
-use app\models\payonline\Cards;
 use app\models\payonline\User;
 use app\models\Payschets;
-use app\services\cards\models\PanToken;
-use app\services\payment\models\Bank;
-use app\services\payment\models\PaySchet;
 use Yii;
 
 class MfoOutcardReg
@@ -54,57 +51,53 @@ class MfoOutcardReg
     /**
      * Сохранение карты для выплат
      * @param $IdPay
-     * @param string $cardNumber
+     * @param string $card
      * @param User $user
      * @return string
      * @throws \yii\db\Exception
      */
-    private function SaveOutard($IdPay, $cardNumber, User $user)
+    private function SaveOutard($IdPay, $card, User $user)
     {
-        // find or create the pan token
-        $cardToken = new CardToken();
-        $panTokenId = $cardToken->CheckExistToken($cardNumber, 0, '');
-        if ($panTokenId === 0) {
-            $panTokenId = $cardToken->CreateToken($cardNumber, 0, '');
-            if ($panTokenId === 0) {
-                Yii::error('Unable to create! IdPay=' . $IdPay);
-                return 0;
-            }
+        $CardToken = new CardToken();
+        $IdPan = $CardToken->CreateToken($card, 0, '');
+        $maskedPan = $this->MaskedCardNumber($card);
+        if ($IdPan) {
+            Yii::warning('register out card: ' . $maskedPan . ' IdPay=' . $IdPay . " IdPan=".$IdPan);
+            Yii::$app->db->createCommand()
+                ->insert('cards', [
+                    'IdUser' => $user->ID,
+                    'NameCard' => $maskedPan,
+                    'CardNumber' => $maskedPan,
+                    'ExtCardIDP' => $IdPan,
+                    'DateAdd' => time(),
+                    'SrokKard' => 0,
+                    'Status' => 1,
+                    'TypeCard' => 1,
+                    'IdPan' => $IdPan
+                ])->execute();
+
+            $IdCard = Yii::$app->db->getLastInsertID();
+            Yii::$app->db->createCommand()
+                ->update('pay_schet', [
+                    'IdKard' => $IdCard,
+                    //'Status' => 2
+                ], 'ID = :IDPAY', [':IDPAY' => $IdPay]
+                )->execute();
+
+            return $IdCard;
+
+        } else {
+            Yii::warning('erorr PAN CreateToken! IdPay='.$IdPay);
+            return 0;
         }
-        $panToken = PanToken::findOne($panTokenId);
+    }
 
-        $maskedCardNumber = $panToken->FirstSixDigits . '******' . $panToken->LastFourDigits;
-        Yii::warning("Register out card: {$maskedCardNumber} IdPay={$IdPay} IdPan={$panToken->ID}");
-
-        $card = Cards::find()
-            ->andWhere([
-                'IdPan' => $panToken->ID,
-                'IdBank' => Bank::OUT_BANK_ID,
-                'TypeCard' => Cards::TYPE_CARD_OUT,
-            ])
-            ->orderBy(['ID' => SORT_DESC])
-            ->limit(1) // optimization
-            ->one();
-        if ($card === null) {
-            $card = new Cards();
-            $card->IdUser = $user->ID;
-            $card->NameCard = $maskedCardNumber;
-            $card->CardNumber = $maskedCardNumber;
-
-            /** @todo Check and remove (change to 0). */
-            $card->ExtCardIDP = $panToken->ID;
-
-            $card->SrokKard = 0;
-            $card->Status = Cards::STATUS_ACTIVE;
-            $card->TypeCard = Cards::TYPE_CARD_OUT;
-            $card->IdPan = $panToken->ID;
-            $card->save(false);
+    public function MaskedCardNumber($card)
+    {
+        if (!empty($card)) {
+            return substr($card, 0, 6)."******".substr($card, strlen($card) - 4, 4);
+        } else {
+            return "";
         }
-
-        $paySchet = PaySchet::findOne($IdPay);
-        $paySchet->IdKard = $card->ID;
-        $paySchet->save(false);
-
-        return $card->ID;
     }
 };

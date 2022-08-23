@@ -30,6 +30,7 @@ use app\services\payment\payment_strategies\CreateFormEcomStrategy;
 use app\services\payment\payment_strategies\CreateFormJkhStrategy;
 use app\services\payment\payment_strategies\IPaymentStrategy;
 use app\services\payment\payment_strategies\mfo\MfoSbpTransferStrategy;
+use app\services\payment\traits\CardsTrait;
 use app\services\payment\traits\PayPartsTrait;
 use app\services\payment\traits\ValidateTrait;
 use Carbon\Carbon;
@@ -37,7 +38,7 @@ use Yii;
 
 class PaymentService
 {
-    use PayPartsTrait, ValidateTrait;
+    use PayPartsTrait, CardsTrait, ValidateTrait;
 
     const GET_SBP_BANK_RECEIVER_CACHE_KEY = 'Getsbpbankreceiver.';
 
