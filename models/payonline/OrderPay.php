@@ -100,7 +100,7 @@ class OrderPay extends ActiveRecord
             $this->DateAdd = time();
         }
 
-        if ($this->getOldAttribute('SumOrder') !== $this->SumOrder) {
+        if ($this->isAttributeChanged('SumOrder')) {
             $this->SumOrder = PaymentHelper::convertToPenny($this->SumOrder);
         }
 
