@@ -42,8 +42,7 @@ return [
     '36372273601402',
     '36372288775118',
     '6504828712321563',
-    // cauri
-    '4012001037141112',
+
     // walletto
     '4111111111111111', // Success authorization
     '2222400060000007', // Success authorization
@@ -80,4 +79,10 @@ return [
     '5555555555554444',
     '5454545454545454',
     '4917610000000000',
+
+    // Cauri
+    '5444870724493746', // Success Bankcard without 3ds
+    '6777060877427221', // Success Bankcard with 3ds
+    '4012001038488884', // Unable to verify with 3ds Bankcard
+    '4111111111111111', // Failing Bankcard
 ];
