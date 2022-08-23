@@ -9,23 +9,23 @@ class CardAuthenticateRequest extends BaseObject
     /**
      * @var string payer authentication response. Returned from bank ACS to acs return url.
      */
-    private $PaRes;
+    private $paRes;
 
     /**
      * @var string merchant data. Parameter that must be passed to bank ACS and returned from there.
      */
-    private $MD;
+    private $mD;
 
     /**
-     * @param string $PaRes
-     * @param string $MD
+     * @param string $paRes
+     * @param string $mD
      */
-    public function __construct(string $PaRes, string $MD)
+    public function __construct(string $paRes, string $mD)
     {
         parent::__construct();
 
-        $this->PaRes = $PaRes;
-        $this->MD = $MD;
+        $this->paRes = $paRes;
+        $this->mD = $mD;
     }
 
     /**
@@ -33,7 +33,7 @@ class CardAuthenticateRequest extends BaseObject
      */
     public function getPaRes(): string
     {
-        return $this->PaRes;
+        return $this->paRes;
     }
 
     /**
@@ -41,6 +41,6 @@ class CardAuthenticateRequest extends BaseObject
      */
     public function getMD(): string
     {
-        return $this->MD;
+        return $this->mD;
     }
 }

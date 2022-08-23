@@ -14,7 +14,7 @@ class UserResolveRequest extends BaseObject
     /**
      * @var string|null full name of nickname of a user
      */
-    private $display_name;
+    private $displayName;
 
     /**
      * @var string email address of a user
@@ -38,16 +38,16 @@ class UserResolveRequest extends BaseObject
 
     /**
      * @param string $identifier
-     * @param string|null $display_name
+     * @param string|null $displayName
      * @param string $email
      * @param string|null $phone
      * @param string|null $locale
      * @param string|null $ip
      */
     public function __construct(
-        string  $identifier,
-        ?string $display_name,
-        string  $email,
+        string $identifier,
+        ?string $displayName,
+        string $email,
         ?string $phone,
         ?string $locale,
         ?string $ip
@@ -56,7 +56,7 @@ class UserResolveRequest extends BaseObject
         parent::__construct();
 
         $this->identifier = $identifier;
-        $this->display_name = $display_name;
+        $this->displayName = $displayName;
         $this->email = $email;
         $this->phone = $phone;
         $this->locale = $locale;
@@ -76,7 +76,7 @@ class UserResolveRequest extends BaseObject
      */
     public function getDisplayName(): ?string
     {
-        return $this->display_name;
+        return $this->displayName;
     }
 
     /**

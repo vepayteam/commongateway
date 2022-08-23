@@ -48,11 +48,11 @@ class CardProcessResponse extends BaseObject
      * @param RecurringDataObject|null $recurring
      */
     public function __construct(
-        int                  $id,
-        bool                 $success,
-        ?string              $responseCode,
-        CardDataObject       $card,
-        ?AcsDataObject       $acs,
+        int $id,
+        bool $success,
+        ?string $responseCode,
+        CardDataObject $card,
+        ?AcsDataObject $acs,
         ?RecurringDataObject $recurring
     )
     {

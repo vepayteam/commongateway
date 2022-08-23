@@ -14,7 +14,7 @@ class TransactionRefundRequest extends BaseObject
     /**
      * @var string|null merchant's order id of a transaction
      */
-    private $order_id;
+    private $orderId;
 
     /**
      * @var float|null amount to refund. If you do not pass this value, then a full refund will be made.
@@ -28,16 +28,16 @@ class TransactionRefundRequest extends BaseObject
 
     /**
      * @param int|null $id
-     * @param string|null $order_id
+     * @param string|null $orderId
      * @param float|null $amount
      * @param string|null $comment
      */
-    public function __construct(?int $id, ?string $order_id, ?float $amount, ?string $comment)
+    public function __construct(?int $id, ?string $orderId, ?float $amount, ?string $comment)
     {
         parent::__construct();
 
         $this->id = $id;
-        $this->order_id = $order_id;
+        $this->orderId = $orderId;
         $this->amount = $amount;
         $this->comment = $comment;
     }
@@ -55,7 +55,7 @@ class TransactionRefundRequest extends BaseObject
      */
     public function getOrderId(): ?string
     {
-        return $this->order_id;
+        return $this->orderId;
     }
 
     /**

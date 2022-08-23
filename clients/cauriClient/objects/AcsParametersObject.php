@@ -9,30 +9,30 @@ class AcsParametersObject extends BaseObject
     /**
      * @var string payer authentication request. Parameter that must be passed to bank ACS.
      */
-    private $PaReq;
+    private $paReq;
 
     /**
      * @var string merchant data. Parameter that must be passed to bank ACS and returned from there.
      */
-    private $MD;
+    private $mD;
 
     /**
      * @var string termination url. Payer return url after authentication on bank ACS. Parameter that must be passed to bank ACS.
      */
-    private $TermUrl;
+    private $termUrl;
 
     /**
-     * @param string $PaReq
-     * @param string $MD
-     * @param string $TermUrl
+     * @param string $paReq
+     * @param string $mD
+     * @param string $termUrl
      */
-    public function __construct(string $PaReq, string $MD, string $TermUrl)
+    public function __construct(string $paReq, string $mD, string $termUrl)
     {
         parent::__construct();
 
-        $this->PaReq = $PaReq;
-        $this->MD = $MD;
-        $this->TermUrl = $TermUrl;
+        $this->paReq = $paReq;
+        $this->mD = $mD;
+        $this->termUrl = $termUrl;
     }
 
     /**
@@ -40,7 +40,7 @@ class AcsParametersObject extends BaseObject
      */
     public function getPaReq(): string
     {
-        return $this->PaReq;
+        return $this->paReq;
     }
 
     /**
@@ -48,7 +48,7 @@ class AcsParametersObject extends BaseObject
      */
     public function getMD(): string
     {
-        return $this->MD;
+        return $this->mD;
     }
 
     /**
@@ -56,6 +56,6 @@ class AcsParametersObject extends BaseObject
      */
     public function getTermUrl(): string
     {
-        return $this->TermUrl;
+        return $this->termUrl;
     }
 }

@@ -14,37 +14,37 @@ class CardGetTokenRequest extends BaseObject
     /**
      * @var int bankcard's expiration month, with or without leading zero
      */
-    private $expiration_month;
+    private $expirationMonth;
 
     /**
      * @var int bankcard's expiration year (4 digits)
      */
-    private $expiration_year;
+    private $expirationYear;
 
     /**
      * @var string bankcard's security code (CVC, CVV2, BATCH)
      */
-    private $security_code;
+    private $securityCode;
 
     /**
      * @param string $number
-     * @param int $expiration_month
-     * @param int $expiration_year
-     * @param string $security_code
+     * @param int $expirationMonth
+     * @param int $expirationYear
+     * @param string $securityCode
      */
     public function __construct(
         string $number,
-        int    $expiration_month,
-        int    $expiration_year,
-        string $security_code
+        int $expirationMonth,
+        int $expirationYear,
+        string $securityCode
     )
     {
         parent::__construct();
 
         $this->number = $number;
-        $this->expiration_month = $expiration_month;
-        $this->expiration_year = $expiration_year;
-        $this->security_code = $security_code;
+        $this->expirationMonth = $expirationMonth;
+        $this->expirationYear = $expirationYear;
+        $this->securityCode = $securityCode;
     }
 
     /**
@@ -60,7 +60,7 @@ class CardGetTokenRequest extends BaseObject
      */
     public function getExpirationMonth(): int
     {
-        return $this->expiration_month;
+        return $this->expirationMonth;
     }
 
     /**
@@ -68,7 +68,7 @@ class CardGetTokenRequest extends BaseObject
      */
     public function getExpirationYear(): int
     {
-        return $this->expiration_year;
+        return $this->expirationYear;
     }
 
     /**
@@ -76,6 +76,6 @@ class CardGetTokenRequest extends BaseObject
      */
     public function getSecurityCode(): string
     {
-        return $this->security_code;
+        return $this->securityCode;
     }
 }

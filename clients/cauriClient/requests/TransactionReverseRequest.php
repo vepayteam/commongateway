@@ -14,7 +14,7 @@ class TransactionReverseRequest extends BaseObject
     /**
      * @var string|null merchant's order id of a transaction
      */
-    private $order_id;
+    private $orderId;
 
     /**
      * @var string|null comment
@@ -23,15 +23,15 @@ class TransactionReverseRequest extends BaseObject
 
     /**
      * @param int|null $id
-     * @param string|null $order_id
+     * @param string|null $orderId
      * @param string|null $comment
      */
-    public function __construct(?int $id, ?string $order_id, ?string $comment)
+    public function __construct(?int $id, ?string $orderId, ?string $comment)
     {
         parent::__construct();
 
         $this->id = $id;
-        $this->order_id = $order_id;
+        $this->orderId = $orderId;
         $this->comment = $comment;
     }
 
@@ -48,7 +48,7 @@ class TransactionReverseRequest extends BaseObject
      */
     public function getOrderId(): ?string
     {
-        return $this->order_id;
+        return $this->orderId;
     }
 
     /**

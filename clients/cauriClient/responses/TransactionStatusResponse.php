@@ -22,7 +22,7 @@ class TransactionStatusResponse extends BaseObject
     /**
      * @var string|null merchant's order id of a transaction
      */
-    private $order_id;
+    private $orderId;
 
     /**
      * @var string|null order description
@@ -72,31 +72,31 @@ class TransactionStatusResponse extends BaseObject
     /**
      * @var string|null authorization code of a transaction. Required only for paid payin transactions.
      */
-    private $auth_code;
+    private $authCode;
 
     /**
      * @var string|null response code of a transaction. Required only for failed payin transactions.
      */
-    private $response_code;
+    private $responseCode;
 
     /**
      * @var bool indicates whether a transaction can reverse
      */
-    private $can_reverse;
+    private $canReverse;
 
     /**
      * @var bool indicates whether a transaction can refund
      */
-    private $can_refund;
+    private $canRefund;
 
     /**
      * @var bool indicates whether a transaction can partial refund
      */
-    private $can_partial_refund;
+    private $canPartialRefund;
 
     /**
      * @param int $id
-     * @param string|null $order_id
+     * @param string|null $orderId
      * @param string|null $description
      * @param string $user
      * @param float $price
@@ -106,35 +106,35 @@ class TransactionStatusResponse extends BaseObject
      * @param string $status
      * @param bool $error
      * @param bool $sandbox
-     * @param string|null $auth_code
-     * @param string|null $response_code
-     * @param bool $can_reverse
-     * @param bool $can_refund
-     * @param bool $can_partial_refund
+     * @param string|null $authCode
+     * @param string|null $responseCode
+     * @param bool $canReverse
+     * @param bool $canRefund
+     * @param bool $canPartialRefund
      */
     public function __construct(
-        int     $id,
-        ?string $order_id,
+        int $id,
+        ?string $orderId,
         ?string $description,
-        string  $user,
-        float   $price,
-        ?float  $earned,
-        string  $currency,
-        string  $type,
-        string  $status,
-        bool    $error,
-        bool    $sandbox,
-        ?string $auth_code,
-        ?string $response_code,
-        bool    $can_reverse,
-        bool    $can_refund,
-        bool    $can_partial_refund
+        string $user,
+        float $price,
+        ?float $earned,
+        string $currency,
+        string $type,
+        string $status,
+        bool $error,
+        bool $sandbox,
+        ?string $authCode,
+        ?string $responseCode,
+        bool $canReverse,
+        bool $canRefund,
+        bool $canPartialRefund
     )
     {
         parent::__construct();
 
         $this->id = $id;
-        $this->order_id = $order_id;
+        $this->orderId = $orderId;
         $this->description = $description;
         $this->user = $user;
         $this->price = $price;
@@ -144,11 +144,11 @@ class TransactionStatusResponse extends BaseObject
         $this->status = $status;
         $this->error = $error;
         $this->sandbox = $sandbox;
-        $this->auth_code = $auth_code;
-        $this->response_code = $response_code;
-        $this->can_reverse = $can_reverse;
-        $this->can_refund = $can_refund;
-        $this->can_partial_refund = $can_partial_refund;
+        $this->authCode = $authCode;
+        $this->responseCode = $responseCode;
+        $this->canReverse = $canReverse;
+        $this->canRefund = $canRefund;
+        $this->canPartialRefund = $canPartialRefund;
     }
 
     /**
@@ -164,7 +164,7 @@ class TransactionStatusResponse extends BaseObject
      */
     public function getOrderId(): ?string
     {
-        return $this->order_id;
+        return $this->orderId;
     }
 
     /**
@@ -244,7 +244,7 @@ class TransactionStatusResponse extends BaseObject
      */
     public function getAuthCode(): ?string
     {
-        return $this->auth_code;
+        return $this->authCode;
     }
 
     /**
@@ -252,7 +252,7 @@ class TransactionStatusResponse extends BaseObject
      */
     public function getResponseCode(): ?string
     {
-        return $this->response_code;
+        return $this->responseCode;
     }
 
     /**
@@ -260,7 +260,7 @@ class TransactionStatusResponse extends BaseObject
      */
     public function isCanReverse(): bool
     {
-        return $this->can_reverse;
+        return $this->canReverse;
     }
 
     /**
@@ -268,7 +268,7 @@ class TransactionStatusResponse extends BaseObject
      */
     public function isCanRefund(): bool
     {
-        return $this->can_refund;
+        return $this->canRefund;
     }
 
     /**
@@ -276,6 +276,6 @@ class TransactionStatusResponse extends BaseObject
      */
     public function isCanPartialRefund(): bool
     {
-        return $this->can_partial_refund;
+        return $this->canPartialRefund;
     }
 }

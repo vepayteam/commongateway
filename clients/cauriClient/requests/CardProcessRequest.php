@@ -9,7 +9,7 @@ class CardProcessRequest extends BaseObject
     /**
      * @var string|null merchant's order id of a transaction
      */
-    private $order_id;
+    private $orderId;
 
     /**
      * @var string|null order description
@@ -24,7 +24,7 @@ class CardProcessRequest extends BaseObject
     /**
      * @var string temporary bankcard token
      */
-    private $card_token;
+    private $cardToken;
 
     /**
      * @var float order price
@@ -39,7 +39,7 @@ class CardProcessRequest extends BaseObject
     /**
      * @var string|null termination url. Payer return url after authentication on bank ACS.
      */
-    private $acs_return_url;
+    private $acsReturnUrl;
 
     /**
      * @var int|null indicates whether a user wants to subscribe to recurring payments
@@ -49,50 +49,50 @@ class CardProcessRequest extends BaseObject
     /**
      * @var int|null days between recurring payments. When set to 0, only manual recurring remains available. Required if recurring is set to 1.
      */
-    private $recurring_interval;
+    private $recurringInterval;
 
     /**
      * @var int|null use to check the card for the possibility of recurring payments. If set to 1, then transaction price will be put on hold and then instantly returned. Required if recurring is set to 1.
      */
-    private $verify_card;
+    private $verifyCard;
 
     /**
-     * @param string|null $order_id
+     * @param string|null $orderId
      * @param string|null $description
      * @param int $user
-     * @param string $card_token
+     * @param string $cardToken
      * @param float $price
      * @param string $currency
-     * @param string|null $acs_return_url
+     * @param string|null $acsReturnUrl
      * @param int|null $recurring
-     * @param int|null $recurring_interval
-     * @param int|null $verify_card
+     * @param int|null $recurringInterval
+     * @param int|null $verifyCard
      */
     public function __construct(
-        ?string $order_id,
+        ?string $orderId,
         ?string $description,
-        int     $user,
-        string  $card_token,
-        float   $price,
-        string  $currency,
-        ?string $acs_return_url,
-        ?int    $recurring,
-        ?int    $recurring_interval,
-        ?int    $verify_card
+        int $user,
+        string $cardToken,
+        float $price,
+        string $currency,
+        ?string $acsReturnUrl,
+        ?int $recurring,
+        ?int $recurringInterval,
+        ?int $verifyCard
     )
     {
         parent::__construct();
 
-        $this->order_id = $order_id;
+        $this->orderId = $orderId;
         $this->description = $description;
         $this->user = $user;
-        $this->card_token = $card_token;
+        $this->cardToken = $cardToken;
         $this->price = $price;
         $this->currency = $currency;
-        $this->acs_return_url = $acs_return_url;
+        $this->acsReturnUrl = $acsReturnUrl;
         $this->recurring = $recurring;
-        $this->recurring_interval = $recurring_interval;
-        $this->verify_card = $verify_card;
+        $this->recurringInterval = $recurringInterval;
+        $this->verifyCard = $verifyCard;
     }
 
     /**
@@ -100,7 +100,7 @@ class CardProcessRequest extends BaseObject
      */
     public function getOrderId(): ?string
     {
-        return $this->order_id;
+        return $this->orderId;
     }
 
     /**
@@ -124,7 +124,7 @@ class CardProcessRequest extends BaseObject
      */
     public function getCardToken(): string
     {
-        return $this->card_token;
+        return $this->cardToken;
     }
 
     /**
@@ -148,7 +148,7 @@ class CardProcessRequest extends BaseObject
      */
     public function getAcsReturnUrl(): ?string
     {
-        return $this->acs_return_url;
+        return $this->acsReturnUrl;
     }
 
     /**
@@ -164,7 +164,7 @@ class CardProcessRequest extends BaseObject
      */
     public function getRecurringInterval(): ?int
     {
-        return $this->recurring_interval;
+        return $this->recurringInterval;
     }
 
     /**
@@ -172,6 +172,6 @@ class CardProcessRequest extends BaseObject
      */
     public function getVerifyCard(): ?int
     {
-        return $this->verify_card;
+        return $this->verifyCard;
     }
 }

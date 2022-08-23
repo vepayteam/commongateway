@@ -9,7 +9,7 @@ class CardProcessRecurringRequest extends BaseObject
     /**
      * @var string|null merchant's order id of a transaction
      */
-    private $order_id;
+    private $orderId;
 
     /**
      * @var string|null order description
@@ -19,7 +19,7 @@ class CardProcessRecurringRequest extends BaseObject
     /**
      * @var string recurring profile token
      */
-    private $recurring_profile;
+    private $recurringProfile;
 
     /**
      * @var float order price
@@ -32,19 +32,19 @@ class CardProcessRecurringRequest extends BaseObject
     private $currency;
 
     /**
-     * @param string|null $order_id
+     * @param string|null $orderId
      * @param string|null $description
-     * @param string $recurring_profile
+     * @param string $recurringProfile
      * @param float $price
      * @param string $currency
      */
-    public function __construct(?string $order_id, ?string $description, string $recurring_profile, float $price, string $currency)
+    public function __construct(?string $orderId, ?string $description, string $recurringProfile, float $price, string $currency)
     {
         parent::__construct();
 
-        $this->order_id = $order_id;
+        $this->orderId = $orderId;
         $this->description = $description;
-        $this->recurring_profile = $recurring_profile;
+        $this->recurringProfile = $recurringProfile;
         $this->price = $price;
         $this->currency = $currency;
     }
@@ -54,7 +54,7 @@ class CardProcessRecurringRequest extends BaseObject
      */
     public function getOrderId(): ?string
     {
-        return $this->order_id;
+        return $this->orderId;
     }
 
     /**
@@ -70,7 +70,7 @@ class CardProcessRecurringRequest extends BaseObject
      */
     public function getRecurringProfile(): string
     {
-        return $this->recurring_profile;
+        return $this->recurringProfile;
     }
 
     /**
