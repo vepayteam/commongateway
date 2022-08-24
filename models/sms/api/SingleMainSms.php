@@ -13,7 +13,6 @@ use app\models\sms\Stop;
 use app\models\sms\tables\AccessSms;
 use app\services\CurlLogger;
 use qfsx\yii2\curl\Curl;
-use app\models\extservice\HttpProxy;
 use Yii;
 use yii\db\ActiveRecord;
 use yii\helpers\VarDumper;

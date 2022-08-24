@@ -1555,18 +1555,7 @@ class TKBankAdapter implements IBankAdapter
         $createRecurrentPayResponse->status = BaseResponse::STATUS_ERROR;
         $createRecurrentPayResponse->message = '';
         if (substr_compare($ans['error'], '500', -3) === 0) {
-            /*TODO: VPBC-1489
-//            вообще сейчас логика работает так
-//            из recurrentPay возвращаются два статуса когда точно уверены что все хорошо, но все таки надо ещё статус
-//            проверить это DONE
-//            и когда точно все зафейлилось это Error
-//            RecurrentPayJob на всякий случай запускает проверку статуса даже когда пришло в ответе Error
-//            а RecurrentPaymentPartsService просто устанавливает status error пишет в лог и все на этом
-//            чего-то промежуточного у нас нет, типа хз че там было, но лучше проверить статус
-//            поэтому либо логику можно допилить до такого, либо просто вернуть Done и тогда refreshStatus жоба
-//            определить че там со статусом
-            */
-            $createRecurrentPayResponse->status = BaseResponse::STATUS_DONE;
+            $createRecurrentPayResponse->status = BaseResponse::STATUS_ERROR;
             $createRecurrentPayResponse->message = 'Ожидается обновление статуса';
         }
         return $createRecurrentPayResponse;

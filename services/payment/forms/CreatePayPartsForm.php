@@ -23,7 +23,7 @@ class CreatePayPartsForm extends MerchantPayForm
             [['document_id'], 'string', 'max' => 40],
             [['fullname'], 'string', 'max' => 80],
             [['successurl', 'failurl', 'cancelurl', 'postbackurl'], 'url'],
-            [['successurl', 'failurl', 'cancelurl'], 'string', 'max' => 300],
+            [['successurl', 'failurl', 'cancelurl'], 'string', 'max' => 1000],
             [['descript'], 'string', 'max' => 200],
             [['timeout'], 'integer', 'min' => 10, 'max' => 59],
 
