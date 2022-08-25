@@ -70,16 +70,6 @@ if ($partner->IsMfo) {
         </div>
     </div>
 
-    <div class="row no-margins">
-        <div class="col-sm-8 col-sm-offset-3">
-            <?php
-            echo $form->field($partner,'IsCommonSchetVydacha')->checkbox([
-                'template' => "<div class=\"checkbox m-l-sm\">\n{input}\n{beginLabel}\n{labelTitle}\n{endLabel}\n{error}\n{hint}\n</div>"
-            ]);
-            ?>
-        </div>
-    </div>
-
     <?php
     echo $form->field($partner, 'LoginTkbEcom')->textInput(['class' => 'form-control']);
     echo $form->field($partner, 'KeyTkbEcom')->textInput(['class' => 'form-control']);
