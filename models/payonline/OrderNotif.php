@@ -2,7 +2,6 @@
 
 namespace app\models\payonline;
 
-use app\helpers\UrlHelper;
 use app\models\SendEmail;
 use Yii;
 use yii\db\ActiveQuery;
