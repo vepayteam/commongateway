@@ -14,7 +14,6 @@ use app\models\planner\ReceiveTelegram;
 use app\models\planner\ReturnComisMfo;
 use app\models\planner\SendNews;
 use app\models\planner\UpdateStatems;
-use app\models\planner\VyvodSumPay;
 use app\models\planner\VyvodVoznagPlanner;
 use app\models\telegram\Telegram;
 use app\services\notifications\NotificationsService;
@@ -269,16 +268,6 @@ class WidgetController extends Controller
 
         $Updatestatm = new UpdateStatems();
         $Updatestatm->execute();
-
-        if (VyvodSumPay::PlannerCommonTime()) {
-            //в 9:00
-            echo "Run VyvodVirt\n";
-
-            $perevod = new VyvodSumPay();
-            $perevod->executeVirt();
-
-        }
-
     }
 
     /**
@@ -291,12 +280,6 @@ class WidgetController extends Controller
             $AlertsSend = new AlarmsSend();
             $AlertsSend->execute();
         }
-    }
-
-    public function actionVyvodvirt()
-    {
-        $perevod = new VyvodSumPay();
-        $perevod->executeVirt();
     }
 
     public function actionSendNews()

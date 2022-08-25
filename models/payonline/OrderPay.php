@@ -100,7 +100,10 @@ class OrderPay extends ActiveRecord
             $this->DateAdd = time();
         }
 
-        $this->SumOrder = PaymentHelper::convertToPenny($this->SumOrder);
+        if ($this->isAttributeChanged('SumOrder')) {
+            $this->SumOrder = PaymentHelper::convertToPenny($this->SumOrder);
+        }
+
         return parent::beforeSave($insert);
     }
 

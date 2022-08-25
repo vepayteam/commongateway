@@ -45,6 +45,10 @@ return [
         'host' => '',
         'token' => ''
     ],
+    'proxy' => [
+        'proxyHost' => '',
+        'proxyUser' => '',
+    ],
 
     'testCards' => require(__DIR__ . '/test_cards.php'),
     'testParams' => [],

@@ -2,14 +2,12 @@
 
 namespace app\models\kkt;
 
-use app\models\extservice\HttpProxy;
 use Yii;
 use yii\base\InvalidArgumentException;
 use yii\helpers\Json;
 
 class OrangeData implements IKkm
 {
-    use HttpProxy;
 
     public $keySign;
     public $keyFile;
