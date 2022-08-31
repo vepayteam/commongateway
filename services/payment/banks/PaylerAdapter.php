@@ -45,6 +45,11 @@ class PaylerAdapter implements IBankAdapter, IBankSecondStepInterface
     public static $bank = 17;
 
     /**
+     * В случае если email отсутствует у клиента
+     */
+    private const EMAIL_DEFAULT = 'payler@vepay.online';
+
+    /**
      * @var PaylerClient
      */
     private $api;
@@ -125,7 +130,7 @@ class PaylerAdapter implements IBankAdapter, IBankSecondStepInterface
                 $createPayForm->CardYear,
                 $createPayForm->CardMonth,
                 $createPayForm->CardCVC,
-                $paySchet->getUserEmail(),
+                $paySchet->getUserEmail() ?? self::EMAIL_DEFAULT,
                 \Yii::$app->request->getUserIP(),
                 $clientData->headerAccept,
                 $clientData->browserLanguage,
@@ -350,7 +355,7 @@ class PaylerAdapter implements IBankAdapter, IBankSecondStepInterface
                 $paySchet->ID,
                 $outCardPayForm->cardnum,
                 $paySchet->getSummFull(),
-                $outCardPayForm->email,
+                $outCardPayForm->email ?? self::EMAIL_DEFAULT,
                 $paySchet->currency->Code,
                 $outCardPayForm->cardHolderName ?? null
             ));
