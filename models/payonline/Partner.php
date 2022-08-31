@@ -101,7 +101,6 @@ use yii\db\ActiveRecord;
  * @property string $KeyTkbOctVyvod
  * @property string $LoginTkbOctPerevod
  * @property string $KeyTkbOctPerevod
- * @property integer $IsCommonSchetVydacha
  * @property string $EmailNotif
  * @property string $OrangeDataSingKey
  * @property string $OrangeDataConKey
@@ -157,7 +156,7 @@ class Partner extends ActiveRecord
         return [
             [['Name'], 'required', 'on' => self::SCENARIO_DEFAULT],
             [['IsBlocked', 'UrState', 'IsMfo', 'IsUnreserveComis', 'TypeMerchant', 'VoznagVyplatDirect',
-                'IsCommonSchetVydacha', 'IsUseKKmPrint',
+                'IsUseKKmPrint',
                 'IsUseApplepay', 'IsUseGooglepay', 'IsUseSamsungpay', 'BankForPaymentId'], 'integer'],
             [['UrAdres', 'PostAdres'], 'string', 'max' => 1000],
             [['UrAdres', 'PostAdres', 'Apple_PayProcCert'], 'string', 'max' => 1000],
@@ -300,7 +299,6 @@ class Partner extends ActiveRecord
             'SchetTcbParts' => 'Номер счета разбивка платежей',
             'LoginTkbParts' => 'Логин ТКБ разбивка платежей',
             'KeyTkbParts' => 'Пароль ТКБ разбивка платежей',
-            'IsCommonSchetVydacha' => 'Один счет на выдачу и погашение',
             'EmailNotif' => 'E-mail для оповещения',
             'OrangeDataSingKey' => 'Ключ для подписи',
             'OrangeDataConKey' => 'Ключ для подключения',
