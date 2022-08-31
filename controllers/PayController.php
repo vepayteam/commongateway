@@ -13,6 +13,7 @@ use app\services\cards\CacheCardService;
 use app\services\LanguageService;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\BankAdapterBuilder;
+use app\services\payment\banks\IBankSecondStepInterface;
 use app\services\payment\banks\TKBankAdapter;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CacheValueMissingException;
@@ -292,11 +293,19 @@ class PayController extends Controller
         $bankAdapterBuilder = new BankAdapterBuilder();
         $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank, $paySchet->currency);
 
-        /** @var TKBankAdapter $tkbAdapter */
-        $tkbAdapter = $bankAdapterBuilder->getBankAdapter();
+        $bankAdapter = $bankAdapterBuilder->getBankAdapter();
+        if (!($bankAdapter instanceof IBankSecondStepInterface)) {
+            Yii::warning('PayController action createPaySecondStep bank adapter is not IBankSecondStepInterface');
+
+            return $this->render('client-error', [
+                'message' => 'Bank adapter error',
+                'failUrl' => $paySchet->FailedUrl,
+            ]);
+        }
+
         try {
             Yii::info('PayController createpaySecondStep createPayStep2');
-            $createPayResponse = $tkbAdapter->createPayStep2($createPaySecondStepForm);
+            $createPayResponse = $bankAdapter->createPayStep2($createPaySecondStepForm);
         } catch (Check3DSv2Exception $e) {
             $errorMessage = \Yii::t('app.payment-errors', 'Карта не поддерживается, обратитесь в банк');
             if ($e->getCode() === Check3DSv2Exception::INCORRECT_ECI) {
@@ -312,6 +321,13 @@ class PayController extends Controller
 
             return $this->renderPartial('client-redirect', [
                 'redirectUrl' => Url::toRoute(['orderok', 'id' => $paySchet->ID]),
+            ]);
+        } catch (BankAdapterResponseException $e) {
+            Yii::$app->errorHandler->logException($e);
+
+            return $this->render('client-error', [
+                'message' => \Yii::t('app.payment-errors', BankAdapterResponseException::REQUEST_ERROR_MSG),
+                'failUrl' => $paySchet->FailedUrl,
             ]);
         }
 

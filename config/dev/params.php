@@ -107,6 +107,9 @@ return [
                 'url' => 'https://paytest.online.tkbbank.ru',
                 'url_xml' => 'https://193.232.101.14:8203',
             ],
+            'Payler' => [
+                'url' => 'https://sandbox.payler.com',
+            ],
         ],
     ],
     'login_user_token_valid_time' => 60 * 60,

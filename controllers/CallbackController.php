@@ -7,8 +7,10 @@ use app\models\PaySchetAcsRedirect;
 use app\services\callbacks\forms\ImpayaCallbackForm;
 use app\services\callbacks\forms\MonetixCallbackForm;
 use app\services\callbacks\forms\MonetixCallbackPingForm;
+use app\services\callbacks\forms\PaylerCallbackForm;
 use app\services\callbacks\ImpayaCallbackService;
 use app\services\callbacks\MonetixCallbackService;
+use app\services\payment\models\PaySchet;
 use Yii;
 use yii\helpers\Json;
 use yii\web\BadRequestHttpException;
@@ -35,6 +37,51 @@ class CallbackController extends Controller
             return parent::beforeAction($action);
         }
         return false;
+    }
+
+    /**
+     * Задача этого callback`а записать recurrent_template_id в карту.
+     * Тк payler не хочет возвращать recurrent_template_id при опросе статуса, а возвращает исключительно в виде callback
+     *
+     * TODO вынести функционал в отдельный сервис?
+     *
+     * @return Response
+     */
+    public function actionPayler(): Response
+    {
+        $form = new PaylerCallbackForm();
+        if (!$form->load(Yii::$app->request->post(), '') || !$form->validate()) {
+            Yii::error([
+                'Message' => 'CallbackController payler invalid post data',
+                'Errors' => Json::encode($form->getErrors()),
+                'Post Data' => Json::encode(Yii::$app->request->post()),
+            ]);
+
+            return $this->asJson([
+                'status' => false,
+            ]);
+        }
+
+        if ($form->getRecurrentTemplateId() === null) {
+            Yii::info([
+                'Message' => 'CallbackController payler recurrent template id is null',
+                'Order Id' => $form->order_id,
+            ]);
+
+            return $this->asJson([
+                'status' => true,
+            ]);
+        }
+
+        $paySchet = PaySchet::findOne(['ID' => $form->getOrderId()]);
+
+        $card = $paySchet->cards;
+        $card->ExtCardIDP = $form->getRecurrentTemplateId();
+        $card->save(false);
+
+        return $this->asJson([
+            'status' => true,
+        ]);
     }
 
     public function actionImpaya(): Response

@@ -40,6 +40,8 @@ class Banks
                 return new ImpayaAdapter();
             case PayloniumAdapter::$bank:
                 return new PayloniumAdapter();
+            case PaylerAdapter::$bank:
+                return new PaylerAdapter();
             default:
                 throw new \Exception('Ошибка выбора банка');
         }

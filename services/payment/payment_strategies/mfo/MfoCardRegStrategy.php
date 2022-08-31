@@ -130,6 +130,7 @@ class MfoCardRegStrategy
         $paySchet->CancelUrl = $this->cardRegByPayForm->cancelurl;
         $paySchet->PostbackUrl = $this->cardRegByPayForm->postbackurl;
         $paySchet->PostbackUrl_v2 = $this->cardRegByPayForm->postbackurl_v2;
+        $paySchet->UserEmail = $this->cardRegByPayForm->email;
 
         $paySchet->sms_accept = 1;
 

@@ -112,6 +112,9 @@ return [
                 'url' => 'https://pay.tkbbank.ru',
                 'url_xml' => 'https://pay.tkbbank.ru:8204',
             ],
+            'Payler' => [
+                'url' => 'https://secure.payler.com',
+            ],
         ],
     ],
     'login_user_token_valid_time' => 60*60,
