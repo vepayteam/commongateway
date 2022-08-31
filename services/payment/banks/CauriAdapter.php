@@ -141,7 +141,7 @@ class CauriAdapter implements IBankAdapter
                 $paySchet->getUserEmail() ?? self::EMAIL_DEFAULT,
                 null,
                 null,
-                $clientData->ip
+                \Yii::$app->request->getUserIP()
             ));
 
             $card = $this->apiClient->cardGetToken(new CardGetTokenRequest(
