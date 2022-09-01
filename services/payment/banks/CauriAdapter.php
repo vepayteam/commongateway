@@ -46,6 +46,7 @@ class CauriAdapter implements IBankAdapter
 
     private const AFT_MIN_SUMM = 120000;
     private const EMAIL_DEFAULT = 'cauri@vepay.online';
+    private const PUBLIC_IP_ADDRESS = '84.38.187.23';
 
     /**
      * @var CauriClient
@@ -141,7 +142,7 @@ class CauriAdapter implements IBankAdapter
                 $paySchet->getUserEmail() ?? self::EMAIL_DEFAULT,
                 null,
                 null,
-                \Yii::$app->request->getUserIP()
+                $this->getUserIp()
             ));
 
             $card = $this->apiClient->cardGetToken(new CardGetTokenRequest(
@@ -412,5 +413,20 @@ class CauriAdapter implements IBankAdapter
             default:
                 return BaseResponse::STATUS_CREATED;
         }
+    }
+
+    /**
+     * По сути костыль для каури, сейчас нет возможности на дев получить реальный ip клиента, в remote_addr адрес из локальной сети
+     * TODO убрать как появится возможность получать реальный ip клиента
+     *
+     * @return string|null
+     */
+    private function getUserIp(): ?string
+    {
+        if (\Yii::$app->params['DEVMODE'] === 'Y' || \Yii::$app->params['TESTMODE'] === 'Y') {
+            return self::PUBLIC_IP_ADDRESS;
+        }
+
+        return \Yii::$app->request->getUserIP();
     }
 }
