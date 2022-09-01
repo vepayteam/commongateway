@@ -18,7 +18,7 @@ use yii\db\ActiveQuery;
  *
  * @property string $ID
  * @property int $IDPartner [int(10) unsigned]  id partner
- * @property bool $IsCustom [tinyint(1) unsigned]  Тип услуги
+ * @property int $IsCustom [tinyint(1) unsigned]  Тип услуги
  * @property string $CustomData danuue customnogo
  * @property int $ExtReestrIDUsluga [int(10) unsigned]  id uslugi v reestrah
  * @property string $NameUsluga [varchar(200)]  naimenovanie uslugi

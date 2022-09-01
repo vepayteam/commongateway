@@ -2,6 +2,7 @@
 
 namespace app\controllers;
 
+use app\helpers\TokenHelper;
 use app\models\bank\ApplePay;
 use app\models\bank\BankMerchant;
 use app\models\bank\GooglePay;
@@ -33,6 +34,7 @@ use app\services\payment\interfaces\Cache3DSv2Interface;
 use app\services\payment\models\Currency;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\repositories\CurrencyRepository;
+use app\services\payment\models\UslugatovarType;
 use app\services\payment\payment_strategies\CreatePayStrategy;
 use app\services\payment\payment_strategies\DonePayStrategy;
 use app\services\payment\payment_strategies\OkPayStrategy;
@@ -41,6 +43,7 @@ use app\services\yandexPay\models\PaymentToken;
 use app\services\YandexPayService;
 use kartik\mpdf\Pdf;
 use Yii;
+use yii\base\InvalidConfigException;
 use yii\db\Exception;
 use yii\helpers\Json;
 use yii\helpers\Url;
@@ -123,11 +126,13 @@ class PayController extends Controller
      * Форма оплаты своя (PCI DSS)
      *
      * @param $id
+     * @param mixed|null $presetHash
      * @return string|Response
      * @throws Exception
      * @throws NotFoundHttpException
+     * @throws InvalidConfigException
      */
-    public function actionForm($id)
+    public function actionForm($id, $presetHash = null)
     {
         Yii::warning("PayForm open id={$id}");
         $payschets = new Payschets();
@@ -136,8 +141,12 @@ class PayController extends Controller
         //данные счета для оплаты
         $params = $payschets->getSchetData($id, null);
         $paySchet = PaySchet::findOne(['ID' => $id]);
+        if ($paySchet === null) {
+            Yii::warning("PaySchet {$id} not found.");
+            throw new NotFoundHttpException('Счет для оплаты не найден.');
+        }
 
-        if ($params && TU::IsInPay($params['IsCustom'])) {
+        if ($params && in_array($params['IsCustom'], UslugatovarType::inTypes())) {
             if (
                 $params['Status'] == 0
                 && $params['UserClickPay'] == 0
@@ -151,6 +160,18 @@ class PayController extends Controller
                 if ($cacheCardService->cardExists()) {
                     $payForm->CardNumber = $cacheCardService->getCard();
                     $cacheCardService->deleteCard();
+                }
+
+                // preset hash
+                if (
+                    $presetHash !== null
+                    && $paySchet->p2pRepayment !== null
+                    && $paySchet->p2pRepayment->presetHash === $presetHash
+                ) {
+                    $presetToken = $paySchet->p2pRepayment->presetSenderPanToken;
+                    $payForm->CardNumber = TokenHelper::getCardPanByPanTokenId($presetToken->ID);
+                    $payForm->CardHolder = $presetToken->CardHolder;
+                    $payForm->CardExp = $presetToken->ExpDateMonth . $presetToken->ExpDateYear;
                 }
 
                 /** @var LanguageService $languageService */
