@@ -85,4 +85,9 @@ return [
     '6777060877427221', // Success Bankcard with 3ds
     '4012001038488884', // Unable to verify with 3ds Bankcard
     '4111111111111111', // Failing Bankcard
+
+    // Payler
+    '4047300000007550', // none 3ds
+    '5136914024041434', // 3ds
+    '5101021232883432', // 3ds v2
 ];

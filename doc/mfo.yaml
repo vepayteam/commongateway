@@ -1047,6 +1047,9 @@ components:
               - "eng"
               - "rus"
           description: Язык формы оплаты, по умолчанию rus
+        email:
+          type: string
+          description: Email клиента
     CardRegAns:
       type: object
       properties:
@@ -1312,6 +1315,9 @@ components:
         phone:
           type: string
           description: Номер телефона
+        email:
+          type: string
+          description: Email клиента
 
     OutU:
       type: object

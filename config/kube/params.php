@@ -110,6 +110,9 @@ return [
             'Cauri' => [
                 'url' => 'https://api.cauri.com/rest-v1',
             ],
+            'Payler' => [
+                'url' => 'https://sandbox.payler.com',
+            ],
         ],
     ],
     'login_user_token_valid_time' => 60*60,
