@@ -108,6 +108,9 @@ return [
                 'url' => 'https://paytest.online.tkbbank.ru',
                 'url_xml' => 'https://193.232.101.14:8203',
             ],
+            'Cauri' => [
+                'url' => 'https://api.cauri.com/rest-v1',
+            ],
             'Payler' => [
                 'url' => 'https://sandbox.payler.com',
             ],
