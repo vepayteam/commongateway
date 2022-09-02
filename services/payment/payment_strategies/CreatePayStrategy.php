@@ -2,6 +2,7 @@
 
 namespace app\services\payment\payment_strategies;
 
+use app\helpers\TokenHelper;
 use app\models\api\Reguser;
 use app\models\crypt\CardToken;
 use app\models\payonline\Cards;
@@ -12,7 +13,16 @@ use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
 use app\services\payment\banks\bank_adapter_responses\createPayResponse\AcsRedirectData;
 use app\services\payment\banks\BankAdapterBuilder;
+use app\services\payment\banks\data\CardData;
 use app\services\payment\banks\data\ClientData;
+use app\services\payment\banks\data\CurrencyData;
+use app\services\payment\banks\data\P2pData;
+use app\services\payment\banks\interfaces\P2p;
+use app\services\payment\banks\results\asc\AcsRedirectGetResult;
+use app\services\payment\banks\results\asc\AcsRedirectPendingResult;
+use app\services\payment\banks\results\asc\AcsRedirectPostResult;
+use app\services\payment\banks\results\P2pErrorResult;
+use app\services\payment\banks\results\P2pOkResult;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
@@ -24,6 +34,7 @@ use app\services\payment\forms\CreatePayForm;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\repositories\CurrencyRepository;
+use app\services\payment\models\UslugatovarType;
 use app\services\payment\PaymentService;
 use Yii;
 use yii\mutex\FileMutex;
@@ -94,12 +105,25 @@ class CreatePayStrategy
             !empty($browserDataForm->javaEnabled) ? $browserDataForm->javaEnabled : null
         );
 
-        try {
-            $this->createPayResponse = $bankAdapterBuilder
-                ->getBankAdapter()
-                ->createPay($this->createPayForm, $clientDataObject);
-        } catch (MerchantRequestAlreadyExistsException $e) {
-            $bankAdapterBuilder->getBankAdapter()->reRequestingStatus($paySchet);
+        if ($paySchet->uslugatovar->IsCustom === UslugatovarType::P2P_REPAYMENT) {
+            $adapter = $bankAdapterBuilder->getBankAdapter();
+            if (!$adapter instanceof P2p) {
+                throw new \LogicException('P2P not supported.');
+            }
+            $this->createPayResponse = $this->executeP2pRepayment(
+                $paySchet,
+                $this->createPayForm,
+                $clientDataObject,
+                $adapter
+            );
+        } else {
+            try {
+                $this->createPayResponse = $bankAdapterBuilder
+                    ->getBankAdapter()
+                    ->createPay($this->createPayForm, $clientDataObject);
+            } catch (MerchantRequestAlreadyExistsException $e) {
+                $bankAdapterBuilder->getBankAdapter()->reRequestingStatus($paySchet);
+            }
         }
 
         if (in_array($this->createPayResponse->status, [BaseResponse::STATUS_CANCEL, BaseResponse::STATUS_ERROR])) {
@@ -124,6 +148,64 @@ class CreatePayStrategy
         }
 
         return $paySchet;
+    }
+
+    public function executeP2pRepayment(
+        PaySchet $paySchet,
+        CreatePayForm $payForm,
+        ClientData $clientDataObject,
+        P2p $bankAdapter
+    ): CreatePayResponse
+    {
+        $createPayResponse = new CreatePayResponse();
+
+        $recipientPan = TokenHelper::getCardPanByPanTokenId($paySchet->p2pRepayment->recipientPanTokenId);
+        $p2pData = new P2pData(
+            $paySchet->getSummFull(),
+            CurrencyData::fromCurrency($paySchet->currency),
+            new CardData(
+                $payForm->CardNumber,
+                $payForm->CardYear,
+                $payForm->CardMonth,
+                $payForm->CardCVC,
+                $payForm->CardHolder
+            ),
+            $recipientPan
+        );
+
+        $result = $bankAdapter->executeP2p($p2pData, $clientDataObject);
+
+        if ($result instanceof P2pOkResult) {
+            $createPayResponse->status = BaseResponse::STATUS_DONE;
+            $createPayResponse->transac = $result->bankTransactionId;
+            if ($result->acs instanceof AcsRedirectPostResult) {
+                $createPayResponse->acs = new AcsRedirectData(
+                    AcsRedirectData::STATUS_OK,
+                    $result->acs->url,
+                    'POST',
+                    $result->acs->parameters
+                );
+            } elseif ($result->acs instanceof AcsRedirectGetResult) {
+                $createPayResponse->acs = new AcsRedirectData(
+                    AcsRedirectData::STATUS_OK,
+                    $result->acs->url,
+                    'GET'
+                );
+            } elseif ($result->acs instanceof AcsRedirectPendingResult) {
+                $createPayResponse->acs = new AcsRedirectData(
+                    AcsRedirectData::STATUS_PENDING
+                );
+            } else {
+                throw new \LogicException('Unknown ACS result.');
+            }
+        } elseif ($result instanceof P2pErrorResult) {
+            $createPayResponse->status = BaseResponse::STATUS_ERROR;
+            $createPayResponse->message = $result->errorMessage;
+        } else {
+            throw new \LogicException('Unknown result.');
+        }
+
+        return $createPayResponse;
     }
 
     /**
