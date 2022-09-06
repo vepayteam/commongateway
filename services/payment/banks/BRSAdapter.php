@@ -20,6 +20,12 @@ use app\services\payment\banks\bank_adapter_responses\SendP2pResponse;
 use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\data\ClientData;
+use app\services\payment\banks\data\P2pData;
+use app\services\payment\banks\interfaces\P2p;
+use app\services\payment\banks\results\asc\AcsRedirectGetResult;
+use app\services\payment\banks\results\BaseP2pResult;
+use app\services\payment\banks\results\P2pErrorResult;
+use app\services\payment\banks\results\P2pOkResult;
 use app\services\payment\CurlSSLStructure;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\BRSAdapterExeception;
@@ -62,7 +68,7 @@ use Exception;
 use Yii;
 use yii\helpers\Json;
 
-class BRSAdapter implements IBankAdapter
+class BRSAdapter implements IBankAdapter, P2p
 {
     const AFT_MIN_SUMM = 180000;
     const KEYS_PATH = '@app/config/brs/';
@@ -139,7 +145,7 @@ class BRSAdapter implements IBankAdapter
             }
         }
 
-        if($paySchet->uslugatovar->IsCustom == UslugatovarType::P2P) {
+        if (in_array($paySchet->uslugatovar->IsCustom, [UslugatovarType::P2P, UslugatovarType::P2P_REPAYMENT])) {
             return $this->confirmP2p($donePayForm);
         }
         $confirmPayResponse = new ConfirmPayResponse();
@@ -1078,6 +1084,41 @@ class BRSAdapter implements IBankAdapter
         }
 
         return $sendP2pResponse;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function executeP2p(P2pData $p2pData, ClientData $clientData): BaseP2pResult
+    {
+        $senderCard = $p2pData->senderCardData;
+        $requestData = [
+            'command' => 'l',
+            'msg_type' => 'p2p',
+            'amount' => $p2pData->amountFractional,
+            'currency' => $p2pData->currencyData->number,
+            'client_ip_addr' => $clientData->ip,
+            'cardname' => $senderCard->cardHolder,
+            'pan' => $senderCard->pan,
+            'expiry' => ($senderCard->expYear % 100)
+                . str_pad($senderCard->expMonth, 2, '0', STR_PAD_LEFT),
+            'cvc2' => $senderCard->cvv,
+            'pan2' => $p2pData->recipientCardPan,
+        ];
+
+        try {
+            $response = $this->sendRequest('/ecomm2/MerchantHandler', $requestData, $this->bankP2pUrl);
+        } catch (BankAdapterResponseException $e) {
+            return new P2pErrorResult(BankAdapterResponseException::REQUEST_ERROR_MSG);
+        }
+
+        if (array_key_exists('error', $response)) {
+            return new P2pErrorResult($response['error']);
+        } else {
+            $ascUrl = $this->bankP2pUrl3DS . '?'
+                . http_build_query(['trans_id' => $response['TRANSACTION_ID']]);
+            return new P2pOkResult($response['TRANSACTION_ID'], new AcsRedirectGetResult($ascUrl));
+        }
     }
 
     /**

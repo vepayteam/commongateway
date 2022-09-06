@@ -158,11 +158,15 @@ class PaymentService extends Component
             $refundPayschet->Status = PaySchet::getDoneStatusByRefundType($refundPayResponse->refundType);
             $refundPayschet->ErrorInfo = $successErrorInfo;
 
-            if ($refundPayResponse->refundType === PaySchet::REFUND_TYPE_REVERSE) {
-                $sourcePaySchet = $refundPayschet->refundSource;
-                $sourcePaySchet->ErrorInfo = 'Операция отменена. Номер отмены: ' . $refundPayschet->ID;
-                $sourcePaySchet->save(false);
+            $sourcePaySchet = $refundPayschet->refundSource;
+            if ($refundPayschet->Status === PaySchet::STATUS_REFUND_DONE) {
+                $sourcePaySchet->ErrorInfo = 'Возврат суммы. Номер возврата: ' . $refundPayschet->ID;
             }
+            if ($refundPayschet->Status === PaySchet::STATUS_CANCEL) {
+                $sourcePaySchet->ErrorInfo = 'Операция отменена. Номер отмены: ' . $refundPayschet->ID;
+            }
+            $sourcePaySchet->save(false);
+
         } elseif ($refundPayResponse->status == BaseResponse::STATUS_CREATED) {
             /**
              * Logic copied from {@see RefundPayJob::execute()}.

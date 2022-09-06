@@ -78,7 +78,7 @@ use SimpleXMLElement;
 use Yii;
 use yii\helpers\Json;
 
-class TKBankAdapter implements IBankAdapter
+class TKBankAdapter implements IBankAdapter, IBankSecondStepInterface
 {
     use TKBank3DSTrait;
 

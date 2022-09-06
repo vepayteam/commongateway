@@ -27,6 +27,7 @@ class UslugatovarType extends \yii\db\ActiveRecord
     public const IDENT = 24; // Упрощенная идентификация пользователей
     public const REGISTRATION_BENIFIC = 25; // Регистрация бенефициара
     public const P2P = 26; // P2P перевод с карты на карту
+    public const P2P_REPAYMENT = 27; //Погашение P2P
     public const JKHPARTS = 100; // Оплата ЖКХ с разбивкой
     public const ECOMPARTS = 102; // Оплата товара/услуги с разбивкой
     public const POGASHATFPARTS = 110; // Платёж AFT с разбивкой
@@ -71,6 +72,7 @@ class UslugatovarType extends \yii\db\ActiveRecord
             self::IDENT => 'Упрощенная идентификация пользователей',
             self::REGISTRATION_BENIFIC => 'Регистрация бенефициара',
             self::P2P => 'P2P перевод с карты на карту',
+            self::P2P_REPAYMENT => 'Погашение p2p',
             self::JKHPARTS => 'Оплата ЖКХ с разбивкой',
             self::ECOMPARTS => 'Оплата товара/услуги с разбивкой',
             self::POGASHATFPARTS => 'Платёж AFT с разбивкой',
@@ -93,6 +95,22 @@ class UslugatovarType extends \yii\db\ActiveRecord
         return [
             self::TOSCHET,
             self::TOCARD,
+        ];
+    }
+
+    public static function inTypes(): array
+    {
+        return [
+            self::JKH,
+            self::REGCARD,
+            self::ECOM,
+            self::POGASHATF,
+            self::POGASHECOM,
+            self::JKHPARTS,
+            self::ECOMPARTS,
+            self::POGASHECOMPARTS,
+            self::POGASHECOMPARTS,
+            self::P2P_REPAYMENT,
         ];
     }
 

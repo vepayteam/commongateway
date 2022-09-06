@@ -10,7 +10,7 @@ use yii\base\UnknownPropertyException;
  *
  * Usage:
  * ```
- * class A extends ImmutableObject {
+ * class A extends ImmutableDataObject {
  *  public function __construct(int $foo, int $bar) {
  *      parent::__construct(get_defined_vars());
  *  }

@@ -31,6 +31,16 @@ class Currency extends ActiveRecord
         return 'currency';
     }
 
+    public static function findDefaultCurrency(): Currency
+    {
+        return static::findByCode(static::MAIN_CURRENCY);
+    }
+
+    public static function findByCode(string $code): Currency
+    {
+        return static::findOne(['Code' => $code]);
+    }
+
     public function rules(): array
     {
         return [

@@ -202,6 +202,28 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+
+  /pay/pay-to-card:
+    post:
+      tags:
+        - Pay
+      summary: P2P оплата pay in через платежную форму VEPAY
+      description: Создаёт операцию pay in. Возвращает ссылку на платёжную форму для дальнейшего ввода реквизитов карты.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PayToCard"
+        description: Параметры платежа
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusIdUrl"
+
   /pay/auto-parts:
     post:
       tags:
@@ -1047,6 +1069,9 @@ components:
               - "eng"
               - "rus"
           description: Язык формы оплаты, по умолчанию rus
+        email:
+          type: string
+          description: Email клиента
     CardRegAns:
       type: object
       properties:
@@ -1145,6 +1170,67 @@ components:
           required: false
           items:
             $ref: "#/components/schemas/Client"
+
+    PayToCard:
+      type: object
+      properties:
+        amount:
+          type: number
+          required: true
+          description: Cумма платежа
+        currency:
+          type: string
+          description: Валюта платежа (По умолчанию "RUB")
+        documentId:
+          type: string
+          maxLength: 40
+          description: Номер договора
+        fullName:
+          type: string
+          maxLength: 80
+          description: ФИО клиента
+        extId:
+          type: string
+          maxLength: 40
+          description: Внешний идентификатор запроса
+        timeout:
+          type: integer
+          minimum: 10
+          maximum: 59
+          description: Тайм-аут ожидания оплаты, от 10 до 59 минут
+        successUrl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после завершения платежа (успех)
+        failUrl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после завершения платежа (ошибка)
+        cancelUrl:
+          type: string
+          format: url
+          description: Адрес для Url для возврата после отказа от оплаты
+        cardRegistration:
+          type: integer
+          description: "Опционально, возможные значения: 1, 0. Если 1, производится регистрация карты на рекуррентные платежи и выплаты. По умолчанию 0."
+          enum:
+            - 1
+            - 0
+        language:
+          type: string
+          default: "rus"
+          enum:
+            - "eng"
+            - "rus"
+          description: Язык формы оплаты, по умолчанию rus
+        presetSenderCardId:
+          type: integer
+          description: ID карты, данные которой будут предустановлены в платежной форме
+        recipientCardNumber:
+          type: string
+          required: true
+          description: Номер карты получателя
+
     PayLkParts:
       type: object
       properties:
@@ -1312,6 +1398,9 @@ components:
         phone:
           type: string
           description: Номер телефона
+        email:
+          type: string
+          description: Email клиента
 
     OutU:
       type: object

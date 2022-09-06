@@ -49,6 +49,11 @@ class OutCardPayForm extends Model implements AmountFormInterface
     public $documentNumber;
     public $phone;
 
+    /**
+     * @var string|null
+     */
+    public $email;
+
     public function rules()
     {
         return [
@@ -76,6 +81,7 @@ class OutCardPayForm extends Model implements AmountFormInterface
                 'phone',
                 'currency',
             ], 'safe'],
+            [['email'], 'email'],
             ['card', 'validateCard'],
         ];
     }

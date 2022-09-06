@@ -158,7 +158,6 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
                     'data-inputmask-mask' => '99/99',
                     'data-inputmask-regex' => '[01]\d{3}',
                     'class' => 'form-control',
-                    'value' => '',
                     'placeholder' => Yii::t('app.payment-form', 'ММ/ГГ'),
                     'autocomplete' => 'off',
                 ]); ?>
@@ -184,7 +183,6 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
                     'data-inputmask-mask' => 'C{3,60}',
                     'data-inputmask-regex' => '[\w+\s+]',
                     'class' => 'form-control',
-                    'value' => '',
                     'placeholder' => ''
                 ]); ?>
             </div>
