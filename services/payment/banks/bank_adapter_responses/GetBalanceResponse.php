@@ -4,17 +4,33 @@ namespace app\services\payment\banks\bank_adapter_responses;
 
 class GetBalanceResponse
 {
-    /** @var string */
-    public $bank_name = "";
-    /** @var float */
+    /**
+     * @var string
+     */
+    public $bank_name = '';
+
+    /**
+     * @var float
+     */
     public $amount;
-    /** @var string */
+
+    /**
+     * @var string
+     */
     public $currency;
-    /** @var int */
+
+    /**
+     * @var int
+     */
     public $account_type;
+
+    /**
+     * @var string|null
+     */
+    public $description = null;
 
     public function __toString()
     {
-        return "$this->bank_name:$this->amount:$this->currency:$this->account_type";
+        return "$this->bank_name:$this->amount:$this->currency:$this->account_type:$this->description";
     }
 }
