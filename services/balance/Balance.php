@@ -70,13 +70,14 @@ class Balance extends Model
             $bank = BankRepository::getBankById($activeGate->BankId);
             $bankAdapter = $this->buildAdapter($bank);
             $getBalanceRequest = $this->formatRequest($activeGate, $bank);
+
             try {
-                /** @var GetBalanceResponse */
                 $getBalanceResponse = $bankAdapter->getBalance($getBalanceRequest);
             } catch (\Exception $exception) {
                 Yii::warning('Balance service: ' . $exception->getMessage() . ' - PartnerId: ' . $this->partner->ID);
                 continue;
             }
+
             if (isset($getBalanceResponse) && is_float($getBalanceResponse->amount)) {
                 $bankResponse[] = $getBalanceResponse;
             }
