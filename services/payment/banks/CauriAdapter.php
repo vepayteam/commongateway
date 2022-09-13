@@ -18,6 +18,7 @@ use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
+use app\services\payment\banks\bank_adapter_responses\createPayResponse\AcsRedirectData;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
@@ -187,9 +188,16 @@ class CauriAdapter implements IBankAdapter
 
         if ($cardProcessResponse->getAcs() !== null) {
             $createPayResponse->isNeed3DSVerif = true;
-            $createPayResponse->md = $cardProcessResponse->getAcs()->getParameters()->getMD();
-            $createPayResponse->pa = $cardProcessResponse->getAcs()->getParameters()->getPaReq();
-            $createPayResponse->url = $cardProcessResponse->getAcs()->getUrl();
+            $createPayResponse->acs = new AcsRedirectData(
+                AcsRedirectData::STATUS_OK,
+                $cardProcessResponse->getAcs()->getUrl(),
+                'POST',
+                [
+                    'PaReq' => $cardProcessResponse->getAcs()->getParameters()->getPaReq(),
+                    'MD' => $cardProcessResponse->getAcs()->getParameters()->getMD(),
+                    'TermUrl' => $createPayResponse->getRetUrl($paySchet->ID),
+                ]
+            );
         } else {
             $createPayResponse->isNeed3DSVerif = false;
         }
