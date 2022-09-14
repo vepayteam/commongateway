@@ -16,8 +16,10 @@ use app\services\payment\banks\bank_adapter_responses\IdentInitResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
+use app\services\payment\banks\bank_adapter_responses\SendP2pResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\data\ClientData;
+use app\services\payment\banks\interfaces\P2p;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\ConfirmPostDataException;
@@ -134,6 +136,11 @@ interface IBankAdapter
 
     public function currencyExchangeRates();
 
+    /**
+     * @param SendP2pForm $sendP2pForm
+     * @return SendP2pResponse
+     * @todo Replace with {@see P2p::executeP2p()}.
+     */
     public function sendP2p(SendP2pForm $sendP2pForm);
 
     /**
