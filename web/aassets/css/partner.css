@@ -353,3 +353,13 @@
 tr.partner-stat-otch_datarow.darkned {
     background-color: #fbfbfb;
 }
+
+.balance-container {
+    width: max-content;
+}
+
+.balance-container__item {
+    display: flex;
+    justify-content: space-between;
+    column-gap: 1rem;
+}

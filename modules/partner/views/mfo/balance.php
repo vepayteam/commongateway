@@ -111,21 +111,24 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
                         <?php foreach (ArrayHelper::index($BalanceResponse->balance, null, 'bank_name') as $bankName => $balances): ?>
                             <div class="col-sm-12">
                                 <b><?= Html::encode($bankName) ?></b>
-                                <div class="form-group">
-                                    <div class="inline">
-                                        <?php foreach ($balances as $balance): ?>
-                                            <div class="full-width">
+
+                                <div class="balance-container">
+                                    <?php foreach ($balances as $balance): ?>
+                                        <div class="balance-container__item">
+                                            <div>
                                                 <?php if ($balance->account_type !== AccountTypes::TYPE_DEFAULT): ?>
-                                                <span style="margin-right: 5px;"><?= Html::encode(AccountTypes::ALL_TYPES[$balance->account_type]) ?>:</span>
+                                                    <span><?= Html::encode(AccountTypes::ALL_TYPES[$balance->account_type]) ?>:</span>
                                                 <?php endif; ?>
 
-                                                <b class="pull-right">
-                                                    <?= PaymentHelper::formatSum($balance->amount) ?>
-                                                    <?= Html::encode($balance->currency) ?>
-                                                </b>
+                                                <?php if ($balance->description !== null): ?>
+                                                    <span><?= Html::encode($balance->description) ?></span>
+                                                <?php endif; ?>
                                             </div>
-                                        <?php endforeach; ?>
-                                    </div>
+                                            <div>
+                                                <b><?= PaymentHelper::formatSum($balance->amount) ?> <?= Html::encode($balance->currency) ?></b>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
                                 </div>
                             </div>
                         <?php endforeach; ?>

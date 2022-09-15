@@ -37,6 +37,7 @@ trait BalanceTrait
             $allActiveBankGates[] = $this->partner
                 ->getEnabledBankGates()
                 ->select([
+                    'TU',
                     'SchetType',
                     'SchetNumber',
                     'Login',
@@ -67,6 +68,7 @@ trait BalanceTrait
         $getBalanceRequest->bankName = $bank->getName();
         $getBalanceRequest->accountNumber = $accountNumber;
         $getBalanceRequest->accountType = $accountType;
+        $getBalanceRequest->uslugatovarType = (int)$activeGate->TU;
         return $getBalanceRequest;
     }
 
