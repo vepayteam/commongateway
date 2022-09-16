@@ -181,6 +181,7 @@ $config = [
         \app\services\LanguageService::class => \app\services\LanguageService::class,
         \app\services\YandexPayService::class => \app\services\YandexPayService::class,
         \app\services\PaymentTransferService::class => \app\services\PaymentTransferService::class,
+        \app\services\PayToCardService::class => \app\services\PayToCardService::class,
     ],
     'params' => $params,
     'container' => [

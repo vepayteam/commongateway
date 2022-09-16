@@ -35,6 +35,11 @@ class CardRegForm extends Model
     public $language;
 
     /**
+     * @var string|null
+     */
+    public $email;
+
+    /**
      * @var string
      */
     public $card;
@@ -55,6 +60,7 @@ class CardRegForm extends Model
             [['card'], 'match', 'pattern' => '/^\d{16}|\d{18}$/'],
             [['card'], 'validateCard'], /** @see validateCard() */
             [['language'], 'in', 'range' => LanguageService::ALL_API_LANG_LIST],
+            [['email'], 'email'],
         ];
     }
 

@@ -45,6 +45,10 @@ return [
         'host' => '',
         'token' => ''
     ],
+    'proxy' => [
+        'proxyHost' => '',
+        'proxyUser' => '',
+    ],
 
     'testCards' => require(__DIR__ . '/test_cards.php'),
     'testParams' => [],
@@ -107,6 +111,12 @@ return [
             'TCB' => [
                 'url' => 'https://pay.tkbbank.ru',
                 'url_xml' => 'https://pay.tkbbank.ru:8204',
+            ],
+            'Cauri' => [
+                'url' => 'https://api.cauri.com/rest-v1',
+            ],
+            'Payler' => [
+                'url' => 'https://secure.payler.com',
             ],
         ],
     ],

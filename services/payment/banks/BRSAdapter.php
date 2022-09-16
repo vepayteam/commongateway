@@ -20,6 +20,12 @@ use app\services\payment\banks\bank_adapter_responses\SendP2pResponse;
 use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\data\ClientData;
+use app\services\payment\banks\data\P2pData;
+use app\services\payment\banks\interfaces\P2p;
+use app\services\payment\banks\results\asc\AcsRedirectGetResult;
+use app\services\payment\banks\results\BaseP2pResult;
+use app\services\payment\banks\results\P2pErrorResult;
+use app\services\payment\banks\results\P2pOkResult;
 use app\services\payment\CurlSSLStructure;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\BRSAdapterExeception;
@@ -62,13 +68,15 @@ use Exception;
 use Yii;
 use yii\helpers\Json;
 
-class BRSAdapter extends BaseAdapter implements IBankAdapter
+class BRSAdapter extends BaseAdapter implements IBankAdapter, P2p
 {
     const AFT_MIN_SUMM = 180000;
     const KEYS_PATH = '@app/config/brs/';
 
     const BALANCE_CARD_NUM = '5100920551403998'; // Карта используется для запроса баланса TODO: переместить в другое место?
     const BALANCE_FAKE_AMOUNT = 1000;
+    const BALANCE_B2C_CACHE_KEY = 'BALANCE_B2C_CACHE';
+    const BALANCE_B2C_CACHE_DURATION = 60 * 60 * 24; // 24 hours
 
     const BRS_RESPONSE_SYSTEM_ERROR_CODE = 1001;
 
@@ -150,7 +158,7 @@ class BRSAdapter extends BaseAdapter implements IBankAdapter
             }
         }
 
-        if($paySchet->uslugatovar->IsCustom == UslugatovarType::P2P) {
+        if (in_array($paySchet->uslugatovar->IsCustom, [UslugatovarType::P2P, UslugatovarType::P2P_REPAYMENT])) {
             return $this->confirmP2p($donePayForm);
         }
         $confirmPayResponse = new ConfirmPayResponse();
@@ -739,6 +747,20 @@ class BRSAdapter extends BaseAdapter implements IBankAdapter
      */
     public function getBalance(GetBalanceRequest $getBalanceRequest): GetBalanceResponse
     {
+        $balanceResponse = new GetBalanceResponse();
+
+        if ($getBalanceRequest->uslugatovarType === UslugatovarType::TRANSFER_B2C_SBP) {
+            $balanceCache = \Yii::$app->cache->get($this->getBalanceB2CCacheKey());
+
+            $balanceResponse->amount = $balanceCache ? PaymentHelper::convertToFullAmount((int)$balanceCache) : 0.0;
+            $balanceResponse->description = $balanceCache ? 'BRS СБП B2C' : 'BRS СБП B2C -нет данных-';
+            $balanceResponse->account_type = $getBalanceRequest->accountType;
+            $balanceResponse->bank_name = $getBalanceRequest->bankName;
+            $balanceResponse->currency = $getBalanceRequest->currency;
+
+            return $balanceResponse;
+        }
+
         $outCardPayCheckRequest = new OutCardPayCheckRequest();
         $outCardPayCheckRequest->card = self::BALANCE_CARD_NUM;
         $outCardPayCheckRequest->amount = self::BALANCE_FAKE_AMOUNT;
@@ -758,7 +780,6 @@ class BRSAdapter extends BaseAdapter implements IBankAdapter
             );
         }
 
-        $balanceResponse = new GetBalanceResponse();
         $balanceResponse->bank_name = $getBalanceRequest->bankName;
         $balanceResponse->amount = PaymentHelper::convertToFullAmount(intval($answer['container']['partner_available_amount']));
         $balanceResponse->currency = $getBalanceRequest->currency;
@@ -1019,6 +1040,14 @@ class BRSAdapter extends BaseAdapter implements IBankAdapter
                 $response->message = $ans['message'] ?? '';
                 $response->trans = $ans['operationId'];
 
+                if (isset($ans['balance'])) {
+                    \Yii::$app->cache->set(
+                        $this->getBalanceB2CCacheKey(),
+                        $ans['balance'],
+                        self::BALANCE_B2C_CACHE_DURATION
+                    );
+                }
+
                 return $response;
             }
 
@@ -1092,6 +1121,41 @@ class BRSAdapter extends BaseAdapter implements IBankAdapter
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public function executeP2p(P2pData $p2pData, ClientData $clientData): BaseP2pResult
+    {
+        $senderCard = $p2pData->senderCardData;
+        $requestData = [
+            'command' => 'l',
+            'msg_type' => 'p2p',
+            'amount' => $p2pData->amountFractional,
+            'currency' => $p2pData->currencyData->number,
+            'client_ip_addr' => $clientData->ip,
+            'cardname' => $senderCard->cardHolder,
+            'pan' => $senderCard->pan,
+            'expiry' => ($senderCard->expYear % 100)
+                . str_pad($senderCard->expMonth, 2, '0', STR_PAD_LEFT),
+            'cvc2' => $senderCard->cvv,
+            'pan2' => $p2pData->recipientCardPan,
+        ];
+
+        try {
+            $response = $this->sendRequest('/ecomm2/MerchantHandler', $requestData, $this->bankP2pUrl);
+        } catch (BankAdapterResponseException $e) {
+            return new P2pErrorResult(BankAdapterResponseException::REQUEST_ERROR_MSG);
+        }
+
+        if (array_key_exists('error', $response)) {
+            return new P2pErrorResult($response['error']);
+        } else {
+            $ascUrl = $this->bankP2pUrl3DS . '?'
+                . http_build_query(['trans_id' => $response['TRANSACTION_ID']]);
+            return new P2pOkResult($response['TRANSACTION_ID'], new AcsRedirectGetResult($ascUrl));
+        }
+    }
+
+    /**
      * @param string $sslCertPath
      * @param string $sslKeyPath
      * @param string|null $caInfoPath
@@ -1136,5 +1200,16 @@ class BRSAdapter extends BaseAdapter implements IBankAdapter
     public function registrationBenific(RegistrationBenificForm $registrationBenificForm)
     {
         throw new GateException('Метод недоступен');
+    }
+
+    /**
+     * @return string
+     */
+    private function getBalanceB2CCacheKey(): string
+    {
+        return join('.', [
+            self::BALANCE_B2C_CACHE_KEY,
+            $this->gate->PartnerId,
+        ]);
     }
 }

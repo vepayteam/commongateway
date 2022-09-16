@@ -107,6 +107,12 @@ return [
                 'url' => getenv('PARAMS_PAYMENTS_TCB_URL', true),
                 'url_xml' => getenv('PARAMS_PAYMENTS_TCB_URL_XML', true),
             ],
+            'Cauri' => [
+                'url' => 'https://api.cauri.com/rest-v1',
+            ],
+            'Payler' => [
+                'url' => 'https://sandbox.payler.com',
+            ],
         ],
     ],
     'login_user_token_valid_time' => 60*60,

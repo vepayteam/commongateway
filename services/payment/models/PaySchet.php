@@ -8,6 +8,7 @@ use app\models\payonline\Partner;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
 use app\models\PaySchetAcsRedirect;
+use app\models\PaySchetP2pRepayment;
 use app\models\PaySchetYandex;
 use app\services\CompensationService;
 use app\services\compensationService\CompensationException;
@@ -110,6 +111,7 @@ use yii\helpers\ArrayHelper;
  * @property-read PaySchetAcsRedirect $acsRedirect {@see PaySchet::getAcsRedirect()}
  * @property-read PaySchetLanguage $paySchetLanguage {@see PaySchet::getPaySchetLanguage()}
  * @property PaySchetYandex|null $yandexPayTransaction {@see PaySchet::getYandexPayTransaction()}
+ * @property PaySchetP2pRepayment|null $p2pRepayment {@see PaySchet::getP2pRepayment()}
  *
  * @property string $Version3DS
  * @property int $IsNeed3DSVerif
@@ -460,6 +462,11 @@ class PaySchet extends \yii\db\ActiveRecord
     public function getPaySchetLanguage(): ActiveQuery
     {
         return $this->hasOne(PaySchetLanguage::class, ['paySchetId' => 'ID']);
+    }
+
+    public function getP2pRepayment(): ActiveQuery
+    {
+        return $this->hasOne(PaySchetP2pRepayment::class, ['paySchetId' => 'ID']);
     }
 
     /**

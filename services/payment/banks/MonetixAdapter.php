@@ -4,7 +4,6 @@ namespace app\services\payment\banks;
 
 use app\Api\Client\AbstractClient;
 use app\Api\Client\Client;
-use app\models\extservice\HttpProxy;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
@@ -59,8 +58,6 @@ use yii\helpers\Json;
 
 class MonetixAdapter extends BaseAdapter implements IBankAdapter
 {
-    use HttpProxy;
-
     const BANK_URL = 'https://api.trxhost.com';
 
     /**

@@ -92,6 +92,7 @@ class OrderNotif extends ActiveRecord
 
             $subject = 'Счет на оплату';
             $content = Yii::$app->controller->renderPartial('@app/mail/order_notif', [
+                'apiUrl' => Yii::$app->params['domain'],
                 'orderNotif' => $orderNotif,
                 'orderPay' => $orderPay,
                 'orderTo' => $orderPay->OrderTo ? Json::decode($orderPay->OrderTo) : null,
