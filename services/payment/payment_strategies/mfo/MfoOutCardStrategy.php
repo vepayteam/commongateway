@@ -102,23 +102,27 @@ class MfoOutCardStrategy
         $outCardPayResponse = $bankAdapterBuilder->getBankAdapter()->outCardPay($this->outCardPayForm);
 
         if ($outCardPayResponse->status == BaseResponse::STATUS_DONE) {
+            /** @todo Fix status change/check logic. */
             $paySchet->ExtBillNumber = $outCardPayResponse->trans;
             $paySchet->save(false);
         } else if ($outCardPayResponse->status == BaseResponse::STATUS_CREATED) {
             $paySchet->Status = PaySchet::STATUS_WAITING_CHECK_STATUS;
             $paySchet->ErrorInfo = $outCardPayResponse->message;
             $paySchet->save(false);
-
-            $this->queue
-                ->delay($bankAdapterBuilder->getBankAdapter()->getOutCardRefreshStatusDelay())
-                ->push(new RefreshStatusPayJob([
-                    'paySchetId' => $paySchet->ID,
-                ]));
         } else {
             $paySchet->Status = PaySchet::STATUS_ERROR;
             $paySchet->ErrorInfo = $outCardPayResponse->message;
             $paySchet->save(false);
             throw new CreatePayException($outCardPayResponse->message);
+        }
+
+        /** @todo Fix status change/check logic. */
+        if (in_array($outCardPayResponse->status, [BaseResponse::STATUS_DONE, BaseResponse::STATUS_CREATED])) {
+            $this->queue
+                ->delay($bankAdapterBuilder->getBankAdapter()->getOutCardRefreshStatusDelay())
+                ->push(new RefreshStatusPayJob([
+                    'paySchetId' => $paySchet->ID,
+                ]));
         }
 
         return $paySchet;
