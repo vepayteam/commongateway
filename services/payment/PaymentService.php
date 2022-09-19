@@ -333,7 +333,7 @@ class PaymentService
             }
 
             $brsBank = Bank::findOne([
-                'ID' => BRSAdapter::$bank,
+                'ID' => BRSAdapter::bankId(),
             ]);
 
             $bankAdapterBuilder = new BankAdapterBuilder();
@@ -355,7 +355,7 @@ class PaymentService
     public function checkSbpCanTransfer(OutPayAccountForm $outPayAccountForm): TransferToAccountResponse
     {
         /** @var BRSAdapter $brsBankAdapter */
-        $brsAdapter = $this->processBankAdapter($outPayAccountForm, BRSAdapter::$bank, TU::$B2CSBP);
+        $brsAdapter = $this->processBankAdapter($outPayAccountForm, BRSAdapter::bankId(), TU::$B2CSBP);
 
         return $brsAdapter->checkTransferB2C($outPayAccountForm);
     }

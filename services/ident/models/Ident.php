@@ -56,7 +56,7 @@ class Ident extends \yii\db\ActiveRecord
      */
     public function setBankScenario(int $bankId)
     {
-        $bankIds = [TKBankAdapter::$bank];
+        $bankIds = [TKBankAdapter::bankId()];
 
         if(in_array($bankId, $bankIds)) {
             $this->scenario = $bankId;
@@ -98,9 +98,9 @@ class Ident extends \yii\db\ActiveRecord
                 'Inn', 'Snils', 'BirthDay', 'IssueData', 'IssueCode', 'Issuer'
             ], 'string', 'max' => 255],
 
-            [['FirstName', 'LastName', 'Series', 'Number'], 'required', 'on' => [TKBankAdapter::$bank]],
+            [['FirstName', 'LastName', 'Series', 'Number'], 'required', 'on' => [TKBankAdapter::bankId()]],
             [['Inn', 'Snils'], 'validateInnOrSnils'],
-            [['Patronymic'], 'validatePatronymicRequireIfSnilsNotEmpty', 'on' => [TKBankAdapter::$bank]],
+            [['Patronymic'], 'validatePatronymicRequireIfSnilsNotEmpty', 'on' => [TKBankAdapter::bankId()]],
         ];
     }
 

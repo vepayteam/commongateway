@@ -15,7 +15,7 @@ class m220131_115824_add_impaya_bank extends Migration
     public function safeUp()
     {
         $bank = new Bank();
-        $bank->ID = ImpayaAdapter::$bank;
+        $bank->ID = 15;
         $bank->Name = 'Impaya';
         $bank->save(false);
     }
@@ -25,7 +25,7 @@ class m220131_115824_add_impaya_bank extends Migration
      */
     public function safeDown()
     {
-        Bank::deleteAll(['ID' => ImpayaAdapter::$bank]);
+        Bank::deleteAll(['ID' => 15]);
         return true;
     }
 }

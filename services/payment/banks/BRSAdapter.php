@@ -68,7 +68,7 @@ use Exception;
 use Yii;
 use yii\helpers\Json;
 
-class BRSAdapter implements IBankAdapter, P2p
+class BRSAdapter extends BaseAdapter implements IBankAdapter, P2p
 {
     const AFT_MIN_SUMM = 180000;
     const KEYS_PATH = '@app/config/brs/';
@@ -80,6 +80,9 @@ class BRSAdapter implements IBankAdapter, P2p
 
     const BRS_RESPONSE_SYSTEM_ERROR_CODE = 1001;
 
+    /**
+     * @deprecated Use {@see bankId()} instead.
+     */
     public static $bank = 7;
 
     /** @var PartnerBankGate */
@@ -106,6 +109,14 @@ class BRSAdapter implements IBankAdapter, P2p
     const BANK_URL_XML_TEST = 'https://194.67.29.216:8443';
 
     /**
+     * {@inheritDoc}
+     */
+    public static function bankId(): int
+    {
+        return 7;
+    }
+
+    /**
      * @inheritDoc
      */
     public function setGate(PartnerBankGate $partnerBankGate)
@@ -126,7 +137,7 @@ class BRSAdapter implements IBankAdapter, P2p
      */
     public function getBankId()
     {
-        return self::$bank;
+        return self::bankId();
     }
 
     /**
@@ -727,7 +738,7 @@ class BRSAdapter implements IBankAdapter, P2p
      */
     public function getAftMinSum()
     {
-        return Bank::findOne(self::$bank)->AftMinSum ?? self::AFT_MIN_SUMM;
+        return $this->getBankModel()->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**

@@ -63,7 +63,7 @@ class WallettoExchangeRateService
     {
         $bank = $this->getBank();
         if (!$bank) {
-            return ExchangeRateUpdateResult::setError('WallettoExchangeRateService: Банк ' . WallettoBankAdapter::$bank . ' не найден');
+            return ExchangeRateUpdateResult::setError('WallettoExchangeRateService: Банк ' . WallettoBankAdapter::bankId() . ' не найден');
         }
 
         $adapter = $this->getAdapter($bank);
@@ -130,7 +130,7 @@ class WallettoExchangeRateService
     {
         /** @var Bank $bank */
         $bank = Bank::find()
-            ->where(['ID' => WallettoBankAdapter::$bank])
+            ->where(['ID' => WallettoBankAdapter::bankId()])
             ->one();
 
         return $bank;
