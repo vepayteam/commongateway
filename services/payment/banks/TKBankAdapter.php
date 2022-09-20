@@ -13,7 +13,6 @@ use app\clients\tcbClient\responses\ErrorResponse;
 use app\clients\tcbClient\responses\GetOrderStateResponse;
 use app\clients\tcbClient\responses\objects\OrderInfo;
 use app\clients\tcbClient\TcbOrderNotExistException;
-use app\helpers\DebugHelper;
 use app\models\payonline\Cards;
 use app\models\payonline\User;
 use app\models\Payschets;
@@ -33,9 +32,10 @@ use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
-use app\services\payment\banks\interfaces\ITKBankAdapterResponseErrors;
+use app\services\payment\banks\data\ClientData;
 use app\services\payment\banks\traits\TKBank3DSTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
+use app\services\payment\exceptions\CacheValueMissingException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
@@ -43,7 +43,9 @@ use app\services\payment\exceptions\MerchantRequestAlreadyExistsException;
 use app\services\payment\exceptions\RefundPayException;
 use app\services\payment\exceptions\reRequestingStatusException;
 use app\services\payment\exceptions\reRequestingStatusOkException;
+use app\services\payment\exceptions\TKBankGatewayTimeoutException;
 use app\services\payment\exceptions\TKBankRefusalException;
+use app\services\payment\exceptions\ValidationException;
 use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\CreatePaySecondStepForm;
@@ -74,7 +76,7 @@ use SimpleXMLElement;
 use Yii;
 use yii\helpers\Json;
 
-class TKBankAdapter implements IBankAdapter
+class TKBankAdapter extends BaseAdapter implements IBankAdapter, IBankSecondStepInterface
 {
     use TKBank3DSTrait;
 
@@ -106,10 +108,22 @@ class TKBankAdapter implements IBankAdapter
     private $backUrls = ['ok' => 'https://api.vepay.online/pay/orderok?orderid='];
     private $_client;
 
+    /**
+     * @deprecated Use {@see bankId()} instead.
+     */
     public static $bank = 2;
+
     private $type = 0;
     private $IsCard = 0;
     private $IsAft = 0;
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function bankId(): int
+    {
+        return 2;
+    }
 
     public function setGate(PartnerBankGate $partnerBankGate)
     {
@@ -125,7 +139,7 @@ class TKBankAdapter implements IBankAdapter
      */
     public function getBankId()
     {
-        return self::$bank;
+        return self::bankId();
     }
 
     /**
@@ -533,6 +547,9 @@ class TKBankAdapter implements IBankAdapter
                     $ans['httperror'] = $jsonReq ? Json::decode($curl->response) : $curl->response;
                     Yii::error(['curlerror:' => ['Headers' => $curl->getRequestHeaders(), 'Post' => Cards::MaskCardLog($post)]], 'merchant');
                     break;
+                case 504:
+                    Yii::warning('TKBankAdapter curlXmlReq gateway timeout response');
+                    throw new TKBankGatewayTimeoutException();
                 default:
                     $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;
                     break;
@@ -1128,8 +1145,9 @@ class TKBankAdapter implements IBankAdapter
      * @throws BankAdapterResponseException
      * @throws Check3DSv2Exception
      * @throws CreatePayException
+     * @throws ValidationException
      */
-    public function createPay(CreatePayForm $createPayForm)
+    public function createPay(CreatePayForm $createPayForm, ClientData $clientData)
     {
         /** @var Check3DSVersionResponse $check3DSVersionResponse */
         $check3DSVersionResponse = $this->check3DSVersion($createPayForm);
@@ -1157,24 +1175,30 @@ class TKBankAdapter implements IBankAdapter
      * @return CreatePayResponse
      * @throws Check3DSv2Exception
      * @throws CreatePayException
+     * @throws CacheValueMissingException
      */
     public function createPayStep2(CreatePaySecondStepForm $createPaySecondStepForm)
     {
         $checkDataCacheKey = Cache3DSv2Interface::CACHE_PREFIX_CHECK_DATA . $createPaySecondStepForm->getPaySchet()->ID;
 
-        if(Yii::$app->cache->exists($checkDataCacheKey)) { //@TODO: а я не понял, а если в кэше нет, то ничего вообще не делаем?
-            $checkData = Yii::$app->cache->get($checkDataCacheKey);
+        if (!Yii::$app->cache->exists($checkDataCacheKey)) {
+            Yii::warning('TKBankAdapter createPayStep2 cache data not found checkDataCacheKey=' . $checkDataCacheKey
+                . ' paySchet.ID=' . $createPaySecondStepForm->getPaySchet()->ID);
 
-            $check3DSVersionResponse = new Check3DSVersionResponse();
-            $check3DSVersionResponse->cardRefId = ($checkData['cardRefId'] ?? '');
-            $check3DSVersionResponse->transactionId = ($checkData['transactionId'] ?? '');
-
-            $paySchet = $createPaySecondStepForm->getPaySchet();
-            $payResponse = $this->createPay3DSv2($paySchet, $check3DSVersionResponse);
-
-            $payResponse->isNeed3DSRedirect = false;
-            return $payResponse;
+            throw new CacheValueMissingException();
         }
+
+        $checkData = Yii::$app->cache->get($checkDataCacheKey);
+
+        $check3DSVersionResponse = new Check3DSVersionResponse();
+        $check3DSVersionResponse->cardRefId = ($checkData['cardRefId'] ?? '');
+        $check3DSVersionResponse->transactionId = ($checkData['transactionId'] ?? '');
+
+        $paySchet = $createPaySecondStepForm->getPaySchet();
+        $payResponse = $this->createPay3DSv2($paySchet, $check3DSVersionResponse);
+
+        $payResponse->isNeed3DSRedirect = false;
+        return $payResponse;
     }
 
     /**
@@ -1532,7 +1556,7 @@ class TKBankAdapter implements IBankAdapter
         if (isset($ans['xml']) && !empty($ans['xml'])) {
             $xml = $this->parseAns($ans['xml']);
             if (isset($xml['orderid'])) {
-                $createRecurrentPayResponse->status = BaseResponse::STATUS_DONE;
+                $createRecurrentPayResponse->status = PaySchet::STATUS_DONE;
                 $createRecurrentPayResponse->transac = $xml['orderid'];
                 return $createRecurrentPayResponse;
             }
@@ -1540,6 +1564,10 @@ class TKBankAdapter implements IBankAdapter
 
         $createRecurrentPayResponse->status = BaseResponse::STATUS_ERROR;
         $createRecurrentPayResponse->message = '';
+        if (substr_compare($ans['error'], '500', -3) === 0) {
+            $createRecurrentPayResponse->status = BaseResponse::STATUS_ERROR;
+            $createRecurrentPayResponse->message = 'Ожидается обновление статуса';
+        }
         return $createRecurrentPayResponse;
     }
 
@@ -1601,13 +1629,27 @@ class TKBankAdapter implements IBankAdapter
         $outCardPayRequest = new OutCardPayRequest();
         $outCardPayRequest->ExtId = $outCardPayForm->paySchet->ID;
         $outCardPayRequest->Amount = $outCardPayForm->paySchet->getSummFull();
+        $outCardPayRequest->Fullname = !empty($outCardPayForm->paySchet->CardHolder) ? $outCardPayForm->paySchet->CardHolder : 'NONAME NONAME';
         $outCardPayRequest->CardInfo = [
             'CardNumber' => $outCardPayForm->cardnum,
         ];
 
-        $ans = $this->parseAns($this->curlXmlReq(Json::encode($outCardPayRequest->getAttributes()), $this->bankUrl . $action));
-
         $outCardPayResponse = new OutCardPayResponse();
+
+        try {
+            $ans = $this->parseAns($this->curlXmlReq(Json::encode($outCardPayRequest->getAttributes()), $this->bankUrl . $action));
+        } catch (TKBankGatewayTimeoutException $e) {
+            /**
+             * В случае если запрос отваливается по таймауту, стоит проверить статус транзакции
+             */
+
+            Yii::warning('TKBankAdapter outCardPay gateway timeout paySchet.ID=' . $outCardPayForm->paySchet->ID);
+
+            $outCardPayResponse->status = BaseResponse::STATUS_CREATED;
+            $outCardPayResponse->message = 'Ожидает запрос статуса';
+
+            return $outCardPayResponse;
+        }
 
         if(isset($ans['xml'])) {
             if(!array_key_exists('errorinfo', $ans['xml']) || (isset($ans['xml']['errorinfo']['errorcode']) && $ans['xml']['errorinfo']['errorcode'] == 0)) {
@@ -1649,7 +1691,7 @@ class TKBankAdapter implements IBankAdapter
 
     public function getAftMinSum()
     {
-        return Bank::findOne(self::$bank)->AftMinSum ?? self::AFT_MIN_SUMM;
+        return $this->getBankModel()->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**

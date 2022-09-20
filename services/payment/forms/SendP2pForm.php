@@ -36,4 +36,11 @@ class SendP2pForm extends Model
             [['cardHolder'], 'match', 'pattern' => '/[a-zA-Z\s]{3,150}/i'],
         ];
     }
+
+    public function attributeLabels()
+    {
+        return [
+            'amount' => 'Суммы перевода',
+        ];
+    }
 }

@@ -14,7 +14,7 @@ class m210316_125728_rename_brs_bank extends Migration
      */
     public function safeUp()
     {
-        $brs = Bank::findOne(['ID' => BRSAdapter::$bank]);
+        $brs = Bank::findOne(['ID' => 7]);
         $brs->Name = 'BRS';
         $brs->save(false);
     }
@@ -24,7 +24,7 @@ class m210316_125728_rename_brs_bank extends Migration
      */
     public function safeDown()
     {
-        $brs = Bank::findOne(['ID' => BRSAdapter::$bank]);
+        $brs = Bank::findOne(['ID' => 7]);
         $brs->Name = 'RSB';
         $brs->save(false);
 

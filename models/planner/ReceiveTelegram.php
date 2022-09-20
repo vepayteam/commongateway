@@ -3,14 +3,14 @@
 namespace app\models\planner;
 
 use app\models\partner\news\News;
-use app\models\extservice\HttpProxy;
+use app\models\payonline\Cards;
+use app\services\CurlLogger;
 use qfsx\yii2\curl\Curl;
 use Yii;
 use yii\helpers\Json;
 
 class ReceiveTelegram
 {
-    use HttpProxy;
     private $resultText;
 
     public function execute()
@@ -74,12 +74,19 @@ class ReceiveTelegram
         if (mb_stripos($url, "?") > 0) {
             $fst = "&";
         }
-        if (Yii::$app->params['DEVMODE'] != 'Y' && Yii::$app->params['TESTMODE'] != 'Y' && !empty($this->proxyHost)) {
+        if (
+            Yii::$app->params['DEVMODE'] != 'Y'
+            && Yii::$app->params['TESTMODE'] != 'Y'
+            && in_array('proxy', Yii::$app->params)
+            && !empty(Yii::$app->params['proxy']['proxyHost'])
+        ) {
             $curl->setOption(CURLOPT_VERBOSE, Yii::$app->params['VERBOSE'] === 'Y');
-            $curl->setOption(CURLOPT_PROXY, $this->proxyHost);
-            $curl->setOption(CURLOPT_PROXYUSERPWD, $this->proxyUser);
+            $curl->setOption(CURLOPT_PROXY, Yii::$app->params['proxy']['proxyHost']);
+            $curl->setOption(CURLOPT_PROXYUSERPWD, Yii::$app->params['proxy']['proxyUser']);
         }
         $curl->get($url . $fst . $params);
+
+        CurlLogger::handle($curl, Cards::MaskCardLog($url . $fst . $params), [], [], Cards::MaskCardLog($curl->response));
 
         Yii::warning("sendCurlGet-url: " . $url . $fst . $params . "\r\n", 'rsbcron');
         if ($curl->errorCode) {

@@ -11,6 +11,7 @@ use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\FailPaymentException;
+use app\services\payment\exceptions\ValidationException;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\tkb\Authenticate3DSv2Request;
 use app\services\payment\forms\tkb\Check3DSVersionRequest;
@@ -75,6 +76,12 @@ trait TKBank3DSTrait
                 $message = 'Бин не найден.';
                 $paySchet->setError($message);
                 throw new FailPaymentException($message);
+            }
+
+            if($ans['httperror']['Code'] === 'ValidationException') {
+                $message = 'Данные не прошли валидацию';
+                $paySchet->setError($message);
+                throw new ValidationException($message);
             }
 
             throw new BankAdapterResponseException('Сервис временно недоступен. Попробуйте позже.');

@@ -4,7 +4,6 @@ namespace app\modules\partner\controllers;
 
 use app\models\kkt\OnlineKassa;
 use app\models\mfo\MfoStat;
-use app\models\partner\admin\VyvodVoznag;
 use app\models\partner\PartUserAccess;
 use app\models\partner\stat\ActMfo;
 use app\models\partner\stat\ActSchet;
@@ -42,6 +41,9 @@ use app\services\payment\models\Bank;
 use app\services\payment\models\PaySchet;
 use app\services\payment\PaymentService;
 use app\services\paymentReport\PaymentReportService;
+use app\services\paymentTransfer\exceptions\PaymentTransferException;
+use app\services\paymentTransfer\models\TransferRewardForm;
+use app\services\PaymentTransferService;
 use Exception;
 use kartik\mpdf\Pdf;
 use Throwable;
@@ -371,6 +373,7 @@ class StatController extends Controller
             'partnerlist' => $fltr->getPartnersList(),
             'uslugilist' => $fltr->getTypeUslugLiust(),
             'bankList' => $fltr->getBankList(),
+            'statuses' => PaySchet::STATUSES,
         ]);
     }
 
@@ -380,10 +383,11 @@ class StatController extends Controller
             Yii::$app->response->format = Response::FORMAT_JSON;
             $data = Yii::$app->request->post();
             $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
+            $perPage = 100;
             $page = Yii::$app->request->get('page', 0);
             $payShetList = new PayShetStat();
             if ($payShetList->load($data, '') && $payShetList->validate()) {
-                $list = $payShetList->getList2($IsAdmin, $page);
+                $list = $payShetList->getList($IsAdmin, ($page - 1) * $perPage, $perPage, true);
                 return [
                     'status' => 1, 'data' => $this->renderPartial('_recalcdata', [
                         'reqdata' => $data,
@@ -412,7 +416,9 @@ class StatController extends Controller
         if (Yii::$app->request->isAjax) {
             $payShetList = new PayShetStat();
             if ($payShetList->load(Yii::$app->request->get(), '')) {
-                $data = $payShetList->getList2(UserLk::IsAdmin(Yii::$app->user), 0, 1);
+                $isAdmin = UserLk::IsAdmin(Yii::$app->user);
+
+                $data = $payShetList->getList($isAdmin, 0, null, true);
                 $paySchets = PaySchet::findAll(ArrayHelper::getColumn($data['data'], 'ID'));
                 foreach ($paySchets as $paySchet) {
                     $paySchet->recalcComiss(array_map('floatval', Yii::$app->request->post()));
@@ -509,18 +515,19 @@ class StatController extends Controller
     public function actionOtchdata()
     {
         if (Yii::$app->request->isAjax) {
-            $data = Yii::$app->request->post();
+            $postData = Yii::$app->request->post();
             $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
             $payShetList = new PayShetStat();
-            Yii::warning('partner/stat/otchdata POST: ' . serialize($data), 'partner');
+            Yii::info('partner/stat/otchdata POST: ' . serialize($postData), 'partner');
             try {
-                if ($payShetList->load($data, '') && $payShetList->validate()) {
+                if ($payShetList->load($postData, '') && $payShetList->validate()) {
                     $paymentReportService = new PaymentReportService();
 
                     $data = $paymentReportService->getLegacyReportEntities($IsAdmin, $payShetList);
                     return $this->renderPartial('_otchdata', [
                         'IsAdmin' => $IsAdmin,
                         'data' => $data,
+                        'postData' => $postData,
                         'requestToExport' => $payShetList->getAttributes()
                     ]);
                 }
@@ -996,18 +1003,26 @@ class StatController extends Controller
             $schet->Komment = 'Вознаграждение за период, '.date('m.Y', $act->ActPeriod);
             $schet->IsDeleted = 0;
             if ($schet->save(false)) {
+                $form = new TransferRewardForm();
+                $form->datefrom = date("01.m.Y H:i", $act->ActPeriod);
+                $form->dateto = date("t.m.Y 23:59", $act->ActPeriod);
+                $form->partner = $act->IdPartner;
+                $form->summ = $act->ComisVyplata;
+                $form->type = TransferRewardForm::TYPE_FAKE;
 
-                $vv = new VyvodVoznag();
-                $vv->setAttributes([
-                    'partner' => $act->IdPartner,
-                    'summ' => $act->ComisVyplata,
-                    'datefrom' => date("01.m.Y H:i", $act->ActPeriod),
-                    'dateto' => date("t.m.Y 23:59", $act->ActPeriod),
-                    'isCron' => true,
-                    'type' => 1,
-                    'balance' => 0
-                ]);
-                $vv->CreatePayVyvod();
+                /** @var PaymentTransferService $paymentTransferService */
+                $paymentTransferService = Yii::$app->get(PaymentTransferService::class);
+
+                try {
+                    $paymentTransferService->transferReward($form);
+                } catch (PaymentTransferException $e) {
+                    Yii::$app->errorHandler->logException($e);
+
+                    return [
+                        'status' => 0,
+                        'message' => $e->getMessage(),
+                    ];
+                }
 
                 return [
                     'status' => 1,
@@ -1027,7 +1042,10 @@ class StatController extends Controller
 
             if ($schet) {
                 $Partner = Partner::findOne(['ID' => $schet->IdPartner]);
-                $recviz = VyvodVoznag::GetRecviz();
+
+                /** @var PaymentTransferService $paymentTransferService */
+                $paymentTransferService = Yii::$app->get(PaymentTransferService::class);
+                $recviz = $paymentTransferService->getLegacyRewardRequisites();
 
                 $pdf = new Pdf([
                     'mode'=> Pdf::MODE_UTF8,

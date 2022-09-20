@@ -70,16 +70,6 @@ if ($partner->IsMfo) {
         </div>
     </div>
 
-    <div class="row no-margins">
-        <div class="col-sm-8 col-sm-offset-3">
-            <?php
-            echo $form->field($partner,'IsCommonSchetVydacha')->checkbox([
-                'template' => "<div class=\"checkbox m-l-sm\">\n{input}\n{beginLabel}\n{labelTitle}\n{endLabel}\n{error}\n{hint}\n</div>"
-            ]);
-            ?>
-        </div>
-    </div>
-
     <?php
     echo $form->field($partner, 'LoginTkbEcom')->textInput(['class' => 'form-control']);
     echo $form->field($partner, 'KeyTkbEcom')->textInput(['class' => 'form-control']);
@@ -122,7 +112,7 @@ ActiveForm::end();
 
 <div class="row">
     <div class="m-md">
-        <h3>Настройки ApplePay, GooglePay, SamsungPay</h3>
+        <h3>Настройки ApplePay, GooglePay, SamsungPay, YandexPay</h3>
     </div>
 </div>
 
@@ -149,8 +139,8 @@ echo $form->field($partner, 'Apple_MerchantID')->textInput(['class' => 'form-con
 echo $form->field($partner, 'Apple_displayName')->textInput(['class' => 'form-control']);
 //echo $form->field($partner, 'Apple_PayProcCert')->textarea(['class' => 'form-control']);
 echo $form->field($partner, 'Apple_KeyPasswd')->textInput(['class' => 'form-control']);
-echo $form->field($partner, 'Apple_MerchIdentKey')->fileInput(['class' => 'form-control'])->hint($partner->Apple_MerchIdentKey);
-echo $form->field($partner, 'Apple_MerchIdentCert')->fileInput(['class' => 'form-control'])->hint($partner->Apple_MerchIdentCert);
+echo $form->field($partner, 'Apple_MerchIdentKey')->fileInput(['class' => 'form-control', 'accept' => '.cer, .key, .crt'])->hint($partner->Apple_MerchIdentKey);
+echo $form->field($partner, 'Apple_MerchIdentCert')->fileInput(['class' => 'form-control', 'accept' => '.cer, .key, .crt'])->hint($partner->Apple_MerchIdentCert);
 ?>
 <div class="row no-margins">
     <div class="col-sm-8 col-sm-offset-3">
@@ -177,6 +167,21 @@ echo $form->field($partner, 'Apple_MerchIdentCert')->fileInput(['class' => 'form
     <div class="col-sm-8 col-sm-offset-3">
         <?php
         echo $form->field($partner,'IsUseSamsungpay')->checkbox([
+            'template' => "<div class=\"checkbox m-l-sm\">\n{input}\n{beginLabel}\n{labelTitle}\n{endLabel}\n{error}\n{hint}\n</div>"
+        ]);
+        ?>
+    </div>
+</div>
+
+<?= $form->field($partner, 'yandexPayMerchantId')->textInput(['class' => 'form-control']);?>
+<?= $form->field($partner, 'yandexPayAuthPrivate')->textInput(['class' => 'form-control']);?>
+<?= $form->field($partner, 'yandexPayAuthPublic')->textInput(['class' => 'form-control']);?>
+<?= $form->field($partner, 'yandexPayEncryptionPrivate')->textInput(['class' => 'form-control']);?>
+<?= $form->field($partner, 'yandexPayEncryptionPublic')->textInput(['class' => 'form-control']);?>
+<div class="row no-margins">
+    <div class="col-sm-8 col-sm-offset-3">
+        <?php
+        echo $form->field($partner,'isUseYandexPay')->checkbox([
             'template' => "<div class=\"checkbox m-l-sm\">\n{input}\n{beginLabel}\n{labelTitle}\n{endLabel}\n{error}\n{hint}\n</div>"
         ]);
         ?>
@@ -324,9 +329,9 @@ $form = ActiveForm::begin([
     ],
 ]);
 
-echo $form->field($partner, 'OrangeDataSingKey')->fileInput(['class' => 'form-control'])->hint($partner->OrangeDataSingKey);
-echo $form->field($partner, 'OrangeDataConKey')->fileInput(['class' => 'form-control'])->hint($partner->OrangeDataConKey);
-echo $form->field($partner, 'OrangeDataConCert')->fileInput(['class' => 'form-control'])->hint($partner->OrangeDataConCert);
+echo $form->field($partner, 'OrangeDataSingKey')->fileInput(['class' => 'form-control', 'accept' => '.cer, .key, .crt'])->hint($partner->OrangeDataSingKey);
+echo $form->field($partner, 'OrangeDataConKey')->fileInput(['class' => 'form-control', 'accept' => '.cer, .key, .crt'])->hint($partner->OrangeDataConKey);
+echo $form->field($partner, 'OrangeDataConCert')->fileInput(['class' => 'form-control', 'accept' => '.cer, .key, .crt'])->hint($partner->OrangeDataConCert);
 
 ?>
 

@@ -29,7 +29,7 @@ class OutCardPayForm extends Model implements AmountFormInterface
     public $amount = 0;
     public $extid = '';
     public $document_id = '';
-    public $fullname = '';
+    public $fullname = 'NONAME NONAME';
     public $currency = 'RUB';
 
     public $card = 0;
@@ -49,6 +49,11 @@ class OutCardPayForm extends Model implements AmountFormInterface
     public $documentNumber;
     public $phone;
 
+    /**
+     * @var string|null
+     */
+    public $email;
+
     public function rules()
     {
         return [
@@ -57,12 +62,12 @@ class OutCardPayForm extends Model implements AmountFormInterface
             ['birthDate', 'match', 'pattern' => '/^[0-3][0-9]\.[0-1][0-9]\.[1-2][0-9]{3}$/i'],
             ['countryOfCitizenship', 'default', 'value' => 'RU'],
             ['countryOfResidence', 'default', 'value' => 'RU'],
+            [['phone'], 'string'],
 
             ['documentType', 'default', 'value' => 'passport'],
             ['documentType', 'in', 'range' => ['passport', 'id']],
             ['documentIssuedAt', 'match', 'pattern' => '/^[0-3][0-9]\.[0-1][0-9]\.[1-2][0-9]{3}$/i'],
             ['documentValidUntil', 'match', 'pattern' => '/^[0-3][0-9]\.[0-1][0-9]\.[1-2][0-9]{3}$/i'],
-
 
             [[
                 'fullname',
@@ -76,6 +81,7 @@ class OutCardPayForm extends Model implements AmountFormInterface
                 'phone',
                 'currency',
             ], 'safe'],
+            [['email'], 'email'],
             ['card', 'validateCard'],
         ];
     }

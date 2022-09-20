@@ -12,7 +12,6 @@ use yii\helpers\Html;
 /**
  * @var Partner $partner
  */
-
 $bankGates = $partner->getBankGates()->orderBy('TU ASC, Priority DESC')->all();
 $currencyList = ArrayHelper::merge(['' => ''], ArrayHelper::map(CurrencyRepository::getAll(), 'Id', 'Code'));
 ?>
@@ -225,46 +224,76 @@ $currencyList = ArrayHelper::merge(['' => ''], ArrayHelper::map(CurrencyReposito
                         </select>
                     </div>
 
-                    <!-- Комиссия от клиента -->
-                    <div class="form-group">
-                        <label>Процентная комиссия от клиента</label>
-                        <input name="ClientCommission" class="form-control" type="number" step="0.01"/>
-                    </div>
-                    <div class="form-group">
-                        <label>Фиксированная комиссия от клиента</label>
-                        <input name="ClientFee" class="form-control" type="number" step="0.01"/>
-                    </div>
-                    <div class="form-group">
-                        <label>Минимальная комиссия от клиента</label>
-                        <input name="ClientMinimalFee" class="form-control" type="number" step="0.01"/>
-                    </div>
+                    <div id="comissionWrapper">
 
-                    <!-- Комиссия от контрагента (партнера/мерчанта) -->
-                    <div class="form-group">
-                        <label>Процентная комиссия от контрагента</label>
-                        <input name="PartnerCommission" class="form-control" type="number" step="0.01"/>
-                    </div>
-                    <div class="form-group">
-                        <label>Фиксированная комиссия от контрагента</label>
-                        <input name="PartnerFee" class="form-control" type="number" step="0.01"/>
-                    </div>
-                    <div class="form-group">
-                        <label>Минимальная комиссия от контрагента</label>
-                        <input name="PartnerMinimalFee" class="form-control" type="number" step="0.01"/>
-                    </div>
+                        <h3>Комиссия с клиента:</h3>
 
-                    <!-- Комиссия банку -->
-                    <div class="form-group">
-                        <label>Процентная комиссия банку</label>
-                        <input name="BankCommission" class="form-control" type="number" step="0.01"/>
-                    </div>
-                    <div class="form-group">
-                        <label>Фиксированная комиссия банку</label>
-                        <input name="BankFee" class="form-control" type="number" step="0.01"/>
-                    </div>
-                    <div class="form-group">
-                        <label>Минимальная комиссия банку</label>
-                        <input name="BankMinimalFee" class="form-control" type="number" step="0.01"/>
+                        <div class="comissionBlock">
+                            <div class="comissionBlockItem">
+                                <div class="form-group">
+                                    <input name="ClientCommission" class="form-control percentsStyle" type="number" step="0.01" value="0">
+                                </div>
+                                <div class="plusPercent">% +</div>
+                                <div class="form-group">
+                                    <input name="ClientFee" class="form-control" type="number" step="0.01" value="0">
+                                </div>
+                                <span class="currencyWrapper"><span class="chosenCurrency fixedComissionCurrency"></span>,</span>
+
+                            </div>
+                            <div class="comissionBlockItem">
+                                <div class="plusPercent">мин</div>
+                                <div class="form-group">
+                                    <input name="ClientMinimalFee" class="form-control" type="number" step="0.01" value="0">
+                                </div>
+                                <span class="chosenCurrency minimalComissionCurrency"></span>
+                            </div>
+                        </div>
+
+                        <h3>Комиссия банка-эквайера:</h3>
+
+                        <div class="comissionBlock">
+                            <div class="comissionBlockItem">
+                                <div class="form-group">
+                                    <input name="BankCommission" class="form-control percentsStyle" type="number" step="0.01" value="0">
+                                </div>
+                                <div class="plusPercent">% +</div>
+                                <div class="form-group">
+                                    <input name="BankFee" class="form-control" type="number" step="0.01" value="0">
+                                </div>
+                                <span class="currencyWrapper"><span class="chosenCurrency  fixedComissionCurrency"></span>,</span>
+
+                            </div>
+                            <div class="comissionBlockItem">
+                                <div class="plusPercent">мин</div>
+                                <div class="form-group">
+                                    <input name="BankMinimalFee" class="form-control" type="number" step="0.01" value="0">
+                                </div>
+                                <span class="chosenCurrency  minimalComissionCurrency"></span>
+                            </div>
+                        </div>
+
+                        <h3>Комиссия с МФО/Мерчанта:</h3>
+
+                        <div class="comissionBlock">
+                            <div class="comissionBlockItem">
+                                <div class="form-group">
+                                    <input name="PartnerCommission" class="form-control percentsStyle" type="number" step="0.01" value="0">
+                                </div>
+                                <div class="plusPercent">% +</div>
+                                <div class="form-group">
+                                    <input name="PartnerFee" class="form-control" type="number" step="0.01" value="0">
+                                </div>
+                                <span class="currencyWrapper"><span class="chosenCurrency  fixedComissionCurrency"></span>,</span>
+
+                            </div>
+                            <div class="comissionBlockItem">
+                                <div class="plusPercent">мин</div>
+                                <div class="form-group">
+                                    <input name="PartnerMinimalFee" class="form-control" type="number" step="0.01" value="0">
+                                </div>
+                                <span class="chosenCurrency  minimalComissionCurrency"></span>
+                            </div>
+                        </div>
                     </div>
 
                 </form>

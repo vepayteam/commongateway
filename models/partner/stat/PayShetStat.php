@@ -104,6 +104,7 @@ class PayShetStat extends Model
     public function getList(bool $IsAdmin, int $offset = 0, ?int $limit = 100, bool $forList = false): array
     {
         $before = microtime(true);
+        $ret = [];
 
         if (!$forList) {
 
@@ -166,13 +167,12 @@ class PayShetStat extends Model
                                                'ps.CardNum',
                                                'ps.CardHolder',
                                                'ps.BankName',
-                                               'c.CardNumber',
                                                'ps.IdKard',//IdCard->cards->IdPan->pan_token->encryptedPan
                                                'b.Name as BankName',
+                                               'ps.OutCardPan',
                                            ])
                                            ->from('`pay_schet` AS ps')
                                            ->leftJoin('`banks` AS b', 'ps.Bank = b.ID')
-                                           ->leftJoin('`cards` AS c', 'ps.IdKard = c.ID')
                                            ->leftJoin('`uslugatovar` AS qp', 'ps.IdUsluga = qp.ID')
                                            ->leftJoin('`user` AS u', 'u.`ID` = ps.`IdUser`')
                                            ->where('ps.DateCreate BETWEEN :DATEFROM AND :DATETO', [
@@ -237,7 +237,6 @@ class PayShetStat extends Model
                 /** @var PaySchet[] $res */
                 $res = $query->cache(3)->all();
 
-                $ret = [];
                 foreach ($res as $row) {
                     $row->VoznagSumm = $row->ComissSumm - $row->BankComis + $row->MerchVozn;
 
@@ -331,6 +330,7 @@ class PayShetStat extends Model
                 'ps.FIO',
                 'ps.RCCode',
                 'b.Name as BankName',
+                'ps.OutCardPan',
                 'RefundAmount' => $refundAmountSubQuery,
             ];
             $query = $this->buildQuery($select, $IdPart);
@@ -357,7 +357,7 @@ class PayShetStat extends Model
                 $row->VoznagSumm = (intval($row->Status) === PaySchet::STATUS_REFUND_DONE) ? 0 : ($row->ComissSumm - $row->BankComis + $row->MerchVozn);
                 $row->Currency = $row->CurrencyId ? CurrencyRepository::getCurrencyCodeById($row->CurrencyId)->Code : null;
                 $row->RefundAmount = $row['RefundAmount'] ?? 0;
-                $row->RemainingRefundAmount = $row->SummPay + $row->ComissSumm - $row->RefundAmount;
+                $row->RemainingRefundAmount = $row->SummPay - $row->RefundAmount;
 
                 if (
                     intval($row->Status) === PaySchet::STATUS_REFUND_DONE ||
@@ -495,9 +495,9 @@ class PayShetStat extends Model
                 $this->params['cardMask'] = trim($this->params['cardMask'], '; \t\n\r');
                 if (strpos($this->params['cardMask'], '*') !== false) {
                     $regexp = str_replace(['*'], ['(\d|\*)'], implode('|', $this->explode($this->params['cardMask'])));
-                    $query->andWhere(['REGEXP', 'c.CardNumber', $regexp]);
+                    $query->andWhere(['REGEXP', 'ps.CardNum', $regexp]);
                 } else {
-                    $query->andWhere(['like', 'c.CardNumber', $this->params['cardMask'] . '%', false]);
+                    $query->andWhere(['like', 'ps.CardNum', $this->params['cardMask'] . '%', false]);
                 }
             }
             if (array_key_exists('bankName', $this->params) && $this->params['bankName'] !== '') {

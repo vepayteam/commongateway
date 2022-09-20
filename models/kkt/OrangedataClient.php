@@ -9,7 +9,8 @@
 
 namespace app\models\kkt;
 
-use app\models\extservice\HttpProxy;
+use app\models\payonline\Cards;
+use app\services\DeprecatedCurlLogger;
 use \DateTime;
 use \Exception;
 use \stdClass;
@@ -17,8 +18,6 @@ use Yii;
 
 class OrangedataClient
 {
-    use HttpProxy;
-
     const MAX_ID_LENGTH = 64;
     const MAX_GROUP_LENGTH = 32;
     const MAX_KEY_LENGTH = 32;
@@ -385,7 +384,8 @@ class OrangedataClient
     {
         $jsonstring = json_encode($this->order_request, JSON_PRESERVE_ZERO_FRACTION);
         $sign = $this->sign_order_request($jsonstring);
-        $curl = is_numeric($this->api_url) ? $this->prepare_curl($this->edit_url($this->api_url, TRUE)) : $this->prepare_curl($this->api_url . '/api/v2/documents/');
+        $url = is_numeric($this->api_url) ? $this->edit_url($this->api_url, TRUE) : ($this->api_url . '/api/v2/documents/');
+        $curl = $this->prepare_curl($url);
         $headers = array(
             "Content-Length: " . strlen($jsonstring),
             "Content-Type: application/json; charset=utf-8",
@@ -399,6 +399,9 @@ class OrangedataClient
         ));
         $answer = curl_exec($curl);
         $info = curl_getinfo($curl);
+
+        DeprecatedCurlLogger::handle($info, $url, $headers, Cards::MaskCardLog($jsonstring), Cards::MaskCardLog($answer));
+
         switch ($info['http_code']) {
             case '201':
                 $return = true;
@@ -436,11 +439,17 @@ class OrangedataClient
         if (strlen($id) > 32 OR strlen($id) == 0) {
             throw new Exception('Invalid order identifier');
         }
-        $curl = is_int($this->api_url) ? $this->prepare_curl($this->edit_url($this->api_url, TRUE) . $this->inn . '/status/' . $id) : $this->prepare_curl($this->api_url . '/api/v2/documents/' . $this->inn . '/status/' . $id);
+        $url = is_int($this->api_url)
+            ? ($this->edit_url($this->api_url, TRUE) . $this->inn . '/status/' . $id)
+            : ($this->api_url . '/api/v2/documents/' . $this->inn . '/status/' . $id);
+        $curl = $this->prepare_curl($url);
         curl_setopt($curl,CURLOPT_VERBOSE , Yii::$app->params['VERBOSE'] === 'Y');
         curl_setopt($curl, CURLOPT_POST, false);
         $answer = curl_exec($curl);
         $info = curl_getinfo($curl);
+
+        DeprecatedCurlLogger::handle($info, $url, [], [], Cards::MaskCardLog($answer));
+
         switch ($info['http_code']) {
             case '200':
                 $return = $answer;
@@ -510,9 +519,14 @@ class OrangedataClient
             CURLOPT_SSL_CIPHER_LIST => 'TLSv1',
             CURLOPT_SSL_VERIFYPEER => false,
         ];
-        if (Yii::$app->params['DEVMODE'] != 'Y' && Yii::$app->params['TESTMODE'] != 'Y' && !empty($this->proxyHost)) {
-            $options[CURLOPT_PROXY] = $this->proxyHost;
-            $options[CURLOPT_PROXYUSERPWD] = $this->proxyUser;
+        if (
+            Yii::$app->params['DEVMODE'] != 'Y'
+            && Yii::$app->params['TESTMODE'] != 'Y'
+            && in_array('proxy', Yii::$app->params)
+            && !empty(Yii::$app->params['proxy']['proxyHost'])
+        ) {
+            $options[CURLOPT_PROXY] = Yii::$app->params['proxy']['proxyHost'];
+            $options[CURLOPT_PROXYUSERPWD] = Yii::$app->params['proxy']['proxyUser'];
         }
         curl_setopt_array($curl, $options);
         if ($this->debug) {
@@ -651,7 +665,8 @@ class OrangedataClient
             throw  new Exception('JSON encode error:' . json_last_error_msg());
         }
         $sign = $this->sign_order_request($jsonstring);
-        $curl = is_numeric($this->api_url) ? $this->prepare_curl($this->edit_url($this->api_url, FALSE)) : $this->prepare_curl($this->api_url . '/api/v2/corrections/');
+        $url = is_numeric($this->api_url) ? $this->edit_url($this->api_url, FALSE) : ($this->api_url . '/api/v2/corrections/');
+        $curl = $this->prepare_curl($url);
         $headers = array(
             "Content-Length: " . strlen($jsonstring),
             "Content-Type: application/json; charset=utf-8",
@@ -665,6 +680,9 @@ class OrangedataClient
         ));
         $answer = curl_exec($curl);
         $info = curl_getinfo($curl);
+
+        DeprecatedCurlLogger::handle($info, $url, $headers, Cards::MaskCardLog($jsonstring), Cards::MaskCardLog($answer));
+
         switch ($info['http_code']) {
             case '201':
                 $return = true;
@@ -702,12 +720,18 @@ class OrangedataClient
         if (strlen($id) > 32 OR strlen($id) == 0) {
             throw new Exception('Invalid order identifier');
         }
-        $curl = is_numeric($this->api_url) ? $this->prepare_curl($this->edit_url($this->api_url,FALSE) . $this->inn . '/status/' . $id) : $this->prepare_curl($this->api_url . '/api/v2/corrections/' . $this->inn . '/status/' . $id);
+        $url = is_numeric($this->api_url)
+            ? ($this->edit_url($this->api_url,FALSE) . $this->inn . '/status/' . $id)
+            : ($this->api_url . '/api/v2/corrections/' . $this->inn . '/status/' . $id);
+        $curl = $this->prepare_curl($url);
         curl_setopt($curl, CURLOPT_POST, false);
         curl_setopt($curl, CURLOPT_VERBOSE, Yii::$app->params['VERBOSE'] === 'Y');
 
         $answer = curl_exec($curl);
         $info = curl_getinfo($curl);
+
+        DeprecatedCurlLogger::handle($info, $url, [], [], Cards::MaskCardLog($answer));
+
         switch ($info['http_code']) {
             case '200':
                 $return = $answer;

@@ -8,6 +8,7 @@ use app\models\partner\UserLk;
 use app\models\TU;
 use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\PaySchet;
+use app\services\payment\models\repositories\CurrencyRepository;
 use Yii;
 use yii\helpers\VarDumper;
 
@@ -50,6 +51,7 @@ class OtchToCSV extends ToCSV
                 'Сумма',
                 'Комиссия',
                 'К оплате',
+                'Валюта',
             ],
             $header_admin,
             [
@@ -59,10 +61,12 @@ class OtchToCSV extends ToCSV
                 'Дата оплаты',
                 'Номер транзакции',
                 'ID мерчанта',
+                'Тип карты',
                 'Маска карты',
                 'Держатель карты',
                 'RRN',
                 'Хэш от номера карты',
+                'Маска карты получателя',
                 'Наименование банка-эквайера',
                 ]
         );
@@ -146,6 +150,7 @@ class OtchToCSV extends ToCSV
                         number_format($data->SummPay / 100.0, 2, '.', ''),
                         number_format($data->ComissSumm / 100.0, 2, '.', ''),
                         number_format(($data->SummPay + $data->ComissSumm) / 100.0, 2, '.', ''),
+                        $data->CurrencyId ? CurrencyRepository::getCurrencyCodeById($data->CurrencyId)->Code : null,
                     ],
                     $ret_admin,
                     [
@@ -155,10 +160,12 @@ class OtchToCSV extends ToCSV
                         $data->DateOplat > 0 ? date("d.m.Y H:i:s", $data->DateOplat) : '',
                         $data->ExtBillNumber,
                         $data->IdOrg,
+                        $data->CardType,
                         $data->CardNum,
                         $data->CardHolder,
                         $data->RRN,
                         $data->IdKard,
+                        $data->OutCardPan,
                         $data->BankName,
                     ]
 

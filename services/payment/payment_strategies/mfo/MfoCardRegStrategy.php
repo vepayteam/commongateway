@@ -49,7 +49,7 @@ class MfoCardRegStrategy
         $paySchet = $this->createPaySchet($user, $bankAdapterBuilder);
 
         /** @var LanguageService $languageService */
-        $languageService = \Yii::$container->get('LanguageService');
+        $languageService = \Yii::$app->get(LanguageService::class);
         $languageService->saveApiLanguage($paySchet->ID, $this->cardRegByPayForm->language);
 
         return $paySchet;
@@ -130,6 +130,7 @@ class MfoCardRegStrategy
         $paySchet->CancelUrl = $this->cardRegByPayForm->cancelurl;
         $paySchet->PostbackUrl = $this->cardRegByPayForm->postbackurl;
         $paySchet->PostbackUrl_v2 = $this->cardRegByPayForm->postbackurl_v2;
+        $paySchet->UserEmail = $this->cardRegByPayForm->email;
 
         $paySchet->sms_accept = 1;
 

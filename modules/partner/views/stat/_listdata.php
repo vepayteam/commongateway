@@ -52,6 +52,7 @@ use yii\widgets\LinkPager;
         <th>Держатель карты</th>
         <th>RRN</th>
         <th>Хэш от номера карты</th>
+        <th>Маска карты получателя</th>
         <th>Провайдер</th>
         <th>Действия</th>
     </tr>
@@ -101,10 +102,11 @@ use yii\widgets\LinkPager;
                 <td><?= Html::encode($row['CardType']) ?></td>
                 <td><?= Html::encode($row['CountryUser'] . " " . $row['CityUser']) ?></td>
                 <td><?= Html::encode($row['IdOrg']) ?></td>
-                <td><?= Html::encode($row['CardNumber']) ?></td>
+                <td><?= Html::encode($row['CardNum']) ?></td>
                 <td><?= Html::encode($row['CardHolder']) ?></td>
                 <td><?= Html::encode($row['RRN']) ?></td>
                 <td><?= Html::encode($row['IdKard']) ?></td>
+                <td><?= Html::encode($row['OutCardPan']) ?></td>
                 <td><?= Html::encode($row['BankName']) ?></td>
                 <td>
                     <input class='btn btn-white btn-xs' data-action="logpay" data-id='<?= Html::encode($row['ID']) ?>' type='button' value='Лог'>

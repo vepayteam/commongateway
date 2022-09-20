@@ -3,17 +3,14 @@
 
 namespace app\models\bank;
 
-
-use app\models\extservice\HttpProxy;
 use app\models\payonline\Cards;
+use app\services\CurlLogger;
 use qfsx\yii2\curl\Curl;
 use Yii;
 use yii\helpers\Json;
 
 class ApplePay
 {
-    use HttpProxy;
-
     public function GetConf($IdPartner)
     {
         $res = Yii::$app->db->createCommand('
@@ -47,6 +44,9 @@ class ApplePay
             "displayName" => $conf['Apple_displayName']
         ];
         $curl = new Curl();
+        $headers = [
+            'Content-type: application/json'
+        ];
         try {
             $curl->reset()
                 ->setOption(CURLOPT_VERBOSE, Yii::$app->params['VERBOSE'] === 'Y')
@@ -58,19 +58,24 @@ class ApplePay
                 //->setOption(CURLOPT_CAINFO, $this->caFile)
                 ->setOption(CURLOPT_SSLKEY, $UserKey)
                 ->setOption(CURLOPT_SSLCERT, $UserCert)
-                ->setOption(CURLOPT_HTTPHEADER, [
-                    'Content-type: application/json'
-                ])
+                ->setOption(CURLOPT_HTTPHEADER, $headers)
                 ->setOption(CURLOPT_POST, Json::encode($data));
 
             if (!empty($conf['Apple_KeyPasswd'])) {
                 $curl->setOption(CURLOPT_SSLKEYPASSWD, $conf['Apple_KeyPasswd']);
             }
-            if (Yii::$app->params['DEVMODE'] != 'Y' && Yii::$app->params['TESTMODE'] != 'Y') {
-                $curl->setOption(CURLOPT_PROXY, $this->proxyHost);
-                $curl->setOption(CURLOPT_PROXYUSERPWD, $this->proxyUser);
+            if (
+                Yii::$app->params['DEVMODE'] != 'Y'
+                && Yii::$app->params['TESTMODE'] != 'Y'
+                && in_array('proxy', Yii::$app->params)
+                && !empty(Yii::$app->params['proxy']['proxyHost'])
+            ) {
+                $curl->setOption(CURLOPT_PROXY, Yii::$app->params['proxy']['proxyHost']);
+                $curl->setOption(CURLOPT_PROXYUSERPWD, Yii::$app->params['proxy']['proxyUser']);
             }
             $ans = $curl->post('https://'.$validationURL.'/paymentSession');
+
+            CurlLogger::handle($curl, 'https://'.$validationURL.'/paymentSession', $headers, Cards::MaskCardLog($data), Cards::MaskCardLog($ans));
 
         } catch (\Exception $e) {
             Yii::warning("curlerror: " . $curl->responseCode . ":" . Cards::MaskCardLog($curl->response), 'merchant');

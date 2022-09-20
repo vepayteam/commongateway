@@ -7,6 +7,7 @@ use app\models\kfapi\KfFormPay;
 use app\models\mfo\MfoReq;
 use app\models\payonline\Cards;
 use app\modules\mfo\jobs\recurrentPaymentParts\ExecutePaymentJob;
+use app\modules\mfo\models\PayToCardForm;
 use app\modules\mfo\models\RecurrentPaymentPartsForm;
 use app\services\base\exceptions\InvalidInputParamException;
 use app\services\compensationService\CompensationException;
@@ -17,12 +18,16 @@ use app\services\payment\forms\AutoPayForm;
 use app\services\payment\forms\CreatePayPartsForm;
 use app\services\payment\forms\MfoCallbackForm;
 use app\services\payment\forms\MfoLkPayForm;
+use app\services\payment\models\Currency;
 use app\services\payment\models\PaySchet;
 use app\services\payment\payment_strategies\CreatePayPartsStrategy;
 use app\services\payment\payment_strategies\mfo\MfoAutoPayStrategy;
 use app\services\payment\payment_strategies\mfo\MfoPayLkCallbackStrategy;
 use app\services\payment\payment_strategies\mfo\MfoPayLkCreateStrategy;
 use app\services\PaySchetService;
+use app\services\PayToCardService;
+use app\services\payToCardService\CreatePaymentException;
+use app\services\payToCardService\data\CreatePaymentData;
 use app\services\RecurrentPaymentPartsService;
 use app\services\recurrentPaymentPartsService\PaymentException;
 use Yii;
@@ -47,6 +52,10 @@ class PayController extends Controller
      */
     private $recurrentPaymentService;
     /**
+     * @var PayToCardService
+     */
+    private $payToCardService;
+    /**
      * @var Queue
      */
     private $queue;
@@ -60,6 +69,8 @@ class PayController extends Controller
 
         $this->paySchetService = \Yii::$app->get(PaySchetService::class);
         $this->recurrentPaymentService = \Yii::$app->get(RecurrentPaymentPartsService::class);
+        $this->payToCardService = \Yii::$app->get(PayToCardService::class);
+
         $this->queue = \Yii::$app->queue;
     }
 
@@ -193,7 +204,7 @@ class PayController extends Controller
         }
         $result = $this->actionLk();
 
-        if($result['status'] == 1) {
+        if ($result['status'] == 1) {
             $kfFormPay->createFormElements($result['id']);
             $result['url'] = $kfFormPay->GetPayForm($result['id']);
         }
@@ -208,7 +219,7 @@ class PayController extends Controller
         $createPayPartsForm = new CreatePayPartsForm();
         $createPayPartsForm->partner = $mfoReq->getPartner();
         $createPayPartsForm->load($mfoReq->Req(), '');
-        if(!$createPayPartsForm->validate()) {
+        if (!$createPayPartsForm->validate()) {
             Yii::error("pay/lk: " . $createPayPartsForm->GetError());
             return ['status' => 0, 'message' => $createPayPartsForm->GetError()];
         }
@@ -231,7 +242,7 @@ class PayController extends Controller
                 'id' => $e->getPaySchetId(),
                 'extid' => $e->getPaySchetExtId(),
             ])->setStatusCode(400);
-        } catch (CreatePayException | GateException $e) {
+        } catch (CreatePayException|GateException $e) {
             return [
                 'status' => 2,
                 'message' => $e->getMessage(),
@@ -239,7 +250,7 @@ class PayController extends Controller
         }
     }
 
-        /**
+    /**
      * Автопогашение займа
      * @return array|Response
      * @throws BadRequestHttpException
@@ -255,7 +266,7 @@ class PayController extends Controller
         $autoPayForm = new AutoPayForm();
         $autoPayForm->partner = $mfo->getPartner();
         $autoPayForm->load($mfo->Req(), '');
-        if(!$autoPayForm->validate()) {
+        if (!$autoPayForm->validate()) {
             Yii::warning("mfo/pay/auto: ошибка валидации формы");
             return ['status' => 0, 'message' => $autoPayForm->getError()];
         }
@@ -290,12 +301,12 @@ class PayController extends Controller
     }
 
     /**
-     * @throws \yii\web\UnauthorizedHttpException
+     * @return array|Response
      * @throws ForbiddenHttpException
      * @throws BadRequestHttpException
      * @throws \yii\db\Exception
      * @throws Exception
-     * @return array|Response
+     * @throws \yii\web\UnauthorizedHttpException
      */
     public function actionAutoParts()
     {
@@ -346,6 +357,76 @@ class PayController extends Controller
     }
 
     /**
+     * @return array
+     * @throws BadRequestHttpException
+     * @throws ForbiddenHttpException
+     * @throws \yii\db\Exception
+     * @throws \yii\web\UnauthorizedHttpException
+     */
+    public function actionPayToCard(): array
+    {
+        $mfo = new MfoReq();
+        $mfo->LoadData(Yii::$app->request->getRawBody());
+        $partner = $mfo->getPartner();
+
+        $form = new PayToCardForm($partner);
+        $form->load($mfo->Req(), '');
+        if (!$form->validate()) {
+            return [
+                'status' => 0,
+                'message' => array_values($form->getFirstErrors())[0],
+            ];
+        }
+
+        $currency = !empty($form->currency)
+            ? Currency::findByCode($form->currency)
+            : Currency::findDefaultCurrency();
+        try {
+            $paySchet = $this->payToCardService->createPayment($partner, new CreatePaymentData(
+                round($form->amount * 100),
+                $currency,
+                $form->documentId,
+                $form->fullName,
+                $form->extId,
+                $form->timeout,
+                $form->successUrl,
+                $form->failUrl,
+                $form->cancelUrl,
+                $form->language,
+                $form->recipientCardNumber,
+                $form->getPresetSenderCard(),
+                $form->postbackUrl,
+                $form->postbackUrlV2,
+                (bool)$form->cardRegistration,
+                $form->description
+            ));
+        } catch (CreatePaymentException $e) {
+            switch ($e->getCode()) {
+                case CreatePaymentException::NO_USLUGATOVAR:
+                    return ['status' => 0, 'message' => 'Услуга не найдена.'];
+                case CreatePaymentException::NO_GATE:
+                    return ['status' => 0, 'message' => 'Шлюз не найден.'];
+                case CreatePaymentException::TOKEN_ERROR:
+                    return ['status' => 0, 'message' => 'Невозможно создать токен карты.'];
+                default:
+                    return ['status' => 0, 'message' => 'Ошибка оплаты.'];
+            }
+        }
+
+        $urlForm = Yii::$app->params['domain'] . '/pay/form/' . $paySchet->ID;
+        if ($paySchet->p2pRepayment->presetHash !== null) {
+            $urlForm = $urlForm . '?' . http_build_query(['presetHash' => $paySchet->p2pRepayment->presetHash]);;
+        }
+
+        return [
+            'status' => 1,
+            'id' => $paySchet->ID,
+            'url' => $urlForm,
+            'message' => '',
+        ];
+    }
+
+    /**
      * Статус платежа погашения
      * @return array
      * @throws BadRequestHttpException
@@ -365,13 +446,14 @@ class PayController extends Controller
             'IdOrg' => $mfo->mfo,
         ]);
 
-        if(!$paySchet) {
+        if (!$paySchet) {
             return ['status' => 0, 'message' => 'Счет не найден'];
         }
 
-        if($paySchet->Status == PaySchet::STATUS_WAITING) {
+        if ($paySchet->Status == PaySchet::STATUS_WAITING) {
             return [
                 'status' => 0,
+                'serviceName' => $paySchet->uslugatovar->type->Name,
                 'message' => 'В обработке',
                 'rc' => '',
                 'channel' => $paySchet->bank->ChannelName,
@@ -379,6 +461,7 @@ class PayController extends Controller
         } else {
             return [
                 'status' => (int)$paySchet->Status,
+                'serviceName' => $paySchet->uslugatovar->type->Name,
                 'message' => (string)$paySchet->ErrorInfo,
                 'rc' => $paySchet->RCCode,
                 'channel' => $paySchet->bank->ChannelName,
@@ -398,13 +481,14 @@ class PayController extends Controller
             'IdOrg' => $mfo->mfo,
         ]);
 
-        if(!$paySchet) {
+        if (!$paySchet) {
             return ['status' => 0, 'message' => 'Счет не найден'];
         }
 
-        if($paySchet->Status == PaySchet::STATUS_WAITING) {
+        if ($paySchet->Status == PaySchet::STATUS_WAITING) {
             return [
                 'status' => 0,
+                'serviceName' => $paySchet->uslugatovar->type->Name,
                 'message' => 'В обработке',
                 'rc' => '',
                 'channel' => $paySchet->bank->ChannelName,
@@ -413,6 +497,7 @@ class PayController extends Controller
         } else {
             return [
                 'status' => (int)$paySchet->Status,
+                'serviceName' => $paySchet->uslugatovar->type->Name,
                 'message' => (string)$paySchet->ErrorInfo,
                 'rc' => $paySchet->RCCode,
                 'channel' => $paySchet->bank->ChannelName,
@@ -448,7 +533,7 @@ class PayController extends Controller
 
         try {
             $callbackStrategy->exec();
-        } catch (InvalidInputParamException | \Exception $e) {
+        } catch (InvalidInputParamException|\Exception $e) {
             Yii::warning("pay/callback: " . $e->getMessage());
             return ['status' => 0, 'message' => 'Ошибка запроса'];
         }

@@ -9,6 +9,7 @@ use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\Payschets;
 use app\models\TU;
+use app\services\CurlLogger;
 use qfsx\yii2\curl\Curl;
 use SoapClient;
 use SoapHeader;
@@ -71,57 +72,9 @@ class MTSBank implements IBank
         $type = $mtsGate->getTypeGate();
         $this->type = $type;
 
-        if (in_array($type, [self::$OCTGATE, self::$SCHETGATE]) && !empty($params['MtsLoginOct'])) {
-            //выдача на карту OCT, и на счет
-            $this->shopId = $mtsGate->gates['MtsLoginOct'];
-            $this->certFile = $mtsGate->gates['MtsPasswordOct'];
-            $this->keyFile = $mtsGate->gates['MtsTokenOct'];
-        } elseif ($type == self::$AFTGATE && !empty($params['MtsLoginAft'])) {
-            //прием с карты AFT
-            $this->shopId = $mtsGate->gates['MtsLoginAft'];
-            $this->certFile = $mtsGate->gates['MtsPasswordAft'];
-            $this->keyFile = $mtsGate->gates['MtsTokenAft'];
-        } elseif ($type == self::$ECOMGATE && !empty($params['MtsLoginEcom'])) {
-            //ecom
-            $this->shopId = $mtsGate->gates['MtsLoginEcom'];
-            $this->certFile = $mtsGate->gates['MtsPasswordEcom'];
-            $this->keyFile = $mtsGate->gates['MtsTokenEcom'];
-        } elseif ($type == self::$VYVODGATE && !empty($params['MtsLoginVyvod'])) {
-            //вывод платежей
-            $this->shopId = $mtsGate->gates['MtsLoginVyvod'];
-            $this->certFile = $mtsGate->gates['MtsPasswordVyvod'];
-            $this->keyFile = $mtsGate->gates['MtsTokenVyvod'];
-        } elseif ($type == self::$JKHGATE && !empty($params['MtsLoginJkh'])) {
-            //жкх платежи
-            $this->shopId = $mtsGate->gates['MtsLoginJkh'];
-            $this->certFile = $mtsGate->gates['MtsPasswordJkh'];
-            $this->keyFile = $mtsGate->gates['MtsTokenJkh'];
-        } elseif ($type == self::$AUTOPAYGATE && !empty($params['MtsLoginAuto'])) {
-            //авторплатеж
-            $this->shopId = $mtsGate->gates['MtsLoginAuto'];
-            $this->certFile = $mtsGate->gates['MtsPasswordAuto'];
-            $this->keyFile = $mtsGate->gates['MtsTokenAuto'];
-        } elseif ($type == self::$PEREVODGATE && !empty($params['MtsLoginPerevod'])) {
-            //перевод зарезервированной комиссии обратно
-            $this->shopId = $mtsGate->gates['MtsLoginPerevod'];
-            $this->certFile = $mtsGate->gates['MtsPasswordPerevod'];
-            $this->keyFile = $mtsGate->gates['MtsTokenPerevod'];
-        } elseif ($type == self::$VYVODOCTGATE && !empty($params['MtsLoginOctVyvod'])) {
-            //выводсо счета выплат
-            $this->shopId = $mtsGate->gates['MtsLoginOctVyvod'];
-            $this->certFile = $mtsGate->gates['MtsPasswordOctVyvod'];
-            $this->keyFile = $mtsGate->gates['MtsTokenOctVyvod'];
-        } elseif ($type == self::$PEREVODOCTGATE && !empty($params['MtsLoginOctPerevod'])) {
-            //перевод со счета выплат внутри банка
-            $this->shopId = $mtsGate->gates['MtsLoginOctPerevod'];
-            $this->certFile = $mtsGate->gates['MtsPasswordOctPerevod'];
-            $this->keyFile = $mtsGate->gates['MtsTokenOctPerevod'];
-        } elseif ($type == self::$PARTSGATE && !empty($params['MtsLoginParts'])) {
-            //платежи с разбивкой
-            $this->shopId = $mtsGate->gates['MtsLoginParts'];
-            $this->certFile = $mtsGate->gates['MtsPasswordParts'];
-            $this->keyFile = $mtsGate->gates['MtsTokenParts'];
-        }
+        $this->shopId = null;
+        $this->certFile = null;
+        $this->keyFile = null;
     }
 
     /**
@@ -242,7 +195,6 @@ class MTSBank implements IBank
 //        $partner = Partner::findOne(['ID' => $params['IDPartner']]);
 //
 //        $response = (new SoapRequestBuilder($this->bankP2PUrl, 'registerP2P', $registerP2P))
-//            ->addSecurity($partner->MtsLoginOct, $partner->MtsPasswordOct)
 //            ->addBody()
 //            ->sendRequest();
 //
@@ -274,7 +226,6 @@ class MTSBank implements IBank
 //        }
 //
 //        $response = (new SoapRequestBuilder($this->bankP2PUrl, 'performP2P', $performP2P))
-//            ->addSecurity($partner->MtsLoginOct, $partner->MtsPasswordOct)
 //            ->addBody()
 //            ->sendRequest();
     }
@@ -687,14 +638,15 @@ class MTSBank implements IBank
         $timout = 110;
         $curl = new Curl();
         Yii::warning("req: login = " . $this->shopId . " url = " . $url . "\r\n" . $this->MaskLog($post), 'merchant');
+        $headers = array_merge([
+            'Content-Type: application/x-www-form-urlencoded; charset=utf-8'
+        ], $addHeader);
         try {
             $curl->reset()
                 ->setOption(CURLOPT_VERBOSE, Yii::$app->params['VERBOSE'] === 'Y')
                 ->setOption(CURLOPT_TIMEOUT, $timout)
                 ->setOption(CURLOPT_CONNECTTIMEOUT, $timout)
-                ->setOption(CURLOPT_HTTPHEADER, array_merge([
-                    'Content-Type: application/x-www-form-urlencoded; charset=utf-8'
-                ], $addHeader))
+                ->setOption(CURLOPT_HTTPHEADER, $headers)
                 ->setOption(CURLOPT_SSL_VERIFYHOST, false)
                 ->setOption(CURLOPT_SSL_CIPHER_LIST, 'TLSv1')
                 //->setOption(CURLOPT_SSLKEY, $this->keyFile)
@@ -703,6 +655,9 @@ class MTSBank implements IBank
                 ->setOption(CURLOPT_SSL_VERIFYPEER, false)
                 ->setOption(CURLOPT_POSTFIELDS, $post)
                 ->post($url);
+
+            CurlLogger::handle($curl, $url, $headers, $this->MaskLog($post), Cards::MaskCardLog($curl->response));
+
         } catch (\Exception $e) {
             Yii::warning("curlerror: " . $curl->responseCode . ":" . Cards::MaskCardLog($curl->response), 'merchant');
             $ans['error'] = $curl->errorCode . ": " . $curl->responseCode;

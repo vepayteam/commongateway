@@ -4,7 +4,9 @@
 namespace app\services\notifications\jobs;
 
 
+use app\models\payonline\Cards;
 use app\models\planner\Notification;
+use app\services\DeprecatedCurlLogger;
 use app\services\notifications\models\NotificationPay;
 use app\services\payment\models\PaySchet;
 use GuzzleHttp\Client;
@@ -41,6 +43,9 @@ class CallbackSendJob extends BaseObject implements \yii\queue\JobInterface
 
             $curl = curl_init();
             Yii::warning('CallbackSendJob sendEnd: ' . $this->notificationPayId);
+            $headers = [
+                "Content-Type: application/json"
+            ];
             curl_setopt_array($curl, array(
                 CURLOPT_URL => $notificationPay->getNotificationUrl(),
                 CURLOPT_RETURNTRANSFER => true,
@@ -50,14 +55,15 @@ class CallbackSendJob extends BaseObject implements \yii\queue\JobInterface
                 CURLOPT_FOLLOWLOCATION => true,
                 CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
                 CURLOPT_CUSTOMREQUEST => "GET",
-                CURLOPT_HTTPHEADER => array(
-                    "Content-Type: application/json"
-                ),
+                CURLOPT_HTTPHEADER => $headers,
             ));
 
             try {
                 $startTimeExec = microtime(true);
                 $response = curl_exec($curl);
+
+                DeprecatedCurlLogger::handle(curl_getinfo($curl), $notificationPay->getNotificationUrl(), $headers, [], Cards::MaskCardLog($response));
+
                 Yii::warning(sprintf(
                         'CallbackSendJob response: %s ;  %s',
                         $this->notificationPayId,

@@ -10,25 +10,24 @@ use Yii;
 class BrsPaySchetStat extends PayShetStat
 {
     /**
-     * Список платежей
+     * Список платежей. !!! Используется только в выгрузках БРС
      *
-     * @param int $IsAdmin
-     * @param int $page
-     * @param int $nolimit
+     * @param bool $IsAdmin
+     * @param int $offset
+     * @param int|null $limit
+     * @param bool $forList
      *
      * @return array
      */
-    public function getList($IsAdmin, $page = 0, $nolimit = 0)
+    public function getList(bool $IsAdmin, int $offset = 0, ?int $limit = 100, bool $forList = false): array
     {
-        $this->idBank = BRSAdapter::$bank;
+        $this->idBank = BRSAdapter::bankId();
 
         $ret = [];
         $cnt = $sumPay = $sumComis = $voznagps = $bankcomis = 0;
         $before = microtime(true);
 
         try {
-
-            $CNTPAGE = 100;
 
             $IdPart = $IsAdmin ? $this->IdPart : UserLk::getPartnerId(Yii::$app->user);
 
@@ -89,7 +88,7 @@ class BrsPaySchetStat extends PayShetStat
                 ->leftJoin('`partner_bank_gates` AS pbg',
                     'pbg.BankId = b.ID AND pbg.PartnerId = qp.IDPartner AND pbg.TU = qp.IsCustom')
                 ->leftJoin('`user` AS u', 'u.`ID` = ps.`IdUser`')
-                ->where('ps.Bank = :BANK', [':BANK' => BRSAdapter::$bank])
+                ->where('ps.Bank = :BANK', [':BANK' => BRSAdapter::bankId()])
                 ->andWhere('ps.DateCreate BETWEEN :DATEFROM AND :DATETO', [
                     ':DATEFROM' => strtotime($this->datefrom . ":00"),
                     ':DATETO' => strtotime($this->dateto . ":59")
@@ -116,13 +115,6 @@ class BrsPaySchetStat extends PayShetStat
                 $cnt++;
             }
 
-            if (!$nolimit) {
-                if ($page > 0) {
-                    $query->offset($CNTPAGE * $page);
-                }
-                $query->orderBy('`ID` DESC')->limit($CNTPAGE);
-            }
-
             $ret = $query->cache(3)->all();
 
             $after = microtime(true);
@@ -136,6 +128,6 @@ class BrsPaySchetStat extends PayShetStat
             Yii::warning("getList Error FINALLY ");
         }
 
-        return ['data' => $ret, 'cnt' => $cnt, 'cntpage' => $CNTPAGE, 'sumpay' => $sumPay, 'sumcomis' => $sumComis, 'bankcomis' => $bankcomis, 'voznagps' => $voznagps];
+        return ['data' => $ret, 'cnt' => $cnt, 'cntpage' => $limit, 'sumpay' => $sumPay, 'sumcomis' => $sumComis, 'bankcomis' => $bankcomis, 'voznagps' => $voznagps];
     }
 }

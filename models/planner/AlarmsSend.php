@@ -3,17 +3,16 @@
 
 namespace app\models\planner;
 
-
-use app\models\extservice\HttpProxy;
 use app\models\partner\admin\AlarmsSettings;
+use app\models\payonline\Cards;
 use app\models\SendEmail;
+use app\services\CurlLogger;
 use qfsx\yii2\curl\Curl;
 use Yii;
 use yii\db\Exception;
 
 class AlarmsSend
 {
-    use HttpProxy;
 
     public function execute()
     {
@@ -206,15 +205,23 @@ class AlarmsSend
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_SSL_CIPHER_LIST => 'TLSv1'
         ]);
-        if (Yii::$app->params['DEVMODE'] != 'Y' && Yii::$app->params['TESTMODE'] != 'Y' && !empty($this->proxyHost)) {
-            $curl->setOption(CURLOPT_PROXY, $this->proxyHost);
-            $curl->setOption(CURLOPT_PROXYUSERPWD, $this->proxyUser);
+        if (
+            Yii::$app->params['DEVMODE'] != 'Y'
+            && Yii::$app->params['TESTMODE'] != 'Y'
+            && in_array('proxy', Yii::$app->params)
+            && !empty(Yii::$app->params['proxy']['proxyHost'])
+        ) {
+            $curl->setOption(CURLOPT_PROXY, Yii::$app->params['proxy']['proxyHost']);
+            $curl->setOption(CURLOPT_PROXYUSERPWD, Yii::$app->params['proxy']['proxyUser']);
         }
         try {
             $curl->head('https://mainsms.ru/');
             if ($curl->responseCode == 200) {
                 $ret = 1;
             }
+
+            CurlLogger::handle($curl, 'https://mainsms.ru/', [], [], Cards::MaskCardLog($curl->response));
+
             if ($curl->errorCode) {
                 Yii::warning('CheckMainSms error: ' . $curl->errorCode . ":" . $curl->errorText, 'rsbcron');
             }

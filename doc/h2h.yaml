@@ -101,6 +101,104 @@ paths:
                 $ref: "#/components/schemas/NotFoundError"
         "422":
           description: Ошибки валидации. JSON-структура аналогичная запросу, где текст ошибки в значениях атрибутов объекта
+    get:
+      summary: Возвращает Оплату Счета
+      description: |
+        Объект Оплата Счета с данными карты и переадресации на проверку 3DS (ACS).<br/>
+        
+        ## Переадресация
+        Если объект с данными переадресации (**acsRedirect**) не null, необходимо сделать переадресацию браузера
+        клиента на страницу прохождения 3DS методом, указанным в поле **method** объекта.<br/>
+        
+        ### Возможные значения поля **method**:<br/>
+        
+        #### - GET
+        Произвести переадресацию на страницу, указанную в поле **url**.<br/>
+        Пример объета **acsRedirect**: 
+        ```
+        {
+          "status": "OK",
+          "method": "GET"
+          "url": "https://some-access-control-server.com/3ds?payId=123"
+        }
+        ```
+        Пример реализации в коде на JavaScript, который нужно выполнить в браузере клиента:
+        ```
+        window.location = acsRedirect.url;
+        ```
+        
+        #### - POST
+        В данном случае нужно добавить в тело страницы оплаты и отправить (с помощью JavaScript) HTML-форму с методом 
+        POST и параметрами, указанными в объекте **postParameters** на адрес, указанный в поле **url**. 
+        Поля объекта **postParameters** не фиксированные и могут измениться (предоставляются банком). 
+        Пример объета **acsRedirect**: 
+        ```
+        {
+          "status": "OK",
+          "method": "POST"
+          "url": "https://some-access-control-server.com/3ds?payId=123",
+          "postParameters": {
+            "pa_req": "K8QufpC0UQXOoYcNlfT857Tvu15Wli12WXyvCyTX8AKY2QyMUCk",
+            "md": "YcNlfT857Tvu15Wli12WXyvCyTX8AKY2QyMUCkGMifQ==",
+            "term_url": "https://api.vepay.online/pay/orderdone/12345"
+          }
+        }
+        ```
+        Пример в HTML:
+        ```
+        <form id="myForm" method="POST" action="https://some-access-control-server.com/3ds?payId=123">
+          <input type="hidden" name="pa_req" value="K8QufpC0UQXOoYcNlfT857Tvu15Wli12WXyvCyTX8AKY2QyMUCk"/>
+          <input type="hidden" name="md" value="YcNlfT857Tvu15Wli12WXyvCyTX8AKY2QyMUCkGMifQ=="/>
+          <input type="hidden" name="term_url" value="https://api.vepay.online/pay/orderdone/12345"/>
+        </form>
+        <script>
+          document.getElementById('myForm').submit();
+        </script>
+        ```
+        Пример чистой (без HTML) реализации в коде на JavaScript, который нужно выполнить в браузере клиента:
+        ```
+        // создаем и добавляем на страницу форму
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = acsRedirect.url;
+        document.body.appendChild(form);
+        // добавляем в форму поля
+        for (const key in acsRedirect.postParameters) {
+          const hiddenField = document.createElement('input');
+          hiddenField.type = 'hidden';
+          hiddenField.name = key;
+          hiddenField.value = acsRedirect.postParameters[key];
+          form.appendChild(hiddenField);
+        }
+        // отправляем форму
+        form.submit();
+        ```
+        Пример реализации на JavaScript с использованием jQuery:
+        ```
+        const $form = $('<form></form>')
+          .attr({'method': 'POST', 'action': acsRedirect.url})
+          .appendTo('body');
+        for (const key in acsRedirect.postParameters) {
+          $('<input/>')
+            .attr({'type': 'hidden', 'name': key, 'value': acsRedirect.postParameters[key]})
+            .appendTo($form);
+        }
+        $form.submit();
+        ```
+
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+        "404":
+          description: Счет не найден, либо оплата по счету не произведена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotFoundError"
 
   /invoices/{id}/payment/refunds:
     parameters:
@@ -200,6 +298,7 @@ components:
     Invoice:
       description: Счет
       type: object
+      required: [amountFractional, currencyCode, externalId, client]
       properties:
         id:
           type: integer
@@ -209,14 +308,12 @@ components:
         amountFractional:
           type: integer
           description: Сумма платежа в копейках (центах)
-          required: true
           minimum: 100
           maximum: 100000000
           example: 50000
         currencyCode:
           type: string
           description: Валюта Счета
-          required: true
           enum: [ RUB, USD, EUR ]
           example: "RUB"
         documentId:
@@ -231,7 +328,6 @@ components:
           minLength: 1
           maxLength: 40
           example: "18a2f5e5-6548-4879-88db-b272c7d6b473"
-          required: true
         description:
           type: string
           description: Описание
@@ -322,53 +418,141 @@ components:
 
     Payment:
       type: object
+      required: [ip, card]
       properties:
         ip:
           type: string
           description: IP Клиента
-          required: true
           example: "108.177.16.21"
           writeOnly: true
-        acsUrl:
-          type: string
-          readOnly: true
-          description: URL страницы проверки 3DS. Если null, проверка не требуется.
-          example: "https://pay1time.com/api/processingResult?payId=188636&status=succes&url=dfgdfgdfgdfdfgfdg=="
-        card:
+        acsRedirect:
+          title: Данные для перенаправления пользователя на страницу ACS (проверка 3DS)
           type: object
+          nullable: true
+          readOnly: true
+          properties:
+            status:
+              type: string
+              enum: [ "OK", "PENDING" ]
+              description: >
+                Статус оплаты Счета:
+                * "OK" - Готово
+                * "PENDING" - Ожидание. Требуется сделать повторный запрос позже.
+              example: "OK"
+            url:
+              type: string
+              description: URL страницы проверки 3DS. null, если статус PENDING.
+              example: "https://some-access-control-server.com/3ds?payId=123"
+            method:
+              type: string
+              description: >
+                HTTP-метод для перенаправления браузера пользователя на страницу проверки 3DS.
+                Если POST, потребуется добавить форму с указанным адресом и параметрами на страницу оплаты
+                в браузере клиента и отправить с помощью JavaScript.
+                null, если статус PENDING.
+              example: "POST"
+            postParameters:
+              type: object
+              description: >
+                Параметры формы для перенаправления методом POST.
+                null, если метод GET или статус PENDING. 
+                Состав параметров не фиксированный (может меняться), определяется банком.
+              additionalProperties: true
+              example: {
+                "pa_req": "K8QufpC0UQXOoYcNlfT857Tvu15Wli12WXyvCyTX8AKY2QyMUCk",
+                "md": "YcNlfT857Tvu15Wli12WXyvCyTX8AKY2QyMUCkGMifQ==",
+                "term_url": "https://api.vepay.online/pay/orderdone/12345"
+              }
+        card:
+          title: Данные карты
+          type: object
+          required: [cardNumber, cardHolder, expires, cvc]
           properties:
             cardNumber:
               type: string
-              required: true
               description: Номер карты. В ответе замаскирован.
               example: "4111111111111111"
             cardHolder:
               type: string
-              required: true
               description: Держатель карты
               example: "Terentiev Mihail"
             expires:
               type: string
-              required: true
               description: Месяц/год карты
               maxLength: 4
               minLength: 4
               example: "0122"
             cvc:
               type: string
-              required: true
               writeOnly: true
               description: CVC
               maxLength: 3
               minLength: 3
               example: "123"
+        headerMap:
+          title: HTTP-заголовки
+          type: object
+          required: [userAgent, accept]
+          nullable: true
+          writeOnly: true
+          properties:
+            userAgent:
+              type: string
+              description: HTTP-заголовок User-Agent.
+              maxLength: 255
+              example: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"
+            accept:
+              type: string
+              description: HTTP-заголовок Accept.
+              maxLength: 255
+              example: "text/html"
+        browserData:
+          title: Данные браузера пользователя
+          type: object
+          required: [screenHeight, screenWidth, windowHeight, windowWidth, timezoneOffset, language, colorDepth, javaEnabled]
+          nullable: true
+          writeOnly: true
+          properties:
+            screenHeight:
+              type: integer
+              description: "Высота экрана. JavaScript: window.screen.height."
+              example: 800
+            screenWidth:
+              type: integer
+              description: "Ширина экрана. JavaScript: window.screen.width."
+              example: 1200
+            windowHeight:
+              type: integer
+              description: "Высота окна. JavaScript: window.outerHeight."
+              example: 800
+            windowWidth:
+              type: integer
+              description: "Ширина окна. JavaScript: window.outerWidth."
+              example: 1200
+            timezoneOffset:
+              type: integer
+              description: "Разница между временной зоной браузера и UTC в минутах. JavaScript: (new Date()).getTimezoneOffset()."
+              example: -180
+            language:
+              type: string
+              description: "Язык браузера (ISO). JavaScript: window.navigator.language || window.navigator.userLanguage."
+              maxLength: 5
+              example: "ru-RU"
+            colorDepth:
+              type: integer
+              description: "Глубина цвета. JavaScript: window.screen.colorDepth."
+              example: 24
+            javaEnabled:
+              type: boolean
+              description: "Java включен. JavaScript: window.navigator.javaEnabled()."
+              example: false
 
     Refund:
       type: object
       properties:
         amountFractional:
           type: integer
-          description: Сумма возврата в копейках (центах). NULL - полный возврат.
+          description: Сумма возврата в копейках (центах). null - полный возврат.
           required: false
           nullable: true
           minimum: 100

@@ -37,7 +37,7 @@ class OrderController extends Controller
                             return false;
                         },
                         'matchCallback' => function ($rule, $action) {
-                            return !(UserLk::IsAdmin(Yii::$app->user) == true ||
+                            return !(UserLk::IsAdmin(Yii::$app->user) == true || UserLk::IsMfo(Yii::$app->user) == true ||
                                 (PartUserAccess::checkRazdelAccess(Yii::$app->user, $action) == true && UserLk::IsMfo(Yii::$app->user) == false)
                             );
                         }

@@ -15,7 +15,7 @@ class m220118_111956_add_monetix_bank extends Migration
     public function safeUp()
     {
         $bank = new Bank();
-        $bank->ID = MonetixAdapter::$bank;
+        $bank->ID = 14;
         $bank->Name = 'Monetix';
         $bank->save(false);
     }
@@ -25,7 +25,7 @@ class m220118_111956_add_monetix_bank extends Migration
      */
     public function safeDown()
     {
-        Bank::deleteAll(['ID' => MonetixAdapter::$bank]);
+        Bank::deleteAll(['ID' => 14]);
         return true;
     }
 }

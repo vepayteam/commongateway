@@ -25,14 +25,14 @@ class MfoStat
     /** For excel we need move ITOGO ot one cell right */
     public const ITOGS_USER_EXCEL = [7 => 1, 8 => 1, 9 => 1];
     public const HEAD_ADMIN = [
-        'ID Vepay', 'ExtID', 'Код ответа', 'Услуга', 'Реквизиты', 'Договор', 'ФИО', 'Сумма', 'Комиссия', 'К оплате',
+        'ID Vepay', 'ExtID', 'Код ответа', 'Услуга', 'Реквизиты', 'Договор', 'ФИО', 'Сумма', 'Комиссия', 'К оплате', 'Валюта',
         'Комис. банка', 'Возн. Vepay', 'Дата создания', 'Статус', 'Ошибка', 'Дата оплаты', 'Номер транзакции',
-        'ID мерчанта', 'Маска карты', 'Держатель карты', 'RRN', 'Хэш от номера карты', 'Наименование банка-эквайера',
+        'ID мерчанта', 'Тип карты', 'Маска карты', 'Держатель карты', 'RRN', 'Хэш от номера карты', 'Маска карты получателя', 'Наименование банка-эквайера',
     ];
     public const HEAD_USER = [
-        'ID Vepay', 'ExtID', 'Код ответа', 'Услуга', 'Реквизиты', 'Договор', 'ФИО', 'Сумма', 'Комиссия', 'К оплате',
+        'ID Vepay', 'ExtID', 'Код ответа', 'Услуга', 'Реквизиты', 'Договор', 'ФИО', 'Сумма', 'Комиссия', 'К оплате', 'Валюта',
         'Дата создания', 'Статус', 'Ошибка', 'Дата оплаты', 'Номер операции',
-        'ID мерчанта', 'Маска карты', 'Держатель карты', 'RRN', 'Хэш от номера карты', 'Наименование банка-эквайера',
+        'ID мерчанта', 'Тип карты', 'Маска карты', 'Держатель карты', 'RRN', 'Хэш от номера карты', 'Маска карты получателя', 'Наименование банка-эквайера',
     ];
 
     public function ExportOpList($post)
@@ -64,6 +64,7 @@ class MfoStat
                     $row['DateOplat'] > 0 ? date("d.m.Y H:i:s", $row['DateOplat']) : '',
                     $row['ExtBillNumber'],
                     $row['IdOrg'],
+                    $row['CardType'],
                     $row['CardNum'],
                     $row['CardHolder'],
                     $row['RRN'],
@@ -94,6 +95,7 @@ class MfoStat
                     $row['ErrorInfo'],
                     $row['DateOplat'] > 0 ? date("d.m.Y H:i:s", $row['DateOplat']) : '',
                     $row['IdOrg'],
+                    $row['CardType'],
                     $row['CardNum'],
                     $row['CardHolder'],
                     $row['RRN'],
@@ -165,6 +167,7 @@ class MfoStat
                         $row['SummPay'] / 100.0,
                         $row['ComissSumm'] / 100.0,
                         ($row['SummPay'] + $row['ComissSumm']) / 100.0,
+                        $row['Currency'],
                     ],
                     $retAdmin,
                     [
@@ -174,10 +177,12 @@ class MfoStat
                         $row['DateOplat'] > 0 ? date("d.m.Y H:i:s", $row['DateOplat']) : '',
                         $row['ExtBillNumber'],
                         $row['IdOrg'],
+                        $row['CardType'],
                         $row['CardNum'],
                         $row['CardHolder'],
                         $row['RRN'],
                         $row['IdKard'],
+                        $row['OutCardPan'],
                         $row['BankName'],
                     ]
                 );

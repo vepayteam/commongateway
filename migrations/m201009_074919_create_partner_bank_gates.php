@@ -56,12 +56,12 @@ class m201009_074919_create_partner_bank_gates extends Migration
     public static function getBanksPrefixs()
     {
         return [
-            TKBankAdapter::$bank => [
+            2 => [
                 'Login' => 'LoginTkb',
                 'Token' => 'KeyTkb',
                 'Password' => null,
             ],
-            MTSBankAdapter::$bank => [
+            3 => [
                 'Login' => 'MtsLogin',
                 'Token' => 'MtsToken',
                 'Password' => 'MtsPassword',
@@ -103,7 +103,7 @@ class m201009_074919_create_partner_bank_gates extends Migration
             foreach ($types as $type) {
 
                 foreach (self::getBanksPrefixs() as $bank => $prefixs) {
-                    if($bank == TKBankAdapter::$bank && $gate == 'Auto') {
+                    if($bank == 2 && $gate == 'Auto') {
                         $gate = 'Auto1';
                     }
 

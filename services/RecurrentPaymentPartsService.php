@@ -93,7 +93,6 @@ class RecurrentPaymentPartsService extends Component
         $paySchet->Status = PaySchet::STATUS_NOT_EXEC;
         $paySchet->IdKard = $card->ID;
         $paySchet->CardNum = Cards::MaskCard($cardNumber);
-        $paySchet->CardType = Cards::GetCardBrand(Cards::GetTypeCard($cardNumber));
         $paySchet->CardHolder = mb_substr($card->CardHolder, 0, 99);
         $paySchet->CardExp = $expires;
         $paySchet->IdShablon = $token;
@@ -164,6 +163,7 @@ class RecurrentPaymentPartsService extends Component
 
             if ($e instanceof FailedRecurrentPaymentException) {
                 $paySchet->RCCode = $e->getRcCode();
+                $paySchet->ExtBillNumber = $e->getTransactionId();
             }
 
             $paySchet->Status = PaySchet::STATUS_ERROR;
@@ -182,13 +182,12 @@ class RecurrentPaymentPartsService extends Component
             $paySchet->save(false);
         } else {
             $paySchet->ErrorInfo = $bankAdapterResponse->message;
-            $paySchet->Status = PaySchet::STATUS_ERROR;
+            $paySchet->Status = PaySchet::STATUS_WAITING_CHECK_STATUS;
             $paySchet->save(false);
             $message = $bankAdapterResponse->status == BaseResponse::STATUS_ERROR
                 ? "Bank response has error status (PaySchet ID:{$paySchet->ID})."
                 : "Invalid bank response status (PaySchet ID:{$paySchet->ID}).";
             \Yii::warning(__CLASS__ . '::executePayment(): ' . $message);
-            throw new PaymentException($message, PaymentException::BANK_EXCEPTION);
         }
     }
 

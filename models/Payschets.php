@@ -115,7 +115,7 @@ class Payschets
                 LEFT JOIN `user` AS u ON u.`ID`=ps.`IdUser`
                 LEFT JOIN `uslugatovar` AS qu ON ps.IdUsluga = qu.ID
                 LEFT JOIN `partner` AS p ON (qu.IDPartner = p.ID AND qu.ID <> 1) OR (qu.ID = 1 AND ps.IdOrg = p.ID)
-            WHERE              
+            WHERE
               ' . $sqlFilter . '
             LIMIT 1
         ', $sqlPar)
@@ -251,11 +251,6 @@ class Payschets
                         //возврат платежа при привязке карты
                         if ($query['IdUsluga'] == 1 && $query['Bank'] != 0) {
                             $this->reversPay($params['idpay']);
-                        }
-
-                        //списать/зачислить на баланс
-                        if ($query['IdUsluga'] != 1) {
-                            $this->ChangeBalance($query, $params['idpay']);
                         }
 
                         $BankCheck = new BankCheck();
@@ -408,7 +403,7 @@ class Payschets
     public function ChangeUsluga($IdPay, $IdPartner, $UslugType)
     {
         $newUsluga = Yii::$app->db->createCommand("
-            SELECT `ID` 
+            SELECT `ID`
             FROM `uslugatovar`
             WHERE `IDPartner` = :IDPARTNER AND `IsCustom` = :TYPEUSL AND `IsDeleted` = 0
         ", [':IDPARTNER' => $IdPartner, ':TYPEUSL' => $UslugType]
@@ -472,88 +467,6 @@ class Payschets
                 'idpay' => $idpay
             ]));
         }*/
-    }
-
-    /**
-     * @param $query
-     * @param $IdPay
-     * @throws Exception
-     */
-    private function ChangeBalance($query, $IdPay)
-    {
-        if (!empty($query['SchetTcbNominal'])) {
-            //номинальный счет
-            if (in_array($query['IsCustom'], [TU::$TOCARD, TU::$TOSCHET])) {
-                //при выдаче списание суммы со счета погашения (номинального), комиссии с транзитного счета (выдачи)
-                $BalanceIn = new BalancePartner(BalancePartner::IN, $query['IdOrg']);
-                $BalanceIn->Dec($query['SummPay'], 'Платеж ' . $IdPay, 3, $IdPay, 0);
-                $BalanceOut = new BalancePartner(BalancePartner::OUT, $query['IdOrg']);
-                $usl = Uslugatovar::findOne(['ID' => $query['IdUsluga']]);
-                if ($usl) {
-                    $comis = $usl->calcComissOrg($query['SummPay']);
-                    if ($comis) {
-                        $BalanceOut->Dec($comis, 'Комиссия ' . $IdPay, 5, $IdPay, 0);
-                    }
-                }
-            } elseif (in_array($query['IsCustom'], [TU::$POGASHECOM, TU::$POGASHATF])) {
-                //погашение
-                $BalanceIn = new BalancePartner(BalancePartner::IN, $query['IdOrg']);
-                $BalanceIn->Inc($query['SummPay'], 'Платеж ' . $IdPay, 2, $IdPay, 0);
-                $usl = Uslugatovar::findOne(['ID' => $query['IdUsluga']]);
-                $comis = $usl->calcComissOrg($query['SummPay']);
-                if ($comis && !empty($query['CardNum'])) {
-                    $BalanceOut = new BalancePartner(BalancePartner::OUT, $query['IdOrg']);
-                    $BalanceOut->Dec($comis, 'Комиссия ' . $IdPay, 5, $IdPay, 0);
-                }
-            }
-        } else {
-            if (in_array($query['IsCustom'], [TU::$TOCARD, TU::$TOSCHET])) {
-                //выплата
-                $BalanceOut = new BalancePartner(BalancePartner::OUT, $query['IdOrg']);
-                $BalanceOut->Dec($query['SummPay'], 'Платеж ' . $IdPay, 3, $IdPay, 0);
-                $usl = Uslugatovar::findOne(['ID' => $query['IdUsluga']]);
-                if ($usl) {
-                    $comis = $usl->calcComissOrg($query['SummPay']);
-                    if ($comis) {
-                        $BalanceOut->Dec($comis, 'Комиссия ' . $IdPay, 5, $IdPay, 0);
-                    }
-                }
-            } elseif (in_array($query['IsCustom'], [TU::$VYPLATVOZN, TU::$REVERSCOMIS])) {
-                $BalanceOut = new BalancePartner(BalancePartner::OUT, $query['IdOrg']);
-                $BalanceOut->Dec($query['SummPay'], 'Перечисление вознаграждения. Платеж ' . $IdPay, 3, $IdPay, 0);
-            } elseif (in_array($query['IsCustom'], [TU::$VYVODPAYS, TU::$PEREVPAYS])) {
-                //перевод денег мфо
-                $partner = Partner::findOne(['ID' => $query['ExtReestrIDUsluga']]);
-                if ($partner && $partner->IsCommonSchetVydacha) {
-                    //со счета выдачи
-                    $BalanceOut = new BalancePartner(BalancePartner::OUT, $query['ExtReestrIDUsluga']);
-                    $BalanceOut->Dec($query['SummPay'], 'Списание на перевод средств ' . $IdPay, 1, $IdPay, 0);
-                } else {
-                    //со счета погашения переводится
-                    $BalanceIn = new BalancePartner(BalancePartner::IN, $query['ExtReestrIDUsluga']);
-                    $BalanceIn->Dec($query['SummPay'], 'Списание на перевод средств ' . $IdPay, 1, $IdPay, 0);
-                    $usl = Uslugatovar::findOne(['ID' => $query['IdUsluga']]);
-                    if ($usl) {
-                        $comis = $usl->calcComissOrg($query['SummPay']);
-                        if ($comis) {
-                            $BalanceIn->Dec($comis, 'Комиссия ' . $IdPay, 5, $IdPay, 0);
-                        }
-                    }
-                }
-            } else {
-                //погашение
-                $BalanceIn = new BalancePartner(BalancePartner::IN, $query['IdOrg']);
-                $BalanceIn->Inc($query['SummPay'], 'Платеж ' . $IdPay, 2, $IdPay, 0);
-                $usl = Uslugatovar::findOne(['ID' => $query['IdUsluga']]);
-                if ($usl) {
-                    $comis = $usl->calcComissOrg($query['SummPay']);
-                    if ($comis) {
-                        $BalanceIn->Dec($comis, 'Комиссия ' . $IdPay, 5, $IdPay, 0);
-                    }
-                }
-
-            }
-        }
     }
 
     /**
@@ -751,7 +664,7 @@ class Payschets
                 c.ID,
                 c.ExtCardIDP
             FROM
-                `user` AS u 
+                `user` AS u
                 LEFT JOIN `cards` AS c ON(c.IdUser = u.ID AND c.TypeCard = 0)
             WHERE
                 u.ID = :IDUSER AND u.IsDeleted = 0
@@ -810,7 +723,7 @@ class Payschets
     {
         $query = Yii::$app->db->createCommand('
               SELECT
-                p.UserEmail as `Email`, 
+                p.UserEmail as `Email`,
                 p.`SummPay`,
                 p.`ComissSumm`,
                 ut.IDPartner,
@@ -903,52 +816,6 @@ class Payschets
     }
 
     /**
-     * Сохранение карты PCI DSS
-     * @param int $IdUser
-     * @param array $card [number,idcard,expiry,type,holder]
-     * @param $IdPAN
-     * @throws \yii\db\Exception
-     */
-    public function SaveCardPan($IdUser, $card, $IdPAN)
-    {
-        $rowCard = Yii::$app->db->createCommand("
-            SELECT
-                c.ID,
-                c.ExtCardIDP
-            FROM
-                `user` AS u 
-                LEFT JOIN `cards` AS c ON(c.IdUser = u.ID AND c.TypeCard = 0)
-            WHERE
-                u.ID = :IDUSER AND u.IsDeleted = 0
-        ", [':IDUSER' => $IdUser]
-        )->queryOne();
-
-        if ($rowCard) {
-            //удалить старую
-            Yii::$app->db->createCommand()
-                ->update('cards', [
-                    'IsDeleted' => 1
-                ], 'IdUser = :IDUSER', [':IDUSER' => $IdUser])
-                ->execute();
-        }
-
-        //новая карта
-        Yii::$app->db->createCommand()->insert('cards', [
-            'IdUser' => $IdUser,
-            'NameCard' => Cards::MaskCard($card['number']),
-            'ExtCardIDP' => 0,
-            'CardNumber' => Cards::MaskCard($card['number']),
-            'CardType' => 0,
-            'SrokKard' => $card['month'] . $card['year'],
-            'CardHolder' => mb_substr($card['holder'], 0, 99),
-            'Status' => 1,
-            'DateAdd' => time(),
-            'Default' => 0,
-            'IdPan' => $IdPAN
-        ])->execute();
-    }
-
-    /**
      * Сохранение карты PCI DSS после подтверждения банка
      * @param int $IdUser
      * @param array $card [number,idcard,expiry,type,holder]
@@ -963,7 +830,7 @@ class Payschets
                 c.ID,
                 c.ExtCardIDP
             FROM
-                `user` AS u 
+                `user` AS u
                 LEFT JOIN `cards` AS c ON(c.IdUser = u.ID AND c.TypeCard = 0)
             WHERE
                 u.ID = :IDUSER AND u.IsDeleted = 0

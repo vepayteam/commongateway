@@ -2,6 +2,8 @@
 
 namespace app\models\mfo;
 
+use yii\db\ActiveRecord;
+
 /**
  * Class VyvodReestr
  *
@@ -16,31 +18,17 @@ namespace app\models\mfo;
  * @property int  $IdPay         [int(10) unsigned]  id pay_schet
  * @property bool $TypePerechisl [tinyint(1) unsigned]  0 - perevod na vydachu 1 - perechislene na schet
  */
-class VyvodReestr extends \yii\db\ActiveRecord
+class VyvodReestr extends ActiveRecord
 {
+    public const STATE_CREATED = 0;
+    public const STATE_SUCCESS = 1;
+    public const STATE_ERROR = 2;
+
     /**
      * {@inheritdoc}
      */
-    public static function tableName()
+    public static function tableName(): string
     {
         return 'vyvod_reestr';
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function rules()
-    {
-        return [];
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function attributeLabels()
-    {
-        return [
-            'ID' => 'ID'
-        ];
     }
 }

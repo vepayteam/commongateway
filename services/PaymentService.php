@@ -12,6 +12,7 @@ use app\services\payment\jobs\RefreshStatusPayJob;
 use app\services\payment\jobs\RefundPayJob;
 use app\services\payment\models\PaySchet;
 use app\services\paymentService\CreateRefundException;
+use app\services\yandexPay\YandexPayException;
 use yii\base\Component;
 use yii\helpers\ArrayHelper;
 
@@ -131,7 +132,7 @@ class PaymentService extends Component
     private function refundInternal(PaySchet $refundPayschet, $successStatus, $successErrorInfo)
     {
         $refundPayResponse = (new BankAdapterBuilder())
-            ->build($refundPayschet->partner, $refundPayschet->uslugatovar)
+            ->buildByBank($refundPayschet->partner, $refundPayschet->uslugatovar, $refundPayschet->bank)
             ->getBankAdapter()
             ->refundPay(new RefundPayForm(['paySchet' => $refundPayschet]));
 
@@ -157,11 +158,15 @@ class PaymentService extends Component
             $refundPayschet->Status = PaySchet::getDoneStatusByRefundType($refundPayResponse->refundType);
             $refundPayschet->ErrorInfo = $successErrorInfo;
 
-            if ($refundPayResponse->refundType === PaySchet::REFUND_TYPE_REVERSE) {
-                $sourcePaySchet = $refundPayschet->refundSource;
-                $sourcePaySchet->ErrorInfo = 'Операция отменена. Номер отмены: ' . $refundPayschet->ID;
-                $sourcePaySchet->save(false);
+            $sourcePaySchet = $refundPayschet->refundSource;
+            if ($refundPayschet->Status === PaySchet::STATUS_REFUND_DONE) {
+                $sourcePaySchet->ErrorInfo = 'Возврат суммы. Номер возврата: ' . $refundPayschet->ID;
             }
+            if ($refundPayschet->Status === PaySchet::STATUS_CANCEL) {
+                $sourcePaySchet->ErrorInfo = 'Операция отменена. Номер отмены: ' . $refundPayschet->ID;
+            }
+            $sourcePaySchet->save(false);
+
         } elseif ($refundPayResponse->status == BaseResponse::STATUS_CREATED) {
             /**
              * Logic copied from {@see RefundPayJob::execute()}.
@@ -178,6 +183,10 @@ class PaymentService extends Component
             $refundPayschet->ErrorInfo = $refundPayResponse->message;
         }
         $refundPayschet->save(false);
+
+        if ($refundPayschet->existsYandexPayTransaction) {
+            $this->updateYandexPayTransaction($refundPayschet);
+        }
     }
 
     /**
@@ -226,6 +235,21 @@ class PaymentService extends Component
 
             $percent = $amount / $sourcePaySchet->SummPay;
             return floor($sourcePaySchet->ComissSumm * $percent);
+        }
+    }
+
+    private function updateYandexPayTransaction(PaySchet $refundPaySchet)
+    {
+        /** @var YandexPayService $yandexPayService */
+        $yandexPayService = \Yii::$app->get(YandexPayService::class);
+
+        try {
+            $yandexPayService->paymentUpdate($refundPaySchet);
+        } catch (YandexPayException $e) {
+            \Yii::error([
+                'PaymentService updateYandexPayTransaction update fail',
+                $e
+            ]);
         }
     }
 }

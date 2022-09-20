@@ -4,6 +4,8 @@
 namespace app\services\payment\banks;
 
 
+use app\models\payonline\Cards;
+use app\services\DeprecatedCurlLogger;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
@@ -16,6 +18,7 @@ use app\services\payment\banks\bank_adapter_responses\RegistrationBenificRespons
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
+use app\services\payment\banks\data\ClientData;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\adg\CreatePayRequest;
 use app\services\payment\forms\AutoPayForm;
@@ -38,14 +41,27 @@ use app\services\payment\models\PaySchet;
 use Yii;
 use yii\base\Model;
 
-class ADGroupBankAdapter implements IBankAdapter
+class ADGroupBankAdapter extends BaseAdapter implements IBankAdapter
 {
     const AFT_MIN_SUMM = 120000;
+
+    /**
+     * @deprecated Use {@see bankId()} instead.
+     */
     public static $bank = 5;
+
     protected $bankUrl = 'https://qpg.adgroup.finance';
 
     /** @var PartnerBankGate */
     protected $gate;
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function bankId(): int
+    {
+        return 5;
+    }
 
     public function setGate(PartnerBankGate $partnerBankGate)
     {
@@ -54,7 +70,7 @@ class ADGroupBankAdapter implements IBankAdapter
 
     public function getBankId()
     {
-        return self::$bank;
+        return self::bankId();
     }
 
     public function confirm(DonePayForm $donePayForm)
@@ -62,7 +78,7 @@ class ADGroupBankAdapter implements IBankAdapter
         // TODO: Implement confirm() method.
     }
 
-    public function createPay(CreatePayForm $createPayForm)
+    public function createPay(CreatePayForm $createPayForm, ClientData $clientData)
     {
         throw new GateException('Метод недоступен');
         $action = '/FE/rest/tx/sync/purchase';
@@ -97,6 +113,9 @@ class ADGroupBankAdapter implements IBankAdapter
         $curl = curl_init();
 
         $url = $this->bankUrl . $action;
+        $headers = [
+            "Content-Type: application/json"
+        ];
         curl_setopt_array($curl, array(
             CURLOPT_VERBOSE => Yii::$app->params['VERBOSE'] === 'Y',
             CURLOPT_URL => $url,
@@ -108,13 +127,13 @@ class ADGroupBankAdapter implements IBankAdapter
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => "POST",
             CURLOPT_POSTFIELDS => json_encode($data),
-            CURLOPT_HTTPHEADER => array(
-                "Content-Type: application/json"
-            ),
+            CURLOPT_HTTPHEADER => $headers,
         ));
 
         $response = curl_exec($curl);
         curl_close($curl);
+
+        DeprecatedCurlLogger::handle(curl_getinfo($curl), $url, $headers, Cards::MaskCardLog($data), Cards::MaskCardLog($response));
 
         $a = 0;
     }
@@ -134,7 +153,7 @@ class ADGroupBankAdapter implements IBankAdapter
 
     public function getAftMinSum()
     {
-        return Bank::findOne(self::$bank)->AftMinSum ?? self::AFT_MIN_SUMM;
+        return $this->getBankModel()->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**

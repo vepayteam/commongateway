@@ -23,6 +23,8 @@ use app\services\payment\jobs\RefundPayJob;
 use app\services\payment\models\PayCard;
 use app\services\payment\models\PaySchet;
 use app\services\payment\PaymentService;
+use app\services\yandexPay\YandexPayException;
+use app\services\YandexPayService;
 use Yii;
 use yii\db\Exception;
 use yii\db\Query;
@@ -37,6 +39,12 @@ class OkPayStrategy
     protected $paymentService;
 
     protected $isCard = false;
+
+    /**
+     * Время задержки между получением успешного статуса и запросом отмены по методу card/reg.
+     * @link https://it.dengisrazy.ru/browse/VPBC-1441
+     */
+    private const REFUND_JOB_DELAY = 20;
 
     /**
      * OkPayStrategy constructor.
@@ -93,6 +101,10 @@ class OkPayStrategy
             $paySchet->save(false);
 
             $this->getNotificationsService()->sendPostbacks($paySchet);
+
+            if ($paySchet->existsYandexPayTransaction) {
+                $this->updateYandexPayTransaction($paySchet);
+            }
         } elseif ($paySchet->sms_accept == 1) {
             $q = new Query();
             $count = $q->from('notification_pay')
@@ -216,14 +228,10 @@ class OkPayStrategy
                      * Если операция и так является возвратом, то заново для неё рефанд запускать не надо
                      */
                     if($paySchet->IdUsluga == Uslugatovar::TYPE_REG_CARD && !$paySchet->isRefund) {
-                        Yii::$app->queue->push(new RefundPayJob([
+                        Yii::$app->queue->delay(self::REFUND_JOB_DELAY)->push(new RefundPayJob([
                             'paySchetId' => $paySchet->ID,
                             'initiator' => 'OkPayStrategy confirmPay',
                         ]));
-                    } else {
-                        /** @var BalanceService $balanceService */
-                        $balanceService = Yii::$container->get('BalanceService');
-                        $balanceService->changeBalance($paySchet);
                     }
 
                     $BankCheck = new BankCheck();
@@ -271,4 +279,18 @@ class OkPayStrategy
         return Yii::$container->get('NotificationsService');
     }
 
+    protected function updateYandexPayTransaction(PaySchet $paySchet)
+    {
+        /** @var YandexPayService $yandexPayService */
+        $yandexPayService = \Yii::$app->get(YandexPayService::class);
+
+        try {
+            $yandexPayService->paymentUpdate($paySchet);
+        } catch (YandexPayException $e) {
+            Yii::error([
+                'RefreshStatusPayStrategy updateYandexPayTransaction update fail',
+                $e
+            ]);
+        }
+    }
 }

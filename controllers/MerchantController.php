@@ -220,7 +220,7 @@ class MerchantController extends Controller
         );
 
         /** @var LanguageService $languageService */
-        $languageService = Yii::$container->get('LanguageService');
+        $languageService = Yii::$app->get(LanguageService::class);
         $languageService->saveApiLanguage($params['IdPay'], $kfPay->language);
 
         if (!empty($kfPay->extid)) {
@@ -327,6 +327,7 @@ class MerchantController extends Controller
 
             $state = [
                 'status' => (int)$confirmPayResult['status'],
+                'serviceName' => $paySchet->uslugatovar->type->Name,
                 'message' => (string)$confirmPayResult['message'],
                 'rc' => isset($confirmPayResult['rc']) ? (string)$confirmPayResult['rc'] : '',
                 'info' => $confirmPayResult['info'],

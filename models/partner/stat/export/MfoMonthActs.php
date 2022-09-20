@@ -3,7 +3,6 @@
 
 namespace app\models\partner\stat\export;
 
-use app\models\partner\admin\VyvodVoznag;
 use app\models\partner\stat\ActMfo;
 use app\models\partner\stat\PayShetStat;
 use app\models\partner\stat\VyvodInfo;
@@ -12,6 +11,7 @@ use app\models\payonline\Partner;
 use app\models\PpExport1s;
 use app\models\TU;
 use app\services\paymentReport\PaymentReportService;
+use app\services\PaymentTransferService;
 use Yii;
 use yii\base\Model;
 
@@ -122,7 +122,7 @@ class MfoMonthActs extends Model
         foreach ($dataOut as $row) {
             $act->SumVyplata += $row['SummPay'];
             $act->ComisVyplata += $row['VoznagSumm'];
-            if (!$partner->VoznagVyplatDirect && ($partner->IsCommonSchetVydacha || $partner->IsUnreserveComis)) {
+            if (!$partner->VoznagVyplatDirect && $partner->IsUnreserveComis) {
                 $act->SumSchetComisVyplata += $row['MerchVozn'];  //c комиссией банка
             } else {
                 $act->SumSchetComisVyplata += $row['VoznagSumm']; //без комиссии банка
@@ -267,7 +267,9 @@ class MfoMonthActs extends Model
             return null;
         }
 
-        $r = VyvodVoznag::GetRecviz();
+        /** @var PaymentTransferService $paymentTransferService */
+        $paymentTransferService = Yii::$app->get(PaymentTransferService::class);
+        $r = $paymentTransferService->getLegacyRewardRequisites();
         $poluchat = new \stdClass();
         $poluchat->Name = $r['name'];
         $poluchat->INN = $r['inn'];

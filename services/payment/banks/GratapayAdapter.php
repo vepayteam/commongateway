@@ -4,13 +4,14 @@
 namespace app\services\payment\banks;
 
 
-use app\Api\Client\Client;
+use app\helpers\Modifiers;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
+use app\services\payment\banks\bank_adapter_responses\createPayResponse\AcsRedirectData;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\IdentGetStatusResponse;
@@ -19,6 +20,7 @@ use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
+use app\services\payment\banks\data\ClientData;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
@@ -30,6 +32,7 @@ use app\services\payment\forms\CheckStatusPayForm;
 use app\services\payment\forms\CreatePayForm;
 use app\services\payment\forms\DonePayForm;
 use app\services\payment\forms\gratapay\CreatePayRequest;
+use app\services\payment\forms\gratapay\OutCardPayRequest;
 use app\services\payment\forms\gratapay\RefundPayRequest;
 use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
@@ -41,25 +44,42 @@ use app\services\payment\models\Bank;
 use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\PaySchet;
 use app\services\payment\types\AccountTypes;
+use GuzzleHttp\Exception\BadResponseException;
 use Vepay\Gateway\Client\Validator\ValidationException;
 use Yii;
 use yii\helpers\Json;
 
-class GratapayAdapter implements IBankAdapter
+class GratapayAdapter extends BaseAdapter implements IBankAdapter
 {
     private const PROD_IN_PAYMENT_SYSTEM = 'CardGate';
     private const TEST_IN_S2S_PAYMENT_SYSTEM = 'CardGateTestS2S';
+    private const PROD_OUT_PAYMENT_SYSTEM = 'Card';
+    private const TEST_OUT_S2S_PAYMENT_SYSTEM = 'TestCard';
+
+    private const DEFAULT_PHONE = '79009000000';
 
     const BANK_URL = 'https://psp.kiparisdmcc.ae/api';
     const AFT_MIN_SUMM = 185000;
 
+    /**
+     * @deprecated Use {@see bankId()} instead.
+     */
     public static $bank = 13;
+
     protected $bankUrl;
 
     /** @var PartnerBankGate */
     protected $gate;
     /** @var \GuzzleHttp\Client */
     protected $apiClient;
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function bankId(): int
+    {
+        return 13;
+    }
 
     /**
      * @inheritDoc
@@ -76,7 +96,7 @@ class GratapayAdapter implements IBankAdapter
      */
     public function getBankId()
     {
-        return self::$bank;
+        return self::bankId();
     }
 
     /**
@@ -92,7 +112,7 @@ class GratapayAdapter implements IBankAdapter
     /**
      * @inheritDoc
      */
-    public function createPay(CreatePayForm $createPayForm)
+    public function createPay(CreatePayForm $createPayForm, ClientData $clientData)
     {
         $paySchet = $createPayForm->getPaySchet();
         $createPayRequest = new CreatePayRequest();
@@ -124,9 +144,24 @@ class GratapayAdapter implements IBankAdapter
                 $createPayResponse->status = BaseResponse::STATUS_DONE;
                 $createPayResponse->transac = $responseBody['id'];
                 $createPayResponse->isNeed3DSRedirect = true;
-                $createPayResponse->url = $responseBody['redirect']['url']
-                    . '?data='
-                    . urlencode($responseBody['redirect']['params']['data']);
+
+                if ($responseBody['redirect']['method'] === 'GET') {
+                    $createPayResponse->url = $responseBody['redirect']['url'] . '?'
+                        . http_build_query($responseBody['redirect']['params']);
+                    $createPayResponse->acs = new AcsRedirectData(
+                        AcsRedirectData::STATUS_OK,
+                        $createPayResponse->url,
+                        'GET'
+                    );
+                } elseif ($responseBody['redirect']['method'] === 'POST') {
+                    $createPayResponse->url = $responseBody['redirect']['url'];
+                    $createPayResponse->acs = new AcsRedirectData(
+                        AcsRedirectData::STATUS_OK,
+                        $createPayResponse->url,
+                        'POST',
+                        $responseBody['redirect']['params']
+                    );
+                }
             } else {
                 $createPayResponse->status = BaseResponse::STATUS_ERROR;
                 $createPayResponse->message = substr($responseBody['message'] ?? '', 0, 255);
@@ -176,19 +211,14 @@ class GratapayAdapter implements IBankAdapter
      */
     public function refundPay(RefundPayForm $refundPayForm)
     {
-        /**
-         * @todo Temporary not available. Remove this exception after fix.
-         */
-        throw new GateException('Метод недоступен');
-
         $paySchet = $refundPayForm->paySchet;
         $sourcePaySchet = $paySchet->refundSource;
 
         $refundPayRequest = new RefundPayRequest();
-        $refundPayRequest->amount = $paySchet->getSummFull() / 100;
+        $refundPayRequest->amount = round($paySchet->getSummFull() / 100, 2);
         $refundPayRequest->currency = $paySchet->currency->Code;
         $refundPayRequest->original_transaction_id = $sourcePaySchet->ExtBillNumber;
-        $refundPayRequest->transaction_id = $sourcePaySchet->ID;
+        $refundPayRequest->transaction_id = $paySchet->ID;
 
         $bodyJson = Json::encode($refundPayRequest->getAttributes());
         $refundPayResponse = new RefundPayResponse();
@@ -205,6 +235,10 @@ class GratapayAdapter implements IBankAdapter
             $refundPayResponse->status = $status;
             $refundPayResponse->message = $responseBody['message'] ?? $responseBody['status'];
         } catch (\Exception $e) {
+            if ($e instanceof BadResponseException) {
+                $response = $e->getResponse();
+                Yii::warning('GratepayAdapter response error uri=' . $url . ' data=' . $response->getBody());
+            }
             $refundPayResponse->status = BaseResponse::STATUS_ERROR;
             $refundPayResponse->message = substr($e->getMessage(), 0, 255);
         }
@@ -213,10 +247,61 @@ class GratapayAdapter implements IBankAdapter
 
     /**
      * @inheritDoc
+     * @todo Improve error handling.
      */
-    public function outCardPay(OutCardPayForm $outCardPayForm)
+    public function outCardPay(OutCardPayForm $outCardPayForm): OutCardPayResponse
     {
-        throw new GateException('Метод недоступен');
+        $paySchet = $outCardPayForm->paySchet;
+
+        $request = new OutCardPayRequest();
+        $request->transaction_id = $paySchet->ID;
+        $request->amount = number_format($paySchet->getSummFull() / 100, 2, '.', '');
+        $request->currency = $paySchet->currency->Code;
+        if(Yii::$app->params['TESTMODE'] == 'Y') {
+            $request->payment_system = self::TEST_OUT_S2S_PAYMENT_SYSTEM;
+        } else {
+            $request->payment_system = self::PROD_OUT_PAYMENT_SYSTEM;
+        }
+
+        $phone = preg_replace('/\D/', '', $outCardPayForm->phone); // only numbers
+        if (empty($phone)) {
+            $phone = self::DEFAULT_PHONE;
+        }
+        $request->system_fields = [
+            'card_number' => $outCardPayForm->cardnum,
+            'client_phone' => '+' . $phone,
+            'payment_description' => 'Payout ' . $paySchet->ID,
+        ];
+
+        $bodyJson = Json::encode($request->getAttributes());
+        $outCardPayResponse = new OutCardPayResponse();
+
+        $url = $this->bankUrl . '/deduce/create';
+        Yii::warning('GratepayAdapter req uri=' . $url . ' data=' . Modifiers::searchAndReplacePan($bodyJson));
+        try {
+            $response = $this->apiClient->post($url, [
+                'headers' => $this->buildRequestHeaders($bodyJson),
+                'body' => $bodyJson,
+            ]);
+            Yii::warning('GratepayAdapter ans uri=' . $url . ' data=' . $response->getBody());
+            $responseBody = Json::decode($response->getBody(), true);
+            if($responseBody['status'] == 'created') {
+                $outCardPayResponse->status = BaseResponse::STATUS_DONE;
+                $outCardPayResponse->trans = $responseBody['id'];
+            } else {
+                $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
+                $outCardPayResponse->message = substr($responseBody['message'] ?? '', 0, 255);
+            }
+        } catch (\Exception $e) {
+            if ($e instanceof BadResponseException) {
+                $response = $e->getResponse();
+                Yii::warning("GratepayAdapter response error uri={$url} HTTP code={$response->getStatusCode()} data={$response->getBody()}");
+            }
+            $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
+            $outCardPayResponse->message = substr($e->getMessage(), 0, 255);
+        }
+
+        return $outCardPayResponse;
     }
 
     /**
@@ -224,7 +309,7 @@ class GratapayAdapter implements IBankAdapter
      */
     public function getAftMinSum()
     {
-        return Bank::findOne(self::$bank)->AftMinSum ?? self::AFT_MIN_SUMM;
+        return $this->getBankModel()->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**

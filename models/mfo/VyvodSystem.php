@@ -2,6 +2,8 @@
 
 namespace app\models\mfo;
 
+use yii\db\ActiveRecord;
+
 /**
  * Class VyvodSystem
  *
@@ -16,31 +18,17 @@ namespace app\models\mfo;
  * @property int  $IdPay     [int(10) unsigned]  id pay_schet
  * @property bool $TypeVyvod [tinyint(1) unsigned]  tip - 0 - pogashenie 1 - vyplaty
  */
-class VyvodSystem extends \yii\db\ActiveRecord
+class VyvodSystem extends ActiveRecord
 {
+    public const STATE_CREATED = 0;
+    public const STATE_SUCCESS = 1;
+    public const STATE_ERROR = 2;
+
     /**
      * {@inheritdoc}
      */
-    public static function tableName()
+    public static function tableName(): string
     {
         return 'vyvod_system';
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function rules()
-    {
-        return [];
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function attributeLabels()
-    {
-        return [
-            'ID' => 'ID'
-        ];
     }
 }

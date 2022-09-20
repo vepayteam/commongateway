@@ -7,6 +7,9 @@ use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
+use app\models\PaySchetAcsRedirect;
+use app\models\PaySchetP2pRepayment;
+use app\models\PaySchetYandex;
 use app\services\CompensationService;
 use app\services\compensationService\CompensationException;
 use app\services\notifications\models\NotificationPay;
@@ -57,7 +60,7 @@ use yii\helpers\ArrayHelper;
  * @property string|null $RRN nomer RRN
  * @property string|null $CardNum nomer karty
  * @property string|null $OutCardPan nomer karty
- * @property string|null $CardType tip karty
+ * @property string|null $CardType tip karty @deprecated Use {@see PaySchet::$cards} instead.
  * @property string|null $CardHolder derjatel karty
  * @property int $CardExp srok deistvia karty - MMYY
  * @property string|null $BankName bank karty
@@ -96,7 +99,7 @@ use yii\helpers\ArrayHelper;
  * @property string|null $RefundExtId Внутренний ID провайдеров операций refund/reverse для проверки статусов
  * @property int|null $RefundType Тип операции refund/reverse {@see PaySchet::REFUND_TYPE_REFUND} {@see PaySchet::REFUND_TYPE_REVERSE}
  *
- * @property Uslugatovar $uslugatovar
+ * @property-read Uslugatovar $uslugatovar {@see PaySchet::getUslugatovar()}
  * @property Partner $partner
  * @property Currency $currency
  * @property PaySchetLog[] $log
@@ -104,6 +107,11 @@ use yii\helpers\ArrayHelper;
  * @property Bank $bank
  * @property PaySchet $refundSource {@see PaySchet::getRefundSource()}
  * @property PaySchet[] $refunds {@see PaySchet::getRefunds()}
+ * @property-read Cards $cards {@see PaySchet::getCards()}
+ * @property-read PaySchetAcsRedirect $acsRedirect {@see PaySchet::getAcsRedirect()}
+ * @property-read PaySchetLanguage $paySchetLanguage {@see PaySchet::getPaySchetLanguage()}
+ * @property PaySchetYandex|null $yandexPayTransaction {@see PaySchet::getYandexPayTransaction()}
+ * @property PaySchetP2pRepayment|null $p2pRepayment {@see PaySchet::getP2pRepayment()}
  *
  * @property string $Version3DS
  * @property int $IsNeed3DSVerif
@@ -115,6 +123,7 @@ use yii\helpers\ArrayHelper;
  * @property-read int|null $refundNumber {@see PaySchet::getRefundNumber()}
  * @property-read bool $isRefund {@see PaySchet::getIsRefund()}
  * @property-read int $refundedAmount {@see PaySchet::getRefundedAmount()}
+ * @property-read bool $existsYandexPayTransaction Возвращает true если существует yandexPayTransaction для текущего paySchet или для refundSource {@see PaySchet::getExistsYandexPayTransaction()}
  */
 class PaySchet extends \yii\db\ActiveRecord
 {
@@ -384,6 +393,16 @@ class PaySchet extends \yii\db\ActiveRecord
         return array_sum(ArrayHelper::getColumn($this->refunds, 'SummPay'));
     }
 
+    public function getYandexPayTransaction(): ActiveQuery
+    {
+        return $this->hasOne(PaySchetYandex::class, ['paySchetId' => 'ID']);
+    }
+
+    public function getExistsYandexPayTransaction(): bool
+    {
+        return ($this->isRefund ? $this->refundSource : $this)->yandexPayTransaction !== null;
+    }
+
     public function getUser()
     {
         return $this->hasOne(User::class, ['ID' => 'IdUser']);
@@ -432,7 +451,22 @@ class PaySchet extends \yii\db\ActiveRecord
 
     public function getCards(): ActiveQuery
     {
-        return $this->hasOne(Cards::className(), ['ID' => 'IdKard']);
+        return $this->hasOne(Cards::class, ['ID' => 'IdKard']);
+    }
+
+    public function getAcsRedirect(): ActiveQuery
+    {
+        return $this->hasOne(PaySchetAcsRedirect::class, ['id' => 'ID']);
+    }
+
+    public function getPaySchetLanguage(): ActiveQuery
+    {
+        return $this->hasOne(PaySchetLanguage::class, ['paySchetId' => 'ID']);
+    }
+
+    public function getP2pRepayment(): ActiveQuery
+    {
+        return $this->hasOne(PaySchetP2pRepayment::class, ['paySchetId' => 'ID']);
     }
 
     /**
@@ -450,7 +484,12 @@ class PaySchet extends \yii\db\ActiveRecord
         if (is_string($this->ErrorInfo)) {
             $this->ErrorInfo = mb_substr($this->ErrorInfo, 0, 250);
         }
+
         $this->DateLastUpdate = time();
+
+        if ($this->isAttributeChanged('CardNum') && $this->CardNum) {
+            $this->CardType = Cards::GetCardBrand(Cards::GetTypeCard($this->CardNum));
+        }
 
         if ($insert || $this->uslugatovar->IsCustom == Uslugatovar::P2P) {
             /**

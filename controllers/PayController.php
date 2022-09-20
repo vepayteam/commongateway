@@ -2,11 +2,11 @@
 
 namespace app\controllers;
 
+use app\helpers\TokenHelper;
 use app\models\bank\ApplePay;
 use app\models\bank\BankMerchant;
 use app\models\bank\GooglePay;
 use app\models\bank\SamsungPay;
-use app\models\payonline\PayForm;
 use app\models\payonline\Uslugatovar;
 use app\models\Payschets;
 use app\models\TU;
@@ -14,8 +14,10 @@ use app\services\cards\CacheCardService;
 use app\services\LanguageService;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\BankAdapterBuilder;
+use app\services\payment\banks\IBankSecondStepInterface;
 use app\services\payment\banks\TKBankAdapter;
 use app\services\payment\exceptions\BankAdapterResponseException;
+use app\services\payment\exceptions\CacheValueMissingException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\DuplicateCreatePayException;
@@ -33,11 +35,16 @@ use app\services\payment\interfaces\Cache3DSv2Interface;
 use app\services\payment\models\Currency;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\repositories\CurrencyRepository;
+use app\services\payment\models\UslugatovarType;
 use app\services\payment\payment_strategies\CreatePayStrategy;
 use app\services\payment\payment_strategies\DonePayStrategy;
 use app\services\payment\payment_strategies\OkPayStrategy;
+use app\services\yandexPay\forms\YandexPayForm;
+use app\services\yandexPay\models\PaymentToken;
+use app\services\YandexPayService;
 use kartik\mpdf\Pdf;
 use Yii;
+use yii\base\InvalidConfigException;
 use yii\db\Exception;
 use yii\helpers\Json;
 use yii\helpers\Url;
@@ -120,11 +127,13 @@ class PayController extends Controller
      * Форма оплаты своя (PCI DSS)
      *
      * @param $id
+     * @param mixed|null $presetHash
      * @return string|Response
      * @throws Exception
      * @throws NotFoundHttpException
+     * @throws InvalidConfigException
      */
-    public function actionForm($id)
+    public function actionForm($id, $presetHash = null)
     {
         Yii::warning("PayForm open id={$id}");
         $payschets = new Payschets();
@@ -132,14 +141,21 @@ class PayController extends Controller
 
         //данные счета для оплаты
         $params = $payschets->getSchetData($id, null);
+        $paySchet = PaySchet::findOne(['ID' => $id]);
+        if ($paySchet === null) {
+            Yii::warning("PaySchet {$id} not found.");
+            throw new NotFoundHttpException('Счет для оплаты не найден.');
+        }
 
-        if ($params && TU::IsInPay($params['IsCustom'])) {
+        if ($params && in_array($params['IsCustom'], UslugatovarType::inTypes())) {
             if (
                 $params['Status'] == 0
                 && $params['UserClickPay'] == 0
                 && $params['DateCreate'] + $params['TimeElapsed'] > time()
             ) {
-                $payForm = new PayForm();
+                $payForm = new CreatePayForm();
+                $payForm->IdPay = $id;
+                $payForm->httpHeaderAccept = \Yii::$app->request->headers->get('accept');
 
                 $cacheCardService = new CacheCardService($params['ID']);
                 if ($cacheCardService->cardExists()) {
@@ -147,16 +163,30 @@ class PayController extends Controller
                     $cacheCardService->deleteCard();
                 }
 
+                // preset hash
+                if (
+                    $presetHash !== null
+                    && $paySchet->p2pRepayment !== null
+                    && $paySchet->p2pRepayment->presetHash === $presetHash
+                ) {
+                    $presetToken = $paySchet->p2pRepayment->presetSenderPanToken;
+                    $payForm->CardNumber = TokenHelper::getCardPanByPanTokenId($presetToken->ID);
+                    $payForm->CardHolder = $presetToken->CardHolder;
+                    $payForm->CardExp = $presetToken->ExpDateMonth . $presetToken->ExpDateYear;
+                }
+
                 /** @var LanguageService $languageService */
-                $languageService = Yii::$container->get('LanguageService');
+                $languageService = Yii::$app->get(LanguageService::class);
                 $languageService->setAppLanguage($params['ID']);
 
                 $payschets->SetIpAddress($params['ID']);
 
                 //разрешить открытие во фрейме на сайте мерчанта
                 $csp = "default-src 'self' 'unsafe-inline' https://mc.yandex.ru https://pay.google.com; " .
-                    "img-src 'self' data: https://mc.yandex.ru https://google.com/pay https://google.com/pay https://www.gstatic.com; " .
-                    "connect-src *; frame-src *;";
+                    "img-src 'self' data: https://mc.yandex.ru https://google.com/pay https://google.com/pay https://www.gstatic.com https://pay.yandex.ru; " .
+                    "connect-src *; " .
+                    "frame-src *; " .
+                    "script-src 'self' 'unsafe-inline' https://pay.yandex.ru;";
                 Yii::$app->response->headers->add('Content-Security-Policy', $csp);
 
                 $currency = $currencyRepository->getCurrency(null, $params['CurrencyId']);
@@ -167,6 +197,8 @@ class PayController extends Controller
 
                 Yii::info('PayForm render id:' . $id .  ',  paySchet: ' . $params['ID'] . ', Headers: ' . Json::encode(Yii::$app->request->headers));
 
+                $yandexPayFormData = $this->getYandexPayFormData($paySchet);
+
                 return $this->render('formpay', [
                     'params' => $params,
                     'apple' => (new ApplePay())->GetConf($params['IDPartner']),
@@ -174,6 +206,7 @@ class PayController extends Controller
                     'samsung' => (new SamsungPay())->GetConf($params['IDPartner']),
                     'payform' => $payForm,
                     'appLang'=> $languageService->getAppLanguage(),
+                    'yandexPayFormData' => $yandexPayFormData,
                 ]);
 
             } else {
@@ -191,7 +224,7 @@ class PayController extends Controller
      *
      * @return array|Response
      * @throws NotFoundHttpException
-     * @throws MerchantRequestAlreadyExistsException
+     * @throws \yii\base\InvalidConfigException
      */
     public function actionCreatepay()
     {
@@ -202,80 +235,73 @@ class PayController extends Controller
 
         $form = new CreatePayForm();
 
-        if (!$form->load(Yii::$app->request->post(), 'PayForm')) {
+        if (!$form->load(Yii::$app->request->post()) || !$form->validate()) {
             return ['status' => 0, 'message' => $form->GetError()];
         }
 
-        /** @var LanguageService $languageService */
-        $languageService = Yii::$container->get('LanguageService');
-        $languageService->setAppLanguage($form->IdPay);
+        return $this->processCreatePayForm($form);
+    }
 
-        if (!$form->validate()) {
-            return ['status' => 0, 'message' => $form->GetError()];
+    /**
+     * @param $id
+     * @return array|Response
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function actionYandexPay($id)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $paySchet = PaySchet::findOne(['ID' => $id]);
+        if (!$paySchet) {
+            return [
+                'status' => 0,
+                'message' => 'Платеж не найден',
+            ];
         }
 
-        Yii::warning("PayForm create id=" . $form->IdPay);
-        Yii::$app->session->set('IdPay', $form->IdPay);
+        /** @var YandexPayService $yandexPayService */
+        $yandexPayService = \Yii::$app->get(YandexPayService::class);
+        if (!$yandexPayService->isEnabled($paySchet)) {
+            return [
+                'status' => 0,
+                'message' => 'Yandex Pay не подключен',
+            ];
+        }
 
-        $createPayStrategy = new CreatePayStrategy($form);
+        $yandexPayForm = new YandexPayForm();
+        if (!$yandexPayForm->load(\Yii::$app->request->post(), '') || !$yandexPayForm->validate()) {
+            return [
+                'status' => 0,
+                'message' => $yandexPayForm->firstErrors[0],
+            ];
+        }
+
+        $paymentToken = new PaymentToken($yandexPayForm->paymentToken);
 
         try {
-            $paySchet = $createPayStrategy->exec();
-        } catch (DuplicateCreatePayException $e) {
-            // releaseLock сюда не надо, эксепшен вызывается при попытке провести платеж, который уже проведен
-            Yii::$app->errorHandler->logException($e);
-
-            return ['status' => 0, 'message' => $e->getMessage()];
-        } catch (CreatePayException | GateException | reRequestingStatusException | BankAdapterResponseException | Exception $e) {
-            Yii::$app->errorHandler->logException($e);
-            $createPayStrategy->releaseLock();
-
-            return ['status' => 0, 'message' => $e->getMessage()];
-        } catch (reRequestingStatusOkException $e) {
-            Yii::$app->errorHandler->logException($e);
-            $createPayStrategy->releaseLock();
-
-            return [
-                'status' => 2,
-                'message' => $e->getMessage(),
-                'url' => Yii::$app->params['domain'] . '/pay/orderok?id=' . $form->IdPay,
-            ];
-        } catch (FailPaymentException $e)   {
-            // The payment has failed: client redirect to orderok which, in turn, will redirect to the fail page
-            Yii::$app->errorHandler->logException($e);
-            $createPayStrategy->releaseLock();
-
-            return [
-                'status' => 2,
-                'message' => $e->getMessage(),
-                'url' => Url::to(['orderok', 'id' => $form->IdPay]),
-            ];
-        } catch (Check3DSv2Exception $e) {
-            Yii::$app->errorHandler->logException($e);
-            $createPayStrategy->releaseLock();
+            $decryptedMessage = $yandexPayService->getDecryptedMessage($paymentToken, $paySchet);
+        } catch (\Exception $e) {
+            \Yii::error([
+                'YandexPayController actionCreatePay payment token decrypt exception',
+                $yandexPayForm->paymentToken,
+                $e
+            ]);
 
             return [
                 'status' => 0,
-                'message' => \Yii::t('app.payment-errors', 'Карта не поддерживается, обратитесь в банк')
+                'message' => 'Ошибка запроса',
             ];
         }
 
-        $createPayResponse = $createPayStrategy->getCreatePayResponse();
-        $createPayResponse->termurl = $createPayResponse->GetRetUrl($paySchet->ID);
-        switch ($createPayResponse->status) {
-            case BaseResponse::STATUS_DONE:
-                // отправить запрос адреса формы 3ds
-                Yii::warning('PayController createPayResponse data: ' . Json::encode($createPayResponse->getAttributes()));
-                return $createPayResponse->getAttributes();
-            case BaseResponse::STATUS_ERROR:
-                // отменить счет
-                return $this->redirect(Url::to('/pay/orderok?id=' . $form->IdPay));
-            case BaseResponse::STATUS_CREATED:
-                $createPayResponse->termurl = $createPayResponse->getStep2Url($paySchet->ID);
-                return $createPayStrategy->getCreatePayResponse()->getAttributes();
-            default:
-                return $createPayStrategy->getCreatePayResponse()->getAttributes();
-        }
+        $createPayForm = new CreatePayForm([
+            'CardNumber' => $decryptedMessage->getPaymentMethodDetails()->getPan(),
+            'CardHolder' => 'YANDEXPAY', // можно не передавать cvv, но нужно передавать любое значение cardHolder не короче 2х символов
+            'CardExp' => $decryptedMessage->getPaymentMethodDetails()->getFullExpiration(),
+            'IdPay' => $id,
+        ]);
+        $createPayForm->afterValidate();
+
+        return $this->processCreatePayForm($createPayForm);
     }
 
     public function actionCreatepaySecondStep($id)
@@ -288,11 +314,19 @@ class PayController extends Controller
         $bankAdapterBuilder = new BankAdapterBuilder();
         $bankAdapterBuilder->buildByBank($paySchet->partner, $paySchet->uslugatovar, $paySchet->bank, $paySchet->currency);
 
-        /** @var TKBankAdapter $tkbAdapter */
-        $tkbAdapter = $bankAdapterBuilder->getBankAdapter();
+        $bankAdapter = $bankAdapterBuilder->getBankAdapter();
+        if (!($bankAdapter instanceof IBankSecondStepInterface)) {
+            Yii::warning('PayController action createPaySecondStep bank adapter is not IBankSecondStepInterface');
+
+            return $this->render('client-error', [
+                'message' => 'Bank adapter error',
+                'failUrl' => $paySchet->FailedUrl,
+            ]);
+        }
+
         try {
             Yii::info('PayController createpaySecondStep createPayStep2');
-            $createPayResponse = $tkbAdapter->createPayStep2($createPaySecondStepForm);
+            $createPayResponse = $bankAdapter->createPayStep2($createPaySecondStepForm);
         } catch (Check3DSv2Exception $e) {
             $errorMessage = \Yii::t('app.payment-errors', 'Карта не поддерживается, обратитесь в банк');
             if ($e->getCode() === Check3DSv2Exception::INCORRECT_ECI) {
@@ -301,6 +335,19 @@ class PayController extends Controller
             Yii::warning('PayController createpaySecondStep redirect: '. $paySchet->ID. ', redirect url:' . $paySchet->FailedUrl . ', Error:' . $errorMessage . ', Headers: ' . Json::encode(Yii::$app->request->headers));
             return $this->render('client-error', [
                 'message' => $errorMessage,
+                'failUrl' => $paySchet->FailedUrl,
+            ]);
+        } catch (CacheValueMissingException $e) {
+            Yii::warning('PayController createpaySecondStep CacheValueMissingException redirect to orderok paySchet.ID=' . $paySchet->ID);
+
+            return $this->renderPartial('client-redirect', [
+                'redirectUrl' => Url::toRoute(['orderok', 'id' => $paySchet->ID]),
+            ]);
+        } catch (BankAdapterResponseException $e) {
+            Yii::$app->errorHandler->logException($e);
+
+            return $this->render('client-error', [
+                'message' => \Yii::t('app.payment-errors', BankAdapterResponseException::REQUEST_ERROR_MSG),
                 'failUrl' => $paySchet->FailedUrl,
             ]);
         }
@@ -365,6 +412,7 @@ class PayController extends Controller
      * @return Response
      * @throws BadRequestHttpException
      * @throws NotFoundHttpException
+     * @todo Add different actions for each bank to avoid ambiguous behavior.
      */
     public function actionOrderdone($id = null)
     {
@@ -375,13 +423,15 @@ class PayController extends Controller
         $donePayForm->trans = Yii::$app->request->post('trans_id', null);
 
         // Impaya
-        if(Yii::$app->request->isGet && $trans = Yii::$app->request->get('transaction_id', null)) {
-            // TODO: check hash
-            Yii::info('PayController orderdone GET Impaya data: ' . Json::encode(Yii::$app->request->get()));
-            $donePayForm->IdPay = $trans;
-        } elseif (Yii::$app->request->isPost && $trans = Yii::$app->request->post('transaction_id', null)) {
-            Yii::info('PayController orderdone POST Impaya trans=' . Json::encode(Yii::$app->request->get()));
-            $donePayForm->trans = $trans;
+        if (empty($id)) {
+            if (Yii::$app->request->isGet && $trans = Yii::$app->request->get('transaction_id', null)) {
+                // TODO: check hash
+                Yii::info('PayController orderdone GET Impaya data: ' . Json::encode(Yii::$app->request->get()));
+                $donePayForm->IdPay = $trans;
+            } elseif (Yii::$app->request->isPost && $trans = Yii::$app->request->post('transaction_id', null)) {
+                Yii::info('PayController orderdone POST Impaya trans=' . Json::encode(Yii::$app->request->get()));
+                $donePayForm->trans = $trans;
+            }
         }
 
         // Для тестирования, добавляем возможность передать ид транзакции GET параметром
@@ -390,6 +440,8 @@ class PayController extends Controller
 
             Yii::info('PayController orderdone IdPay=' . $id . ' trans=' . $trans);
         }
+
+        $donePayForm->postParameters = Yii::$app->request->post();
 
         $donePayForm->md = Yii::$app->request->post('MD', null);
         $donePayForm->paRes = Yii::$app->request->post('PaRes', null);
@@ -444,7 +496,7 @@ class PayController extends Controller
         }
 
         /** @var LanguageService $languageService */
-        $languageService = Yii::$container->get('LanguageService');
+        $languageService = Yii::$app->get(LanguageService::class);
         $languageService->setAppLanguage($okPayForm->IdPay);
 
         // Wait until the "order done" mutex lock released.
@@ -453,8 +505,13 @@ class PayController extends Controller
         $mutex->acquire($mutexKey, 15);
         $mutex->release($mutexKey);
 
-        $okPayStrategy = new OkPayStrategy($okPayForm);
-        $paySchet = $okPayStrategy->exec();
+        try {
+            $okPayStrategy = new OkPayStrategy($okPayForm);
+            $paySchet = $okPayStrategy->exec();
+        } catch (BankAdapterResponseException $e) {
+            Yii::warning($e);
+            return $this->render('paywait');
+        }
         Yii::info('PayController orderok IdPay=' . $id . ' okPayStrategy exec ok'
             . ' Status=' . $paySchet->Status
             . ' ErrorInfo=' . $paySchet->ErrorInfo);
@@ -507,7 +564,7 @@ class PayController extends Controller
         Yii::warning("PayForm orderfail id={$id}");
 
         /** @var LanguageService $languageService */
-        $languageService = Yii::$container->get('LanguageService');
+        $languageService = Yii::$app->get(LanguageService::class);
         $languageService->setAppLanguage($id);
 
         return $this->render('paycancel');
@@ -625,4 +682,101 @@ class PayController extends Controller
         return '';
     }
 
+    /**
+     * @param CreatePayForm $form
+     * @return array|Response
+     * @throws \yii\base\InvalidConfigException
+     */
+    private function processCreatePayForm(CreatePayForm $form)
+    {
+        /** @var LanguageService $languageService */
+        $languageService = Yii::$app->get(LanguageService::class);
+        $languageService->setAppLanguage($form->IdPay);
+
+        Yii::warning("PayForm create id=" . $form->IdPay);
+        Yii::$app->session->set('IdPay', $form->IdPay);
+
+        $createPayStrategy = new CreatePayStrategy($form);
+
+        try {
+            $paySchet = $createPayStrategy->exec();
+        } catch (DuplicateCreatePayException $e) {
+            // releaseLock сюда не надо, эксепшен вызывается при попытке провести платеж, который уже проведен
+            Yii::$app->errorHandler->logException($e);
+
+            return ['status' => 0, 'message' => $e->getMessage()];
+        } catch (CreatePayException | GateException | reRequestingStatusException | BankAdapterResponseException | Exception $e) {
+            Yii::$app->errorHandler->logException($e);
+            $createPayStrategy->releaseLock();
+
+            return ['status' => 0, 'message' => $e->getMessage()];
+        } catch (reRequestingStatusOkException $e) {
+            Yii::$app->errorHandler->logException($e);
+            $createPayStrategy->releaseLock();
+
+            return [
+                'status' => 2,
+                'message' => $e->getMessage(),
+                'url' => Yii::$app->params['domain'] . '/pay/orderok?id=' . $form->IdPay,
+            ];
+        } catch (FailPaymentException $e)   {
+            // The payment has failed: client redirect to orderok which, in turn, will redirect to the fail page
+            Yii::$app->errorHandler->logException($e);
+            $createPayStrategy->releaseLock();
+
+            return [
+                'status' => 2,
+                'message' => $e->getMessage(),
+                'url' => Url::to(['orderok', 'id' => $form->IdPay]),
+            ];
+        } catch (Check3DSv2Exception $e) {
+            Yii::$app->errorHandler->logException($e);
+            $createPayStrategy->releaseLock();
+
+            return [
+                'status' => 0,
+                'message' => \Yii::t('app.payment-errors', 'Карта не поддерживается, обратитесь в банк')
+            ];
+        }
+
+        $createPayResponse = $createPayStrategy->getCreatePayResponse();
+        $createPayResponse->termurl = $createPayResponse->GetRetUrl($paySchet->ID);
+        switch ($createPayResponse->status) {
+            case BaseResponse::STATUS_DONE:
+                // отправить запрос адреса формы 3ds
+                Yii::warning('PayController createPayResponse data: ' . Json::encode($createPayResponse->getAttributes()));
+                return $createPayResponse->getAttributes();
+            case BaseResponse::STATUS_ERROR:
+                // отменить счет
+                return $this->redirect(Url::to('/pay/orderok?id=' . $form->IdPay));
+            case BaseResponse::STATUS_CREATED:
+                $createPayResponse->termurl = $createPayResponse->getStep2Url($paySchet->ID);
+                return $createPayStrategy->getCreatePayResponse()->getAttributes();
+            default:
+                return $createPayStrategy->getCreatePayResponse()->getAttributes();
+        }
+    }
+
+    /**
+     * @param PaySchet $paySchet
+     * @return array
+     */
+    private function getYandexPayFormData(PaySchet $paySchet): array
+    {
+        /** @var YandexPayService $yandexPayService */
+        $yandexPayService = \Yii::$app->get(YandexPayService::class);
+
+        if ($yandexPayService->isEnabled($paySchet)) {
+            return [
+                'isEnabled' => true,
+                'merchantId' => $paySchet->partner->yandexPayMerchantId,
+                'environment' => $yandexPayService->getEnvironment(),
+            ];
+        }
+        else {
+            return [
+                'isEnabled' => false,
+            ];
+        }
+    }
 }

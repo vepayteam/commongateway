@@ -2,7 +2,6 @@
 
 namespace app\models\partner\stat;
 
-use app\models\partner\admin\VyvodVoznag;
 use app\models\payonline\Partner;
 use Yii;
 
@@ -71,7 +70,7 @@ class ActSchet extends \yii\db\ActiveRecord
                 `NumSchet`
             FROM
                 `act_schet`
-            ORDER BY `ID` DESC 
+            ORDER BY `ID` DESC
             LIMIT 1
         ')->queryScalar();
         return (int)$id + 1;

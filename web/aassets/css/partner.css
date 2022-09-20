@@ -314,3 +314,72 @@
     content: "\f0dd";
     /*content: "\f15e";*/
 }
+
+.comissionBlock {
+    display: flex;
+    justify-content: space-between;
+}
+
+.comissionBlockItem {
+    display: flex;
+    justify-content: space-between;
+
+}
+
+#comissionWrapper h3 {
+    font-size: 13px;
+    color: #676a6c;
+    font-weight: 700;
+}
+
+#comissionWrapper .plusPercent {
+    font-size: 16px;
+    padding-top: 5px;
+    margin-left: 1rem;
+    margin-right: 1rem;
+    white-space: nowrap;
+}
+
+#comissionWrapper .chosenCurrency {
+    font-size: 16px;
+    padding-top: 5px;
+    margin-left: 1rem;
+}
+
+#comissionWrapper .currencyWrapper {
+    font-size: 16px;
+    padding-top: 5px;
+}
+
+#comissionWrapper input {
+    text-align: right;
+}
+
+#comissionWrapper .percentsStyle {
+    width: 9rem;
+}
+
+@media (max-width: 550px) {
+    .comissionBlock {
+        flex-wrap: wrap;
+    }
+}
+
+.partner-stat-otch tr.partner-stat-otch_provider, .partner-stat-otch tr.partner-stat-otch_summary {
+    background-color: #f9f9f9;
+    font-weight: bold;
+}
+
+tr.partner-stat-otch_datarow.darkned {
+    background-color: #fbfbfb;
+}
+
+.balance-container {
+    width: max-content;
+}
+
+.balance-container__item {
+    display: flex;
+    justify-content: space-between;
+    column-gap: 1rem;
+}

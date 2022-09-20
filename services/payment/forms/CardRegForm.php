@@ -32,7 +32,12 @@ class CardRegForm extends Model
     public $cancelurl = '';
     public $postbackurl = '';
     public $postbackurl_v2 = '';
-    public $language = LanguageService::API_LANG_RUS;
+    public $language;
+
+    /**
+     * @var string|null
+     */
+    public $email;
 
     /**
      * @var string
@@ -55,6 +60,7 @@ class CardRegForm extends Model
             [['card'], 'match', 'pattern' => '/^\d{16}|\d{18}$/'],
             [['card'], 'validateCard'], /** @see validateCard() */
             [['language'], 'in', 'range' => LanguageService::ALL_API_LANG_LIST],
+            [['email'], 'email'],
         ];
     }
 

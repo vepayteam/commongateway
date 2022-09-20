@@ -2,33 +2,34 @@
 
 namespace app\services\payment\payment_strategies\mfo;
 
+use app\models\api\Reguser;
 use app\models\crypt\CardToken;
 use app\models\payonline\Cards;
-use app\models\api\Reguser;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
 use app\services\cards\models\PanToken;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
-use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\CardTokenException;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\NotUniquePayException;
 use app\services\payment\forms\OutCardPayForm;
-use app\services\payment\models\Currency;
-use app\services\payment\models\PayCard;
+use app\services\payment\jobs\RefreshStatusPayJob;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
 use app\services\payment\PaymentService;
 use Yii;
 use yii\base\Exception;
 use yii\mutex\FileMutex;
+use yii\queue\redis\Queue;
 
 class MfoOutCardStrategy
 {
     /** @var OutCardPayForm */
     private $outCardPayForm;
+    /** @var Queue */
+    private $queue;
     /** @var PaymentService */
     protected $paymentService;
 
@@ -38,6 +39,7 @@ class MfoOutCardStrategy
     public function __construct(OutCardPayForm $outCardPayForm)
     {
         $this->outCardPayForm = $outCardPayForm;
+        $this->queue = \Yii::$app->queue;
     }
 
     /**
@@ -99,14 +101,28 @@ class MfoOutCardStrategy
         $this->outCardPayForm->paySchet = $paySchet;
         $outCardPayResponse = $bankAdapterBuilder->getBankAdapter()->outCardPay($this->outCardPayForm);
 
-        if($outCardPayResponse->status == BaseResponse::STATUS_DONE) {
+        if ($outCardPayResponse->status == BaseResponse::STATUS_DONE) {
+            /** @todo Fix status change/check logic. */
             $paySchet->ExtBillNumber = $outCardPayResponse->trans;
+            $paySchet->save(false);
+        } else if ($outCardPayResponse->status == BaseResponse::STATUS_CREATED) {
+            $paySchet->Status = PaySchet::STATUS_WAITING_CHECK_STATUS;
+            $paySchet->ErrorInfo = $outCardPayResponse->message;
             $paySchet->save(false);
         } else {
             $paySchet->Status = PaySchet::STATUS_ERROR;
             $paySchet->ErrorInfo = $outCardPayResponse->message;
             $paySchet->save(false);
             throw new CreatePayException($outCardPayResponse->message);
+        }
+
+        /** @todo Fix status change/check logic. */
+        if (in_array($outCardPayResponse->status, [BaseResponse::STATUS_DONE, BaseResponse::STATUS_CREATED])) {
+            $this->queue
+                ->delay($bankAdapterBuilder->getBankAdapter()->getOutCardRefreshStatusDelay())
+                ->push(new RefreshStatusPayJob([
+                    'paySchetId' => $paySchet->ID,
+                ]));
         }
 
         return $paySchet;
@@ -142,7 +158,7 @@ class MfoOutCardStrategy
         $card->NameCard = $cardNumber;
         $card->CardNumber = $cardNumber;
         $card->ExtCardIDP = 0;
-        $card->CardType = 0;
+        $card->CardType = Cards::GetTypeCard($cardNumber);
         $card->SrokKard = 0;
         $card->Status = 1;
         $card->DateAdd = time();
@@ -200,7 +216,6 @@ class MfoOutCardStrategy
         $paySchet->IdKard = $card->ID;
         $paySchet->IdUser = $user->ID;
         $paySchet->CardNum = Cards::MaskCard($this->outCardPayForm->cardnum);
-        $paySchet->CardType = Cards::GetCardBrand(Cards::GetTypeCard($this->outCardPayForm->cardnum));
         $paySchet->CardHolder = mb_substr($card->CardHolder, 0, 99);
         $paySchet->CardExp = $card->getMonth() . $card->getYear();
         $paySchet->Status = PaySchet::STATUS_WAITING;

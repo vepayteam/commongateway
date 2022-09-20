@@ -106,6 +106,7 @@ $config = [
                 'POST /h2hapi/v1/invoices' => '/h2hapi/v1/invoice/post',
                 'GET /h2hapi/v1/invoices/<id:\d+>' => '/h2hapi/v1/invoice/get',
                 'PUT /h2hapi/v1/invoices/<paySchetId:\d+>/payment' => '/h2hapi/v1/payment/put',
+                'GET /h2hapi/v1/invoices/<paySchetId:\d+>/payment' => '/h2hapi/v1/payment/get',
                 'PUT /h2hapi/v1/invoices/<paySchetId:\d+>/payment/reversed' => '/h2hapi/v1/payment/put-reversed',
 
                 'POST /h2hapi/v1/invoices/<paySchetId:\d+>/payment/refunds' => '/h2hapi/v1/refund/post',
@@ -177,6 +178,10 @@ $config = [
         \app\services\RecurrentPaymentPartsService::class => \app\services\RecurrentPaymentPartsService::class,
         \app\services\ReportService::class => \app\services\ReportService::class,
         \app\services\PaymentService::class => \app\services\PaymentService::class,
+        \app\services\LanguageService::class => \app\services\LanguageService::class,
+        \app\services\YandexPayService::class => \app\services\YandexPayService::class,
+        \app\services\PaymentTransferService::class => \app\services\PaymentTransferService::class,
+        \app\services\PayToCardService::class => \app\services\PayToCardService::class,
     ],
     'params' => $params,
     'container' => [
@@ -188,7 +193,6 @@ $config = [
             'AuthService' => ['class' => 'app\services\auth\AuthService'],
             'NotificationsService' => ['class' => 'app\services\notifications\NotificationsService'],
             'WallettoExchangeRateService' => ['class' => 'app\services\exchange_rates\WallettoExchangeRateService'],
-            'LanguageService' => ['class' => 'app\services\LanguageService'],
         ],
     ],
     'modules' => [

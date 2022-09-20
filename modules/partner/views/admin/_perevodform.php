@@ -1,8 +1,10 @@
 <?php
 /* @var $partnerlist Partner[]*/
+/* @var $banks Bank[]*/
 /* @var $this yii\web\View */
 
 use app\models\payonline\Partner;
+use app\services\payment\models\Bank;
 use yii\helpers\Html;
 
 ?>
@@ -19,6 +21,7 @@ use yii\helpers\Html;
         <label class="control-label col-sm-3">Контрагент</label>
         <div class="col-sm-8">
             <select class="form-control" name="Perechislen[IdPartner]">
+                <option value="0" disabled selected>Выберите контрагента</option>
                 <?php foreach ($partnerlist as $partner) : ?>
                     <option value="<?=Html::encode($partner->ID)?>"><?=Html::encode($partner->nameWithId)?></option>
                 <?php endforeach; ?>
@@ -27,30 +30,42 @@ use yii\helpers\Html;
     </div>
 
     <div class="form-group row">
+        <label class="control-label col-sm-3">Провайдер</label>
+        <div class="col-sm-8">
+            <select class="form-control" name="Perechislen[BankId]">
+                <option value="0" disabled selected>Выберите провайдера</option>
+                <?php foreach ($banks as $bank) : ?>
+                    <option value="<?=Html::encode($bank->ID)?>"><?=Html::encode($bank->Name)?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="control-label col-sm-3">Баланс</label>
+        <div class="col-sm-8">
+            <div class="m-t-xs" id=balancepartner>-</div>
+        </div>
+    </div>
+
+    <div class="form-group row">
         <label class="control-label col-sm-3">Счет назначения</label>
         <div class="col-sm-8">
-            <div class="radio">
-                <input type="radio" name="Perechislen[TypeSchet]" id="TypeSchet1" value="0" checked="checked">
-                <label for="TypeSchet1">
-                    Счет выдачи <div id="TypeSchet1Info"></div>
-                </label>
-            </div>
             <div class="radio">
                 <input type="radio" name="Perechislen[TypeSchet]" id="TypeSchet2" value="1">
                 <label for="TypeSchet2">
                     Банковский счет <div id="TypeSchet2Info"></div>
                 </label>
             </div>
+            <div class="radio">
+                <input type="radio" name="Perechislen[TypeSchet]" id="TypeSchet1" value="0" checked="checked">
+                <label for="TypeSchet1">
+                    Счет выдачи <div id="TypeSchet1Info"></div>
+                </label>
+            </div>
         </div>
     </div>
     <span id="infoschet" style="display: none;"></span>
-
-    <div class="form-group row">
-        <label class="control-label col-sm-3">Баланс</label>
-        <div class="col-sm-8">
-            <div class="col-sm-8 m-t-xs" id=balancepartner></div>
-        </div>
-    </div>
 
     <div class="form-group row">
         <label for="Name" class="control-label col-sm-3">Сумма</label>

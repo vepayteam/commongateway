@@ -17,16 +17,28 @@ class Currency extends ActiveRecord
     public const RUB = 'RUB';
     public const USD = 'USD';
     public const EUR = 'EUR';
+    public const AZN = 'AZN';
     public const SYMBOLS = [
         self::RUB => '₽',
         self::USD => '$',
-        self::EUR => '€'
+        self::EUR => '€',
+        self::AZN => 'AZN',
     ];
     public const MAIN_CURRENCY = self::RUB;
 
     public static function tableName(): string
     {
         return 'currency';
+    }
+
+    public static function findDefaultCurrency(): Currency
+    {
+        return static::findByCode(static::MAIN_CURRENCY);
+    }
+
+    public static function findByCode(string $code): Currency
+    {
+        return static::findOne(['Code' => $code]);
     }
 
     public function rules(): array

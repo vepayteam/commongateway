@@ -347,6 +347,7 @@
         },
 
         pingMonetixCallback: function(interval) {
+            let me = this;
             let id = $('[name="PayForm[IdPay]"]').val();
             $.ajax({
                 type: 'POST',
@@ -366,6 +367,16 @@
                         var termUrl = response['data']['acs']['term_url'];
                         payform.load3dsMonetix(url, paReq, md, termUrl);
                         clearInterval(interval);
+                    } else if(response['status'] && response['status'] == 'awaiting redirect result') {
+                        let method = response['data']['redirect_data']['method'];
+                        let url = response['data']['redirect_data']['url'];
+                        let fields = response['data']['redirect_data']['body'];
+                        if (method === 'GET') {
+                            window.location = url;
+                        } else {
+                            me.submitForm(method, url, fields);
+                        }
+                        clearInterval(interval);
                     } else if(response['status'] && response['status'] == 'decline') {
                         window.location = response.termurl;
                         clearInterval(interval);
@@ -381,6 +392,18 @@
         },
 
         createPaySuccess: function (data, textStatus, jqXHR) {
+            if ('acs' in data && data.acs !== null) {
+                const acs = data.acs;
+                if (acs.type === 'redirect' && acs.status === 'OK') {
+                    if (acs.method === 'GET') {
+                        window.location = acs.url;
+                    } else if (acs.method === 'POST') {
+                        payform.submitForm('POST', acs.url, acs.postParameters);
+                    }
+                    return;
+                }
+            }
+
             if (data.status == 1 && data.isNeedPingMonetix) {
                 var interval = setInterval(function() {
                     payform.pingMonetixCallback(interval);

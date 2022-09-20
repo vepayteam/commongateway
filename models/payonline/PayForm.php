@@ -2,9 +2,13 @@
 
 namespace app\models\payonline;
 
+use app\services\payment\forms\CreatePayForm;
 use Yii;
 use yii\base\Model;
 
+/**
+ * @deprecated Use {@see CreatePayForm} instead.
+ */
 class PayForm extends Model
 {
     public $CardNumber;
@@ -38,12 +42,19 @@ class PayForm extends Model
                 if ($this->CardExp) {
                     $CardMonth = substr($this->CardExp, 0, 2);
                     $CardYear = substr($this->CardExp, 2, 2);
-                    if (!preg_match('/^[01]\d{3}$/', $this->CardExp) ||
-                        $CardMonth < 1 ||
-                        $CardMonth > 12 ||
-                        $CardYear + 2000 < date('Y') ||
-                        ($CardYear + 2000 == date('Y') && $CardMonth < date('n')) ||
-                        $CardYear + 2000 > date('Y') + 10
+                    if (!preg_match('/^[01]\d{3}$/', $this->CardExp)
+                        || $CardMonth < 1
+                        || $CardMonth > 12
+                        // TODO: Убрать после потери актуальности https://it.dengisrazy.ru/browse/VPBC-1468
+                        || (!in_array(Cards::GetTypeCard($this->CardNumber), [
+                                Cards::BRAND_AMERICAN_EXPRESS,
+                                Cards::BRAND_MAESTRO,
+                                Cards::BRAND_MASTERCARD,
+                                Cards::BRAND_VISA
+                            ])
+                            && ($CardYear + 2000 < date('Y') || ($CardYear + 2000 == date('Y') && $CardMonth < date('n')))
+                        )
+                        || $CardYear + 2000 > date('Y') + 10
                     ) {
                         $this->addError($attribute, \Yii::t('app.payment-errors', 'Неверный Срок действия'));
                     }

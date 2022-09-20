@@ -467,7 +467,7 @@ return array(
     'PharIo\\Manifest\\Manifest' => $vendorDir . '/phar-io/manifest/src/values/Manifest.php',
     'PharIo\\Manifest\\ManifestDocument' => $vendorDir . '/phar-io/manifest/src/xml/ManifestDocument.php',
     'PharIo\\Manifest\\ManifestDocumentException' => $vendorDir . '/phar-io/manifest/src/exceptions/ManifestDocumentException.php',
-    'PharIo\\Manifest\\ManifestDocumentLoadingException' => $vendorDir . '/phar-io/manifest/src/xml/ManifestDocumentLoadingException.php',
+    'PharIo\\Manifest\\ManifestDocumentLoadingException' => $vendorDir . '/phar-io/manifest/src/exceptions/ManifestDocumentLoadingException.php',
     'PharIo\\Manifest\\ManifestDocumentMapper' => $vendorDir . '/phar-io/manifest/src/ManifestDocumentMapper.php',
     'PharIo\\Manifest\\ManifestDocumentMapperException' => $vendorDir . '/phar-io/manifest/src/exceptions/ManifestDocumentMapperException.php',
     'PharIo\\Manifest\\ManifestElement' => $vendorDir . '/phar-io/manifest/src/xml/ManifestElement.php',

@@ -10,6 +10,7 @@ setlocale (LC_TIME, "RUS");
 return [
     'id' => 'basic-console',
     'language' => 'ru_RU',
+    'sourceLanguage' => 'ru-RU',
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log', 'gii', 'queue', 'reportQueue'],
     'controllerNamespace' => 'app\commands',
@@ -57,6 +58,10 @@ return [
         \app\services\RecurrentPaymentPartsService::class => \app\services\RecurrentPaymentPartsService::class,
         \app\services\PaymentService::class => \app\services\PaymentService::class,
         \app\services\ReportService::class => \app\services\ReportService::class,
+        \app\services\LanguageService::class => \app\services\LanguageService::class,
+        \app\services\YandexPayService::class => \app\services\YandexPayService::class,
+        \app\services\PaymentTransferService::class => \app\services\PaymentTransferService::class,
+        \app\services\PayToCardService::class => \app\services\PayToCardService::class,
     ],
     'params' => $params,
     'container' => [

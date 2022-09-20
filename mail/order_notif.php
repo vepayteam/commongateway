@@ -4,6 +4,7 @@ use app\models\payonline\OrderNotif;
 use app\models\payonline\OrderPay;
 use yii\helpers\Html;
 
+/* @var string $apiUrl */
 /* @var OrderNotif $orderNotif */
 /* @var OrderPay $orderPay */
 /* @var array|null $orderTo */
@@ -41,4 +42,4 @@ use yii\helpers\Html;
     </table>
 <?php endif; ?>
 
-<a href="https://api.vepay.online/widget/order/<?= Html::encode($orderNotif->IdOrder) ?>">Оплатить</a>
+<a href="<?= $apiUrl ?>/widget/order/<?= Html::encode($orderNotif->IdOrder) ?>">Оплатить</a>

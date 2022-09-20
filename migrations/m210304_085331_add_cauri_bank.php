@@ -13,7 +13,7 @@ class m210304_085331_add_cauri_bank extends Migration
     public function safeUp()
     {
         $bank = new \app\services\payment\models\Bank();
-        $bank->ID = \app\services\payment\banks\CauriAdapter::$bank;
+        $bank->ID = 8;
         $bank->Name = 'Cauri';
         $bank->save(false);
     }
@@ -23,7 +23,7 @@ class m210304_085331_add_cauri_bank extends Migration
      */
     public function safeDown()
     {
-        \app\services\payment\models\Bank::deleteAll(['ID' => \app\services\payment\banks\CauriAdapter::$bank]);
+        \app\services\payment\models\Bank::deleteAll(['ID' => 8]);
         return true;
     }
 }

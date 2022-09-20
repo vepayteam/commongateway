@@ -5,6 +5,7 @@ namespace app\services\payment\banks;
 use app\models\payonline\Cards;
 use app\models\payonline\Uslugatovar;
 use app\models\TU;
+use app\services\DeprecatedCurlLogger;
 use app\services\ident\models\Ident;
 use app\services\payment\banks\bank_adapter_requests\GetBalanceRequest;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
@@ -18,9 +19,17 @@ use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\SendP2pResponse;
 use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
+use app\services\payment\banks\data\ClientData;
+use app\services\payment\banks\data\P2pData;
+use app\services\payment\banks\interfaces\P2p;
+use app\services\payment\banks\results\asc\AcsRedirectGetResult;
+use app\services\payment\banks\results\BaseP2pResult;
+use app\services\payment\banks\results\P2pErrorResult;
+use app\services\payment\banks\results\P2pOkResult;
 use app\services\payment\CurlSSLStructure;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\BRSAdapterExeception;
+use app\services\payment\exceptions\ConfirmPostDataException;
 use app\services\payment\exceptions\FailedRecurrentPaymentException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\AutoPayForm;
@@ -46,8 +55,8 @@ use app\services\payment\forms\OkPayForm;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\forms\OutPayAccountForm;
 use app\services\payment\forms\RefundPayForm;
-use app\services\payment\forms\SendP2pForm;
 use app\services\payment\forms\RegistrationBenificForm;
+use app\services\payment\forms\SendP2pForm;
 use app\services\payment\helpers\BRSErrorHelper;
 use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\models\Bank;
@@ -59,16 +68,21 @@ use Exception;
 use Yii;
 use yii\helpers\Json;
 
-class BRSAdapter implements IBankAdapter
+class BRSAdapter extends BaseAdapter implements IBankAdapter, P2p
 {
     const AFT_MIN_SUMM = 180000;
     const KEYS_PATH = '@app/config/brs/';
 
-    const BALANCE_CARD_NUM = '5100476090795931'; // Карта используется для запроса баланса TODO: переместить в другое место?
+    const BALANCE_CARD_NUM = '5100920551403998'; // Карта используется для запроса баланса TODO: переместить в другое место?
     const BALANCE_FAKE_AMOUNT = 1000;
+    const BALANCE_B2C_CACHE_KEY = 'BALANCE_B2C_CACHE';
+    const BALANCE_B2C_CACHE_DURATION = 60 * 60 * 24; // 24 hours
 
     const BRS_RESPONSE_SYSTEM_ERROR_CODE = 1001;
 
+    /**
+     * @deprecated Use {@see bankId()} instead.
+     */
     public static $bank = 7;
 
     /** @var PartnerBankGate */
@@ -95,6 +109,14 @@ class BRSAdapter implements IBankAdapter
     const BANK_URL_XML_TEST = 'https://194.67.29.216:8443';
 
     /**
+     * {@inheritDoc}
+     */
+    public static function bankId(): int
+    {
+        return 7;
+    }
+
+    /**
      * @inheritDoc
      */
     public function setGate(PartnerBankGate $partnerBankGate)
@@ -115,7 +137,7 @@ class BRSAdapter implements IBankAdapter
      */
     public function getBankId()
     {
-        return self::$bank;
+        return self::bankId();
     }
 
     /**
@@ -123,7 +145,20 @@ class BRSAdapter implements IBankAdapter
      */
     public function confirm(DonePayForm $donePayForm)
     {
-        if($donePayForm->getPaySchet()->uslugatovar->IsCustom == UslugatovarType::P2P) {
+        $paySchet = $donePayForm->getPaySchet();
+
+        // check for error in POST parameters
+        if (isset($donePayForm->postParameters['trans_id'])) {
+            if ($donePayForm->postParameters['trans_id'] !== $paySchet->ExtBillNumber) {
+                /** @todo Refactor: move "trans_id" check to a validation form. */
+                throw new \Exception('Invalid transaction ID.');
+            }
+            if (array_key_exists('error', $donePayForm->postParameters)) {
+                throw new ConfirmPostDataException($donePayForm->postParameters['error']);
+            }
+        }
+
+        if (in_array($paySchet->uslugatovar->IsCustom, [UslugatovarType::P2P, UslugatovarType::P2P_REPAYMENT])) {
             return $this->confirmP2p($donePayForm);
         }
         $confirmPayResponse = new ConfirmPayResponse();
@@ -163,7 +198,7 @@ class BRSAdapter implements IBankAdapter
     /**
      * @inheritDoc
      */
-    public function createPay(CreatePayForm $createPayForm)
+    public function createPay(CreatePayForm $createPayForm, ClientData $clientData)
     {
         $uri = '/ecomm2/MerchantHandler';
 
@@ -398,7 +433,7 @@ class BRSAdapter implements IBankAdapter
                     . ' bad response result code 1001');
 
                 // Вызываем FailedRecurrentPaymentException, чтобы в RecurrentPayJob платежу присвоился статус ERROR и не было опроса статуса
-                throw new FailedRecurrentPaymentException(BRSErrorHelper::getMessage($ans), $ans['RESULT_CODE']);
+                throw new FailedRecurrentPaymentException(BRSErrorHelper::getMessage($ans), $ans['RESULT_CODE'], $ans['TRANSACTION_ID'] ?? '');
             }
 
             $createRecurrentPayResponse->message = BRSErrorHelper::getMessage($ans);
@@ -482,6 +517,8 @@ class BRSAdapter implements IBankAdapter
         $response = curl_exec($curl);
         $curlError = curl_error($curl);
         $info = curl_getinfo($curl);
+
+        DeprecatedCurlLogger::handle($info, $url, [], Cards::MaskCardLog(Json::encode($data)), Cards::MaskCardLog($response));
 
         if(empty($curlError) && $info['http_code'] == 200) {
             try {
@@ -623,6 +660,16 @@ class BRSAdapter implements IBankAdapter
         $xml = $request->buildXml($this->gate);
         $curl = curl_init();
 
+        $headers = [
+            'Content-Type: text/xml',
+            'Accept: text/xml',
+            'Accept-Encoding: *',
+            'Pragma: no-cache',
+            'User-Agent: Mozilla/4.0',
+            'Cache-Control: no-cache',
+            'Expect: 100-continue',
+            'Authorization: Basic ' . base64_encode($this->gate->Token . ':' . $this->gate->Password)
+        ];
         curl_setopt_array($curl, array(
             CURLOPT_VERBOSE => Yii::$app->params['VERBOSE'] === 'Y',
             CURLOPT_URL => $this->bankUrlXml,
@@ -636,16 +683,7 @@ class BRSAdapter implements IBankAdapter
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'POST',
             CURLOPT_POSTFIELDS => $xml,
-            CURLOPT_HTTPHEADER => array(
-                'Content-Type: text/xml',
-                'Accept: text/xml',
-                'Accept-Encoding: *',
-                'Pragma: no-cache',
-                'User-Agent: Mozilla/4.0',
-                'Cache-Control: no-cache',
-                'Expect: 100-continue',
-                'Authorization: Basic ' . base64_encode($this->gate->Token . ':' . $this->gate->Password)
-            ),
+            CURLOPT_HTTPHEADER => $headers,
         ));
 
         Yii::warning('BRSAdapter xmlReq uri=' . $xml);
@@ -653,6 +691,8 @@ class BRSAdapter implements IBankAdapter
         $curlError = curl_error($curl);
         $info = curl_getinfo($curl);
         curl_close($curl);
+
+        DeprecatedCurlLogger::handle($info, $this->bankUrlXml, $headers, Cards::MaskCardLog($xml), Cards::MaskCardLog($response));
 
         if(empty($curlError) && $info['http_code'] == 200) {
             Yii::warning('BRSAdapter xmlAns uri=' . $response);
@@ -698,7 +738,7 @@ class BRSAdapter implements IBankAdapter
      */
     public function getAftMinSum()
     {
-        return Bank::findOne(self::$bank)->AftMinSum ?? self::AFT_MIN_SUMM;
+        return $this->getBankModel()->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**
@@ -707,6 +747,20 @@ class BRSAdapter implements IBankAdapter
      */
     public function getBalance(GetBalanceRequest $getBalanceRequest): GetBalanceResponse
     {
+        $balanceResponse = new GetBalanceResponse();
+
+        if ($getBalanceRequest->uslugatovarType === UslugatovarType::TRANSFER_B2C_SBP) {
+            $balanceCache = \Yii::$app->cache->get($this->getBalanceB2CCacheKey());
+
+            $balanceResponse->amount = $balanceCache ? PaymentHelper::convertToFullAmount((int)$balanceCache) : 0.0;
+            $balanceResponse->description = $balanceCache ? 'BRS СБП B2C' : 'BRS СБП B2C -нет данных-';
+            $balanceResponse->account_type = $getBalanceRequest->accountType;
+            $balanceResponse->bank_name = $getBalanceRequest->bankName;
+            $balanceResponse->currency = $getBalanceRequest->currency;
+
+            return $balanceResponse;
+        }
+
         $outCardPayCheckRequest = new OutCardPayCheckRequest();
         $outCardPayCheckRequest->card = self::BALANCE_CARD_NUM;
         $outCardPayCheckRequest->amount = self::BALANCE_FAKE_AMOUNT;
@@ -726,7 +780,6 @@ class BRSAdapter implements IBankAdapter
             );
         }
 
-        $balanceResponse = new GetBalanceResponse();
         $balanceResponse->bank_name = $getBalanceRequest->bankName;
         $balanceResponse->amount = PaymentHelper::convertToFullAmount(intval($answer['container']['partner_available_amount']));
         $balanceResponse->currency = $getBalanceRequest->currency;
@@ -777,7 +830,7 @@ class BRSAdapter implements IBankAdapter
         }
 
         $requestData = $transferToAccountRequest->getAttributes();
-        $requestData['msgSign'] = $transferToAccountRequest->getMsgSign($this->gate);
+        $requestData['msgSign'] = $transferToAccountRequest->getMsgSign($this->gate, $this->gate->Login . '.fps.key');
         $transferToAccountResponse = new TransferToAccountResponse();
 
         try {
@@ -810,6 +863,10 @@ class BRSAdapter implements IBankAdapter
     {
         $curl = curl_init();
 
+        $headers = [
+            'Content-Type: application/json',
+            'x-User-Login: ' . $this->gate->AdvParam_1,
+        ];
         $optArray = [
             CURLOPT_VERBOSE => Yii::$app->params['VERBOSE'] === 'Y',
             CURLOPT_URL => $this->bankUrlB2C . $uri,
@@ -822,10 +879,7 @@ class BRSAdapter implements IBankAdapter
             CURLOPT_CUSTOMREQUEST => $requestType,
             CURLOPT_SSL_VERIFYPEER => 0,
             CURLOPT_SSL_VERIFYHOST => 0,
-            CURLOPT_HTTPHEADER => [
-                'Content-Type: application/json',
-                'x-User-Login: ' . $this->gate->AdvParam_1,
-            ],
+            CURLOPT_HTTPHEADER => $headers,
         ];
 
         if ($requestType !== 'GET') {
@@ -837,11 +891,10 @@ class BRSAdapter implements IBankAdapter
         }
 
         if ($curlSSLStructure instanceof CurlSSLStructure) {
-            $this->validateCertFiles($curlSSLStructure->sslcert, $curlSSLStructure->sslkey, $curlSSLStructure->cainfo);
+            $this->validateCertFiles($curlSSLStructure->sslcert, $curlSSLStructure->sslkey);
 
             $optArray[CURLOPT_SSLCERTTYPE] = $curlSSLStructure->sslcerttype;
             $optArray[CURLOPT_SSLKEYTYPE] = $curlSSLStructure->sslkeytype;
-            $optArray[CURLOPT_CAINFO] = $curlSSLStructure->cainfo;
             $optArray[CURLOPT_SSLCERT] = $curlSSLStructure->sslcert;
             $optArray[CURLOPT_SSLKEY] = $curlSSLStructure->sslkey;
         } else {
@@ -857,10 +910,12 @@ class BRSAdapter implements IBankAdapter
 
         curl_setopt_array($curl, $optArray);
 
-        Yii::warning('BRSAdapter req ' . $requestType . ' uri=' . $uri . '; data=' . Json::encode($data));
+        Yii::warning('BRSAdapter req ' . $requestType . ' uri=' . $uri . '; x-User-Login: ' . $this->gate->AdvParam_1 . '; data=' . Json::encode($data));
         $response = curl_exec($curl);
         $curlError = curl_error($curl);
         $info = curl_getinfo($curl);
+
+        DeprecatedCurlLogger::handle($info, Cards::MaskCardLog($this->bankUrlB2C . $uri), $headers, [], Cards::MaskCardLog($response));
 
         if(empty($curlError)) {
             try {
@@ -886,7 +941,6 @@ class BRSAdapter implements IBankAdapter
 
         $sslData->sslcerttype = 'PEM';
         $sslData->sslkeytype = 'PEM';
-        $sslData->cainfo = Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.ca.crt');
         $sslData->sslcert = Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.pem');
         $sslData->sslkey = Yii::getAlias(self::KEYS_PATH . $this->gate->Login . '.key');
 
@@ -934,7 +988,7 @@ class BRSAdapter implements IBankAdapter
      */
     private function getTransferB2cRequestData(OutPayAccountForm $outPayaccForm): array
     {
-        $id = $outPayaccForm->paySchet->ID ?? Yii::$app->security->generateRandomString(16);
+        $id = (string) ($outPayaccForm->paySchet->ID ?? Yii::$app->security->generateRandomString(16));
         $transferToAccountRequest = new TransferToAccountRequest();
         $transferToAccountRequest->bic = $outPayaccForm->bic;
         $transferToAccountRequest->receiverId = $outPayaccForm->getPhoneToSend();
@@ -947,7 +1001,7 @@ class BRSAdapter implements IBankAdapter
         $transferToAccountRequest->sourceId = $id;
 
         $requestData = $transferToAccountRequest->getAttributes();
-        $requestData['msgSign'] = $transferToAccountRequest->getMsgSign($this->gate, $this->gate->Login . '.key');
+        $requestData['msgSign'] = $transferToAccountRequest->getMsgSign($this->gate, $this->gate->Login . '.fps.key');
 
         return $requestData;
     }
@@ -985,6 +1039,14 @@ class BRSAdapter implements IBankAdapter
                 $response->status = BaseResponse::STATUS_DONE;
                 $response->message = $ans['message'] ?? '';
                 $response->trans = $ans['operationId'];
+
+                if (isset($ans['balance'])) {
+                    \Yii::$app->cache->set(
+                        $this->getBalanceB2CCacheKey(),
+                        $ans['balance'],
+                        self::BALANCE_B2C_CACHE_DURATION
+                    );
+                }
 
                 return $response;
             }
@@ -1059,6 +1121,41 @@ class BRSAdapter implements IBankAdapter
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public function executeP2p(P2pData $p2pData, ClientData $clientData): BaseP2pResult
+    {
+        $senderCard = $p2pData->senderCardData;
+        $requestData = [
+            'command' => 'l',
+            'msg_type' => 'p2p',
+            'amount' => $p2pData->amountFractional,
+            'currency' => $p2pData->currencyData->number,
+            'client_ip_addr' => $clientData->ip,
+            'cardname' => $senderCard->cardHolder,
+            'pan' => $senderCard->pan,
+            'expiry' => ($senderCard->expYear % 100)
+                . str_pad($senderCard->expMonth, 2, '0', STR_PAD_LEFT),
+            'cvc2' => $senderCard->cvv,
+            'pan2' => $p2pData->recipientCardPan,
+        ];
+
+        try {
+            $response = $this->sendRequest('/ecomm2/MerchantHandler', $requestData, $this->bankP2pUrl);
+        } catch (BankAdapterResponseException $e) {
+            return new P2pErrorResult(BankAdapterResponseException::REQUEST_ERROR_MSG);
+        }
+
+        if (array_key_exists('error', $response)) {
+            return new P2pErrorResult($response['error']);
+        } else {
+            $ascUrl = $this->bankP2pUrl3DS . '?'
+                . http_build_query(['trans_id' => $response['TRANSACTION_ID']]);
+            return new P2pOkResult($response['TRANSACTION_ID'], new AcsRedirectGetResult($ascUrl));
+        }
+    }
+
+    /**
      * @param string $sslCertPath
      * @param string $sslKeyPath
      * @param string|null $caInfoPath
@@ -1103,5 +1200,16 @@ class BRSAdapter implements IBankAdapter
     public function registrationBenific(RegistrationBenificForm $registrationBenificForm)
     {
         throw new GateException('Метод недоступен');
+    }
+
+    /**
+     * @return string
+     */
+    private function getBalanceB2CCacheKey(): string
+    {
+        return join('.', [
+            self::BALANCE_B2C_CACHE_KEY,
+            $this->gate->PartnerId,
+        ]);
     }
 }

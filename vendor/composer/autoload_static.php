@@ -198,6 +198,7 @@ class ComposerStaticInita57ff6ced5f8f56ae58d5b096b8905e4
         array (
             'MyCLabs\\Enum\\' => 13,
             'Mpdf\\' => 5,
+            'Mdanter\\Ecc\\' => 12,
             'MaxMind\\WebService\\' => 19,
             'MaxMind\\Exception\\' => 18,
             'MaxMind\\Db\\' => 11,
@@ -218,8 +219,10 @@ class ComposerStaticInita57ff6ced5f8f56ae58d5b096b8905e4
         ),
         'F' => 
         array (
+            'Firebase\\JWT\\' => 13,
             'Faker\\' => 6,
             'Facebook\\WebDriver\\' => 19,
+            'FG\\' => 3,
         ),
         'E' => 
         array (
@@ -508,6 +511,10 @@ class ComposerStaticInita57ff6ced5f8f56ae58d5b096b8905e4
         array (
             0 => __DIR__ . '/..' . '/mpdf/mpdf/src',
         ),
+        'Mdanter\\Ecc\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/mdanter/ecc/src',
+        ),
         'MaxMind\\WebService\\' => 
         array (
             0 => __DIR__ . '/..' . '/maxmind/web-service-common/src/WebService',
@@ -552,6 +559,10 @@ class ComposerStaticInita57ff6ced5f8f56ae58d5b096b8905e4
         array (
             0 => __DIR__ . '/..' . '/geoip2/geoip2/src',
         ),
+        'Firebase\\JWT\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/firebase/php-jwt/src',
+        ),
         'Faker\\' => 
         array (
             0 => __DIR__ . '/..' . '/fzaninotto/faker/src/Faker',
@@ -559,6 +570,10 @@ class ComposerStaticInita57ff6ced5f8f56ae58d5b096b8905e4
         'Facebook\\WebDriver\\' => 
         array (
             0 => __DIR__ . '/..' . '/php-webdriver/webdriver/lib',
+        ),
+        'FG\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/fgrosse/phpasn1/lib',
         ),
         'Egulias\\EmailValidator\\' => 
         array (
@@ -1149,7 +1164,7 @@ class ComposerStaticInita57ff6ced5f8f56ae58d5b096b8905e4
         'PharIo\\Manifest\\Manifest' => __DIR__ . '/..' . '/phar-io/manifest/src/values/Manifest.php',
         'PharIo\\Manifest\\ManifestDocument' => __DIR__ . '/..' . '/phar-io/manifest/src/xml/ManifestDocument.php',
         'PharIo\\Manifest\\ManifestDocumentException' => __DIR__ . '/..' . '/phar-io/manifest/src/exceptions/ManifestDocumentException.php',
-        'PharIo\\Manifest\\ManifestDocumentLoadingException' => __DIR__ . '/..' . '/phar-io/manifest/src/xml/ManifestDocumentLoadingException.php',
+        'PharIo\\Manifest\\ManifestDocumentLoadingException' => __DIR__ . '/..' . '/phar-io/manifest/src/exceptions/ManifestDocumentLoadingException.php',
         'PharIo\\Manifest\\ManifestDocumentMapper' => __DIR__ . '/..' . '/phar-io/manifest/src/ManifestDocumentMapper.php',
         'PharIo\\Manifest\\ManifestDocumentMapperException' => __DIR__ . '/..' . '/phar-io/manifest/src/exceptions/ManifestDocumentMapperException.php',
         'PharIo\\Manifest\\ManifestElement' => __DIR__ . '/..' . '/phar-io/manifest/src/xml/ManifestElement.php',

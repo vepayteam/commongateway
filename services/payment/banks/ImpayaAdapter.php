@@ -17,6 +17,7 @@ use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
+use app\services\payment\banks\data\ClientData;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
@@ -44,15 +45,27 @@ use Yii;
 use yii\base\InvalidArgumentException;
 use yii\helpers\Json;
 
-class ImpayaAdapter implements IBankAdapter
+class ImpayaAdapter extends BaseAdapter implements IBankAdapter
 {
     private const PHONE_DEFAULT_VALUE = '79009000000';
 
+    /**
+     * @deprecated Use {@see bankId()} instead.
+     */
     public static $bank = 15;
+
     protected $bankUrl;
 
     /** @var PartnerBankGate */
     protected $gate;
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function bankId(): int
+    {
+        return 15;
+    }
 
     public function setGate(PartnerBankGate $partnerBankGate)
     {
@@ -62,7 +75,7 @@ class ImpayaAdapter implements IBankAdapter
 
     public function getBankId()
     {
-        return self::$bank;
+        return self::bankId();
     }
 
     public function confirm(DonePayForm $donePayForm)
@@ -72,7 +85,7 @@ class ImpayaAdapter implements IBankAdapter
         return $confirmPayResponse;
     }
 
-    public function createPay(CreatePayForm $createPayForm): CreatePayResponse
+    public function createPay(CreatePayForm $createPayForm, ClientData $clientData): CreatePayResponse
     {
         $paySchet = $createPayForm->getPaySchet();
         $createPayRequest = new CreatePayRequest();

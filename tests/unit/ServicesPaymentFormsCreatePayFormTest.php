@@ -31,13 +31,13 @@ class ServicesPaymentFormsCreatePayFormTest extends \Codeception\Test\Unit
         $form->LinkPhone = 2;
         $this->assertFalse($form->validate());
         $errors = $form->getErrors();
-        $this->tester->assertEquals('Неверный номер карты', $errors['CardNumber'][0]);
-        $this->tester->assertEquals('Заполните данные карты', $errors['CardHolder'][0]);
-        $this->tester->assertEquals('Заполните данные карты', $errors['CardExp'][0]);
-        $this->tester->assertEquals('Неверный CVC код', $errors['CardCVC'][0]);
-        $this->tester->assertEquals('Заполните данные карты', $errors['IdPay'][0]);
-        $this->tester->assertEquals('Неверный номер телефона', $errors['Phone'][0]);
-        $this->tester->assertEquals('Неверный адрес почты', $errors['Email'][0]);
+        $this->tester->assertEquals('Invalid card number', $errors['CardNumber'][0]);
+        $this->tester->assertEquals('Please insert card data', $errors['CardHolder'][0]);
+        $this->tester->assertEquals('Please insert card data', $errors['CardExp'][0]);
+        $this->tester->assertEquals('Invalid CVC', $errors['CardCVC'][0]);
+        $this->tester->assertEquals('Please insert card data', $errors['IdPay'][0]);
+        $this->tester->assertEquals('invalid phone number', $errors['Phone'][0]);
+        $this->tester->assertEquals('Invalid e-mail', $errors['Email'][0]);
         $this->tester->assertEquals('Привязать номер к карте must be either "1" or "0".', $errors['LinkPhone'][0]);
         $form->CardNumber = 4314090010071979;
         $form->CardHolder = 'TEST TESOV';
@@ -88,7 +88,7 @@ class ServicesPaymentFormsCreatePayFormTest extends \Codeception\Test\Unit
         $form = new CreatePayForm();
         $form->validate();
         $err = $form->GetError();
-        $this->tester->assertEquals('Заполните данные карты', $err);
+        $this->tester->assertEquals('Please insert card data', $err);
     }
 
     public function testGetPaySchet()

@@ -131,7 +131,7 @@ $route = Yii::$app->controller->route;
                 </li>
             <?php endif; ?>
 
-            <?php if ($IsAdmin || (!$IsMfo && (count($razdels) == 0 || isset($razdels[6])))) : ?>
+            <?php if ($IsAdmin || $IsMfo || (count($razdels) == 0 || isset($razdels[6]))) : ?>
                 <li class="<?= Html::encode($act[6]) ?>"><a href="/partner/order/index"><i class="fa fa-dribbble"></i> <span
                                 class="nav-label">Виджет</span></a></li>
             <?php endif; ?>

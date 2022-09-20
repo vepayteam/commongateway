@@ -1,19 +1,22 @@
 <?php
 
-/* @var \yii\web\View $this */
+use app\components\widgets\EmbedJs;
+use app\services\LanguageService;
+use app\services\partners\models\PartnerOption;
+use app\services\payment\forms\CreatePayForm;
+use app\services\payment\helpers\PaymentHelper;
+use yii\bootstrap\ActiveForm;
+use yii\bootstrap\Html;
+use yii\web\View;
+
+/* @var View $this */
 /* @var array $params */
 /* @var array $apple */
 /* @var array $google */
 /* @var array $samsung */
-/* @var \app\models\payonline\PayForm $payform */
 /* @var string $appLang */
-
-use app\services\LanguageService;
-use app\services\partners\models\PartnerOption;
-use app\services\payment\helpers\PaymentHelper;
-use app\services\payment\models\Currency;
-use yii\bootstrap\ActiveForm;
-use yii\bootstrap\Html;
+/* @var CreatePayForm $payform */
+/* @var array $yandexPayFormData */
 
 $partnerCardRegTextHeaderOption = PartnerOption::findOne(['PartnerId' => $params['IdOrg'], 'Name' => PartnerOption::CARD_REG_TEXT_HEADER_NAME]);
 
@@ -85,6 +88,7 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
     <div id="loader" class="col-xs-12" style="display: none">
         <div class='text-center col-xs-12 loader'><i class="fa fa-spinner fa-spin fa-fw"></i></div>
     </div>
+
     <?php
     $form = ActiveForm::begin([
         'id' => 'payform',
@@ -99,6 +103,40 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
         ]
     ]);
     ?>
+
+    <?php if ($yandexPayFormData['isEnabled']): ?>
+        <div id="yandex-pay-btn" style="margin-top: 2rem;"></div>
+        <div id="yandex-pay-data" style="display: none;">
+            <input type="hidden" id="yandexPayMerchantId" value="<?= Html::encode($yandexPayFormData['merchantId']) ?>">
+            <input type="hidden" id="yandexPayEnvironment" value="<?= Html::encode($yandexPayFormData['environment']) ?>">
+            <input type="hidden" id="paymentId" value="<?= Html::encode($params['ID']) ?>">
+            <input type="hidden" id="paymentAmount" value="<?= Html::encode(PaymentHelper::convertToFullAmount($params['SummFull'])) ?>">
+            <input type="hidden" id="paymentCurrency" value="<?= Html::encode($params['currency']) ?>">
+            <input type="hidden" id="partnerId" value="<?= Html::encode($params['IDPartner']) ?>">
+            <input type="hidden" id="partnerName" value="<?= Html::encode($params['NamePartner']) ?>">
+        </div>
+
+        <div class="yandex-pay-separator">
+            <div class="yandex-pay-separator_line"></div>
+            <span class="yandex-pay-separator_info">или</span>
+            <div class="yandex-pay-separator_line"></div>
+        </div>
+    <?php endif ?>
+
+    <?= Html::activeHiddenInput($payform, 'IdPay', ['class' => 'idPay']) ?>
+
+    <?=
+    /** {@see CreatePayForm::$browserDataJson} */
+    Html::activeHiddenInput($payform, 'browserDataJson');
+    ?>
+
+    <?=
+    /** {@see CreatePayForm::$httpHeaderAccept} */
+    Html::activeHiddenInput($payform, 'httpHeaderAccept');
+    ?>
+
+    <input type="hidden" class="user_hash" name="user_hash" value="">
+
     <div class="row margin-top24">
         <div class="col-xs-12 nopadding">
             <div class="cardnumblock">
@@ -120,7 +158,6 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
                     'data-inputmask-mask' => '99/99',
                     'data-inputmask-regex' => '[01]\d{3}',
                     'class' => 'form-control',
-                    'value' => '',
                     'placeholder' => Yii::t('app.payment-form', 'ММ/ГГ'),
                     'autocomplete' => 'off',
                 ]); ?>
@@ -146,7 +183,6 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
                     'data-inputmask-mask' => 'C{3,60}',
                     'data-inputmask-regex' => '[\w+\s+]',
                     'class' => 'form-control',
-                    'value' => '',
                     'placeholder' => ''
                 ]); ?>
             </div>
@@ -167,9 +203,6 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
 
     <div class="row nopadding margin-top24">
         <div class="col-xs-12">
-            <input type="hidden" class="idPay" name="PayForm[IdPay]" value="<?=Html::encode($params['ID'])?>">
-            <input type="hidden" class="user_hash" name="user_hash" value="">
-            <input type="hidden" id="client_data" name="PayForm[client]">
             <?=
                 Html::submitButton(
                     $params['IdUsluga'] == 1 ? Yii::t('app.payment-form', 'ОТПРАВИТЬ') : (Yii::t('app.payment-form', 'ОПЛАТИТЬ') . " {$sumFormatted} {$params['currencySymbol']}"),
@@ -186,8 +219,6 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
 
     <div class="row nopadding margin-top24" id="applepay" style="display: none">
         <div class="col-xs-12">
-            <input type="hidden" class="idPay" name="PayForm[IdPay]" value="<?=Html::encode($params['ID'])?>">
-            <input type="hidden" class="user_hash" name="user_hash" value="">
             <?= Html::button('<i class="fa fa-apple" aria-hidden="true"></i> PAY', [
                 'class' => 'btn btn-success paybtn',
                 'id' => 'applepaybtn'
@@ -196,8 +227,6 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
     </div>
     <div class="row nopadding margin-top24" id="googlepay" style="display: none">
         <div class="col-xs-12">
-            <input type="hidden" class="idPay" name="PayForm[IdPay]" value="<?=Html::encode($params['ID'])?>">
-            <input type="hidden" class="user_hash" name="user_hash" value="">
             <?= Html::button('<i class="fa fa-google" aria-hidden="true"></i> PAY', [
                 'class' => 'btn btn-success paybtn',
                 'id' => 'googlepaybtn'
@@ -206,8 +235,6 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
     </div>
     <div class="row nopadding margin-top24" id="samsungpay" style="display: none">
         <div class="col-xs-12">
-            <input type="hidden" class="idPay" name="PayForm[IdPay]" value="<?=Html::encode($params['ID'])?>">
-            <input type="hidden" class="user_hash" name="user_hash" value="">
             <?= Html::button('SAMSUNG PAY', [
                 'class' => 'btn btn-success paybtn',
                 'id' => 'samsungpaybtn'
@@ -241,9 +268,7 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
             </div>
         </div>
     <?php endif; ?>
-    <input id="client_data" type="hidden" name="client_data" value="{}">
-    <?php /* Crutch for Walletto, which need real client_data_accept from client in 3DS 2.0 */ ?>
-    <input id="client_data_accept" type="hidden" name="client_data_accept" value="<?= Yii::$app->request->headers->get('accept') ?>">
+
     <?php ActiveForm::end(); ?>
 
     <iframe name="threDS" id="confirm3dsV2TKBFrame" style="height: 1px; display: none">
@@ -252,7 +277,7 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
 
     <div class="raw3DsForm"></div>
 
-    <div id="frame3ds" class="BankFrame" style="height: 600px; display: none">
+    <div id="frame3ds" class="BankFrame" style="display: none">
         <form id="form3ds" action="" method='POST'>
             <input type="hidden" id="pareq3ds" name="PaReq" value="">
             <input type="hidden" id="md3ds" name="MD" value="">
@@ -295,12 +320,15 @@ $sumFormatted = number_format($params['SummFull']/100.0, 2, ',', '');
 </div>
 
 <noscript><div><img src="https://mc.yandex.ru/watch/66552382" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+
 <?php
 $this->registerJs('payform.init();');
 $this->registerJs('payform.checkIframe();');
+
 if (isset($apple['IsUseApplepay']) && $apple['IsUseApplepay'] && isset($apple['Apple_MerchantID']) && !empty($apple['Apple_MerchantID'])) {
     $this->registerJs('payform.applepay("' . $apple['Apple_MerchantID'] . '", "' . ($params['SummFull'] / 100.0) . '", "' . $params['NamePartner'] . '");');
 }
+
 if (isset($google['IsUseGooglepay']) && $google['IsUseGooglepay']) {
     $this->registerJsFile('https://pay.google.com/gp/p/js/pay.js');
     $this->registerJs('payform.googlepay("' .
@@ -312,9 +340,38 @@ if (isset($google['IsUseGooglepay']) && $google['IsUseGooglepay']) {
         '");'
     );
 }
+
 if (isset($samsung['IsUseSamsungpay']) && $samsung['IsUseSamsungpay']) {
     $this->registerJs('payform.samsungpay("' . $samsung['Samsung_MerchantID'] . '", "' . number_format($params['SummFull'] / 100.0, 2, '.', '') . '", "' . $params['NamePartner'] . '");');
 }
-$this->registerJs('$("#client_data").val(JSON.stringify({ "browser_screen_height": window.innerHeight, "browser_screen_width": window.innerWidth, "browser_timezone": (new Date()).getTimezoneOffset(), "browser_java_enabled": navigator.javaEnabled(), "window_height": window.outerHeight, "window_width": window.outerWidth, "browser_color_depth": screen.colorDepth }))');
 $this->registerJs('setTimeout(tracking.sendToServer, 500)', \yii\web\View::POS_READY);
+
+if ($yandexPayFormData['isEnabled']) {
+    $this->registerJsFile('https://pay.yandex.ru/sdk/v1/pay.js', [
+        'onload' => 'onYaPayLoad()',
+        'async' => true,
+    ]);
+}
 ?>
+
+<?php
+EmbedJs::begin([
+    'data' => [
+        'browserDataJsonInputId' => Html::getInputId($payform, 'browserDataJson'),
+    ],
+]);
+?>
+    <script>
+        $("#" + data.browserDataJsonInputId).val(JSON.stringify({
+            "screenHeight": window.screen.height,
+            "screenWidth": window.screen.width,
+            "timezoneOffset": (new Date()).getTimezoneOffset(),
+            "javaEnabled": window.navigator.javaEnabled(),
+            "windowHeight": window.outerHeight,
+            "windowWidth": window.outerWidth,
+            "colorDepth": window.screen.colorDepth,
+            "language": window.navigator.language || window.navigator.userLanguage
+        }));
+    </script>
+
+<?php EmbedJs::end(); ?>

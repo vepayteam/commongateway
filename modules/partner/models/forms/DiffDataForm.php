@@ -8,6 +8,8 @@ use yii\web\UploadedFile;
 
 class DiffDataForm extends Model
 {
+    private const FILE_MAX_SIZE = 1024 * 1024 * 70; // 70mb
+
     /**
      * @var int
      */
@@ -57,7 +59,7 @@ class DiffDataForm extends Model
             [['bank'], 'exist', 'targetClass' => Bank::class, 'targetAttribute' => 'ID'],
             [['allRegistryStatusSuccess'], 'boolean'],
             [['allRegistryStatusSuccess'], 'default', 'value' => false],
-            [['registryFile'], 'file'],
+            [['registryFile'], 'file', 'maxSize' => self::FILE_MAX_SIZE],
             [['dbColumn'], 'string'],
             ['statuses', 'each', 'rule' => ['string']],
         ];

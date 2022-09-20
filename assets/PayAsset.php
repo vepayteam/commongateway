@@ -28,6 +28,7 @@ class PayAsset extends AssetBundle
         'payasset/js/payform.js',
         'payasset/js/formdata.js',
         'payasset/js/customvalidation.js',
+        'payasset/js/yandex-pay.js',
     ];
     public $depends = [
         'app\assets\CommonAsset'

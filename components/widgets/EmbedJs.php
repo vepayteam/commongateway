@@ -24,10 +24,8 @@ class EmbedJs extends Block
             $block = $m['block_content'];
         }
 
-        if ($this->data !== null) {
-            $jsData = Json::encode($this->data);
-            $block = "(function(data){\n{$block}\n}($jsData));\n";
-        }
+        $jsData = $this->data !== null ? Json::encode($this->data) : '';
+        $block = "(function(data){\n{$block}\n}($jsData));\n";
 
         $key = (empty($this->key)) ? md5($block) : $this->key;
 

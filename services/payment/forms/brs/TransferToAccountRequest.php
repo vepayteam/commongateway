@@ -56,7 +56,6 @@ class TransferToAccountRequest extends Model
             'bic',
             'firstName',
             'lastName',
-            'phone',
             'middleName',
             'amount',
             'currency',
@@ -64,7 +63,9 @@ class TransferToAccountRequest extends Model
 
         $sortedAttributes = [];
         foreach ($sortedKeys as $key) {
-            $sortedAttributes[$key] = $this->$key;
+            if (in_array($this->$key, ['', null], true) === false) {
+                $sortedAttributes[$key] = $this->$key;
+            }
         }
 
         return Json::encode($sortedAttributes);
