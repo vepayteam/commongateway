@@ -1,6 +1,5 @@
 <?php
 
-use app\services\auth\models\User;
 use yii\db\Migration;
 
 /**
@@ -13,7 +12,7 @@ class m200724_063509_create_auth_logins extends Migration
      */
     public function safeUp()
     {
-        $this->createTable(User::tableName(), [
+        $this->createTable('auth_logins', [
             'ID' => $this->primaryKey()->unsigned(),
             'PartnerId' => $this->integer()->defaultValue(0),
             'Email' => $this->string(),
@@ -27,7 +26,7 @@ class m200724_063509_create_auth_logins extends Migration
      */
     public function safeDown()
     {
-        $this->dropTable(User::tableName());
+        $this->dropTable('auth_logins');
 
         return true;
     }

@@ -211,9 +211,6 @@ $config = [
         'antifraud' => [
             'class' => 'app\modules\antifraud\Module',
         ],
-        'lk' => [
-            'class' => 'app\modules\lk\Module',
-        ],
         'h2hapi' => [
             'class' => 'app\modules\h2hapi\Module',
         ],
