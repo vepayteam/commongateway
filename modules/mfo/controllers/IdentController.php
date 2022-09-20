@@ -7,18 +7,11 @@ use app\models\bank\TCBank;
 use app\models\bank\TcbGate;
 use app\models\mfo\IdentificationUser;
 use app\models\mfo\MfoReq;
-use app\models\payonline\Partner;
-use app\services\ident\exceptions\RunaIdentException;
-use app\services\ident\forms\RunaIdentInitForm;
-use app\services\ident\forms\RunaIdentStateForm;
 use app\services\ident\IdentService;
 use app\services\ident\RequestInitStrategy;
 use app\services\ident\models\Ident;
-use app\services\ident\models\IdentRuna;
 use app\services\payment\exceptions\GateException;
 use Yii;
-use yii\base\InvalidConfigException;
-use yii\di\NotInstantiableException;
 use yii\helpers\Json;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
@@ -57,8 +50,6 @@ class IdentController extends Controller
         return [
             'index' => ['POST'],
             'state' => ['POST'],
-            'runa-init' => ['POST'],
-            'runa-state' => ['POST'],
         ];
     }
 
@@ -121,87 +112,6 @@ class IdentController extends Controller
         }
 
         return ['status' => 0];
-    }
-
-    public function actionRunaInit()
-    {
-        $mfo = new MfoReq();
-        $mfo->LoadData(Yii::$app->request->getRawBody());
-
-        Yii::$app->session->set('partnerId', $mfo->mfo);
-        $runaIdentInitForm = new RunaIdentInitForm();
-
-        try {
-            $post = json_decode(Yii::$app->request->getRawBody(), true);
-        } catch (\Exception $e) {
-            throw new BadRequestHttpException($e);
-        }
-
-        $runaIdentInitForm->load($post, '');
-
-        $partner = Partner::findOne(['ID' => $mfo->mfo]);
-        $runaIdentInitForm->cid_origin = $partner->RunaBankCid;
-
-        if(!$runaIdentInitForm->validate()) {
-            return [
-                'status' => 0,
-                'message' => $runaIdentInitForm->getError(),
-            ];
-        }
-
-        try {
-            $runaIdentInitResponse = $this->getIdentService()->runaInit($runaIdentInitForm);
-        }  catch (RunaIdentException | NotInstantiableException | InvalidConfigException $e) {
-            return [
-                'status' => 2,
-                'message' => $e->getMessage(),
-            ];
-        }
-
-        return [
-            'status' => 1,
-            'id' => $runaIdentInitResponse->identRuna->Id,
-            'message' => 'Заявка создана',
-        ];
-    }
-
-    public function actionRunaState()
-    {
-        $mfo = new MfoReq();
-        $mfo->LoadData(Yii::$app->request->getRawBody());
-
-        Yii::$app->session->set('partnerId', $mfo->mfo);
-
-        try {
-            $post = json_decode(Yii::$app->request->getRawBody(), true);
-        } catch (\Exception $e) {
-            throw new BadRequestHttpException($e);
-        }
-        $identRunaId = (isset($post['id']) ? (int)$post['id'] : 0);
-        $identRuna = IdentRuna::findOne(['Id' => $identRunaId, 'PartnerId' => $mfo->mfo]);
-
-        if(!$identRuna) {
-            throw new BadRequestHttpException();
-        }
-
-        $runaIdentStateForm = new RunaIdentStateForm();
-        $runaIdentStateForm->tid = $identRuna->Tid;
-        $runaIdentStateForm->attach_smev_response = true;
-
-        try {
-            $runaIdentStateResponse = $this->getIdentService()->runaState($runaIdentStateForm);
-        } catch (RunaIdentException | NotInstantiableException | InvalidConfigException $e) {
-            return [
-                'status' => 2,
-                'message' => $e->getMessage(),
-            ];
-        }
-
-        return [
-            'status' => $runaIdentStateResponse->getStatus(),
-            'message' => $runaIdentStateResponse->state_description,
-            'details' => $runaIdentStateResponse->details,
-        ];
     }
 
     public function actionRequestInit()
