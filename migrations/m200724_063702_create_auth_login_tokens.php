@@ -1,6 +1,5 @@
 <?php
 
-use app\services\auth\models\UserToken;
 use yii\db\Migration;
 
 /**
@@ -13,7 +12,7 @@ class m200724_063702_create_auth_login_tokens extends Migration
      */
     public function safeUp()
     {
-        $this->createTable(UserToken::tableName(), [
+        $this->createTable('auth_login_tokens', [
             'ID' => $this->primaryKey()->unsigned(),
             'UserId' => $this->integer()->notNull(),
             'IP' => $this->string()->notNull(),
@@ -31,7 +30,7 @@ class m200724_063702_create_auth_login_tokens extends Migration
      */
     public function safeDown()
     {
-        $this->dropTable(UserToken::tableName());
+        $this->dropTable('auth_login_tokens');
         return true;
     }
 
