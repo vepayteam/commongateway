@@ -2,6 +2,7 @@
 
 namespace app\modules\partner\controllers;
 
+use app\helpers\ExcelHelper;
 use app\models\kkt\OnlineKassa;
 use app\models\mfo\MfoStat;
 use app\models\partner\PartUserAccess;
@@ -25,17 +26,18 @@ use app\models\TU;
 use app\modules\partner\models\DiffColumns;
 use app\modules\partner\models\DiffData;
 use app\modules\partner\models\DiffExport;
+use app\modules\partner\models\forms\BasicPartnerStatisticForm;
 use app\modules\partner\models\forms\DiffColumnsForm;
 use app\modules\partner\models\forms\DiffDataForm;
 use app\modules\partner\models\forms\DiffExportForm;
 use app\modules\partner\models\forms\ReverseOrderForm;
 use app\modules\partner\models\forms\UpdateTransactionForm;
 use app\modules\partner\models\PaySchetLogForm;
+use app\modules\partner\models\search\IdentificationListFilter;
+use app\modules\partner\services\IdentificationStatisticService;
 use app\modules\partner\services\UpdateTransactionService;
-use app\services\ident\forms\IdentStatisticForm;
 use app\services\ident\IdentService;
 use app\services\partners\StatDiffSettingsService;
-use app\services\payment\helpers\PaymentHelper;
 use app\services\payment\jobs\RefundPayJob;
 use app\services\payment\models\Bank;
 use app\services\payment\models\PaySchet;
@@ -49,6 +51,7 @@ use kartik\mpdf\Pdf;
 use Throwable;
 use Yii;
 use yii\base\DynamicModel;
+use yii\base\InvalidConfigException;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\helpers\ArrayHelper;
@@ -66,6 +69,11 @@ class StatController extends Controller
     public $enableCsrfValidation = false;
 
     public const PAGINATION_LIMIT = 100;
+
+    /**
+     * @var IdentificationStatisticService
+     */
+    private $identificationStatisticService;
 
     public function behaviors()
     {
@@ -127,6 +135,15 @@ class StatController extends Controller
                 ],
             ],
         ];
+    }
+
+    /**
+     * {@inheritDoc}
+     * @throws InvalidConfigException
+     */
+    public function init()
+    {
+        $this->identificationStatisticService = \Yii::$app->get(IdentificationStatisticService::class);
     }
 
     public function actionDiff()
@@ -1108,37 +1125,55 @@ class StatController extends Controller
 
     public function actionIdent()
     {
-        $partners = null;
-        $data = null;
+        $model = new BasicPartnerStatisticForm();
+        $model->scenario = BasicPartnerStatisticForm::SCENARIO_ADMIN;
 
-        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-        if ($IsAdmin) {
-            $partners = ArrayHelper::index(
-                Partner::find()->select(['ID', 'Name'])->where(['IsBlocked' => 0, 'IsDeleted' => 0])->all(), 'ID'
-            );
+        if (UserLk::IsAdmin(Yii::$app->user)) {
+            $model->scenario = BasicPartnerStatisticForm::SCENARIO_ADMIN;
+
+            $partners = Partner::find()
+                ->andWhere(['IsBlocked' => 0, 'IsDeleted' => 0])
+                ->all();
+            $partnerList = ArrayHelper::map($partners, 'ID', function (Partner $partner) {
+                return "{$partner->ID} | {$partner->Name}";
+            });
         } else {
-            $partners = [];
+            $model->scenario = BasicPartnerStatisticForm::SCENARIO_PARTNER;
+            $model->partnerId = UserLk::getPartnerId(Yii::$app->user);
+
+            $partnerList = null;
         }
 
-        return $this->render('ident', compact('partners'));
+        $searchModel = null;
+        $dataProvider = null;
 
-    }
+        if ($model->load(\Yii::$app->request->queryParams) && $model->validate()) {
+            $searchModel = new IdentificationListFilter();
+            $searchModel->load(\Yii::$app->request->queryParams);
 
-    public function actionIdentProcessing()
-    {
-        $this->enableCsrfValidation = false;
-        $post = Yii::$app->request->post();
+            // return Excel file
+            if (Yii::$app->request->get('excel')) {
+                $dataProvider = $this->identificationStatisticService->search($model, $searchModel, true);
+                $htmlString = $this->renderPartial('ident/grid', [
+                    'searchModel' => null,
+                    'dataProvider' => $dataProvider,
+                ]);
+                return Yii::$app->response->sendContentAsFile(
+                    ExcelHelper::generateFromHtml($htmlString),
+                    "export_identification_{$model->partnerId}.xlsx",
+                    ['mimeType' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+                );
+            }
 
-        $identStatisticForm = new IdentStatisticForm();
-        $IsAdmin = UserLk::IsAdmin(Yii::$app->user);
-        if (!$IsAdmin) {
-            $post['filters']['partnerId'] = UserLk::getPartnerId(Yii::$app->user);
+            $dataProvider = $this->identificationStatisticService->search($model, $searchModel);
         }
 
-        if(!$identStatisticForm->load($post, '') || !$identStatisticForm->validate()) {
-            $a = 0;
-        }
-        return $this->asJson($this->getIdentService()->getIdentStatistic($identStatisticForm));
+        return $this->render('ident', [
+            'model' => $model,
+            'searchModel' => $searchModel,
+            'dataProvider' => $dataProvider,
+            'partnerList' => $partnerList,
+        ]);
     }
 
     public function actionTransactionEditModal(int $id)

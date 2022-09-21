@@ -5,26 +5,29 @@ namespace app\modules\partner\services;
 use app\models\partner\admin\VyvodParts;
 use app\models\PayschetPart;
 use app\modules\partner\models\data\PartListItem;
-use app\modules\partner\models\forms\PartListForm;
+use app\modules\partner\models\forms\BasicPartnerStatisticForm;
 use app\modules\partner\models\search\PartListFilter;
+use app\services\balance\traits\PartsTrait;
 use app\services\payment\models\PaySchet;
 use Carbon\Carbon;
 use yii\base\Component;
 use yii\data\ActiveDataProvider;
 use yii\db\ActiveQuery;
+use yii\db\Query;
 
 class PartService extends Component
 {
     private const DATE_FORMAT = 'd.m.Y';
 
     /**
-     * @param PartListForm $form
+     * @param BasicPartnerStatisticForm $form
      * @param PartListFilter $filterForm
      * @param bool $excelMode
      * @return ActiveDataProvider|null
+     * @see PartsTrait
      */
     public function search(
-        PartListForm $form,
+        BasicPartnerStatisticForm $form,
         PartListFilter $filterForm,
         bool $excelMode = false
     ): ?ActiveDataProvider
@@ -147,6 +150,13 @@ class PartService extends Component
             $query->andWhere('0=1');
         }
 
+        // exclude refunds
+        $query->andWhere([
+            'not exists',
+            (new Query())
+                ->from('pay_schet as refund_pay_schet')
+                ->andWhere('refund_pay_schet.RefundSourceId=paySchetAlias.ID')
+        ]);
 
         $models = $dataProvider->getModels();
         foreach ($models as &$model) {

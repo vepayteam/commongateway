@@ -1,8 +1,7 @@
 <?php
 
 use app\components\widgets\EmbedJs;
-use app\models\payonline\Partner;
-use app\modules\partner\models\forms\PartListForm;
+use app\modules\partner\models\forms\BasicPartnerStatisticForm;
 use app\modules\partner\models\search\PartListFilter;
 use yii\bootstrap\ActiveForm;
 use yii\bootstrap\Html;
@@ -13,18 +12,18 @@ use yii\widgets\Pjax;
 
 /**
  * @var View $this
- * @var PartListForm $model
+ * @var BasicPartnerStatisticForm $model
  * @var PartListFilter|null $searchModel
  * @var ActiveDataProvider|null $dataProvider
- * @var Partner[]|null $partnerList
+ * @var array|null $partnerList
  * @var array $columns
  */
 
 $action = Yii::$app->controller->action->id;
 if ($action === 'parts-balance') {
-    $this->title = "Баланс по разбивке (Платформа)";
+    $this->title = 'Баланс по разбивке (Платформа)';
 } elseif ($action === 'parts-balance-partner') {
-    $this->title = "Баланс по разбивке (Партнер)";
+    $this->title = 'Баланс по разбивке (Партнер)';
 } else {
     throw new LogicException('Unknown action.');
 }

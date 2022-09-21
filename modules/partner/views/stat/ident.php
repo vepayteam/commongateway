@@ -1,31 +1,27 @@
 <?php
 
-/* @var yii\web\View $this */
-/* @var $balances */
-/* @var \app\models\payonline\Partner $Partner */
-/* @var $IsAdmin bool */
-
-/* @var $partners Partner[] */
-/* @var $data array */
-/* @var $columns array */
-
-/* @var $partsBalanceForm \app\services\balance\models\PartsBalanceForm */
-
-use app\models\partner\UserLk;
-use app\models\payonline\Partner;
-use app\services\balance\models\PartsBalanceForm;
-use app\services\ident\forms\IdentStatisticForm;
-use yii\helpers\Html;
+use app\components\widgets\EmbedJs;
+use app\modules\partner\models\forms\BasicPartnerStatisticForm;
+use app\modules\partner\models\search\IdentificationListFilter;
+use yii\bootstrap\ActiveForm;
+use yii\bootstrap\Html;
+use yii\data\ActiveDataProvider;
+use yii\helpers\Url;
 use yii\web\View;
+use yii\widgets\Pjax;
 
-$this->title = "Статистика идентификации";
+/**
+ * @var View $this
+ * @var BasicPartnerStatisticForm $model
+ * @var IdentificationListFilter|null $searchModel
+ * @var ActiveDataProvider|null $dataProvider
+ * @var array|null $partnerList
+ */
 
-$this->params['breadtitle'] = "Статистика идентификации";
-$this->params['breadcrumbs'][] = $this->params['breadtitle'];
-
+$this->title = 'Статистика идентификации';
+$this->params['breadtitle'] = $this->title;
+$this->params['breadcrumbs'][] = $this->title;
 ?>
-
-
 
 <div class="row">
     <div class="col-sm-12">
@@ -35,121 +31,108 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
             </div>
             <div class="ibox-content">
 
-                <form class="form-horizontal" id="parts-balance__form" method="post">
+                <?php
+                $form = ActiveForm::begin([
+                    'id' => 'parts-form',
+                    'layout' => 'horizontal',
+                    'action' => Url::toRoute(''),
+                    'method' => 'GET',
+                ]);
+                ?>
 
-                    <div class="form-group">
-                        <label class="col-sm-2 control-label">Дата</label>
-                        <div class="col-sm-10 col-md-6">
-                            <div class="float-right">
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-xs btn-white active" name="calDay">День
-                                    </button>
-                                    <button type="button" class="btn btn-xs btn-white" name="calWeek">Неделя</button>
-                                    <button type="button" class="btn btn-xs btn-white" name="calMon">Месяц</button>
-                                </div>
-                            </div>
-                            <div class="input-daterange input-group">
-
-                                <input id="part-balance__form__datefrom" type="text" name="datefrom"
-                                       value="<?=date("d.m.Y")?> 00:00" maxlength="10"
-                                       class="form-control">
-                                <span class="input-group-addon">по</span>
-                                <input id="part-balance__form__dateto" type="text" name="dateto"
-                                       value="<?=date("d.m.Y")?> 23:59"
-                                       maxlength="10"
-                                       class="form-control">
-                            </div>
+                <div class="form-group">
+                    <div class="col-sm-offset-3 col-sm-6">
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-white js-day">День</button>
+                            <button type="button" class="btn btn-white js-week">Неделя</button>
+                            <button type="button" class="btn btn-white js-month">Месяц</button>
                         </div>
                     </div>
+                </div>
 
+                <?= $form->field($model, 'dateFrom')->textInput(['class' => 'form-control js-date']) ?>
+
+                <?= $form->field($model, 'dateTo')->textInput(['class' => 'form-control js-date']) ?>
+
+                <?php if ($partnerList !== null): ?>
+                    <?= $form->field($model, 'partnerId')->dropDownList($partnerList) ?>
+                <?php endif; ?>
+
+                <div class="form-group">
+                    <div class="col-sm-offset-3 col-sm-6">
+                        <?= Html::submitButton('Найти', ['class' => 'btn btn-primary']) ?>
+                    </div>
+                </div>
+
+                <?php ActiveForm::end() ?>
+
+                <?php if ($dataProvider !== null): ?>
+
+                    <?php Pjax::begin(); ?>
+
+                    <?php
+                    echo $this->render('ident/grid', [
+                        'searchModel' => $searchModel,
+                        'dataProvider' => $dataProvider,
+                    ]);
+                    ?>
+
+                    <?php Pjax::end(); ?>
+
+                    <br/>
+                    <?= Html::beginForm('', 'GET', ['class' => 'form-horizontal clear']) ?>
                     <div class="form-group">
-                        <div class="col-sm-offset-2 col-sm-4">
-                            <?php if (UserLk::IsAdmin(Yii::$app->user)): ?>
-                                <label for="parts-balance__form__partner-select">Партнер</label>
-                                <select id="part-balance__form__partnerId" class="form-control"
-                                        id="parts-balance__form__partner-select">
-                                    <?php foreach ($partners as $partner): ?>
-                                        <option value="<?= Html::encode($partner->ID) ?>">
-                                            <?= Html::encode($partner->nameWithId) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            <?php else: ?>
-                                <input name="partnerId" type="hidden"
-                                       value="<?= Html::encode(UserLk::getPartnerId(Yii::$app->user)) ?>">
-                            <?php endif; ?>
-                            <?= Html::hiddenInput('_csrf', Yii::$app->request->csrfToken, ['id' => '_csrf']) ?>
-                            <button id="parts-balance__form__submit" type="submit" class="btn btn-sm btn-primary" style="margin-top: 20px">Найти</button>
+                        <div class="col-sm-6">
+                            <?= Html::submitButton('Excel <i class="fa fa-download"></i>', ['class' => 'btn btn-default']) ?>
                         </div>
                     </div>
+                    <?= Html::hiddenInput('excel', 1) ?>
+                    <?= Html::endForm() ?>
 
-                </form>
+                <?php endif; ?>
 
-                <div class="sk-spinner sk-spinner-wave">
-                    <div class="sk-rect1"></div>
-                    <div class="sk-rect2"></div>
-                    <div class="sk-rect3"></div>
-                    <div class="sk-rect4"></div>
-                    <div class="sk-rect5"></div>
-                </div>
-                <div class="table-responsive" id="parts-balance__result">
-                    <div class="panel-group" id="parts-balance__accordion" role="tablist" aria-multiselectable="true">
-
-                        <table id="example" class="table table-bordered display nowrap" style="width:100%">
-
-                        </table>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
-
 </div>
-<?php $this->registerJs('lk.mfobalance()'); ?>
-<script>
-    var datatableColumns = <?=json_encode(IdentStatisticForm::getDatatableColumns())?>;
-    var processingUri = '/partner/stat/ident-processing';
-    var datatableFilters = [
-        {
-            column_number: 1,
-            filter_type: "text",
-            filter_delay: 500
-        },
-        {
-            column_number: 2,
-            filter_type: "text",
-            filter_delay: 500
-        },
-        {
-            column_number: 3,
-            filter_type: "text",
-            filter_delay: 500
-        },
-        {
-            column_number: 4,
-            filter_type: "text",
-            filter_delay: 500
-        },
-        {
-            column_number: 5,
-            filter_type: "text",
-            filter_delay: 500
-        },
-        {
-            column_number: 6,
-            filter_type: "text",
-            filter_delay: 500
-        },
-        {
-            column_number: 7,
-            filter_type: "text",
-            filter_delay: 500
-        },
-        {
-            column_number: 8,
-            filter_type: "text",
-            filter_delay: 500
-        },
 
-    ];
+<?php
+EmbedJs::begin([
+    'data' => [
+        'dateFromId' => Html::getInputId($model, 'dateFrom'),
+        'dateToId' => Html::getInputId($model, 'dateTo'),
+    ]
+])
+?>
+<script>
+    let $dateFromInput = $('#' + data.dateFromId);
+    let $dateToInput = $('#' + data.dateToId);
+
+    $('.js-date').datetimepicker({
+        format: 'DD.MM.YYYY',
+        showClose: true,
+        useCurrent: false
+    });
+
+    $dateFromInput.add($dateToInput)
+        .each(function () {
+            let $input = $(this);
+            if (!$input.val()) {
+                $input.data("DateTimePicker").date(moment(new Date()));
+            }
+        });
+
+    $('.js-day').click(function () {
+        $dateFromInput.data("DateTimePicker").date(moment(new Date()));
+        $dateToInput.data("DateTimePicker").date(moment(new Date()));
+    });
+    $('.js-week').click(function () {
+        $dateFromInput.data("DateTimePicker").date(moment(new Date()).subtract(7, 'days'));
+        $dateToInput.data("DateTimePicker").date(moment(new Date()));
+    });
+    $('.js-month').click(function () {
+        $dateFromInput.data("DateTimePicker").date(moment(new Date()).subtract(1, 'months'));
+        $dateToInput.data("DateTimePicker").date(moment(new Date()));
+    });
 </script>
+<?php EmbedJs::end() ?>

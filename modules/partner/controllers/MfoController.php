@@ -7,13 +7,10 @@ use app\models\mfo\MfoBalance;
 use app\models\partner\PartUserAccess;
 use app\models\partner\UserLk;
 use app\models\payonline\Partner;
-use app\modules\partner\models\forms\PartListForm;
+use app\modules\partner\models\forms\BasicPartnerStatisticForm;
 use app\modules\partner\models\search\PartListFilter;
 use app\modules\partner\services\PartService;
 use app\services\balance\Balance;
-use app\services\balance\BalanceService;
-use app\services\balance\models\PartsBalanceForm;
-use app\services\balance\models\PartsBalancePartnerForm;
 use Throwable;
 use Yii;
 use yii\filters\AccessControl;
@@ -139,9 +136,9 @@ class MfoController extends Controller
         ]
     )
     {
-        $model = new PartListForm();
+        $model = new BasicPartnerStatisticForm();
         if (UserLk::IsAdmin(Yii::$app->user)) {
-            $model->scenario = PartListForm::SCENARIO_ADMIN;
+            $model->scenario = BasicPartnerStatisticForm::SCENARIO_ADMIN;
 
             $partners = Partner::find()
                 ->andWhere(['IsBlocked' => 0, 'IsDeleted' => 0])
@@ -150,7 +147,7 @@ class MfoController extends Controller
                 return "{$partner->ID} | {$partner->Name}";
             });
         } else {
-            $model->scenario = PartListForm::SCENARIO_PARTNER;
+            $model->scenario = BasicPartnerStatisticForm::SCENARIO_PARTNER;
             $model->partnerId = UserLk::getPartnerId(Yii::$app->user);
 
             $partnerList = null;
@@ -203,6 +200,7 @@ class MfoController extends Controller
             return $this->redirect('/partner');
         }
 
+        $this->view->title = 'Баланс по разбивке (Платформа)';
         return $this->partsInternal([
             'paySchetId',
             'partnerName',
@@ -232,6 +230,7 @@ class MfoController extends Controller
             return $this->redirect('/partner');
         }
 
+        $this->view->title = 'Баланс по разбивке (Партнер)';
         return $this->partsInternal([
             'paySchetId',
             'partnerName',

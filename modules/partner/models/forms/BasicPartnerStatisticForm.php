@@ -6,7 +6,7 @@ use app\models\payonline\Partner;
 use yii\base\Model;
 use yii\helpers\ArrayHelper;
 
-class PartListForm extends Model
+class BasicPartnerStatisticForm extends Model
 {
     const SCENARIO_ADMIN = 'admin';
     const SCENARIO_PARTNER = 'partner';

@@ -29,7 +29,8 @@ class IdentService
      * @param IdentStatisticForm $identStatisticForm
      * @return array
      * @throws \Exception
-     * @todo Refactor or remove: unsafe and fragile code.
+     * @todo Remove unused method.
+     * @deprecated
      */
     public function getIdentStatistic(IdentStatisticForm $identStatisticForm)
     {

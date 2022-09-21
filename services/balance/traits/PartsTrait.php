@@ -11,6 +11,7 @@ use yii\db\Query;
 
 /**
  * @deprecated
+ * @todo Remove unused class.
  */
 trait PartsTrait
 {

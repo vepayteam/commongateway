@@ -3,6 +3,7 @@
 namespace app\modules\partner;
 
 use app\modules\partner\services\AdminSettingsService;
+use app\modules\partner\services\IdentificationStatisticService;
 use app\modules\partner\services\PartService;
 use Yii;
 use yii\base\InvalidConfigException;
@@ -32,6 +33,9 @@ class Module extends \yii\base\Module
         }
         if (!\Yii::$app->has(PartService::class)) {
             \Yii::$app->set(PartService::class, PartService::class);
+        }
+        if (!\Yii::$app->has(IdentificationStatisticService::class)) {
+            \Yii::$app->set(IdentificationStatisticService::class, IdentificationStatisticService::class);
         }
     }
 
