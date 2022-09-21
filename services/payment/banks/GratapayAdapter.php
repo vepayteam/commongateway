@@ -49,7 +49,7 @@ use Vepay\Gateway\Client\Validator\ValidationException;
 use Yii;
 use yii\helpers\Json;
 
-class GratapayAdapter implements IBankAdapter
+class GratapayAdapter extends BaseAdapter implements IBankAdapter
 {
     private const PROD_IN_PAYMENT_SYSTEM = 'CardGate';
     private const TEST_IN_S2S_PAYMENT_SYSTEM = 'CardGateTestS2S';
@@ -61,13 +61,25 @@ class GratapayAdapter implements IBankAdapter
     const BANK_URL = 'https://psp.kiparisdmcc.ae/api';
     const AFT_MIN_SUMM = 185000;
 
+    /**
+     * @deprecated Use {@see bankId()} instead.
+     */
     public static $bank = 13;
+
     protected $bankUrl;
 
     /** @var PartnerBankGate */
     protected $gate;
     /** @var \GuzzleHttp\Client */
     protected $apiClient;
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function bankId(): int
+    {
+        return 13;
+    }
 
     /**
      * @inheritDoc
@@ -84,7 +96,7 @@ class GratapayAdapter implements IBankAdapter
      */
     public function getBankId()
     {
-        return self::$bank;
+        return self::bankId();
     }
 
     /**
@@ -297,7 +309,7 @@ class GratapayAdapter implements IBankAdapter
      */
     public function getAftMinSum()
     {
-        return Bank::findOne(self::$bank)->AftMinSum ?? self::AFT_MIN_SUMM;
+        return $this->getBankModel()->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**

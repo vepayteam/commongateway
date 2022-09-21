@@ -103,14 +103,19 @@ class AdminSettingsService extends Component
             ->all();
 
         foreach ($banks as $bank) {
-            $bankForm = $bankForms[$bank->ID];
-            $bank->SortOrder = (int)$bankForm->sortOrder;
-            $bank->AftMinSum = $bankForm->aftMinSum !== null ? (int)$bankForm->aftMinSum : null;
-            $bank->UsePayIn = (bool)$bankForm->usePayIn;
-            $bank->UseApplePay = (bool)$bankForm->useApplePay;
-            $bank->UseGooglePay = (bool)$bankForm->useGooglePay;
-            $bank->UseSamsungPay = (bool)$bankForm->useSamsungPay;
-            $bank->save(false);
+            $this->saveBank($bank, $bankForms[$bank->ID]);
         }
+    }
+
+    public function saveBank(Bank $bank, AdminSettingsBankForm $bankForm)
+    {
+        $bank->SortOrder = (int)$bankForm->sortOrder;
+        $bank->AftMinSum = $bankForm->aftMinSum !== null ? (int)$bankForm->aftMinSum : null;
+        $bank->UsePayIn = (bool)$bankForm->usePayIn;
+        $bank->UseApplePay = (bool)$bankForm->useApplePay;
+        $bank->UseGooglePay = (bool)$bankForm->useGooglePay;
+        $bank->UseSamsungPay = (bool)$bankForm->useSamsungPay;
+        $bank->OutCardRefreshStatusDelay = (int)$bankForm->outCardRefreshStatusDelay;
+        $bank->save(false);
     }
 }

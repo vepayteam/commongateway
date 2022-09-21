@@ -95,9 +95,6 @@ return [
         'antifraud' => [
             'class' => 'app\modules\antifraud\Module',
         ],
-        'lk' => [
-            'class' => 'app\modules\lk\Module',
-        ],
     ],
 
 ];

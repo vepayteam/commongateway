@@ -1,10 +1,7 @@
 <?php
 
-
 namespace app\services\payment\models\active_query;
 
-
-use app\models\payonline\Uslugatovar;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
 use Carbon\Carbon;
@@ -16,7 +13,7 @@ use yii\db\ActiveQuery;
 class PaySchetQuery extends ActiveQuery
 {
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      * @return PaySchet[]|array
      */
     public function all($db = null): array
@@ -25,7 +22,7 @@ class PaySchetQuery extends ActiveQuery
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      * @return PaySchet|array|null
      */
     public function one($db = null)
@@ -33,30 +30,40 @@ class PaySchetQuery extends ActiveQuery
         return parent::one($db);
     }
 
-    /**
-     * @return PaySchetQuery
-     */
-    public function needCheckStatusByRsbcron()
+    public function needCheckStatusByRsbcron(): PaySchetQuery
     {
-        $searchStartTimestamp = Carbon::now()->addDays(-14)->timestamp;
+        $alias = $this->getTableNameAndAlias()[1];
+
+        $fixedTimeoutTypes = array_merge(UslugatovarType::outTypes(), UslugatovarType::autoTypes());
+
         return $this
-            ->innerJoin(
-                Uslugatovar::tableName(),
-                Uslugatovar::tableName() . '.ID = ' . PaySchet::tableName() . '.IdUsluga'
-            )
-            ->where([
-                PaySchet::tableName() . '.Status' => PaySchet::STATUS_WAITING,
-                PaySchet::tableName() . '.sms_accept' => 1,
+            ->innerJoinWith([
+                'uslugatovar ut',/** @see PaySchet::$uslugatovar */
             ])
-            ->andWhere(['>', PaySchet::tableName() . '.DateLastUpdate', $searchStartTimestamp])
-            ->andWhere(PaySchet::tableName() . '.ExtBillNumber IS NOT NULL')
-            ->andWhere(sprintf(
-                '(%1$s.IsCustom NOT IN (%3$s) AND %2$s.DateLastUpdate < UNIX_TIMESTAMP() - %2$s.TimeElapsed)
-                OR (%1$s.IsCustom IN (%3$s) AND %2$s.DateLastUpdate < %4$s)',
-                Uslugatovar::tableName(),
-                PaySchet::tableName(),
-                implode(', ', array_merge(UslugatovarType::outTypes(), UslugatovarType::autoTypes())),
-                Carbon::now()->addMinutes(-1)->timestamp
-            ));
+            ->andWhere([
+                "{$alias}.Status" => PaySchet::STATUS_WAITING,
+                "{$alias}.sms_accept" => 1,
+            ])
+            ->andWhere("{$alias}.DateLastUpdate > :twoWeeksAgo")
+            ->andWhere("{$alias}.ExtBillNumber IS NOT NULL")
+            ->andWhere([
+                'or',
+                [
+                    'and',
+                    ['in', 'ut.IsCustom', $fixedTimeoutTypes],
+                    "{$alias}.DateLastUpdate < :fixedTimeout",
+                ],
+                [
+                    'and',
+                    ['not in', 'ut.IsCustom', $fixedTimeoutTypes],
+                    "{$alias}.DateLastUpdate < :now - {$alias}.TimeElapsed",
+                ],
+            ])
+            ->andWhere(['!=', 'ut.IsCustom', UslugatovarType::TOCARD])
+            ->addParams([
+                ':now' => Carbon::now()->timestamp,
+                ':fixedTimeout' => Carbon::now()->addMinutes(-1)->timestamp,
+                ':twoWeeksAgo' => Carbon::now()->addDays(-14)->timestamp,
+            ]);
     }
 }

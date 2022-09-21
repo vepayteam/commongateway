@@ -46,15 +46,27 @@ use Vepay\Gateway\Client\Validator\ValidationException;
 use Yii;
 use yii\base\Model;
 
-class RunaBankAdapter implements IBankAdapter
+class RunaBankAdapter extends BaseAdapter implements IBankAdapter
 {
     const DOMAIN = 'https://ecommerce.runabank.ru/pc4x4';
     const DOMAIN_TEST = 'https://ecommerce-sec.runabank.ru/pc4x4';
 
+    /**
+     * @deprecated Use {@see bankId()} instead.
+     */
     public static $bank = 11;
+
     private $domain;
     /** @var PartnerBankGate */
     private $gate;
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function bankId(): int
+    {
+        return 11;
+    }
 
     /**
      * @inheritDoc
@@ -74,7 +86,7 @@ class RunaBankAdapter implements IBankAdapter
      */
     public function getBankId()
     {
-        return self::$bank;
+        return self::bankId();
     }
 
     /**
@@ -130,7 +142,7 @@ class RunaBankAdapter implements IBankAdapter
      */
     public function getAftMinSum()
     {
-        return Bank::findOne(self::$bank)->AftMinSum;
+        return $this->getBankModel()->AftMinSum;
     }
 
     /**

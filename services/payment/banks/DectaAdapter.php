@@ -43,7 +43,7 @@ use Yii;
 /**
  * Class DectaAdapter
  */
-class DectaAdapter implements IBankAdapter
+class DectaAdapter extends BaseAdapter implements IBankAdapter
 {
     public const AFT_MIN_SUM = 120000;
 
@@ -54,7 +54,11 @@ class DectaAdapter implements IBankAdapter
     /** @var string $apiUrl */
     protected $apiUrl;
 
+    /**
+     * @deprecated Use {@see bankId()} instead.
+     */
     public static $bank = 12;
+
     private const API_URL = 'https://gate.decta.com/api/v0.6';
 
     public const STATUS_NEW = 'issued';
@@ -78,6 +82,14 @@ class DectaAdapter implements IBankAdapter
         'pay' => 'orders/',
         'refund_pay' => 'orders/{payment_id}/refund',
     ];
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function bankId(): int
+    {
+        return 12;
+    }
 
     public function setGate(PartnerBankGate $partnerBankGate)
     {
@@ -103,7 +115,7 @@ class DectaAdapter implements IBankAdapter
      */
     public function getBankId(): int
     {
-        return self::$bank;
+        return self::bankId();
     }
 
     /**
@@ -391,7 +403,7 @@ class DectaAdapter implements IBankAdapter
      */
     public function getAftMinSum(): int
     {
-        return Bank::findOne(self::$bank)->AftMinSum ?? self::AFT_MIN_SUM;
+        return $this->getBankModel()->AftMinSum ?? self::AFT_MIN_SUM;
     }
 
     /**
