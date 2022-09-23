@@ -2,13 +2,6 @@
 
 use app\models\bank\ADGBank;
 use app\models\bank\MTSBank;
-use app\services\payment\banks\ADGroupBankAdapter;
-use app\services\payment\banks\BRSAdapter;
-use app\services\payment\banks\CauriAdapter;
-use app\services\payment\banks\FortaTechAdapter;
-use app\services\payment\banks\RunaBankAdapter;
-use app\services\payment\banks\TKBankAdapter;
-use app\services\payment\banks\WallettoBankAdapter;
 use yii\db\Migration;
 
 /**
