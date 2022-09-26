@@ -2,7 +2,7 @@
 
 use app\components\widgets\EmbedJs;
 use app\modules\partner\models\forms\BasicPartnerStatisticForm;
-use app\modules\partner\models\search\IdentificationListFilter;
+use app\modules\partner\models\search\PartListFilter;
 use yii\bootstrap\ActiveForm;
 use yii\bootstrap\Html;
 use yii\data\ActiveDataProvider;
@@ -13,12 +13,20 @@ use yii\widgets\Pjax;
 /**
  * @var View $this
  * @var BasicPartnerStatisticForm $model
- * @var IdentificationListFilter|null $searchModel
+ * @var PartListFilter|null $searchModel
  * @var ActiveDataProvider|null $dataProvider
  * @var array|null $partnerList
+ * @var array $columns
  */
 
-$this->title = 'Статистика идентификации';
+$action = Yii::$app->controller->action->id;
+if ($action === 'parts-balance') {
+    $this->title = 'Баланс по разбивке (Платформа)';
+} elseif ($action === 'parts-balance-partner') {
+    $this->title = 'Баланс по разбивке (Партнер)';
+} else {
+    throw new LogicException('Unknown action.');
+}
 $this->params['breadtitle'] = $this->title;
 $this->params['breadcrumbs'][] = $this->title;
 ?>
@@ -71,9 +79,10 @@ $this->params['breadcrumbs'][] = $this->title;
                     <?php Pjax::begin(); ?>
 
                     <?php
-                    echo $this->render('ident/grid', [
+                    echo $this->render('parts/grid', [
                         'searchModel' => $searchModel,
                         'dataProvider' => $dataProvider,
+                        'columns' => $columns,
                     ]);
                     ?>
 

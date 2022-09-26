@@ -26,7 +26,7 @@ return [
         'app\assets\CommonAsset',
         'app\assets\InsAsset',
         'app\assets\SiteAsset',
-        'app\assets\SwaggerAsset',
+//        'app\assets\SwaggerAsset',
         'app\assets\MerchantAsset',
         'app\assets\PartnerAsset',
         'app\assets\PayAsset',
@@ -70,17 +70,17 @@ return [
                 'app\assets\SiteAsset'
             ],
         ],
-        'swagger' => [
-            'class' => 'yii\web\AssetBundle',
-            'basePath' => '@webroot/assets',
-            'baseUrl' => '@web/assets',
-            'js' => 'swagger-{hash}.js',
-            'css' => 'swagger-{hash}.css',
-            'depends' => [
-                // Include only 'backend' assets:
-				'app\assets\SwaggerAsset'
-            ],
-        ],
+//        'swagger' => [
+//            'class' => 'yii\web\AssetBundle',
+//            'basePath' => '@webroot/assets',
+//            'baseUrl' => '@web/assets',
+//            'js' => 'swagger-{hash}.js',
+//            'css' => 'swagger-{hash}.css',
+//            'depends' => [
+//                // Include only 'backend' assets:
+//				'app\assets\SwaggerAsset'
+//            ],
+//        ],
         'communal' => [
             'class' => 'yii\web\AssetBundle',
             'basePath' => '@webroot/assets',

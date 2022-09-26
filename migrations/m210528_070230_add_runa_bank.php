@@ -1,6 +1,5 @@
 <?php
 
-use app\services\payment\banks\RunaBankAdapter;
 use app\services\payment\models\Bank;
 use yii\db\Migration;
 
