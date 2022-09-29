@@ -51,9 +51,9 @@ use yii\helpers\Json;
 
 class GratapayAdapter extends BaseAdapter implements IBankAdapter
 {
-    private const PROD_IN_PAYMENT_SYSTEM = 'CardGate';
+    private const PROD_IN_PAYMENT_SYSTEM = 'CardGateRU';
     private const TEST_IN_S2S_PAYMENT_SYSTEM = 'CardGateTestS2S';
-    private const PROD_OUT_PAYMENT_SYSTEM = 'Card';
+    private const PROD_OUT_PAYMENT_SYSTEM = 'CardRU';
     private const TEST_OUT_S2S_PAYMENT_SYSTEM = 'TestCard';
 
     private const DEFAULT_PHONE = '79009000000';
