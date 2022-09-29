@@ -154,16 +154,6 @@ class MerchantPayCreateStrategy
 
         if ($this->payForm->regcard) {
             $paySchet->RegisterCard = 1;
-
-            $partnerId = $this->payForm->partner->ID;
-            $user = (new Reguser())->findUser(
-                '0',
-                $partnerId . '-' . time(),
-                md5($partnerId . '-' . time()),
-                $partnerId,
-                false
-            );
-            $paySchet->IdUser = $user->ID ?? 0;
         }
 
         if (!$paySchet->save()) {

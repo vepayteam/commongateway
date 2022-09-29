@@ -8,6 +8,7 @@ use app\models\crypt\CardToken;
 use app\models\payonline\Cards;
 use app\models\payonline\User;
 use app\models\PaySchetAcsRedirect;
+use app\services\CardRegisterService;
 use app\services\cards\models\PanToken;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
@@ -24,6 +25,7 @@ use app\services\payment\banks\results\asc\AcsRedirectPostResult;
 use app\services\payment\banks\results\P2pErrorResult;
 use app\services\payment\banks\results\P2pOkResult;
 use app\services\payment\exceptions\BankAdapterResponseException;
+use app\services\payment\exceptions\CardTokenException;
 use app\services\payment\exceptions\Check3DSv2Exception;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\DuplicateCreatePayException;
@@ -57,6 +59,8 @@ class CreatePayStrategy
     private $currencyRepository;
     /** @var FileMutex */
     private $mutex;
+    /** @var CardRegisterService */
+    private $cardRegisterService;
 
     public function __construct(CreatePayForm $payForm)
     {
@@ -64,6 +68,7 @@ class CreatePayStrategy
         $this->paymentService = Yii::$container->get('PaymentService');
         $this->currencyRepository = new CurrencyRepository();
         $this->mutex = new FileMutex();
+        $this->cardRegisterService = Yii::$app->get(CardRegisterService::class);
     }
 
     /**
@@ -236,32 +241,26 @@ class CreatePayStrategy
 
     /**
      * @throws CreatePayException
+     * @throws CardTokenException
      */
     protected function setCardPay(PaySchet $paySchet, PartnerBankGate $partnerBankGate)
     {
-        $cartToken = new CardToken();
-        $token = $cartToken->CheckExistToken(
+        $token = TokenHelper::getOrCreateToken(
             $this->createPayForm->CardNumber,
-            $this->createPayForm->CardMonth . $this->createPayForm->CardYear
+            $this->createPayForm->CardMonth . $this->createPayForm->CardYear,
+            $this->createPayForm->CardHolder
+        );
+        if ($token === null) {
+            throw new CardTokenException('Ошибка при формировании токена.');
+        }
+
+        $card = $this->cardRegisterService->getOrCreateCard(
+            PanToken::findOne($token),
+            $partnerBankGate
         );
 
-        if ($paySchet->IdUser) {
-            $user = User::findOne(['ID' => $paySchet->IdUser]);
-        } else {
-            $reguser = new Reguser();
-            $user = $reguser->findUser('0', $paySchet->IdOrg . '-' . time(), md5($paySchet->IdOrg . '-' . time()), $paySchet->IdOrg, false);
-            $paySchet->IdUser = $user->ID;
-        }
-
-        if ($token == 0) {
-            $token = $cartToken->CreateToken(
-                $this->createPayForm->CardNumber,
-                $this->createPayForm->CardMonth . $this->createPayForm->CardYear,
-                $this->createPayForm->CardHolder
-            );
-        }
-        $card = $this->createUnregisterCard($token, $user, $partnerBankGate);
         $paySchet->IdKard = $card->ID;
+        $paySchet->IdUser = $card->IdUser;
         $paySchet->CardNum = Cards::MaskCard($this->createPayForm->CardNumber);
         $paySchet->CardHolder = mb_substr($this->createPayForm->CardHolder, 0, 99);
         $paySchet->CardExp = $this->createPayForm->CardMonth . $this->createPayForm->CardYear;
@@ -270,35 +269,6 @@ class CreatePayStrategy
         if (!$paySchet->save()) {
             throw new CreatePayException('Ошибка валидации данных счета');
         }
-    }
-
-    /**
-     * @param $token
-     * @return Cards
-     */
-    private function createUnregisterCard($token, User $user, PartnerBankGate $partnerBankGate)
-    {
-        $panToken = PanToken::findOne(['ID' => $token]);
-
-        $cardNumber = $panToken->FirstSixDigits . '******' . $panToken->LastFourDigits;
-        $card = new Cards();
-        $card->IdUser = $user->ID;
-        $card->NameCard = $cardNumber;
-        $card->CardNumber = $cardNumber;
-        $card->ExtCardIDP = 0;
-        $card->CardType = Cards::GetTypeCard($cardNumber);
-        $card->SrokKard = $this->createPayForm->CardMonth . $this->createPayForm->CardYear;
-        $card->CardHolder = mb_substr($this->createPayForm->CardHolder, 0, 99);
-        $card->Status = 0;
-        $card->DateAdd = time();
-        $card->Default = 0;
-        $card->TypeCard = 0;
-        $card->IdPan = $panToken->ID;
-        $card->IdBank = $partnerBankGate->BankId;
-        $card->IsDeleted = 0;
-        $card->save(false);
-
-        return $card;
     }
 
     /**

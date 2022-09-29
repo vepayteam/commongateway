@@ -39,7 +39,7 @@ use app\models\payonline\Partner;
  * @property float $BankMinimalFee Минимальная комиссия банку
  *
  * @property Banks $bank
- * @property Partner $partner
+ * @property-read Partner $partner {@see PartnerBankGate::getPartner()}
  * @property UslugatovarType $uslugatovarType
  * @property-read Currency $currency
  * @property-read Currency $feeCurrency

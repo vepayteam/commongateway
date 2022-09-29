@@ -32,7 +32,7 @@ use yii\helpers\Json;
  * @property integer $IdPan
  * @property integer $IdBank
  * @property integer $IsDeleted
- * @property User $user
+ * @property-read User $user {@see Cards::getUser()}
  * @property Bank $bank
  * @property PanToken $panToken
  *
@@ -63,6 +63,15 @@ class Cards extends ActiveRecord
     public const BRAND_MAESTRO = 6;
     public const BRAND_DISCOVER = 7;
     public const BRAND_CHINA_UNIONPAY = 8;
+
+    /** Card for payments. */
+    public const TYPE_CARD_IN = 0;
+    /** Card for replenish. */
+    public const TYPE_CARD_OUT = 1;
+
+    public const STATUS_UNCONFIRMED = 0;
+    public const STATUS_ACTIVE = 1;
+    public const STATUS_BLOCKED = 2;
 
     /**
      * @inheritdoc
@@ -133,6 +142,10 @@ class Cards extends ActiveRecord
 
         if ($this->CardNumber) {
             $this->CardType = Cards::GetTypeCard($this->CardNumber);
+        }
+
+        if ($insert) {
+            $this->DateAdd = time();
         }
 
         return parent::beforeSave($insert);
