@@ -1494,7 +1494,7 @@ class TKBankAdapter extends BaseAdapter implements IBankAdapter, IBankSecondStep
                 $checkStatusPayResponse->transId = $response->orderInfo->orderId;
             }
             $checkStatusPayResponse->status = $status;
-            $checkStatusPayResponse->message = $response->orderInfo->stateDescription ?? '';
+            $checkStatusPayResponse->message = $this->handleStatusResponseMessage($response->orderInfo->stateDescription ?? '');
             $checkStatusPayResponse->rcCode = $response->additionalInfo->rc ?? null;
             $checkStatusPayResponse->rrn = $response->additionalInfo->rrn ?? null;
             $checkStatusPayResponse->cardRefId = $response->additionalInfo->cardRefId ?? null;
@@ -1895,5 +1895,23 @@ class TKBankAdapter extends BaseAdapter implements IBankAdapter, IBankSecondStep
         }
 
         return $registrationBenificResponse;
+    }
+
+    /**
+     * Функция для обработки описания статуса транзакции
+     *
+     * @param string $message
+     * @return string
+     */
+    private function handleStatusResponseMessage(string $message): string
+    {
+        /**
+         * Убираем номер карты из сообщения "Установлены ограничения для данной карты. 1111 1111 1111 1111"
+         */
+        if (preg_match('/(Установлены ограничения для данной карты\.)([\s\d]*)/', $message, $matches)) {
+            return $matches[1];
+        }
+
+        return $message;
     }
 }
