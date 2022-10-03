@@ -203,6 +203,10 @@ $currencyList = ArrayHelper::merge(['' => ''], ArrayHelper::map(CurrencyReposito
                     </div>
 
                     <div class="form-group">
+                        <input name="ReceiveProviderCommission" type="checkbox"/> Получать комиссию провайдера
+                    </div>
+
+                    <div class="form-group">
                         <input name="UseGateCompensation" type="checkbox"/> Использовать комиссию шлюза
                     </div>
 

@@ -2123,6 +2123,7 @@
                 $form.find('select[name=CurrencyId]').val(gate.CurrencyId);
 
 
+                $form.find('input[name=ReceiveProviderCommission]').attr('checked', gate.ReceiveProviderCommission === 1);
                 $form.find('input[name=UseGateCompensation]').attr('checked', gate.UseGateCompensation === 1);
 
                 // $form.find('input[name=UseGateCompensation]').val(gate.UseGateCompensation);

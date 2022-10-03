@@ -25,6 +25,7 @@ use app\models\payonline\Partner;
  * @property int|null $Priority
  * @property int|null $Enable
 
+ * @property bool $ReceiveProviderCommission Получать комиссию провайдера
  * @property int|bool $UseGateCompensation Использовать комиссию шлюза
  * @property int $FeeCurrencyId Валюта фиксированной комиссии
  * @property int $MinimalFeeCurrencyId Валюта минимальной комиссии
@@ -77,6 +78,7 @@ class PartnerBankGate extends \yii\db\ActiveRecord
             [['PartnerId', 'BankId', 'Priority', 'Enable', 'TU', 'SchetType', 'CurrencyId'], 'integer'],
             [['Login', 'AdvParam_1', 'AdvParam_2', 'AdvParam_3', 'AdvParam_4', 'SchetNumber'], 'string', 'max' => 400],
             [['Token', 'Password'], 'safe'],
+            [['ReceiveProviderCommission'], 'boolean'],
             [['UseGateCompensation'], 'in', 'range' => [0, 1]],
             [
                 ['FeeCurrencyId', 'MinimalFeeCurrencyId'],

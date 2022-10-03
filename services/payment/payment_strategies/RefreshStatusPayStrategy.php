@@ -107,6 +107,13 @@ class RefreshStatusPayStrategy extends OkPayStrategy
             $paySchet->RCCode = $checkStatusPayResponse->rcCode;
         }
 
+        if (
+            $bankAdapterBuilder->getPartnerBankGate()->ReceiveProviderCommission &&
+            $checkStatusPayResponse->providerCommission !== null
+        ) {
+            $paySchet->BankComis = $checkStatusPayResponse->providerCommission;
+        }
+
         $paySchet->save(false);
 
         $this->getNotificationsService()->sendPostbacks($paySchet);
