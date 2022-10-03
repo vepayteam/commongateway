@@ -30,8 +30,6 @@ class Banks
                 return new WallettoBankAdapter();
             case DectaAdapter::bankId():
                 return new DectaAdapter();
-            case RunaBankAdapter::bankId():
-                return new RunaBankAdapter();
             case GratapayAdapter::bankId():
                 return new GratapayAdapter();
             case MonetixAdapter::bankId():

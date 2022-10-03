@@ -7,6 +7,8 @@ use Yii;
 /**
  * This is the model class for table "ident_runa".
  *
+ * @deprecated Удалено все, что связано с руной, основную таблицу оставляем как есть
+ *
  * @property int $Id
  * @property int $PartnerId
  * @property string|null $Data
