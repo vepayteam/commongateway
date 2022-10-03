@@ -1906,10 +1906,10 @@ class TKBankAdapter extends BaseAdapter implements IBankAdapter, IBankSecondStep
     private function handleStatusResponseMessage(string $message): string
     {
         /**
-         * Убираем номер карты из сообщения "Установлены ограничения для данной карты. 1111 1111 1111 1111"
+         * Убираем номер карты из сообщения "2222 22** **** 222222"
          */
-        if (preg_match('/(Установлены ограничения для данной карты\.)([\s\d]*)/', $message, $matches)) {
-            return $matches[1];
+        if (preg_match('/(\b[23456][\d\*\s]{15,22}\b)/', $message, $matches)) {
+            return trim(str_replace($matches[1], '', $message));
         }
 
         return $message;
