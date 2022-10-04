@@ -2,11 +2,14 @@
 
 namespace app\services\payment\payment_strategies\mfo;
 
+use app\helpers\TokenHelper;
 use app\models\api\Reguser;
 use app\models\crypt\CardToken;
 use app\models\payonline\Cards;
+use app\models\payonline\Partner;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
+use app\services\CardRegisterService;
 use app\services\cards\models\PanToken;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\BankAdapterBuilder;
@@ -16,11 +19,13 @@ use app\services\payment\exceptions\GateException;
 use app\services\payment\exceptions\NotUniquePayException;
 use app\services\payment\forms\OutCardPayForm;
 use app\services\payment\jobs\RefreshStatusPayJob;
+use app\services\payment\models\Bank;
 use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
 use app\services\payment\PaymentService;
 use Yii;
 use yii\base\Exception;
+use yii\db\ActiveQuery;
 use yii\mutex\FileMutex;
 use yii\queue\redis\Queue;
 
@@ -30,6 +35,8 @@ class MfoOutCardStrategy
     private $outCardPayForm;
     /** @var Queue */
     private $queue;
+    /** @var CardRegisterService */
+    private $cardRegisterService;
     /** @var PaymentService */
     protected $paymentService;
 
@@ -40,6 +47,7 @@ class MfoOutCardStrategy
     {
         $this->outCardPayForm = $outCardPayForm;
         $this->queue = \Yii::$app->queue;
+        $this->cardRegisterService = Yii::$app->get(CardRegisterService::class);
     }
 
     /**
@@ -80,24 +88,21 @@ class MfoOutCardStrategy
             throw new CardTokenException('Ошибка при получение номера карты');
         }
 
-        $user = $this->createUser();
         $card = $this->outCardPayForm->getCardOut();
-        $token = null;
-        $paySchet = null;
-        if($card) {
+        if ($card) {
             $cardToken = new CardToken();
             $this->outCardPayForm->cardnum = $cardToken->GetCardByToken($card->IdPan);
         } else {
-            $cartToken = new CardToken();
-            if (($token = $cartToken->CheckExistToken($this->outCardPayForm->cardnum, 0)) == 0) {
-                $token = $cartToken->CreateToken($this->outCardPayForm->cardnum, 0, '');
+            $token = TokenHelper::getOrCreateToken($this->outCardPayForm->cardnum, null, null);
+            if ($token === null) {
+                throw new CardTokenException('Ошибка при формировании токена.');
             }
-            if ($token === 0) {
-                throw new CardTokenException('Ошибка при формирование токена');
-            }
-            $card = $this->createUnregisterCard($token, $user);
+            $card = $this->cardRegisterService->getOrCreateCard(
+                PanToken::findOne($token),
+                $bankAdapterBuilder->getPartnerBankGate()
+            );
         }
-        $paySchet = $this->createPaySchet($bankAdapterBuilder, $user, $card);
+        $paySchet = $this->createPaySchet($bankAdapterBuilder, $card);
         $this->outCardPayForm->paySchet = $paySchet;
         $outCardPayResponse = $bankAdapterBuilder->getBankAdapter()->outCardPay($this->outCardPayForm);
 
@@ -126,50 +131,6 @@ class MfoOutCardStrategy
         }
 
         return $paySchet;
-    }
-
-    /**
-     * @return \app\models\payonline\User|bool|false
-     * @throws \Exception
-     */
-    private function createUser()
-    {
-        $reguser = new Reguser();
-        $user = $reguser->findUser(
-            '0',
-            $this->outCardPayForm->partner->ID . '-' . time() . random_int(100, 999),
-            md5($this->outCardPayForm->partner->ID . '-' . time()),
-            $this->outCardPayForm->partner->ID, false
-        );
-        return $user;
-    }
-
-    /**
-     * @param $token
-     * @return Cards
-     */
-    private function createUnregisterCard($token, User $user)
-    {
-        $panToken = PanToken::findOne(['ID' => $token]);
-
-        $cardNumber = $panToken->FirstSixDigits . '******' . $panToken->LastFourDigits;
-        $card = new Cards();
-        $card->IdUser = $user->ID;
-        $card->NameCard = $cardNumber;
-        $card->CardNumber = $cardNumber;
-        $card->ExtCardIDP = 0;
-        $card->CardType = Cards::GetTypeCard($cardNumber);
-        $card->SrokKard = 0;
-        $card->Status = 1;
-        $card->DateAdd = time();
-        $card->Default = 0;
-        $card->TypeCard = 1;
-        $card->IdPan = $panToken->ID;
-        $card->IdBank = 0;
-        $card->IsDeleted = 0;
-        $save = $card->save(false);
-
-        return $card;
     }
 
     /**
@@ -209,12 +170,12 @@ class MfoOutCardStrategy
      * @return PaySchet
      * @throws CreatePayException
      */
-    private function createPaySchet(BankAdapterBuilder $bankAdapterBuilder, User $user, Cards $card)
+    private function createPaySchet(BankAdapterBuilder $bankAdapterBuilder, Cards $card)
     {
         $paySchet = new PaySchet();
 
         $paySchet->IdKard = $card->ID;
-        $paySchet->IdUser = $user->ID;
+        $paySchet->IdUser = $card->IdUser;
         $paySchet->CardNum = Cards::MaskCard($this->outCardPayForm->cardnum);
         $paySchet->CardHolder = mb_substr($card->CardHolder, 0, 99);
         $paySchet->CardExp = $card->getMonth() . $card->getYear();

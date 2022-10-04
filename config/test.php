@@ -66,6 +66,7 @@ return [
         \app\services\LanguageService::class => \app\services\LanguageService::class,
         \app\services\PaymentTransferService::class => \app\services\PaymentTransferService::class,
         \app\services\PayToCardService::class => \app\services\PayToCardService::class,
+        \app\services\CardRegisterService::class => \app\services\CardRegisterService::class,
     ],
     'params' => $params,
     'container' => [

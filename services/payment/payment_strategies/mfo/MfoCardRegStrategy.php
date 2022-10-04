@@ -6,6 +6,7 @@ namespace app\services\payment\payment_strategies\mfo;
 use app\models\api\Reguser;
 use app\models\payonline\User;
 use app\models\payonline\Uslugatovar;
+use app\services\CardRegisterService;
 use app\services\LanguageService;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\CreatePayException;
@@ -15,6 +16,10 @@ use app\services\payment\models\PaySchet;
 use app\services\payment\models\UslugatovarType;
 use yii\mutex\FileMutex;
 
+/**
+ * @deprecated Use {@see CardRegisterService} instead.
+ * @todo Remove this class, unused legacy code.
+ */
 class MfoCardRegStrategy
 {
     const PAYMENT_AMOUNT_REG_TYPE_BY_PAY = 1100;
