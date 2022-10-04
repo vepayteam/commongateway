@@ -19,7 +19,6 @@ use yii\base\BaseObject;
  * @property-read string|null $eci
  * @property-read string|null $cardNumberHash
  * @property-read string|null $rc
- * @property-read string|null $fee
  * @property-read string|null $rrn
  */
 class OrderAdditionalInfo extends BaseObject
@@ -38,7 +37,6 @@ class OrderAdditionalInfo extends BaseObject
     private $_eci;
     private $_cardNumberHash;
     private $_rc;
-    private $_fee;
     private $_rrn;
 
     public function __construct(
@@ -56,7 +54,6 @@ class OrderAdditionalInfo extends BaseObject
         ?string $eci,
         ?string $cardNumberHash,
         ?string $rc,
-        ?string $fee,
         ?string $rrn
     )
     {
@@ -76,7 +73,6 @@ class OrderAdditionalInfo extends BaseObject
         $this->_eci = $eci;
         $this->_cardNumberHash = $cardNumberHash;
         $this->_rc = $rc;
-        $this->_fee = $fee;
         $this->_rrn = $rrn;
     }
 
@@ -190,14 +186,6 @@ class OrderAdditionalInfo extends BaseObject
     public function getRc(): ?string
     {
         return $this->_rc;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getFee(): ?string
-    {
-        return $this->_fee;
     }
 
     /**

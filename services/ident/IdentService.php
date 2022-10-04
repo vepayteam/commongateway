@@ -5,7 +5,6 @@ namespace app\services\ident;
 
 
 use app\services\ident\forms\IdentStatisticForm;
-use app\services\ident\traits\RunaIdentTrait;
 use yii\db\Query;
 
 /**
@@ -13,8 +12,6 @@ use yii\db\Query;
  */
 class IdentService
 {
-    use RunaIdentTrait;
-
     const LIST_CHECKS = ['Inn', 'Snils', 'Passport', 'PassportDeferred'];
     const BANK_STATUSES = [
         'NotProcessed' => '000',
@@ -29,7 +26,8 @@ class IdentService
      * @param IdentStatisticForm $identStatisticForm
      * @return array
      * @throws \Exception
-     * @todo Refactor or remove: unsafe and fragile code.
+     * @todo Remove unused method.
+     * @deprecated
      */
     public function getIdentStatistic(IdentStatisticForm $identStatisticForm)
     {

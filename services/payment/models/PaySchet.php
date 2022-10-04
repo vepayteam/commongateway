@@ -99,7 +99,7 @@ use yii\helpers\ArrayHelper;
  * @property string|null $RefundExtId Внутренний ID провайдеров операций refund/reverse для проверки статусов
  * @property int|null $RefundType Тип операции refund/reverse {@see PaySchet::REFUND_TYPE_REFUND} {@see PaySchet::REFUND_TYPE_REVERSE}
  *
- * @property Uslugatovar $uslugatovar
+ * @property-read Uslugatovar $uslugatovar {@see PaySchet::getUslugatovar()}
  * @property Partner $partner
  * @property Currency $currency
  * @property PaySchetLog[] $log

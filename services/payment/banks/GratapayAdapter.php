@@ -49,25 +49,32 @@ use Vepay\Gateway\Client\Validator\ValidationException;
 use Yii;
 use yii\helpers\Json;
 
-class GratapayAdapter implements IBankAdapter
+class GratapayAdapter extends BaseAdapter implements IBankAdapter
 {
-    private const PROD_IN_PAYMENT_SYSTEM = 'CardGate';
-    private const TEST_IN_S2S_PAYMENT_SYSTEM = 'CardGateTestS2S';
-    private const PROD_OUT_PAYMENT_SYSTEM = 'Card';
-    private const TEST_OUT_S2S_PAYMENT_SYSTEM = 'TestCard';
-
     private const DEFAULT_PHONE = '79009000000';
 
     const BANK_URL = 'https://psp.kiparisdmcc.ae/api';
     const AFT_MIN_SUMM = 185000;
 
+    /**
+     * @deprecated Use {@see bankId()} instead.
+     */
     public static $bank = 13;
+
     protected $bankUrl;
 
     /** @var PartnerBankGate */
     protected $gate;
     /** @var \GuzzleHttp\Client */
     protected $apiClient;
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function bankId(): int
+    {
+        return 13;
+    }
 
     /**
      * @inheritDoc
@@ -84,7 +91,7 @@ class GratapayAdapter implements IBankAdapter
      */
     public function getBankId()
     {
-        return self::$bank;
+        return self::bankId();
     }
 
     /**
@@ -110,12 +117,7 @@ class GratapayAdapter implements IBankAdapter
         $createPayRequest->url = $createPayRequest->getUrls($paySchet);
         $createPayRequest->system_fields = $createPayRequest->getSystemFields($createPayForm);
         $createPayRequest->three_ds_v2 = $createPayRequest->getThreeDsV2();
-
-        if(Yii::$app->params['TESTMODE'] == 'Y') {
-            $createPayRequest->payment_system = self::TEST_IN_S2S_PAYMENT_SYSTEM;
-        } else {
-            $createPayRequest->payment_system = self::PROD_IN_PAYMENT_SYSTEM;
-        }
+        $createPayRequest->payment_system = $this->gate->AdvParam_1;
 
         $createPayResponse = new CreatePayResponse();
         $bodyJson = Json::encode($createPayRequest->getAttributes());
@@ -245,11 +247,7 @@ class GratapayAdapter implements IBankAdapter
         $request->transaction_id = $paySchet->ID;
         $request->amount = number_format($paySchet->getSummFull() / 100, 2, '.', '');
         $request->currency = $paySchet->currency->Code;
-        if(Yii::$app->params['TESTMODE'] == 'Y') {
-            $request->payment_system = self::TEST_OUT_S2S_PAYMENT_SYSTEM;
-        } else {
-            $request->payment_system = self::PROD_OUT_PAYMENT_SYSTEM;
-        }
+        $request->payment_system = $this->gate->AdvParam_2;
 
         $phone = preg_replace('/\D/', '', $outCardPayForm->phone); // only numbers
         if (empty($phone)) {
@@ -297,7 +295,7 @@ class GratapayAdapter implements IBankAdapter
      */
     public function getAftMinSum()
     {
-        return Bank::findOne(self::$bank)->AftMinSum ?? self::AFT_MIN_SUMM;
+        return $this->getBankModel()->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**

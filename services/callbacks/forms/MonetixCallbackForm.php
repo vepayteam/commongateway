@@ -31,7 +31,7 @@ class MonetixCallbackForm extends Model
     public function validatePaySchetId()
     {
         $paySchet = $this->getPaySchet();
-        if(!$paySchet || $paySchet->ExtBillNumber != $this->transId || $paySchet->Bank != MonetixAdapter::$bank) {
+        if(!$paySchet || $paySchet->ExtBillNumber != $this->transId || $paySchet->Bank != MonetixAdapter::bankId()) {
             Yii::warning('MonetixCallbackForm validatePaySchetId error: ' . Json::encode($this->getAttributes()));
             $this->addError('paySchetId', 'Ошибка проверки номера транзакции');
         }

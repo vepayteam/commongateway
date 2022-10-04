@@ -15,7 +15,7 @@ class m210812_100122_add_gratapay_bank extends Migration
     public function safeUp()
     {
         $bank = new Bank();
-        $bank->ID = GratapayAdapter::$bank;
+        $bank->ID = 13;
         $bank->Name = 'Gratapay';
         $bank->save(false);
     }
@@ -25,7 +25,7 @@ class m210812_100122_add_gratapay_bank extends Migration
      */
     public function safeDown()
     {
-        Bank::deleteAll(['ID' => GratapayAdapter::$bank]);
+        Bank::deleteAll(['ID' => 13]);
         return true;
     }
 }

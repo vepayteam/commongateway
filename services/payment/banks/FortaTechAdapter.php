@@ -58,7 +58,7 @@ use GuzzleHttp\RequestOptions;
 use Yii;
 use yii\helpers\Json;
 
-class FortaTechAdapter implements IBankAdapter
+class FortaTechAdapter extends BaseAdapter implements IBankAdapter
 {
     use MaskableTrait;
 
@@ -78,7 +78,11 @@ class FortaTechAdapter implements IBankAdapter
     /** Interval in seconds between status refresh requests for recurrent payments. */
     private const RECURRENT_REFRESH_STATUS_INTERVAL = 2;
 
+    /**
+     * @deprecated Use {@see bankId()} instead.
+     */
     public static $bank = 9;
+
     protected $bankUrl;
     /** @var PartnerBankGate */
     protected $gate;
@@ -87,6 +91,14 @@ class FortaTechAdapter implements IBankAdapter
     protected $errorMatchList = [
         'failed to connect to' => 'Не удалось связаться с провайдером',
     ];
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function bankId(): int
+    {
+        return 9;
+    }
 
     /**
      * @inheritDoc
@@ -119,7 +131,7 @@ class FortaTechAdapter implements IBankAdapter
      */
     public function getBankId()
     {
-        return self::$bank;
+        return self::bankId();
     }
 
     /**
@@ -701,7 +713,7 @@ class FortaTechAdapter implements IBankAdapter
      */
     public function getAftMinSum()
     {
-        return Bank::findOne(self::$bank)->AftMinSum ?? self::AFT_MIN_SUMM;
+        return $this->getBankModel()->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**

@@ -124,7 +124,6 @@ use yii\db\ActiveRecord;
  * @property boolean $isUseYandexPay
  * @property int $BankForPaymentId
  * @property int $BankForTransferToCardId
- * @property int $RunaBankCid
  * @property Uslugatovar[] $uslugatovars
  * @property PartnerBankRekviz[] $partner_bank_rekviz Deprecated, use {@see Partner::$bankRekviz} instead.
  * @property string $Apple_displayName [varchar(100)]

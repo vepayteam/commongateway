@@ -295,6 +295,26 @@
     margin-top: 30px;
 }
 
+/* add sorting icons to gridview sort links */
+.grid-view a.asc:after, .grid-view a.desc:after {
+    display: inline-block;
+    font: normal normal normal 14px/1 FontAwesome;
+    font-size: inherit;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin-left: 2px;
+}
+
+.grid-view a.asc:after {
+    content: "\f0de";
+    /*content: "\f15d";*/
+}
+.grid-view a.desc:after {
+    content: "\f0dd";
+    /*content: "\f15e";*/
+}
+
 .comissionBlock {
     display: flex;
     justify-content: space-between;

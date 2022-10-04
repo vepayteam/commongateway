@@ -13,7 +13,6 @@ use app\clients\tcbClient\responses\ErrorResponse;
 use app\clients\tcbClient\responses\GetOrderStateResponse;
 use app\clients\tcbClient\responses\objects\OrderInfo;
 use app\clients\tcbClient\TcbOrderNotExistException;
-use app\helpers\DebugHelper;
 use app\models\payonline\Cards;
 use app\models\payonline\User;
 use app\models\Payschets;
@@ -34,7 +33,6 @@ use app\services\payment\banks\bank_adapter_responses\RefundPayResponse;
 use app\services\payment\banks\bank_adapter_responses\RegistrationBenificResponse;
 use app\services\payment\banks\bank_adapter_responses\TransferToAccountResponse;
 use app\services\payment\banks\data\ClientData;
-use app\services\payment\banks\interfaces\ITKBankAdapterResponseErrors;
 use app\services\payment\banks\traits\TKBank3DSTrait;
 use app\services\payment\exceptions\BankAdapterResponseException;
 use app\services\payment\exceptions\CacheValueMissingException;
@@ -78,7 +76,7 @@ use SimpleXMLElement;
 use Yii;
 use yii\helpers\Json;
 
-class TKBankAdapter implements IBankAdapter, IBankSecondStepInterface
+class TKBankAdapter extends BaseAdapter implements IBankAdapter, IBankSecondStepInterface
 {
     use TKBank3DSTrait;
 
@@ -110,10 +108,22 @@ class TKBankAdapter implements IBankAdapter, IBankSecondStepInterface
     private $backUrls = ['ok' => 'https://api.vepay.online/pay/orderok?orderid='];
     private $_client;
 
+    /**
+     * @deprecated Use {@see bankId()} instead.
+     */
     public static $bank = 2;
+
     private $type = 0;
     private $IsCard = 0;
     private $IsAft = 0;
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function bankId(): int
+    {
+        return 2;
+    }
 
     public function setGate(PartnerBankGate $partnerBankGate)
     {
@@ -129,7 +139,7 @@ class TKBankAdapter implements IBankAdapter, IBankSecondStepInterface
      */
     public function getBankId()
     {
-        return self::$bank;
+        return self::bankId();
     }
 
     /**
@@ -1485,6 +1495,7 @@ class TKBankAdapter implements IBankAdapter, IBankSecondStepInterface
             }
             $checkStatusPayResponse->status = $status;
             $checkStatusPayResponse->message = $response->orderInfo->stateDescription ?? '';
+            $checkStatusPayResponse->providerCommission = $response->orderInfo->fee ?? null;
             $checkStatusPayResponse->rcCode = $response->additionalInfo->rc ?? null;
             $checkStatusPayResponse->rrn = $response->additionalInfo->rrn ?? null;
             $checkStatusPayResponse->cardRefId = $response->additionalInfo->cardRefId ?? null;
@@ -1492,7 +1503,6 @@ class TKBankAdapter implements IBankAdapter, IBankSecondStepInterface
             $checkStatusPayResponse->expMonth = $response->additionalInfo->cardExpMonth ?? null;
             $checkStatusPayResponse->cardHolder = $response->additionalInfo->cardHolder ?? null;
             $checkStatusPayResponse->cardNumber = $response->additionalInfo->cardNumber ?? null;
-
         } else {
             throw new \LogicException('Unprocessable response object.');
         }
@@ -1681,7 +1691,7 @@ class TKBankAdapter implements IBankAdapter, IBankSecondStepInterface
 
     public function getAftMinSum()
     {
-        return Bank::findOne(self::$bank)->AftMinSum ?? self::AFT_MIN_SUMM;
+        return $this->getBankModel()->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**

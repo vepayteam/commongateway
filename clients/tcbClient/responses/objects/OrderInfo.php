@@ -11,6 +11,7 @@ use yii\base\BaseObject;
  * @property-read int $state See {@see OrderInfo::stateList()}.
  * @property-read string $stateDescription
  * @property-read string $type See {@see OrderInfo::typeList()}.
+ * @property-read int|null $fee
  * @property-read int $amount Amount in fractional currency (cents).
  * @property-read Carbon $datetime Date and time when TCB order created.
  * @property-read Carbon $stateUpdateDateTime
@@ -62,6 +63,10 @@ class OrderInfo extends BaseObject
      */
     private $_amount;
     /**
+     * @var int|null
+     */
+    private $_fee;
+    /**
      * @var Carbon
      */
     private $_datetime;
@@ -108,6 +113,7 @@ class OrderInfo extends BaseObject
      * @param string $stateDescription
      * @param string $type
      * @param int $amount
+     * @param int|null $fee
      * @param Carbon $datetime
      * @param Carbon $stateUpdateDateTime
      */
@@ -118,6 +124,7 @@ class OrderInfo extends BaseObject
         string $stateDescription,
         string $type,
         int $amount,
+        ?int $fee,
         Carbon $datetime,
         Carbon $stateUpdateDateTime
     )
@@ -130,6 +137,7 @@ class OrderInfo extends BaseObject
         $this->_stateDescription = $stateDescription;
         $this->_type = $type;
         $this->_amount = $amount;
+        $this->_fee = $fee;
         $this->_datetime = $datetime;
         $this->_stateUpdateDateTime = $stateUpdateDateTime;
     }
@@ -172,6 +180,14 @@ class OrderInfo extends BaseObject
     public function getType(): string
     {
         return $this->_type;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getFee(): ?int
+    {
+        return $this->_fee;
     }
 
     /**

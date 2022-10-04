@@ -11,34 +11,32 @@ class Banks
      * @return IBankAdapter
      * @throws \Exception
      */
-    public static function getBankAdapter($bankId)
+    public static function getBankAdapter($bankId): IBankAdapter
     {
         switch ($bankId) {
-            case TKBankAdapter::$bank:
+            case TKBankAdapter::bankId():
                 return new TKBankAdapter();
-            case MTSBankAdapter::$bank:
+            case MTSBankAdapter::bankId():
                 return new MTSBankAdapter();
-            case ADGroupBankAdapter::$bank:
+            case ADGroupBankAdapter::bankId():
                 return new ADGroupBankAdapter();
-            case BRSAdapter::$bank:
+            case BRSAdapter::bankId():
                 return new BRSAdapter();
-            case CauriAdapter::$bank:
+            case CauriAdapter::bankId():
                 return new CauriAdapter();
-            case FortaTechAdapter::$bank:
+            case FortaTechAdapter::bankId():
                 return new FortaTechAdapter();
-            case WallettoBankAdapter::$bank:
+            case WallettoBankAdapter::bankId():
                 return new WallettoBankAdapter();
-            case DectaAdapter::$bank:
+            case DectaAdapter::bankId():
                 return new DectaAdapter();
-            case RunaBankAdapter::$bank:
-                return new RunaBankAdapter();
-            case GratapayAdapter::$bank:
+            case GratapayAdapter::bankId():
                 return new GratapayAdapter();
-            case MonetixAdapter::$bank:
+            case MonetixAdapter::bankId():
                 return new MonetixAdapter();
-            case ImpayaAdapter::$bank:
+            case ImpayaAdapter::bankId():
                 return new ImpayaAdapter();
-            case PayloniumAdapter::$bank:
+            case PayloniumAdapter::bankId():
                 return new PayloniumAdapter();
             case PaylerAdapter::$bank:
                 return new PaylerAdapter();

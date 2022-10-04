@@ -2,13 +2,6 @@
 
 use app\models\bank\ADGBank;
 use app\models\bank\MTSBank;
-use app\services\payment\banks\ADGroupBankAdapter;
-use app\services\payment\banks\BRSAdapter;
-use app\services\payment\banks\CauriAdapter;
-use app\services\payment\banks\FortaTechAdapter;
-use app\services\payment\banks\RunaBankAdapter;
-use app\services\payment\banks\TKBankAdapter;
-use app\services\payment\banks\WallettoBankAdapter;
 use yii\db\Migration;
 
 /**
@@ -25,15 +18,15 @@ class m210713_100154_add_channel_name_to_banks_table extends Migration
 
         $this->update('banks', ['ChannelName' => 'vepay'], ['ID' => 0]);
         $this->update('banks', ['ChannelName' => 'Russia'], ['ID' => 1]);
-        $this->update('banks', ['ChannelName' => 'TKB'], ['ID' => TKBankAdapter::$bank]);
+        $this->update('banks', ['ChannelName' => 'TKB'], ['ID' => 2]);
         $this->update('banks', ['ChannelName' => 'MTS Bank'], ['ID' => MTSBank::$bank]);
         $this->update('banks', ['ChannelName' => 'AD Group Bank'], ['ID' => ADGBank::$bank]);
-        $this->update('banks', ['ChannelName' => 'AD Group'], ['ID' => ADGroupBankAdapter::$bank]);
-        $this->update('banks', ['ChannelName' => 'BRS'], ['ID' => BRSAdapter::$bank]);
-        $this->update('banks', ['ChannelName' => 'Cauri'], ['ID' => CauriAdapter::$bank]);
-        $this->update('banks', ['ChannelName' => 'FortaTech'], ['ID' => FortaTechAdapter::$bank]);
-        $this->update('banks', ['ChannelName' => 'Walleto'], ['ID' => WallettoBankAdapter::$bank]);
-        $this->update('banks', ['ChannelName' => 'Runa'], ['ID' => RunaBankAdapter::$bank]);
+        $this->update('banks', ['ChannelName' => 'AD Group'], ['ID' => 5]);
+        $this->update('banks', ['ChannelName' => 'BRS'], ['ID' => 7]);
+        $this->update('banks', ['ChannelName' => 'Cauri'], ['ID' => 8]);
+        $this->update('banks', ['ChannelName' => 'FortaTech'], ['ID' => 9]);
+        $this->update('banks', ['ChannelName' => 'Walleto'], ['ID' => 10]);
+        $this->update('banks', ['ChannelName' => 'Runa'], ['ID' => 11]);
     }
 
     /**

@@ -50,9 +50,13 @@ use SoapHeader;
 use Yii;
 use yii\helpers\Json;
 
-class MTSBankAdapter implements IBankAdapter
+class MTSBankAdapter extends BaseAdapter implements IBankAdapter
 {
     const AFT_MIN_SUMM = 120000;
+
+    /**
+     * @deprecated Use {@see bankId()} instead.
+     */
     public static $bank = 3;
 
     /** @var PartnerBankGate */
@@ -86,6 +90,14 @@ class MTSBankAdapter implements IBankAdapter
 
     public static $PARTSGATE = 100;
 
+    /**
+     * {@inheritDoc}
+     */
+    public static function bankId(): int
+    {
+        return 3;
+    }
+
     public function setGate(PartnerBankGate $partnerBankGate)
     {
         $this->gate = $partnerBankGate;
@@ -102,7 +114,7 @@ class MTSBankAdapter implements IBankAdapter
      */
     public function getBankId()
     {
-        return self::$bank;
+        return self::bankId();
     }
 
     /**
@@ -147,7 +159,7 @@ class MTSBankAdapter implements IBankAdapter
                             'type' => Cards::GetTypeCard($status['xml']['orderadditionalinfo']['cardnumber']),
                             'holder' => isset($status['xml']['orderadditionalinfo']['cardholder']) ? $status['xml']['orderadditionalinfo']['cardholder'] : ''
                         ];
-                        $payschets->UpdateCardExtId($params['IdUser'], $card, $params['ID'], MTSBankAdapter::$bank);
+                        $payschets->UpdateCardExtId($params['IdUser'], $card, $params['ID'], MTSBankAdapter::bankId());
                     }
 
                     if ($status['state'] == 1) {
@@ -944,7 +956,7 @@ class MTSBankAdapter implements IBankAdapter
 
     public function getAftMinSum()
     {
-        return Bank::findOne(self::$bank)->AftMinSum ?? self::AFT_MIN_SUMM;
+        return $this->getBankModel()->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**

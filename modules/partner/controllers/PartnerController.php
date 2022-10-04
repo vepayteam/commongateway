@@ -594,6 +594,7 @@ class PartnerController extends Controller
         }
 
         /** @todo Использовать ActiveForm на клиенте, чтобы убрать это. */
+        $post['ReceiveProviderCommission'] = isset($post['ReceiveProviderCommission']) && $post['ReceiveProviderCommission'] === 'on';
         $post['UseGateCompensation'] = (int)(isset($post['UseGateCompensation']) && $post['UseGateCompensation'] === 'on');
 
         if($post['Id']) {

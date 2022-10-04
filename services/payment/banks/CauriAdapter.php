@@ -18,6 +18,7 @@ use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\bank_adapter_responses\CheckStatusPayResponse;
 use app\services\payment\banks\bank_adapter_responses\ConfirmPayResponse;
 use app\services\payment\banks\bank_adapter_responses\CreatePayResponse;
+use app\services\payment\banks\bank_adapter_responses\createPayResponse\AcsRedirectData;
 use app\services\payment\banks\bank_adapter_responses\CreateRecurrentPayResponse;
 use app\services\payment\banks\bank_adapter_responses\GetBalanceResponse;
 use app\services\payment\banks\bank_adapter_responses\OutCardPayResponse;
@@ -40,8 +41,11 @@ use app\services\payment\models\PartnerBankGate;
 use app\services\payment\models\UslugatovarType;
 use GuzzleHttp\Exception\GuzzleException;
 
-class CauriAdapter implements IBankAdapter
+class CauriAdapter extends BaseAdapter implements IBankAdapter
 {
+    /**
+     * @deprecated Use {@see bankId()} instead.
+     */
     public static $bank = 8;
 
     private const AFT_MIN_SUMM = 120000;
@@ -57,6 +61,14 @@ class CauriAdapter implements IBankAdapter
      * @var PartnerBankGate
      */
     protected $gate;
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function bankId(): int
+    {
+        return 8;
+    }
 
     /**
      * @inheritDoc
@@ -79,7 +91,7 @@ class CauriAdapter implements IBankAdapter
      */
     public function getBankId(): int
     {
-        return self::$bank;
+        return self::bankId();
     }
 
     /**
@@ -187,9 +199,16 @@ class CauriAdapter implements IBankAdapter
 
         if ($cardProcessResponse->getAcs() !== null) {
             $createPayResponse->isNeed3DSVerif = true;
-            $createPayResponse->md = $cardProcessResponse->getAcs()->getParameters()->getMD();
-            $createPayResponse->pa = $cardProcessResponse->getAcs()->getParameters()->getPaReq();
-            $createPayResponse->url = $cardProcessResponse->getAcs()->getUrl();
+            $createPayResponse->acs = new AcsRedirectData(
+                AcsRedirectData::STATUS_OK,
+                $cardProcessResponse->getAcs()->getUrl(),
+                'POST',
+                [
+                    'PaReq' => $cardProcessResponse->getAcs()->getParameters()->getPaReq(),
+                    'MD' => $cardProcessResponse->getAcs()->getParameters()->getMD(),
+                    'TermUrl' => $createPayResponse->getRetUrl($paySchet->ID),
+                ]
+            );
         } else {
             $createPayResponse->isNeed3DSVerif = false;
         }
@@ -335,7 +354,7 @@ class CauriAdapter implements IBankAdapter
      */
     public function getAftMinSum(): int
     {
-        return Bank::findOne(self::$bank)->AftMinSum ?? self::AFT_MIN_SUMM;
+        return $this->getBankModel()->AftMinSum ?? self::AFT_MIN_SUMM;
     }
 
     /**
