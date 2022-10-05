@@ -19,4 +19,9 @@ class CheckStatusPayResponse extends BaseResponse
     public $expMonth;
     public $cardHolder;
     public $operations;
+
+    /**
+     * @var int|null Комиссия провайдера в минимальных денежных единицах (копейки, центы)
+     */
+    public $providerCommission = null;
 }
