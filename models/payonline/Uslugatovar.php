@@ -75,6 +75,8 @@ use yii\db\ActiveQuery;
  * @property string $TypeReestr [int unsigned]  tip reestra: 0 - teleport 1 - sber full 2 - sber gv 3 - sber hv 4 - kes 5 - ds kirov 6 - fkr43 7 - gaz 8 -
  *     sber new
  * @property string $IsKommunal [tinyint unsigned]  1 - jkh 0 - ecomm
+ *
+ * @property-read UslugatovarType $type {@see Uslugatovar::getType()}
  */
 class Uslugatovar extends \yii\db\ActiveRecord
 {
