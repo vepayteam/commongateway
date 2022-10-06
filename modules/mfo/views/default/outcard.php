@@ -1,6 +1,5 @@
 <?php
 
-/* @var $user array */
 /* @var $IdPay int */
 /* @var $cardNumber string|null */
 
@@ -69,10 +68,6 @@ $provData = new Provparams();
         ])->hiddenInput(['value' => 1])->label(''); ?>
 
         <?php
-        echo Html::input('hidden', 'imei', $user->IMEI);
-        echo Html::input('hidden', 'extuser', $user->Login);
-        echo Html::input('hidden', 'extpw', $user->Password);
-        echo Html::input('hidden', 'extorg', $user->ExtOrg);
         echo Html::input('hidden', 'IdPay', $IdPay);
         ?>
 

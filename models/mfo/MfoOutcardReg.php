@@ -2,10 +2,16 @@
 
 namespace app\models\mfo;
 
-use app\models\Crypt;
+use app\helpers\TokenHelper;
+use app\models\api\Reguser;
 use app\models\crypt\CardToken;
+use app\models\payonline\Cards;
 use app\models\payonline\User;
 use app\models\Payschets;
+use app\services\cards\models\PanToken;
+use app\services\payment\exceptions\CardTokenException;
+use app\services\payment\models\Bank;
+use app\services\payment\models\PaySchet;
 use Yii;
 
 class MfoOutcardReg
@@ -13,18 +19,18 @@ class MfoOutcardReg
     /**
      * @param $IdPay
      * @param int $result
-     * @param string $card
+     * @param string $cardNumber
      * @param $user
      * @param $org
      * @return int|string
      * @throws \yii\db\Exception
      * @throws \Exception
      */
-    public function SaveCard($IdPay, $result, $card, User $user, $org)
+    public function SaveCard($IdPay, $result, $cardNumber)
     {
         $payschets = new Payschets();
         //данные счета для оплаты
-        $params = $payschets->getSchetData($IdPay, '', $org);
+        $params = $payschets->getSchetData($IdPay);
 
         if ($params) {
             if ($result > 0) {
@@ -38,7 +44,7 @@ class MfoOutcardReg
                     'message' => ''
                 ]);
                 if ($result == 1) {
-                    $IdCard = $this->SaveOutard($IdPay, $card, $user);
+                    $IdCard = $this->SaveOutard($IdPay, $cardNumber);
                     Yii::warning('register out card: '.$IdCard);
                     return $IdCard;
                 }
@@ -51,53 +57,71 @@ class MfoOutcardReg
     /**
      * Сохранение карты для выплат
      * @param $IdPay
-     * @param string $card
+     * @param string $cardNumber
      * @param User $user
      * @return string
      * @throws \yii\db\Exception
      */
-    private function SaveOutard($IdPay, $card, User $user)
+    private function SaveOutard($IdPay, $cardNumber)
     {
-        $CardToken = new CardToken();
-        $IdPan = $CardToken->CreateToken($card, 0, '');
-        $maskedPan = $this->MaskedCardNumber($card);
-        if ($IdPan) {
-            Yii::warning('register out card: ' . $maskedPan . ' IdPay=' . $IdPay . " IdPan=".$IdPan);
-            Yii::$app->db->createCommand()
-                ->insert('cards', [
-                    'IdUser' => $user->ID,
-                    'NameCard' => $maskedPan,
-                    'CardNumber' => $maskedPan,
-                    'ExtCardIDP' => $IdPan,
-                    'DateAdd' => time(),
-                    'SrokKard' => 0,
-                    'Status' => 1,
-                    'TypeCard' => 1,
-                    'IdPan' => $IdPan
-                ])->execute();
+        $paySchet = PaySchet::findOne($IdPay);
+        $partner = $paySchet->partner;
 
-            $IdCard = Yii::$app->db->getLastInsertID();
-            Yii::$app->db->createCommand()
-                ->update('pay_schet', [
-                    'IdKard' => $IdCard,
-                    //'Status' => 2
-                ], 'ID = :IDPAY', [':IDPAY' => $IdPay]
-                )->execute();
-
-            return $IdCard;
-
-        } else {
-            Yii::warning('erorr PAN CreateToken! IdPay='.$IdPay);
+        $token = TokenHelper::getOrCreateToken($cardNumber, null, null);
+        if ($token === null) {
+            Yii::error('Unable to create token! IdPay=' . $IdPay);
             return 0;
         }
-    }
+        $panToken = PanToken::findOne($token);
 
-    public function MaskedCardNumber($card)
-    {
-        if (!empty($card)) {
-            return substr($card, 0, 6)."******".substr($card, strlen($card) - 4, 4);
-        } else {
-            return "";
+        $maskedCardNumber = $panToken->FirstSixDigits . '******' . $panToken->LastFourDigits;
+        Yii::warning("Register out card: {$maskedCardNumber} IdPay={$IdPay} IdPan={$panToken->ID}");
+
+        $card = Cards::find()
+            ->alias('cardAlias')
+            ->notSoftDeleted()
+            ->joinWith([
+                /** @see Cards::$user */
+                'user userAlias',
+            ])
+            ->andWhere([
+                'cardAlias.IdPan' => $panToken->ID,
+                'cardAlias.IdBank' => Bank::OUT_BANK_ID,
+                'cardAlias.TypeCard' => Cards::TYPE_CARD_OUT,
+                'userAlias.ExtOrg' => $paySchet->IdOrg,
+            ])
+            ->orderBy(['cardAlias.ID' => SORT_DESC])
+            ->limit(1) // optimization
+            ->one();
+
+
+        if ($card === null) {
+            $user = (new Reguser())->findUser(
+                '0',
+                $partner->ID . '-' . time() . random_int(100, 999),
+                md5($partner->ID . '-' . time()),
+                $partner->ID,
+                false
+            );
+
+            $card = new Cards();
+            $card->IdUser = $user->ID;
+            $card->CardNumber = $card->NameCard = $maskedCardNumber;
+
+            /** @todo Check and remove (change to 0). */
+            $card->ExtCardIDP = $panToken->ID;
+
+            $card->SrokKard = 0;
+            $card->Status = Cards::STATUS_ACTIVE;
+            $card->TypeCard = Cards::TYPE_CARD_OUT;
+            $card->IdPan = $panToken->ID;
+            $card->save(false);
         }
+
+        $paySchet->IdKard = $card->ID;
+        $paySchet->IdUser = $card->IdUser;
+        $paySchet->save(false);
+
+        return $card->ID;
     }
 };
