@@ -38,7 +38,10 @@ class DefaultController extends Controller
      */
     public function beforeAction($action)
     {
-        $this->enableCsrfValidation = false;
+        if ($action->id !== 'addoutcard') {
+            $this->enableCsrfValidation = false;
+        }
+
         return parent::beforeAction($action);
     }
 
@@ -78,7 +81,6 @@ class DefaultController extends Controller
         $payschets = new Payschets();
         //данные счета для оплаты
         $params = $payschets->getSchetData($id, null);
-        $user = User::find()->where(['ID' => $params['IdUser'], 'IsDeleted' => 0])->one();
         if ($params && isset($params['ID']) && $params['Status'] == 0) {
             $cardNumber = null;
 
@@ -88,7 +90,7 @@ class DefaultController extends Controller
                 $cacheCardService->deleteCard();
             }
 
-            return $this->render('outcard', ['user' => $user, 'IdPay' => $params['ID'], 'cardNumber' => $cardNumber]);
+            return $this->render('outcard', ['IdPay' => $params['ID'], 'cardNumber' => $cardNumber]);
         } else {
             throw new NotFoundHttpException("Идентификатор не найден");
         }
@@ -110,16 +112,9 @@ class DefaultController extends Controller
                 $card = $card['param']['0'];
             }
 
-            $extuser = Yii::$app->request->post('extuser', '');
-            $extpw = Yii::$app->request->post('extpw', '');
-            $extorg = Yii::$app->request->post('extorg', 0);
-
-            $reguser = new Reguser();
-            $user = $reguser->findUser('0', $extuser, $extpw, $extorg, 0);
-
             $mor = new MfoOutcardReg();
             if (preg_match('/^\d{16}|\d{18}$/', $card) && Cards::CheckValidCard($card)) {
-                if ($mor->SaveCard($IdPay, 1, $card, $user, $extorg)) {
+                if ($mor->SaveCard($IdPay, 1, $card)) {
                     return ['status' => 1, 'message' => 'Карта добавлена'];
                 } else {
                     return ['status' => 0, 'message' => 'Ошибка регистарции карты'];

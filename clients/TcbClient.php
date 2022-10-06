@@ -256,6 +256,11 @@ class TcbClient extends BaseObject
             return new ErrorResponse($responseData['ErrorInfo']['ErrorMessage'] ?? '', $errorCode);
         }
 
+        /**
+         * В документации ТКБ ошибочно написано, что параметр Fee возвращается в OrderAdditionalInfo.
+         * Как сказала техподдержка Fee находится в OrderInfo и в некоторых ситуациях может не передаваться.
+         */
+
         $infoData = $responseData['OrderInfo'];
         $info = new OrderInfo(
             $infoData['ExtId'],
@@ -264,6 +269,7 @@ class TcbClient extends BaseObject
             $infoData['StateDescription'],
             $infoData['Type'],
             $infoData['Amount'],
+            $infoData['Fee'] ?? null,
             new Carbon($infoData['DateTime']),
             new Carbon($infoData['StateUpdateDateTime'])
         );
@@ -285,7 +291,6 @@ class TcbClient extends BaseObject
                 $additionalInfoData['ECI'] ?? null,
                 $additionalInfoData['CardNumberHash'] ?? null,
                 $additionalInfoData['RC'] ?? null,
-                $additionalInfoData['Fee'] ?? null,
                 $additionalInfoData['RRN'] ?? null
             );
         } else {

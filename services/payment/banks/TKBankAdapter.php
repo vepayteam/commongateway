@@ -1494,7 +1494,8 @@ class TKBankAdapter extends BaseAdapter implements IBankAdapter, IBankSecondStep
                 $checkStatusPayResponse->transId = $response->orderInfo->orderId;
             }
             $checkStatusPayResponse->status = $status;
-            $checkStatusPayResponse->message = $response->orderInfo->stateDescription ?? '';
+            $checkStatusPayResponse->message = $this->handleStatusResponseMessage($response->orderInfo->stateDescription ?? '');
+            $checkStatusPayResponse->providerCommission = $response->orderInfo->fee ?? null;
             $checkStatusPayResponse->rcCode = $response->additionalInfo->rc ?? null;
             $checkStatusPayResponse->rrn = $response->additionalInfo->rrn ?? null;
             $checkStatusPayResponse->cardRefId = $response->additionalInfo->cardRefId ?? null;
@@ -1502,7 +1503,6 @@ class TKBankAdapter extends BaseAdapter implements IBankAdapter, IBankSecondStep
             $checkStatusPayResponse->expMonth = $response->additionalInfo->cardExpMonth ?? null;
             $checkStatusPayResponse->cardHolder = $response->additionalInfo->cardHolder ?? null;
             $checkStatusPayResponse->cardNumber = $response->additionalInfo->cardNumber ?? null;
-
         } else {
             throw new \LogicException('Unprocessable response object.');
         }
@@ -1895,5 +1895,23 @@ class TKBankAdapter extends BaseAdapter implements IBankAdapter, IBankSecondStep
         }
 
         return $registrationBenificResponse;
+    }
+
+    /**
+     * Функция для обработки описания статуса транзакции
+     *
+     * @param string $message
+     * @return string
+     */
+    private function handleStatusResponseMessage(string $message): string
+    {
+        /**
+         * Убираем номер карты из сообщения "2222 22** **** 222222"
+         */
+        if (preg_match('/(\b[23456][\d\*\s]{15,22}\b)/', $message, $matches)) {
+            return trim(str_replace($matches[1], '', $message));
+        }
+
+        return $message;
     }
 }

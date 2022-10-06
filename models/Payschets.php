@@ -608,47 +608,6 @@ class Payschets
     }
 
     /**
-     * проверяем есть ли карта
-     * @param int $IdUser
-     * @param int $idCard
-     * @param int $activate
-     * @return array|null ['ExtCardIDP', 'SrokKard']
-     * @throws \yii\db\Exception
-     */
-    public function getSavedCard($IdUser, $idCard = 0, $activate = 0)
-    {
-        $card = Yii::$app->db->createCommand("
-            SELECT
-                c.ExtCardIDP,
-                c.SrokKard
-            FROM
-                cards AS c
-            WHERE
-                c.`IsDeleted` = 0
-                AND c.`TypeCard` = 0
-                AND c.Status = " . ($activate ? "0" : "1") . "
-                AND c.IdUser = :IdUser
-                AND (
-                    (MOD(c.`SrokKard`,100) > :YEAR)
-                    OR
-                    (ROUND(c.SrokKard/100) >= :MONTH AND MOD(c.`SrokKard`,100) = :YEAR)
-                )
-                " . ($idCard > 0 ? " AND `ID` = " . intval($idCard) : "") . "
-            ORDER BY c.`Default` DESC
-        ", [
-            ":IdUser" => $IdUser,
-            ":YEAR" => date('y'),
-            ":MONTH" => date('n'),
-        ])
-            ->queryOne();
-
-        if ($card) {
-            return $card;
-        }
-        return null;
-    }
-
-    /**
      * Сохранение карты
      * @param int $IdUser
      * @param array $card [number,idcard,expiry,type,holder]

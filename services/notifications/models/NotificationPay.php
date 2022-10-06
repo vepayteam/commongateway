@@ -120,6 +120,10 @@ class NotificationPay extends \yii\db\ActiveRecord
             $params['errorCode'] = $this->getRcCode();
         }
 
+        if ($settings->SendServiceName) {
+            $params['serviceName'] = $this->paySchet->uslugatovar->type->Name;
+        }
+
         $params['key'] = $this->buildKey($settings);
 
         return $params;
@@ -174,6 +178,10 @@ class NotificationPay extends \yii\db\ActiveRecord
 
         if ($settings->SendErrorCode) {
             $params[] = $this->getRcCode();
+        }
+
+        if ($settings->SendServiceName) {
+            $params[] = $this->paySchet->uslugatovar->type->Name;
         }
 
         $params[] = $this->paySchet->uslugatovar->KeyInform;

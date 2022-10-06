@@ -24,6 +24,7 @@ class MfoSettings extends Model
     public $CallbackSendChannel = false;
     public $CallbackSendCardMask = false;
     public $CallbackSendErrorCode = false;
+    public $CallbackSendServiceName = false;
 
     public function rules()
     {
@@ -32,7 +33,19 @@ class MfoSettings extends Model
             [['url', 'UrlReturn', 'UrlReturnFail', 'UrlCheckReq', 'UrlReturnCancel'], 'url'],
             [['url', 'UrlReturn', 'UrlReturnFail', 'UrlCheckReq', 'UrlReturnCancel'], 'string', 'max' => 300],
             ['key', 'string', 'max' => 20],
-            [['CallbackSendExtId', 'CallbackSendId', 'CallbackSendSum', 'CallbackSendStatus', 'CallbackSendChannel', 'CallbackSendCardMask', 'CallbackSendErrorCode'], 'boolean'],
+            [
+                [
+                    'CallbackSendExtId',
+                    'CallbackSendId',
+                    'CallbackSendSum',
+                    'CallbackSendStatus',
+                    'CallbackSendChannel',
+                    'CallbackSendCardMask',
+                    'CallbackSendErrorCode',
+                    'CallbackSendServiceName',
+                ],
+                'boolean'
+            ],
         ];
     }
 
@@ -67,6 +80,7 @@ class MfoSettings extends Model
             $this->CallbackSendChannel = $partnerCallbackSettings->SendChannel;
             $this->CallbackSendCardMask = $partnerCallbackSettings->SendCardMask;
             $this->CallbackSendErrorCode = $partnerCallbackSettings->SendErrorCode;
+            $this->CallbackSendServiceName = $partnerCallbackSettings->SendServiceName;
         }
     }
 
@@ -176,6 +190,7 @@ class MfoSettings extends Model
             $partnerCallbackSettings->SendChannel = $this->CallbackSendChannel;
             $partnerCallbackSettings->SendCardMask = $this->CallbackSendCardMask;
             $partnerCallbackSettings->SendErrorCode = $this->CallbackSendErrorCode;
+            $partnerCallbackSettings->SendServiceName = $this->CallbackSendServiceName;
             $partnerCallbackSettings->save(false);
         }
 
