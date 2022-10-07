@@ -75,7 +75,7 @@ class AdminSettingsBankForm extends Model
             'id' => 'ID',
             'name' => 'Банк',
             'sortOrder' => 'Приоритет',
-            'aftMinSum' => 'Порог для платежа через AFT (в копейках)',
+            'aftMinSum' => 'Порог для платежа через AFT',
             'usePayIn' => 'Использовать',
             'useApplePay' => 'Apple Pay',
             'useGooglePay' => 'Google Pay',
@@ -101,5 +101,11 @@ class AdminSettingsBankForm extends Model
         $this->outCardRefreshStatusDelay = $bank->OutCardRefreshStatusDelay;
 
         return $this;
+    }
+
+    public function beforeValidate()
+    {
+        $this->aftMinSum = ($this->aftMinSum !== null && $this->aftMinSum !== 0) ? (int)((float)$this->aftMinSum * 100) : null;
+        return parent::beforeValidate();
     }
 }
