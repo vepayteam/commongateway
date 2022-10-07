@@ -177,19 +177,20 @@ class CardController extends Controller
         }
 
         // check for duplicates
-        $duplicatePaySchet = PaySchet::findOne([
-            'Extid' => $cardRegForm->extid,
-            'IdOrg' => $partner->ID,
-        ]);
-        if ($duplicatePaySchet !== null) {
-            return $this->asJson([
-                'status' => 0,
-                'message' => 'Транзакция с передаваемым extid уже существует',
-                'id' => $duplicatePaySchet->ID,
-                'extid' => $duplicatePaySchet->Extid,
-            ])->setStatusCode(400);
+        if ($cardRegForm->extid) {
+            $duplicatePaySchet = PaySchet::findOne([
+                'Extid' => $cardRegForm->extid,
+                'IdOrg' => $partner->ID,
+            ]);
+            if ($duplicatePaySchet !== null) {
+                return $this->asJson([
+                    'status' => 0,
+                    'message' => 'Транзакция с передаваемым extid уже существует',
+                    'id' => $duplicatePaySchet->ID,
+                    'extid' => $duplicatePaySchet->Extid,
+                ])->setStatusCode(400);
+            }
         }
-
 
         $mutex = new FileMutex();
         if (!empty($cardRegForm->extid)) {
