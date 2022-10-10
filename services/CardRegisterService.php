@@ -2,6 +2,7 @@
 
 namespace app\services;
 
+use app\models\api\Reguser;
 use app\models\payonline\Cards;
 use app\models\payonline\Partner;
 use app\models\payonline\Uslugatovar;
@@ -111,7 +112,16 @@ class CardRegisterService extends Component
             ->limit(1) // optimization
             ->one();
         if ($card === null) {
+            $user = (new Reguser())->findUser(
+                '0',
+                $partner->ID . '-' . time() . random_int(100, 999),
+                md5($partner->ID . '-' . time()),
+                $partner->ID,
+                false
+            );
+
             $card = new Cards();
+            $card->IdUser = $user->ID;
             $card->CardNumber = $card->NameCard = $panToken->FirstSixDigits . '******' . $panToken->LastFourDigits;
             $card->ExtCardIDP = 0;
             $card->SrokKard = (int)($panToken->ExpDateMonth . $panToken->ExpDateYear);

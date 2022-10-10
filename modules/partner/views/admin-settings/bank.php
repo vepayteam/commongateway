@@ -40,7 +40,7 @@ $this->params['breadcrumbs'][] = $this->params['breadtitle'];
             <div class="ibox-content">
                 <?=
                 /** {@see AdminSettingsBankForm::$aftMinSum} */
-                $form->field($bank, 'aftMinSum')->textInput()
+                $form->field($bank, 'aftMinSum')->textInput(['value' => $bank->aftMinSum / 100])
                 ?>
 
                 <?= $form->field($bank, 'usePayIn')->checkbox() ?>
