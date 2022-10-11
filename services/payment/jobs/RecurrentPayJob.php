@@ -3,6 +3,7 @@
 namespace app\services\payment\jobs;
 
 use app\models\crypt\CardToken;
+use app\models\payonline\Cards;
 use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\banks\BankAdapterBuilder;
 use app\services\payment\exceptions\CreatePayException;
@@ -34,7 +35,14 @@ class RecurrentPayJob extends BaseObject implements \yii\queue\JobInterface
         } catch (GateException|FailedRecurrentPaymentException $e) {
             if ($e instanceof FailedRecurrentPaymentException) {
                 $paySchet->RCCode = $e->getRcCode();
-                $paySchet->ExtBillNumber = $e->getTransactionId();
+                if ($e->getTransactionId() !== null) {
+                    $paySchet->ExtBillNumber = $e->getTransactionId();
+                }
+                if ($e->getCode() === FailedRecurrentPaymentException::CARD_BLOCKED) {
+                    $card = $autoPayForm->getCard();
+                    $card->Status = Cards::STATUS_BLOCKED;
+                    $card->save(false);
+                }
             }
 
             $paySchet->Status = PaySchet::STATUS_ERROR;

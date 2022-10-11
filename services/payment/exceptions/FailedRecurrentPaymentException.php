@@ -7,6 +7,9 @@ namespace app\services\payment\exceptions;
  */
 class FailedRecurrentPaymentException extends \Exception
 {
+    public const SERVER_ERROR = 1;
+    public const CARD_BLOCKED = 2;
+
     /**
      * @var string|null {@see \app\services\payment\models\PaySchet::$RCCode}
      */
@@ -15,11 +18,18 @@ class FailedRecurrentPaymentException extends \Exception
 
     /**
      * @param string $message
+     * @param int $code
      * @param string|null $rcCode
+     * @param $transactionId
      */
-    public function __construct(string $message = '', ?string $rcCode = null, $transactionId = null)
+    public function __construct(
+        string $message,
+        int $code,
+        ?string $rcCode = null,
+        $transactionId = null
+    )
     {
-        parent::__construct($message);
+        parent::__construct($message, $code);
 
         $this->rcCode = $rcCode;
         $this->transactionId = $transactionId;

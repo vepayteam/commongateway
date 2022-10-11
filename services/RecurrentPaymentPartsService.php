@@ -163,7 +163,14 @@ class RecurrentPaymentPartsService extends Component
 
             if ($e instanceof FailedRecurrentPaymentException) {
                 $paySchet->RCCode = $e->getRcCode();
-                $paySchet->ExtBillNumber = $e->getTransactionId();
+                if ($e->getTransactionId() !== null) {
+                    $paySchet->ExtBillNumber = $e->getTransactionId();
+                }
+                if ($e->getCode() === FailedRecurrentPaymentException::CARD_BLOCKED) {
+                    $card = $autoPayForm->getCard();
+                    $card->Status = Cards::STATUS_BLOCKED;
+                    $card->save(false);
+                }
             }
 
             $paySchet->Status = PaySchet::STATUS_ERROR;
