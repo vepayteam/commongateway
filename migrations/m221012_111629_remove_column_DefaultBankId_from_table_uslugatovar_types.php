@@ -14,7 +14,7 @@ class m221012_111629_remove_column_DefaultBankId_from_table_uslugatovar_types ex
     {
         $column = $this->getDb()->getTableSchema('uslugatovar_types')->getColumn('DefaultBankId');
         if ($column) {
-            $this->dropColumn('partner', 'DefaultBankId');
+            $this->dropColumn('uslugatovar_types', 'DefaultBankId');
         }
     }
 
