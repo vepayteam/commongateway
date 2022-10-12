@@ -84,8 +84,14 @@ $(document).ready(function() {
         checkButtonState()
     })
 
+    let submitLocked = false;
     $('#submit_btn').click(function(e) {
         e.preventDefault();
+
+        if (submitLocked) {
+            return;
+        }
+        submitLocked = true;
 
         disableSendButton()
 
@@ -113,6 +119,7 @@ $(document).ready(function() {
 
         if(!valid) {
             checkButtonState()
+            submitLocked = false;
             return false;
         }
 
@@ -151,6 +158,7 @@ $(document).ready(function() {
 
         if(!valid) {
             checkButtonState()
+            submitLocked = false;
             return false;
         }
 
@@ -177,12 +185,16 @@ $(document).ready(function() {
                     $('#form__payment_details_error').text(response.message)
                     $('#form__payment_details_error').css({'display': 'block'})
                 }
+
+                submitLocked = false;
             },
             error: function(response) {
                 checkButtonState()
 
                 $('#form__payment_details_error').text('Ошибка запроса')
                 $('#form__payment_details_error').css({'display': 'block'})
+
+                submitLocked = false;
             }
         })
     })

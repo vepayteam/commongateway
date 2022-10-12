@@ -1,22 +1,20 @@
 <?php
 
-
 namespace app\controllers;
 
-
-use app\models\bank\ApplePay;
-use app\models\bank\GooglePay;
-use app\models\bank\SamsungPay;
 use app\models\kfapi\KfRequest;
+use app\services\payment\banks\bank_adapter_responses\BaseResponse;
 use app\services\payment\exceptions\CreatePayException;
 use app\services\payment\exceptions\GateException;
 use app\services\payment\forms\CreateP2pForm;
 use app\services\payment\forms\SendP2pForm;
 use app\services\payment\models\PaySchet;
+use app\services\payment\models\UslugatovarType;
 use app\services\payment\payment_strategies\CreateP2pFormStrategy;
 use app\services\payment\payment_strategies\SendP2pStrategy;
 use Yii;
 use yii\helpers\Url;
+use yii\redis\Mutex;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
@@ -61,18 +59,20 @@ class P2pController extends Controller
                 'message' => '',
             ];
 
-        } catch (CreatePayException | GateException $e) {
+        } catch (CreatePayException|GateException $e) {
             return ['status' => 0, 'message' => $e->getMessage()];
         }
     }
 
+    /**
+     * @param $id
+     * @return string|Response
+     * @throws NotFoundHttpException
+     */
     public function actionForm($id)
     {
-        Yii::warning("P2P open id={$id}");
-        $paySchet = PaySchet::findOne(['ID' => $id]);
-        if(!$paySchet) {
-            throw new NotFoundHttpException("Форма для перевода не найдена");
-        }
+        Yii::info("P2P: form open (ID: {$id}).");
+        $paySchet = $this->findPaySchet($id);
 
         if ($paySchet->Status != PaySchet::STATUS_WAITING) {
             return $this->redirect(Url::to('/pay/orderok?id=' . $id));
@@ -94,36 +94,90 @@ class P2pController extends Controller
         }
     }
 
+    /**
+     * @param $id
+     * @return array
+     * @throws NotFoundHttpException
+     */
     public function actionSend($id)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
-        $post = Yii::$app->request->post();
 
-        $paySchet = PaySchet::findOne(['ID' => $id]);
-        if(!$paySchet) {
-            throw new NotFoundHttpException("Форма для перевода не найдена");
+        $paySchet = $this->findPaySchet($id);
+
+        if ($paySchet->ExtBillNumber !== null) {
+            \Yii::warning("P2P: payment has already been made (PaySchet ID:{$paySchet->ID}).");
+            return [
+                'status' => 0,
+                'message' => 'Оплата уже произведена.',
+            ];
         }
 
-        $sendP2pForm = new SendP2pForm();
-        $sendP2pForm->load($post, '');
-        if(!$sendP2pForm->validate()) {
+        $sendP2pForm = new SendP2pForm($paySchet);
+        $sendP2pForm->load(Yii::$app->request->post(), '');
+        if (!$sendP2pForm->validate()) {
             return [
                 'status' => 0,
                 'message' => $sendP2pForm->GetError(),
             ];
         }
-        $sendP2pForm->paySchet = $paySchet;
 
         $sendP2pStrategy = new SendP2pStrategy($sendP2pForm);
-        try {
-            $sendP2pStrategy->exec();
-            $sendP2pResponse = $sendP2pStrategy->sendP2pResponse;
-            return $sendP2pResponse->getAttributes();
-        } catch (\Exception $e) {
-            return [
-                'status' => 2,
-                'message' => 'Ошибка запроса',
+
+        $mutex = new Mutex();
+        $mutexKey = static::class . "::actionSend({$id})";
+
+        if ($mutex->acquire($mutexKey)) {
+            try {
+                $sendP2pStrategy->exec();
+                $response = $sendP2pStrategy->sendP2pResponse;
+                $result = [
+                    'status' => (int)$response->status === BaseResponse::STATUS_DONE,
+                    'message' => $response->message,
+                    'url' => $response->url,
+                ];
+            } catch (CreatePayException|GateException $e) {
+                \Yii::warning($e);
+                $result = [
+                    'status' => 0,
+                    'message' => $e->getMessage(),
+                ];
+            } catch (\Exception $e) {
+                \Yii::error($e);
+                $result = [
+                    'status' => 0,
+                    'message' => 'Ошибка запроса.',
+                ];
+            } finally {
+                $mutex->release($mutexKey);
+            }
+        } else {
+            \Yii::warning("P2P: mutex locked on send (PaySchet ID:{$paySchet->ID}).");
+            $result = [
+                'status' => 0,
+                'message' => 'Запрос в процессе обработки.',
             ];
         }
+
+        return $result;
+    }
+
+    /**
+     * @param $id
+     * @return PaySchet
+     * @throws NotFoundHttpException
+     */
+    private function findPaySchet($id): PaySchet
+    {
+        $paySchet = PaySchet::findOne(['ID' => $id]);
+        if (!$paySchet) {
+            throw new NotFoundHttpException('Форма для перевода не найдена.');
+        }
+        if ($paySchet->uslugatovar->IsCustom !== UslugatovarType::P2P) {
+            \Yii::warning("P2P: incorrect uslugatovar type (PaySchet ID: {$id}).");
+            throw new NotFoundHttpException('Форма для перевода не найдена.');
+        }
+
+        return $paySchet;
     }
 }
