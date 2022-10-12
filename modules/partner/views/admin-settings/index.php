@@ -156,7 +156,7 @@ foreach ($allModels as $model) {
                                         'errorOptions' => ['style' => 'margin: 0'],
                                     ])
                                     ->label(false)
-                                    ->textInput(['style' => 'width: 100%;']);
+                                    ->textInput(['style' => 'width: 100%;', 'value' => ($bank->aftMinSum / 100) ? ($bank->aftMinSum / 100) : '' ]);
                             },
                             'options' => ['style' => 'width: 170px;']
                         ],

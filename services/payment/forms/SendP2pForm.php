@@ -23,6 +23,13 @@ class SendP2pForm extends Model
     public $cardHolder;
     public $outCardPan;
 
+    public function __construct(PaySchet $paySchet)
+    {
+        parent::__construct();
+
+        $this->paySchet = $paySchet;
+    }
+
     public function rules()
     {
         return [
