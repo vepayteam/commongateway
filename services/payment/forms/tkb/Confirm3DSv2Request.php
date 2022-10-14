@@ -12,6 +12,10 @@ class Confirm3DSv2Request extends Model
     public $Cres;
     public $Amount;
     public $CardInfo;
+    /**
+     * @var string 'ECOM' or 'AFT'.
+     */
+    public $ForceGate;
 
     public function rules()
     {

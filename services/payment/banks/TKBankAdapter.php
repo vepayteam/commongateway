@@ -1375,6 +1375,8 @@ class TKBankAdapter extends BaseAdapter implements IBankAdapter, IBankSecondStep
         $confirm3DSv2Request->CardInfo = [
             'CardRefId' => $cardRefId,
         ];
+        $confirm3DSv2Request->ForceGate = in_array($donePayForm->getPaySchet()->uslugatovar->IsCustom, UslugatovarType::ecomTypes())
+            ? 'ECOM' : 'AFT';
 
         Yii::warning('TKBankAdapter get cardRefId cache: paySchet.ID=' . $donePayForm->getPaySchet()->ID
             . ' paySchet.Extid=' . $donePayForm->getPaySchet()->Extid

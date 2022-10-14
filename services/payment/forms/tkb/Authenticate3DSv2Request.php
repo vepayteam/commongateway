@@ -12,6 +12,10 @@ class Authenticate3DSv2Request extends Model
     public $CardInfo;
     public $Amount;
     public $AuthenticateInfo;
+    /**
+     * @var string 'ECOM' or 'AFT'.
+     */
+    public $ForceGate;
 
     public function rules()
     {
