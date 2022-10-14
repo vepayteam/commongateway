@@ -18,6 +18,7 @@ use app\services\payment\forms\tkb\Check3DSVersionRequest;
 use app\services\payment\interfaces\Cache3DSv2Interface;
 use app\services\payment\interfaces\Issuer3DSVersionInterface;
 use app\services\payment\models\PaySchet;
+use app\services\payment\models\UslugatovarType;
 use Yii;
 use yii\helpers\Json;
 
@@ -44,6 +45,8 @@ trait TKBank3DSTrait
             'ExpirationMonth' => str_pad($createPayForm->CardMonth, 2, '0', STR_PAD_LEFT),
             'CVV' => $createPayForm->CardCVC,
         ];
+        $check3DSVerisonRequest->ForceGate = in_array($paySchet->uslugatovar->IsCustom, UslugatovarType::ecomTypes())
+            ? 'ECOM' : 'AFT';
 
         $queryData = Json::encode($check3DSVerisonRequest->getAttributes());
 
@@ -131,6 +134,8 @@ trait TKBank3DSTrait
                 'CardRefId' => $check3DSVersionResponse->cardRefId,
             ];
             $authenticate3DSv2Request->Amount = $paySchet->getSummFull();
+            $authenticate3DSv2Request->ForceGate = in_array($paySchet->uslugatovar->IsCustom, UslugatovarType::ecomTypes())
+                ? 'ECOM' : 'AFT';
 
             // TODO:
             $headers = Yii::$app->request->headers;
