@@ -106,6 +106,12 @@ class MfoOutCardStrategy
         $this->outCardPayForm->paySchet = $paySchet;
         $outCardPayResponse = $bankAdapterBuilder->getBankAdapter()->outCardPay($this->outCardPayForm);
 
+        if ($outCardPayResponse->doRefreshStatus) {
+            \Yii::warning("Pay to card: execute doRefreshStatus directive (ID: {$paySchet->ID}).");
+            $this->refreshStatus($bankAdapterBuilder->getBankAdapter()->getOutCardRefreshStatusDelay(), $paySchet);
+            return $paySchet;
+        }
+
         if ($outCardPayResponse->status == BaseResponse::STATUS_DONE) {
             /** @todo Fix status change/check logic. */
             $paySchet->ExtBillNumber = $outCardPayResponse->trans;
@@ -123,14 +129,19 @@ class MfoOutCardStrategy
 
         /** @todo Fix status change/check logic. */
         if (in_array($outCardPayResponse->status, [BaseResponse::STATUS_DONE, BaseResponse::STATUS_CREATED])) {
-            $this->queue
-                ->delay($bankAdapterBuilder->getBankAdapter()->getOutCardRefreshStatusDelay())
-                ->push(new RefreshStatusPayJob([
-                    'paySchetId' => $paySchet->ID,
-                ]));
+            $this->refreshStatus($bankAdapterBuilder->getBankAdapter()->getOutCardRefreshStatusDelay(), $paySchet);
         }
 
         return $paySchet;
+    }
+
+    private function refreshStatus($delay, PaySchet $paySchet)
+    {
+        $this->queue
+            ->delay($delay)
+            ->push(new RefreshStatusPayJob([
+                'paySchetId' => $paySchet->ID,
+            ]));
     }
 
     /**
