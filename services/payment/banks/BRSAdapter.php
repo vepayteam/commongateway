@@ -642,6 +642,7 @@ class BRSAdapter extends BaseAdapter implements IBankAdapter, P2p
             $error = $ans['error']['code'] . ': ' . $ans['error']['description'];
             $outCardPayResponse->status = BaseResponse::STATUS_ERROR;
             $outCardPayResponse->message = $error;
+            $outCardPayResponse->doRefreshStatus = true;
             return $outCardPayResponse;
         }
         $outCardPayResponse->status = BaseResponse::STATUS_DONE;
