@@ -271,6 +271,11 @@ class PayController extends Controller
             return ['status' => 0, 'message' => $autoPayForm->getError()];
         }
 
+        if ($autoPayForm->getCard() && $autoPayForm->getCard()->Status === Cards::STATUS_BLOCKED) {
+            Yii::warning('mfo/pay/auto: карта заблокирована.');
+            return ['status' => 0, 'message' => 'Карта заблокирована.'];
+        }
+
         if ($autoPayForm->getCard() && (!$autoPayForm->getCard()->ExtCardIDP || $autoPayForm->getCard()->ExtCardIDP == '0')) {
             Yii::warning("mfo/pay/auto: у карты нет ExtCardIDP");
             $autoPayForm->addError('card', 'Карта не зарегистрирована');
@@ -321,6 +326,12 @@ class PayController extends Controller
             if (!$form->validate()) {
                 return ['status' => 0, 'message' => array_values($form->getFirstErrors())[0]];
             }
+
+            $card = Cards::findOne($form->card);
+            if ($card->Status === Cards::STATUS_BLOCKED) {
+                return ['status' => 0, 'message' => 'Карта заблокирована.'];
+            }
+
             $paySchet = $this->recurrentPaymentService->createPayment($partner, $form);
             $this->queue->push(new ExecutePaymentJob(['paySchetId' => $paySchet->ID]));
 

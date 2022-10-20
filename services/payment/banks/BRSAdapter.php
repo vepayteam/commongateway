@@ -79,6 +79,19 @@ class BRSAdapter extends BaseAdapter implements IBankAdapter, P2p
     const BALANCE_B2C_CACHE_DURATION = 60 * 60 * 24; // 24 hours
 
     const BRS_RESPONSE_SYSTEM_ERROR_CODE = 1001;
+    private const BRS_RESPONSE_PICK_UP_CARD_CODES = [
+        200, // pick-up (general, no comments)
+        201, // expired card
+        202, // suspected fraud
+        203, // card acceptor contact card acquirer
+        204, // restricted card
+        205, // card acceptor call acquirer's security department
+        206, // allowable PIN tries exceeded
+        207, // special conditions
+        208, // lost card
+        209, // stolen card
+        210, // suspected counterfeit card
+    ];
 
     /**
      * @deprecated Use {@see bankId()} instead.
@@ -428,12 +441,28 @@ class BRSAdapter extends BaseAdapter implements IBankAdapter, P2p
         try {
             $ans = $this->sendRequest($uri, $recurrentPayRequest->getAttributes());
 
-            if (isset($ans['RESULT_CODE']) && intval($ans['RESULT_CODE']) === self::BRS_RESPONSE_SYSTEM_ERROR_CODE) {
+            $resultCode = isset($ans['RESULT_CODE']) ? (int)$ans['RESULT_CODE'] : null;
+
+            if (in_array($resultCode, self::BRS_RESPONSE_PICK_UP_CARD_CODES)) {
+                Yii::warning("BRSAdapter recurrentPay paySchet.ID={$paySchet->ID}. Card blocked, result code {$resultCode}.");
+                throw new FailedRecurrentPaymentException(
+                    BRSErrorHelper::getMessageByResultCode($resultCode),
+                    FailedRecurrentPaymentException::CARD_BLOCKED,
+                    $resultCode
+                );
+            }
+
+            if ($resultCode === self::BRS_RESPONSE_SYSTEM_ERROR_CODE) {
                 Yii::error('BRSAdapter recurrentPay paySchet.ID=' . $paySchet->ID
                     . ' bad response result code 1001');
 
                 // Вызываем FailedRecurrentPaymentException, чтобы в RecurrentPayJob платежу присвоился статус ERROR и не было опроса статуса
-                throw new FailedRecurrentPaymentException(BRSErrorHelper::getMessage($ans), $ans['RESULT_CODE'], $ans['TRANSACTION_ID'] ?? '');
+                throw new FailedRecurrentPaymentException(
+                    BRSErrorHelper::getMessageByResultCode($resultCode),
+                    FailedRecurrentPaymentException::SERVER_ERROR,
+                    $resultCode,
+                    $ans['TRANSACTION_ID'] ?? null
+                );
             }
 
             $createRecurrentPayResponse->message = BRSErrorHelper::getMessage($ans);

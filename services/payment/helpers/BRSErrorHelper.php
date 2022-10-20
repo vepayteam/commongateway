@@ -485,4 +485,9 @@ class BRSErrorHelper
 
         return BankAdapterResponseException::REQUEST_ERROR_MSG;
     }
+
+    public static function getMessageByResultCode(int $resultCode): string
+    {
+        return $resultCode . ' - ' . self::$errorCodes[$resultCode]['desc_rus'];
+    }
 }
