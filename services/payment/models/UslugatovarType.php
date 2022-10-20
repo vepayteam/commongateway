@@ -109,7 +109,7 @@ class UslugatovarType extends \yii\db\ActiveRecord
             self::JKHPARTS,
             self::ECOMPARTS,
             self::POGASHECOMPARTS,
-            self::POGASHECOMPARTS,
+            self::POGASHATFPARTS,
             self::P2P_REPAYMENT,
         ];
     }
