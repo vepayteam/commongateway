@@ -7,7 +7,6 @@ namespace app\services\payment\models;
  *
  * @property int|null $Id
  * @property string $Name
- * @property int|null $DefaultBankId
  */
 class UslugatovarType extends \yii\db\ActiveRecord
 {

@@ -9,7 +9,6 @@ use Yii;
  *
  * @property int $Id
  * @property string $Name
- * @property int|null $DefaultBankId
  *
  * @property Uslugatovar[] $uslugatovars
  */
@@ -30,7 +29,7 @@ class UslugatovarTypes extends \yii\db\ActiveRecord
     {
         return [
             [['Id', 'Name'], 'required'],
-            [['Id', 'DefaultBankId'], 'integer'],
+            [['Id'], 'integer'],
             [['Name'], 'string', 'max' => 255],
             [['Id'], 'unique'],
         ];
@@ -44,7 +43,6 @@ class UslugatovarTypes extends \yii\db\ActiveRecord
         return [
             'Id' => 'ID',
             'Name' => 'Name',
-            'DefaultBankId' => 'Default Bank ID',
         ];
     }
 
